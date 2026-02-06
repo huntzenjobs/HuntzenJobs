@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # --------------------------------------------------------------------------
     # API Keys - Job Providers
     # --------------------------------------------------------------------------
-    serpapi_api_key: SecretStr = Field(default=SecretStr(""), description="SerpAPI Key")
+    serpapi_key: SecretStr = Field(default=SecretStr(""), description="SerpAPI Key")
     adzuna_app_id: str = Field(default="", description="Adzuna App ID")
     adzuna_api_key: SecretStr = Field(default=SecretStr(""), description="Adzuna API Key")
     rapidapi_key: SecretStr = Field(default=SecretStr(""), description="RapidAPI Key")
@@ -91,11 +91,15 @@ class Settings(BaseSettings):
     
     def get_serpapi_key(self) -> str:
         """Get SerpAPI key as string."""
-        return self.serpapi_api_key.get_secret_value()
+        return self.serpapi_key.get_secret_value()
     
     def get_adzuna_key(self) -> str:
         """Get Adzuna API key as string."""
         return self.adzuna_api_key.get_secret_value()
+
+    def get_rapidapi_key(self) -> str:
+        """Get RapidAPI key as string (used for JSearch salary estimates)."""
+        return self.rapidapi_key.get_secret_value()
 
 
 @lru_cache
