@@ -16,7 +16,6 @@ services:
       # Mount NEW backend structure for hot reload
       - ./backend/src:/app/src
       - ./backend/prompts:/app/prompts
-      - ./backend/templates:/app/templates
       - ./backend/pyproject.toml:/app/pyproject.toml
       # Persist Marker model cache to avoid re-downloading
       - marker-cache:/home/huntzen/.cache
