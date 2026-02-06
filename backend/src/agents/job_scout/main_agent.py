@@ -21,6 +21,7 @@ from src.config.settings import settings
 from src.models.schemas import Job, JobSearchResponse, SearchMetadata
 from src.services.job_providers import (
     AdzunaProvider,
+    JSearchProvider,
     RemoteOKProvider,
     SerpAPIProvider,
     aggregate_jobs,
@@ -54,6 +55,7 @@ class JobScoutAgent(BaseAgent):
         self.providers = [
             AdzunaProvider(),
             SerpAPIProvider(),
+            JSearchProvider(),
             RemoteOKProvider(),
         ]
         

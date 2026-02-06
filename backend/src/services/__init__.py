@@ -9,6 +9,7 @@ from src.services.job_providers import (
     AdzunaProvider,
     SerpAPIProvider,
     RemoteOKProvider,
+    JSearchProvider,
     aggregate_jobs,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "AdzunaProvider",
     "SerpAPIProvider",
     "RemoteOKProvider",
+    "JSearchProvider",
     "aggregate_jobs",
 ]

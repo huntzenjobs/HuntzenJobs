@@ -146,9 +146,11 @@ def sort_jobs_by_relevance(
         # Source priority
         source_priority = {
             "google_jobs": 0.9,
-            "adzuna": 0.8,
+            "jsearch": 0.88,
             "linkedin": 0.85,
+            "adzuna": 0.8,
             "indeed": 0.8,
+            "glassdoor": 0.8,
             "remoteok": 0.7,
         }
         source_score = source_priority.get(job.get("source", ""), 0.5)
