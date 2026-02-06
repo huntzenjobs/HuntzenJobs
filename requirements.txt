@@ -1,0 +1,77 @@
+# ============================================
+# FastAPI & Server
+# ============================================
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.18
+
+# ============================================
+# LangGraph & LLMs
+# ============================================
+langgraph==0.2.60
+langchain==0.3.13
+langchain-groq==0.2.2
+langchain-core==0.3.28
+groq==0.13.1
+
+# ============================================
+# Database
+# ============================================
+supabase==2.10.0
+psycopg2-binary==2.9.10
+
+# ============================================
+# HTTP & APIs
+# ============================================
+requests==2.32.3
+httpx>=0.26,<0.28
+python-dotenv==1.0.1
+beautifulsoup4==4.12.3
+
+# ============================================
+# PDF Processing - IBM Docling pour extraction haute qualité
+# ============================================
+docling>=1.0.0
+# marker-pdf>=1.10.0  # Remplacé par Docling
+# transformers>=4.45.2,<5.0.0  # Plus nécessaire avec Docling
+
+# ============================================
+# Word Document Processing (DOCX/DOC)
+# ============================================
+python-docx==1.1.2
+
+# ============================================
+# Utilities & Validation
+# ============================================
+pydantic==2.10.4
+pydantic-settings==2.7.0
+jinja2==3.1.5
+tenacity>=8.2.3  # Retry logic pour agents
+cachetools>=5.3.2  # Caching pour lazy loading
+
+# ============================================
+# Security & Auth
+# ============================================
+python-jose[cryptography]==3.3.0
+PyJWT==2.10.1
+
+# ============================================
+# Rate Limiting & Logging (NEW)
+# ============================================
+slowapi==0.1.9
+structlog==24.4.0
+sentry-sdk[fastapi]==2.51.0
+
+# ============================================
+# Testing (dev dependencies)
+# ============================================
+pytest==8.3.4
+pytest-asyncio==0.24.0
+
+# ============================================
+# PostgreSQL & Redis (Connection Pooling)
+# ============================================
+psycopg-pool==3.3.0
+psycopg[binary]==3.3.2
+redis==7.1.0
+stripe>=11.0.0

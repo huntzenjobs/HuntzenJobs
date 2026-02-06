@@ -1,0 +1,24 @@
+# Development and testing dependencies for HuntZen
+# These extend the base requirements.txt
+
+# Include base requirements first
+-r requirements.txt
+
+# Additional testing tools (pytest and pytest-asyncio are already in requirements.txt)
+pytest-cov>=5.0.0
+pytest-mock>=3.12.0
+pytest-xdist>=3.5.0  # Parallel test execution
+
+# HTTP testing & mocking
+respx>=0.20.0  # Mock HTTP requests
+
+# Test data generation
+faker>=22.0.0
+freezegun>=1.4.0  # Time mocking for date-dependent tests
+
+# Code quality
+ruff>=0.1.0
+mypy>=1.8.0
+
+# Database testing (psycopg3 for connection pooling - Sprint 6)
+psycopg[binary,pool]>=3.1.0  # PostgreSQL adapter with connection pool support

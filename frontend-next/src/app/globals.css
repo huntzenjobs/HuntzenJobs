@@ -1,0 +1,764 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* =========================================
+   HUNTZEN DESIGN SYSTEM - CSS VARIABLES
+   ========================================= */
+
+@layer base {
+  :root {
+    /* HuntZen Brand Colors */
+    --huntzen-dark: #0f172a;
+    --huntzen-dark-light: #1e293b;
+    --huntzen-dark-overlay: rgba(15, 23, 42, 0.7);
+    --huntzen-blue: #2563eb;
+    --huntzen-blue-light: #3b82f6;
+    --huntzen-blue-dark: #1d4ed8;
+    --huntzen-turquoise: #00d4aa;
+    --huntzen-turquoise-dark: #00b894;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    --gradient-accent: linear-gradient(135deg, #2563eb 0%, #00d4aa 100%);
+    --gradient-dark: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+
+    /* Text Colors */
+    --text-white: #ffffff;
+    --text-light: rgba(255, 255, 255, 0.9);
+    --text-muted-light: rgba(255, 255, 255, 0.7);
+    --text-dark: #0f172a;
+    --text-gray: #64748b;
+
+    /* Background Colors */
+    --bg-white: #ffffff;
+    --bg-light: #f8fafc;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
+    --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.12);
+    --shadow-lg: 0 10px 40px rgba(15, 23, 42, 0.15);
+    --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.3);
+    --shadow-turquoise: 0 0 20px rgba(0, 212, 170, 0.3);
+
+    /* Animation Timing */
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Border Radius */
+    --radius: 0.625rem;
+
+    /* Sidebar */
+    --sidebar-width: 280px;
+    --sidebar-bg: #0a0f1a;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-text: rgba(255, 255, 255, 0.7);
+    --mobile-header-height: 56px;
+
+    /* Shadcn Theme Variables */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+
+  * {
+    @apply border-border;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(37, 99, 235, 0.2);
+    color: var(--huntzen-dark);
+  }
+}
+
+/* =========================================
+   KEYFRAME ANIMATIONS
+   ========================================= */
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-8px); }
+}
+
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* =========================================
+   CUSTOM UTILITY CLASSES
+   ========================================= */
+
+@layer utilities {
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .bg-gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .bg-gradient-dark {
+    background: var(--gradient-dark);
+  }
+
+  .bg-huntzen-dark {
+    background-color: var(--huntzen-dark);
+  }
+
+  .bg-huntzen-blue {
+    background-color: var(--huntzen-blue);
+  }
+
+  .bg-huntzen-turquoise {
+    background-color: var(--huntzen-turquoise);
+  }
+
+  .bg-sidebar {
+    background-color: var(--sidebar-bg);
+  }
+
+  .text-huntzen-blue {
+    color: var(--huntzen-blue);
+  }
+
+  .text-huntzen-turquoise {
+    color: var(--huntzen-turquoise);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .shadow-turquoise {
+    box-shadow: var(--shadow-turquoise);
+  }
+
+  .animate-slide-in {
+    animation: slideIn var(--duration-slow) var(--ease-out);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn var(--duration-normal) var(--ease-out);
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-gradient {
+    background-size: 200% auto;
+    animation: gradient 3s linear infinite;
+  }
+
+  .animate-bounce {
+    animation: bounce 2s ease-in-out infinite;
+  }
+}
+
+/* =========================================
+   SKELETON LOADING
+   ========================================= */
+
+@layer components {
+  .skeleton {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  .skeleton-card {
+    @apply bg-white rounded-xl p-6 mb-4;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .skeleton-line {
+    @apply skeleton h-4 mb-3;
+  }
+
+  .skeleton-line.title {
+    @apply w-3/4;
+    height: 1.25rem;
+  }
+
+  .skeleton-line.subtitle {
+    @apply w-1/2;
+  }
+
+  .skeleton-line.short {
+    @apply w-1/3;
+  }
+}
+
+/* =========================================
+   SOURCE BADGES (Job Sources)
+   ========================================= */
+
+@layer components {
+  .source-badge {
+    @apply inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .source-badge.adzuna {
+    @apply bg-amber-100 text-amber-800;
+  }
+
+  .source-badge.linkedin {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .source-badge.remoteok,
+  .source-badge.remote_ok {
+    @apply bg-emerald-100 text-emerald-800;
+  }
+
+  .source-badge.indeed {
+    @apply bg-pink-100 text-pink-800;
+  }
+
+  .source-badge.glassdoor {
+    @apply bg-sky-100 text-sky-800;
+  }
+
+  .source-badge.google_jobs {
+    @apply bg-red-100 text-red-800;
+  }
+}
+
+/* =========================================
+   BUTTONS - HuntZen Style
+   ========================================= */
+
+@layer components {
+  .btn-primary-huntzen {
+    @apply inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-semibold text-white transition-all;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-primary-huntzen:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.5);
+  }
+
+  .btn-primary-huntzen:active {
+    transform: translateY(-1px) scale(0.98);
+  }
+
+  .btn-search {
+    @apply inline-flex items-center justify-center gap-2 px-7 py-3 rounded-lg font-semibold text-white transition-all cursor-pointer border-none;
+    background: var(--gradient-primary);
+    min-width: 200px;
+  }
+
+  .btn-search:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+  }
+
+  .btn-search:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .btn-search:disabled {
+    @apply opacity-60 cursor-not-allowed;
+    transform: none;
+  }
+
+  .btn-interconnect {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all cursor-pointer;
+    border: 2px solid var(--huntzen-turquoise);
+    color: var(--huntzen-turquoise);
+    background: transparent;
+  }
+
+  .btn-interconnect:hover {
+    background: var(--huntzen-turquoise);
+    color: var(--huntzen-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+  }
+}
+
+/* =========================================
+   FORM CONTROLS
+   ========================================= */
+
+@layer components {
+  .form-control-huntzen {
+    @apply w-full px-4 py-3 rounded-lg text-sm transition-all;
+    border: 2px solid #e2e8f0;
+    background: var(--bg-light);
+  }
+
+  .form-control-huntzen:hover {
+    border-color: #cbd5e1;
+  }
+
+  .form-control-huntzen:focus {
+    border-color: var(--huntzen-blue);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    background: var(--bg-white);
+    outline: none;
+  }
+}
+
+/* =========================================
+   RESULT CARDS
+   ========================================= */
+
+@layer components {
+  .result-card {
+    @apply bg-white rounded-xl p-5 mb-4 transition-all relative overflow-hidden;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--huntzen-blue);
+    animation: cardReveal var(--duration-slow) var(--ease-out) forwards;
+    opacity: 0;
+  }
+
+  .result-card:nth-child(1) { animation-delay: 0ms; }
+  .result-card:nth-child(2) { animation-delay: 60ms; }
+  .result-card:nth-child(3) { animation-delay: 120ms; }
+  .result-card:nth-child(4) { animation-delay: 180ms; }
+  .result-card:nth-child(5) { animation-delay: 240ms; }
+  .result-card:nth-child(6) { animation-delay: 300ms; }
+
+  .result-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-md);
+    border-left-color: var(--huntzen-turquoise);
+  }
+}
+
+/* =========================================
+   TOOL HEADER
+   ========================================= */
+
+@layer components {
+  .tool-header {
+    @apply py-10;
+    background: var(--huntzen-dark);
+  }
+
+  .tool-header h1 {
+    @apply text-white text-2xl font-bold flex items-center gap-3;
+  }
+
+  .tool-header h1 svg {
+    color: var(--huntzen-blue);
+  }
+
+  .tool-header p {
+    @apply text-sm mt-2;
+    color: var(--text-muted-light);
+  }
+}
+
+/* =========================================
+   EMPTY STATE
+   ========================================= */
+
+@layer components {
+  .empty-state {
+    @apply text-center py-16 px-5;
+  }
+
+  .empty-state-icon {
+    @apply w-20 h-20 mx-auto mb-5 rounded-full flex items-center justify-center;
+    background: var(--bg-light);
+  }
+
+  .empty-state-icon svg {
+    @apply w-8 h-8;
+    color: var(--text-gray);
+  }
+
+  .empty-state h4 {
+    @apply text-lg font-semibold mb-2;
+    color: var(--text-dark);
+  }
+
+  .empty-state p {
+    @apply text-sm max-w-xs mx-auto;
+    color: var(--text-gray);
+  }
+}
+
+/* =========================================
+   TYPING INDICATOR
+   ========================================= */
+
+@layer components {
+  .typing-indicator {
+    @apply flex items-center gap-1.5 px-4 py-3 rounded-xl w-fit;
+    background: var(--bg-white);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .typing-indicator span {
+    @apply w-2 h-2 rounded-full;
+    background: #94a3b8;
+    animation: typingBounce 1.4s ease infinite;
+  }
+
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+}
+
+/* =========================================
+   CHAT BUBBLES
+   ========================================= */
+
+@layer components {
+  .chat-bubble {
+    @apply px-4 py-3 rounded-2xl text-sm leading-relaxed;
+    max-width: 75%;
+  }
+
+  .chat-bubble.user {
+    @apply ml-auto;
+    background: var(--huntzen-blue);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .chat-bubble.bot {
+    @apply mr-auto;
+    background: var(--bg-white);
+    color: var(--text-dark);
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+/* =========================================
+   SCORE RING (CV Analysis)
+   ========================================= */
+
+@layer components {
+  .score-ring {
+    @apply relative w-32 h-32 mx-auto;
+  }
+
+  .score-ring svg {
+    @apply w-full h-full;
+    transform: rotate(-90deg);
+  }
+
+  .score-ring circle {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+
+  .score-ring .bg-circle {
+    stroke: #e2e8f0;
+  }
+
+  .score-ring .progress-circle {
+    stroke: var(--huntzen-blue);
+    transition: stroke-dashoffset 1s var(--ease-out);
+  }
+
+  .score-ring .score-text {
+    @apply absolute inset-0 flex items-center justify-center text-3xl font-bold;
+    color: var(--huntzen-blue);
+  }
+}
+
+/* =========================================
+   INFO BANNER
+   ========================================= */
+
+@layer components {
+  .info-banner {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sm;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(0, 212, 170, 0.08));
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    color: var(--text-dark);
+  }
+
+  .info-banner svg {
+    @apply flex-shrink-0;
+    color: var(--huntzen-blue);
+  }
+}
+
+/* =========================================
+   QUICK QUESTIONS (Coach)
+   ========================================= */
+
+@layer components {
+  .quick-question-btn {
+    @apply w-full text-left px-4 py-3 rounded-lg text-sm transition-all;
+    background: var(--bg-light);
+    border: 1px solid transparent;
+  }
+
+  .quick-question-btn:hover {
+    background: var(--bg-white);
+    border-color: var(--huntzen-blue);
+    color: var(--huntzen-blue);
+  }
+}
+
+/* =========================================
+   STEP INDICATOR (CV Analysis Wizard)
+   ========================================= */
+
+@layer components {
+  .step-indicator {
+    @apply flex items-center justify-center gap-4 mb-8;
+  }
+
+  .step {
+    @apply flex items-center gap-2;
+  }
+
+  .step-number {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all;
+    background: #e2e8f0;
+    color: var(--text-gray);
+  }
+
+  .step.active .step-number {
+    background: var(--huntzen-blue);
+    color: white;
+  }
+
+  .step.completed .step-number {
+    background: var(--huntzen-turquoise);
+    color: white;
+  }
+
+  .step-label {
+    @apply text-sm font-medium hidden sm:block;
+    color: var(--text-gray);
+  }
+
+  .step.active .step-label {
+    color: var(--huntzen-blue);
+  }
+
+  .step-connector {
+    @apply w-12 h-0.5;
+    background: #e2e8f0;
+  }
+
+  .step-connector.completed {
+    background: var(--huntzen-turquoise);
+  }
+}
+
+/* =========================================
+   UPLOAD ZONE (CV Analysis)
+   ========================================= */
+
+@layer components {
+  .upload-zone {
+    @apply border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer;
+    border-color: #e2e8f0;
+  }
+
+  .upload-zone:hover {
+    border-color: var(--huntzen-blue);
+    background: rgba(37, 99, 235, 0.02);
+  }
+
+  .upload-zone.dragging {
+    border-color: var(--huntzen-blue);
+    background: rgba(37, 99, 235, 0.05);
+  }
+
+  .upload-zone.has-file {
+    border-color: var(--huntzen-turquoise);
+    border-style: solid;
+    background: rgba(0, 212, 170, 0.05);
+  }
+}
+
+/* =========================================
+   SCROLLBAR STYLING
+   ========================================= */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* =========================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================= */
+
+@media (max-width: 768px) {
+  .tool-header {
+    @apply py-8;
+  }
+
+  .tool-header h1 {
+    @apply text-xl;
+  }
+
+  .btn-search {
+    @apply w-full;
+    min-width: auto;
+  }
+
+  .btn-interconnect {
+    @apply w-full justify-center;
+  }
+
+  .result-card {
+    animation-delay: 0ms !important;
+  }
+}
+
+/* =========================================
+   PRINT STYLES
+   ========================================= */
+
+@media print {
+  .sidebar,
+  .mobile-header,
+  .toast-container {
+    display: none !important;
+  }
+}
+
+/* =========================================
+   REDUCED MOTION
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

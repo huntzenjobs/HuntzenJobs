@@ -1,0 +1,26 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+
+# AI / LLM
+langchain
+langchain-groq
+langchain-core
+
+# PDF Processing
+docling
+
+# HTTP Clients
+httpx
+aiohttp
+
+# Configuration
+pydantic
+pydantic-settings
+python-dotenv
+
+# Utilities
+tenacity
+cachetools
