@@ -46,7 +46,6 @@ class Settings(BaseSettings):
     # API Keys - LLM Providers
     # --------------------------------------------------------------------------
     groq_api_key: SecretStr = Field(default=SecretStr(""), description="Groq API Key")
-    openai_api_key: SecretStr = Field(default=SecretStr(""), description="OpenAI API Key (optional)")
     
     # --------------------------------------------------------------------------
     # API Keys - Job Providers
@@ -55,22 +54,13 @@ class Settings(BaseSettings):
     adzuna_app_id: str = Field(default="", description="Adzuna App ID")
     adzuna_api_key: SecretStr = Field(default=SecretStr(""), description="Adzuna API Key")
     rapidapi_key: SecretStr = Field(default=SecretStr(""), description="RapidAPI Key")
-    hunter_api_key: SecretStr = Field(default=SecretStr(""), description="Hunter.io API Key")
-    
-    # --------------------------------------------------------------------------
-    # PDF Generation
-    # --------------------------------------------------------------------------
-    dynamic_pdf_api: SecretStr = Field(default=SecretStr(""), description="DynamicPDF API Key")
-    pdf_provider: Literal["weasyprint", "dynamicpdf"] = Field(
-        default="dynamicpdf", description="PDF generation provider"
-    )
-    
+
     # --------------------------------------------------------------------------
     # Database (Optional - Supabase)
     # --------------------------------------------------------------------------
     supabase_url: str = Field(default="", description="Supabase Project URL")
     supabase_key: SecretStr = Field(default=SecretStr(""), description="Supabase Anon Key")
-    
+
     # --------------------------------------------------------------------------
     # Agent Configuration
     # --------------------------------------------------------------------------
@@ -106,10 +96,6 @@ class Settings(BaseSettings):
     def get_adzuna_key(self) -> str:
         """Get Adzuna API key as string."""
         return self.adzuna_api_key.get_secret_value()
-    
-    def get_dynamic_pdf_key(self) -> str:
-        """Get DynamicPDF API key as string."""
-        return self.dynamic_pdf_api.get_secret_value()
 
 
 @lru_cache

@@ -5,7 +5,6 @@ Endpoints for AI career coaching.
 """
 
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
 

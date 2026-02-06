@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form, status
 from typing import Optional
 
 from src.api.deps import CVAgentDep
-from src.models.schemas import CVAnalysisRequest, CVAnalysisResponse, ATSScore
+from src.models.schemas import CVAnalysisRequest, CVAnalysisResponse
 
 router = APIRouter()
 
