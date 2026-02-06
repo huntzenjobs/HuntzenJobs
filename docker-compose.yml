@@ -7,20 +7,17 @@ services:
   # FastAPI Backend
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: huntzen-backend
     ports:
       - "8000:8000"
     volumes:
-      # Mount source code for hot reload (dev mode)
-      - ./main.py:/app/main.py
-      - ./modal_app.py:/app/modal_app.py
-      - ./app:/app/app
-      - ./src:/app/src
-      - ./job_finder:/app/job_finder
-      - ./prompts:/app/prompts
-      - ./templates:/app/templates
+      # Mount NEW backend structure for hot reload
+      - ./backend/src:/app/src
+      - ./backend/prompts:/app/prompts
+      - ./backend/templates:/app/templates
+      - ./backend/pyproject.toml:/app/pyproject.toml
       # Persist Marker model cache to avoid re-downloading
       - marker-cache:/home/huntzen/.cache
     env_file:
@@ -32,7 +29,7 @@ services:
       # Marker PDF configuration - use home directory for fonts/static
       - MARKER_DATA_DIR=/home/huntzen/.cache/marker
       - HF_HOME=/home/huntzen/.cache/huggingface
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --timeout-keep-alive 300 --timeout-graceful-shutdown 60 --reload
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 1 --timeout-keep-alive 300 --timeout-graceful-shutdown 60 --reload
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
