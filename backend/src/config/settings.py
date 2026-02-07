@@ -105,8 +105,14 @@ class Settings(BaseSettings):
     # --------------------------------------------------------------------------
     # Redis Cache (Upstash)
     # --------------------------------------------------------------------------
-    redis_url: str = Field(default="", description="Upstash Redis URL")
-    redis_token: SecretStr = Field(default=SecretStr(""), description="Upstash Redis Token")
+    # For upstash-redis library (cache.py) - REST API format
+    redis_url: str = Field(default="", description="Upstash Redis REST URL (https://...)")
+    redis_token: SecretStr = Field(default=SecretStr(""), description="Upstash Redis REST Token")
+
+    # For SlowAPI rate limiting (middleware.py) - Standard Redis protocol
+    # Format: redis://default:PASSWORD@host:6379
+    redis_limiter_url: str = Field(default="", description="Redis URL for rate limiting (redis://...)")
+
     cache_enabled: bool = Field(default=True, description="Enable distributed caching")
     cache_default_ttl: int = Field(default=300, ge=60, le=3600, description="Default cache TTL (seconds)")
 

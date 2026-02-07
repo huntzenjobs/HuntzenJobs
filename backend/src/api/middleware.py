@@ -29,23 +29,33 @@ def get_limiter() -> Limiter:
     Returns:
         Limiter instance configured with Redis or in-memory fallback
     """
-    redis = get_redis()
-
-    if redis and settings.redis_url:
-        # Use Redis for distributed rate limiting (recommended for production)
-        return Limiter(
-            key_func=get_remote_address,
-            storage_uri=settings.redis_url,
-            storage_options={"token": settings.get_redis_token()},
-            default_limits=["100/minute"],
-        )
+    # Use standard Redis URL (redis://...) for SlowAPI
+    # SlowAPI expects Redis protocol URL with embedded auth, not Upstash REST URL
+    if settings.redis_limiter_url and settings.redis_limiter_url.startswith("redis://"):
+        try:
+            # Extract host for logging (hide password)
+            redis_host = settings.redis_limiter_url.split('@')[1] if '@' in settings.redis_limiter_url else "configured"
+            logger.info(f"✅ Initializing distributed rate limiting with Redis: {redis_host}")
+            return Limiter(
+                key_func=get_remote_address,
+                storage_uri=settings.redis_limiter_url,  # Must be redis:// format with auth embedded
+                default_limits=["100/minute"],
+            )
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize Redis rate limiting: {e}")
+            logger.warning("⚠️ Falling back to in-memory rate limiting")
     else:
         # Fallback to in-memory rate limiting (not recommended for production)
+        if settings.redis_limiter_url:
+            logger.warning(f"⚠️ Invalid Redis URL format (must start with redis://): {settings.redis_limiter_url[:30]}...")
+        else:
+            logger.warning("⚠️ No REDIS_LIMITER_URL configured")
         logger.warning("⚠️ Using in-memory rate limiting (not distributed)")
-        return Limiter(
-            key_func=get_remote_address,
-            default_limits=["100/minute"],
-        )
+
+    return Limiter(
+        key_func=get_remote_address,
+        default_limits=["100/minute"],
+    )
 
 
 # Global limiter instance
