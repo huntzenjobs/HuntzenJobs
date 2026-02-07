@@ -64,6 +64,7 @@ dependencies = [
 
     # Cache (Redis)
     "upstash-redis>=0.15.0",
+    "redis>=5.0.0",  # Redis client for SlowAPI backend (REQUIRED!)
 
     # Rate Limiting
     "slowapi>=0.1.9",
