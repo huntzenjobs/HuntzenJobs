@@ -4,14 +4,16 @@ API Dependencies
 Dependency injection for FastAPI routes.
 """
 
-from typing import Annotated, Generator
+from typing import Annotated, Generator, Optional
 
 from fastapi import Depends, Header, HTTPException, status
+from supabase import create_client, Client
 
 from src.agents.coach import CareerCoachAgent
-from src.agents.cv_analyzer import CVAnalyzerAgent
-from src.agents.cv_adapter import CVAdapterAgent
-from src.agents.job_scout import JobScoutAgent
+from src.agents.job_scout.conversational_agent import JobScoutConversationalAgent
+from src.agents.cv_analyzer.conversational_agent import CVAnalyzerConversationalAgent
+from src.agents.cv_adapter.conversational_agent import CVAdapterConversationalAgent
+from src.agents.interview_sim.conversational_agent import InterviewSimAgent
 from src.config.settings import Settings, get_settings
 
 
@@ -57,9 +59,10 @@ def clear_session(session_id: str) -> None:
 
 # Agent singletons
 _coach_agent: CareerCoachAgent | None = None
-_scout_agent: JobScoutAgent | None = None
-_cv_agent: CVAnalyzerAgent | None = None
-_cv_adapter_agent: CVAdapterAgent | None = None
+_scout_agent: JobScoutConversationalAgent | None = None
+_cv_agent: CVAnalyzerConversationalAgent | None = None
+_cv_adapter_agent: CVAdapterConversationalAgent | None = None
+_interview_sim_agent: InterviewSimAgent | None = None
 
 
 def get_coach_agent() -> CareerCoachAgent:
@@ -70,31 +73,98 @@ def get_coach_agent() -> CareerCoachAgent:
     return _coach_agent
 
 
-def get_scout_agent() -> JobScoutAgent:
-    """Get JobScout agent singleton."""
+def get_scout_agent() -> JobScoutConversationalAgent:
+    """Get JobScout conversational agent singleton."""
     global _scout_agent
     if _scout_agent is None:
-        _scout_agent = JobScoutAgent()
+        _scout_agent = JobScoutConversationalAgent()
     return _scout_agent
 
 
-def get_cv_agent() -> CVAnalyzerAgent:
-    """Get CVAnalyzer agent singleton."""
+def get_cv_agent() -> CVAnalyzerConversationalAgent:
+    """Get CVAnalyzer conversational agent singleton."""
     global _cv_agent
     if _cv_agent is None:
-        _cv_agent = CVAnalyzerAgent()
+        _cv_agent = CVAnalyzerConversationalAgent()
     return _cv_agent
 
 
-def get_cv_adapter_agent() -> CVAdapterAgent:
-    """Get CV Adapter agent singleton."""
+def get_cv_adapter_agent() -> CVAdapterConversationalAgent:
+    """Get CV Adapter conversational agent singleton."""
     global _cv_adapter_agent
     if _cv_adapter_agent is None:
-        _cv_adapter_agent = CVAdapterAgent()
+        _cv_adapter_agent = CVAdapterConversationalAgent()
     return _cv_adapter_agent
 
 
+def get_interview_sim_agent() -> InterviewSimAgent:
+    """Get Interview Simulation agent singleton."""
+    global _interview_sim_agent
+    if _interview_sim_agent is None:
+        _interview_sim_agent = InterviewSimAgent()
+    return _interview_sim_agent
+
+
 CoachAgentDep = Annotated[CareerCoachAgent, Depends(get_coach_agent)]
-ScoutAgentDep = Annotated[JobScoutAgent, Depends(get_scout_agent)]
-CVAgentDep = Annotated[CVAnalyzerAgent, Depends(get_cv_agent)]
-CVAdapterAgentDep = Annotated[CVAdapterAgent, Depends(get_cv_adapter_agent)]
+ScoutAgentDep = Annotated[JobScoutConversationalAgent, Depends(get_scout_agent)]
+CVAgentDep = Annotated[CVAnalyzerConversationalAgent, Depends(get_cv_agent)]
+CVAdapterAgentDep = Annotated[CVAdapterConversationalAgent, Depends(get_cv_adapter_agent)]
+InterviewSimAgentDep = Annotated[InterviewSimAgent, Depends(get_interview_sim_agent)]
+
+
+# Supabase Client
+_supabase_client: Client | None = None
+
+
+def get_supabase_client() -> Client:
+    """
+    Get Supabase client singleton with service role key.
+
+    Uses service role key for full database and storage access.
+
+    Returns:
+        Supabase client instance
+    """
+    global _supabase_client
+    if _supabase_client is None:
+        settings = get_settings()
+        _supabase_client = create_client(
+            settings.supabase_url,
+            settings.get_supabase_service_role_key()
+        )
+    return _supabase_client
+
+
+def get_user_id_from_token(authorization: Optional[str]) -> Optional[str]:
+    """
+    Extract user ID from Authorization Bearer token.
+
+    Args:
+        authorization: Authorization header value (Bearer token)
+
+    Returns:
+        User ID if authenticated, None otherwise
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+
+    token = authorization.replace("Bearer ", "")
+
+    try:
+        settings = get_settings()
+        # Use anon key for token verification
+        supabase_anon = create_client(
+            settings.supabase_url,
+            settings.get_supabase_key()
+        )
+        response = supabase_anon.auth.get_user(token)
+        if response and response.user:
+            return response.user.id
+    except Exception as e:
+        # Log error but don't raise (graceful degradation)
+        print(f"⚠️ Error extracting user ID from token: {e}")
+
+    return None
+
+
+SupabaseClientDep = Annotated[Client, Depends(get_supabase_client)]
