@@ -1,0 +1,124 @@
+"""
+Job Scout Conversational Agent
+================================
+Expert conversationnel en recherche d'emploi.
+
+Cet agent guide l'utilisateur dans sa recherche d'emploi avec:
+- Stratégies de recherche personnalisées
+- Analyse du marché de l'emploi
+- Conseils sur les meilleures plateformes
+- Techniques de networking
+"""
+
+from typing import Any, Optional
+from langchain_groq import ChatGroq
+from langchain.schema import HumanMessage, SystemMessage, AIMessage
+
+from src.agents.base import BaseAgent, AgentConfig
+from src.config.settings import settings
+
+
+class JobScoutConversationalAgent(BaseAgent):
+    """
+    Agent conversationnel expert en recherche d'emploi.
+
+    Fournit des conseils personnalisés, des stratégies de recherche,
+    et une expertise sur le marché de l'emploi.
+    """
+
+    def __init__(self):
+        config = AgentConfig(
+            name="JobScoutConversational",
+            description="Expert conversationnel en recherche d'emploi et stratégies de carrière",
+            model=settings.llm_model_powerful,  # Use powerful model for expert advice
+            temperature=0.7,  # More creative for personalized advice
+            max_tokens=2048,
+        )
+        super().__init__(config)
+
+        self.system_prompt = """Tu es un Expert en Recherche d'Emploi certifié avec 15 ans d'expérience.
+
+🎯 TON RÔLE:
+Tu guides les chercheurs d'emploi avec des stratégies personnalisées et des conseils pratiques.
+
+💡 TES EXPERTISES:
+- Stratégies de recherche d'emploi sur mesure
+- Analyse du marché de l'emploi et des tendances
+- Optimisation de profils LinkedIn et réseaux professionnels
+- Techniques de networking efficaces
+- Identification des opportunités cachées
+- Préparation aux processus de recrutement
+
+✅ TON APPROCHE:
+1. Écoute active pour comprendre les objectifs et contraintes
+2. Questions ciblées pour affiner la stratégie
+3. Conseils actionnables et personnalisés
+4. Exemples concrets et success stories
+5. Plan d'action étape par étape
+
+🎨 TON STYLE:
+- Encourageant et motivant
+- Pragmatique et orienté résultats
+- Humain et empathique
+- Professionnel mais accessible
+
+⚠️ IMPORTANT:
+- Pose des questions pour mieux comprendre le contexte
+- Adapte tes conseils au profil de l'utilisateur
+- Propose des actions concrètes et mesurables
+- Reste positif et constructif
+- Réponds TOUJOURS en français (sauf si demandé autrement)
+"""
+
+    async def run(
+        self,
+        message: str,
+        history: Optional[list[dict]] = None,
+        language: str = "fr",
+    ) -> dict[str, Any]:
+        """
+        Execute conversational job search guidance.
+
+        Args:
+            message: User's message
+            history: Conversation history
+            language: Response language (fr/en)
+
+        Returns:
+            Dictionary with response and metadata
+        """
+        try:
+            # Build messages for LLM
+            messages = [SystemMessage(content=self.system_prompt)]
+
+            # Add conversation history
+            if history:
+                for msg in history[-6:]:  # Keep last 6 messages for context
+                    if msg["role"] == "user":
+                        messages.append(HumanMessage(content=msg["content"]))
+                    elif msg["role"] == "assistant":
+                        messages.append(AIMessage(content=msg["content"]))
+
+            # Add current message
+            messages.append(HumanMessage(content=message))
+
+            # Generate response
+            response = await self.llm.ainvoke(messages)
+
+            return {
+                "success": True,
+                "response": response.content,
+                "language": language,
+                "metadata": {
+                    "agent": "job-scout-conversational",
+                    "model": self.config.model,
+                }
+            }
+
+        except Exception as e:
+            self.logger.error(f"Error in conversational job scout: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "response": "Désolé, une erreur est survenue. Pouvez-vous reformuler votre question ?"
+            }
