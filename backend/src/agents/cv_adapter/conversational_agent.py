@@ -12,7 +12,7 @@ Cet agent aide l'utilisateur à personnaliser son CV avec:
 
 from typing import Any, Optional
 from langchain_groq import ChatGroq
-from langchain.schema import HumanMessage, SystemMessage, AIMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from src.agents.base import BaseAgent, AgentConfig
 from src.config.settings import settings
