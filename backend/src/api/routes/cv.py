@@ -18,8 +18,8 @@ router = APIRouter()
 @router.post("/analyze", response_model=CVAnalysisResponse)
 @limiter.limit("5/minute")  # Rate limit: 5 analyses per minute per IP
 async def analyze_cv(
-    req: Request,  # Required for rate limiting
-    request: CVAnalysisRequest,
+    request: Request,  # Required for rate limiting
+    data: CVAnalysisRequest,
     agent: CVAgentDep,
 ):
     """
@@ -32,9 +32,9 @@ async def analyze_cv(
     - Job matching (if job description provided)
     """
     result = await agent.run(
-        cv_text=request.cv_text,
-        job_description=request.job_description,
-        language=request.language,
+        cv_text=data.cv_text,
+        job_description=data.job_description,
+        language=data.language,
     )
     
     if not result.get("success"):
@@ -76,7 +76,7 @@ async def analyze_cv(
 @router.post("/upload")
 @limiter.limit("5/minute")  # Rate limit: 5 uploads per minute per IP
 async def analyze_cv_file(
-    req: Request,  # Required for rate limiting
+    request: Request,  # Required for rate limiting
     agent: CVAgentDep,
     supabase: SupabaseClientDep,
     file: UploadFile = File(..., description="CV file (PDF or DOCX)"),

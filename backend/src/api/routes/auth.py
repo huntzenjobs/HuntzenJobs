@@ -56,7 +56,7 @@ def get_user_from_token(authorization: Optional[str]) -> Optional[dict]:
 
 @router.get("/api/auth/me")
 @limiter.limit("20/minute")  # Rate limit: 20 requests per minute per IP
-async def get_current_user(req: Request, authorization: Optional[str] = Header(None)):
+async def get_current_user(request: Request, authorization: Optional[str] = Header(None)):
     """
     Get current authenticated user information.
 

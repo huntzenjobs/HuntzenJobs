@@ -16,8 +16,8 @@ router = APIRouter()
 @router.post("/search", response_model=JobSearchResponse)
 @limiter.limit("10/minute")  # Rate limit: 10 searches per minute per IP
 async def search_jobs(
-    req: Request,  # Required for rate limiting
-    request: JobSearchRequest,
+    request: Request,  # Required for rate limiting
+    data: JobSearchRequest,
     agent: ScoutAgentDep,
 ):
     """
@@ -30,8 +30,8 @@ async def search_jobs(
     - Provide market insights
     """
     result = await agent.run(
-        job_title=request.job_title,
-        country_code=request.country_code,
+        job_title=data.job_title,
+        country_code=data.country_code,
         city=request.city,
         contract_type=request.contract_type,
         max_results=request.max_results,
@@ -69,7 +69,7 @@ async def search_jobs(
         success=True,
         jobs=jobs,
         metadata=SearchMetadata(
-            original_query=metadata.get("original_query", request.job_title),
+            original_query=metadata.get("original_query", data.job_title),
             refined_query=metadata.get("refined_query"),
             total_raw=metadata.get("total_raw", 0),
             total_deduplicated=metadata.get("total_deduplicated", len(jobs)),

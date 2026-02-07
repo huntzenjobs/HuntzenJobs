@@ -23,24 +23,24 @@ router = APIRouter()
 @router.post("/chat", response_model=CoachResponse)
 @limiter.limit("30/minute")  # Rate limit: 30 messages per minute per IP
 async def coach_chat(
-    req: Request,  # Required for rate limiting
-    request: CoachRequest,
+    request: Request,  # Required for rate limiting
+    data: CoachRequest,
     agent: CoachAgentDep,
 ):
     """
     Chat with the Career Coach AI.
-    
+
     The coach provides personalized career advice, training recommendations,
     and guidance for professional development.
     """
     # Get conversation history
-    history = get_session_history(request.session_id)
-    
+    history = get_session_history(data.session_id)
+
     # Run agent
     result = await agent.run(
-        message=request.message,
+        message=data.message,
         history=history,
-        language=request.language,
+        language=data.language,
         deep_analysis=True,
     )
     

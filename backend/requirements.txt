@@ -1,6 +1,7 @@
 # Web Framework
 fastapi
 uvicorn[standard]
+gunicorn==25.0.2  # Production WSGI server with multi-worker support
 jinja2
 python-multipart
 
@@ -24,3 +25,8 @@ python-dotenv
 # Utilities
 tenacity
 cachetools
+
+# Rate Limiting & Cache (Phase 1)
+slowapi==0.1.9  # Rate limiting for FastAPI
+redis==5.0.1  # Redis client for SlowAPI backend
+upstash-redis==0.15.0  # Upstash Redis REST API client for cache
