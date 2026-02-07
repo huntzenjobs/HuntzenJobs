@@ -62,16 +62,21 @@ def get_limiter() -> Limiter:
     Returns:
         Limiter instance configured with Redis or in-memory fallback
     """
-    # Use standard Redis URL (redis://...) for SlowAPI
+    # Use standard Redis URL (redis:// or rediss://...) for SlowAPI
     # SlowAPI expects Redis protocol URL with embedded auth, not Upstash REST URL
-    if settings.redis_limiter_url and settings.redis_limiter_url.startswith("redis://"):
+    # rediss:// is for TLS/SSL connections (required by Upstash)
+    if settings.redis_limiter_url and (
+        settings.redis_limiter_url.startswith("redis://") or
+        settings.redis_limiter_url.startswith("rediss://")
+    ):
         try:
             # Extract host for logging (hide password)
             redis_host = settings.redis_limiter_url.split('@')[1] if '@' in settings.redis_limiter_url else "configured"
-            logger.info(f"✅ Initializing distributed rate limiting with Redis: {redis_host}")
+            protocol = "TLS" if settings.redis_limiter_url.startswith("rediss://") else "standard"
+            logger.info(f"✅ Initializing distributed rate limiting with Redis ({protocol}): {redis_host}")
             return Limiter(
                 key_func=get_remote_address,
-                storage_uri=settings.redis_limiter_url,  # Must be redis:// format with auth embedded
+                storage_uri=settings.redis_limiter_url,  # Must be redis:// or rediss:// format with auth embedded
                 default_limits=["100/minute"],
             )
         except Exception as e:
@@ -80,7 +85,7 @@ def get_limiter() -> Limiter:
     else:
         # Fallback to in-memory rate limiting (not recommended for production)
         if settings.redis_limiter_url:
-            logger.warning(f"⚠️ Invalid Redis URL format (must start with redis://): {settings.redis_limiter_url[:30]}...")
+            logger.warning(f"⚠️ Invalid Redis URL format (must start with redis:// or rediss://): {settings.redis_limiter_url[:30]}...")
         else:
             logger.warning("⚠️ No REDIS_LIMITER_URL configured")
         logger.warning("⚠️ Using in-memory rate limiting (not distributed)")
