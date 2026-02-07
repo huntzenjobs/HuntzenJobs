@@ -22,6 +22,39 @@ from src.utils.cache import get_redis
 logger = logging.getLogger(__name__)
 
 
+async def custom_rate_limit_handler(request: Request, exc: Exception) -> Response:
+    """
+    Custom exception handler for rate limiting errors.
+    Handles both RateLimitExceeded and ConnectionError gracefully.
+    """
+    # If it's a ConnectionError, Redis is down - disable rate limiting for this request
+    if isinstance(exc, ConnectionError):
+        logger.error(f"❌ Redis connection error during rate limiting: {exc}")
+        logger.warning("⚠️ Rate limiting bypassed due to Redis unavailability")
+        # Return a 503 Service Unavailable with a message
+        return Response(
+            content='{"error": "Rate limiting service temporarily unavailable"}',
+            status_code=503,
+            media_type="application/json"
+        )
+
+    # Standard rate limit exceeded
+    if isinstance(exc, RateLimitExceeded):
+        return Response(
+            content=f'{{"error": "Rate limit exceeded: {exc.detail}"}}',
+            status_code=429,
+            media_type="application/json"
+        )
+
+    # Unknown error
+    logger.error(f"❌ Unexpected error in rate limiting: {type(exc).__name__}: {exc}")
+    return Response(
+        content='{"error": "Rate limiting error"}',
+        status_code=500,
+        media_type="application/json"
+    )
+
+
 def get_limiter() -> Limiter:
     """
     Get rate limiter with Redis storage for distributed rate limiting.
@@ -94,9 +127,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 def setup_middleware(app: FastAPI) -> None:
     """Configure all middleware for the application."""
 
-    # Rate limiting
+    # Rate limiting with custom error handling
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, custom_rate_limit_handler)
+    app.add_exception_handler(ConnectionError, custom_rate_limit_handler)
     app.add_middleware(SlowAPIMiddleware)
 
     # CORS
