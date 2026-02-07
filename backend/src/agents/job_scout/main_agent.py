@@ -26,6 +26,7 @@ from src.services.job_providers import (
     SerpAPIProvider,
     aggregate_jobs,
 )
+from src.utils.cache import redis_cache
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,8 @@ class JobScoutAgent(BaseAgent):
         self.register_sub_agent(self.market_analyzer)
         
         logger.info(f"[{self.name}] Initialized 3 sub-agents + {len(self.providers)} providers")
-    
+
+    @redis_cache(ttl=300, prefix="jobs")  # Cache job searches for 5 minutes
     async def run(
         self,
         job_title: str,

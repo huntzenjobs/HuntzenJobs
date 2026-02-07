@@ -4,16 +4,19 @@ Job Search API Routes
 Endpoints for AI-powered job searching.
 """
 
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Request
 
 from src.api.deps import ScoutAgentDep
+from src.api.middleware import limiter
 from src.models.schemas import JobSearchRequest, JobSearchResponse, SearchMetadata, Job
 
 router = APIRouter()
 
 
 @router.post("/search", response_model=JobSearchResponse)
+@limiter.limit("10/minute")  # Rate limit: 10 searches per minute per IP
 async def search_jobs(
+    req: Request,  # Required for rate limiting
     request: JobSearchRequest,
     agent: ScoutAgentDep,
 ):

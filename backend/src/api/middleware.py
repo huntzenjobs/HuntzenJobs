@@ -11,10 +11,45 @@ from typing import Callable
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from src.config.settings import settings
+from src.utils.cache import get_redis
 
 logger = logging.getLogger(__name__)
+
+
+def get_limiter() -> Limiter:
+    """
+    Get rate limiter with Redis storage for distributed rate limiting.
+
+    Returns:
+        Limiter instance configured with Redis or in-memory fallback
+    """
+    redis = get_redis()
+
+    if redis and settings.redis_url:
+        # Use Redis for distributed rate limiting (recommended for production)
+        return Limiter(
+            key_func=get_remote_address,
+            storage_uri=settings.redis_url,
+            storage_options={"token": settings.get_redis_token()},
+            default_limits=["100/minute"],
+        )
+    else:
+        # Fallback to in-memory rate limiting (not recommended for production)
+        logger.warning("⚠️ Using in-memory rate limiting (not distributed)")
+        return Limiter(
+            key_func=get_remote_address,
+            default_limits=["100/minute"],
+        )
+
+
+# Global limiter instance
+limiter = get_limiter()
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -48,7 +83,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 def setup_middleware(app: FastAPI) -> None:
     """Configure all middleware for the application."""
-    
+
+    # Rate limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
+
     # CORS
     app.add_middleware(
         CORSMiddleware,
@@ -57,6 +97,6 @@ def setup_middleware(app: FastAPI) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Request logging
     app.add_middleware(RequestLoggingMiddleware)

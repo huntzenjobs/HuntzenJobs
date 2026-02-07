@@ -6,7 +6,7 @@ Endpoints for AI career coaching.
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 
 from src.api.deps import (
     CoachAgentDep,
@@ -14,13 +14,16 @@ from src.api.deps import (
     update_session_history,
     clear_session,
 )
+from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
 
 router = APIRouter()
 
 
 @router.post("/chat", response_model=CoachResponse)
+@limiter.limit("30/minute")  # Rate limit: 30 messages per minute per IP
 async def coach_chat(
+    req: Request,  # Required for rate limiting
     request: CoachRequest,
     agent: CoachAgentDep,
 ):

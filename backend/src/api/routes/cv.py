@@ -4,17 +4,20 @@ CV Analysis API Routes
 Endpoints for AI-powered CV analysis.
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, status, Request
 from typing import Optional
 
 from src.api.deps import CVAgentDep
+from src.api.middleware import limiter
 from src.models.schemas import CVAnalysisRequest, CVAnalysisResponse
 
 router = APIRouter()
 
 
 @router.post("/analyze", response_model=CVAnalysisResponse)
+@limiter.limit("5/minute")  # Rate limit: 5 analyses per minute per IP
 async def analyze_cv(
+    req: Request,  # Required for rate limiting
     request: CVAnalysisRequest,
     agent: CVAgentDep,
 ):
@@ -70,7 +73,9 @@ async def analyze_cv(
 
 
 @router.post("/upload")
+@limiter.limit("5/minute")  # Rate limit: 5 uploads per minute per IP
 async def analyze_cv_file(
+    req: Request,  # Required for rate limiting
     agent: CVAgentDep,
     file: UploadFile = File(..., description="CV file (PDF or DOCX)"),
     job_description: Optional[str] = Form(default=None),
