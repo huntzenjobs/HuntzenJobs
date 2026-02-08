@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Lock, Sparkles, TrendingUp, Target, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Lock, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
@@ -18,6 +18,8 @@ interface UnlockOverlayProps {
   ctaText?: string
   /** Redirect path after authentication */
   redirectPath?: string
+  /** Position mode: 'fullscreen' covers entire page, 'right-side' only covers right portion */
+  position?: 'fullscreen' | 'right-side'
 }
 
 export function UnlockOverlay({
@@ -26,7 +28,8 @@ export function UnlockOverlay({
   features,
   icon,
   ctaText = "Se connecter pour débloquer",
-  redirectPath = "/cv-analysis"
+  redirectPath = "/cv-analysis",
+  position = 'fullscreen'
 }: UnlockOverlayProps) {
   const router = useRouter()
 
@@ -35,8 +38,10 @@ export function UnlockOverlay({
     router.push(`${path}?redirect=${redirectPath}`)
   }
 
+  const isRightSide = position === 'right-side'
+
   return (
-    <div className="unlock-overlay">
+    <div className={`unlock-overlay ${isRightSide ? 'unlock-overlay-right' : ''}`}>
       {/* Backdrop with blur and gradient */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -44,10 +49,10 @@ export function UnlockOverlay({
         transition={{ duration: 0.5 }}
         className="unlock-backdrop"
       >
-        {/* Animated gradient orbs */}
-        <div className="unlock-orb unlock-orb-1" />
-        <div className="unlock-orb unlock-orb-2" />
-        <div className="unlock-orb unlock-orb-3" />
+        {/* Animated gradient orbs - adjusted for right-side mode */}
+        <div className={`unlock-orb unlock-orb-1 ${isRightSide ? 'unlock-orb-right' : ''}`} />
+        <div className={`unlock-orb unlock-orb-2 ${isRightSide ? 'unlock-orb-right' : ''}`} />
+        <div className={`unlock-orb unlock-orb-3 ${isRightSide ? 'unlock-orb-right' : ''}`} />
       </motion.div>
 
       {/* Main card with glassmorphism */}
@@ -196,6 +201,38 @@ export function UnlockOverlay({
           overflow: hidden;
         }
 
+        .unlock-overlay-right {
+          position: absolute;
+          inset: auto;
+          left: auto;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 100%;
+          max-width: 650px;
+          pointer-events: none;
+        }
+
+        .unlock-overlay-right .unlock-backdrop {
+          pointer-events: auto;
+          background: linear-gradient(
+            to left,
+            rgba(15, 23, 42, 0.95) 0%,
+            rgba(15, 23, 42, 0.85) 50%,
+            rgba(15, 23, 42, 0) 100%
+          );
+        }
+
+        .unlock-overlay-right .unlock-card {
+          pointer-events: auto;
+          max-width: 500px;
+          margin-right: 2rem;
+        }
+
+        .unlock-overlay-right .unlock-container {
+          padding-right: 2rem;
+        }
+
         .unlock-backdrop {
           position: absolute;
           inset: 0;
@@ -244,6 +281,25 @@ export function UnlockOverlay({
           left: 50%;
           transform: translate(-50%, -50%);
           animation-delay: -14s;
+        }
+
+        .unlock-orb-right.unlock-orb-1 {
+          top: 10%;
+          left: auto;
+          right: 10%;
+        }
+
+        .unlock-orb-right.unlock-orb-2 {
+          bottom: 10%;
+          left: auto;
+          right: -5%;
+        }
+
+        .unlock-orb-right.unlock-orb-3 {
+          top: 50%;
+          left: auto;
+          right: 20%;
+          transform: translate(0, -50%);
         }
 
         @keyframes float {
@@ -460,6 +516,28 @@ export function UnlockOverlay({
           padding: 0.625rem 1.25rem;
           width: fit-content;
           margin: 0 auto;
+        }
+
+        @media (max-width: 1024px) {
+          .unlock-overlay-right {
+            max-width: 100%;
+            position: fixed;
+            left: 0;
+          }
+
+          .unlock-overlay-right .unlock-backdrop {
+            background: linear-gradient(
+              135deg,
+              rgba(15, 23, 42, 0.92) 0%,
+              rgba(30, 41, 59, 0.88) 50%,
+              rgba(51, 65, 85, 0.85) 100%
+            );
+          }
+
+          .unlock-overlay-right .unlock-card {
+            margin-right: auto;
+            margin-left: auto;
+          }
         }
 
         @media (max-width: 640px) {

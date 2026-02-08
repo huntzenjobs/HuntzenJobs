@@ -69,13 +69,11 @@ export default function CVAnalysisPage() {
   // If no session, show overlay over the page content
   if (!session) {
     return (
-      <>
-        {/* Page content in background (with pointer-events-none to prevent interaction) */}
-        <div className="pointer-events-none select-none" style={{ filter: 'blur(2px)' }}>
-          {pageContent}
-        </div>
+      <div className="relative">
+        {/* Page content in background - fully visible and interactive */}
+        {pageContent}
 
-        {/* Unlock overlay */}
+        {/* Unlock overlay - positioned on right side only */}
         <UnlockOverlay
           title="Analyse CV Intelligente"
           description="Découvrez comment notre IA peut analyser votre CV en profondeur et vous donner des recommandations personnalisées pour maximiser vos chances d'obtenir un entretien."
@@ -88,8 +86,9 @@ export default function CVAnalysisPage() {
           ]}
           icon={<FileText className="w-12 h-12 text-blue-400" />}
           redirectPath="/cv-analysis"
+          position="right-side"
         />
-      </>
+      </div>
     )
   }
 
