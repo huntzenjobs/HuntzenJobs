@@ -19,7 +19,8 @@ import {
   Crown,
   LogIn,
   Calendar,
-  Activity
+  Activity,
+  Users
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
@@ -34,8 +35,9 @@ const navigation = [
   { name: 'Recherche d\'emplois', href: '/jobs', icon: Briefcase, premium: false },
   { name: 'Salons & Forums', href: '/salons', icon: Calendar, premium: false },
   { name: 'Analyse CV', href: '/cv-analysis', icon: FileText, premium: false },
-  { name: 'Coach IA Carriere', href: '/coach', icon: Bot, premium: false },
+  { name: 'Assistant', href: '/assistant', icon: Bot, premium: false },
   { name: 'Jobs sauvegardes', href: '/saved-jobs', icon: Bookmark, premium: true },
+  { name: 'Contact Recruteur', href: '/recruiter-contact', icon: Users, premium: false, badge: '50€' },
 ]
 
 interface SidebarProps {
@@ -97,7 +99,6 @@ export function Sidebar({ className }: SidebarProps) {
             HuntZen
           </span>
           <span className="w-2 h-2 rounded-full bg-huntzen-blue"></span>
-          <span className="text-sm font-medium text-white/60">IA</span>
         </Link>
         <button
           className="lg:hidden text-white/70 hover:text-white p-2"
@@ -146,6 +147,12 @@ export function Sidebar({ className }: SidebarProps) {
                   isActive ? 'text-huntzen-blue' : 'group-hover:text-huntzen-blue'
                 )} />
                 <span className="nav-label flex-1">{item.name}</span>
+                {/* Badge (ex: "50€" pour contact recruteur) */}
+                {'badge' in item && item.badge && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">
+                    {item.badge}
+                  </span>
+                )}
                 {isLocked && (
                   <Lock className="w-4 h-4 text-white/40" />
                 )}

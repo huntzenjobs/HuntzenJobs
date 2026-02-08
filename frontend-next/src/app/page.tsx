@@ -24,7 +24,7 @@ export default function HomePage() {
             <Link href="/cv-analysis" className="text-white text-sm hover:text-huntzen-blue transition-colors">
               Analyse CV
             </Link>
-            <Link href="/coach" className="text-white text-sm hover:text-huntzen-blue transition-colors">
+            <Link href="/assistant" className="text-white text-sm hover:text-huntzen-blue transition-colors">
               Coach IA
             </Link>
             <Link href="/pricing" className="text-white text-sm hover:text-huntzen-blue transition-colors">
@@ -173,7 +173,7 @@ export default function HomePage() {
               <h3 className="text-sm font-semibold text-gray-900 mb-3 min-h-[45px] flex items-center justify-center">
                 Simulation d&apos;entretien
               </h3>
-              <Link href="/coach" className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-huntzen-blue transition-colors">
+              <Link href="/assistant" className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-huntzen-blue transition-colors">
                 En savoir plus
                 <ChevronRight className="w-4 h-4" />
               </Link>

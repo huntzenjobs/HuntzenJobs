@@ -3,6 +3,8 @@
 import * as React from 'react'
 import { Sparkles, MessageSquare, Target, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAssistant } from '@/contexts/assistant-context'
+import { getAssistantConfig } from '@/config/assistants'
 
 /**
  * WelcomeScreen - Engaging empty state for Coach chat
@@ -56,12 +58,24 @@ const DEFAULT_QUESTIONS = [
 ]
 
 export function WelcomeScreen({
-  quickQuestions = DEFAULT_QUESTIONS,
+  quickQuestions,
   onQuestionClick,
   className,
 }: WelcomeScreenProps) {
+  // Get current assistant config
+  const { selectedAssistant } = useAssistant()
+  const assistantConfig = getAssistantConfig(selectedAssistant)
+
+  // Use assistant-specific questions if not provided
+  const questions = quickQuestions || assistantConfig.exampleQuestions.map((text, i) => ({
+    id: `q${i}`,
+    text,
+    category: 'career' as const, // Default category
+  }))
+
   return (
     <div
+      key={selectedAssistant} // Force re-render avec animation quand l'assistant change
       className={cn(
         'flex flex-col items-center justify-center',
         'h-full min-h-[500px] px-4 py-12',
@@ -69,44 +83,55 @@ export function WelcomeScreen({
         className
       )}
     >
-      {/* Animated Avatar */}
+      {/* Animated Avatar - Dynamique selon l'assistant */}
       <div className="relative mb-8">
-        {/* Main avatar */}
-        <div className="relative size-20 rounded-full bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-600 flex items-center justify-center shadow-2xl">
-          <Sparkles className="size-10 text-white animate-pulse" />
-          
+        {/* Main avatar avec couleur de l'assistant */}
+        <div
+          className="relative size-20 rounded-full flex items-center justify-center shadow-2xl"
+          style={{ backgroundColor: assistantConfig.color }}
+        >
+          <assistantConfig.icon className="size-10 text-white animate-pulse" />
+
           {/* Glow rings */}
-          <div 
-            className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping" 
-            style={{ animationDuration: '2s' }}
+          <div
+            className="absolute inset-0 rounded-full opacity-30 animate-ping"
+            style={{ backgroundColor: assistantConfig.color, animationDuration: '2s' }}
           />
-          <div 
-            className="absolute inset-0 rounded-full bg-purple-400/20 animate-ping" 
-            style={{ animationDuration: '3s', animationDelay: '0.5s' }}
+          <div
+            className="absolute inset-0 rounded-full opacity-20 animate-ping"
+            style={{ backgroundColor: assistantConfig.color, animationDuration: '3s', animationDelay: '0.5s' }}
           />
         </div>
 
         {/* Floating particles */}
-        <div className="absolute -top-2 -right-2 size-3 rounded-full bg-yellow-400 animate-bounce" 
+        <div className="absolute -top-2 -right-2 size-3 rounded-full bg-yellow-400 animate-bounce"
              style={{ animationDelay: '0ms', animationDuration: '2s' }} />
-        <div className="absolute -bottom-2 -left-2 size-2 rounded-full bg-blue-400 animate-bounce" 
+        <div className="absolute -bottom-2 -left-2 size-2 rounded-full bg-blue-400 animate-bounce"
              style={{ animationDelay: '400ms', animationDuration: '2s' }} />
-        <div className="absolute top-0 -left-4 size-2 rounded-full bg-pink-400 animate-bounce" 
+        <div className="absolute top-0 -left-4 size-2 rounded-full bg-pink-400 animate-bounce"
              style={{ animationDelay: '800ms', animationDuration: '2s' }} />
       </div>
 
-      {/* Welcome message */}
+      {/* Welcome message - Adapté à l'expert */}
       <div className="text-center mb-10 max-w-2xl">
         <h1 className="text-3xl font-bold text-gray-900 mb-3">
-          Bonjour ! Je suis votre Coach IA
+          Bonjour ! Je suis {assistantConfig.shortName}
         </h1>
+        {assistantConfig.certificationBadge && (
+          <div className="inline-block mb-3 px-3 py-1 rounded-full bg-green-500/10 text-green-700 text-sm font-medium">
+            ✓ {assistantConfig.certificationBadge}
+          </div>
+        )}
         <p className="text-lg text-gray-600 leading-relaxed">
-          Je suis là pour vous aider à{' '}
-          <span className="text-violet-600 font-semibold">
-            booster votre carrière
-          </span>
-          . Posez-moi n'importe quelle question sur votre recherche d'emploi,
-          votre CV, vos entretiens, ou votre développement professionnel.
+          {assistantConfig.description}
+          {assistantConfig.specialties && assistantConfig.specialties.length > 0 && (
+            <>
+              {' '}Je me spécialise dans :{' '}
+              <span className="font-semibold" style={{ color: assistantConfig.color }}>
+                {assistantConfig.specialties.join(', ')}
+              </span>
+            </>
+          )}
         </p>
       </div>
 
@@ -132,10 +157,10 @@ export function WelcomeScreen({
       {/* Quick start questions */}
       <div className="w-full max-w-3xl">
         <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide text-center mb-4">
-          Questions fréquentes pour commencer
+          Questions fréquentes pour {assistantConfig.shortName}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {quickQuestions.map((question) => (
+          {questions.map((question) => (
             <button
               key={question.id}
               onClick={() => onQuestionClick?.(question.text)}

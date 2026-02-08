@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Routes protegees (premium only) - rediriger vers login si non authentifie
-  // Note: /jobs, /cv-analysis, /coach sont maintenant accessibles sans compte (freemium)
+  // Note: /jobs, /cv-analysis, /assistant sont maintenant accessibles sans compte (freemium)
   const protectedRoutes = ['/dashboard', '/profile', '/saved-jobs']
   const isProtectedRoute = protectedRoutes.some(route =>
     request.nextUrl.pathname.startsWith(route)

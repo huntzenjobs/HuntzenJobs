@@ -1,0 +1,25 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "main": false,
+      "Production": true,
+      "Pre-production": true,
+      "test": true
+    }
+  },
+  "github": {
+    "silent": false,
+    "autoJobCancelation": true
+  },
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "regions": ["cdg1"],
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",
+    "NEXT_PUBLIC_SENTRY_DSN": "@sentry-dsn"
+  }
+}
