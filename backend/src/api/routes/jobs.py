@@ -129,7 +129,7 @@ async def get_market_insights(
 ):
     """
     Get job market insights for a role.
-    
+
     Provides demand level, salary ranges, required skills, and hot locations.
     """
     insights = await agent._get_market_insights(job_title, country)
@@ -139,3 +139,59 @@ async def get_market_insights(
         "country": country,
         "insights": insights,
     }
+
+
+@router.post("/description")
+async def get_job_description(request: Request):
+    """
+    Get full job description from a job URL.
+
+    Note: Currently returns empty description.
+    Full scraping implementation to be added in future sprint.
+    """
+    try:
+        body = await request.json()
+        url = body.get("url", "")
+        source = body.get("source", "")
+
+        # TODO: Implement actual scraping logic in future sprint
+        # For now, return empty to prevent 404 errors
+        return {
+            "success": True,
+            "description": "",
+            "message": "Full description scraping not yet implemented"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "description": "",
+            "error": str(e)
+        }
+
+
+@router.post("/track-view")
+async def track_job_view(request: Request):
+    """
+    Track job view for analytics and quota management.
+
+    Note: Currently a placeholder.
+    Full tracking implementation to be added in future sprint.
+    """
+    try:
+        body = await request.json()
+        job_id = body.get("job_id", "")
+
+        # TODO: Implement actual tracking logic (store in DB, check quotas, etc.)
+        # For now, return success to prevent frontend errors
+        return {
+            "success": True,
+            "tracked": True,
+            "remaining": 999,  # Placeholder - unlimited for now
+            "message": "View tracking not yet implemented"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "tracked": False,
+            "error": str(e)
+        }

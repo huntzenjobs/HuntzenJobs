@@ -388,7 +388,7 @@ class HuntzenApiClient {
   // Job Description
   async getJobDescription(url: string, source?: string): Promise<string> {
     const response = await this.fetch<{ success: boolean; description: string }>(
-      '/api/job/description',
+      '/api/jobs/description',
       {
         method: 'POST',
         body: JSON.stringify({ url, source: source || '' }),
