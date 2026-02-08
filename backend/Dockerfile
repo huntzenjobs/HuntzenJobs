@@ -79,12 +79,13 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Signal Handling: --graceful-timeout 30 allows workers to finish requests before shutdown
 CMD ["gunicorn", "src.main:app", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--workers", "4", \
+     "--workers", "2", \
      "--bind", "0.0.0.0:8000", \
      "--timeout", "120", \
      "--graceful-timeout", "30", \
      "--keep-alive", "5", \
      "--max-requests", "1000", \
      "--max-requests-jitter", "50", \
+     "--preload", \
      "--access-logfile", "-", \
      "--error-logfile", "-"]

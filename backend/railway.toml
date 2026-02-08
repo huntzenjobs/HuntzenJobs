@@ -12,8 +12,7 @@ restartPolicyMaxRetries = 3
 
 # Health check configuration
 healthcheckPath = "/health"
-healthcheckTimeout = 30
-startCommand = ""
+healthcheckTimeout = 120
 
 # Auto-scaling configuration
 [deploy.autoscaling]
