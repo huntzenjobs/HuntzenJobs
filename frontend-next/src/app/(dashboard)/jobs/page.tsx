@@ -317,15 +317,23 @@ export default function JobsPage() {
         )}
       </div>
 
-      {/* Search Form - V2 (Inline) or V1 (Vertical) */}
-      {featureFlags.useJobsV2 ? (
-        <SearchFormInline
-          onSearch={handleSearch}
-          isLoading={searchMutation.isPending}
-          disabled={false}
-        />
-      ) : (
-        <Card className="shadow-sm border-2 border-gray-200">
+      {/* Search Form - V2 (Inline) or V1 (Vertical) - Wrapped with ErrorBoundary */}
+      <ErrorBoundary fallback={
+        <Card className="p-6 bg-red-50 border-red-200">
+          <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
+          <p className="text-red-700 text-center">
+            Erreur lors du chargement du formulaire. Veuillez rafraîchir la page.
+          </p>
+        </Card>
+      }>
+        {featureFlags.useJobsV2 ? (
+          <SearchFormInline
+            onSearch={handleSearch}
+            isLoading={searchMutation.isPending}
+            disabled={false}
+          />
+        ) : (
+          <Card className="shadow-sm border-2 border-gray-200">
           <CardHeader className="pb-6 bg-white border-b-2 border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -390,23 +398,43 @@ export default function JobsPage() {
                     }
                   }}
                   onFocus={() => setShowCountrySuggestions(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setShowCountrySuggestions(false)
+                    }
+                  }}
                   autoComplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={showCountrySuggestions && filteredCountries.length > 0}
+                  aria-controls="country-suggestions"
+                  aria-activedescendant={selectedCountry ? `country-${selectedCountry}` : undefined}
                   required
                 />
                 {showCountrySuggestions && countrySearch && filteredCountries.length > 0 && (
                   <div
                     ref={countrySuggestionsRef}
+                    id="country-suggestions"
+                    role="listbox"
                     className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-[200px] overflow-y-auto pointer-events-auto"
                   >
                     {filteredCountries.map((country) => (
                       <button
                         key={country.code}
+                        id={`country-${country.code}`}
                         type="button"
+                        role="option"
+                        aria-selected={selectedCountry === country.code}
                         className={cn(
-                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors",
-                          selectedCountry === country.code && "bg-gray-100 font-medium"
+                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors",
+                          selectedCountry === country.code && "bg-blue-50 font-medium"
                         )}
                         onClick={() => handleCountrySelect(country)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleCountrySelect(country)
+                          }
+                        }}
                       >
                         {country.name}
                       </button>
@@ -447,23 +475,43 @@ export default function JobsPage() {
                     }
                   }}
                   onFocus={() => setShowCitySuggestions(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setShowCitySuggestions(false)
+                    }
+                  }}
                   disabled={!selectedCountry}
                   autoComplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={showCitySuggestions && filteredCities.length > 0}
+                  aria-controls="city-suggestions"
+                  aria-activedescendant={selectedCity ? `city-${selectedCity}` : undefined}
                 />
                 {showCitySuggestions && citySearch && filteredCities.length > 0 && (
                   <div
                     ref={citySuggestionsRef}
+                    id="city-suggestions"
+                    role="listbox"
                     className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-[200px] overflow-y-auto pointer-events-auto"
                   >
                     {filteredCities.map((city) => (
                       <button
                         key={city}
+                        id={`city-${city}`}
                         type="button"
+                        role="option"
+                        aria-selected={selectedCity === city}
                         className={cn(
-                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors",
-                          selectedCity === city && "bg-gray-100 font-medium"
+                          "w-full px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors",
+                          selectedCity === city && "bg-blue-50 font-medium"
                         )}
                         onClick={() => handleCitySelect(city)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleCitySelect(city)
+                          }
+                        }}
                       >
                         {city}
                       </button>
@@ -541,7 +589,8 @@ export default function JobsPage() {
           </form>
         </CardContent>
       </Card>
-      )}
+        )}
+      </ErrorBoundary>
 
       {/* Error */}
       {searchMutation.isError && searchMutation.error?.message !== 'Limite de recherches atteinte' && (
@@ -593,7 +642,18 @@ export default function JobsPage() {
       )}
 
       {!searchMutation.isPending && jobs.length > 0 && (
-        <div className="space-y-6">
+        <ErrorBoundary fallback={
+          <Card className="p-8 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Erreur lors de l'affichage des résultats
+            </h3>
+            <p className="text-gray-600">
+              Une erreur s'est produite. Veuillez réessayer.
+            </p>
+          </Card>
+        }>
+          <div className="space-y-6">
           <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-xl border border-green-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
@@ -654,7 +714,8 @@ export default function JobsPage() {
                         onClick={() => handleSaveJob(job)}
                         className={cn(
                           "relative p-2 rounded-full hover:bg-red-50 transition-all",
-                          savedJobIds.has(job.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                          savedJobIds.has(job.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                          (saveJobMutation.isPending || savedJobIds.has(job.id)) && "cursor-not-allowed opacity-50"
                         )}
                         title={
                           !hasFeature('has_favorites')
@@ -663,14 +724,19 @@ export default function JobsPage() {
                             ? 'Deja dans vos favoris'
                             : 'Sauvegarder cette offre'
                         }
+                        aria-label={savedJobIds.has(job.id) ? 'Déjà sauvegardé' : 'Sauvegarder'}
                         disabled={saveJobMutation.isPending || savedJobIds.has(job.id)}
                       >
-                        <Heart className={cn(
-                          "w-5 h-5 transition-colors",
-                          !hasFeature('has_favorites') && 'text-gray-300',
-                          hasFeature('has_favorites') && !savedJobIds.has(job.id) && 'text-gray-400 hover:text-red-500 hover:fill-red-500',
-                          hasFeature('has_favorites') && savedJobIds.has(job.id) && 'text-red-500 fill-red-500'
-                        )} />
+                        {saveJobMutation.isPending ? (
+                          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                        ) : (
+                          <Heart className={cn(
+                            "w-5 h-5 transition-colors",
+                            !hasFeature('has_favorites') && 'text-gray-300',
+                            hasFeature('has_favorites') && !savedJobIds.has(job.id) && 'text-gray-400 hover:text-red-500 hover:fill-red-500',
+                            hasFeature('has_favorites') && savedJobIds.has(job.id) && 'text-red-500 fill-red-500'
+                          )} />
+                        )}
                         {!hasFeature('has_favorites') && (
                           <Lock className="w-3 h-3 absolute -top-0.5 -right-0.5 text-gray-400 bg-white rounded-full" />
                         )}
@@ -730,7 +796,8 @@ export default function JobsPage() {
               </>
             )}
           </div>
-        </div>
+          </div>
+        </ErrorBoundary>
       )}
 
       {/* Placeholder avant première recherche - NOUVEAU */}

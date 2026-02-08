@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, MapPin, Users, Building2, Clock, ExternalLink, Filter, X, Loader2, Sparkles, TrendingUp } from 'lucide-react'
+import { Calendar, MapPin, Users, Building2, Clock, ExternalLink, Filter, X, Loader2, Sparkles, TrendingUp, AlertCircle } from 'lucide-react'
 import { huntzenApi, type JobFair } from '@/lib/api/huntzen-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import DOMPurify from 'dompurify'
 import { FeaturedEventsCarousel } from '@/components/salons/featured-events-carousel'
+import { ErrorBoundary } from '@/components/error-boundary'
 
 // Fonction pour nettoyer le HTML et extraire le texte brut
 function stripHtml(html: string): string {
@@ -159,7 +160,7 @@ export default function SalonsPage() {
         )}
       </div>
 
-      {/* Filters */}
+      {/* Filters - Wrapped with ErrorBoundary */}
       <AnimatePresence>
         {showFilters && (
           <motion.div
@@ -169,7 +170,15 @@ export default function SalonsPage() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="mb-8"
           >
-            <Card className="border-2 border-blue-100 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
+            <ErrorBoundary fallback={
+              <Card className="p-6 bg-red-50 border-red-200">
+                <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
+                <p className="text-red-700 text-center">
+                  Erreur lors du chargement des filtres. Veuillez rafraîchir la page.
+                </p>
+              </Card>
+            }>
+              <Card className="border-2 border-blue-100 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -309,6 +318,7 @@ export default function SalonsPage() {
                 </div>
               </CardContent>
             </Card>
+            </ErrorBoundary>
           </motion.div>
         )}
       </AnimatePresence>
@@ -349,9 +359,20 @@ export default function SalonsPage() {
         </div>
       )}
 
-      {/* Events grid */}
+      {/* Events grid - Wrapped with ErrorBoundary */}
       {!loading && !error && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ErrorBoundary fallback={
+          <Card className="p-8 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Erreur lors de l'affichage des événements
+            </h3>
+            <p className="text-gray-600">
+              Une erreur s'est produite. Veuillez réessayer.
+            </p>
+          </Card>
+        }>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {events.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -389,7 +410,8 @@ export default function SalonsPage() {
               <EventCard key={`${event.url}-${index}`} event={event} index={index} />
             ))
           )}
-        </div>
+          </div>
+        </ErrorBoundary>
       )}
     </div>
   )

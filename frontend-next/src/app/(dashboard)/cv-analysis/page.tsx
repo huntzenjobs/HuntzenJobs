@@ -1,10 +1,12 @@
 'use client'
 
-import { FileText, Loader2 } from 'lucide-react'
+import { FileText, Loader2, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useSubscription } from '@/contexts/subscription-context'
 import { UsageCounter } from '@/components/freemium/usage-counter'
 import { CVUploadAsyncWizard } from '@/components/cv/cv-upload-async-wizard'
+import { ErrorBoundary } from '@/components/error-boundary'
+import { Card } from '@/components/ui/card'
 
 export default function CVAnalysisPage() {
   const { session, loading } = useAuth()
@@ -50,18 +52,30 @@ export default function CVAnalysisPage() {
         {session && <UsageCounter feature="cv_analysis" />}
       </div>
 
-      {/* Full Wizard with all features */}
-      <div className="bg-white p-8 rounded-2xl border-2 border-gray-200 shadow-sm">
-        <CVUploadAsyncWizard
-          canUse={canUse}
-          incrementUsage={incrementUsage}
-          openPricingModal={openPricingModal}
-          hasFeatures={{
-            hasCVHistory: hasFeature('has_cv_history'),
-            hasPDFExport: hasFeature('has_pdf_export')
-          }}
-        />
-      </div>
+      {/* Full Wizard with all features - Wrapped with ErrorBoundary */}
+      <ErrorBoundary fallback={
+        <Card className="p-8 bg-red-50 border-red-200">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-gray-900 mb-2 text-center">
+            Erreur lors du chargement de l'analyse CV
+          </h3>
+          <p className="text-gray-600 text-center">
+            Une erreur s'est produite. Veuillez rafraîchir la page.
+          </p>
+        </Card>
+      }>
+        <div className="bg-white p-8 rounded-2xl border-2 border-gray-200 shadow-sm">
+          <CVUploadAsyncWizard
+            canUse={canUse}
+            incrementUsage={incrementUsage}
+            openPricingModal={openPricingModal}
+            hasFeatures={{
+              hasCVHistory: hasFeature('has_cv_history'),
+              hasPDFExport: hasFeature('has_pdf_export')
+            }}
+          />
+        </div>
+      </ErrorBoundary>
     </div>
   )
 
