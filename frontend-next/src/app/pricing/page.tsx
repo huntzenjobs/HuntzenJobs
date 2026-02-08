@@ -237,7 +237,8 @@ export default function PricingPage() {
       toast.loading('Redirection vers le paiement...', { id: 'stripe-redirect' })
 
       // Call backend to create Stripe checkout session
-      const response = await fetch('http://localhost:8000/api/stripe/create-checkout-session', {
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const response = await fetch(`${apiUrl}/api/stripe/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

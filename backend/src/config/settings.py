@@ -74,7 +74,10 @@ class Settings(BaseSettings):
     stripe_publishable_key: str = Field(default="", description="Stripe Publishable Key")
     stripe_webhook_secret: SecretStr = Field(default=SecretStr(""), description="Stripe Webhook Secret")
     recruiter_contact_price_id: str = Field(default="", description="Stripe Price ID for recruiter contact (50€)")
-    frontend_url: str = Field(default="http://localhost:3000", description="Frontend URL for redirects")
+    frontend_url: str = Field(
+        default="http://localhost:3000",
+        description="Frontend URL(s) for redirects. Supports multiple URLs separated by commas. Example: https://prod.vercel.app,https://staging.vercel.app"
+    )
 
     # --------------------------------------------------------------------------
     # Email Service (Resend - Sprint 3)
@@ -160,6 +163,27 @@ class Settings(BaseSettings):
     def get_redis_token(self) -> str:
         """Get Redis token as string."""
         return self.redis_token.get_secret_value()
+
+    def get_frontend_urls(self) -> list[str]:
+        """
+        Get all frontend URLs as a list.
+        Supports multiple URLs separated by commas.
+
+        Returns:
+            list[str]: List of frontend URLs
+        """
+        return [url.strip() for url in self.frontend_url.split(',') if url.strip()]
+
+    def get_primary_frontend_url(self) -> str:
+        """
+        Get the primary frontend URL (first one in the list).
+        Used for OAuth and Stripe redirects.
+
+        Returns:
+            str: Primary frontend URL
+        """
+        urls = self.get_frontend_urls()
+        return urls[0] if urls else 'http://localhost:3000'
 
 
 @lru_cache

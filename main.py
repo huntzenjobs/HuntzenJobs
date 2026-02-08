@@ -284,20 +284,44 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS Configuration - Allow frontend to call API
+# Support multiple frontend URLs separated by commas
+# Example: FRONTEND_URL=https://prod.vercel.app,https://staging.vercel.app,https://test.vercel.app
+frontend_urls_str = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+frontend_urls = [url.strip() for url in frontend_urls_str.split(',') if url.strip()]
+
+# Build list of allowed origins (localhost for development)
+allowed_origins = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",  # Vite dev server
+    "http://127.0.0.1:5173",
+]
+
+# Add all production frontend URLs
+for url in frontend_urls:
+    if url and not url.startswith('http://localhost') and not url.startswith('http://127.0.0.1'):
+        if url not in allowed_origins:
+            allowed_origins.append(url)
+
+# Use regex to allow ALL Vercel deployment URLs (production, pre-production, test)
+# This covers preview deployments and any new branches
+# Pattern matches: https://frontend-next-*.vercel.app or https://*.vercel.app
+vercel_pattern = r"https://.*\.vercel\.app"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",  # Vite dev server
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=allowed_origins,
+    allow_origin_regex=vercel_pattern,  # Allows all Vercel URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Store primary frontend URL for redirects (OAuth, Stripe)
+# Use the first URL in the list as the primary one
+PRIMARY_FRONTEND_URL = frontend_urls[0] if frontend_urls else 'http://localhost:3000'
 
 # Security Headers Middleware (Helmet-style protection)
 @app.middleware("http")
@@ -2149,9 +2173,9 @@ async def create_stripe_checkout(
         if not user_id or not user_email:
             raise HTTPException(status_code=401, detail="Invalid token payload")
 
-        # Frontend URLs for redirect
-        success_url = f"{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
-        cancel_url = f"{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/pricing"
+        # Frontend URLs for redirect (use primary frontend URL)
+        success_url = f"{PRIMARY_FRONTEND_URL}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{PRIMARY_FRONTEND_URL}/pricing"
 
         logger.info(f"[STRIPE] Creating checkout for user {user_id}: {plan_name} ({billing_period})")
 

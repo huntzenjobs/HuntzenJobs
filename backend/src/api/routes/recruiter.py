@@ -194,8 +194,8 @@ async def create_payment_session(
                 },
             ],
             mode="payment",
-            success_url=f"{settings.frontend_url}/recruiter-contact/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{settings.frontend_url}/recruiter-contact?cancelled=true",
+            success_url=f"{settings.get_primary_frontend_url()}/recruiter-contact/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{settings.get_primary_frontend_url()}/recruiter-contact?cancelled=true",
             customer_email=request_data.get("email"),
             metadata={
                 "request_id": payment.request_id,

@@ -83,7 +83,7 @@ def send_recruiter_request_confirmation(
                         💡 <strong>Conseil :</strong> Préparez votre CV et une liste de questions pour maximiser votre session !
                     </p>
 
-                    <a href="{settings.frontend_url}/recruiter-contact" class="button">Voir mes demandes</a>
+                    <a href="{settings.get_primary_frontend_url()}/recruiter-contact" class="button">Voir mes demandes</a>
                 </div>
                 <div class="footer">
                     <p>Besoin d'aide ? Contactez-nous à <a href="mailto:contact@huntzen.app">contact@huntzen.app</a></p>
@@ -185,7 +185,7 @@ def send_recruiter_request_notification(
                         <li>Préparer les notes de consultation</li>
                     </ol>
 
-                    <a href="{settings.frontend_url}/admin/recruiter-requests" class="button">Gérer dans l'admin</a>
+                    <a href="{settings.get_primary_frontend_url()}/admin/recruiter-requests" class="button">Gérer dans l'admin</a>
                 </div>
             </div>
         </body>

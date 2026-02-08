@@ -1,23 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { FileText } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useSubscription } from '@/contexts/subscription-context'
 import { UsageCounter } from '@/components/freemium/usage-counter'
 import { CVUploadAsyncWizard } from '@/components/cv/cv-upload-async-wizard'
+import { UnlockOverlay } from '@/components/auth/unlock-overlay'
 
 export default function CVAnalysisPage() {
   const { session, loading } = useAuth()
-  const router = useRouter()
-
-  // Redirect to signup if not authenticated
-  useEffect(() => {
-    if (!loading && !session) {
-      router.push('/signup?redirect=/cv-analysis&message=auth_required')
-    }
-  }, [session, loading, router])
 
   // Freemium state
   const {
@@ -39,12 +30,8 @@ export default function CVAnalysisPage() {
     )
   }
 
-  // If no session, don't render anything (redirect in progress)
-  if (!session) {
-    return null
-  }
-
-  return (
+  // Main page content (visible in background when overlay is shown)
+  const pageContent = (
     <div className="space-y-6">
       {/* Hero Header - HuntZen Style */}
       <div className="flex items-start justify-between gap-4 bg-white p-8 rounded-2xl border-2 border-gray-200 shadow-sm">
@@ -60,8 +47,8 @@ export default function CVAnalysisPage() {
           </p>
         </div>
 
-        {/* Usage Counter */}
-        <UsageCounter feature="cv_analysis" />
+        {/* Usage Counter - only shown when authenticated */}
+        {session && <UsageCounter feature="cv_analysis" />}
       </div>
 
       {/* Full Wizard with all features */}
@@ -78,4 +65,34 @@ export default function CVAnalysisPage() {
       </div>
     </div>
   )
+
+  // If no session, show overlay over the page content
+  if (!session) {
+    return (
+      <>
+        {/* Page content in background (with pointer-events-none to prevent interaction) */}
+        <div className="pointer-events-none select-none" style={{ filter: 'blur(2px)' }}>
+          {pageContent}
+        </div>
+
+        {/* Unlock overlay */}
+        <UnlockOverlay
+          title="Analyse CV Intelligente"
+          description="Découvrez comment notre IA peut analyser votre CV en profondeur et vous donner des recommandations personnalisées pour maximiser vos chances d'obtenir un entretien."
+          features={[
+            "Analyse ATS et compatibilité avec les systèmes de recrutement",
+            "Score détaillé sur 7 critères essentiels",
+            "Recommandations personnalisées et actionnables",
+            "Comparaison avec les standards du marché",
+            "Export PDF de vos résultats"
+          ]}
+          icon={<FileText className="w-12 h-12 text-blue-400" />}
+          redirectPath="/cv-analysis"
+        />
+      </>
+    )
+  }
+
+  // If authenticated, show normal page
+  return pageContent
 }
