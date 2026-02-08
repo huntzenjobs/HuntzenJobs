@@ -28,6 +28,7 @@ import { formatJobSource } from '@/lib/utils/job-source-formatter'
 import { SearchFormInline, type SearchParams } from '@/components/jobs/search-form-inline'
 import { featureFlags } from '@/lib/feature-flags'
 import { JobsPlaceholder } from '@/components/jobs/jobs-placeholder'
+import { ErrorBoundary } from '@/components/error-boundary'
 
 export default function JobsPage() {
   const [jobTitle, setJobTitle] = useState('')
