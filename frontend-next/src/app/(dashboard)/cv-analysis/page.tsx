@@ -5,10 +5,9 @@ import { useAuth } from '@/contexts/auth-context'
 import { useSubscription } from '@/contexts/subscription-context'
 import { UsageCounter } from '@/components/freemium/usage-counter'
 import { CVUploadAsyncWizard } from '@/components/cv/cv-upload-async-wizard'
-import { UnlockOverlay } from '@/components/auth/unlock-overlay'
 
 export default function CVAnalysisPage() {
-  const { session, loading } = useAuth()
+  const { session } = useAuth()
 
   // Freemium state
   const {
@@ -18,19 +17,7 @@ export default function CVAnalysisPage() {
     openPricingModal,
   } = useSubscription()
 
-  // Show loading state while checking authentication
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-          <p className="mt-4 text-gray-600">Chargement...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Main page content (visible in background when overlay is shown)
+  // Main page content
   const pageContent = (
     <div className="space-y-6">
       {/* Hero Header - HuntZen Style */}
@@ -66,32 +53,6 @@ export default function CVAnalysisPage() {
     </div>
   )
 
-  // If no session, show overlay over the page content
-  if (!session) {
-    return (
-      <div className="relative">
-        {/* Page content in background - fully visible and interactive */}
-        {pageContent}
-
-        {/* Unlock overlay - positioned on right side only */}
-        <UnlockOverlay
-          title="Analyse CV Intelligente"
-          description="Découvrez comment notre IA peut analyser votre CV en profondeur et vous donner des recommandations personnalisées pour maximiser vos chances d'obtenir un entretien."
-          features={[
-            "Analyse ATS et compatibilité avec les systèmes de recrutement",
-            "Score détaillé sur 7 critères essentiels",
-            "Recommandations personnalisées et actionnables",
-            "Comparaison avec les standards du marché",
-            "Export PDF de vos résultats"
-          ]}
-          icon={<FileText className="w-12 h-12 text-blue-400" />}
-          redirectPath="/cv-analysis"
-          position="right-side"
-        />
-      </div>
-    )
-  }
-
-  // If authenticated, show normal page
+  // Always show page content (authentication is handled by CVUploadAsyncWizard)
   return pageContent
 }
