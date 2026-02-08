@@ -61,6 +61,7 @@ dependencies = [
     # Utilities
     "tenacity>=8.2.0",
     "cachetools>=5.3.0",
+    "structlog>=24.1.0",  # Logging for modal_integration
 
     # Cache (Redis)
     "upstash-redis>=0.15.0",
