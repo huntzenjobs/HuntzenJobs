@@ -71,9 +71,9 @@ USER huntzen
 
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/docs || exit 1
+# Health check - matches Railway healthcheckPath
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Production command with Gunicorn multi-worker (16x capacity increase)
 # Signal Handling: --graceful-timeout 30 allows workers to finish requests before shutdown
