@@ -13,7 +13,7 @@ Date: 2026-02-08
 Sprint: 6 - Modal Integration
 """
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request, Query
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Header, Request, Query
 from typing import Optional
 from src.modal_integration import (
     process_cv_async,
@@ -31,7 +31,7 @@ async def analyze_cv_async(
     cv_text: Optional[str] = Form(None),
     job_description: Optional[str] = Form(None),
     language: str = Form("fr"),
-    user_id: Optional[str] = Depends(get_user_id_from_token)
+    authorization: Optional[str] = Header(default=None)
 ):
     """
     Upload CV for async processing with Modal Labs.
@@ -65,6 +65,9 @@ async def analyze_cv_async(
         400: Neither file nor cv_text provided
         500: Processing failed
     """
+    # Get user ID from token
+    user_id = get_user_id_from_token(authorization)
+
     if not user_id:
         raise HTTPException(
             status_code=401,
@@ -89,7 +92,7 @@ async def analyze_cv_async(
 @router.get("/status/{cv_id}")
 async def get_analysis_status(
     cv_id: str,
-    user_id: Optional[str] = Depends(get_user_id_from_token),
+    authorization: Optional[str] = Header(default=None),
     anonymous_id: Optional[str] = Query(None)
 ):
     """
@@ -118,6 +121,9 @@ async def get_analysis_status(
         404: CV analysis not found or unauthorized
         500: Database error
     """
+    # Get user ID from token (optional for status polling)
+    user_id = get_user_id_from_token(authorization)
+
     return await get_cv_analysis_status(
         cv_id=cv_id,
         user_id=user_id,
@@ -127,7 +133,7 @@ async def get_analysis_status(
 
 @router.get("/list")
 async def list_analyses(
-    user_id: str = Depends(get_user_id_from_token),
+    authorization: Optional[str] = Header(default=None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0)
 ):
@@ -163,6 +169,9 @@ async def list_analyses(
         401: Authentication required
         500: Database error
     """
+    # Get user ID from token
+    user_id = get_user_id_from_token(authorization)
+
     if not user_id:
         raise HTTPException(
             status_code=401,
