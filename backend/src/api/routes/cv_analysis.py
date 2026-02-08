@@ -15,7 +15,7 @@ Sprint: 6 - Modal Integration
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request, Query
 from typing import Optional
-from src.modal_integration import (
+from app.modal_integration import (
     process_cv_async,
     get_cv_analysis_status,
     list_user_cv_analyses
