@@ -10,6 +10,7 @@ from fastapi import Depends, Header, HTTPException, status
 from supabase import create_client, Client
 
 from src.agents.coach import CareerCoachAgent
+from src.agents.job_scout.main_agent import JobScoutAgent
 from src.agents.job_scout.conversational_agent import JobScoutConversationalAgent
 from src.agents.cv_analyzer.conversational_agent import CVAnalyzerConversationalAgent
 from src.agents.cv_adapter.conversational_agent import CVAdapterConversationalAgent
@@ -59,7 +60,8 @@ def clear_session(session_id: str) -> None:
 
 # Agent singletons
 _coach_agent: CareerCoachAgent | None = None
-_scout_agent: JobScoutConversationalAgent | None = None
+_scout_agent: JobScoutAgent | None = None  # Main agent for direct search
+_scout_conversational_agent: JobScoutConversationalAgent | None = None  # Chat agent
 _cv_agent: CVAnalyzerConversationalAgent | None = None
 _cv_adapter_agent: CVAdapterConversationalAgent | None = None
 _interview_sim_agent: InterviewSimAgent | None = None
@@ -73,12 +75,20 @@ def get_coach_agent() -> CareerCoachAgent:
     return _coach_agent
 
 
-def get_scout_agent() -> JobScoutConversationalAgent:
-    """Get JobScout conversational agent singleton."""
+def get_scout_agent() -> JobScoutAgent:
+    """Get JobScout main agent singleton (for direct job search)."""
     global _scout_agent
     if _scout_agent is None:
-        _scout_agent = JobScoutConversationalAgent()
+        _scout_agent = JobScoutAgent()
     return _scout_agent
+
+
+def get_scout_conversational_agent() -> JobScoutConversationalAgent:
+    """Get JobScout conversational agent singleton (for chat)."""
+    global _scout_conversational_agent
+    if _scout_conversational_agent is None:
+        _scout_conversational_agent = JobScoutConversationalAgent()
+    return _scout_conversational_agent
 
 
 def get_cv_agent() -> CVAnalyzerConversationalAgent:
@@ -106,7 +116,8 @@ def get_interview_sim_agent() -> InterviewSimAgent:
 
 
 CoachAgentDep = Annotated[CareerCoachAgent, Depends(get_coach_agent)]
-ScoutAgentDep = Annotated[JobScoutConversationalAgent, Depends(get_scout_agent)]
+ScoutAgentDep = Annotated[JobScoutAgent, Depends(get_scout_agent)]
+ScoutConversationalAgentDep = Annotated[JobScoutConversationalAgent, Depends(get_scout_conversational_agent)]
 CVAgentDep = Annotated[CVAnalyzerConversationalAgent, Depends(get_cv_agent)]
 CVAdapterAgentDep = Annotated[CVAdapterConversationalAgent, Depends(get_cv_adapter_agent)]
 InterviewSimAgentDep = Annotated[InterviewSimAgent, Depends(get_interview_sim_agent)]
