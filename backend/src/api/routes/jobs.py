@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.post("/search", response_model=JobSearchResponse)
-@limiter.limit("10/minute")  # Rate limit: 10 searches per minute per IP
+@limiter.limit("50/minute")  # Rate limit: 50 searches per minute per IP
 async def search_jobs(
     request: Request,  # Required for rate limiting
     data: JobSearchRequest,
@@ -22,7 +22,7 @@ async def search_jobs(
 ):
     """
     Search for jobs across multiple providers.
-    
+
     Uses AI to:
     - Refine and correct search queries
     - Aggregate from multiple sources (Adzuna, Google Jobs, RemoteOK)
@@ -32,10 +32,10 @@ async def search_jobs(
     result = await agent.run(
         job_title=data.job_title,
         country_code=data.country_code,
-        city=request.city,
-        contract_type=request.contract_type,
-        max_results=request.max_results,
-        max_days=request.max_days,
+        city=data.city,
+        contract_type=data.contract_type,
+        max_results=data.max_results,
+        max_days=data.max_days,
         include_insights=True,
     )
     
