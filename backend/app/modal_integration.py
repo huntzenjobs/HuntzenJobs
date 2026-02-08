@@ -1,0 +1,517 @@
+"""
+Modal Integration for CV Processing (S6-6)
+
+This module provides async CV processing using Modal Labs serverless functions.
+Replaces synchronous processing with non-blocking workflow:
+
+1. Upload PDF to Supabase Storage
+2. Create database record with status='pending'
+3. Spawn Modal function (non-blocking)
+4. Return immediately to frontend
+5. Frontend polls status endpoint
+6. Modal updates database when complete
+
+Author: HuntZen Team
+Date: 2026-01-28
+Sprint: 6 - Ticket S6-6
+"""
+
+import os
+import uuid
+import httpx
+from typing import Optional, Dict, Any
+from datetime import datetime, timedelta
+from structlog import get_logger
+from fastapi import UploadFile, HTTPException
+from supabase import create_client, Client
+
+logger = get_logger(__name__)
+
+# ============================================
+# SUPABASE CLIENT
+# ============================================
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    logger.warning("Supabase credentials not configured - Modal integration disabled")
+    supabase_client: Optional[Client] = None
+else:
+    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    logger.info("Supabase client initialized for Modal integration")
+
+
+# ============================================
+# MODAL WEBHOOK CONFIGURATION
+# ============================================
+
+# Modal web endpoint URL (deployed via modal deploy modal_app.py)
+MODAL_WEBHOOK_URL = os.getenv(
+    "MODAL_WEBHOOK_URL",
+    "https://huntzenproject--huntzen-cv-processor-process-cv-webhook.modal.run"
+)
+
+# Check if Modal is enabled (webhook URL is configured)
+MODAL_ENABLED = bool(MODAL_WEBHOOK_URL)
+
+if MODAL_ENABLED:
+    logger.info(f"Modal integration enabled - webhook URL: {MODAL_WEBHOOK_URL}")
+else:
+    logger.warning("Modal integration disabled - MODAL_WEBHOOK_URL not configured")
+
+
+# ============================================
+# UPLOAD TO SUPABASE STORAGE
+# ============================================
+
+async def upload_cv_to_storage(
+    file_content: bytes,
+    filename: str,
+    user_id: str  # ✅ Maintenant OBLIGATOIRE (pas Optional)
+) -> str:
+    """
+    Upload CV file to Supabase Storage.
+
+    ⚠️ REQUIRES AUTHENTICATION - user_id is mandatory
+
+    Args:
+        file_content: PDF file bytes
+        filename: Original filename
+        user_id: User UUID (REQUIRED - no anonymous support)
+
+    Returns:
+        Public URL of uploaded file
+
+    Raises:
+        HTTPException: If upload fails
+        ValueError: If user_id is not provided
+    """
+    # ✅ Validation: user_id is required
+    if not user_id:
+        raise ValueError("user_id is required for CV upload (no anonymous support)")
+
+    if not supabase_client:
+        raise HTTPException(status_code=500, detail="Supabase client not configured")
+
+    try:
+        # Generate unique filename
+        file_ext = filename.split('.')[-1]
+
+        # ✅ Simplified path: user_id only (no more anonymous folder)
+        unique_filename = f"{user_id}/{uuid.uuid4()}.{file_ext}"
+
+        logger.info(f"Uploading CV to Supabase Storage: {unique_filename}")
+
+        # Upload to Supabase Storage bucket 'cvs'
+        response = supabase_client.storage.from_("cvs").upload(
+            path=unique_filename,
+            file=file_content,
+            file_options={"content-type": "application/pdf"}
+        )
+
+        # Get public URL
+        public_url = supabase_client.storage.from_("cvs").get_public_url(unique_filename)
+
+        logger.info(f"CV uploaded successfully: {public_url}")
+        return public_url
+
+    except Exception as e:
+        logger.error(f"Failed to upload CV to storage: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload CV: {str(e)}")
+
+
+# ============================================
+# CREATE CV ANALYSIS RECORD
+# ============================================
+
+async def create_cv_analysis_record(
+    user_id: str,  # ✅ Maintenant OBLIGATOIRE (pas Optional)
+    pdf_url: Optional[str] = None,
+    cv_text: Optional[str] = None,
+    filename: Optional[str] = None,
+    job_description: Optional[str] = None,
+    language: str = "fr"
+) -> str:
+    """
+    Create CV analysis record in database with status='pending'.
+
+    ⚠️ REQUIRES AUTHENTICATION - user_id is mandatory
+
+    Args:
+        user_id: User UUID (REQUIRED - no anonymous support)
+        pdf_url: Supabase Storage URL (if PDF mode)
+        cv_text: CV text content (if text mode)
+        filename: Original filename (if PDF mode)
+        job_description: Optional job description for matching
+        language: Response language
+
+    Returns:
+        CV analysis UUID
+
+    Raises:
+        HTTPException: If database insert fails
+        ValueError: If user_id is not provided
+    """
+    # ✅ Validation: user_id is required
+    if not user_id:
+        raise ValueError("user_id is required for CV analysis record (no anonymous support)")
+
+    if not supabase_client:
+        raise HTTPException(status_code=500, detail="Supabase client not configured")
+
+    try:
+        cv_id = str(uuid.uuid4())
+
+        # ✅ Simplified data: no more anonymous_id or client_ip
+        data = {
+            "id": cv_id,
+            "user_id": user_id,  # ✅ Toujours présent maintenant
+            "pdf_url": pdf_url,
+            "cv_text": cv_text,
+            "status": "pending",
+            "job_description": job_description,
+            "language": language,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+
+        logger.info(f"Creating CV analysis record: {cv_id} (mode: {'text' if cv_text else 'file'}, user_id: {user_id})")
+
+        response = supabase_client.table("cv_analyses").insert(data).execute()
+
+        logger.info(f"CV analysis record created successfully: {cv_id}")
+        return cv_id
+
+    except Exception as e:
+        logger.error(f"Failed to create CV analysis record: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create analysis record: {str(e)}")
+
+
+# ============================================
+# SPAWN MODAL FUNCTION
+# ============================================
+
+async def spawn_modal_cv_processing(
+    cv_id: str,
+    user_id: Optional[str] = None,
+    pdf_url: Optional[str] = None,
+    cv_text: Optional[str] = None,
+    job_description: Optional[str] = None,
+    language: str = "fr"
+) -> bool:
+    """
+    Trigger Modal webhook to process CV asynchronously via HTTP.
+
+    This is a non-blocking call. The Modal function will update the database
+    when processing is complete.
+
+    Args:
+        cv_id: CV analysis UUID
+        user_id: User UUID (None for anonymous users)
+        pdf_url: Supabase Storage URL (if PDF mode)
+        cv_text: CV text content (if text mode)
+        job_description: Optional job description for matching
+        language: Response language
+
+    Returns:
+        True if Modal webhook triggered successfully
+
+    Raises:
+        HTTPException: If Modal webhook call fails
+    """
+    if not MODAL_ENABLED:
+        logger.warning("Modal integration disabled - falling back to synchronous processing")
+        return False
+
+    try:
+        is_anonymous = user_id is None
+        logger.info(f"Triggering Modal webhook for CV: {cv_id} (mode: {'text' if cv_text else 'file'}, anonymous: {is_anonymous})")
+
+        # Prepare request payload
+        payload = {
+            "cv_id": cv_id,
+            "user_id": user_id,
+            "pdf_url": pdf_url,
+            "cv_text": cv_text,
+            "job_description": job_description,
+            "language": language
+        }
+
+        # Call Modal webhook (extended timeout for cold starts)
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            # Wait for Modal to process (webhook is synchronous)
+            # Modal processes and returns results directly
+            response = await client.post(
+                MODAL_WEBHOOK_URL,
+                json=payload
+            )
+
+            # Check if webhook accepted the request
+            if response.status_code == 200:
+                logger.info(f"Modal webhook triggered successfully for CV: {cv_id}")
+                return True
+            else:
+                logger.error(f"Modal webhook returned status {response.status_code}: {response.text}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Modal webhook failed: {response.status_code}"
+                )
+
+    except httpx.TimeoutException:
+        logger.error(f"Modal webhook timeout for CV: {cv_id}")
+        # Update database with error
+        try:
+            supabase_client.table("cv_analyses").update({
+                "status": "failed",
+                "error": "Modal webhook timeout",
+                "updated_at": datetime.utcnow().isoformat()
+            }).eq("id", cv_id).execute()
+        except:
+            pass
+        return False
+
+    except Exception as e:
+        logger.error(f"Failed to trigger Modal webhook: {e}")
+        # Update database with error
+        try:
+            supabase_client.table("cv_analyses").update({
+                "status": "failed",
+                "error": f"Failed to trigger Modal webhook: {str(e)}",
+                "updated_at": datetime.utcnow().isoformat()
+            }).eq("id", cv_id).execute()
+        except:
+            pass
+        return False
+
+
+# ============================================
+# MAIN WORKFLOW: ASYNC CV PROCESSING
+# ============================================
+
+async def process_cv_async(
+    user_id: str,  # ✅ Maintenant OBLIGATOIRE (pas Optional)
+    file: Optional[UploadFile] = None,
+    cv_text: Optional[str] = None,
+    job_description: Optional[str] = None,
+    language: str = "fr"
+) -> Dict[str, Any]:
+    """
+    Main workflow for async CV processing with Modal.
+
+    ⚠️ REQUIRES AUTHENTICATION - user_id is mandatory
+
+    Supports both PDF and text modes:
+    - PDF mode: Upload to Supabase Storage, extract with Docling
+    - Text mode: Store text in DB, skip Docling extraction
+
+    Steps:
+    1. Upload PDF to Supabase Storage OR store text in DB
+    2. Create database record (status='pending')
+    3. Spawn Modal function (non-blocking)
+    4. Return immediately with cv_id
+
+    Frontend will poll GET /api/cv-analysis/status/{cv_id} for updates.
+
+    Args:
+        user_id: User UUID (REQUIRED - no anonymous support)
+        file: Uploaded PDF file (if PDF mode)
+        cv_text: CV text content (if text mode)
+        job_description: Optional job description for matching
+        language: Response language
+
+    Returns:
+        Dict with cv_id and status='pending'
+    """
+    try:
+        # ✅ Validation: user_id is required
+        if not user_id:
+            raise ValueError("user_id is required for CV analysis (no anonymous support)")
+        pdf_url = None
+
+        # Step 1: Handle file or text
+        if file:
+            # PDF mode: Upload to Supabase Storage
+            file_content = await file.read()
+            pdf_url = await upload_cv_to_storage(
+                file_content=file_content,
+                filename=file.filename,
+                user_id=user_id  # ✅ Seulement user_id (plus d'anonymous_id)
+            )
+
+        # Step 2: Create database record
+        cv_id = await create_cv_analysis_record(
+            user_id=user_id,  # ✅ Seulement user_id (plus d'anonymous_id ni client_ip)
+            pdf_url=pdf_url,
+            cv_text=cv_text,
+            filename=file.filename if file else None,
+            job_description=job_description,
+            language=language
+        )
+
+        # Step 3: Spawn Modal function (non-blocking)
+        modal_spawned = await spawn_modal_cv_processing(
+            cv_id=cv_id,
+            user_id=user_id,
+            pdf_url=pdf_url,
+            cv_text=cv_text,
+            job_description=job_description,
+            language=language
+        )
+
+        if not modal_spawned:
+            # Fallback: Modal failed, mark as failed in DB
+            raise HTTPException(status_code=500, detail="Failed to spawn CV processing")
+
+        # Return immediately (non-blocking)
+        return {
+            "success": True,
+            "cv_id": cv_id,
+            "status": "pending",
+            "message": "CV analysis started. Poll /api/cv-analysis/status/{cv_id} for updates.",
+            "estimated_time_seconds": 15 if file else 8  # Text mode faster (no Docling)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"CV async processing failed: {e}")
+        raise HTTPException(status_code=500, detail=f"CV processing failed: {str(e)}")
+
+
+# ============================================
+# GET CV ANALYSIS STATUS
+# ============================================
+
+async def get_cv_analysis_status(
+    cv_id: str,
+    user_id: Optional[str] = None,
+    anonymous_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get CV analysis status for polling.
+
+    Supports both authenticated and anonymous users:
+    - Authenticated: Requires user_id to match
+    - Anonymous: Requires anonymous_id to match (no user_id needed)
+
+    Args:
+        cv_id: CV analysis UUID
+        user_id: User UUID (for authenticated users)
+        anonymous_id: Anonymous session ID (for anonymous users)
+
+    Returns:
+        Status dict with result if completed
+
+    Raises:
+        HTTPException: If CV not found or unauthorized
+    """
+    if not supabase_client:
+        raise HTTPException(status_code=500, detail="Supabase client not configured")
+
+    try:
+        # Build query based on authentication type
+        query = supabase_client.table("cv_analyses").select("*").eq("id", cv_id)
+
+        # Add authorization filter
+        if user_id:
+            # Authenticated user - must match user_id
+            query = query.eq("user_id", user_id)
+        elif anonymous_id:
+            # Anonymous user - must match anonymous_id
+            query = query.eq("anonymous_id", anonymous_id).is_("user_id", "null")
+        else:
+            # No authentication provided - allow access by cv_id only
+            # This is for backwards compatibility and public access
+            pass
+
+        response = query.single().execute()
+
+        if not response.data:
+            raise HTTPException(status_code=404, detail="CV analysis not found")
+
+        data = response.data
+
+        # Calculate processing time if completed
+        processing_time = None
+        if data.get("completed_at") and data.get("created_at"):
+            created = datetime.fromisoformat(data["created_at"].replace("Z", "+00:00"))
+            completed = datetime.fromisoformat(data["completed_at"].replace("Z", "+00:00"))
+            processing_time = (completed - created).total_seconds()
+
+        return {
+            "cv_id": cv_id,
+            "status": data["status"],
+            "result": data.get("result"),
+            "error": data.get("error"),
+            "created_at": data["created_at"],
+            "completed_at": data.get("completed_at"),
+            "processing_time_seconds": processing_time
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get CV status: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+
+
+# ============================================
+# LIST USER CV ANALYSES
+# ============================================
+
+async def list_user_cv_analyses(
+    user_id: str,
+    limit: int = 20,
+    offset: int = 0
+) -> Dict[str, Any]:
+    """
+    List all CV analyses for a user.
+
+    Args:
+        user_id: User UUID
+        limit: Max number of results
+        offset: Pagination offset
+
+    Returns:
+        List of CV analyses with status
+    """
+    if not supabase_client:
+        raise HTTPException(status_code=500, detail="Supabase client not configured")
+
+    try:
+        response = supabase_client.table("cv_analyses")\
+            .select("id, status, created_at, completed_at, result")\
+            .eq("user_id", user_id)\
+            .order("created_at", desc=True)\
+            .limit(limit)\
+            .range(offset, offset + limit - 1)\
+            .execute()
+
+        analyses = []
+        for row in response.data:
+            # Calculate processing time
+            processing_time = None
+            if row.get("completed_at") and row.get("created_at"):
+                created = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00"))
+                completed = datetime.fromisoformat(row["completed_at"].replace("Z", "+00:00"))
+                processing_time = (completed - created).total_seconds()
+
+            analyses.append({
+                "cv_id": row["id"],
+                "status": row["status"],
+                "created_at": row["created_at"],
+                "completed_at": row.get("completed_at"),
+                "processing_time_seconds": processing_time,
+                "has_result": bool(row.get("result"))
+            })
+
+        return {
+            "success": True,
+            "total": len(analyses),
+            "analyses": analyses
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to list CV analyses: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list analyses: {str(e)}")

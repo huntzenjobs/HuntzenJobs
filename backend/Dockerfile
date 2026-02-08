@@ -59,11 +59,9 @@ RUN mkdir -p /usr/local/lib/python3.11/site-packages/static && \
 
 # Copy NEW application structure
 COPY --chown=huntzen:huntzen src/ ./src/
+COPY --chown=huntzen:huntzen app/ ./app/
 COPY --chown=huntzen:huntzen prompts/ ./prompts/
 COPY --chown=huntzen:huntzen pyproject.toml .
-
-# Copy Modal integration from root /app/ directory
-COPY --chown=huntzen:huntzen ../app/ ./app/
 
 # Create cache directory for Marker models with proper permissions
 RUN mkdir -p /home/huntzen/.cache && \
