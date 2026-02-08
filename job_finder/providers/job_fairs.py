@@ -1,25 +1,29 @@
 """
-Job Fairs / Salons Emploi Scraper
-Scrape les salons d'emploi depuis des sources publiques françaises.
+Job Fairs / Salons Emploi — Hybrid Provider
+============================================
+Sources:
+  1. France Travail API officielle (OAuth2, accès libre, ~15 000 events)
+  2. L'Étudiant scraping (salons étudiants, ~14-118 salons/saison)
 
-Sources supportées:
-- Pôle Emploi / France Travail
-- CCI France
-- APEC
-- Salons étudiants (L'Etudiant)
-- Régions / Métropoles
-- Calendriers événementiels
+Zéro mock, zéro APEC, zéro CCI.
 """
+
 import asyncio
+import os
 import re
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, asdict
+
 import httpx
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 import logging
 
+load_dotenv()
 logger = logging.getLogger(__name__)
+
 
 # ==========================================
 # DATA MODEL
@@ -48,13 +52,203 @@ class JobFair:
     registration_url: Optional[str] = None
     is_free: bool = True
     companies_count: Optional[int] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
 
 # ==========================================
-# SCRAPERS PAR SOURCE
+# FRANCE TRAVAIL — API OFFICIELLE
+# ==========================================
+
+_ft_token: Optional[str] = None
+_ft_token_expires: float = 0
+
+
+async def _get_france_travail_token() -> str:
+    """
+    Obtient un access_token OAuth2 via client_credentials.
+    Scope: api_mesevenementsemploiv1
+    """
+    global _ft_token, _ft_token_expires
+
+    if _ft_token and time.time() < _ft_token_expires - 60:
+        return _ft_token
+
+    client_id = os.getenv("CLIENT_ID", "")
+    client_secret = os.getenv("CLIENT_SECRET", "")
+
+    if not client_id or not client_secret:
+        raise ValueError(
+            "CLIENT_ID et CLIENT_SECRET manquants dans .env. "
+            "Créez une app sur https://francetravail.io"
+        )
+
+    token_url = "https://entreprise.francetravail.fr/connexion/oauth2/access_token"
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.post(
+            token_url,
+            params={"realm": "/partenaire"},
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "scope": "evenements",
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+
+        if response.status_code != 200:
+            logger.error(f"[FT_API] OAuth2 token error {response.status_code}: {response.text}")
+            raise ValueError(f"France Travail OAuth2 failed: {response.status_code}")
+
+        data = response.json()
+        _ft_token = data["access_token"]
+        _ft_token_expires = time.time() + data.get("expires_in", 1500)
+        logger.info("[FT_API] OAuth2 token obtained successfully")
+        return _ft_token
+
+
+async def fetch_france_travail_events(
+    region: str = "",
+    sector: str = "",
+    event_type: str = "",
+) -> List[JobFair]:
+    """
+    API officielle France Travail — Mes événements emploi.
+    Base: https://api.francetravail.io/partenaire/evenements/v1
+    """
+    events: List[JobFair] = []
+
+    try:
+        token = await _get_france_travail_token()
+    except ValueError as e:
+        logger.warning(f"[FT_API] Auth failed: {e}")
+        return events
+
+    api_base = "https://api.francetravail.io/partenaire/evenements/v1"
+
+    body: Dict[str, Any] = {}
+    if region:
+        body["lieuEvenement"] = region
+    if sector:
+        body["thematique"] = sector
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(
+                f"{api_base}/evenements",
+                json=body,
+                headers=headers,
+            )
+
+            if response.status_code != 200:
+                logger.warning(f"[FT_API] /evenements returned {response.status_code}: {response.text[:200]}")
+                # Fallback: GET /salonsEnLigne
+                response = await client.get(f"{api_base}/salonsEnLigne", headers=headers)
+                if response.status_code != 200:
+                    logger.error(f"[FT_API] Fallback also failed: {response.status_code}")
+                    return events
+
+            data = response.json()
+
+            if isinstance(data, list):
+                raw_events = data
+            elif isinstance(data, dict):
+                raw_events = data.get("resultats", data.get("evenements", data.get("results", [])))
+                if not raw_events and "titre" in data:
+                    raw_events = [data]
+            else:
+                raw_events = []
+
+            logger.info(f"[FT_API] Got {len(raw_events)} raw events from API")
+
+            for raw in raw_events:
+                try:
+                    event = _parse_ft_event(raw)
+                    if event:
+                        events.append(event)
+                except Exception as e:
+                    logger.debug(f"[FT_API] Skip event parse error: {e}")
+
+    except httpx.TimeoutException:
+        logger.warning("[FT_API] Request timeout")
+    except Exception as e:
+        logger.error(f"[FT_API] Error: {e}")
+
+    return events
+
+
+def _parse_ft_event(raw: Dict[str, Any]) -> Optional[JobFair]:
+    """Parse un événement brut de l'API France Travail en JobFair."""
+    title = raw.get("titre") or raw.get("intitule") or raw.get("libelle") or ""
+    if not title:
+        return None
+
+    date_start_raw = raw.get("dateDebut") or raw.get("dateEvenement") or raw.get("date") or ""
+    date_end_raw = raw.get("dateFin") or ""
+    date_start = _parse_iso_date(date_start_raw)
+    date_end = _parse_iso_date(date_end_raw) if date_end_raw else None
+
+    time_start = raw.get("heureDebut") or raw.get("heure") or None
+    time_end = raw.get("heureFin") or None
+
+    lieu = raw.get("lieu") or raw.get("lieuEvenement") or {}
+    if isinstance(lieu, str):
+        city, address, region_name = lieu, None, detect_region(lieu)
+    else:
+        city = lieu.get("ville") or lieu.get("commune") or lieu.get("libelle") or raw.get("ville") or raw.get("codePostal", "")
+        address = lieu.get("adresse") or lieu.get("rue") or None
+        region_name = lieu.get("region") or detect_region(city)
+
+    format_raw = str(raw.get("typeEvenement") or raw.get("modalite") or raw.get("format") or "").lower()
+    if "ligne" in format_raw or "distanciel" in format_raw or "virtuel" in format_raw:
+        event_format = "virtuel"
+    elif "hybride" in format_raw or "mixte" in format_raw:
+        event_format = "hybride"
+    else:
+        event_format = "physique"
+
+    organizer = raw.get("organisateur") or raw.get("organisme") or raw.get("structure") or "France Travail"
+    if isinstance(organizer, dict):
+        organizer = organizer.get("nom") or organizer.get("libelle") or "France Travail"
+
+    description = raw.get("description") or raw.get("contenu") or raw.get("descriptif") or None
+    url = raw.get("url") or raw.get("urlDetailEvenement") or raw.get("lien") or "https://mesevenementsemploi.francetravail.fr/mes-evenements-emploi/evenements"
+
+    full_text = title + " " + (description or "")
+
+    return JobFair(
+        title=title.strip(),
+        event_type=classify_event_type(title),
+        public=classify_public(full_text),
+        sector=classify_sector(full_text),
+        level="tous",
+        date_start=date_start,
+        date_end=date_end,
+        time_start=time_start,
+        time_end=time_end,
+        city=city,
+        region=region_name,
+        address=address,
+        format=event_format,
+        organizer=organizer if isinstance(organizer, str) else "France Travail",
+        description=description,
+        url=url,
+        source="france_travail",
+        is_free=True,
+    )
+
+
+# ==========================================
+# L'ÉTUDIANT — SCRAPING
 # ==========================================
 
 HEADERS = {
@@ -64,553 +258,289 @@ HEADERS = {
 }
 
 
-async def scrape_pole_emploi_events(region: str = "", sector: str = "") -> List[JobFair]:
+async def scrape_letudiant_salons() -> List[JobFair]:
     """
-    Scrape les événements France Travail (ex Pôle Emploi).
-    Source très fiable et légale (données publiques).
+    Scrape les salons depuis L'Étudiant.
+    Sélecteur: <article class="tw-group/sal-card"> cards.
+    Title in <h3>, URL in <a href="*.salon.letudiant.fr">, city from URL slug.
     """
-    events = []
-    
+    events: List[JobFair] = []
+
+    url = "https://www.letudiant.fr/etudes/salons.html"
+
     try:
-        # API événements France Travail
-        url = "https://candidat.francetravail.fr/evenements/evenements"
-        
-        async with httpx.AsyncClient(timeout=15, headers=HEADERS) as client:
+        async with httpx.AsyncClient(timeout=15, headers=HEADERS, follow_redirects=True) as client:
             response = await client.get(url)
-            
             if response.status_code != 200:
-                logger.warning(f"[JOB_FAIRS] France Travail returned {response.status_code}")
+                logger.warning(f"[LETUDIANT] {url} returned {response.status_code}")
                 return events
-            
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Chercher les cartes d'événements
-            event_cards = soup.select('.event-card, .evenement-item, article.event')
-            
-            for card in event_cards[:20]:  # Limiter à 20
+
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            # Each salon is an <article class="tw-group/sal-card ...">
+            articles = soup.find_all("article", class_=re.compile(r"sal-card"))
+
+            for article in articles:
                 try:
-                    title_el = card.select_one('h2, h3, .event-title, .titre')
-                    date_el = card.select_one('.date, .event-date, time')
-                    location_el = card.select_one('.location, .lieu, .ville')
-                    link_el = card.select_one('a[href]')
-                    
-                    if not title_el:
+                    # Get salon link
+                    salon_link = article.find("a", href=re.compile(r"salon\.letudiant\.fr"))
+                    if not salon_link:
                         continue
-                    
-                    title = title_el.get_text(strip=True)
-                    
-                    # Parser la date
-                    date_text = date_el.get_text(strip=True) if date_el else ""
-                    date_start = parse_french_date(date_text)
-                    
-                    # Ville
-                    city = location_el.get_text(strip=True) if location_el else "France"
-                    
-                    # Déterminer le type
-                    event_type = classify_event_type(title)
-                    public = classify_public(title)
-                    detected_sector = classify_sector(title)
-                    
+                    href = salon_link.get("href", "")
+                    if not href:
+                        continue
+
+                    # Title from h3 — clean out date digits that leak in
+                    h3 = article.find(["h3", "h2", "h4"])
+                    if h3:
+                        raw_title = h3.get_text(" ", strip=True)
+                        # Remove trailing date fragments like "07\n\nfévrier"
+                        raw_title = re.sub(r"\s*\d{1,2}\s*(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)?\s*$", "", raw_title, flags=re.IGNORECASE).strip()
+                        title = raw_title if len(raw_title) > 5 else ""
+                    else:
+                        title = ""
+
+                    if not title:
+                        # Fallback: build title from URL slug
+                        slug_match = re.search(r"https?://([^.]+)\.salon\.letudiant\.fr", href)
+                        if slug_match:
+                            title = slug_match.group(1).replace("-", " ").title()
+                        else:
+                            continue
+
+                    # City from URL slug (last word before .salon.letudiant.fr)
+                    city_match = re.search(r"-([a-z]+(?:-[a-z]+)?)\.salon\.letudiant\.fr", href)
+                    city = "Paris"
+                    if city_match:
+                        city = city_match.group(1).replace("-", " ").title()
+
+                    # Also try from title "à Nice" pattern
+                    title_city = re.search(r"à\s+([A-ZÀ-Ü][a-zà-ü]+(?:[\s-][A-ZÀ-Ü][a-zà-ü]+)*)", title)
+                    if title_city:
+                        city = title_city.group(1).strip()
+
+                    # Date from card text
+                    block_text = article.get_text(" ", strip=True)
+                    date_start = _extract_date_from_text(block_text)
+                    date_end = _extract_end_date_from_text(block_text, date_start)
+
+                    if not href.startswith("http"):
+                        href = "https:" + href if href.startswith("//") else "https://www.letudiant.fr" + href
+
                     event = JobFair(
                         title=title,
-                        event_type=event_type,
-                        public=public,
-                        sector=detected_sector if not sector else sector,
-                        level="tous",
-                        date_start=date_start,
-                        date_end=None,
-                        time_start=None,
-                        time_end=None,
-                        city=city,
-                        region=region or detect_region(city),
-                        address=None,
-                        format="physique",
-                        organizer="France Travail",
-                        description=None,
-                        url=link_el.get('href', url) if link_el else url,
-                        source="france_travail",
-                        is_free=True
-                    )
-                    events.append(event)
-                    
-                except Exception as e:
-                    logger.debug(f"[JOB_FAIRS] Error parsing event: {e}")
-                    continue
-                    
-    except Exception as e:
-        logger.error(f"[JOB_FAIRS] France Travail scraping error: {e}")
-    
-    return events
-
-
-async def scrape_letudiant_salons(public: str = "etudiants") -> List[JobFair]:
-    """
-    Scrape les salons depuis L'Etudiant.
-    Excellente source pour étudiants et jeunes diplômés.
-    """
-    events = []
-    
-    try:
-        url = "https://www.letudiant.fr/etudes/salons.html"
-        
-        async with httpx.AsyncClient(timeout=15, headers=HEADERS) as client:
-            response = await client.get(url)
-            
-            if response.status_code != 200:
-                return events
-            
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Cartes de salons
-            salon_cards = soup.select('.salon-card, .event-item, .salon-item')
-            
-            for card in salon_cards[:15]:
-                try:
-                    title_el = card.select_one('h2, h3, .salon-title')
-                    date_el = card.select_one('.date, .salon-date')
-                    location_el = card.select_one('.location, .salon-city')
-                    link_el = card.select_one('a[href]')
-                    
-                    if not title_el:
-                        continue
-                    
-                    title = title_el.get_text(strip=True)
-                    date_text = date_el.get_text(strip=True) if date_el else ""
-                    city = location_el.get_text(strip=True) if location_el else "Paris"
-                    
-                    event = JobFair(
-                        title=title,
-                        event_type=classify_event_type(title),
+                        event_type="salon",
                         public="etudiants",
                         sector=classify_sector(title),
                         level=detect_level(title),
-                        date_start=parse_french_date(date_text),
-                        date_end=None,
+                        date_start=date_start,
+                        date_end=date_end,
                         time_start=None,
                         time_end=None,
                         city=city,
                         region=detect_region(city),
                         address=None,
                         format="physique",
-                        organizer="L'Etudiant",
+                        organizer="L'Étudiant",
                         description=None,
-                        url=link_el.get('href', url) if link_el else url,
-                        source="letudiant"
+                        url=href,
+                        source="letudiant",
+                        is_free=True,
                     )
                     events.append(event)
-                    
                 except Exception as e:
+                    logger.debug(f"[LETUDIANT] Parse error: {e}")
                     continue
-                    
+
     except Exception as e:
-        logger.error(f"[JOB_FAIRS] L'Etudiant scraping error: {e}")
-    
-    return events
+        logger.error(f"[LETUDIANT] Scraping error: {e}")
 
+    # Deduplicate by title
+    seen = set()
+    unique = []
+    for ev in events:
+        key = ev.title.lower().strip()
+        if key not in seen:
+            seen.add(key)
+            unique.append(ev)
 
-async def scrape_apec_events() -> List[JobFair]:
-    """
-    Scrape les événements APEC.
-    Excellent pour cadres et managers.
-    """
-    events = []
-    
-    try:
-        url = "https://www.apec.fr/evenements.html"
-        
-        async with httpx.AsyncClient(timeout=15, headers=HEADERS) as client:
-            response = await client.get(url)
-            
-            if response.status_code != 200:
-                return events
-            
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            event_cards = soup.select('.event-card, .evenement, article')
-            
-            for card in event_cards[:15]:
-                try:
-                    title_el = card.select_one('h2, h3, .event-title')
-                    date_el = card.select_one('.date, time')
-                    location_el = card.select_one('.location, .ville')
-                    link_el = card.select_one('a[href]')
-                    format_el = card.select_one('.format, .type')
-                    
-                    if not title_el:
-                        continue
-                    
-                    title = title_el.get_text(strip=True)
-                    event_format = "virtuel" if format_el and "ligne" in format_el.get_text().lower() else "physique"
-                    
-                    event = JobFair(
-                        title=title,
-                        event_type=classify_event_type(title),
-                        public="pros",
-                        sector=classify_sector(title),
-                        level="bac+5",
-                        date_start=parse_french_date(date_el.get_text(strip=True) if date_el else ""),
-                        date_end=None,
-                        time_start=None,
-                        time_end=None,
-                        city=location_el.get_text(strip=True) if location_el else "En ligne",
-                        region="France",
-                        address=None,
-                        format=event_format,
-                        organizer="APEC",
-                        description=None,
-                        url=link_el.get('href', url) if link_el else url,
-                        source="apec"
-                    )
-                    events.append(event)
-                    
-                except Exception as e:
-                    continue
-                    
-    except Exception as e:
-        logger.error(f"[JOB_FAIRS] APEC scraping error: {e}")
-    
-    return events
-
-
-async def scrape_cci_events(region: str = "") -> List[JobFair]:
-    """
-    Scrape les événements CCI France.
-    Source institutionnelle très fiable.
-    """
-    events = []
-    
-    # Liste des CCI régionales avec leurs URLs
-    cci_urls = [
-        ("https://www.cci-paris-idf.fr/evenements", "Île-de-France"),
-        ("https://www.lyon-metropole.cci.fr/evenements", "Auvergne-Rhône-Alpes"),
-        ("https://www.ccimbo.fr/evenements", "Bretagne"),
-    ]
-    
-    try:
-        async with httpx.AsyncClient(timeout=15, headers=HEADERS) as client:
-            for url, cci_region in cci_urls:
-                if region and region.lower() not in cci_region.lower():
-                    continue
-                    
-                try:
-                    response = await client.get(url)
-                    if response.status_code != 200:
-                        continue
-                    
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    event_cards = soup.select('.event, .evenement, article')
-                    
-                    for card in event_cards[:10]:
-                        try:
-                            title_el = card.select_one('h2, h3, .title')
-                            if not title_el:
-                                continue
-                            
-                            title = title_el.get_text(strip=True)
-                            
-                            # Filtrer pour garder seulement les événements emploi
-                            if not any(kw in title.lower() for kw in ['emploi', 'recrutement', 'job', 'alternance', 'stage', 'carrière']):
-                                continue
-                            
-                            event = JobFair(
-                                title=title,
-                                event_type=classify_event_type(title),
-                                public="tous",
-                                sector=classify_sector(title),
-                                level="tous",
-                                date_start=datetime.now().strftime("%Y-%m-%d"),
-                                date_end=None,
-                                time_start=None,
-                                time_end=None,
-                                city=cci_region.split('-')[0] if '-' in cci_region else cci_region,
-                                region=cci_region,
-                                address=None,
-                                format="physique",
-                                organizer=f"CCI {cci_region}",
-                                description=None,
-                                url=url,
-                                source="cci"
-                            )
-                            events.append(event)
-                            
-                        except Exception:
-                            continue
-                            
-                except Exception:
-                    continue
-                    
-    except Exception as e:
-        logger.error(f"[JOB_FAIRS] CCI scraping error: {e}")
-    
-    return events
-
-
-# ==========================================
-# MOCK DATA (fallback si scraping échoue)
-# ==========================================
-
-def get_mock_job_fairs() -> List[JobFair]:
-    """Données de test / fallback"""
-    now = datetime.now()
-    
-    return [
-        JobFair(
-            title="Forum Emploi Paris 2026",
-            event_type="forum",
-            public="tous",
-            sector="tous",
-            level="tous",
-            date_start=(now + timedelta(days=15)).strftime("%Y-%m-%d"),
-            date_end=(now + timedelta(days=16)).strftime("%Y-%m-%d"),
-            time_start="09:00",
-            time_end="18:00",
-            city="Paris",
-            region="Île-de-France",
-            address="Parc des Expositions, Porte de Versailles",
-            format="physique",
-            organizer="Paris pour l'Emploi",
-            description="Plus de 200 entreprises qui recrutent",
-            url="https://www.paris.fr/emploi",
-            source="mock",
-            companies_count=200,
-            is_free=True
-        ),
-        JobFair(
-            title="Salon de l'Alternance Lyon",
-            event_type="salon",
-            public="etudiants",
-            sector="tous",
-            level="bac+2",
-            date_start=(now + timedelta(days=30)).strftime("%Y-%m-%d"),
-            date_end=None,
-            time_start="10:00",
-            time_end="17:00",
-            city="Lyon",
-            region="Auvergne-Rhône-Alpes",
-            address="Cité Internationale",
-            format="physique",
-            organizer="L'Etudiant",
-            description="Trouvez votre alternance parmi 150 entreprises",
-            url="https://www.letudiant.fr/salons/lyon",
-            source="mock",
-            companies_count=150,
-            is_free=True
-        ),
-        JobFair(
-            title="Job Dating Tech - 100% Remote",
-            event_type="job_dating",
-            public="pros",
-            sector="tech",
-            level="bac+5",
-            date_start=(now + timedelta(days=7)).strftime("%Y-%m-%d"),
-            date_end=None,
-            time_start="14:00",
-            time_end="18:00",
-            city="En ligne",
-            region="France",
-            address=None,
-            format="virtuel",
-            organizer="Welcome to the Jungle",
-            description="Rencontrez 30 startups tech en visio",
-            url="https://www.welcometothejungle.com/events",
-            source="mock",
-            companies_count=30,
-            is_free=True
-        ),
-        JobFair(
-            title="Forum Emploi Seniors & Reconversion",
-            event_type="forum",
-            public="seniors",
-            sector="tous",
-            level="tous",
-            date_start=(now + timedelta(days=45)).strftime("%Y-%m-%d"),
-            date_end=None,
-            time_start="09:00",
-            time_end="17:00",
-            city="Marseille",
-            region="Provence-Alpes-Côte d'Azur",
-            address="Palais du Pharo",
-            format="physique",
-            organizer="France Travail",
-            description="Événement dédié aux +45 ans et reconversions",
-            url="https://www.francetravail.fr/evenements",
-            source="mock",
-            companies_count=80,
-            is_free=True
-        ),
-        JobFair(
-            title="Salon Industrie & BTP Toulouse",
-            event_type="salon",
-            public="tous",
-            sector="industrie",
-            level="tous",
-            date_start=(now + timedelta(days=60)).strftime("%Y-%m-%d"),
-            date_end=(now + timedelta(days=61)).strftime("%Y-%m-%d"),
-            time_start="08:30",
-            time_end="18:00",
-            city="Toulouse",
-            region="Occitanie",
-            address="MEETT - Parc des Expositions",
-            format="physique",
-            organizer="CCI Occitanie",
-            description="Métiers de l'industrie, BTP et aéronautique",
-            url="https://www.toulouse.cci.fr",
-            source="mock",
-            companies_count=120,
-            is_free=True
-        ),
-        JobFair(
-            title="Forum Santé & Médico-Social Nantes",
-            event_type="forum",
-            public="tous",
-            sector="sante",
-            level="tous",
-            date_start=(now + timedelta(days=20)).strftime("%Y-%m-%d"),
-            date_end=None,
-            time_start="09:00",
-            time_end="17:00",
-            city="Nantes",
-            region="Pays de la Loire",
-            address="Cité des Congrès",
-            format="physique",
-            organizer="ARS Pays de la Loire",
-            description="Hôpitaux, EHPAD, cliniques recrutent",
-            url="https://www.ars.sante.fr/evenements",
-            source="mock",
-            companies_count=60,
-            is_free=True
-        ),
-    ]
+    logger.info(f"[LETUDIANT] Scraped {len(unique)} unique salons")
+    return unique
 
 
 # ==========================================
 # HELPERS
 # ==========================================
 
-def parse_french_date(text: str) -> str:
-    """Parse une date française vers YYYY-MM-DD"""
+def _parse_iso_date(text: str) -> str:
     if not text:
         return datetime.now().strftime("%Y-%m-%d")
-    
-    text = text.lower().strip()
-    
-    # Mois français
-    months = {
-        'janvier': 1, 'février': 2, 'mars': 3, 'avril': 4,
-        'mai': 5, 'juin': 6, 'juillet': 7, 'août': 8,
-        'septembre': 9, 'octobre': 10, 'novembre': 11, 'décembre': 12,
-        'janv': 1, 'févr': 2, 'avr': 4, 'juil': 7,
-        'sept': 9, 'oct': 10, 'nov': 11, 'déc': 12
+    if "T" in text or re.match(r"\d{4}-\d{2}-\d{2}", text):
+        return text[:10]
+    match = re.search(r"(\d{1,2})[/\-](\d{1,2})[/\-](\d{2,4})", text)
+    if match:
+        d, m, y = int(match.group(1)), int(match.group(2)), int(match.group(3))
+        if y < 100:
+            y += 2000
+        return f"{y}-{m:02d}-{d:02d}"
+    return parse_french_date(text)
+
+
+def _extract_date_from_text(text: str) -> str:
+    months_fr = {
+        "janvier": 1, "février": 2, "mars": 3, "avril": 4,
+        "mai": 5, "juin": 6, "juillet": 7, "août": 8,
+        "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12,
+        "february": 2, "march": 3, "january": 1, "april": 4,
+        "may": 5, "june": 6, "july": 7, "august": 8,
+        "september": 9, "october": 10, "november": 11, "december": 12,
     }
-    
-    # Pattern: "15 janvier 2026" ou "15/01/2026"
+    text_lower = text.lower()
+    for month_name, month_num in months_fr.items():
+        match = re.search(r"(\d{1,2})\s*" + month_name, text_lower)
+        if match:
+            day = int(match.group(1))
+            year = datetime.now().year
+            try:
+                dt = datetime(year, month_num, day)
+                if dt < datetime.now():
+                    year += 1
+            except ValueError:
+                pass
+            return f"{year}-{month_num:02d}-{day:02d}"
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+def _extract_end_date_from_text(text: str, start_date: str) -> Optional[str]:
+    months_fr = {
+        "janvier": 1, "février": 2, "mars": 3, "avril": 4,
+        "mai": 5, "juin": 6, "juillet": 7, "août": 8,
+        "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12,
+        "february": 2, "march": 3, "january": 1, "april": 4,
+        "may": 5, "june": 6, "july": 7, "august": 8,
+        "september": 9, "october": 10, "november": 11, "december": 12,
+    }
+    text_lower = text.lower()
+    for month_name, month_num in months_fr.items():
+        match = re.search(r"(\d{1,2})\s*[-–]\s*(\d{1,2})\s*" + month_name, text_lower)
+        if match:
+            end_day = int(match.group(2))
+            try:
+                year = int(start_date[:4])
+            except (ValueError, IndexError):
+                year = datetime.now().year
+            return f"{year}-{month_num:02d}-{end_day:02d}"
+    return None
+
+
+def parse_french_date(text: str) -> str:
+    if not text:
+        return datetime.now().strftime("%Y-%m-%d")
+    text = text.lower().strip()
+    months = {
+        "janvier": 1, "février": 2, "mars": 3, "avril": 4,
+        "mai": 5, "juin": 6, "juillet": 7, "août": 8,
+        "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12,
+        "janv": 1, "févr": 2, "avr": 4, "juil": 7,
+        "sept": 9, "oct": 10, "nov": 11, "déc": 12,
+    }
     for month_name, month_num in months.items():
         if month_name in text:
-            match = re.search(r'(\d{1,2})\s*' + month_name + r'\s*(\d{4})?', text)
+            match = re.search(r"(\d{1,2})\s*" + month_name + r"\s*(\d{4})?", text)
             if match:
                 day = int(match.group(1))
                 year = int(match.group(2)) if match.group(2) else datetime.now().year
                 return f"{year}-{month_num:02d}-{day:02d}"
-    
-    # Pattern numérique
-    match = re.search(r'(\d{1,2})[/\-](\d{1,2})[/\-](\d{2,4})', text)
+    match = re.search(r"(\d{1,2})[/\-](\d{1,2})[/\-](\d{2,4})", text)
     if match:
         day, month, year = int(match.group(1)), int(match.group(2)), int(match.group(3))
         if year < 100:
             year += 2000
         return f"{year}-{month:02d}-{day:02d}"
-    
     return datetime.now().strftime("%Y-%m-%d")
 
 
 def classify_event_type(title: str) -> str:
-    """Détermine le type d'événement"""
-    title_lower = title.lower()
-    
-    if 'job dating' in title_lower or 'jobdating' in title_lower:
-        return 'job_dating'
-    elif 'webinar' in title_lower or 'visio' in title_lower or 'en ligne' in title_lower:
-        return 'webinar'
-    elif 'forum' in title_lower:
-        return 'forum'
-    elif 'salon' in title_lower:
-        return 'salon'
-    else:
-        return 'salon'
+    t = title.lower()
+    if "job dating" in t or "jobdating" in t:
+        return "job_dating"
+    elif "webinar" in t or "visio" in t or "en ligne" in t or "webinaire" in t:
+        return "webinar"
+    elif "forum" in t:
+        return "forum"
+    elif "salon" in t:
+        return "salon"
+    elif "atelier" in t or "réunion" in t or "information" in t:
+        return "forum"
+    return "salon"
 
 
 def classify_public(title: str) -> str:
-    """Détermine le public cible"""
-    title_lower = title.lower()
-    
-    if any(kw in title_lower for kw in ['étudiant', 'etudiant', 'jeune diplômé', 'alternance', 'stage']):
-        return 'etudiants'
-    elif any(kw in title_lower for kw in ['senior', '+45', '+50', 'reconversion']):
-        return 'seniors'
-    elif any(kw in title_lower for kw in ['cadre', 'manager', 'dirigeant']):
-        return 'pros'
-    else:
-        return 'tous'
+    t = title.lower()
+    if any(kw in t for kw in ["étudiant", "etudiant", "jeune diplômé", "alternance", "stage", "apprenti"]):
+        return "etudiants"
+    elif any(kw in t for kw in ["senior", "+45", "+50", "reconversion"]):
+        return "seniors"
+    elif any(kw in t for kw in ["cadre", "manager", "dirigeant", "ingénieur"]):
+        return "pros"
+    elif any(kw in t for kw in ["handicap", "rqth", "cap emploi"]):
+        return "handicap"
+    return "tous"
 
 
 def classify_sector(title: str) -> str:
-    """Détermine le secteur"""
-    title_lower = title.lower()
-    
+    t = title.lower()
     sectors = {
-        'tech': ['tech', 'it', 'développeur', 'data', 'cyber', 'numérique', 'digital', 'startup'],
-        'industrie': ['industrie', 'btp', 'construction', 'aéronautique', 'automobile', 'mécanique'],
-        'sante': ['santé', 'médical', 'hôpital', 'ehpad', 'paramédical', 'infirmier'],
-        'commerce': ['commerce', 'vente', 'retail', 'distribution'],
-        'finance': ['banque', 'finance', 'assurance', 'comptabilité'],
-        'public': ['fonction publique', 'territorial', 'état', 'collectivité'],
+        "tech": ["tech", "it", "développeur", "data", "cyber", "numérique", "digital", "startup", "informatique"],
+        "industrie": ["industrie", "btp", "construction", "aéronautique", "automobile", "mécanique", "travaux publics"],
+        "sante": ["santé", "médical", "hôpital", "ehpad", "paramédical", "infirmier", "médico-social", "aide-soignant"],
+        "commerce": ["commerce", "vente", "retail", "distribution", "vendeur"],
+        "finance": ["banque", "finance", "assurance", "comptabilité"],
+        "hotellerie": ["hôtellerie", "restauration", "tourisme", "hrt"],
+        "transport": ["transport", "logistique", "supply chain"],
+        "education": ["éducation", "formation", "enseignement"],
+        "public": ["fonction publique", "territorial", "état", "collectivité"],
     }
-    
     for sector, keywords in sectors.items():
-        if any(kw in title_lower for kw in keywords):
+        if any(kw in t for kw in keywords):
             return sector
-    
-    return 'tous'
+    return "tous"
 
 
 def detect_level(title: str) -> str:
-    """Détecte le niveau d'études"""
-    title_lower = title.lower()
-    
-    if 'bac+5' in title_lower or 'master' in title_lower or 'ingénieur' in title_lower:
-        return 'bac+5'
-    elif 'bac+3' in title_lower or 'licence' in title_lower:
-        return 'bac+3'
-    elif 'bac+2' in title_lower or 'bts' in title_lower or 'dut' in title_lower:
-        return 'bac+2'
-    elif 'bac' in title_lower:
-        return 'bac'
-    else:
-        return 'tous'
+    t = title.lower()
+    if "bac+5" in t or "master" in t or "ingénieur" in t:
+        return "bac+5"
+    elif "bac+3" in t or "licence" in t:
+        return "bac+3"
+    elif "bac+2" in t or "bts" in t or "dut" in t:
+        return "bac+2"
+    elif "bac" in t and "bac+" not in t:
+        return "bac"
+    return "tous"
 
 
 def detect_region(city: str) -> str:
-    """Détecte la région depuis la ville"""
-    city_lower = city.lower()
-    
+    c = city.lower()
     regions = {
-        'Île-de-France': ['paris', 'boulogne', 'nanterre', 'versailles', 'créteil'],
-        'Auvergne-Rhône-Alpes': ['lyon', 'grenoble', 'saint-étienne', 'clermont'],
-        'Provence-Alpes-Côte d\'Azur': ['marseille', 'nice', 'toulon', 'aix'],
-        'Occitanie': ['toulouse', 'montpellier', 'nîmes', 'perpignan'],
-        'Nouvelle-Aquitaine': ['bordeaux', 'limoges', 'poitiers', 'pau'],
-        'Pays de la Loire': ['nantes', 'angers', 'le mans', 'saint-nazaire'],
-        'Bretagne': ['rennes', 'brest', 'lorient', 'quimper'],
-        'Hauts-de-France': ['lille', 'amiens', 'dunkerque', 'calais'],
-        'Grand Est': ['strasbourg', 'metz', 'nancy', 'reims'],
-        'Normandie': ['rouen', 'le havre', 'caen', 'cherbourg'],
+        "Île-de-France": ["paris", "boulogne", "nanterre", "versailles", "créteil", "saint-denis", "montreuil"],
+        "Auvergne-Rhône-Alpes": ["lyon", "grenoble", "saint-étienne", "clermont", "annecy", "valence", "vaulx"],
+        "Provence-Alpes-Côte d'Azur": ["marseille", "nice", "toulon", "aix", "avignon", "cannes", "brignoles"],
+        "Occitanie": ["toulouse", "montpellier", "nîmes", "perpignan", "béziers"],
+        "Nouvelle-Aquitaine": ["bordeaux", "limoges", "poitiers", "pau", "bayonne", "la rochelle"],
+        "Pays de la Loire": ["nantes", "angers", "le mans", "saint-nazaire", "laval"],
+        "Bretagne": ["rennes", "brest", "lorient", "quimper", "vannes"],
+        "Hauts-de-France": ["lille", "amiens", "dunkerque", "calais", "roubaix", "tourcoing"],
+        "Grand Est": ["strasbourg", "metz", "nancy", "reims", "mulhouse", "colmar"],
+        "Normandie": ["rouen", "le havre", "caen", "cherbourg", "dieppe"],
+        "Centre-Val de Loire": ["tours", "orléans", "bourges", "blois", "chartres"],
+        "Bourgogne-Franche-Comté": ["dijon", "besançon", "auxerre", "belfort", "chalon"],
+        "Corse": ["ajaccio", "bastia"],
     }
-    
     for region, cities in regions.items():
-        if any(c in city_lower for c in cities):
+        if any(v in c for v in cities):
             return region
-    
-    return 'France'
+    return "France"
 
 
 # ==========================================
@@ -623,36 +553,19 @@ async def search_job_fairs(
     public: str = "",
     event_type: str = "",
     format_type: str = "",
-    include_mock: bool = True
 ) -> Dict[str, Any]:
-    """
-    Recherche agrégée de salons d'emploi.
-    
-    Args:
-        region: Filtrer par région (ex: "Île-de-France")
-        sector: Filtrer par secteur (tech, industrie, sante, etc.)
-        public: Filtrer par public (etudiants, pros, seniors, tous)
-        event_type: Filtrer par type (salon, forum, job_dating, webinar)
-        format_type: Filtrer par format (physique, virtuel, hybride)
-        include_mock: Inclure les données mock si scraping échoue
-    
-    Returns:
-        Dict avec events, count, sources, filters
-    """
+    """Recherche agrégée: France Travail API + L'Étudiant scraping."""
     all_events: List[JobFair] = []
-    sources_used = []
-    errors = []
-    
-    # Lancer les scrapers en parallèle
+    sources_used: List[str] = []
+    errors: List[str] = []
+
     tasks = [
-        ("france_travail", scrape_pole_emploi_events(region, sector)),
-        ("letudiant", scrape_letudiant_salons(public)),
-        ("apec", scrape_apec_events()),
-        ("cci", scrape_cci_events(region)),
+        ("france_travail", fetch_france_travail_events(region, sector, event_type)),
+        ("letudiant", scrape_letudiant_salons()),
     ]
-    
+
     results = await asyncio.gather(*[t[1] for t in tasks], return_exceptions=True)
-    
+
     for (source_name, _), result in zip(tasks, results):
         if isinstance(result, Exception):
             errors.append(f"{source_name}: {str(result)}")
@@ -661,39 +574,29 @@ async def search_job_fairs(
             all_events.extend(result)
             sources_used.append(source_name)
             logger.info(f"[JOB_FAIRS] {source_name}: {len(result)} events")
-    
-    # Fallback sur mock si peu de résultats
-    if len(all_events) < 3 and include_mock:
-        mock_events = get_mock_job_fairs()
-        all_events.extend(mock_events)
-        sources_used.append("mock")
-        logger.info(f"[JOB_FAIRS] Added {len(mock_events)} mock events")
-    
-    # Appliquer les filtres
-    filtered_events = all_events
-    
+        else:
+            logger.info(f"[JOB_FAIRS] {source_name}: 0 events")
+
+    filtered = all_events
+
     if region:
-        filtered_events = [e for e in filtered_events if region.lower() in e.region.lower() or region.lower() in e.city.lower()]
-    
+        r = region.lower()
+        filtered = [e for e in filtered if r in e.region.lower() or r in e.city.lower()]
     if sector and sector != "tous":
-        filtered_events = [e for e in filtered_events if e.sector == sector or e.sector == "tous"]
-    
+        filtered = [e for e in filtered if e.sector == sector or e.sector == "tous"]
     if public and public != "tous":
-        filtered_events = [e for e in filtered_events if e.public == public or e.public == "tous"]
-    
+        filtered = [e for e in filtered if e.public == public or e.public == "tous"]
     if event_type:
-        filtered_events = [e for e in filtered_events if e.event_type == event_type]
-    
+        filtered = [e for e in filtered if e.event_type == event_type]
     if format_type:
-        filtered_events = [e for e in filtered_events if e.format == format_type]
-    
-    # Trier par date
-    filtered_events.sort(key=lambda e: e.date_start)
-    
+        filtered = [e for e in filtered if e.format == format_type]
+
+    filtered.sort(key=lambda e: e.date_start)
+
     return {
         "success": True,
-        "events": [e.to_dict() for e in filtered_events],
-        "count": len(filtered_events),
+        "events": [e.to_dict() for e in filtered],
+        "count": len(filtered),
         "total_scraped": len(all_events),
         "sources": sources_used,
         "errors": errors if errors else None,
@@ -702,8 +605,8 @@ async def search_job_fairs(
             "sector": sector or None,
             "public": public or None,
             "event_type": event_type or None,
-            "format": format_type or None
-        }
+            "format": format_type or None,
+        },
     }
 
 
@@ -713,9 +616,16 @@ async def search_job_fairs(
 
 if __name__ == "__main__":
     import json
-    
+
     async def test():
-        result = await search_job_fairs(region="", sector="", public="")
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-    
+        print("Testing job fairs scraper...")
+        result = await search_job_fairs()
+        print(f"\nTotal: {result['count']} events")
+        print(f"Sources: {result['sources']}")
+        if result.get("errors"):
+            print(f"Errors: {result['errors']}")
+        for e in result["events"][:5]:
+            print(f"  [{e['source']}] {e['title']}")
+            print(f"    {e['date_start']} | {e['city']} ({e['region']})")
+
     asyncio.run(test())
