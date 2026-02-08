@@ -49,17 +49,32 @@ export function AuthProvider({
   const router = useRouter()
 
   useEffect(() => {
-    // Get initial session with error handling
-    supabaseClient.auth.getSession()
-      .then(({ data: { session } }) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error('Failed to get session:', err)
-        setLoading(false)
-      })
+    const initializeAuth = async () => {
+      if (initialUser) {
+        // User fourni par SSR, fetch seulement session
+        try {
+          const { data: { session } } = await supabaseClient.auth.getSession()
+          setSession(session)
+          // Ne pas toucher user (déjà set par initialUser)
+        } catch (err) {
+          console.error('Failed to get session:', err)
+        }
+        // Pas de setLoading(false) - déjà false
+      } else {
+        // Pas d'initialUser, fetch complet
+        try {
+          const { data: { session } } = await supabaseClient.auth.getSession()
+          setSession(session)
+          setUser(session?.user ?? null)
+        } catch (err) {
+          console.error('Failed to get session:', err)
+        } finally {
+          setLoading(false)
+        }
+      }
+    }
+
+    initializeAuth()
 
     // Listen for auth changes
     const {
@@ -109,13 +124,22 @@ export function AuthProvider({
     )
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [initialUser])
 
   const clearError = () => setError(null)
 
   const signInWithGoogle = async () => {
     try {
       setError(null)
+
+      // Capturer redirectTo et stocker dans cookie avant OAuth
+      const params = new URLSearchParams(window.location.search)
+      const redirectTo = params.get('redirectTo')
+
+      if (redirectTo) {
+        document.cookie = `huntzen_redirect_after_auth=${encodeURIComponent(redirectTo)}; path=/; max-age=600; SameSite=Lax`
+      }
+
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -143,6 +167,8 @@ export function AuthProvider({
   const signInWithEmail = async (email: string, password: string) => {
     try {
       setError(null)
+      setLoading(true)
+
       const { data, error } = await supabaseClient.auth.signInWithPassword({
         email,
         password,
@@ -161,14 +187,17 @@ export function AuthProvider({
 
       if (redirectTo && redirectTo.startsWith('/')) {
         router.push(redirectTo)
-        router.refresh() // Force server components to refetch with new session
       } else {
         router.push('/jobs')
-        router.refresh() // Force server components to refetch with new session
       }
+
+      // Reset loading après navigation initiale
+      setTimeout(() => setLoading(false), 100)
+
     } catch (err: any) {
       console.error('Email sign in error:', err)
       setError(err.message || 'Invalid email or password')
+      setLoading(false)
 
       // Log failed login
       await logLoginFailed(email, err.message)
@@ -184,6 +213,8 @@ export function AuthProvider({
   const signUpWithEmail = async (email: string, password: string, fullName: string) => {
     try {
       setError(null)
+      setLoading(true)
+
       const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
@@ -212,9 +243,14 @@ export function AuthProvider({
 
       // Redirect to login with success message
       router.push('/login?message=Check your email to confirm your account')
+
+      // Reset loading
+      setTimeout(() => setLoading(false), 100)
+
     } catch (err: any) {
       console.error('Sign up error:', err)
       setError(err.message || 'Failed to create account')
+      setLoading(false)
       throw err
     }
   }

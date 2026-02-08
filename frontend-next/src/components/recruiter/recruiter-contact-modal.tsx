@@ -69,7 +69,7 @@ export function RecruiterContactModal({
     e.preventDefault()
     if (!user) {
       onClose()
-      router.push('/login?redirect=/recruiter-contact')
+      router.push('/login?redirectTo=' + encodeURIComponent('/recruiter-contact'))
       return
     }
 

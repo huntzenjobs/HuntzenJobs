@@ -84,8 +84,23 @@ export function CVUploadAsyncWizard({
   openPricingModal,
   hasFeatures
 }: CVUploadAsyncWizardProps) {
-  const { session, user } = useAuth();
+  const { session, user, loading } = useAuth();
   const router = useRouter();
+
+  // ============================================
+  // LOADING CHECK - Skeleton pendant vérification auth
+  // ============================================
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+          <p className="text-gray-600">Vérification de votre session...</p>
+        </div>
+      </div>
+    );
+  }
 
   // ============================================
   // AUTH CHECK - Force authentication for CV analysis
@@ -134,13 +149,13 @@ export function CVUploadAsyncWizard({
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => router.push('/signup?redirect=/cv-analysis')}
+              onClick={() => router.push('/signup?redirectTo=' + encodeURIComponent('/cv-analysis'))}
               className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
             >
               Créer un compte gratuit
             </button>
             <button
-              onClick={() => router.push('/login?redirect=/cv-analysis')}
+              onClick={() => router.push('/login?redirectTo=' + encodeURIComponent('/cv-analysis'))}
               className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-blue-500 transition-all"
             >
               J'ai déjà un compte

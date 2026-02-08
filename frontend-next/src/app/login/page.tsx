@@ -35,6 +35,17 @@ function LoginForm() {
 
     if (msg) setMessage(msg)
     if (err) setMessage(err)
+
+    // Auto-clear après 5s
+    if (msg || err) {
+      const timer = setTimeout(() => {
+        setMessage(null)
+        // Nettoyer URL sans reload
+        window.history.replaceState({}, '', window.location.pathname)
+      }, 5000)
+
+      return () => clearTimeout(timer)
+    }
   }, [searchParams])
 
   const handleGoogleSignIn = async () => {
@@ -53,6 +64,10 @@ function LoginForm() {
       setLoading(true)
       clearError()
       await signInWithEmail(email, password)
+
+      // Reset form après succès
+      setEmail('')
+      setPassword('')
     } catch (err) {
       setLoading(false)
     }

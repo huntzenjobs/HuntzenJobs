@@ -35,7 +35,7 @@ export function UnlockOverlay({
 
   const handleUnlock = (mode: 'login' | 'signup') => {
     const path = mode === 'login' ? '/login' : '/signup'
-    router.push(`${path}?redirect=${redirectPath}`)
+    router.push(`${path}?redirectTo=${encodeURIComponent(redirectPath)}`)
   }
 
   const isRightSide = position === 'right-side'
@@ -197,7 +197,7 @@ export function UnlockOverlay({
         .unlock-overlay {
           position: fixed;
           inset: 0;
-          z-index: 9999;
+          z-index: 50;
           overflow: hidden;
         }
 

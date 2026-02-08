@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
   const errorDescription = requestUrl.searchParams.get('error_description')
   const origin = requestUrl.origin
 
+  // Read redirect cookie set before OAuth flow
+  const redirectCookie = request.cookies.get('huntzen_redirect_after_auth')
+  const redirectTo = redirectCookie?.value ? decodeURIComponent(redirectCookie.value) : null
+
   // Handle OAuth errors from Google
   if (error) {
     await logSecurityEvent({
@@ -46,9 +50,17 @@ export async function GET(request: NextRequest) {
         }
       })
 
-      // Successful auth, redirect to jobs dashboard
-      // AuthProvider will automatically detect session from cookies and update context
-      return NextResponse.redirect(`${origin}/jobs`)
+      // Determine final redirect destination from cookie or default to /jobs
+      const finalRedirect = redirectTo && redirectTo.startsWith('/')
+        ? redirectTo
+        : '/jobs'
+
+      const response = NextResponse.redirect(`${origin}${finalRedirect}`)
+
+      // Delete cookie after successful use
+      response.cookies.delete('huntzen_redirect_after_auth')
+
+      return response
     }
 
     // Log session exchange failure

@@ -23,7 +23,7 @@ function SignupForm() {
   const { user, signInWithGoogle, signUpWithEmail, error, clearError } = useAuth()
 
   // Detect CV analysis redirect
-  const redirectTo = searchParams.get('redirect')
+  const redirectTo = searchParams.get('redirectTo')
   const message = searchParams.get('message')
   const showCVMessage = redirectTo === '/cv-analysis' || message === 'auth_required'
 
@@ -64,6 +64,12 @@ function SignupForm() {
       setPasswordError('')
       clearError()
       await signUpWithEmail(email, password, fullName)
+
+      // Reset form après succès
+      setFullName('')
+      setEmail('')
+      setPassword('')
+      setConfirmPassword('')
     } catch (err) {
       setLoading(false)
     }

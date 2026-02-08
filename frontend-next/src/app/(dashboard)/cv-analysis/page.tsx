@@ -1,13 +1,13 @@
 'use client'
 
-import { FileText } from 'lucide-react'
+import { FileText, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useSubscription } from '@/contexts/subscription-context'
 import { UsageCounter } from '@/components/freemium/usage-counter'
 import { CVUploadAsyncWizard } from '@/components/cv/cv-upload-async-wizard'
 
 export default function CVAnalysisPage() {
-  const { session } = useAuth()
+  const { session, loading } = useAuth()
 
   // Freemium state
   const {
@@ -16,6 +16,18 @@ export default function CVAnalysisPage() {
     hasFeature,
     openPricingModal,
   } = useSubscription()
+
+  // Skeleton pendant vérification auth
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+          <p className="text-gray-600">Chargement de votre espace...</p>
+        </div>
+      </div>
+    )
+  }
 
   // Main page content
   const pageContent = (
