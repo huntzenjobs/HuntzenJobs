@@ -16,6 +16,8 @@ eggs/
 .eggs/
 lib/
 lib64/
+# Exception: Don't ignore frontend lib directory
+!frontend-next/src/lib/
 parts/
 sdist/
 var/
