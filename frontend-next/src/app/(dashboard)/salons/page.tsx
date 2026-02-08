@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import DOMPurify from 'dompurify'
+import { FeaturedEventsCarousel } from '@/components/salons/featured-events-carousel'
 
 // Fonction pour nettoyer le HTML et extraire le texte brut
 function stripHtml(html: string): string {
@@ -115,7 +116,7 @@ export default function SalonsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-huntzen-blue to-blue-600 bg-clip-text text-transparent">
               Salons & Forums Emploi
             </h1>
             <p className="text-gray-600 mt-2 text-lg">
@@ -130,8 +131,8 @@ export default function SalonsPage() {
             className={cn(
               "flex items-center gap-2 border-2 transition-all",
               showFilters
-                ? "border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100"
-                : "border-gray-300 hover:border-violet-300"
+                ? "border-blue-300 bg-blue-50 text-huntzen-blue hover:bg-blue-100"
+                : "border-gray-300 hover:border-blue-300"
             )}
           >
             <Filter className="size-4" />
@@ -143,7 +144,7 @@ export default function SalonsPage() {
         {!loading && !error && (
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center gap-2">
-              <Calendar className="size-4 text-violet-600" />
+              <Calendar className="size-4 text-huntzen-blue" />
               <span className="font-medium">
                 {events.length} événement{events.length > 1 ? 's' : ''} disponible{events.length > 1 ? 's' : ''}
               </span>
@@ -168,11 +169,11 @@ export default function SalonsPage() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="mb-8"
           >
-            <Card className="border-2 border-violet-100 shadow-lg bg-gradient-to-br from-white to-violet-50/30">
-              <CardHeader className="bg-gradient-to-r from-violet-50 to-purple-50 border-b border-violet-100">
+            <Card className="border-2 border-blue-100 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-huntzen-blue to-blue-600 flex items-center justify-center">
                       <Filter className="size-4 text-white" />
                     </div>
                     <CardTitle className="text-lg font-bold text-gray-900">Filtres de recherche</CardTitle>
@@ -182,7 +183,7 @@ export default function SalonsPage() {
                       variant="ghost"
                       size="sm"
                       onClick={clearFilters}
-                      className="text-xs text-violet-600 hover:text-violet-700 hover:bg-violet-100"
+                      className="text-xs text-huntzen-blue hover:text-huntzen-blue hover:bg-blue-100"
                     >
                       <X className="size-3 mr-1" />
                       Réinitialiser
@@ -286,7 +287,7 @@ export default function SalonsPage() {
                     onClick={searchEvents}
                     disabled={loading}
                     size="lg"
-                    className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md text-white font-semibold"
+                    className="bg-gradient-to-r from-huntzen-blue to-blue-600 hover:from-blue-700 hover:to-blue-800 shadow-md text-white font-semibold"
                   >
                     {loading ? (
                       <>
@@ -312,6 +313,11 @@ export default function SalonsPage() {
         )}
       </AnimatePresence>
 
+      {/* Featured Events - NOUVEAU */}
+      {!loading && !error && events.length > 0 && (
+        <FeaturedEventsCarousel events={events} />
+      )}
+
       {/* Error state */}
       {error && (
         <motion.div
@@ -327,16 +333,16 @@ export default function SalonsPage() {
       {loading && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="animate-pulse border-2 border-violet-100">
-              <CardHeader className="bg-gradient-to-r from-violet-50 to-purple-50">
-                <div className="h-6 bg-violet-200 rounded-lg w-3/4 mb-2" />
-                <div className="h-4 bg-violet-100 rounded-lg w-1/2" />
+            <Card key={i} className="animate-pulse border-2 border-blue-100">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+                <div className="h-6 bg-blue-200 rounded-lg w-3/4 mb-2" />
+                <div className="h-4 bg-blue-100 rounded-lg w-1/2" />
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
                 <div className="h-4 bg-gray-200 rounded-lg" />
                 <div className="h-4 bg-gray-200 rounded-lg w-5/6" />
                 <div className="h-4 bg-gray-200 rounded-lg w-4/6" />
-                <div className="h-10 bg-violet-100 rounded-lg w-full mt-4" />
+                <div className="h-10 bg-blue-100 rounded-lg w-full mt-4" />
               </CardContent>
             </Card>
           ))}
@@ -352,10 +358,10 @@ export default function SalonsPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="col-span-full"
             >
-              <Card className="border-2 border-dashed border-violet-200 bg-gradient-to-br from-violet-50/50 to-purple-50/50">
+              <Card className="border-2 border-dashed border-blue-200 bg-gradient-to-br from-blue-50/50 to-cyan-50/50">
                 <CardContent className="flex flex-col items-center justify-center py-16">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mb-4">
-                    <Calendar className="size-8 text-violet-600" />
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center mb-4">
+                    <Calendar className="size-8 text-huntzen-blue" />
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     Aucun événement trouvé
@@ -369,7 +375,7 @@ export default function SalonsPage() {
                     <Button
                       variant="outline"
                       onClick={clearFilters}
-                      className="mt-6 border-violet-300 text-violet-700 hover:bg-violet-50"
+                      className="mt-6 border-blue-300 text-huntzen-blue hover:bg-blue-50"
                     >
                       <X className="size-4 mr-2" />
                       Effacer les filtres
@@ -405,9 +411,9 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
       case 'physique':
         return 'bg-blue-500 text-white'
       case 'virtuel':
-        return 'bg-purple-500 text-white'
+        return 'bg-blue-500 text-white'
       case 'hybride':
-        return 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+        return 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
       default:
         return 'bg-gray-500 text-white'
     }
@@ -416,7 +422,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
   const getEventTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case 'salon':
-        return 'bg-violet-100 text-violet-700 border-violet-200'
+        return 'bg-blue-100 text-huntzen-blue border-blue-200'
       case 'forum':
         return 'bg-blue-100 text-blue-700 border-blue-200'
       case 'job_dating':
@@ -435,16 +441,16 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className="h-full"
     >
-      <Card className="h-full flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 border-violet-100 hover:border-violet-300 bg-white overflow-hidden">
+      <Card className="h-full flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 border-blue-100 hover:border-blue-300 bg-white overflow-hidden">
         {/* Header - hauteur fixe */}
-        <div className="bg-gradient-to-r from-violet-50 via-purple-50 to-violet-50 border-b border-violet-100 p-4 h-[88px] flex items-center">
+        <div className="bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 border-b border-blue-100 p-4 h-[88px] flex items-center">
           <div className="flex items-start justify-between gap-3 w-full">
             <div className="flex-1 min-w-0">
               <h3 className="text-base font-bold line-clamp-1 text-gray-900 mb-1.5 leading-tight">
                 {event.title}
               </h3>
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded bg-gradient-to-br from-huntzen-blue to-blue-600 flex items-center justify-center shrink-0">
                   <Building2 className="size-3 text-white" />
                 </div>
                 <span className="font-medium text-gray-700 text-xs truncate">{event.organizer}</span>
@@ -543,7 +549,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             <Button
               asChild
               size="sm"
-              className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md font-semibold text-xs h-9"
+              className="w-full bg-gradient-to-r from-huntzen-blue to-blue-600 hover:from-blue-700 hover:to-blue-800 shadow-md font-semibold text-xs h-9"
             >
               <a href={event.url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-3 mr-1.5" />

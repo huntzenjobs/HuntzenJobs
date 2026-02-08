@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Users,
   CheckCircle2,
   Star,
   Clock,
@@ -22,13 +21,17 @@ import {
   Sparkles,
   Phone,
   Mail,
-  Briefcase,
   Calendar,
   ArrowRight,
+  Loader2,
 } from 'lucide-react'
 import { huntzenApi } from '@/lib/api/huntzen-client'
 import { useRouter } from 'next/navigation'
 import { useOptionalAuth } from '@/contexts/auth-context'
+import { HeroSection } from '@/components/recruiter/hero-section'
+import { ProcessSteps } from '@/components/recruiter/process-steps'
+import { TestimonialsSection } from '@/components/recruiter/testimonials-section'
+import { FAQSection } from '@/components/recruiter/faq-section'
 
 export default function RecruiterContactPage() {
   const router = useRouter()
@@ -78,25 +81,31 @@ export default function RecruiterContactPage() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
-      {/* Hero Section */}
-      <div className="mb-12 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 mb-4">
-          <Users className="w-8 h-8 text-emerald-500" />
+      {/* Hero Premium - NOUVEAU */}
+      <HeroSection />
+
+      {/* Stats rapides - NOUVEAU */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+        <div className="text-center p-6 bg-white rounded-xl border-2 border-huntzen-blue/20 hover:border-huntzen-blue hover:shadow-lg transition-all">
+          <div className="text-4xl font-black text-huntzen-blue mb-2">127</div>
+          <p className="text-sm text-gray-600">Consultations réussies</p>
         </div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Parlez directement avec un recruteur expert
-        </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Obtenez des conseils personnalisés d'un professionnel du recrutement pour booster votre recherche d'emploi
-        </p>
+        <div className="text-center p-6 bg-white rounded-xl border-2 border-huntzen-turquoise/20 hover:border-huntzen-turquoise hover:shadow-lg transition-all">
+          <div className="text-4xl font-black text-huntzen-turquoise mb-2">4.9/5</div>
+          <p className="text-sm text-gray-600">Satisfaction moyenne</p>
+        </div>
+        <div className="text-center p-6 bg-white rounded-xl border-2 border-blue-500/20 hover:border-blue-500 hover:shadow-lg transition-all">
+          <div className="text-4xl font-black text-blue-500 mb-2">48h</div>
+          <p className="text-sm text-gray-600">Délai moyen</p>
+        </div>
       </div>
 
       {/* Benefits Section */}
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
-        <Card className="border-2 hover:border-emerald-500 transition-all">
+      <div className="grid md:grid-cols-3 gap-6 mb-16">
+        <Card className="border-2 hover:border-huntzen-blue hover:shadow-lg transition-all">
           <CardContent className="pt-6">
-            <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+            <div className="w-12 h-12 rounded-lg bg-huntzen-blue/20 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-6 h-6 text-huntzen-blue" />
             </div>
             <h3 className="font-semibold text-lg mb-2">Conseils personnalisés</h3>
             <p className="text-gray-600 text-sm">
@@ -105,10 +114,10 @@ export default function RecruiterContactPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:border-emerald-500 transition-all">
+        <Card className="border-2 hover:border-huntzen-blue hover:shadow-lg transition-all">
           <CardContent className="pt-6">
-            <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4">
-              <Star className="w-6 h-6 text-emerald-500" />
+            <div className="w-12 h-12 rounded-lg bg-huntzen-blue/20 flex items-center justify-center mb-4">
+              <Star className="w-6 h-6 text-huntzen-blue" />
             </div>
             <h3 className="font-semibold text-lg mb-2">Expertise professionnelle</h3>
             <p className="text-gray-600 text-sm">
@@ -117,10 +126,10 @@ export default function RecruiterContactPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-2 hover:border-emerald-500 transition-all">
+        <Card className="border-2 hover:border-huntzen-blue hover:shadow-lg transition-all">
           <CardContent className="pt-6">
-            <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4">
-              <Clock className="w-6 h-6 text-emerald-500" />
+            <div className="w-12 h-12 rounded-lg bg-huntzen-blue/20 flex items-center justify-center mb-4">
+              <Clock className="w-6 h-6 text-huntzen-blue" />
             </div>
             <h3 className="font-semibold text-lg mb-2">Réponse rapide</h3>
             <p className="text-gray-600 text-sm">
@@ -130,10 +139,16 @@ export default function RecruiterContactPage() {
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      {/* Process Steps - NOUVEAU */}
+      <ProcessSteps />
+
+      {/* Testimonials - NOUVEAU */}
+      <TestimonialsSection />
+
+      <div id="contact-form" className="grid lg:grid-cols-2 gap-8">
         {/* Pricing Card */}
-        <Card className="border-2 border-emerald-500 shadow-lg">
-          <CardHeader className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+        <Card className="border-2 border-huntzen-blue shadow-lg">
+          <CardHeader className="bg-gradient-to-br from-huntzen-blue to-blue-600 text-white">
             <CardTitle className="text-2xl flex items-center gap-2">
               <Sparkles className="w-6 h-6" />
               Consultation Recruteur
@@ -153,7 +168,7 @@ export default function RecruiterContactPage() {
 
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-huntzen-blue mt-0.5" />
                 <div>
                   <p className="font-medium text-gray-900">Session vidéo de 30 minutes</p>
                   <p className="text-sm text-gray-600">Échange en direct avec un expert</p>
@@ -161,7 +176,7 @@ export default function RecruiterContactPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-huntzen-blue mt-0.5" />
                 <div>
                   <p className="font-medium text-gray-900">Analyse personnalisée</p>
                   <p className="text-sm text-gray-600">CV, profil LinkedIn, stratégie de recherche</p>
@@ -169,7 +184,7 @@ export default function RecruiterContactPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-huntzen-blue mt-0.5" />
                 <div>
                   <p className="font-medium text-gray-900">Plan d'action concret</p>
                   <p className="text-sm text-gray-600">Recommandations actionnables immédiatement</p>
@@ -177,7 +192,7 @@ export default function RecruiterContactPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-huntzen-blue mt-0.5" />
                 <div>
                   <p className="font-medium text-gray-900">Compte-rendu écrit</p>
                   <p className="text-sm text-gray-600">Résumé détaillé après la consultation</p>
@@ -322,11 +337,14 @@ export default function RecruiterContactPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
-                disabled={isSubmitting}
+                className="w-full h-12 text-base font-bold bg-gradient-to-r from-huntzen-blue to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting || !formData.fullName || !formData.email}
               >
                 {isSubmitting ? (
-                  'Traitement en cours...'
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Traitement en cours...</span>
+                  </div>
                 ) : (
                   <>
                     Réserver ma consultation (50€)
@@ -343,37 +361,27 @@ export default function RecruiterContactPage() {
         </Card>
       </div>
 
-      {/* FAQ Section */}
-      <div className="mt-12 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-8">Questions fréquentes</h2>
-        <div className="space-y-4">
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2">Comment se déroule la consultation ?</h3>
-              <p className="text-gray-600 text-sm">
-                Après paiement, vous recevrez un email avec un lien pour planifier la session à l'horaire qui vous convient. La consultation se fait en visioconférence avec un recruteur expert qui analysera votre situation et vous donnera des conseils personnalisés.
-              </p>
-            </CardContent>
-          </Card>
+      {/* FAQ Interactive - NOUVEAU */}
+      <FAQSection />
 
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2">Que se passe-t-il si je ne suis pas satisfait ?</h3>
-              <p className="text-gray-600 text-sm">
-                Nous offrons une garantie satisfait ou remboursé de 7 jours. Si la consultation ne répond pas à vos attentes, contactez-nous pour obtenir un remboursement complet.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2">Qui sont les recruteurs ?</h3>
-              <p className="text-gray-600 text-sm">
-                Nos recruteurs sont des professionnels certifiés avec 10+ ans d'expérience dans le recrutement de talents. Ils ont travaillé pour des cabinets de recrutement renommés et des entreprises du CAC 40.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+      {/* CTA Bottom - NOUVEAU */}
+      <div className="bg-gradient-to-r from-huntzen-blue to-blue-700 text-white p-12 rounded-3xl text-center mt-12">
+        <h3 className="text-3xl font-bold mb-4">
+          Prêt à booster votre carrière ?
+        </h3>
+        <p className="text-xl text-white/90 mb-6">
+          👥 <strong>5 consultations</strong> réservées cette semaine
+        </p>
+        <Button
+          size="lg"
+          className="h-14 px-12 bg-white text-huntzen-blue hover:bg-gray-100 font-bold"
+          onClick={() => {
+            const formSection = document.getElementById('contact-form')
+            formSection?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
+        >
+          Réserver maintenant (50€)
+        </Button>
       </div>
     </div>
   )

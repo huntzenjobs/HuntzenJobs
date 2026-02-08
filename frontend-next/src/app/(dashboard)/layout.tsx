@@ -1,8 +1,11 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
+import { NavigationLoader } from '@/components/layout/navigation-loader'
 import { SubscriptionProvider } from '@/contexts/subscription-context'
 import { PricingModal } from '@/components/freemium/pricing-modal'
 import { UpgradeBanner } from '@/components/freemium/upgrade-banner'
+import DashboardLoading from './loading'
 
 export default async function DashboardLayout({
   children,
@@ -12,6 +15,7 @@ export default async function DashboardLayout({
   return (
     <SubscriptionProvider>
       <div className="min-h-screen bg-gray-50">
+        <NavigationLoader />
         <Sidebar />
 
         {/* Main content - offset by sidebar width */}
@@ -25,7 +29,9 @@ export default async function DashboardLayout({
           </div>
 
           <div className="p-4 lg:p-6">
-            {children}
+            <Suspense fallback={<DashboardLoading />}>
+              {children}
+            </Suspense>
           </div>
         </main>
 

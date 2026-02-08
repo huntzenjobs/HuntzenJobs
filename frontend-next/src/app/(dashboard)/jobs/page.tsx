@@ -27,6 +27,7 @@ import { JobDetailsModal } from '@/components/jobs/job-details-modal'
 import { formatJobSource } from '@/lib/utils/job-source-formatter'
 import { SearchFormInline, type SearchParams } from '@/components/jobs/search-form-inline'
 import { featureFlags } from '@/lib/feature-flags'
+import { JobsPlaceholder } from '@/components/jobs/jobs-placeholder'
 
 export default function JobsPage() {
   const [jobTitle, setJobTitle] = useState('')
@@ -729,6 +730,17 @@ export default function JobsPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Placeholder avant première recherche - NOUVEAU */}
+      {!searchMutation.isPending && !searchMutation.isSuccess && jobs.length === 0 && (
+        <JobsPlaceholder
+          onSearchClick={(jobTitle) => {
+            // TODO: Trigger search with popular job title
+            // This would require access to the search form state
+            console.log('Search for:', jobTitle)
+          }}
+        />
       )}
 
       {!searchMutation.isPending && searchMutation.isSuccess && jobs.length === 0 && (

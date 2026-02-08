@@ -20,7 +20,8 @@ import {
   LogIn,
   Calendar,
   Activity,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
@@ -56,6 +57,7 @@ export function Sidebar({ className }: SidebarProps) {
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUsageModalOpen, setIsUsageModalOpen] = useState(false)
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
 
   // Use auth context as single source of truth
   const auth = useOptionalAuth()
@@ -118,6 +120,7 @@ export function Sidebar({ className }: SidebarProps) {
           {navigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             const isLocked = item.premium && (!user || isFreePlan)
+            const isNavigating = navigatingTo === item.href
 
             return (
               <Link
@@ -127,11 +130,13 @@ export function Sidebar({ className }: SidebarProps) {
                   if (isLocked && user) {
                     e.preventDefault()
                     openPricingModal()
+                  } else if (!isLocked) {
+                    setNavigatingTo(item.href)
                   }
                   setIsMobileMenuOpen(false)
                 }}
                 className={cn(
-                  'nav-item flex items-center gap-3.5 px-4 py-3.5 mb-1 rounded-xl text-sm font-medium transition-all relative',
+                  'nav-item flex items-center gap-3.5 px-4 py-3.5 mb-1 rounded-xl text-sm font-medium transition-all relative group',
                   isActive
                     ? 'bg-[rgba(37,99,235,0.18)] text-white'
                     : 'text-white/70 hover:bg-[rgba(37,99,235,0.12)] hover:text-white',
@@ -142,10 +147,14 @@ export function Sidebar({ className }: SidebarProps) {
                 {isActive && (
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[60%] bg-huntzen-blue rounded-r" />
                 )}
-                <item.icon className={cn(
-                  'w-5 h-5 transition-all',
-                  isActive ? 'text-huntzen-blue' : 'group-hover:text-huntzen-blue'
-                )} />
+                {isNavigating ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-huntzen-blue" />
+                ) : (
+                  <item.icon className={cn(
+                    'w-5 h-5 transition-all',
+                    isActive ? 'text-huntzen-blue' : 'group-hover:text-huntzen-blue'
+                  )} />
+                )}
                 <span className="nav-label flex-1">{item.name}</span>
                 {/* Badge (ex: "50€" pour contact recruteur) */}
                 {'badge' in item && item.badge && (
