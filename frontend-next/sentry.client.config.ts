@@ -33,6 +33,17 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
     )
   }
 
+  // Session Replay for debugging user issues
+  if (Sentry.replayIntegration) {
+    integrations.push(
+      Sentry.replayIntegration({
+        // Mask all text content and block all media by default for privacy
+        maskAllText: false,
+        blockAllMedia: true,
+      })
+    )
+  }
+
   Sentry.init({
     // Data Source Name - unique identifier for this project
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -40,8 +51,12 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
     // Environment (development, staging, production)
     environment: process.env.NODE_ENV || 'development',
 
-    // Performance Monitoring
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0, // 10% in prod, 100% in dev
+    // Performance Monitoring - Increased to 50% for better visibility
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.5 : 1.0, // 50% in prod, 100% in dev
+
+    // Session Replay - Capture 10% of normal sessions, 100% of error sessions
+    replaysSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0.0, // 10% in prod, off in dev
+    replaysOnErrorSampleRate: process.env.NODE_ENV === 'production' ? 1.0 : 0.0, // 100% on errors in prod
 
     // Browser-side integrations only (no server instrumentations needed)
     integrations,
