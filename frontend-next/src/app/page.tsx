@@ -1,19 +1,24 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
-  Rocket,
   TrendingUp,
   FileText,
   Search,
   Users,
   Target,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Menu,
+  X
 } from 'lucide-react'
 
 export default function HomePage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header - Black background */}
@@ -24,6 +29,25 @@ export default function HomePage() {
             <span className="text-white font-bold text-xl tracking-tight">HuntZen</span>
             <span className="w-2 h-2 rounded-full bg-[#00D9FF]"></span>
           </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-8">
+            <Link href="/pricing" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+              Tarifs
+            </Link>
+            <Link href="/jobs" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+              Recherche d&apos;emploi
+            </Link>
+            <Link href="/assistant" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+              Assistant
+            </Link>
+            <Link href="/salons" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+              Salon & Forum
+            </Link>
+            <Link href="/cv-analysis" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+              Analyse de CV
+            </Link>
+          </nav>
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-3">
@@ -39,8 +63,65 @@ export default function HomePage() {
             >
               S&apos;INSCRIRE
             </Link>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden text-white p-2"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="lg:hidden absolute top-16 left-0 right-0 bg-black border-b border-white/10"
+          >
+            <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
+              <Link
+                href="/pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
+              >
+                Tarifs
+              </Link>
+              <Link
+                href="/jobs"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
+              >
+                Recherche d&apos;emploi
+              </Link>
+              <Link
+                href="/assistant"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
+              >
+                Assistant
+              </Link>
+              <Link
+                href="/salons"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
+              >
+                Salon & Forum
+              </Link>
+              <Link
+                href="/cv-analysis"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
+              >
+                Analyse de CV
+              </Link>
+            </nav>
+          </motion.div>
+        )}
       </header>
 
       {/* Hero Section */}
@@ -84,11 +165,11 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             <Link
-              href="/cv-analysis"
+              href="/jobs"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-2xl hover:shadow-[#00D9FF]/50 hover:-translate-y-1"
             >
-              <Rocket className="w-5 h-5" />
-              Analysez-moi CV
+              <Search className="w-5 h-5" />
+              Trouvez votre emploi
             </Link>
             <p className="text-white/60 text-sm mt-4">Voir comment ça marche</p>
           </motion.div>
@@ -245,9 +326,15 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-br from-gray-100 to-gray-50 rounded-3xl p-12 aspect-square flex items-center justify-center border-2 border-gray-200"
+                className="relative rounded-3xl overflow-hidden aspect-square border-2 border-gray-200 shadow-xl"
               >
-                <FileText className="w-32 h-32 text-[#00D9FF]/30" />
+                <Image
+                  src="/images/cv-analysis-feature.png"
+                  alt="Interface d'analyse de CV avec IA montrant les compétences et recommandations"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
               </motion.div>
             </div>
 
@@ -258,9 +345,15 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-br from-gray-100 to-gray-50 rounded-3xl p-12 aspect-square flex items-center justify-center border-2 border-gray-200 md:order-1"
+                className="relative rounded-3xl overflow-hidden aspect-square border-2 border-gray-200 shadow-xl md:order-1"
               >
-                <Search className="w-32 h-32 text-[#00D9FF]/30" />
+                <Image
+                  src="/images/job-matching-feature.png"
+                  alt="Interface de recherche d'emploi avec scores de compatibilité intelligents"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
@@ -335,14 +428,18 @@ export default function HomePage() {
                 period: "/7 jours",
                 color: "#9CA3AF",
                 features: [
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage"
+                  "3 recherches d'offres par jour",
+                  "10 offres d'emploi visibles maximum",
+                  "1 analyse de CV par jour avec IA",
+                  "5 minutes de coaching IA personnel",
+                  "Support standard"
                 ],
-                unavailable: ["Indisponible", "Indisponible", "Indisponible"],
-                cta: "Commencer à pratiquer"
+                unavailable: [
+                  "Filtres avancés",
+                  "Gestion favoris",
+                  "Export PDF rapports"
+                ],
+                cta: "Commencer gratuitement"
               },
               {
                 name: "ESSENTIEL",
@@ -351,33 +448,29 @@ export default function HomePage() {
                 color: "#00D9FF",
                 popular: true,
                 features: [
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage"
+                  "Recherches d'offres illimitées",
+                  "Accès à toutes les offres d'emploi",
+                  "Filtres avancés (salaire, télétravail, date)",
+                  "Gestion de vos favoris",
+                  "Analyses de CV illimitées avec IA",
+                  "Score de compatibilité visuel et animé",
+                  "Coach IA personnel (30 min/jour)"
                 ],
-                unavailable: ["Indisponible"],
-                cta: "Commencer avec Advanced"
+                unavailable: ["Export PDF rapports"],
+                cta: "Commencer avec Essentiel"
               },
               {
                 name: "PRO",
-                price: "14.90€",
+                price: "13.90€",
                 period: "/mois",
                 color: "#9333EA",
                 features: [
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage"
+                  "Toutes les fonctionnalités Starter incluses",
+                  "Coach IA disponible 24/7 sans limite",
+                  "Export PDF professionnel",
+                  "Simulations d'entretien réalistes avec IA",
+                  "Feedback détaillé sur vos performances",
+                  "Support prioritaire par email"
                 ],
                 unavailable: [],
                 cta: "Commencer avec Pro"
@@ -388,16 +481,14 @@ export default function HomePage() {
                 period: "/mois",
                 color: "#F97316",
                 features: [
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage",
-                  "Avantage"
+                  "Toutes les fonctionnalités Pro incluses",
+                  "Historique illimité de toutes vos analyses CV",
+                  "Conseils personnalisés ultra-ciblés par l'IA",
+                  "Alertes email instantanées",
+                  "Historique complet sessions coaching",
+                  "Accès anticipé aux nouvelles fonctionnalités",
+                  "Support VIP avec assistance prioritaire",
+                  "Rapports mensuels de progression"
                 ],
                 unavailable: [],
                 cta: "Commencer avec Premium"

@@ -1,21 +1,23 @@
 'use client'
 
 /**
- * Signup Page
+ * Signup Page - Modern Design
  * Email/Password + Google OAuth registration
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2, CheckCircle2, User, Mail, Lock as LockIcon } from 'lucide-react'
+import { AuthLayout } from '@/components/auth/auth-layout'
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, signInWithGoogle, signUpWithEmail, error, clearError } = useAuth()
@@ -68,63 +70,97 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-          {/* Header */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Créer un compte</h1>
-            <p className="text-gray-600 mt-2">
-              {showCVMessage ? 'Analysez votre CV gratuitement' : 'Commencez votre recherche d\'emploi'}
-            </p>
-          </div>
+    <AuthLayout type="signup">
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <motion.h1
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-bold text-gray-900 mb-2"
+          >
+            Créer votre compte
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-gray-600"
+          >
+            {showCVMessage
+              ? 'Commencez votre analyse CV gratuitement'
+              : 'Rejoignez HuntZen et boostez votre carrière'
+            }
+          </motion.p>
+        </div>
 
-          {/* CV Analysis Specific Banner */}
-          {showCVMessage && (
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
-              <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="text-xl">🎯</span>
-                Ce que vous obtenez gratuitement :
-              </h3>
-              <ul className="space-y-2">
-                <li className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <span><strong>1 analyse CV gratuite</strong> par jour</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <span><strong>Score ATS détaillé</strong> avec recommandations</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <span><strong>Matching avec offres</strong> d'emploi</span>
-                </li>
-                <li className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <span><strong>Historique</strong> de vos analyses</span>
-                </li>
-              </ul>
+        {/* CV Analysis Specific Banner */}
+        {showCVMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-5"
+          >
+            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <span className="text-xl">🎯</span>
+              Offre de bienvenue :
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <span><strong>1 analyse CV gratuite</strong> par jour</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <span><strong>Score ATS détaillé</strong></span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <span><strong>Matching emploi</strong></span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <span><strong>Historique</strong> complet</span>
+              </div>
             </div>
-          )}
+          </motion.div>
+        )}
 
-          {/* Error Messages */}
-          {error && (
+        {/* Error Messages */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-          )}
+          </motion.div>
+        )}
 
-          {passwordError && (
+        {passwordError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <Alert variant="destructive">
               <AlertDescription>{passwordError}</AlertDescription>
             </Alert>
-          )}
+          </motion.div>
+        )}
 
-          {/* Google Sign Up */}
+        {/* Google Sign Up */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
           <Button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
+            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200 hover:border-gray-300 shadow-sm h-12"
             size="lg"
           >
             {loading ? (
@@ -149,25 +185,36 @@ export default function SignupPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                S'inscrire avec Google
+                <span className="font-medium">S'inscrire avec Google</span>
               </>
             )}
           </Button>
+        </motion.div>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Ou avec email</span>
-            </div>
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
           </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-gray-50 text-gray-500 font-medium">Ou avec email</span>
+          </div>
+        </div>
 
-          {/* Email/Password Form */}
-          <form onSubmit={handleEmailSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nom complet</Label>
+        {/* Email/Password Form */}
+        <motion.form
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          onSubmit={handleEmailSignUp}
+          className="space-y-4"
+        >
+          <div className="space-y-2">
+            <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+              Nom complet
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="fullName"
                 type="text"
@@ -176,11 +223,17 @@ export default function SignupPage() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 disabled={loading}
+                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              Adresse email
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="email"
                 type="email"
@@ -189,11 +242,17 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
+                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              Mot de passe
+            </Label>
+            <div className="relative">
+              <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="password"
                 type="password"
@@ -203,11 +262,17 @@ export default function SignupPage() {
                 required
                 disabled={loading}
                 minLength={6}
+                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+              Confirmer le mot de passe
+            </Label>
+            <div className="relative">
+              <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="confirmPassword"
                 type="password"
@@ -216,42 +281,73 @@ export default function SignupPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 disabled={loading}
+                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+          </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Création...
-                </>
-              ) : (
-                'Créer mon compte'
-              )}
-            </Button>
-          </form>
+          <Button
+            type="submit"
+            className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all mt-6"
+            size="lg"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Création en cours...
+              </>
+            ) : (
+              'Créer mon compte gratuitement'
+            )}
+          </Button>
+        </motion.form>
 
-          {/* Login link */}
-          <p className="text-center text-sm text-gray-600">
-            Vous avez déjà un compte ?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">
-              Se connecter
-            </Link>
-          </p>
-        </div>
+        {/* Login link */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="text-center text-sm text-gray-600"
+        >
+          Vous avez déjà un compte ?{' '}
+          <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+            Se connecter
+          </Link>
+        </motion.p>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="text-center text-xs text-gray-500 pt-4"
+        >
           En créant un compte, vous acceptez nos{' '}
-          <Link href="/terms" className="underline">
+          <Link href="/terms" className="underline hover:text-gray-700 transition-colors">
             Conditions d'utilisation
           </Link>{' '}
           et notre{' '}
-          <Link href="/privacy" className="underline">
+          <Link href="/privacy" className="underline hover:text-gray-700 transition-colors">
             Politique de confidentialité
           </Link>
-        </p>
+        </motion.p>
       </div>
-    </div>
+    </AuthLayout>
+  )
+}
+
+// Main page component with Suspense boundary
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   )
 }

@@ -1,19 +1,21 @@
 'use client'
 
 /**
- * Login Page
+ * Login Page - Modern Design
  * Email/Password + Google OAuth sign in
  */
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Mail, Lock as LockIcon } from 'lucide-react'
+import { AuthLayout } from '@/components/auth/auth-layout'
 
 // Separate component that uses useSearchParams (must be wrapped in Suspense)
 function LoginForm() {
@@ -57,33 +59,61 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-          {/* Header */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Bienvenue sur HuntZen</h1>
-            <p className="text-gray-600 mt-2">Connectez-vous pour continuer</p>
-          </div>
+    <AuthLayout type="login">
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <motion.h1
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-bold text-gray-900 mb-2"
+          >
+            Bon retour !
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-gray-600"
+          >
+            Connectez-vous pour accéder à votre espace
+          </motion.p>
+        </div>
 
-          {/* Messages */}
-          {message && (
+        {/* Messages */}
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <Alert>
               <AlertDescription>{message}</AlertDescription>
             </Alert>
-          )}
+          </motion.div>
+        )}
 
-          {error && (
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-          )}
+          </motion.div>
+        )}
 
-          {/* Google Sign In */}
+        {/* Google Sign In */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <Button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
+            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200 hover:border-gray-300 shadow-sm h-12"
             size="lg"
           >
             {loading ? (
@@ -108,25 +138,36 @@ function LoginForm() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Continuer avec Google
+                <span className="font-medium">Continuer avec Google</span>
               </>
             )}
           </Button>
+        </motion.div>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Ou avec email</span>
-            </div>
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
           </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-gray-50 text-gray-500 font-medium">Ou avec email</span>
+          </div>
+        </div>
 
-          {/* Email/Password Form */}
-          <form onSubmit={handleEmailSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+        {/* Email/Password Form */}
+        <motion.form
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          onSubmit={handleEmailSignIn}
+          className="space-y-5"
+        >
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+              Adresse email
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="email"
                 type="email"
@@ -135,11 +176,25 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
+                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Mot de passe
+              </Label>
+              <Link
+                href="/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
+            <div className="relative">
+              <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="password"
                 type="password"
@@ -148,49 +203,59 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
+                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+          </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <Link href="/forgot-password" className="text-blue-600 hover:underline">
-                Mot de passe oublié ?
-              </Link>
-            </div>
+          <Button
+            type="submit"
+            className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all"
+            size="lg"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Connexion en cours...
+              </>
+            ) : (
+              'Se connecter'
+            )}
+          </Button>
+        </motion.form>
 
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Connexion...
-                </>
-              ) : (
-                'Se connecter'
-              )}
-            </Button>
-          </form>
-
-          {/* Sign up link */}
-          <p className="text-center text-sm text-gray-600">
-            Pas encore de compte ?{' '}
-            <Link href="/signup" className="text-blue-600 hover:underline font-medium">
-              Créer un compte
-            </Link>
-          </p>
-        </div>
+        {/* Sign up link */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="text-center text-sm text-gray-600"
+        >
+          Pas encore de compte ?{' '}
+          <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+            Créer un compte gratuitement
+          </Link>
+        </motion.p>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="text-center text-xs text-gray-500 pt-4"
+        >
           En continuant, vous acceptez nos{' '}
-          <Link href="/terms" className="underline">
+          <Link href="/terms" className="underline hover:text-gray-700 transition-colors">
             Conditions d'utilisation
           </Link>{' '}
           et notre{' '}
-          <Link href="/privacy" className="underline">
+          <Link href="/privacy" className="underline hover:text-gray-700 transition-colors">
             Politique de confidentialité
           </Link>
-        </p>
+        </motion.p>
       </div>
-    </div>
+    </AuthLayout>
   )
 }
 
@@ -199,10 +264,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
         </div>
       }
     >
