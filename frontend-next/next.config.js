@@ -27,7 +27,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://ngiakfikbuyugqfqtfwp.supabase.co https://*.supabase.co http://localhost:* ws://localhost:* wss://ngiakfikbuyugqfqtfwp.supabase.co",
+              "connect-src 'self' https://ngiakfikbuyugqfqtfwp.supabase.co https://*.supabase.co https://huntzenjobs-production.up.railway.app http://localhost:* ws://localhost:* wss://ngiakfikbuyugqfqtfwp.supabase.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
