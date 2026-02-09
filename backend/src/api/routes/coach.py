@@ -6,7 +6,7 @@ Endpoints for AI career coaching.
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Depends
 
 from src.api.deps import (
     CoachAgentDep,

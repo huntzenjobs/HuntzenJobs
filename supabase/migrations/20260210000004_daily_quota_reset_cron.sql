@@ -24,10 +24,10 @@ BEGIN
     PERFORM cron.schedule(
       'daily-quota-reset',  -- job name
       '0 0 * * *',          -- cron schedule: midnight UTC daily
-      $$
+      $schedule$
         -- Delete old usage_quotas records (keep last 7 days for audit)
         DELETE FROM usage_quotas WHERE quota_date < CURRENT_DATE - INTERVAL '7 days';
-      $$
+      $schedule$
     );
 
     RAISE NOTICE '✓ pg_cron job "daily-quota-reset" scheduled successfully - runs at midnight UTC';

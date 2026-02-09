@@ -16,5 +16,11 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "regions": ["cdg1"]
+  "regions": ["cdg1"],
+  "crons": [
+    {
+      "path": "/api/cron/reset-quotas",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }
