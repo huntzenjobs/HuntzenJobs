@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from src.api.deps import (
     CoachAgentDep,
-    ScoutAgentDep,
+    ScoutConversationalAgentDep,
     CVAgentDep,
     CVAdapterAgentDep,
     InterviewSimAgentDep,
@@ -62,7 +62,7 @@ class AssistantResponse(BaseModel):
 @router.post("/job-scout", response_model=AssistantResponse)
 async def job_scout_chat(
     request: AssistantRequest,
-    agent: ScoutAgentDep,
+    agent: ScoutConversationalAgentDep,
 ):
     """
     Chat with the Job Search expert.
