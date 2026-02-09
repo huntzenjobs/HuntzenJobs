@@ -218,6 +218,72 @@ async def search_cities_nominatim(
         return []
 
 
+async def get_cities_from_nominatim(country_code: str, limit: int = 500) -> list[str]:
+    """
+    Get all cities for a country from OpenStreetMap Nominatim API.
+
+    Fetches major cities from Nominatim without a specific query.
+
+    Args:
+        country_code: ISO 3166-1 alpha-2 country code
+        limit: Maximum number of cities to return (default: 500)
+
+    Returns:
+        List of city names
+
+    Examples:
+        >>> await get_cities_from_nominatim("km")  # Comores
+        ["Moroni", "Mutsamudu", "Fomboni", ...]
+        >>> await get_cities_from_nominatim("fr")
+        ["Paris", "Marseille", "Lyon", ...]
+    """
+    try:
+        url = "https://nominatim.openstreetmap.org/search"
+        params = {
+            "countrycodes": country_code.lower(),
+            "format": "json",
+            "addressdetails": 1,
+            "limit": min(limit, 100),  # Nominatim max limit
+            "featuretype": "city",
+        }
+        headers = {
+            "User-Agent": "HuntZen/3.0 (job search platform)"
+        }
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+
+        # Extract city names from results
+        cities = []
+        seen = set()
+
+        for item in data:
+            address = item.get("address", {})
+            city = (
+                address.get("city")
+                or address.get("town")
+                or address.get("village")
+                or address.get("municipality")
+                or item.get("display_name", "").split(",")[0]
+            )
+
+            if city and city not in seen:
+                cities.append(city)
+                seen.add(city)
+
+        logger.info(f"[GEO] Nominatim found {len(cities)} cities for {country_code}")
+        return cities
+
+    except httpx.TimeoutException:
+        logger.warning(f"[GEO] Nominatim timeout for country {country_code}")
+        return []
+    except Exception as e:
+        logger.error(f"[GEO] Nominatim failed for {country_code}: {e}")
+        return []
+
+
 def get_cities_from_geonames(country_code: str, limit: int = 500) -> list[str]:
     """
     Get cities from local geonamescache.
