@@ -526,8 +526,13 @@ async def process_cv_analysis(
     start_time = time.time()
 
     try:
-        # Step 1: Update status to 'processing'
-        await update_cv_status(cv_id, "processing")
+        # Step 1: Update status to 'processing' IMMEDIATELY
+        # This allows frontend to show progress instead of staying at 0%
+        update_success = await update_cv_status(cv_id, "processing")
+        if not update_success:
+            print(f"⚠️ Warning: Failed to update status to 'processing' for {cv_id}")
+        else:
+            print(f"✅ Status updated to 'processing' for {cv_id}")
 
         # Step 2: Get CV text (either from PDF or directly)
         if cv_text:
