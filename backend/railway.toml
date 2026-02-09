@@ -2,7 +2,7 @@
 # Documentation: https://docs.railway.app/deploy/deployments#railway-toml-file
 
 [build]
-builder = "DOCKERFILE"
+builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
