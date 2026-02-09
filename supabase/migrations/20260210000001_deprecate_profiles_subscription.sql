@@ -4,6 +4,22 @@
 -- Purpose: Mark old subscription columns as deprecated without removing them
 -- Provides migration path while maintaining backward compatibility
 
+-- ============================================
+-- ENSURE REQUIRED COLUMNS EXIST
+-- ============================================
+-- Add stripe_price_id column if it doesn't exist (for retrocompatibility)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'user_subscriptions'
+      AND column_name = 'stripe_price_id'
+  ) THEN
+    ALTER TABLE user_subscriptions ADD COLUMN stripe_price_id TEXT;
+  END IF;
+END $$;
+
 -- Add deprecation comments to old subscription columns
 COMMENT ON COLUMN profiles.subscription_tier IS 'DEPRECATED: Use user_subscriptions.plan_id instead. Will be removed in future migration. Do not use in new code.';
 COMMENT ON COLUMN profiles.stripe_customer_id IS 'DEPRECATED: Use user_subscriptions.stripe_customer_id instead. Will be removed in future migration. Do not use in new code.';
