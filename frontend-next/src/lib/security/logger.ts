@@ -73,13 +73,20 @@ export function getClientIP(headers?: Headers): string | undefined {
 
 /**
  * Get session ID from Supabase auth
+ * Silently fails if session is broken to avoid breaking logout
  */
 async function getSessionId(): Promise<string | undefined> {
-  const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  return session?.access_token
+  try {
+    const supabase = createClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    return session?.access_token
+  } catch (error) {
+    // Session broken (AbortError, etc.) - return undefined
+    // This is normal during logout or when session expires
+    return undefined
+  }
 }
 
 /**
@@ -99,26 +106,32 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
   try {
     const supabase = createClient()
 
-    // Get session ID if not provided
+    // Get session ID if not provided (may return undefined if session broken)
     const finalSessionId = sessionId || (await getSessionId())
 
     // Get user agent if not provided (browser only)
     const finalUserAgent = userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : undefined)
 
     // Call PostgreSQL function to log event
-    const { data: result, error } = await supabase.rpc('log_security_event', {
-      p_event_type: eventType,
-      p_severity: severity,
-      p_user_id: userId || null,
-      p_session_id: finalSessionId || null,
-      p_ip_address: ipAddress || null,
-      p_user_agent: finalUserAgent || null,
-      p_event_data: metadata,
-    })
+    // Wrapped in try/catch to handle AbortError and other failures gracefully
+    try {
+      const { data: result, error } = await supabase.rpc('log_security_event', {
+        p_event_type: eventType,
+        p_severity: severity,
+        p_user_id: userId || null,
+        p_session_id: finalSessionId || null,
+        p_ip_address: ipAddress || null,
+        p_user_agent: finalUserAgent || null,
+        p_event_data: metadata,
+      })
 
-    if (error) {
-      console.error('Failed to log security event:', error)
-      // Don't throw - logging failures shouldn't break app
+      if (error) {
+        console.error('Failed to log security event:', error)
+        // Don't throw - logging failures shouldn't break app
+      }
+    } catch (rpcError) {
+      // Silently handle RPC errors (AbortError, network issues, etc.)
+      console.error('Error calling log_security_event RPC:', rpcError)
     }
 
     // Send to Sentry for critical/emergency events

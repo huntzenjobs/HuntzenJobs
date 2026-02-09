@@ -90,14 +90,16 @@ export function AuthProvider({
         // Handle different auth events
         switch (event) {
           case 'SIGNED_IN':
-            // Log OAuth login success
+            // Log OAuth login success (non-blocking)
             if (session?.user) {
               const provider = session.user.app_metadata?.provider
               if (provider === 'google') {
-                await logLoginSuccess(session.user.id, {
+                logLoginSuccess(session.user.id, {
                   email: session.user.email,
                   method: 'oauth_google',
                   provider: 'google'
+                }).catch(err => {
+                  console.error('Failed to log OAuth login (non-critical):', err)
                 })
               }
             }
@@ -153,11 +155,13 @@ export function AuthProvider({
       setError(err.message || 'Failed to sign in with Google')
       setLoading(false)
 
-      // Log OAuth failure
-      await logSecurityEvent({
+      // Log OAuth failure (non-blocking)
+      logSecurityEvent({
         eventType: 'auth.oauth_failed',
         severity: 'warning',
         metadata: { provider: 'google', error: err.message }
+      }).catch(logErr => {
+        console.error('Failed to log OAuth failure (non-critical):', logErr)
       })
 
       throw err
@@ -176,9 +180,11 @@ export function AuthProvider({
 
       if (error) throw error
 
-      // Log successful login
+      // Log successful login (non-blocking)
       if (data.user) {
-        await logLoginSuccess(data.user.id, { email, method: 'email' })
+        logLoginSuccess(data.user.id, { email, method: 'email' }).catch(err => {
+          console.error('Failed to log login success (non-critical):', err)
+        })
       }
 
       // Check for redirectTo parameter in URL for deep links
@@ -199,8 +205,10 @@ export function AuthProvider({
       setError(err.message || 'Invalid email or password')
       setLoading(false)
 
-      // Log failed login
-      await logLoginFailed(email, err.message)
+      // Log failed login (non-blocking)
+      logLoginFailed(email, err.message).catch(logErr => {
+        console.error('Failed to log login failure (non-critical):', logErr)
+      })
 
       // Check for anomalies (multiple failed attempts)
       // Note: We don't have userId yet, so we can't check here
@@ -228,13 +236,15 @@ export function AuthProvider({
 
       if (error) throw error
 
-      // Log successful signup
+      // Log successful signup (non-blocking)
       if (data.user) {
-        await logSecurityEvent({
+        logSecurityEvent({
           eventType: 'auth.signup',
           severity: 'info',
           userId: data.user.id,
           metadata: { email, full_name: fullName, method: 'email' },
+        }).catch(err => {
+          console.error('Failed to log signup (non-critical):', err)
         })
       }
 
@@ -259,9 +269,12 @@ export function AuthProvider({
     try {
       setError(null)
 
-      // Log logout before signing out
+      // Log logout in background (non-blocking)
+      // Don't await to prevent logout delays if logging fails
       if (user) {
-        await logLogout(user.id)
+        logLogout(user.id).catch(err => {
+          console.error('Failed to log logout (non-critical):', err)
+        })
       }
 
       const { error } = await supabaseClient.auth.signOut()
