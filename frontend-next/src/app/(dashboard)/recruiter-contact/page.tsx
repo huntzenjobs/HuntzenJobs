@@ -147,7 +147,7 @@ export default function RecruiterContactPage() {
 
       <div id="contact-form" className="grid lg:grid-cols-2 gap-8">
         {/* Pricing Card */}
-        <Card className="border-2 border-huntzen-blue shadow-lg">
+        <Card className="border-2 border-huntzen-blue shadow-lg overflow-hidden">
           <CardHeader className="bg-gradient-to-br from-huntzen-blue to-blue-600 text-white">
             <CardTitle className="text-2xl flex items-center gap-2">
               <Sparkles className="w-6 h-6" />

@@ -18,10 +18,6 @@ const faqs = [
     a: "Nos recruteurs sont des professionnels certifiés avec 5+ ans d'expérience dans le recrutement tech. Ils ont placé des centaines de candidats dans des entreprises comme Google, Meta, Datadog, etc."
   },
   {
-    q: "Puis-je obtenir un remboursement ?",
-    a: "Oui, nous offrons une garantie satisfait ou remboursé à 100% si vous n'êtes pas satisfait de votre consultation dans les 48h."
-  },
-  {
     q: "Combien de temps pour avoir un créneau ?",
     a: "En général, nous trouvons un créneau sous 48h. Les créneaux sont disponibles du lundi au vendredi de 9h à 19h, et le samedi matin."
   },

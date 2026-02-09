@@ -179,3 +179,52 @@ def get_user_id_from_token(authorization: Optional[str]) -> Optional[str]:
 
 
 SupabaseClientDep = Annotated[Client, Depends(get_supabase_client)]
+
+
+async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
+    """
+    Get current authenticated user from JWT token.
+
+    Args:
+        authorization: Authorization header value (Bearer token)
+
+    Returns:
+        User dict with id and email
+
+    Raises:
+        HTTPException: If token is invalid or missing
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid authorization header"
+        )
+
+    token = authorization.replace("Bearer ", "")
+
+    try:
+        settings = get_settings()
+        # Use anon key for token verification
+        supabase_anon = create_client(
+            settings.supabase_url,
+            settings.get_supabase_key()
+        )
+        response = supabase_anon.auth.get_user(token)
+
+        if not response or not response.user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token"
+            )
+
+        return {
+            "id": response.user.id,
+            "email": response.user.email
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Authentication failed: {str(e)}"
+        )

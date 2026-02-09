@@ -18,6 +18,7 @@ from src.api.routes.static_data import router as static_data_router
 from src.api.routes.auth import router as auth_router
 from src.api.routes.saved_jobs import router as saved_jobs_router
 from src.api.routes.cv_analysis import router as cv_analysis_router
+from src.api.routes.stripe import router as stripe_router
 
 router = APIRouter()
 
@@ -34,3 +35,4 @@ router.include_router(cv_analysis_router, prefix="/api/cv-analysis", tags=["CV A
 router.include_router(cv_adapter_router, prefix="/api/cv-adapter", tags=["CV Adapter"])
 router.include_router(recruiter_router, prefix="/api/recruiter", tags=["Recruiter Contact"])
 router.include_router(events_router, prefix="/api/events", tags=["Events"])
+router.include_router(stripe_router, prefix="/api/stripe", tags=["Stripe Payments"])

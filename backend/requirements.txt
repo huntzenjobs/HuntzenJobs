@@ -25,6 +25,7 @@ python-dotenv
 # Utilities
 tenacity
 cachetools
+structlog  # Structured logging
 
 # Rate Limiting & Cache (Phase 1) - Updated 2026-02-07
 slowapi==0.1.9  # Rate limiting for FastAPI
@@ -33,6 +34,9 @@ upstash-redis==0.15.0  # Upstash Redis REST API client for cache
 
 # Database & Storage
 supabase==2.3.4  # Supabase Python client
+
+# Payments
+stripe  # Stripe payment processing
 
 # Country & City Data (Phase 2 - Hybrid approach)
 pycountry==24.6.1  # ISO 3166 country codes

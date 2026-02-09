@@ -168,8 +168,23 @@ export function PricingModal() {
 
       toast.dismiss('stripe-redirect')
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.checkout_url
+      // Check if it's a subscription modification (upgrade/downgrade) or new subscription
+      if (data.modified) {
+        // Subscription was modified immediately (upgrade) or scheduled (downgrade)
+        if (data.immediate) {
+          toast.success('✨ Abonnement mis à niveau ! Les changements sont actifs immédiatement.')
+        } else {
+          toast.success('📅 Changement planifié ! Votre nouveau plan sera actif à la fin de la période actuelle.')
+        }
+
+        // Refresh the page to update subscription status
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+      } else {
+        // New subscription - redirect to Stripe Checkout
+        window.location.href = data.checkout_url
+      }
 
     } catch (error: any) {
       console.error('Stripe checkout error:', error)
