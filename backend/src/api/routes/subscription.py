@@ -96,7 +96,8 @@ async def get_current_subscription(current_user: dict = Depends(get_current_user
             "p_user_id": user_id
         }).execute()
 
-        if not response.data:
+        # RPC returns TABLE (list of rows), not a single object
+        if not response.data or len(response.data) == 0:
             # No active subscription - user is on free plan
             return {
                 "success": True,
@@ -109,7 +110,8 @@ async def get_current_subscription(current_user: dict = Depends(get_current_user
                 }
             }
 
-        subscription_data = response.data
+        # Get first row from the result
+        subscription_data = response.data[0]
 
         return {
             "success": True,
