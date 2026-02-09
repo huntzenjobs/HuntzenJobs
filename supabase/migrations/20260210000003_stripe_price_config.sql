@@ -6,7 +6,7 @@
 -- Supports multiple billing periods per plan
 
 CREATE TABLE IF NOT EXISTS stripe_prices (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   plan_id UUID NOT NULL REFERENCES subscription_plans(id) ON DELETE CASCADE,
   billing_period TEXT NOT NULL CHECK (billing_period IN ('monthly', 'yearly')),
   stripe_price_id TEXT NOT NULL UNIQUE,
