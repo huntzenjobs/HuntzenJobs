@@ -566,21 +566,23 @@ async def handle_checkout_completed(session: Dict[str, Any]):
             "updated_at": datetime.utcnow().isoformat()
         }
 
-        # For plan changes: Cancel old subscription FIRST, then UPDATE existing DB entry
+        # For plan changes: UPDATE DB entry FIRST, then cancel old subscription in Stripe
         if is_plan_change and previous_subscription_id:
             try:
-                logger.info(f"Plan change: Cancelling previous subscription: {previous_subscription_id}")
+                logger.info(f"Plan change: Updating DB entry for subscription: {previous_subscription_id}")
 
-                # Step 1: Cancel old subscription in Stripe immediately (payment already confirmed for new one)
-                stripe.Subscription.delete(previous_subscription_id)
-                logger.info(f"Previous subscription cancelled in Stripe: {previous_subscription_id}")
-
-                # Step 2: UPDATE existing DB entry with new subscription data (single operation)
+                # Step 1: UPDATE existing DB entry with new subscription data
+                # IMPORTANT: Do this BEFORE cancelling in Stripe to avoid race condition with webhook
                 supabase_client.table("user_subscriptions")\
                     .update(subscription_data)\
-                    .eq("user_id", user_id)\
                     .eq("stripe_subscription_id", previous_subscription_id)\
                     .execute()
+
+                logger.info(f"DB entry updated: {previous_subscription_id} → {stripe_subscription_id}")
+
+                # Step 2: Cancel old subscription in Stripe (payment already confirmed for new one)
+                stripe.Subscription.delete(previous_subscription_id)
+                logger.info(f"Previous subscription cancelled in Stripe: {previous_subscription_id}")
 
                 logger.info(f"Plan change completed: {previous_plan} → {plan_name}")
             except Exception as cancel_error:
