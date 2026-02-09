@@ -566,47 +566,48 @@ async def handle_checkout_completed(session: Dict[str, Any]):
             "updated_at": datetime.utcnow().isoformat()
         }
 
-        if existing.data and len(existing.data) > 0:
-            # Update existing subscription
+        # For plan changes: Cancel old subscription FIRST, then UPDATE existing DB entry
+        if is_plan_change and previous_subscription_id:
+            try:
+                logger.info(f"Plan change: Cancelling previous subscription: {previous_subscription_id}")
+
+                # Step 1: Cancel old subscription in Stripe immediately (payment already confirmed for new one)
+                stripe.Subscription.delete(previous_subscription_id)
+                logger.info(f"Previous subscription cancelled in Stripe: {previous_subscription_id}")
+
+                # Step 2: UPDATE existing DB entry with new subscription data (single operation)
+                supabase_client.table("user_subscriptions")\
+                    .update(subscription_data)\
+                    .eq("user_id", user_id)\
+                    .eq("stripe_subscription_id", previous_subscription_id)\
+                    .execute()
+
+                logger.info(f"Plan change completed: {previous_plan} → {plan_name}")
+            except Exception as cancel_error:
+                # If cancel fails, fallback to INSERT (safer than leaving broken state)
+                logger.error(f"Failed to cancel/update previous subscription {previous_subscription_id}: {cancel_error}")
+                logger.info(f"Fallback: Creating new subscription entry for {plan_name}")
+                supabase_client.table("user_subscriptions")\
+                    .insert(subscription_data)\
+                    .execute()
+        elif existing.data and len(existing.data) > 0:
+            # Renewal or update: Update existing subscription
             supabase_client.table("user_subscriptions")\
                 .update(subscription_data)\
                 .eq("user_id", user_id)\
                 .eq("status", "active")\
                 .execute()
-            logger.info(f"Subscription updated for user {user_id}: {plan_name}")
+            logger.info(f"Subscription renewed/updated for user {user_id}: {plan_name}")
         else:
-            # Create new subscription
+            # First subscription: Create new entry
             supabase_client.table("user_subscriptions")\
                 .insert(subscription_data)\
                 .execute()
-            logger.info(f"Subscription created for user {user_id}: {plan_name}")
+            logger.info(f"First subscription created for user {user_id}: {plan_name}")
 
         # Invalidate quota cache after subscription creation/update
         await invalidate_user_quota_cache(user_id)
         logger.info(f"Quota cache invalidated for user {user_id}")
-
-        # NEW: If this was a plan change, cancel the old subscription
-        if is_plan_change and previous_subscription_id:
-            try:
-                logger.info(f"Cancelling previous subscription: {previous_subscription_id}")
-
-                # Cancel old subscription immediately (payment already confirmed for new one)
-                stripe.Subscription.delete(previous_subscription_id)
-
-                # Update old subscription status in database
-                supabase_client.table("user_subscriptions")\
-                    .update({
-                        "status": "cancelled",
-                        "cancelled_at": datetime.utcnow().isoformat(),
-                        "updated_at": datetime.utcnow().isoformat()
-                    })\
-                    .eq("stripe_subscription_id", previous_subscription_id)\
-                    .execute()
-
-                logger.info(f"Previous subscription cancelled successfully: {previous_subscription_id}")
-            except Exception as cancel_error:
-                # Log error but don't fail the webhook (new subscription is already active)
-                logger.error(f"Failed to cancel previous subscription {previous_subscription_id}: {cancel_error}")
 
     except Exception as e:
         logger.error(f"Failed to update subscription in database: {e}")
