@@ -148,9 +148,10 @@ async def search_cities_nominatim(
     limit: int = 10
 ) -> list[str]:
     """
-    Search cities dynamically using OpenStreetMap Nominatim API.
+    Search cities dynamically using Nominatim + geonames hybrid approach.
 
-    Real-time search as user types. This is the CORRECT way to search cities.
+    For short queries (< 4 chars), combines Nominatim with local geonames
+    to improve results. This fixes the "Par" → Paris issue.
 
     Args:
         query: City name search query (e.g., "Garges", "Paris")
@@ -166,9 +167,13 @@ async def search_cities_nominatim(
         >>> await search_cities_nominatim("Par", "fr")
         ["Paris", "Paray-le-Monial", "Paray-Vieille-Poste"]
     """
-    if not query or len(query) < 1:
+    if not query or len(query) < 2:
         return []
 
+    cities = []
+    seen = set()
+
+    # Step 1: Try Nominatim first
     try:
         url = "https://nominatim.openstreetmap.org/search"
         params = {
@@ -176,8 +181,7 @@ async def search_cities_nominatim(
             "countrycodes": country_code.lower(),
             "format": "json",
             "addressdetails": 1,
-            "limit": limit,
-            "featuretype": "city",  # Filter for cities only
+            "limit": limit * 2,  # Get more to filter later
         }
         headers = {
             "User-Agent": "HuntZen/3.0 (job search platform)"
@@ -188,34 +192,62 @@ async def search_cities_nominatim(
             response.raise_for_status()
             data = response.json()
 
-        # Extract city names from results
-        cities = []
-        seen = set()  # Deduplicate
+        # Extract city names from Nominatim results
+        # Prioritize results of type "administrative" (real cities)
+        admin_cities = []
+        other_cities = []
 
         for item in data:
-            # Try to get city name from address details
             address = item.get("address", {})
             city = (
                 address.get("city")
                 or address.get("town")
                 or address.get("village")
                 or address.get("municipality")
-                or item.get("display_name", "").split(",")[0]
             )
 
             if city and city not in seen:
-                cities.append(city)
                 seen.add(city)
+                if item.get("type") == "administrative":
+                    admin_cities.append(city)
+                else:
+                    other_cities.append(city)
+
+        # Combine: administrative first, then others
+        cities = admin_cities + other_cities
 
         logger.info(f"[GEO] Nominatim search '{query}' in {country_code}: {len(cities)} results")
-        return cities[:limit]
 
     except httpx.TimeoutException:
         logger.warning(f"[GEO] Nominatim timeout for query '{query}'")
-        return []
     except Exception as e:
         logger.error(f"[GEO] Nominatim search failed: {e}")
-        return []
+
+    # Step 2: For short queries (< 4 chars), ALWAYS add geonames for better accuracy
+    if len(query) < 4:
+        logger.info(f"[GEO] Short query '{query}', adding geonames for better accuracy")
+
+        try:
+            # Get all cities from geonames
+            all_cities = get_cities_from_geonames(country_code, limit=500)
+
+            # Filter cities that start with query (case-insensitive)
+            query_lower = query.lower()
+            matching_cities = [
+                city for city in all_cities
+                if city.lower().startswith(query_lower) and city not in seen
+            ]
+
+            # Prioritize geonames matches (they start with the query) over Nominatim
+            # Geonames first, then Nominatim results
+            cities = matching_cities + cities
+
+            logger.info(f"[GEO] Geonames added {len(matching_cities)} matching cities")
+
+        except Exception as e:
+            logger.error(f"[GEO] Geonames fallback failed: {e}")
+
+    return cities[:limit]
 
 
 async def get_cities_from_nominatim(country_code: str, limit: int = 500) -> list[str]:
@@ -244,7 +276,6 @@ async def get_cities_from_nominatim(country_code: str, limit: int = 500) -> list
             "format": "json",
             "addressdetails": 1,
             "limit": min(limit, 100),  # Nominatim max limit
-            "featuretype": "city",
         }
         headers = {
             "User-Agent": "HuntZen/3.0 (job search platform)"
