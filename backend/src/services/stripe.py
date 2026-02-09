@@ -154,14 +154,31 @@ async def modify_existing_subscription(
                 .execute()
 
             if plan_response.data:
-                supabase_client.table("user_subscriptions")\
-                    .update({
-                        "plan_id": plan_response.data["id"],
-                        "current_period_end": datetime.fromtimestamp(
+                # Safely get current_period_end from Stripe subscription
+                try:
+                    if updated_subscription.current_period_end:
+                        period_end = datetime.fromtimestamp(
                             updated_subscription.current_period_end
-                        ).isoformat(),
-                        "updated_at": datetime.utcnow().isoformat()
-                    })\
+                        ).isoformat()
+                    else:
+                        logger.warning(f"No current_period_end in Stripe subscription {subscription_id}, using None")
+                        period_end = None
+                except (ValueError, TypeError, AttributeError) as e:
+                    logger.error(f"Failed to parse current_period_end: {e}. Value: {updated_subscription.current_period_end}")
+                    # Keep existing period_end if conversion fails
+                    period_end = None
+
+                update_data = {
+                    "plan_id": plan_response.data["id"],
+                    "updated_at": datetime.utcnow().isoformat()
+                }
+
+                # Only update period_end if we have a valid value
+                if period_end:
+                    update_data["current_period_end"] = period_end
+
+                supabase_client.table("user_subscriptions")\
+                    .update(update_data)\
                     .eq("stripe_subscription_id", subscription_id)\
                     .execute()
 
