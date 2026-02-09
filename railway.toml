@@ -1,0 +1,30 @@
+# Railway Configuration for HuntZen Backend
+# Documentation: https://docs.railway.app/deploy/deployments#railway-toml-file
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "backend/Dockerfile"
+
+[deploy]
+numReplicas = 2
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Auto-scaling configuration
+[deploy.autoscaling]
+enabled = true
+minReplicas = 2
+maxReplicas = 4
+
+# Scale up when CPU > 70% for 60 seconds
+[[deploy.autoscaling.triggers]]
+type = "cpu"
+threshold = 70
+duration = 60
+
+# Scale down when CPU < 30% for 300 seconds (5 minutes)
+[[deploy.autoscaling.triggers]]
+type = "cpu"
+threshold = 30
+duration = 300
+scaleDown = true
