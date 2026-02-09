@@ -101,18 +101,12 @@ async def get_current_user_info(
 
         profile = profile_response.data[0]
 
-        # Get user's active subscription with plan details
-        subscription_response = supabase.table("user_subscriptions").select(
-            """
-            status,
-            current_period_end,
-            subscription_plans (
-                name,
-                display_name,
-                price_monthly
-            )
-            """
-        ).eq("user_id", user_id).eq("status", "active").execute()
+        # Get user's active subscription using RPC (with ORDER BY fix)
+        # This ensures we always get the highest-priority plan (paid > free)
+        subscription_response = supabase.rpc(
+            "get_user_current_subscription",
+            {"p_user_id": user_id}
+        ).execute()
 
         # Default to free plan if no active subscription
         subscription_data = {
@@ -125,12 +119,14 @@ async def get_current_user_info(
 
         if subscription_response.data and len(subscription_response.data) > 0:
             sub = subscription_response.data[0]
-            plan = sub.get("subscription_plans", {})
+            # Extract price from plan_limits JSONB (subscription_plans doesn't have price_monthly in RPC)
+            # For now, map plan names to prices (will be fixed in Phase 1 with stripe_prices table)
+            plan_prices = {"free": 0, "starter": 8.90, "pro": 13.90, "premium": 19.90}
             subscription_data = {
-                "plan_name": plan.get("name", "free"),
-                "plan_display_name": plan.get("display_name", "Free"),
-                "price_monthly": float(plan.get("price_monthly", 0)),
-                "status": sub.get("status", "active"),
+                "plan_name": sub.get("plan_name", "free"),
+                "plan_display_name": sub.get("plan_display_name", "Free"),
+                "price_monthly": plan_prices.get(sub.get("plan_name", "free"), 0),
+                "status": sub.get("subscription_status", "active"),
                 "current_period_end": sub.get("current_period_end")
             }
 

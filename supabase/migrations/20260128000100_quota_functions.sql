@@ -169,6 +169,7 @@ BEGIN
     WHERE us.user_id = p_user_id
       AND us.status = 'active'
       AND us.current_period_end > NOW()
+    ORDER BY sp.sort_order DESC, us.created_at DESC
     LIMIT 1
   ),
   user_usage AS (

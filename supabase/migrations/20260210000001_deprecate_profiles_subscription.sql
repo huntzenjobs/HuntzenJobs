@@ -128,7 +128,9 @@ BEGIN
     usu.stripe_subscription_id,
     usu.current_period_end
   FROM user_subscription_unified usu
+  JOIN subscription_plans sp ON usu.plan_id = sp.id
   WHERE usu.user_id = p_user_id
+  ORDER BY sp.sort_order DESC, usu.subscription_created_at DESC
   LIMIT 1;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
