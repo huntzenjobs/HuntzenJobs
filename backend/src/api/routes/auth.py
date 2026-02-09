@@ -29,7 +29,7 @@ def get_supabase_client() -> Client:
     """Get Supabase client (lazy initialization)."""
     return create_client(
         settings.supabase_url,
-        settings.get_supabase_key()
+        settings.get_supabase_service_role_key()  # Use SERVICE_ROLE to bypass RLS
     )
 
 
