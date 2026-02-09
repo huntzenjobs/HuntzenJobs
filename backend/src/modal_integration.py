@@ -264,11 +264,12 @@ async def spawn_modal_cv_processing(
         try:
             supabase_client.table("cv_analyses").update({
                 "status": "failed",
-                "error": "Modal webhook timeout",
+                "error_message": "Modal webhook timeout",
                 "updated_at": datetime.utcnow().isoformat()
             }).eq("id", cv_id).execute()
-        except:
-            pass
+            logger.info(f"Updated CV {cv_id} status to failed (timeout)")
+        except Exception as e:
+            logger.error(f"Failed to update CV {cv_id} after timeout: {e}")
         return False
 
     except Exception as e:
@@ -277,11 +278,12 @@ async def spawn_modal_cv_processing(
         try:
             supabase_client.table("cv_analyses").update({
                 "status": "failed",
-                "error": f"Failed to trigger Modal webhook: {str(e)}",
+                "error_message": f"Failed to trigger Modal webhook: {str(e)}",
                 "updated_at": datetime.utcnow().isoformat()
             }).eq("id", cv_id).execute()
-        except:
-            pass
+            logger.info(f"Updated CV {cv_id} status to failed (webhook error)")
+        except Exception as e:
+            logger.error(f"Failed to update CV {cv_id} after error: {e}")
         return False
 
 
@@ -444,7 +446,7 @@ async def get_cv_analysis_status(
             "cv_id": cv_id,
             "status": data["status"],
             "result": data.get("result"),
-            "error": data.get("error"),
+            "error": data.get("error_message"),
             "created_at": data["created_at"],
             "completed_at": data.get("completed_at"),
             "processing_time_seconds": processing_time
