@@ -5,6 +5,7 @@ Hybrid approach: OpenStreetMap Nominatim + Local fallback (pycountry + geonamesc
 """
 
 import logging
+from functools import lru_cache
 
 import pycountry
 from fastapi import APIRouter
