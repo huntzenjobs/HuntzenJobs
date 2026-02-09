@@ -50,6 +50,7 @@ dependencies = [
     
     # Database (Optional)
     "supabase>=2.3.0",
+    "psycopg[pool]>=3.1.0",  # PostgreSQL async driver with connection pooling
 
     # Payments (Sprint 3 - Recruiter Contact)
     "stripe>=8.0.0",
