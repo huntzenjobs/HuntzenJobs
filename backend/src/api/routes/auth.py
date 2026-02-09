@@ -101,12 +101,26 @@ async def get_current_user_info(
 
         profile = profile_response.data[0]
 
+        # 🔍 DEBUG: Log user info before RPC call
+        print(f"\n{'='*70}")
+        print(f"[AUTH_ME DEBUG] User ID: {user_id}")
+        print(f"[AUTH_ME DEBUG] Email: {profile.get('email')}")
+        print(f"{'='*70}\n")
+
         # Get user's active subscription using RPC (with ORDER BY fix)
         # This ensures we always get the highest-priority plan (paid > free)
         subscription_response = supabase.rpc(
             "get_user_current_subscription",
             {"p_user_id": user_id}
         ).execute()
+
+        # 🔍 DEBUG: Log raw RPC response
+        print(f"\n{'='*70}")
+        print(f"[AUTH_ME DEBUG] RPC get_user_current_subscription Response:")
+        print(f"  - Data: {subscription_response.data}")
+        print(f"  - Type: {type(subscription_response.data)}")
+        print(f"  - Length: {len(subscription_response.data) if subscription_response.data else 0}")
+        print(f"{'='*70}\n")
 
         # Default to free plan if no active subscription
         subscription_data = {
@@ -119,6 +133,17 @@ async def get_current_user_info(
 
         if subscription_response.data and len(subscription_response.data) > 0:
             sub = subscription_response.data[0]
+
+            # 🔍 DEBUG: Log subscription object details
+            print(f"\n{'='*70}")
+            print(f"[AUTH_ME DEBUG] ✅ Subscription FOUND:")
+            print(f"  - plan_name: {sub.get('plan_name')}")
+            print(f"  - plan_display_name: {sub.get('plan_display_name')}")
+            print(f"  - subscription_status: {sub.get('subscription_status')}")
+            print(f"  - current_period_end: {sub.get('current_period_end')}")
+            print(f"  - stripe_subscription_id: {sub.get('stripe_subscription_id')}")
+            print(f"{'='*70}\n")
+
             # Extract price from plan_limits JSONB (subscription_plans doesn't have price_monthly in RPC)
             # For now, map plan names to prices (will be fixed in Phase 1 with stripe_prices table)
             plan_prices = {"free": 0, "starter": 8.90, "pro": 13.90, "premium": 19.90}
@@ -129,6 +154,11 @@ async def get_current_user_info(
                 "status": sub.get("subscription_status", "active"),
                 "current_period_end": sub.get("current_period_end")
             }
+        else:
+            # 🔍 DEBUG: No subscription found
+            print(f"\n{'='*70}")
+            print(f"[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
+            print(f"{'='*70}\n")
 
         # Get quota status using Supabase RPC
         quota_response = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
@@ -147,8 +177,8 @@ async def get_current_user_info(
                     "reset_at": quota["reset_at"]
                 }
 
-        # Return formatted response
-        return {
+        # Build response
+        response_data = {
             "success": True,
             "user": {
                 "id": str(profile["id"]),
@@ -160,6 +190,16 @@ async def get_current_user_info(
             "subscription": subscription_data,
             "quotas": quotas
         }
+
+        # 🔍 DEBUG: Log final response
+        print(f"\n{'='*70}")
+        print(f"[AUTH_ME DEBUG] 📤 FINAL RESPONSE to frontend:")
+        print(f"  - subscription.plan_name: {subscription_data.get('plan_name')}")
+        print(f"  - subscription.plan_display_name: {subscription_data.get('plan_display_name')}")
+        print(f"  - subscription.status: {subscription_data.get('status')}")
+        print(f"{'='*70}\n")
+
+        return response_data
 
     except HTTPException:
         raise
