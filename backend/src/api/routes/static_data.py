@@ -50,6 +50,43 @@ async def get_countries():
     }
 
 
+@router.get("/api/cities/search")
+async def search_cities(
+    q: str = Query(..., min_length=1, description="City search query"),
+    country_code: str = Query(..., min_length=2, max_length=2, description="ISO country code"),
+    limit: int = Query(default=10, ge=1, le=20, description="Max results")
+):
+    """
+    Search cities dynamically using OpenStreetMap Nominatim.
+
+    Real-time city search as user types. This is the CORRECT approach.
+
+    Args:
+        q: City name query (e.g., "Garges", "Par", "Minsk")
+        country_code: ISO 3166-1 alpha-2 country code (e.g., "fr", "by")
+        limit: Maximum number of results (default: 10)
+
+    Returns:
+        List of matching city names
+
+    Examples:
+        GET /api/cities/search?q=Garges&country_code=fr
+        → ["Garges-lès-Gonesse", "Garges-lès-Beaune"]
+
+        GET /api/cities/search?q=Par&country_code=fr
+        → ["Paris", "Paray-le-Monial", ...]
+    """
+    cities = await search_cities_nominatim(q, country_code, limit)
+
+    return {
+        "success": True,
+        "data": cities,
+        "query": q,
+        "country_code": country_code,
+        "count": len(cities)
+    }
+
+
 @router.get("/api/cities/{country_name}")
 async def get_cities(country_name: str):
     """
@@ -95,43 +132,6 @@ async def get_cities(country_name: str):
     return {
         "success": True,
         "data": cities,
-        "country_code": country_code,
-        "count": len(cities)
-    }
-
-
-@router.get("/api/cities/search")
-async def search_cities(
-    q: str = Query(..., min_length=1, description="City search query"),
-    country_code: str = Query(..., min_length=2, max_length=2, description="ISO country code"),
-    limit: int = Query(default=10, ge=1, le=20, description="Max results")
-):
-    """
-    Search cities dynamically using OpenStreetMap Nominatim.
-
-    Real-time city search as user types. This is the CORRECT approach.
-
-    Args:
-        q: City name query (e.g., "Garges", "Par", "Minsk")
-        country_code: ISO 3166-1 alpha-2 country code (e.g., "fr", "by")
-        limit: Maximum number of results (default: 10)
-
-    Returns:
-        List of matching city names
-
-    Examples:
-        GET /api/cities/search?q=Garges&country_code=fr
-        → ["Garges-lès-Gonesse", "Garges-lès-Beaune"]
-
-        GET /api/cities/search?q=Par&country_code=fr
-        → ["Paris", "Paray-le-Monial", ...]
-    """
-    cities = await search_cities_nominatim(q, country_code, limit)
-
-    return {
-        "success": True,
-        "data": cities,
-        "query": q,
         "country_code": country_code,
         "count": len(cities)
     }
