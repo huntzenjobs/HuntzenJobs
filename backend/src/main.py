@@ -54,15 +54,16 @@ structlog.configure(
 
 import logging
 
-from app.graph.builder import huntzen_app
-# CV Analysis - Using router for dual system support (legacy/new)
-from app.agents import cv_router
-from app.state import HuntZenState
+# LEGACY MODULES - Commented out (app.graph.builder doesn't exist)
+# These were part of old LangGraph system, now replaced by modular routes in src/api/routes
+# from app.graph.builder import huntzen_app
+# from app.agents import cv_router
+# from app.state import HuntZenState
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from app.database import init_db, init_connection_pool_async, close_connection_pool, get_db
 from app.cache import init_redis_client, close_redis_client
-from app.geo_api import get_all_countries, get_cities_by_country, get_contract_types
-from job_finder.api_tools import find_recruiter_linkedin, find_multiple_recruiters, search_jobs_aggregated, find_recruiters_by_domain
+# from app.geo_api import get_all_countries, get_cities_by_country, get_contract_types
+# from job_finder.api_tools import find_recruiter_linkedin, find_multiple_recruiters, search_jobs_aggregated, find_recruiters_by_domain
 
 # Import security validators
 from src.utils.validators import (
@@ -489,7 +490,8 @@ async def get_cv_tester(request: Request):
 
 
 
-@app.post("/chat")
+# LEGACY ENDPOINT - Commented out (uses huntzen_app which doesn\'t exist)
+# @app.post("/chat")
 @limiter.limit("30/minute")
 async def chat_endpoint(request: Request, data: ChatMessage):
     try:
@@ -580,7 +582,8 @@ class ResetRequest(BaseModel):
 
 
 
-@app.post("/reset")
+# LEGACY ENDPOINT - Commented out
+# @app.post("/reset")
 @limiter.limit("30/minute")  # Prevent abuse of session resets
 async def reset_session(request: Request, data: ResetRequest):
     try:
@@ -618,7 +621,8 @@ class RecruiterByDomainRequest(BaseModel):
 
 
 
-@app.post("/api/search/recruiter")
+# LEGACY ENDPOINT - Uses job_finder which should be in modular routes
+# @app.post("/api/search/recruiter")
 @limiter.limit("10/minute")
 async def search_recruiter_direct(request: Request, data: RecruiterSearchRequest):
     """
@@ -662,7 +666,8 @@ async def search_recruiter_direct(request: Request, data: RecruiterSearchRequest
 
 
 
-@app.post("/api/search/recruiters-by-domain")
+# LEGACY ENDPOINT - Uses job_finder
+# @app.post("/api/search/recruiters-by-domain")
 @limiter.limit("10/minute")
 async def search_recruiters_by_domain(request: Request, data: RecruiterByDomainRequest):
     """
@@ -711,7 +716,8 @@ class JobDescriptionRequest(BaseModel):
 
 
 
-@app.post("/api/coach/generate-title")
+# LEGACY ENDPOINT - Commented out (uses huntzen_app)
+# @app.post("/api/coach/generate-title")
 @limiter.limit("30/minute")
 async def generate_conversation_title(request: Request, data: GenerateTitleRequest):
     """
@@ -815,7 +821,8 @@ class CVAnalysisRequest(BaseModel):
 
 
 
-@app.post("/api/analyze-cv")
+# LEGACY ENDPOINT - Replaced by /api/cv/analyze in src/api/routes/cv.py
+# @app.post("/api/analyze-cv")
 @limiter.limit("5/minute")
 async def analyze_cv(
     request: Request,
@@ -881,7 +888,8 @@ async def analyze_cv(
 
 
 
-@app.post("/api/analyze-cv-pdf")
+# LEGACY ENDPOINT - Replaced by /api/cv/upload in src/api/routes/cv.py
+# @app.post("/api/analyze-cv-pdf")
 @limiter.limit("3/minute")
 async def analyze_cv_file(
     request: Request,
