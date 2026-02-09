@@ -6,6 +6,7 @@ import { Check, X, Sparkles, Zap, Crown, ArrowLeft, Rocket, Star, TrendingUp, Us
 import { Button } from '@/components/ui/button'
 import { useOptionalAuth } from '@/contexts/auth-context'
 import { useOptionalSubscription } from '@/contexts/subscription-context'
+import { useSubscriptionApi } from '@/hooks/use-subscription-api'
 import { toast } from 'sonner'
 
 const plans = [
@@ -199,7 +200,23 @@ export default function PricingPage() {
   const auth = useOptionalAuth()
   const user = auth?.user
   const subscription = useOptionalSubscription()
-  const currentPlan = subscription?.plan || 'free'
+
+  // 🔥 FIX: Use useSubscriptionApi directly to get fresh data from backend
+  const apiData = useSubscriptionApi()
+
+  // Use API data as source of truth, fallback to context if API not loaded yet
+  const currentPlan = apiData.subscription?.plan_name || subscription?.plan || 'free'
+
+  // 🔍 DEBUG: Log subscription data to see what's happening
+  console.log('[PRICING DEBUG] Subscription data:', {
+    apiSubscription: apiData.subscription,
+    apiPlan: apiData.subscription?.plan_name,
+    contextPlan: subscription?.plan,
+    finalPlan: currentPlan,
+    isLoading: apiData.isLoading,
+    error: apiData.error
+  })
+
   const setPlan = subscription?.setPlan
 
   const getPrice = (plan: typeof plans[0]) => {
@@ -259,8 +276,26 @@ export default function PricingPage() {
 
       toast.dismiss('stripe-redirect')
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.checkout_url
+      // Check if it's a subscription modification (upgrade/downgrade) or new subscription
+      if (data.modified) {
+        // Subscription was modified immediately (upgrade) or scheduled (downgrade)
+        if (data.immediate) {
+          toast.success('✨ Abonnement mis à niveau ! Les changements sont actifs immédiatement.')
+        } else {
+          toast.success('📅 Changement planifié ! Votre nouveau plan sera actif à la fin de la période actuelle.')
+        }
+
+        // Refresh the page to update subscription status
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+      } else {
+        // New subscription - redirect to Stripe Checkout
+        if (!data.checkout_url) {
+          throw new Error('Checkout URL manquante')
+        }
+        window.location.href = data.checkout_url
+      }
 
     } catch (error: any) {
       console.error('Stripe checkout error:', error)

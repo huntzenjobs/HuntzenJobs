@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Check, X, Sparkles, Zap, Crown, Gift } from 'lucide-react'
 import { useSubscription } from '@/contexts/subscription-context'
+import { useSubscriptionApi } from '@/hooks/use-subscription-api'
 import { useOptionalAuth } from '@/contexts/auth-context'
 import { PlanType } from '@/hooks/use-freemium-limits'
 import Link from 'next/link'
@@ -121,10 +122,24 @@ const plans: PricingPlan[] = [
 ]
 
 export function PricingModal() {
-  const { showPricingModal, closePricingModal, pricingModalFeature, plan: currentPlan } =
+  const { showPricingModal, closePricingModal, pricingModalFeature, plan: contextPlan } =
     useSubscription()
   const auth = useOptionalAuth()
   const user = auth?.user
+
+  // 🔥 FIX: Use useSubscriptionApi directly to get fresh data from backend
+  const apiData = useSubscriptionApi()
+
+  // Use API data as source of truth, fallback to context if API not loaded yet
+  const currentPlan = apiData.subscription?.plan_name || contextPlan
+
+  // 🔍 DEBUG
+  console.log('[PRICING MODAL DEBUG]', {
+    apiPlan: apiData.subscription?.plan_name,
+    contextPlan,
+    finalPlan: currentPlan,
+    isLoading: apiData.isLoading
+  })
 
   const handleSelectPlan = async (planId: PlanType) => {
     if (planId === 'free' || planId === currentPlan) {
