@@ -39,16 +39,19 @@ class SerpAPIProvider(BaseJobProvider):
         location: str = "",
         country_code: str = "fr",
         max_results: int = 50,
+        radius_km: int | None = None,
+        **kwargs,
     ) -> list[dict[str, Any]]:
         """
         Search Google Jobs via SerpAPI.
-        
+
         Args:
             query: Job title or keywords
             location: City or region
             country_code: ISO country code
             max_results: Maximum results
-            
+            radius_km: Search radius in kilometers around city (optional)
+
         Returns:
             List of normalized job listings
         """
@@ -56,13 +59,18 @@ class SerpAPIProvider(BaseJobProvider):
         if not api_key:
             logger.debug(f"[{self.name}] Missing API key")
             return []
-        
+
         # Build location string using pycountry for comprehensive support
         location_str = location or country_code_to_name(country_code)
 
+        # Build query with radius if specified
+        search_query = query
+        if radius_km and location:
+            search_query = f"{query} within {radius_km} km"
+
         params = {
             "engine": "google_jobs",
-            "q": query,
+            "q": search_query,
             "location": location_str,
             "hl": country_code_to_language(country_code),
             "api_key": api_key,

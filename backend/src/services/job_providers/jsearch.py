@@ -58,6 +58,8 @@ class JSearchProvider(BaseJobProvider):
         location: str = "",
         country_code: str = "fr",
         max_results: int = 50,
+        radius_km: int | None = None,
+        **kwargs,
     ) -> list[dict[str, Any]]:
         """
         Search jobs via JSearch /search endpoint.
@@ -67,6 +69,7 @@ class JSearchProvider(BaseJobProvider):
             location: City or region
             country_code: ISO country code
             max_results: Maximum results (JSearch returns ~10 per page)
+            radius_km: Search radius in kilometers around city (optional)
 
         Returns:
             List of normalized job listings
@@ -80,7 +83,12 @@ class JSearchProvider(BaseJobProvider):
         # Use pycountry for comprehensive country support (250+ countries)
         country_name = country_code_to_name(country_code)
         location_str = f"{location}, {country_name}" if location else country_name
-        search_query = f"{query} in {location_str}"
+
+        # Add radius to query if specified
+        if radius_km and location:
+            search_query = f"{query} in {location_str} within {radius_km} km"
+        else:
+            search_query = f"{query} in {location_str}"
 
         # Request up to 2 pages (~20 results)
         num_pages = min(2, max(1, max_results // 10))

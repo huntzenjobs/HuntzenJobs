@@ -69,14 +69,16 @@ class JobSearchRequest(BaseModel):
     salary_min: Optional[int] = Field(default=None, ge=0)
     max_results: int = Field(default=50, ge=5, le=100)
     max_days: int = Field(default=7, ge=1, le=30, description="Max days since posting (1-30)")
-    
+    radius_km: Optional[int] = Field(default=None, ge=1, le=100, description="Search radius in kilometers around city (1-100)")
+
     model_config = {"json_schema_extra": {"example": {
         "job_title": "Data Engineer",
         "country_code": "us",
         "city": "New York",
         "contract_type": "permanent",
         "max_results": 50,
-        "max_days": 7
+        "max_days": 7,
+        "radius_km": 50
     }}}
 
 

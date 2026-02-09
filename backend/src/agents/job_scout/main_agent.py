@@ -101,11 +101,12 @@ class JobScoutAgent(BaseAgent):
         contract_type: str = "",
         max_results: int = 50,
         max_days: int = 7,
+        radius_km: Optional[int] = None,
         include_insights: bool = True,
     ) -> dict[str, Any]:
         """
         Execute job search with AI enhancement.
-        
+
         Args:
             job_title: Job title to search
             country_code: ISO country code
@@ -113,8 +114,9 @@ class JobScoutAgent(BaseAgent):
             contract_type: Contract type filter
             max_results: Maximum results to return
             max_days: Only jobs from last N days
+            radius_km: Search radius in kilometers around city (optional)
             include_insights: Include market insights
-            
+
         Returns:
             Search results with metadata
         """
@@ -136,6 +138,7 @@ class JobScoutAgent(BaseAgent):
                 max_per_provider=max_results,
                 max_days=max_days,
                 contract_type=contract_type,
+                radius_km=radius_km,
             )
             
             # Step 3: Deduplicate

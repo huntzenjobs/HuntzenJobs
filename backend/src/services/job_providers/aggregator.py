@@ -21,10 +21,11 @@ async def aggregate_jobs(
     max_per_provider: int = 50,
     max_days: int = 7,
     contract_type: str = "",
+    radius_km: int | None = None,
 ) -> list[dict[str, Any]]:
     """
     Aggregate jobs from multiple providers.
-    
+
     Args:
         providers: List of job providers to query
         query: Job title or keywords
@@ -33,7 +34,8 @@ async def aggregate_jobs(
         max_per_provider: Max results per provider
         max_days: Only jobs from last N days
         contract_type: Filter by contract type
-        
+        radius_km: Search radius in kilometers around city (optional)
+
     Returns:
         Combined list of all job listings
     """
@@ -51,7 +53,11 @@ async def aggregate_jobs(
             if hasattr(provider, 'name') and provider.name == 'adzuna':
                 kwargs["max_days"] = max_days
                 kwargs["contract_type"] = contract_type
-            
+
+            # Pass radius_km to providers that support it
+            if radius_km is not None:
+                kwargs["radius_km"] = radius_km
+
             jobs = await provider.search(**kwargs)
             return provider.name, jobs
         except Exception as e:
