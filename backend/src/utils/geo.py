@@ -182,24 +182,24 @@ async def get_cities_from_nominatim(
     return []
 
 
-def get_cities_from_geonames(country_code: str, limit: int = 50) -> list[str]:
+def get_cities_from_geonames(country_code: str, limit: int = 500) -> list[str]:
     """
-    Get major cities from local geonamescache.
+    Get cities from local geonamescache.
 
     Cities are sorted by population (largest first).
 
     Args:
         country_code: ISO 3166-1 alpha-2 country code
-        limit: Maximum number of cities to return
+        limit: Maximum number of cities to return (default: 500)
 
     Returns:
         List of city names (sorted by population, descending)
 
     Examples:
         >>> get_cities_from_geonames("fr")
-        ["Paris", "Marseille", "Lyon", ...]
+        ["Paris", "Marseille", "Lyon", "Toulouse", "Nice", ...]
         >>> get_cities_from_geonames("by")
-        ["Minsk", "Homyel'", "Mahilyow", ...]
+        ["Minsk", "Gomel", "Mogilev", "Vitebsk", ...]
     """
     try:
         cities_data = _gc.get_cities()
@@ -207,12 +207,11 @@ def get_cities_from_geonames(country_code: str, limit: int = 50) -> list[str]:
 
         for city in cities_data.values():
             if city.get("countrycode", "").upper() == country_code.upper():
-                # Only major cities (population > 100k)
-                if city.get("population", 0) > 100000:
-                    country_cities.append({
-                        "name": city["name"],
-                        "population": city.get("population", 0)
-                    })
+                # Accept all cities (no population filter)
+                country_cities.append({
+                    "name": city["name"],
+                    "population": city.get("population", 0)
+                })
 
         # Sort by population (descending) and extract names
         country_cities.sort(key=lambda x: x["population"], reverse=True)
@@ -225,27 +224,27 @@ def get_cities_from_geonames(country_code: str, limit: int = 50) -> list[str]:
 
 async def get_cities_for_country(
     country_code: str,
-    limit: int = 50,
+    limit: int = 500,
     use_fallback: bool = True
 ) -> list[str]:
     """
-    Get major cities for a country (hybrid approach).
+    Get cities for a country (hybrid approach).
 
     Tries OpenStreetMap Nominatim first, falls back to local geonamescache.
 
     Args:
         country_code: ISO 3166-1 alpha-2 country code
-        limit: Maximum number of cities to return
+        limit: Maximum number of cities to return (default: 500)
         use_fallback: Whether to use geonamescache fallback if Nominatim fails
 
     Returns:
-        List of city names
+        List of city names (sorted by population, descending)
 
     Examples:
         >>> await get_cities_for_country("by")
         ["Minsk", "Gomel", "Mogilev", "Vitebsk", ...]
         >>> await get_cities_for_country("fr", limit=10)
-        ["Paris", "Marseille", "Lyon", ...]
+        ["Paris", "Marseille", "Lyon", "Toulouse", "Nice", ...]
     """
     # Try Nominatim first (always up-to-date)
     cities = await get_cities_from_nominatim(country_code, limit)

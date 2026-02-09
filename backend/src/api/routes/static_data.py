@@ -142,7 +142,7 @@ async def get_cities(country_name: str):
         }
 
     # Use centralized geo utility (Nominatim + geonames fallback)
-    cities = await get_cities_for_country(country_code, limit=50)
+    cities = await get_cities_for_country(country_code, limit=500)
 
     return {
         "success": True,

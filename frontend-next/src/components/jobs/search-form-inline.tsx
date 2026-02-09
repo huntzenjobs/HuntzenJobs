@@ -32,6 +32,7 @@ export interface SearchParams {
   query: string
   location: string
   country: string
+  radiusKm?: number
 }
 
 export function SearchFormInline({ onSearch, isLoading = false, disabled = false }: SearchFormInlineProps) {
@@ -40,6 +41,7 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
   const [country, setCountry] = useState('')
   const [selectedCountryName, setSelectedCountryName] = useState('')
   const [isCountryValid, setIsCountryValid] = useState(false) // Track if valid country selected
+  const [radiusKm, setRadiusKm] = useState(50) // Default 50km radius
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { canUse, getRemaining, isFreePlan } = useSubscription()
@@ -151,6 +153,7 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
       query: query.trim(),
       location: location.trim(),
       country: country.trim(),
+      radiusKm: location.trim() ? radiusKm : undefined, // Only send radius if city is specified
     })
 
     // Clear errors on successful search
@@ -247,6 +250,28 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
           />
         </div>
 
+        {/* Radius Slider - Only show if city is specified */}
+        {location && (
+          <div className="flex-1 min-w-0 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+            <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-gray-700">Rayon</span>
+                <span className="text-xs font-bold text-huntzen-blue">{radiusKm} km</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(Number(e.target.value))}
+                disabled={disabled || isLoading}
+                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-huntzen-blue disabled:opacity-50"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-2">
           {/* Standard Search */}
@@ -331,6 +356,28 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
           icon={<MapPin className="h-5 w-5" />}
           emptyMessage={!isCountryValid ? "Sélectionnez d'abord un pays" : "Aucune ville trouvée"}
         />
+
+        {/* Radius Slider - Only show if city is specified */}
+        {location && (
+          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+            <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Rayon de recherche</span>
+                <span className="text-sm font-bold text-huntzen-blue">{radiusKm} km</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(Number(e.target.value))}
+                disabled={disabled || isLoading}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-huntzen-blue disabled:opacity-50"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="w-full">
