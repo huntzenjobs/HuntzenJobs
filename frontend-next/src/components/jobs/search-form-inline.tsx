@@ -60,23 +60,21 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
     }
   }
 
-  // Fetch cities for autocomplete
+  // Fetch cities for autocomplete - DYNAMIC SEARCH with OpenStreetMap
   const fetchCities = async (query: string): Promise<AutocompleteOption[]> => {
-    console.log('🏙️ fetchCities called:', { query, selectedCountryName, isCountryValid })
-    if (!query || !selectedCountryName) {
-      console.log('❌ Missing query or country name')
+    console.log('🏙️ fetchCities called:', { query, country, isCountryValid })
+    if (!query || query.length < 1 || !country) {
+      console.log('❌ Missing query or country code')
       return []
     }
     try {
-      console.log('🌐 Fetching cities for:', selectedCountryName)
-      const cities = await huntzenApi.getCities(selectedCountryName)
-      console.log('✅ Cities fetched:', cities.length)
-      return cities
-        .filter(c => c.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 8)
-        .map(c => ({ label: c, value: c }))
+      console.log('🌐 Searching cities dynamically via Nominatim:', query)
+      // Use dynamic search with OpenStreetMap Nominatim
+      const cities = await huntzenApi.searchCities(query, country)
+      console.log('✅ Cities found:', cities.length)
+      return cities.map(c => ({ label: c, value: c }))
     } catch (error) {
-      console.error('❌ Error fetching cities:', error)
+      console.error('❌ Error searching cities:', error)
       return []
     }
   }

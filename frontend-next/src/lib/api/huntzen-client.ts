@@ -133,6 +133,21 @@ class HuntzenApiClient {
     return response.data || []
   }
 
+  /**
+   * Search cities dynamically using OpenStreetMap Nominatim
+   * @param query - City search query (e.g., "Garges", "Par")
+   * @param countryCode - ISO country code (e.g., "fr", "by")
+   * @returns List of matching city names
+   */
+  async searchCities(query: string, countryCode: string): Promise<string[]> {
+    if (!query || query.length < 1) return []
+
+    const response = await this.fetch<{ success: boolean; data: string[] }>(
+      `/api/cities/search?q=${encodeURIComponent(query)}&country_code=${countryCode}`
+    )
+    return response.data || []
+  }
+
   async getContractTypes(): Promise<ContractType[]> {
     const response = await this.fetch<{ success: boolean; data: ContractType[] }>('/api/contract-types')
     return response.data || []

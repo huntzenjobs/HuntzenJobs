@@ -159,27 +159,80 @@ def format_location_query(
     return f"{query} in {location}"
 
 
-async def get_cities_from_nominatim(
+async def search_cities_nominatim(
+    query: str,
     country_code: str,
-    limit: int = 50
+    limit: int = 10
 ) -> list[str]:
     """
-    Fetch major cities from OpenStreetMap Nominatim API.
+    Search cities dynamically using OpenStreetMap Nominatim API.
 
-    Note: Nominatim API can be unreliable for city listings.
-    This function returns empty list and relies on geonamescache fallback.
+    Real-time search as user types. This is the CORRECT way to search cities.
 
     Args:
-        country_code: ISO 3166-1 alpha-2 country code
-        limit: Maximum number of cities to return
+        query: City name search query (e.g., "Garges", "Paris")
+        country_code: ISO 3166-1 alpha-2 country code to filter results
+        limit: Maximum number of results (default: 10)
 
     Returns:
-        List of city names (usually empty, use geonamescache fallback)
+        List of matching city names
+
+    Examples:
+        >>> await search_cities_nominatim("Garges", "fr")
+        ["Garges-lès-Gonesse", "Garges-lès-Beaune"]
+        >>> await search_cities_nominatim("Par", "fr")
+        ["Paris", "Paray-le-Monial", "Paray-Vieille-Poste"]
     """
-    # Nominatim is not reliable for getting city lists
-    # Always fallback to geonamescache for better results
-    logger.debug(f"[GEO] Skipping Nominatim for {country_code}, using geonames directly")
-    return []
+    if not query or len(query) < 1:
+        return []
+
+    try:
+        url = "https://nominatim.openstreetmap.org/search"
+        params = {
+            "q": query,
+            "countrycodes": country_code.lower(),
+            "format": "json",
+            "addressdetails": 1,
+            "limit": limit,
+            "featuretype": "city",  # Filter for cities only
+        }
+        headers = {
+            "User-Agent": "HuntZen/3.0 (job search platform)"
+        }
+
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+
+        # Extract city names from results
+        cities = []
+        seen = set()  # Deduplicate
+
+        for item in data:
+            # Try to get city name from address details
+            address = item.get("address", {})
+            city = (
+                address.get("city")
+                or address.get("town")
+                or address.get("village")
+                or address.get("municipality")
+                or item.get("display_name", "").split(",")[0]
+            )
+
+            if city and city not in seen:
+                cities.append(city)
+                seen.add(city)
+
+        logger.info(f"[GEO] Nominatim search '{query}' in {country_code}: {len(cities)} results")
+        return cities[:limit]
+
+    except httpx.TimeoutException:
+        logger.warning(f"[GEO] Nominatim timeout for query '{query}'")
+        return []
+    except Exception as e:
+        logger.error(f"[GEO] Nominatim search failed: {e}")
+        return []
 
 
 def get_cities_from_geonames(country_code: str, limit: int = 500) -> list[str]:
