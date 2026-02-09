@@ -41,6 +41,7 @@ export function CoachTimer({
 }: CoachTimerProps) {
   const [secondsRemaining, setSecondsRemaining] = React.useState(totalSeconds)
   const [alertsShown, setAlertsShown] = React.useState<Set<number>>(new Set())
+  const [hasCalledTimeUp, setHasCalledTimeUp] = React.useState(false)
 
   // Calculate time parts
   const minutes = Math.floor(secondsRemaining / 60)
@@ -62,7 +63,11 @@ export function CoachTimer({
   // Timer countdown
   React.useEffect(() => {
     if (secondsRemaining <= 0) {
-      onTimeUp?.()
+      // Only call onTimeUp once when time expires
+      if (!hasCalledTimeUp) {
+        setHasCalledTimeUp(true)
+        onTimeUp?.()
+      }
       return
     }
 
@@ -77,7 +82,7 @@ export function CoachTimer({
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [secondsRemaining, onTimeUp])
+  }, [secondsRemaining, onTimeUp, hasCalledTimeUp])
 
   // Progressive alerts
   React.useEffect(() => {

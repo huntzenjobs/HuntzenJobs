@@ -95,17 +95,25 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const remaining = Math.max(0, totalAllowed - freemium.usage.coachSecondsUsedToday)
       setCoachTimeRemaining(remaining)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [freemium.isLoaded, freemium.isCoachSessionActive])
+  }, [
+    freemium.isLoaded,
+    freemium.isCoachSessionActive,
+    freemium.limits.coach_minutes_per_day,
+    freemium.usage.coachSecondsUsedToday,
+  ])
 
   const openPricingModal = useCallback((feature?: string) => {
     setPricingModalFeature(feature || null)
     setShowPricingModal(true)
   }, [])
 
-  const closePricingModal = useCallback(() => {
-    setShowPricingModal(false)
-    setPricingModalFeature(null)
+  const closePricingModal = useCallback((open?: boolean) => {
+    // Si un paramètre est fourni (par le Dialog onOpenChange), on l'utilise
+    // Sinon on ferme par défaut
+    setShowPricingModal(open ?? false)
+    if (open === false || open === undefined) {
+      setPricingModalFeature(null)
+    }
   }, [])
 
   // Map API data to interface (use API as source of truth, localStorage as fallback)
