@@ -74,7 +74,7 @@ async def coach_chat(
     return CoachResponse(
         success=True,
         response=result["response"],
-        language=result.get("language", request.language),
+        language=result.get("language", data.language),
         training_suggestions=result.get("training_suggestions", []),
         career_insights=result.get("career_insights", {}),
     )
