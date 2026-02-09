@@ -20,64 +20,12 @@ router = APIRouter()
 def get_all_countries() -> list[dict]:
     """
     Get all countries using pycountry (ISO 3166-1 alpha-2).
+    French names via pycountry built-in locales (250+ countries).
     Cached for performance.
     """
     countries = []
     for country in pycountry.countries:
-        # Use French name if available, otherwise English
-        name = country.name
-        # French translations for common countries
-        french_names = {
-            "United States": "États-Unis",
-            "United Kingdom": "Royaume-Uni",
-            "Germany": "Allemagne",
-            "Spain": "Espagne",
-            "Italy": "Italie",
-            "Netherlands": "Pays-Bas",
-            "Belgium": "Belgique",
-            "Switzerland": "Suisse",
-            "Austria": "Autriche",
-            "Greece": "Grèce",
-            "Portugal": "Portugal",
-            "Poland": "Pologne",
-            "Sweden": "Suède",
-            "Norway": "Norvège",
-            "Denmark": "Danemark",
-            "Finland": "Finlande",
-            "Ireland": "Irlande",
-            "Czech Republic": "République Tchèque",
-            "Romania": "Roumanie",
-            "Hungary": "Hongrie",
-            "South Africa": "Afrique du Sud",
-            "Egypt": "Égypte",
-            "Morocco": "Maroc",
-            "Algeria": "Algérie",
-            "Tunisia": "Tunisie",
-            "Saudi Arabia": "Arabie Saoudite",
-            "United Arab Emirates": "Émirats Arabes Unis",
-            "China": "Chine",
-            "Japan": "Japon",
-            "South Korea": "Corée du Sud",
-            "India": "Inde",
-            "Thailand": "Thaïlande",
-            "Vietnam": "Vietnam",
-            "Indonesia": "Indonésie",
-            "Malaysia": "Malaisie",
-            "Singapore": "Singapour",
-            "Philippines": "Philippines",
-            "Israel": "Israël",
-            "Turkey": "Turquie",
-            "Australia": "Australie",
-            "New Zealand": "Nouvelle-Zélande",
-            "Canada": "Canada",
-            "Brazil": "Brésil",
-            "Argentina": "Argentine",
-            "Chile": "Chili",
-            "Colombia": "Colombie",
-            "Peru": "Pérou",
-            "Mexico": "Mexique",
-        }
-        name = french_names.get(country.name, country.name)
+        name = country_code_to_name(country.alpha_2, lang="fr")
 
         countries.append({
             "name": name,

@@ -8,7 +8,9 @@ Hybrid approach:
 - Cities: OpenStreetMap Nominatim API (primary) + geonamescache (fallback)
 """
 
+import gettext
 import logging
+import os
 from functools import lru_cache
 
 import httpx
@@ -19,6 +21,16 @@ logger = logging.getLogger(__name__)
 
 # Initialize geonames cache for offline fallback
 _gc = geonamescache.GeonamesCache()
+
+# Initialize French translator from pycountry built-in locales (250+ countries)
+_localedir = os.path.join(os.path.dirname(pycountry.__file__), "locales")
+try:
+    _french_translator = gettext.translation(
+        "iso3166-1", _localedir, languages=["fr"]
+    ).gettext
+except FileNotFoundError:
+    logger.warning("[GEO] French locale not found for pycountry, falling back to English")
+    _french_translator = None
 
 
 @lru_cache(maxsize=256)
@@ -47,34 +59,9 @@ def country_code_to_name(country_code: str, lang: str = "en") -> str:
         if country:
             name = country.name
 
-            # French translations for common countries (optional)
-            if lang == "fr":
-                french_names = {
-                    "United States": "États-Unis",
-                    "United Kingdom": "Royaume-Uni",
-                    "Germany": "Allemagne",
-                    "Spain": "Espagne",
-                    "Italy": "Italie",
-                    "Netherlands": "Pays-Bas",
-                    "Belgium": "Belgique",
-                    "Switzerland": "Suisse",
-                    "Austria": "Autriche",
-                    "Belarus": "Biélorussie",
-                    "Poland": "Pologne",
-                    "Russia": "Russie",
-                    "Ukraine": "Ukraine",
-                    "Greece": "Grèce",
-                    "Portugal": "Portugal",
-                    "Sweden": "Suède",
-                    "Norway": "Norvège",
-                    "Denmark": "Danemark",
-                    "Finland": "Finlande",
-                    "Ireland": "Irlande",
-                    "Czech Republic": "République Tchèque",
-                    "Romania": "Roumanie",
-                    "Hungary": "Hongrie",
-                }
-                return french_names.get(name, name)
+            # French translation via pycountry built-in locales (250+ countries)
+            if lang == "fr" and _french_translator:
+                return _french_translator(name)
 
             return name
     except Exception as e:
@@ -87,7 +74,10 @@ def country_code_to_name(country_code: str, lang: str = "en") -> str:
 @lru_cache(maxsize=256)
 def country_code_to_language(country_code: str) -> str:
     """
-    Get primary language code for a country.
+    Get primary language code for a country using geonamescache.
+
+    Extracts the first (primary) language from geonamescache country data,
+    which covers all countries. Falls back to "en" if not found.
 
     Args:
         country_code: ISO 3166-1 alpha-2 code
@@ -100,29 +90,22 @@ def country_code_to_language(country_code: str) -> str:
         "fr"
         >>> country_code_to_language("us")
         "en"
+        >>> country_code_to_language("jp")
+        "ja"
     """
-    mapping = {
-        "fr": "fr",
-        "be": "fr",  # Belgium (French/Dutch)
-        "ch": "fr",  # Switzerland (German/French/Italian)
-        "lu": "fr",  # Luxembourg
-        "de": "de",
-        "at": "de",  # Austria
-        "es": "es",
-        "mx": "es",
-        "ar": "es",
-        "it": "it",
-        "pt": "pt",
-        "br": "pt",
-        "nl": "nl",
-        "ru": "ru",
-        "by": "ru",  # Belarus (Russian/Belarusian)
-        "ua": "uk",  # Ukraine
-        "pl": "pl",
-        "ja": "ja",
-        "cn": "zh",
-    }
-    return mapping.get(country_code.lower(), "en")
+    try:
+        countries = _gc.get_countries()
+        country = countries.get(country_code.upper())
+        if country:
+            languages_str = country.get("languages", "")
+            if languages_str:
+                # Format is "fr-FR,frp,br,co" — take the first, strip region
+                primary = languages_str.split(",")[0]
+                return primary.split("-")[0]
+    except Exception as e:
+        logger.warning(f"[GEO] Failed to get language for '{country_code}': {e}")
+
+    return "en"
 
 
 def format_location_query(
