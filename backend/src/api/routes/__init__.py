@@ -21,6 +21,7 @@ from src.api.routes.cv_analysis import router as cv_analysis_router
 from src.api.routes.stripe import router as stripe_router
 from src.api.routes.subscription import router as subscription_router
 from src.api.routes.health import router as health_router
+from src.api.routes.admin_cleanup import router as admin_cleanup_router
 
 router = APIRouter()
 
@@ -39,4 +40,5 @@ router.include_router(recruiter_router, prefix="/api/recruiter", tags=["Recruite
 router.include_router(events_router, prefix="/api/job-fairs", tags=["Job Fairs"])
 router.include_router(stripe_router, prefix="/api/stripe", tags=["Stripe Payments"])
 router.include_router(subscription_router, prefix="/api/subscription", tags=["Subscription Management"])
+router.include_router(admin_cleanup_router, prefix="/api/admin", tags=["Admin Cleanup"])
 router.include_router(health_router, prefix="/api/health", tags=["Health & Monitoring"])
