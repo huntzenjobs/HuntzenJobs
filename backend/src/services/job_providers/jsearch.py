@@ -16,6 +16,7 @@ import httpx
 
 from src.config.settings import settings
 from src.services.job_providers.base import BaseJobProvider
+from src.utils.geo import country_code_to_name, format_location_query
 
 logger = logging.getLogger(__name__)
 
@@ -26,19 +27,6 @@ _PUBLISHER_SOURCE_MAP = {
     "glassdoor": "glassdoor",
     "ziprecruiter": "ziprecruiter",
     "google": "google_jobs",
-}
-
-# Country code → human-readable name for search queries
-_COUNTRY_NAMES = {
-    "fr": "France", "us": "United States", "gb": "United Kingdom",
-    "uk": "United Kingdom", "de": "Germany", "ca": "Canada",
-    "au": "Australia", "es": "Spain", "it": "Italy", "nl": "Netherlands",
-    "be": "Belgium", "ch": "Switzerland", "at": "Austria", "pl": "Poland",
-    "pt": "Portugal", "br": "Brazil", "mx": "Mexico", "in": "India",
-    "sg": "Singapore", "ae": "United Arab Emirates", "ma": "Morocco",
-    "za": "South Africa", "ng": "Nigeria", "ke": "Kenya", "eg": "Egypt",
-    "jp": "Japan", "nz": "New Zealand", "ie": "Ireland", "se": "Sweden",
-    "no": "Norway", "dk": "Denmark", "fi": "Finland",
 }
 
 
@@ -89,8 +77,8 @@ class JSearchProvider(BaseJobProvider):
             return []
 
         # JSearch uses natural-language queries like "Data Engineer in Paris, France"
-        cc = country_code.lower()
-        country_name = _COUNTRY_NAMES.get(cc, country_code.upper())
+        # Use pycountry for comprehensive country support (250+ countries)
+        country_name = country_code_to_name(country_code)
         location_str = f"{location}, {country_name}" if location else country_name
         search_query = f"{query} in {location_str}"
 

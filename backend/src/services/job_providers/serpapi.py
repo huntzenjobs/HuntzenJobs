@@ -12,6 +12,7 @@ import httpx
 
 from src.config.settings import settings
 from src.services.job_providers.base import BaseJobProvider
+from src.utils.geo import country_code_to_name, country_code_to_language
 
 logger = logging.getLogger(__name__)
 
@@ -56,14 +57,14 @@ class SerpAPIProvider(BaseJobProvider):
             logger.debug(f"[{self.name}] Missing API key")
             return []
         
-        # Build location string
-        location_str = location or self._country_to_location(country_code)
-        
+        # Build location string using pycountry for comprehensive support
+        location_str = location or country_code_to_name(country_code)
+
         params = {
             "engine": "google_jobs",
             "q": query,
             "location": location_str,
-            "hl": self._get_language(country_code),
+            "hl": country_code_to_language(country_code),
             "api_key": api_key,
         }
         
@@ -120,28 +121,3 @@ class SerpAPIProvider(BaseJobProvider):
         if extensions.get("schedule_type"):
             return extensions["schedule_type"]
         return None
-    
-    def _country_to_location(self, country_code: str) -> str:
-        """Convert country code to location string."""
-        mapping = {
-            "fr": "France",
-            "us": "United States",
-            "uk": "United Kingdom",
-            "gb": "United Kingdom",
-            "de": "Germany",
-            "es": "Spain",
-            "it": "Italy",
-            "ca": "Canada",
-            "au": "Australia",
-        }
-        return mapping.get(country_code.lower(), country_code.upper())
-    
-    def _get_language(self, country_code: str) -> str:
-        """Get language code for country."""
-        mapping = {
-            "fr": "fr",
-            "de": "de",
-            "es": "es",
-            "it": "it",
-        }
-        return mapping.get(country_code.lower(), "en")
