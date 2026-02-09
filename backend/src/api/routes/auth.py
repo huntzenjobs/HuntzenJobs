@@ -55,20 +55,25 @@ def get_user_from_token(authorization: Optional[str]) -> Optional[dict]:
 
 
 @router.get("/api/auth/me")
-@limiter.limit("20/minute")  # Rate limit: 20 requests per minute per IP
-async def get_current_user(request: Request, authorization: Optional[str] = Header(None)):
+@limiter.limit("60/minute")
+async def get_current_user_info(
+    request: Request,
+    authorization: Optional[str] = Header(None)
+):
     """
-    Get current authenticated user information.
+    Get current authenticated user information with subscription and quotas.
 
-    Args:
-        authorization: Bearer token from header
+    Sprint AUTH (SA-4): Returns user profile + subscription + quotas.
 
     Returns:
-        User data if authenticated
+        - user: Profile information (id, email, full_name, avatar_url)
+        - subscription: Current plan details
+        - quotas: Usage stats for cv_analysis, coach, job_search
 
     Raises:
         HTTPException: If not authenticated
     """
+    # Get user from token
     user = get_user_from_token(authorization)
 
     if not user:
@@ -77,4 +82,94 @@ async def get_current_user(request: Request, authorization: Optional[str] = Head
             detail="Not authenticated"
         )
 
-    return user
+    user_id = user["id"]
+
+    try:
+        # Get Supabase client
+        supabase = get_supabase_client()
+
+        # Get user profile from profiles table
+        profile_response = supabase.table("profiles").select(
+            "id, email, full_name, avatar_url, created_at"
+        ).eq("id", user_id).execute()
+
+        if not profile_response.data or len(profile_response.data) == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="User profile not found"
+            )
+
+        profile = profile_response.data[0]
+
+        # Get user's active subscription with plan details
+        subscription_response = supabase.table("user_subscriptions").select(
+            """
+            status,
+            current_period_end,
+            subscription_plans (
+                name,
+                display_name,
+                price_monthly
+            )
+            """
+        ).eq("user_id", user_id).eq("status", "active").execute()
+
+        # Default to free plan if no active subscription
+        subscription_data = {
+            "plan_name": "free",
+            "plan_display_name": "Free",
+            "price_monthly": 0,
+            "status": "active",
+            "current_period_end": None
+        }
+
+        if subscription_response.data and len(subscription_response.data) > 0:
+            sub = subscription_response.data[0]
+            plan = sub.get("subscription_plans", {})
+            subscription_data = {
+                "plan_name": plan.get("name", "free"),
+                "plan_display_name": plan.get("display_name", "Free"),
+                "price_monthly": float(plan.get("price_monthly", 0)),
+                "status": sub.get("status", "active"),
+                "current_period_end": sub.get("current_period_end")
+            }
+
+        # Get quota status using Supabase RPC
+        quota_response = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+
+        # Format quotas for frontend
+        quotas = {}
+        if quota_response.data:
+            for quota in quota_response.data:
+                feature = quota["feature"]
+                quotas[feature] = {
+                    "limit": quota["quota_limit"],
+                    "used": quota["quota_used"],
+                    "remaining": quota["quota_remaining"],
+                    "percentage": float(quota["quota_percentage"]) if quota["quota_percentage"] else 0,
+                    "has_access": quota["has_access"],
+                    "reset_at": quota["reset_at"]
+                }
+
+        # Return formatted response
+        return {
+            "success": True,
+            "user": {
+                "id": str(profile["id"]),
+                "email": profile["email"],
+                "full_name": profile.get("full_name"),
+                "avatar_url": profile.get("avatar_url"),
+                "created_at": profile.get("created_at")
+            },
+            "subscription": subscription_data,
+            "quotas": quotas
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[AUTH_ME] Error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get user info: {str(e)}"
+        )
