@@ -42,6 +42,7 @@ class AdzunaProvider(BaseJobProvider):
         max_results: int = 50,
         max_days: int = 7,
         contract_type: str = "",
+        **kwargs,
     ) -> list[dict[str, Any]]:
         """
         Search Adzuna for jobs.

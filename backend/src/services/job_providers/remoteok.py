@@ -37,6 +37,7 @@ class RemoteOKProvider(BaseJobProvider):
         location: str = "",
         country_code: str = "fr",
         max_results: int = 50,
+        **kwargs,
     ) -> list[dict[str, Any]]:
         """
         Search RemoteOK for remote jobs.
