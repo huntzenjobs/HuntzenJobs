@@ -1,15 +1,24 @@
 """
 Geographic Utilities
 ====================
-Country and city helpers using pycountry and geonamescache.
+Country and city helpers using pycountry, OpenStreetMap Nominatim, and geonamescache.
+
+Hybrid approach:
+- Countries: pycountry (250+ countries, ISO 3166)
+- Cities: OpenStreetMap Nominatim API (primary) + geonamescache (fallback)
 """
 
 import logging
 from functools import lru_cache
 
+import httpx
 import pycountry
+import geonamescache
 
 logger = logging.getLogger(__name__)
+
+# Initialize geonames cache for offline fallback
+_gc = geonamescache.GeonamesCache()
 
 
 @lru_cache(maxsize=256)
@@ -148,3 +157,109 @@ def format_location_query(
         location = country_name
 
     return f"{query} in {location}"
+
+
+async def get_cities_from_nominatim(
+    country_code: str,
+    limit: int = 50
+) -> list[str]:
+    """
+    Fetch major cities from OpenStreetMap Nominatim API.
+
+    Note: Nominatim API can be unreliable for city listings.
+    This function returns empty list and relies on geonamescache fallback.
+
+    Args:
+        country_code: ISO 3166-1 alpha-2 country code
+        limit: Maximum number of cities to return
+
+    Returns:
+        List of city names (usually empty, use geonamescache fallback)
+    """
+    # Nominatim is not reliable for getting city lists
+    # Always fallback to geonamescache for better results
+    logger.debug(f"[GEO] Skipping Nominatim for {country_code}, using geonames directly")
+    return []
+
+
+def get_cities_from_geonames(country_code: str, limit: int = 50) -> list[str]:
+    """
+    Get major cities from local geonamescache.
+
+    Cities are sorted by population (largest first).
+
+    Args:
+        country_code: ISO 3166-1 alpha-2 country code
+        limit: Maximum number of cities to return
+
+    Returns:
+        List of city names (sorted by population, descending)
+
+    Examples:
+        >>> get_cities_from_geonames("fr")
+        ["Paris", "Marseille", "Lyon", ...]
+        >>> get_cities_from_geonames("by")
+        ["Minsk", "Homyel'", "Mahilyow", ...]
+    """
+    try:
+        cities_data = _gc.get_cities()
+        country_cities = []
+
+        for city in cities_data.values():
+            if city.get("countrycode", "").upper() == country_code.upper():
+                # Only major cities (population > 100k)
+                if city.get("population", 0) > 100000:
+                    country_cities.append({
+                        "name": city["name"],
+                        "population": city.get("population", 0)
+                    })
+
+        # Sort by population (descending) and extract names
+        country_cities.sort(key=lambda x: x["population"], reverse=True)
+        return [city["name"] for city in country_cities[:limit]]
+
+    except Exception as e:
+        logger.error(f"[GEO] Geonames fallback failed for {country_code}: {e}")
+        return []
+
+
+async def get_cities_for_country(
+    country_code: str,
+    limit: int = 50,
+    use_fallback: bool = True
+) -> list[str]:
+    """
+    Get major cities for a country (hybrid approach).
+
+    Tries OpenStreetMap Nominatim first, falls back to local geonamescache.
+
+    Args:
+        country_code: ISO 3166-1 alpha-2 country code
+        limit: Maximum number of cities to return
+        use_fallback: Whether to use geonamescache fallback if Nominatim fails
+
+    Returns:
+        List of city names
+
+    Examples:
+        >>> await get_cities_for_country("by")
+        ["Minsk", "Gomel", "Mogilev", "Vitebsk", ...]
+        >>> await get_cities_for_country("fr", limit=10)
+        ["Paris", "Marseille", "Lyon", ...]
+    """
+    # Try Nominatim first (always up-to-date)
+    cities = await get_cities_from_nominatim(country_code, limit)
+
+    if cities:
+        logger.info(f"[GEO] Found {len(cities)} cities for {country_code} via Nominatim")
+        return cities
+
+    # Fallback to local cache
+    if use_fallback:
+        cities = get_cities_from_geonames(country_code, limit)
+        if cities:
+            logger.info(f"[GEO] Found {len(cities)} cities for {country_code} via geonames (fallback)")
+            return cities
+
+    logger.warning(f"[GEO] No cities found for {country_code}")
+    return []

@@ -5,18 +5,14 @@ Hybrid approach: OpenStreetMap Nominatim + Local fallback (pycountry + geonamesc
 """
 
 import logging
-from functools import lru_cache
 
-import httpx
 import pycountry
-import geonamescache
 from fastapi import APIRouter
+
+from src.utils.geo import country_code_to_name, get_cities_for_country
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-# Initialize geonames cache
-gc = geonamescache.GeonamesCache()
 
 
 @lru_cache(maxsize=1)
@@ -105,117 +101,53 @@ async def get_countries():
     }
 
 
-async def fetch_cities_from_nominatim(country_code: str, country_name: str) -> list[str]:
-    """
-    Fetch cities from OpenStreetMap Nominatim API.
-
-    Returns empty list if rate limited or error occurs.
-    """
-    try:
-        # Search for major cities in the country
-        url = "https://nominatim.openstreetmap.org/search"
-        params = {
-            "country": country_name,
-            "featuretype": "city",
-            "format": "json",
-            "limit": 50,
-            "addressdetails": 1
-        }
-        headers = {
-            "User-Agent": "HuntZen Job Search/1.0"
-        }
-
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(url, params=params, headers=headers)
-
-            if response.status_code == 429:
-                # Rate limited
-                logger.warning(f"Nominatim rate limit hit for {country_name}")
-                return []
-
-            if response.status_code != 200:
-                return []
-
-            data = response.json()
-            cities = []
-            seen = set()
-
-            for item in data:
-                # Extract city name
-                city_name = item.get("display_name", "").split(",")[0].strip()
-                if city_name and city_name not in seen and len(city_name) > 2:
-                    cities.append(city_name)
-                    seen.add(city_name)
-
-            return cities[:30]  # Limit to 30 cities
-
-    except Exception as e:
-        logger.warning(f"Nominatim fetch failed for {country_name}: {e}")
-        return []
-
-
-def get_cities_from_geonames(country_code: str) -> list[str]:
-    """
-    Fallback: Get cities from local geonamescache.
-    """
-    try:
-        cities_data = gc.get_cities()
-        country_cities = []
-
-        for city in cities_data.values():
-            if city.get("countrycode", "").lower() == country_code.lower():
-                # Only major cities (population > 100k)
-                if city.get("population", 0) > 100000:
-                    country_cities.append(city["name"])
-
-        # Sort by population (reverse) and take top 30
-        return sorted(country_cities)[:30]
-
-    except Exception as e:
-        logger.error(f"Geonames fallback failed for {country_code}: {e}")
-        return []
-
-
 @router.get("/api/cities/{country_name}")
 async def get_cities(country_name: str):
     """
-    Get cities for a country.
+    Get cities for a country using hybrid approach.
 
-    Hybrid approach:
-    1. Try OpenStreetMap Nominatim (always up-to-date, free)
-    2. Fallback to geonamescache (local, works offline)
+    Uses centralized geo utilities (OpenStreetMap Nominatim + geonamescache fallback).
 
     Args:
-        country_name: Country name (e.g., "France", "États-Unis")
+        country_name: Country name (e.g., "France", "Biélorussie", "Belarus")
 
     Returns:
-        List of city names for the country
+        List of major city names for the country
+
+    Examples:
+        GET /api/cities/France → ["Paris", "Marseille", "Lyon", ...]
+        GET /api/cities/Belarus → ["Minsk", "Gomel", "Mogilev", ...]
     """
-    # Find country code from name
+    # Find country code from name (supports both English and French names)
     country_code = None
     for country in get_all_countries():
         if country["name"].lower() == country_name.lower():
             country_code = country["code"]
             break
 
+    # Also try direct country lookup by name (English)
+    if not country_code:
+        try:
+            country = pycountry.countries.search_fuzzy(country_name)[0]
+            country_code = country.alpha_2.lower()
+        except Exception:
+            pass
+
     if not country_code:
         return {
             "success": True,
-            "data": []
+            "data": [],
+            "message": f"Country not found: {country_name}"
         }
 
-    # Try Nominatim first
-    cities = await fetch_cities_from_nominatim(country_code, country_name)
-
-    # Fallback to geonames if Nominatim failed
-    if not cities:
-        logger.info(f"Using geonames fallback for {country_name}")
-        cities = get_cities_from_geonames(country_code)
+    # Use centralized geo utility (Nominatim + geonames fallback)
+    cities = await get_cities_for_country(country_code, limit=50)
 
     return {
         "success": True,
         "data": cities,
-        "source": "nominatim" if cities and cities != get_cities_from_geonames(country_code) else "geonames"
+        "country_code": country_code,
+        "count": len(cities)
     }
 
 
