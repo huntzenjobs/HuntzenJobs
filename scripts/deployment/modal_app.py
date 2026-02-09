@@ -161,7 +161,7 @@ async def update_cv_status(
     cv_id: str,
     status: str,
     result: Optional[Dict[str, Any]] = None,
-    error: Optional[str] = None
+    error_message: Optional[str] = None
 ) -> bool:
     """
     Update CV analysis status in database AND notify FastAPI callback (Issue 2 Fix).
@@ -170,7 +170,7 @@ async def update_cv_status(
         cv_id: CV analysis UUID
         status: Status ('processing', 'completed', 'failed')
         result: Analysis results (for completed status)
-        error: Error message (for failed status)
+        error_message: Error message (for failed status)
 
     Returns:
         True if updated successfully
@@ -192,16 +192,16 @@ async def update_cv_status(
                     """,
                     (status, json.dumps(result), cv_id)
                 )
-            elif status == "failed" and error:
+            elif status == "failed" and error_message:
                 cur.execute(
                     """
                     UPDATE cv_analyses
                     SET status = %s,
-                        error = %s,
+                        error_message = %s,
                         updated_at = NOW()
                     WHERE id = %s
                     """,
-                    (status, error, cv_id)
+                    (status, error_message, cv_id)
                 )
             else:
                 cur.execute(
@@ -594,7 +594,7 @@ async def process_cv_analysis(
         print(f"❌ {error_msg}")
 
         # Update database with error
-        await update_cv_status(cv_id, "failed", error=error_msg)
+        await update_cv_status(cv_id, "failed", error_message=error_msg)
 
         return {
             "success": False,
