@@ -33,6 +33,7 @@ import { WizardSteps } from '@/components/cv/wizard-steps';
 import { ResultsAccordion } from '@/components/cv/results-accordion';
 import { CVInfoPanel } from '@/components/cv/cv-info-panel';
 import { ScoreRing } from '@/components/cv/score-ring';
+import { ProcessingSteps } from '@/components/cv/processing-steps';
 import { exportCVAnalysisToPDF } from '@/utils/export-cv-pdf';
 import type { FeatureType } from '@/hooks/use-freemium-limits';
 import type { Suggestion } from '@/components/cv/actionable-suggestions';
@@ -664,7 +665,7 @@ export function CVUploadAsyncWizard({
   // ============================================
 
   const renderStep3 = () => {
-    // Processing
+    // Processing - New visual steps with percentage
     if (isUploading || status === 'pending' || status === 'processing') {
       return (
         <motion.div
@@ -674,43 +675,34 @@ export function CVUploadAsyncWizard({
           animate="center"
           exit="exit"
           transition={{ duration: 0.3 }}
-          className="text-center py-12"
+          className="py-12"
         >
-          <Loader2 className="w-16 h-16 animate-spin text-huntzen-blue mx-auto mb-6" />
-
-          <h3 className="text-2xl font-bold mb-2">Analyse en cours...</h3>
-          <p className="text-gray-600 mb-8">
-            {isUploading ? 'Téléchargement vers Supabase Storage...' : 'Traitement avec Modal Labs'}
-          </p>
-
-          {/* Progress Bar */}
-          <div className="max-w-md mx-auto mb-6">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600">Progression</span>
-              <span className="font-semibold text-blue-600">{progress}%</span>
+          {/* Header with Percentage */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-3 mb-3">
+              <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+              <div className="text-5xl font-black text-blue-600">{progress}%</div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <h3 className="text-2xl font-bold mb-2">Analyse en cours...</h3>
+            <p className="text-gray-600">
+              {isUploading ? 'Téléchargement vers Supabase Storage...' : 'Traitement en cours avec notre IA'}
+            </p>
+          </div>
+
+          {/* Visual Steps Component */}
+          <div className="max-w-2xl mx-auto">
+            <ProcessingSteps status={status} elapsedTime={elapsedTime} />
+          </div>
+
+          {/* Global Progress Bar */}
+          <div className="max-w-md mx-auto mt-6">
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className="bg-huntzen-blue h-full transition-all duration-300 ease-out"
+                className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
-
-          {/* Time Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-            <div className="flex justify-between items-center text-sm">
-              <div>
-                <p className="font-medium text-blue-900">Temps écoulé : {elapsedTime}s</p>
-                <p className="text-xs text-blue-700">Temps restant : ~{estimatedTimeRemaining}s</p>
-              </div>
-              <Clock className="w-8 h-8 text-blue-600" />
-            </div>
-          </div>
-
-          <p className="text-xs text-gray-500 mt-6">
-            Le traitement se fait en arrière-plan sur Modal Labs
-          </p>
         </motion.div>
       );
     }
