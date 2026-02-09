@@ -15,6 +15,16 @@ router = APIRouter()
 settings = get_settings()
 
 
+@router.get("/api/auth/test-debug")
+async def test_debug():
+    """Test endpoint to verify deployment."""
+    return {
+        "status": "ok",
+        "message": "Debug logs deployed successfully",
+        "commit": "df2ef1f"
+    }
+
+
 def get_supabase_client() -> Client:
     """Get Supabase client (lazy initialization)."""
     return create_client(
