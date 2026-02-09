@@ -177,131 +177,139 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
   return (
     <div className="w-full">
       {/* Desktop: Horizontal Layout */}
-      <div className="hidden md:flex items-start gap-3 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-        {/* Query Input */}
-        <div className="flex-1 min-w-0">
-          <label htmlFor="query-inline" className="sr-only">
-            Métier ou poste recherché
-          </label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            <input
-              id="query-inline"
-              type="text"
-              placeholder="Métier ou poste recherché"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              disabled={disabled || isLoading}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSearch()
-                }
-              }}
-              className={`
-                w-full pl-10 pr-4 py-3
-                bg-white
-                border rounded-lg
-                text-sm font-medium
-                placeholder:text-gray-400 placeholder:font-normal
-                focus:outline-none focus:ring-2 focus:ring-offset-0
-                transition-all duration-200
-                disabled:opacity-50 disabled:cursor-not-allowed
-                ${errors.query
-                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                }
-              `}
-              aria-invalid={!!errors.query}
-              aria-describedby={errors.query ? 'query-error' : undefined}
-            />
-          </div>
-          {errors.query && (
-            <p id="query-error" className="mt-1 text-xs text-red-600">
-              {errors.query}
-            </p>
-          )}
-        </div>
-
-        {/* Country Autocomplete - DOIT ÊTRE AVANT LA VILLE */}
-        <div className="flex-1 min-w-0">
-          <AutocompleteInput
-            placeholder="Pays"
-            value={country}
-            onChange={handleCountryChange}
-            onSearch={fetchCountries}
-            disabled={disabled || isLoading}
-            icon={<Globe className="h-5 w-5" />}
-            error={!!errors.country}
-            helperText={errors.country}
-            required
-          />
-        </div>
-
-        {/* Location Autocomplete - APRÈS LE PAYS */}
-        <div className="flex-1 min-w-0">
-          <AutocompleteInput
-            placeholder="Ville (optionnel)"
-            value={location}
-            onChange={setLocation}
-            onSearch={fetchCities}
-            disabled={disabled || isLoading || !isCountryValid}
-            icon={<MapPin className="h-5 w-5" />}
-            emptyMessage={!isCountryValid ? "Sélectionnez d'abord un pays" : "Aucune ville trouvée"}
-          />
-        </div>
-
-        {/* Radius Slider - Only show if city is specified */}
-        {location && (
-          <div className="flex-1 min-w-0 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-            <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-gray-700">Rayon</span>
-                <span className="text-xs font-bold text-huntzen-blue">{radiusKm} km</span>
-              </div>
+      <div className="hidden md:block p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+        {/* Main Search Inputs Row */}
+        <div className="flex items-start gap-3 mb-4">
+          {/* Query Input */}
+          <div className="flex-1 min-w-0">
+            <label htmlFor="query-inline" className="sr-only">
+              Métier ou poste recherché
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
               <input
-                type="range"
-                min="1"
-                max="100"
-                value={radiusKm}
-                onChange={(e) => setRadiusKm(Number(e.target.value))}
+                id="query-inline"
+                type="text"
+                placeholder="Métier ou poste recherché"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 disabled={disabled || isLoading}
-                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-huntzen-blue disabled:opacity-50"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSearch()
+                  }
+                }}
+                className={`
+                  w-full pl-10 pr-4 py-3
+                  bg-white
+                  border rounded-lg
+                  text-sm font-medium
+                  placeholder:text-gray-400 placeholder:font-normal
+                  focus:outline-none focus:ring-2 focus:ring-offset-0
+                  transition-all duration-200
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  ${errors.query
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                  }
+                `}
+                aria-invalid={!!errors.query}
+                aria-describedby={errors.query ? 'query-error' : undefined}
               />
             </div>
+            {errors.query && (
+              <p id="query-error" className="mt-1 text-xs text-red-600">
+                {errors.query}
+              </p>
+            )}
           </div>
-        )}
 
-        {/* Include Remote Jobs Checkbox */}
-        <div className="flex items-center gap-2 px-3 py-2">
-          <input
-            type="checkbox"
-            id="include-remote-desktop"
-            checked={includeRemote}
-            onChange={(e) => setIncludeRemote(e.target.checked)}
-            disabled={disabled || isLoading}
-            className="w-4 h-4 text-huntzen-blue bg-gray-100 border-gray-300 rounded focus:ring-huntzen-blue focus:ring-2 disabled:opacity-50"
-          />
-          <label
-            htmlFor="include-remote-desktop"
-            className="text-sm font-medium text-gray-700 cursor-pointer select-none"
-          >
-            Inclure jobs remote
-          </label>
+          {/* Country Autocomplete - DOIT ÊTRE AVANT LA VILLE */}
+          <div className="flex-1 min-w-0">
+            <AutocompleteInput
+              placeholder="Pays"
+              value={country}
+              onChange={handleCountryChange}
+              onSearch={fetchCountries}
+              disabled={disabled || isLoading}
+              icon={<Globe className="h-5 w-5" />}
+              error={!!errors.country}
+              helperText={errors.country}
+              required
+            />
+          </div>
+
+          {/* Location Autocomplete - APRÈS LE PAYS */}
+          <div className="flex-1 min-w-0">
+            <AutocompleteInput
+              placeholder="Ville (optionnel)"
+              value={location}
+              onChange={setLocation}
+              onSearch={fetchCities}
+              disabled={disabled || isLoading || !isCountryValid}
+              icon={<MapPin className="h-5 w-5" />}
+              emptyMessage={!isCountryValid ? "Sélectionnez d'abord un pays" : "Aucune ville trouvée"}
+            />
+          </div>
+
+          {/* Action Button */}
+          <div className="flex-shrink-0">
+            <Button
+              onClick={() => handleSearch()}
+              disabled={disabled || isLoading}
+              size="lg"
+              className="px-6 whitespace-nowrap bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:from-huntzen-blue/90 hover:to-huntzen-turquoise/90"
+            >
+              {isLoading ? 'Recherche...' : 'Rechercher'}
+            </Button>
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          {/* Standard Search */}
-          <Button
-            onClick={() => handleSearch()}
-            disabled={disabled || isLoading}
-            size="lg"
-            className="px-6 whitespace-nowrap bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:from-huntzen-blue/90 hover:to-huntzen-turquoise/90"
-          >
-            {isLoading ? 'Recherche...' : 'Rechercher'}
-          </Button>
+        {/* Options Row: Radius Slider + Remote Checkbox */}
+        <div className="flex items-center gap-4 pt-3 border-t border-gray-100">
+          {/* Include Remote Jobs Checkbox - ALWAYS VISIBLE */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="include-remote-desktop"
+              checked={includeRemote}
+              onChange={(e) => setIncludeRemote(e.target.checked)}
+              disabled={disabled || isLoading}
+              className="w-4 h-4 text-huntzen-blue bg-gray-100 border-gray-300 rounded focus:ring-huntzen-blue focus:ring-2 disabled:opacity-50"
+            />
+            <label
+              htmlFor="include-remote-desktop"
+              className="text-sm font-medium text-gray-700 cursor-pointer select-none whitespace-nowrap"
+            >
+              Inclure jobs remote
+            </label>
+          </div>
+
+          {/* Radius Slider - Only show if city is specified */}
+          {location && (
+            <>
+              <div className="w-px h-6 bg-gray-200" />
+              <div className="flex items-center gap-3 flex-1">
+                <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0 max-w-md">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-gray-700">Rayon de recherche</span>
+                    <span className="text-xs font-bold text-huntzen-blue">{radiusKm} km</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={radiusKm}
+                    onChange={(e) => setRadiusKm(Number(e.target.value))}
+                    disabled={disabled || isLoading}
+                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-huntzen-blue disabled:opacity-50"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
