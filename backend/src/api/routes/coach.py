@@ -66,8 +66,8 @@ async def coach_chat(
     
     # Update history
     update_session_history(
-        request.session_id,
-        request.message,
+        data.session_id,
+        data.message,
         result["response"],
     )
     
