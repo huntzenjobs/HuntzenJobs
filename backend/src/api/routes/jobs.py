@@ -37,6 +37,7 @@ async def search_jobs(
         max_results=data.max_results,
         max_days=data.max_days,
         radius_km=data.radius_km,
+        include_remote=data.include_remote,
         include_insights=True,
     )
     
@@ -90,6 +91,7 @@ async def search_jobs_get(
     contract: str = Query(default="", description="Contract type"),
     limit: int = Query(default=25, ge=5, le=100),
     radius: int = Query(default=None, ge=1, le=100, description="Search radius in km"),
+    include_remote: bool = Query(default=True, description="Include remote jobs"),
 ):
     """
     Search for jobs (GET endpoint for simple queries).
@@ -101,6 +103,7 @@ async def search_jobs_get(
         contract_type=contract,
         max_results=limit,
         radius_km=radius,
+        include_remote=include_remote,
     )
 
     return result

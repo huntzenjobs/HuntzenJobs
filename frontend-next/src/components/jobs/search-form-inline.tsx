@@ -33,6 +33,7 @@ export interface SearchParams {
   location: string
   country: string
   radiusKm?: number
+  includeRemote?: boolean
 }
 
 export function SearchFormInline({ onSearch, isLoading = false, disabled = false }: SearchFormInlineProps) {
@@ -42,6 +43,7 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
   const [selectedCountryName, setSelectedCountryName] = useState('')
   const [isCountryValid, setIsCountryValid] = useState(false) // Track if valid country selected
   const [radiusKm, setRadiusKm] = useState(50) // Default 50km radius
+  const [includeRemote, setIncludeRemote] = useState(true) // Include remote jobs by default
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { canUse, getRemaining, isFreePlan } = useSubscription()
@@ -152,6 +154,7 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
       location: location.trim(),
       country: country.trim(),
       radiusKm: location.trim() ? radiusKm : undefined, // Only send radius if city is specified
+      includeRemote, // Include remote jobs setting
     })
 
     // Clear errors on successful search
@@ -270,6 +273,24 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
           </div>
         )}
 
+        {/* Include Remote Jobs Checkbox */}
+        <div className="flex items-center gap-2 px-3 py-2">
+          <input
+            type="checkbox"
+            id="include-remote-desktop"
+            checked={includeRemote}
+            onChange={(e) => setIncludeRemote(e.target.checked)}
+            disabled={disabled || isLoading}
+            className="w-4 h-4 text-huntzen-blue bg-gray-100 border-gray-300 rounded focus:ring-huntzen-blue focus:ring-2 disabled:opacity-50"
+          />
+          <label
+            htmlFor="include-remote-desktop"
+            className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+          >
+            Inclure jobs remote
+          </label>
+        </div>
+
         {/* Action Buttons */}
         <div className="flex gap-2">
           {/* Standard Search */}
@@ -376,6 +397,24 @@ export function SearchFormInline({ onSearch, isLoading = false, disabled = false
             </div>
           </div>
         )}
+
+        {/* Include Remote Jobs Checkbox */}
+        <div className="flex items-center gap-3 px-4 py-3">
+          <input
+            type="checkbox"
+            id="include-remote-mobile"
+            checked={includeRemote}
+            onChange={(e) => setIncludeRemote(e.target.checked)}
+            disabled={disabled || isLoading}
+            className="w-4 h-4 text-huntzen-blue bg-gray-100 border-gray-300 rounded focus:ring-huntzen-blue focus:ring-2 disabled:opacity-50"
+          />
+          <label
+            htmlFor="include-remote-mobile"
+            className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+          >
+            Inclure jobs remote
+          </label>
+        </div>
 
         {/* Action Buttons */}
         <div className="w-full">

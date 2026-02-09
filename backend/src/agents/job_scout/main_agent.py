@@ -102,6 +102,7 @@ class JobScoutAgent(BaseAgent):
         max_results: int = 50,
         max_days: int = 7,
         radius_km: Optional[int] = None,
+        include_remote: bool = True,
         include_insights: bool = True,
     ) -> dict[str, Any]:
         """
@@ -115,23 +116,33 @@ class JobScoutAgent(BaseAgent):
             max_results: Maximum results to return
             max_days: Only jobs from last N days
             radius_km: Search radius in kilometers around city (optional)
+            include_remote: Include remote jobs in search results (default: True)
             include_insights: Include market insights
 
         Returns:
             Search results with metadata
         """
         start_time = time.time()
-        
+
         try:
             # Step 1: Refine query with sub-agent
             refined = await self._refine_query(job_title)
             search_query = refined.get("corrected_query", job_title)
-            
+
             logger.info(f"[{self.name}] Searching: '{search_query}' in {country_code}")
-            
-            # Step 2: Aggregate from all providers
+
+            # Step 2: Filter providers based on include_remote setting
+            # If user doesn't want remote jobs, exclude RemoteOK provider
+            active_providers = self.providers
+            if not include_remote:
+                active_providers = [p for p in self.providers if p.name != "remoteok"]
+                logger.info(f"[{self.name}] Remote jobs excluded, using {len(active_providers)} providers")
+            else:
+                logger.info(f"[{self.name}] Remote jobs included, using all {len(active_providers)} providers")
+
+            # Step 3: Aggregate from active providers
             raw_jobs = await aggregate_jobs(
-                providers=self.providers,
+                providers=active_providers,
                 query=search_query,
                 location=city,
                 country_code=country_code,

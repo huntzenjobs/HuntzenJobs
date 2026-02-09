@@ -207,6 +207,8 @@ export default function JobsPage() {
         country_code: params.country,
         city: params.location,
         contract_type: contractType,
+        radiusKm: params.radiusKm,
+        includeRemote: params.includeRemote,
       })
     },
     onSuccess: (data) => {

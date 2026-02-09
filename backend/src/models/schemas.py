@@ -70,6 +70,7 @@ class JobSearchRequest(BaseModel):
     max_results: int = Field(default=50, ge=5, le=100)
     max_days: int = Field(default=7, ge=1, le=30, description="Max days since posting (1-30)")
     radius_km: Optional[int] = Field(default=None, ge=1, le=100, description="Search radius in kilometers around city (1-100)")
+    include_remote: bool = Field(default=True, description="Include remote jobs in search results")
 
     model_config = {"json_schema_extra": {"example": {
         "job_title": "Data Engineer",

@@ -161,6 +161,8 @@ class HuntzenApiClient {
     country_code: string
     city?: string
     contract_type?: string
+    radiusKm?: number
+    includeRemote?: boolean
   }): Promise<{ jobs: Job[]; count: number; corrected_query?: string }> {
     const response = await this.fetch<{
       success: boolean
