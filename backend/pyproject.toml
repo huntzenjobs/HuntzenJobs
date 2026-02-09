@@ -70,6 +70,9 @@ dependencies = [
     # Rate Limiting
     "slowapi>=0.1.9",
 
+    # Error Tracking
+    "sentry-sdk[fastapi]>=2.0.0",
+
     # Country & City Data (Phase 2 - Hybrid approach)
     "pycountry>=24.6.1",      # ISO 3166 country codes
     "geonamescache>=2.1.2",   # Local cities fallback
