@@ -7,9 +7,10 @@
 -- ============================================
 -- ENSURE REQUIRED COLUMNS EXIST
 -- ============================================
--- Add stripe_price_id column if it doesn't exist (for retrocompatibility)
+-- Add missing columns if they don't exist (for retrocompatibility)
 DO $$
 BEGIN
+  -- Add stripe_price_id if missing
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public'
@@ -17,6 +18,36 @@ BEGIN
       AND column_name = 'stripe_price_id'
   ) THEN
     ALTER TABLE user_subscriptions ADD COLUMN stripe_price_id TEXT;
+  END IF;
+
+  -- Add trial_start if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'user_subscriptions'
+      AND column_name = 'trial_start'
+  ) THEN
+    ALTER TABLE user_subscriptions ADD COLUMN trial_start TIMESTAMPTZ;
+  END IF;
+
+  -- Add trial_end if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'user_subscriptions'
+      AND column_name = 'trial_end'
+  ) THEN
+    ALTER TABLE user_subscriptions ADD COLUMN trial_end TIMESTAMPTZ;
+  END IF;
+
+  -- Add cancel_at_period_end if missing
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'user_subscriptions'
+      AND column_name = 'cancel_at_period_end'
+  ) THEN
+    ALTER TABLE user_subscriptions ADD COLUMN cancel_at_period_end BOOLEAN DEFAULT false;
   END IF;
 END $$;
 
