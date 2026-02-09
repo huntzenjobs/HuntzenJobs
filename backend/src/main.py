@@ -456,6 +456,8 @@ SESSION_TTL = 3600  # 1 hour in seconds
 session_timestamps = {}
 
 class ChatMessage(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000, description="User message")
+    session_id: str = Field(..., pattern=r'^[a-f0-9-]{36}$', description="Valid UUID session ID")
 
 # ============================================
 # IMPORT ALL API ROUTERS FROM src/api/routes
