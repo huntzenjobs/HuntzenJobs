@@ -42,8 +42,8 @@ async def create_stripe_checkout(
             raise HTTPException(status_code=401, detail="Invalid user data")
 
         # Frontend URLs for redirect
-        # Use environment variable for frontend URL
-        frontend_url = settings.frontend_url or "https://huntzen.com"
+        # Use primary frontend URL (first one if multiple URLs defined)
+        frontend_url = settings.get_primary_frontend_url()
         success_url = f"{frontend_url}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
         cancel_url = f"{frontend_url}/pricing"
 
