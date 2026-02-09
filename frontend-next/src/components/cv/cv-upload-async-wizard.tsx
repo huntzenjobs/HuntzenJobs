@@ -232,7 +232,7 @@ export function CVUploadAsyncWizard({
             return;
           }
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/cv-analysis/list`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/list`, {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
             },
@@ -263,7 +263,7 @@ export function CVUploadAsyncWizard({
 
           if (!session?.access_token) return;
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/cv-analysis/list`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/list`, {
             headers: { 'Authorization': `Bearer ${session.access_token}` },
           });
 
@@ -413,7 +413,7 @@ export function CVUploadAsyncWizard({
       }
 
       // Fetch full result from API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/cv-analysis/status/${analysis.cv_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/status/${analysis.cv_id}`, {
         headers,
       });
 

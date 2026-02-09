@@ -264,3 +264,4 @@ uploads/
 temp/
 *.pdf
 !frontend/public/images/*.pdf
+.vercel

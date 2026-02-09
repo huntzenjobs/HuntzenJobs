@@ -214,7 +214,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
 
         // Build headers (auth optional for anonymous users)
         // Build URL with anonymous_id query param if needed
-        let url = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/cv-analysis/status/${cvAnalysisId}`;
+        let url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/status/${cvAnalysisId}`;
         if (anonymousSessionId) {
           url += `?anonymous_id=${encodeURIComponent(anonymousSessionId)}`;
         }
@@ -332,7 +332,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
 
       // Upload to backend with automatic token refresh on 401
       const response = await authenticatedFetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/cv-analysis/async`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/async`,
         {
           method: 'POST',
           body: formData,
@@ -428,7 +428,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
 
       // Upload to backend with automatic token refresh on 401
       const response = await authenticatedFetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/cv-analysis/async`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/async`,
         {
           method: 'POST',
           body: formData,

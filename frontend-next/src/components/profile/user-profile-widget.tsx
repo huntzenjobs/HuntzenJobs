@@ -135,7 +135,11 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
         setLoading(true)
         setError(null)
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/auth/me`, {
+        if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
+          throw new Error('NEXT_PUBLIC_BACKEND_URL is not configured')
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json'
@@ -159,7 +163,7 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
             console.log('[UserProfile] Session refreshed successfully, retrying...')
 
             // Retry with new token
-            const retryResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/auth/me`, {
+            const retryResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
               headers: {
                 'Authorization': `Bearer ${refreshData.session.access_token}`,
                 'Content-Type': 'application/json'
