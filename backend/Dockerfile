@@ -15,8 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy pyproject.toml for dependencies
-# Note: Context is repo root, so we need backend/ prefix
-COPY backend/pyproject.toml .
+COPY pyproject.toml .
 
 # Install PyTorch CPU and dependencies from pyproject.toml
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
@@ -50,8 +49,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
 # Copy pyproject.toml and install dependencies
-# Note: Context is repo root, so we need backend/ prefix
-COPY backend/pyproject.toml .
+COPY pyproject.toml .
 RUN pip install --no-cache-dir -e .
 
 # Create Marker static directory with proper permissions
@@ -60,11 +58,10 @@ RUN mkdir -p /usr/local/lib/python3.11/site-packages/static && \
     chmod -R 777 /usr/local/lib/python3.11/site-packages/static
 
 # Copy NEW application structure
-# Note: Context is repo root, so we need backend/ prefix
-COPY --chown=huntzen:huntzen backend/src/ ./src/
-COPY --chown=huntzen:huntzen backend/app/ ./app/
-COPY --chown=huntzen:huntzen backend/prompts/ ./prompts/
-# Note: pyproject.toml already copied above at line 53
+COPY --chown=huntzen:huntzen src/ ./src/
+COPY --chown=huntzen:huntzen app/ ./app/
+COPY --chown=huntzen:huntzen prompts/ ./prompts/
+# Note: pyproject.toml already copied above
 
 # Create cache directory for Marker models with proper permissions
 RUN mkdir -p /home/huntzen/.cache && \
