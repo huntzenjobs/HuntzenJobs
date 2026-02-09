@@ -64,7 +64,7 @@ RUN mkdir -p /usr/local/lib/python3.11/site-packages/static && \
 COPY --chown=huntzen:huntzen backend/src/ ./src/
 COPY --chown=huntzen:huntzen backend/app/ ./app/
 COPY --chown=huntzen:huntzen backend/prompts/ ./prompts/
-COPY --chown=huntzen:huntzen backend/pyproject.toml .
+# Note: pyproject.toml already copied above at line 53
 
 # Create cache directory for Marker models with proper permissions
 RUN mkdir -p /home/huntzen/.cache && \
