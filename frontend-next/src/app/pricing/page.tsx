@@ -236,6 +236,14 @@ export default function PricingPage() {
   }
 
   const handleSelectPlan = async (planId: string) => {
+    console.log('[CHECKOUT] 🎯 Starting checkout flow:', {
+      planId,
+      currentPlan,
+      billingPeriod,
+      hasUser: !!user,
+      hasSession: !!auth?.session
+    })
+
     // Free plan or already subscribed
     if (planId === 'free' || planId === currentPlan) {
       toast.info('Vous utilisez déjà ce plan')
@@ -245,7 +253,6 @@ export default function PricingPage() {
     // Check if user is authenticated
     if (!user || !auth?.session) {
       toast.error('Vous devez être connecté pour souscrire à un plan')
-      // Redirect to login with pricing redirect
       window.location.href = '/login?redirectTo=/pricing'
       return
     }
@@ -256,6 +263,9 @@ export default function PricingPage() {
       // Call backend to create Stripe checkout session
       const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL
       if (!apiUrl) throw new Error('Backend URL not configured')
+
+      console.log('[CHECKOUT] 📡 Calling API:', `${apiUrl}/api/stripe/create-checkout-session`)
+
       const response = await fetch(`${apiUrl}/api/stripe/create-checkout-session`, {
         method: 'POST',
         headers: {
@@ -270,6 +280,14 @@ export default function PricingPage() {
 
       const data = await response.json()
 
+      console.log('[CHECKOUT] 📨 API Response:', {
+        status: response.status,
+        ok: response.ok,
+        hasModified: !!data.modified,
+        hasCheckoutUrl: !!data.checkout_url,
+        data
+      })
+
       if (!response.ok) {
         throw new Error(data.detail || 'Failed to create checkout session')
       }
@@ -278,6 +296,11 @@ export default function PricingPage() {
 
       // Check if it's a subscription modification (upgrade/downgrade) or new subscription
       if (data.modified) {
+        console.log('[CHECKOUT] ✅ Subscription modification (upgrade/downgrade):', {
+          immediate: data.immediate,
+          message: data.message
+        })
+
         // Subscription was modified immediately (upgrade) or scheduled (downgrade)
         if (data.immediate) {
           toast.success('✨ Abonnement mis à niveau ! Les changements sont actifs immédiatement.')
@@ -287,13 +310,19 @@ export default function PricingPage() {
 
         // Refresh the page to update subscription status
         setTimeout(() => {
+          console.log('[CHECKOUT] 🔄 Reloading page...')
           window.location.reload()
         }, 2000)
       } else {
         // New subscription - redirect to Stripe Checkout
+        console.log('[CHECKOUT] 💳 New checkout session - redirecting to Stripe')
+
         if (!data.checkout_url) {
-          throw new Error('Checkout URL manquante')
+          console.error('[CHECKOUT] ❌ Missing checkout_url:', data)
+          throw new Error('Checkout URL manquante - le serveur n\'a pas retourné d\'URL de paiement')
         }
+
+        console.log('[CHECKOUT] ➡️ Redirecting to:', data.checkout_url)
         window.location.href = data.checkout_url
       }
 
