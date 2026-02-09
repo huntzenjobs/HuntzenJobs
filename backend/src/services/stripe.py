@@ -170,6 +170,7 @@ async def modify_existing_subscription(
 
                 update_data = {
                     "plan_id": plan_response.data["id"],
+                    "stripe_price_id": new_price_id,  # CRITICAL: Sync price_id to prevent desync
                     "updated_at": datetime.utcnow().isoformat()
                 }
 
@@ -181,6 +182,8 @@ async def modify_existing_subscription(
                     .update(update_data)\
                     .eq("stripe_subscription_id", subscription_id)\
                     .execute()
+
+                logger.info(f"Database updated: plan_id={plan_response.data['id']}, stripe_price_id={new_price_id}")
 
                 # Invalidate quota cache after plan change
                 await invalidate_user_quota_cache(user_id)
@@ -268,15 +271,31 @@ async def create_checkout_session(
         existing_subscription = await get_active_subscription(user_id)
 
         if existing_subscription and existing_subscription.get("stripe_subscription_id"):
-            # User has active subscription - modify it instead of creating new one
+            # User has active subscription - verify if change is needed
+            stripe_subscription_id = existing_subscription["stripe_subscription_id"]
             current_plan = existing_subscription["subscription_plans"]["name"]
 
-            # Don't allow "upgrading" to the same plan
-            if current_plan == plan_name:
-                raise HTTPException(status_code=400, detail=f"Already subscribed to {plan_name}")
+            # CRITICAL FIX: Check Stripe directly to avoid desync issues
+            # Get current price_id from Stripe (source of truth)
+            try:
+                stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+                current_price_id = stripe_subscription["items"]["data"][0]["price"]["id"]
+
+                # Compare price IDs directly - this is the most reliable check
+                if current_price_id == price_id:
+                    logger.warning(f"User {user_id} already on {plan_name} (price_id: {price_id})")
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Already subscribed to {plan_name}"
+                    )
+            except stripe.error.StripeError as e:
+                logger.error(f"Failed to retrieve Stripe subscription {stripe_subscription_id}: {e}")
+                # Fallback to database check if Stripe API fails
+                if current_plan == plan_name:
+                    raise HTTPException(status_code=400, detail=f"Already subscribed to {plan_name}")
 
             return await modify_existing_subscription(
-                subscription_id=existing_subscription["stripe_subscription_id"],
+                subscription_id=stripe_subscription_id,
                 current_plan=current_plan,
                 new_plan=plan_name,
                 new_price_id=price_id,
@@ -548,9 +567,16 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
         return
 
     try:
+        # Extract current price_id and plan_name from Stripe subscription
+        stripe_price_id = subscription["items"]["data"][0]["price"]["id"]
+        plan_name_from_metadata = subscription.get("metadata", {}).get("plan_name")
+
+        logger.info(f"Webhook: stripe_price_id={stripe_price_id}, plan_name={plan_name_from_metadata}")
+
         # Update subscription in database with Stripe's current state
         update_data = {
             "status": subscription["status"],
+            "stripe_price_id": stripe_price_id,  # CRITICAL: Always sync price_id
             "current_period_start": datetime.fromtimestamp(
                 subscription["current_period_start"]
             ).isoformat(),
@@ -560,6 +586,18 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
             "cancel_at_period_end": subscription.get("cancel_at_period_end", False),
             "updated_at": datetime.utcnow().isoformat()
         }
+
+        # If plan changed, update plan_id too
+        if plan_name_from_metadata:
+            plan_response = supabase_client.table("subscription_plans")\
+                .select("id")\
+                .eq("name", plan_name_from_metadata)\
+                .single()\
+                .execute()
+
+            if plan_response.data:
+                update_data["plan_id"] = plan_response.data["id"]
+                logger.info(f"Webhook: Updating plan to {plan_name_from_metadata}")
 
         supabase_client.table("user_subscriptions")\
             .update(update_data)\
