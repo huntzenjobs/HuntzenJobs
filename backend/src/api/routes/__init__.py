@@ -19,6 +19,8 @@ from src.api.routes.auth import router as auth_router
 from src.api.routes.saved_jobs import router as saved_jobs_router
 from src.api.routes.cv_analysis import router as cv_analysis_router
 from src.api.routes.stripe import router as stripe_router
+from src.api.routes.subscription import router as subscription_router
+from src.api.routes.health import router as health_router
 
 router = APIRouter()
 
@@ -36,3 +38,5 @@ router.include_router(cv_adapter_router, prefix="/api/cv-adapter", tags=["CV Ada
 router.include_router(recruiter_router, prefix="/api/recruiter", tags=["Recruiter Contact"])
 router.include_router(events_router, prefix="/api/job-fairs", tags=["Job Fairs"])
 router.include_router(stripe_router, prefix="/api/stripe", tags=["Stripe Payments"])
+router.include_router(subscription_router, prefix="/api/subscription", tags=["Subscription Management"])
+router.include_router(health_router, prefix="/api/health", tags=["Health & Monitoring"])

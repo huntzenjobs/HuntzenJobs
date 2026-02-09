@@ -13,6 +13,7 @@ Sprint: Phase 2 - Stripe Integration
 
 import os
 import stripe
+import traceback
 from typing import Optional, Dict, Any, Literal
 from datetime import datetime, timedelta
 from structlog import get_logger
@@ -21,6 +22,15 @@ from supabase import create_client, Client
 
 logger = get_logger(__name__)
 
+# Import quota cache invalidation
+try:
+    from app.quota import invalidate_user_quota_cache
+except ImportError:
+    logger.warning("Could not import invalidate_user_quota_cache - cache invalidation disabled")
+    async def invalidate_user_quota_cache(user_id: str) -> bool:
+        """Fallback stub if quota module not available."""
+        return False
+
 # ============================================
 # STRIPE CONFIGURATION
 # ============================================
@@ -28,21 +38,9 @@ logger = get_logger(__name__)
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
-# Price IDs from Stripe Dashboard
-STRIPE_PRICE_IDS = {
-    "starter": {
-        "monthly": "price_1SwkaNF7q8KRoF9a8cVsijpc",
-        "yearly": "price_1SwkacF7q8KRoF9aEmn5s5aL"
-    },
-    "pro": {
-        "monthly": "price_1SwkeQF7q8KRoF9azQdPo1o6",
-        "yearly": "price_1SwlBkF7q8KRoF9agySwklWJ"
-    },
-    "premium": {
-        "monthly": "price_1SwlC1F7q8KRoF9a8FXeooCj",
-        "yearly": "price_1SwlCBF7q8KRoF9aG8uNTsiH"
-    }
-}
+# Price IDs are now stored in database (stripe_prices table)
+# Removed hardcoded STRIPE_PRICE_IDS dict - use get_stripe_price_id() RPC instead
+# Migration: 20260210000003_stripe_price_config.sql
 
 if not stripe.api_key:
     logger.warning("Stripe not configured - STRIPE_SECRET_KEY missing")
@@ -167,6 +165,10 @@ async def modify_existing_subscription(
                     .eq("stripe_subscription_id", subscription_id)\
                     .execute()
 
+                # Invalidate quota cache after plan change
+                await invalidate_user_quota_cache(user_id)
+                logger.info(f"Quota cache invalidated for user {user_id}")
+
         logger.info(f"Subscription modified successfully for user {user_id}")
 
         return {
@@ -226,11 +228,24 @@ async def create_checkout_session(
     if not STRIPE_ENABLED:
         raise HTTPException(status_code=500, detail="Stripe not configured")
 
-    if plan_name not in STRIPE_PRICE_IDS:
-        raise HTTPException(status_code=400, detail=f"Invalid plan: {plan_name}")
-
     try:
-        price_id = STRIPE_PRICE_IDS[plan_name][billing_period]
+        # Get price_id from database (replaces hardcoded STRIPE_PRICE_IDS)
+        if not supabase_client:
+            raise HTTPException(status_code=500, detail="Database not configured")
+
+        price_response = supabase_client.rpc("get_stripe_price_id", {
+            "p_plan_name": plan_name,
+            "p_billing_period": billing_period
+        }).execute()
+
+        if not price_response.data:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Price not found for {plan_name}/{billing_period}. Contact support."
+            )
+
+        price_id = price_response.data
+        logger.info(f"Retrieved price ID from DB: {price_id} for {plan_name}/{billing_period}")
 
         # Check if user already has an active subscription
         existing_subscription = await get_active_subscription(user_id)
@@ -347,19 +362,76 @@ async def handle_stripe_webhook(
             raise HTTPException(status_code=400, detail="Webhook parsing failed")
 
     event_type = event["type"]
-    logger.info(f"Received Stripe webhook: {event_type}")
+    event_id = event.get("id", "unknown")
 
-    # Handle different event types
-    if event_type == "checkout.session.completed":
-        await handle_checkout_completed(event["data"]["object"])
-    elif event_type == "customer.subscription.deleted":
-        await handle_subscription_deleted(event["data"]["object"])
-    elif event_type == "invoice.payment_failed":
-        await handle_payment_failed(event["data"]["object"])
-    else:
-        logger.info(f"Unhandled webhook event: {event_type}")
+    logger.info(f"Received Stripe webhook: {event_type} (ID: {event_id})")
 
-    return {"status": "success", "event": event_type}
+    # Check idempotency - has this event already been processed?
+    if supabase_client:
+        try:
+            check_result = supabase_client.rpc("is_webhook_event_processed", {
+                "p_event_id": event_id
+            }).execute()
+
+            if check_result.data:
+                logger.info(f"Event {event_id} already processed, skipping")
+                return {"status": "success", "event": event_type, "skipped": True}
+        except Exception as e:
+            logger.error(f"Failed to check webhook idempotency: {e}")
+            # Continue processing (fail-open for safety)
+
+    # Handle different event types with error tracking
+    try:
+        if event_type == "checkout.session.completed":
+            await handle_checkout_completed(event["data"]["object"])
+        elif event_type == "customer.subscription.updated":
+            await handle_subscription_updated(event["data"]["object"])
+        elif event_type == "customer.subscription.deleted":
+            await handle_subscription_deleted(event["data"]["object"])
+        elif event_type == "invoice.payment_failed":
+            await handle_payment_failed(event["data"]["object"])
+        else:
+            logger.info(f"Unhandled webhook event: {event_type}")
+
+        # Mark event as processed (idempotency)
+        if supabase_client:
+            try:
+                supabase_client.rpc("mark_webhook_event_processed", {
+                    "p_event_id": event_id,
+                    "p_event_type": event_type,
+                    "p_payload": event
+                }).execute()
+            except Exception as e:
+                logger.error(f"Failed to mark webhook as processed: {e}")
+
+        return {"status": "success", "event": event_type}
+
+    except Exception as e:
+        # Log webhook failure for monitoring
+        error_msg = str(e)
+        error_trace = traceback.format_exc()
+
+        logger.error("webhook_failed",
+            event_id=event_id,
+            event_type=event_type,
+            error=error_msg,
+            traceback=error_trace
+        )
+
+        # Log to database for alerting
+        if supabase_client:
+            try:
+                supabase_client.rpc("log_webhook_failure", {
+                    "p_event_id": event_id,
+                    "p_event_type": event_type,
+                    "p_error_message": error_msg,
+                    "p_error_traceback": error_trace
+                }).execute()
+            except Exception as log_error:
+                logger.error(f"Failed to log webhook failure: {log_error}")
+
+        # Re-raise so Stripe knows the webhook failed and will retry
+        raise
 
 
 async def handle_checkout_completed(session: Dict[str, Any]):
@@ -389,14 +461,18 @@ async def handle_checkout_completed(session: Dict[str, Any]):
 
         plan_id = plan_response.data["id"]
 
-        # Calculate subscription period
-        # Stripe subscriptions start immediately and renew monthly/yearly
-        current_period_start = datetime.utcnow()
-        billing_period = session["metadata"].get("billing_period", "monthly")
-        if billing_period == "yearly":
-            current_period_end = current_period_start + timedelta(days=365)
-        else:
-            current_period_end = current_period_start + timedelta(days=30)
+        # Get actual subscription data from Stripe (use real periods, not calculated)
+        stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+
+        # Use Stripe's actual period dates instead of hardcoded calculations
+        current_period_start = datetime.fromtimestamp(
+            stripe_subscription.current_period_start
+        )
+        current_period_end = datetime.fromtimestamp(
+            stripe_subscription.current_period_end
+        )
+
+        logger.info(f"Subscription period from Stripe: {current_period_start} → {current_period_end}")
 
         # Check if user already has an active subscription
         existing = supabase_client.table("user_subscriptions")\
@@ -408,12 +484,13 @@ async def handle_checkout_completed(session: Dict[str, Any]):
         subscription_data = {
             "user_id": user_id,
             "plan_id": plan_id,
-            "status": "active",
+            "status": stripe_subscription.status,  # Use Stripe's actual status
             "stripe_subscription_id": stripe_subscription_id,
             "stripe_customer_id": stripe_customer_id,
+            "stripe_price_id": stripe_subscription["items"]["data"][0]["price"]["id"],
             "current_period_start": current_period_start.isoformat(),
             "current_period_end": current_period_end.isoformat(),
-            "cancel_at_period_end": False,
+            "cancel_at_period_end": stripe_subscription.cancel_at_period_end,
             "updated_at": datetime.utcnow().isoformat()
         }
 
@@ -432,6 +509,62 @@ async def handle_checkout_completed(session: Dict[str, Any]):
                 .execute()
             logger.info(f"Subscription created for user {user_id}: {plan_name}")
 
+        # Invalidate quota cache after subscription creation/update
+        await invalidate_user_quota_cache(user_id)
+        logger.info(f"Quota cache invalidated for user {user_id}")
+
+    except Exception as e:
+        logger.error(f"Failed to update subscription in database: {e}")
+
+
+async def handle_subscription_updated(subscription: Dict[str, Any]):
+    """
+    Handle subscription updates (renewals, plan changes, etc.).
+    This webhook fires when subscription details change in Stripe.
+    """
+    stripe_subscription_id = subscription["id"]
+
+    logger.info(f"Subscription updated: {stripe_subscription_id}")
+
+    if not supabase_client:
+        logger.error("Supabase client not configured")
+        return
+
+    try:
+        # Update subscription in database with Stripe's current state
+        update_data = {
+            "status": subscription["status"],
+            "current_period_start": datetime.fromtimestamp(
+                subscription["current_period_start"]
+            ).isoformat(),
+            "current_period_end": datetime.fromtimestamp(
+                subscription["current_period_end"]
+            ).isoformat(),
+            "cancel_at_period_end": subscription.get("cancel_at_period_end", False),
+            "updated_at": datetime.utcnow().isoformat()
+        }
+
+        supabase_client.table("user_subscriptions")\
+            .update(update_data)\
+            .eq("stripe_subscription_id", stripe_subscription_id)\
+            .execute()
+
+        # Get user_id for cache invalidation
+        user_subscription = supabase_client.table("user_subscriptions")\
+            .select("user_id")\
+            .eq("stripe_subscription_id", stripe_subscription_id)\
+            .single()\
+            .execute()
+
+        if user_subscription.data:
+            user_id = user_subscription.data["user_id"]
+
+            # Invalidate quota cache
+            await invalidate_user_quota_cache(user_id)
+            logger.info(f"Quota cache invalidated for user {user_id}")
+
+        logger.info(f"Subscription updated in database: {stripe_subscription_id}")
+
     except Exception as e:
         logger.error(f"Failed to update subscription in database: {e}")
 
@@ -448,7 +581,7 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
 
     try:
         # Update subscription status to cancelled
-        supabase_client.table("user_subscriptions")\
+        result = supabase_client.table("user_subscriptions")\
             .update({
                 "status": "cancelled",
                 "cancelled_at": datetime.utcnow().isoformat(),
@@ -456,6 +589,13 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
             })\
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .execute()
+
+        # Get user_id for cache invalidation
+        if result.data and len(result.data) > 0:
+            user_id = result.data[0].get("user_id")
+            if user_id:
+                await invalidate_user_quota_cache(user_id)
+                logger.info(f"Quota cache invalidated for user {user_id}")
 
         logger.info(f"Subscription cancelled in database: {stripe_subscription_id}")
 
@@ -475,13 +615,20 @@ async def handle_payment_failed(invoice: Dict[str, Any]):
 
     try:
         # Update subscription status to past_due
-        supabase_client.table("user_subscriptions")\
+        result = supabase_client.table("user_subscriptions")\
             .update({
                 "status": "past_due",
                 "updated_at": datetime.utcnow().isoformat()
             })\
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .execute()
+
+        # Get user_id for cache invalidation
+        if result.data and len(result.data) > 0:
+            user_id = result.data[0].get("user_id")
+            if user_id:
+                await invalidate_user_quota_cache(user_id)
+                logger.info(f"Quota cache invalidated for user {user_id}")
 
         logger.info(f"Subscription marked as past_due: {stripe_subscription_id}")
 

@@ -56,7 +56,10 @@ interface SubscriptionApiData {
 
 const CACHE_KEY = 'huntzen_subscription_cache'
 const CACHE_EXPIRY_KEY = 'huntzen_subscription_cache_expiry'
-const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
+// Cache TTL: 5 min fallback (était 24h)
+// Invalidation principale = événements (webhooks, actions utilisateur)
+// TTL 5 min = filet de sécurité si événements ratés
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes (FALLBACK)
 const REFRESH_INTERVAL = 5 * 60 * 1000 // 5 minutes
 
 /**
@@ -309,5 +312,54 @@ export function useSubscriptionApi(): SubscriptionApiData {
   return {
     ...data,
     refetch: fetchSubscription,
+  }
+}
+
+/**
+ * Hook to invalidate cache on subscription changes (event-based)
+ *
+ * Listens for custom 'subscription-changed' events and immediately
+ * invalidates the cache + refetches fresh data.
+ *
+ * This ensures users see their new subscription immediately after
+ * Stripe checkout success, without waiting for cache TTL.
+ *
+ * Usage:
+ * ```tsx
+ * const { invalidateCache } = useSubscriptionSync()
+ * // Cache is automatically invalidated on 'subscription-changed' events
+ * ```
+ */
+export function useSubscriptionSync() {
+  const { refetch } = useSubscriptionApi()
+
+  useEffect(() => {
+    const handleSubscriptionChange = () => {
+      console.log('[SubscriptionSync] Subscription changed event detected')
+
+      // Clear localStorage cache immediately
+      localStorage.removeItem(CACHE_KEY)
+      localStorage.removeItem(CACHE_EXPIRY_KEY)
+
+      // Refetch fresh data from API
+      refetch()
+
+      console.log('[SubscriptionSync] Cache invalidated and refetch triggered')
+    }
+
+    // Listen for custom subscription-changed event
+    // Dispatched from payment/success page after Stripe webhook processes
+    window.addEventListener('subscription-changed', handleSubscriptionChange)
+
+    console.log('[SubscriptionSync] Event listener registered')
+
+    return () => {
+      window.removeEventListener('subscription-changed', handleSubscriptionChange)
+      console.log('[SubscriptionSync] Event listener removed')
+    }
+  }, [refetch])
+
+  return {
+    invalidateCache: refetch,
   }
 }

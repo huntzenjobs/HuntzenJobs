@@ -13,9 +13,23 @@ from src.api.deps import (
     get_session_history,
     update_session_history,
     clear_session,
+    get_current_user,
 )
 from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
+from pydantic import BaseModel, Field
+from structlog import get_logger
+
+logger = get_logger(__name__)
+
+# Pydantic models for sync-time endpoint
+class CoachTimeSyncRequest(BaseModel):
+    seconds_used: int = Field(..., ge=0, description="Number of seconds used in this sync period")
+
+
+class CoachTimeSyncResponse(BaseModel):
+    success: bool
+    coach_quota: dict
 
 router = APIRouter()
 
@@ -137,3 +151,68 @@ async def delete_session(session_id: str):
     """Clear a chat session."""
     clear_session(session_id)
     return {"success": True, "message": "Session cleared"}
+
+
+@router.post("/sync-time", response_model=CoachTimeSyncResponse)
+async def sync_coach_time(
+    data: CoachTimeSyncRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Sync coach time usage from frontend to backend.
+
+    Called periodically (every 2 minutes) during active coach sessions
+    to ensure time usage is tracked even if browser crashes or closes.
+
+    This prevents users from losing quota tracking if their session
+    ends unexpectedly.
+
+    Args:
+        data: Contains seconds_used in this sync period
+        current_user: Authenticated user from JWT token
+
+    Returns:
+        Success status and updated coach quota information
+
+    Raises:
+        HTTPException: If sync fails or user not authenticated
+    """
+    try:
+        user_id = current_user.get("id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid user")
+
+        if data.seconds_used < 0:
+            raise HTTPException(status_code=400, detail="Invalid time value")
+
+        logger.info(f"Syncing coach time for user {user_id}: {data.seconds_used}s")
+
+        # Import quota functions
+        try:
+            from app.quota import increment_user_usage, get_user_quota_status
+        except ImportError:
+            raise HTTPException(status_code=500, detail="Quota module not available")
+
+        # Increment usage in database
+        success = await increment_user_usage(user_id, "coach", data.seconds_used)
+
+        if not success:
+            logger.error(f"Failed to increment coach usage for user {user_id}")
+            raise HTTPException(status_code=500, detail="Failed to sync time")
+
+        # Get updated quota status
+        quota_status = await get_user_quota_status(user_id)
+        coach_quota = quota_status.get("coach", {})
+
+        logger.info(f"Coach time synced successfully for user {user_id}: {data.seconds_used}s")
+
+        return {
+            "success": True,
+            "coach_quota": coach_quota
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Coach time sync failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
