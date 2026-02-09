@@ -274,6 +274,7 @@ async def create_checkout_session(
             # User has active subscription - verify if change is needed
             stripe_subscription_id = existing_subscription["stripe_subscription_id"]
             current_plan = existing_subscription["subscription_plans"]["name"]
+            stripe_customer_id = existing_subscription.get("stripe_customer_id")
 
             # CRITICAL FIX: Check Stripe directly to avoid desync issues
             # Get current price_id from Stripe (source of truth)
@@ -294,13 +295,41 @@ async def create_checkout_session(
                 if current_plan == plan_name:
                     raise HTTPException(status_code=400, detail=f"Already subscribed to {plan_name}")
 
-            return await modify_existing_subscription(
-                subscription_id=stripe_subscription_id,
-                current_plan=current_plan,
-                new_plan=plan_name,
-                new_price_id=price_id,
-                user_id=user_id
+            # NEW: Create Checkout Session for ALL plan changes (upgrade AND downgrade)
+            # This ensures payment is confirmed BEFORE plan activation
+            logger.info(f"Creating Checkout for plan change: {current_plan} → {plan_name}")
+
+            session = stripe.checkout.Session.create(
+                customer=stripe_customer_id,  # Use existing customer
+                mode="subscription",
+                payment_method_types=["card"],
+                line_items=[{
+                    "price": price_id,
+                    "quantity": 1,
+                }],
+                success_url=success_url,
+                cancel_url=cancel_url,
+                metadata={
+                    "user_id": user_id,
+                    "plan_name": plan_name,
+                    "previous_plan": current_plan,
+                    "previous_subscription_id": stripe_subscription_id,  # Will be cancelled after payment
+                    "is_plan_change": "true"
+                },
+                subscription_data={
+                    "metadata": {
+                        "user_id": user_id,
+                        "plan_name": plan_name
+                    }
+                }
             )
+
+            logger.info(f"Checkout session created for plan change: {session.id}")
+
+            return {
+                "checkout_url": session.url,
+                "session_id": session.id
+            }
 
         # No existing subscription - create new checkout session
         logger.info(f"Creating new Stripe checkout for user {user_id}: {plan_name} ({billing_period})")
@@ -477,7 +506,14 @@ async def handle_checkout_completed(session: Dict[str, Any]):
     stripe_subscription_id = session["subscription"]
     stripe_customer_id = session["customer"]
 
+    # Check if this is a plan change (upgrade/downgrade)
+    is_plan_change = session["metadata"].get("is_plan_change") == "true"
+    previous_subscription_id = session["metadata"].get("previous_subscription_id")
+    previous_plan = session["metadata"].get("previous_plan")
+
     logger.info(f"Checkout completed for user {user_id}: {plan_name}")
+    if is_plan_change:
+        logger.info(f"Plan change detected: {previous_plan} → {plan_name}")
 
     if not supabase_client:
         logger.error("Supabase client not configured")
@@ -548,6 +584,29 @@ async def handle_checkout_completed(session: Dict[str, Any]):
         # Invalidate quota cache after subscription creation/update
         await invalidate_user_quota_cache(user_id)
         logger.info(f"Quota cache invalidated for user {user_id}")
+
+        # NEW: If this was a plan change, cancel the old subscription
+        if is_plan_change and previous_subscription_id:
+            try:
+                logger.info(f"Cancelling previous subscription: {previous_subscription_id}")
+
+                # Cancel old subscription immediately (payment already confirmed for new one)
+                stripe.Subscription.delete(previous_subscription_id)
+
+                # Update old subscription status in database
+                supabase_client.table("user_subscriptions")\
+                    .update({
+                        "status": "cancelled",
+                        "cancelled_at": datetime.utcnow().isoformat(),
+                        "updated_at": datetime.utcnow().isoformat()
+                    })\
+                    .eq("stripe_subscription_id", previous_subscription_id)\
+                    .execute()
+
+                logger.info(f"Previous subscription cancelled successfully: {previous_subscription_id}")
+            except Exception as cancel_error:
+                # Log error but don't fail the webhook (new subscription is already active)
+                logger.error(f"Failed to cancel previous subscription {previous_subscription_id}: {cancel_error}")
 
     except Exception as e:
         logger.error(f"Failed to update subscription in database: {e}")
