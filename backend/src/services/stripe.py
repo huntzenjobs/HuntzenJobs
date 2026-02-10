@@ -31,6 +31,15 @@ except ImportError:
         """Fallback stub if quota module not available."""
         return False
 
+# Import email service for recruiter confirmations
+try:
+    from src.services.email import send_recruiter_request_confirmation
+except ImportError:
+    logger.warning("Could not import send_recruiter_request_confirmation - email notifications disabled")
+    def send_recruiter_request_confirmation(*args, **kwargs):
+        """Fallback stub if email service not available."""
+        logger.warning("Email notification skipped (service not available)")
+
 # ============================================
 # STRIPE CONFIGURATION
 # ============================================
@@ -500,7 +509,17 @@ async def handle_stripe_webhook(
 
 
 async def handle_checkout_completed(session: Dict[str, Any]):
-    """Handle successful checkout - create/update subscription."""
+    """Handle successful checkout - route to subscription or recruiter handler."""
+    metadata = session.get("metadata", {})
+
+    # Detect type based on metadata
+    if "request_id" in metadata:
+        # This is a recruiter request payment
+        logger.info("Detected recruiter request payment, routing...")
+        await handle_recruiter_checkout(session)
+        return
+
+    # Otherwise, handle as subscription checkout
     user_id = session["metadata"]["user_id"]
     plan_name = session["metadata"]["plan_name"]
     stripe_subscription_id = session["subscription"]
@@ -765,3 +784,59 @@ async def handle_payment_failed(invoice: Dict[str, Any]):
 
     except Exception as e:
         logger.error(f"Failed to update subscription status: {e}")
+
+
+async def handle_recruiter_checkout(session: Dict[str, Any]):
+    """
+    Handle successful recruiter request payment.
+
+    Called when checkout.session.completed has metadata.request_id.
+    Updates recruiter_requests table and sends confirmation email.
+    """
+    request_id = session["metadata"].get("request_id")
+
+    if not request_id:
+        logger.warning("Recruiter checkout missing request_id in metadata")
+        return
+
+    logger.info(f"Processing recruiter request payment: {request_id}")
+
+    if not supabase_client:
+        logger.error("Supabase client not configured")
+        return
+
+    try:
+        # Update request status to paid
+        supabase_client.table("recruiter_requests")\
+            .update({
+                "payment_status": "paid",
+                "payment_intent_id": session.get("payment_intent"),
+            })\
+            .eq("id", request_id)\
+            .execute()
+
+        logger.info(f"Recruiter request marked as paid: {request_id}")
+
+        # Fetch request details for email
+        request_response = supabase_client.table("recruiter_requests")\
+            .select("*")\
+            .eq("id", request_id)\
+            .execute()
+
+        if request_response.data:
+            request_data = request_response.data[0]
+
+            # Send confirmation email to user
+            send_recruiter_request_confirmation(
+                to_email=request_data["email"],
+                full_name=request_data["full_name"],
+                sector=request_data["sector"],
+                experience_level=request_data["experience_level"],
+            )
+
+            logger.info(f"Confirmation email sent for request: {request_id}")
+        else:
+            logger.warning(f"Recruiter request not found: {request_id}")
+
+    except Exception as e:
+        logger.error(f"Failed to process recruiter checkout: {e}")
