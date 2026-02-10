@@ -286,19 +286,30 @@ export function AuthProvider({
         })
       }
 
+      // Attempt to sign out from Supabase
+      // If session is already expired, this will fail - that's OK
       const { error } = await supabaseClient.auth.signOut()
 
-      if (error) throw error
+      if (error) {
+        // Log the error but don't block logout
+        // Session might already be expired (AbortError)
+        console.warn('Sign out warning (continuing anyway):', error)
+      }
+    } catch (err: any) {
+      // Catch any exception (AbortError, network issues, etc.)
+      console.warn('Sign out exception (continuing anyway):', err)
+    } finally {
+      // ALWAYS clean up local state and redirect, even if signOut failed
+      // If session was already expired, we still need to clear local data
+      setSession(null)
+      setUser(null)
 
       // Clear subscription cache to prevent data leakage between users
       localStorage.removeItem('huntzen_subscription_cache')
       localStorage.removeItem('huntzen_subscription_cache_expiry')
 
+      // Redirect to login page
       router.push('/login')
-    } catch (err: any) {
-      console.error('Sign out error:', err)
-      setError(err.message || 'Failed to sign out')
-      throw err
     }
   }
 
