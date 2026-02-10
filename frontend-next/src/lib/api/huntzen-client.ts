@@ -163,19 +163,45 @@ class HuntzenApiClient {
     contract_type?: string
     radiusKm?: number
     includeRemote?: boolean
+    // Advanced filters (Premium feature)
+    industries?: string
+    keywords?: string
+    experienceLevel?: string
+    salaryMin?: number
+    salaryMax?: number
+    companySize?: string
   }): Promise<{ jobs: Job[]; count: number; corrected_query?: string }> {
+    // Build query parameters
+    const queryParams = new URLSearchParams()
+    queryParams.append('q', params.job_title)
+    queryParams.append('country', params.country_code)
+    if (params.city) queryParams.append('city', params.city)
+    if (params.contract_type) queryParams.append('contract', params.contract_type)
+    if (params.radiusKm !== undefined) queryParams.append('radius', params.radiusKm.toString())
+    if (params.includeRemote !== undefined) queryParams.append('include_remote', params.includeRemote.toString())
+
+    // Add advanced filters if provided
+    if (params.industries) queryParams.append('industries', params.industries)
+    if (params.keywords) queryParams.append('keywords', params.keywords)
+    if (params.experienceLevel) queryParams.append('experience_level', params.experienceLevel)
+    if (params.salaryMin !== undefined) queryParams.append('salary_min', params.salaryMin.toString())
+    if (params.salaryMax !== undefined) queryParams.append('salary_max', params.salaryMax.toString())
+    if (params.companySize) queryParams.append('company_size', params.companySize)
+
     const response = await this.fetch<{
       success: boolean
       jobs: Job[]
       count: number
       corrected_query?: string
-    }>('/api/jobs/search', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    })
+      metadata?: {
+        total_filtered?: number
+        total_before_filters?: number
+      }
+    }>(`/api/jobs/search?${queryParams.toString()}`)
+
     return {
       jobs: response.jobs || [],
-      count: response.count || 0,
+      count: response.metadata?.total_filtered ?? response.count ?? 0,
       corrected_query: response.corrected_query,
     }
   }

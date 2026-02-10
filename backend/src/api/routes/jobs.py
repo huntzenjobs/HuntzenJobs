@@ -4,6 +4,7 @@ Job Search API Routes
 Endpoints for AI-powered job searching.
 """
 
+from typing import List
 from fastapi import APIRouter, HTTPException, status, Query, Request
 
 from src.api.deps import ScoutAgentDep
@@ -11,6 +12,116 @@ from src.api.middleware import limiter
 from src.models.schemas import JobSearchRequest, JobSearchResponse, SearchMetadata, Job
 
 router = APIRouter()
+
+
+def apply_advanced_filters(
+    jobs: List[dict],
+    industries: str = "",
+    keywords: str = "",
+    experience_level: str = "",
+    salary_min: int = None,
+    salary_max: int = None,
+    company_size: str = "",
+) -> List[dict]:
+    """
+    Filter jobs based on advanced criteria (Premium feature).
+
+    This is a post-processing filter applied after the AI agent returns results.
+    """
+    if not jobs:
+        return []
+
+    filtered = jobs
+
+    # Filter by industries (case-insensitive match in title or description)
+    if industries:
+        industry_list = [ind.strip().lower() for ind in industries.split(',')]
+        filtered = [
+            job for job in filtered
+            if any(
+                ind in job.get('title', '').lower() or
+                ind in job.get('description', '').lower() or
+                ind in job.get('company', '').lower()
+                for ind in industry_list
+            )
+        ]
+
+    # Filter by keywords (case-insensitive match in title or description)
+    if keywords:
+        keyword_list = [kw.strip().lower() for kw in keywords.split(',')]
+        filtered = [
+            job for job in filtered
+            if any(
+                kw in job.get('title', '').lower() or
+                kw in job.get('description', '').lower()
+                for kw in keyword_list
+            )
+        ]
+
+    # Filter by experience level (heuristic based on title/description)
+    if experience_level:
+        level_keywords = {
+            'junior': ['junior', 'jr', 'entry', 'graduate', 'débutant'],
+            'mid': ['mid', 'intermediate', 'confirmé', 'experienced'],
+            'senior': ['senior', 'sr', 'expert', 'sénior'],
+            'lead': ['lead', 'principal', 'staff', 'architect', 'head', 'director'],
+        }
+        keywords_to_match = level_keywords.get(experience_level.lower(), [])
+        if keywords_to_match:
+            filtered = [
+                job for job in filtered
+                if any(
+                    keyword in job.get('title', '').lower() or
+                    keyword in job.get('description', '').lower()
+                    for keyword in keywords_to_match
+                )
+            ]
+
+    # Filter by salary range (if salary information is available)
+    if salary_min is not None or salary_max is not None:
+        def extract_salary(job: dict) -> tuple:
+            """Extract min/max salary from job (returns None if not available)."""
+            salary_str = job.get('salary', '')
+            if not salary_str:
+                return None, None
+            # Simple heuristic: extract numbers from salary string
+            # This is a basic implementation - improve based on actual data format
+            import re
+            numbers = re.findall(r'\d+', salary_str.replace(' ', '').replace(',', ''))
+            if len(numbers) >= 2:
+                return int(numbers[0]), int(numbers[1])
+            elif len(numbers) == 1:
+                val = int(numbers[0])
+                return val, val
+            return None, None
+
+        filtered = [
+            job for job in filtered
+            if (lambda s_min, s_max: (
+                (salary_min is None or s_max is None or s_max >= salary_min) and
+                (salary_max is None or s_min is None or s_min <= salary_max)
+            ))(*extract_salary(job))
+        ]
+
+    # Filter by company size (heuristic based on company name/description)
+    if company_size:
+        size_keywords = {
+            'startup': ['startup', 'start-up', 'jeune pousse', 'seed', 'early stage'],
+            'scaleup': ['scale-up', 'scaleup', 'growth', 'series a', 'series b'],
+            'enterprise': ['enterprise', 'corporation', 'multinational', 'fortune', 'global'],
+        }
+        keywords_to_match = size_keywords.get(company_size.lower(), [])
+        if keywords_to_match:
+            filtered = [
+                job for job in filtered
+                if any(
+                    keyword in job.get('company', '').lower() or
+                    keyword in job.get('description', '').lower()
+                    for keyword in keywords_to_match
+                )
+            ]
+
+    return filtered
 
 
 @router.post("/search", response_model=JobSearchResponse)
@@ -92,6 +203,13 @@ async def search_jobs_get(
     limit: int = Query(default=25, ge=5, le=100),
     radius: int = Query(default=None, ge=1, le=100, description="Search radius in km"),
     include_remote: bool = Query(default=True, description="Include remote jobs"),
+    # Advanced filters (Premium feature)
+    industries: str = Query(default="", description="Comma-separated industries (e.g. 'Tech/IT,Finance')"),
+    keywords: str = Query(default="", description="Comma-separated keywords (e.g. 'React,Python')"),
+    experience_level: str = Query(default="", description="Experience level: junior, mid, senior, lead"),
+    salary_min: int = Query(default=None, ge=0, description="Minimum salary (annual)"),
+    salary_max: int = Query(default=None, ge=0, description="Maximum salary (annual)"),
+    company_size: str = Query(default="", description="Company size: startup, scaleup, enterprise"),
 ):
     """
     Search for jobs (GET endpoint for simple queries).
@@ -105,6 +223,22 @@ async def search_jobs_get(
         radius_km=radius,
         include_remote=include_remote,
     )
+
+    # Apply advanced filters if any are provided (Premium feature)
+    if any([industries, keywords, experience_level, salary_min, salary_max, company_size]):
+        jobs = result.get('jobs', [])
+        filtered_jobs = apply_advanced_filters(
+            jobs=jobs,
+            industries=industries,
+            keywords=keywords,
+            experience_level=experience_level,
+            salary_min=salary_min,
+            salary_max=salary_max,
+            company_size=company_size,
+        )
+        result['jobs'] = filtered_jobs
+        result['metadata']['total_filtered'] = len(filtered_jobs)
+        result['metadata']['total_before_filters'] = len(jobs)
 
     return result
 

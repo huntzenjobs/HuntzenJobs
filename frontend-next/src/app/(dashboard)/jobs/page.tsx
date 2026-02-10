@@ -247,6 +247,13 @@ export default function JobsPage() {
         contract_type: contractType,
         radiusKm: params.radiusKm,
         includeRemote: params.includeRemote,
+        // Advanced filters (Premium feature)
+        industries: advancedFilters.industries?.join(','),
+        keywords: advancedFilters.keywords?.join(','),
+        experienceLevel: advancedFilters.experienceLevel,
+        salaryMin: advancedFilters.salaryMin,
+        salaryMax: advancedFilters.salaryMax,
+        companySize: advancedFilters.companySize,
       })
     },
     onSuccess: (data) => {
@@ -362,16 +369,34 @@ export default function JobsPage() {
     // Update URL without page reload
     router.push(`/jobs?${params.toString()}`, { scroll: false })
 
-    // TODO: Apply filters to job search query (backend integration)
+    // Re-run search with new filters if a search has already been performed
+    if (jobTitle && selectedCountry && jobs.length > 0) {
+      console.log('[ADVANCED_FILTERS] Re-running search with filters...')
+      handleSearch({
+        query: jobTitle,
+        country: selectedCountry,
+        location: selectedCity,
+      })
+    }
 
     // Show confirmation toast
     const filtersCount = Object.keys(filters).length
     if (filtersCount > 0) {
       toast.success(`${filtersCount} filtre(s) avancé(s) appliqué(s)`, {
-        description: 'Vous pouvez partager ce lien pour conserver vos filtres',
+        description: filtersCount > 0 && jobs.length > 0
+          ? 'Recherche mise à jour avec les nouveaux filtres'
+          : 'Les filtres seront appliqués à la prochaine recherche',
       })
     } else {
       toast.info('Filtres avancés réinitialisés')
+      // Re-run search to remove filters
+      if (jobs.length > 0) {
+        handleSearch({
+          query: jobTitle,
+          country: selectedCountry,
+          location: selectedCity,
+        })
+      }
     }
   }
 
