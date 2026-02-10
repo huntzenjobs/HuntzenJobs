@@ -154,9 +154,20 @@ async def get_current_user_info(
             print(f"  - stripe_subscription_id: {sub.get('stripe_subscription_id')}")
             print(f"{'='*70}\n")
 
-            # Extract price from plan_limits JSONB (subscription_plans doesn't have price_monthly in RPC)
-            # For now, map plan names to prices (will be fixed in Phase 1 with stripe_prices table)
-            plan_prices = {"free": 0, "starter": 8.90, "pro": 13.90, "premium": 19.90}
+            # Fetch plan prices dynamically from subscription_plans table
+            try:
+                plans_response = supabase.table("subscription_plans")\
+                    .select("name, price_monthly")\
+                    .execute()
+
+                plan_prices = {
+                    plan["name"]: plan["price_monthly"]
+                    for plan in plans_response.data
+                }
+            except Exception as e:
+                logger.error(f"Failed to fetch plan prices: {e}")
+                # Fallback to hardcoded prices (safety)
+                plan_prices = {"free": 0, "starter": 8.90, "pro": 13.90, "premium": 19.90}
             subscription_data = {
                 "plan_name": sub.get("plan_name", "free"),
                 "plan_display_name": sub.get("plan_display_name", "Free"),
@@ -168,6 +179,38 @@ async def get_current_user_info(
             # 🔍 DEBUG: No subscription found
             print(f"\n{'='*70}")
             print(f"[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
+            print(f"  - User ID: {user_id}")
+            print(f"  - Email: {user['email']}")
+
+            # Check if user has stripe_subscription_id in profiles but no active subscription
+            # This would indicate a desync between Stripe and Supabase
+            try:
+                profile_check = supabase.table("profiles") \
+                    .select("stripe_subscription_id, stripe_customer_id") \
+                    .eq("id", user_id) \
+                    .single() \
+                    .execute()
+
+                if profile_check.data:
+                    stripe_sub_id = profile_check.data.get("stripe_subscription_id")
+                    stripe_customer_id = profile_check.data.get("stripe_customer_id")
+
+                    if stripe_sub_id:
+                        print(f"\n  🚨 DESYNC DETECTED:")
+                        print(f"     - Stripe Subscription ID in profiles: {stripe_sub_id}")
+                        print(f"     - Stripe Customer ID: {stripe_customer_id}")
+                        print(f"     - BUT no active subscription in user_subscriptions table!")
+                        print(f"     - This indicates a webhook failure or manual DB modification")
+                        print(f"\n  Possible causes:")
+                        print(f"     1. Stripe webhook failed to process subscription.created")
+                        print(f"     2. user_subscriptions.status is not 'active' or 'trialing'")
+                        print(f"     3. user_subscriptions.current_period_end has expired")
+                        print(f"     4. Manual deletion from user_subscriptions table")
+                    else:
+                        print(f"  ℹ️ No Stripe subscription IDs in profiles (user never subscribed)")
+            except Exception as check_error:
+                print(f"  ⚠️ Failed to check profiles for Stripe IDs: {check_error}")
+
             print(f"{'='*70}\n")
 
         # Get quota status using Supabase RPC

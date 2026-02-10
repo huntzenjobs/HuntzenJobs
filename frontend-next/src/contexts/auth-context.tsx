@@ -103,6 +103,11 @@ export function AuthProvider({
                 })
               }
             }
+
+            // Clear old subscription cache and trigger refresh
+            localStorage.removeItem('huntzen_subscription_cache')
+            localStorage.removeItem('huntzen_subscription_cache_expiry')
+            window.dispatchEvent(new Event('subscription-changed'))
             break
 
           case 'TOKEN_REFRESHED':
@@ -115,6 +120,10 @@ export function AuthProvider({
             console.log('[AuthContext] User signed out')
             setSession(null)
             setUser(null)
+
+            // Clear subscription cache to prevent data leakage
+            localStorage.removeItem('huntzen_subscription_cache')
+            localStorage.removeItem('huntzen_subscription_cache_expiry')
             break
 
           case 'USER_UPDATED':
@@ -280,6 +289,10 @@ export function AuthProvider({
       const { error } = await supabaseClient.auth.signOut()
 
       if (error) throw error
+
+      // Clear subscription cache to prevent data leakage between users
+      localStorage.removeItem('huntzen_subscription_cache')
+      localStorage.removeItem('huntzen_subscription_cache_expiry')
 
       router.push('/login')
     } catch (err: any) {

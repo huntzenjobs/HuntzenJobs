@@ -216,7 +216,10 @@ export function Sidebar({ className }: SidebarProps) {
                 <p className="text-sm font-medium text-white truncate group-hover:text-huntzen-blue transition-colors">
                   {user.user_metadata?.full_name || 'Utilisateur'}
                 </p>
-                {planBadge && (
+                {subscription === null ? (
+                  // Loading skeleton while subscription data is being fetched
+                  <span className="bg-white/20 animate-pulse rounded px-2 py-1 w-14 h-4" />
+                ) : planBadge ? (
                   <span className={cn(
                     'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white',
                     planBadge.color
@@ -224,7 +227,7 @@ export function Sidebar({ className }: SidebarProps) {
                     {planBadge.icon}
                     {planBadge.label}
                   </span>
-                )}
+                ) : null}
               </div>
               <p className="text-xs text-white/50 truncate">
                 {user.email}

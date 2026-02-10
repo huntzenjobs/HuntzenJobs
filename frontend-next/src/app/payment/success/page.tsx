@@ -33,8 +33,8 @@ export default function PaymentSuccessPage() {
     }
 
     // Polling avec retry intelligent au lieu de wait fixe 2s
-    // Check toutes les 1s pendant max 10s pour détecter changement abonnement
-    const MAX_ATTEMPTS = 10
+    // Check toutes les 1s pendant max 20s pour détecter changement abonnement (webhooks Stripe peuvent être lents)
+    const MAX_ATTEMPTS = 20
     const POLL_INTERVAL = 1000 // 1 seconde
 
     let currentAttempt = 0

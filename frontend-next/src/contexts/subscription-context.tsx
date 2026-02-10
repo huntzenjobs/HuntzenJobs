@@ -8,6 +8,8 @@ import {
   PLAN_LIMITS,
 } from '@/hooks/use-freemium-limits'
 import { useSubscriptionApi } from '@/hooks/use-subscription-api'
+import { useOptionalAuth } from '@/contexts/auth-context'
+import { toast } from 'sonner'
 
 type PlanLimits = (typeof PLAN_LIMITS)[PlanType]
 
@@ -54,6 +56,9 @@ interface SubscriptionContextType {
   openPricingModal: (feature?: string) => void
   closePricingModal: () => void
   pricingModalFeature: string | null
+
+  // Subscription sync
+  reconcileSubscription: () => Promise<void>
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | null>(null)
@@ -72,9 +77,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // KEEP: Local state for setPlan() and coach session until Stripe integration
   const freemium = useFreemiumLimits()
 
+  // Get auth session for inconsistency detection
+  const auth = useOptionalAuth()
+
   const [showPricingModal, setShowPricingModal] = useState(false)
   const [pricingModalFeature, setPricingModalFeature] = useState<string | null>(null)
   const [coachTimeRemaining, setCoachTimeRemaining] = useState(0)
+  const [hasShownInconsistencyWarning, setHasShownInconsistencyWarning] = useState(false)
 
   // Update coach time remaining every second when session is active
   useEffect(() => {
@@ -116,9 +125,104 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Map API data to interface (use API as source of truth, localStorage as fallback)
-  const plan: PlanType = apiData.subscription?.plan_name || freemium.plan
+  // Manual reconciliation function (for debugging or user-triggered sync)
+  const reconcileSubscription = useCallback(async () => {
+    console.log('[SUBSCRIPTION] Manual reconciliation triggered')
+
+    // Clear local cache
+    try {
+      localStorage.removeItem('huntzen_subscription_cache')
+      localStorage.removeItem('huntzen_subscription_cache_expiry')
+      console.log('[SUBSCRIPTION] Local cache cleared')
+    } catch (error) {
+      console.error('[SUBSCRIPTION] Failed to clear cache:', error)
+    }
+
+    // Force refetch from API
+    if (apiData.refetch) {
+      await apiData.refetch()
+      toast.success('Abonnement synchronisé', {
+        description: 'Vos informations d\'abonnement ont été actualisées.',
+      })
+    } else {
+      toast.error('Synchronisation impossible', {
+        description: 'La fonction de synchronisation n\'est pas disponible.',
+      })
+    }
+
+    // Reset warning flag
+    setHasShownInconsistencyWarning(false)
+  }, [apiData.refetch])
+
+  // Map API data to interface (distinguish loading/error/no-subscription states)
+  const plan: PlanType = (() => {
+    // During loading, use localStorage fallback to prevent UI flicker
+    if (apiData.isLoading) return freemium.plan
+
+    // On error, log warning and fallback (user should see error state elsewhere)
+    if (apiData.error) {
+      console.error('[Subscription] API error, check authentication:', apiData.error)
+      return freemium.plan
+    }
+
+    // No subscription data = new user or free user, default to 'free'
+    return apiData.subscription?.plan_name || 'free'
+  })()
   const planName = PLAN_NAMES[plan]
+
+  // Detect inconsistency: user authenticated but no subscription data from API
+  useEffect(() => {
+    const isAuthenticated = auth?.session !== null && auth?.session !== undefined
+    const hasSubscriptionData = apiData.subscription !== null && apiData.subscription !== undefined
+    const isApiLoading = apiData.isLoading
+    const isApiError = apiData.error !== null
+
+    // Only check when:
+    // - User is authenticated
+    // - API has finished loading
+    // - No subscription data received from API
+    // - Haven't already shown warning this session
+    if (isAuthenticated && !isApiLoading && !hasSubscriptionData && !hasShownInconsistencyWarning) {
+      console.warn(
+        '[SUBSCRIPTION] Inconsistency detected: authenticated but no subscription data from API',
+        {
+          hasSession: !!auth?.session,
+          apiSubscription: apiData.subscription,
+          fallbackPlan: freemium.plan,
+          apiError: apiData.error
+        }
+      )
+
+      // Show user-visible warning
+      if (isApiError) {
+        toast.error('Erreur de chargement de votre abonnement', {
+          description: 'Impossible de récupérer vos informations d\'abonnement. Veuillez vous reconnecter.',
+          duration: 6000,
+        })
+      } else {
+        toast.warning('Chargement de votre abonnement en cours...', {
+          description: 'Si le problème persiste, veuillez vous reconnecter.',
+          duration: 5000,
+        })
+      }
+
+      setHasShownInconsistencyWarning(true)
+
+      // Auto-refetch after 5 seconds if not an error
+      if (!isApiError) {
+        setTimeout(() => {
+          console.log('[SUBSCRIPTION] Auto-refetching subscription data...')
+          apiData.refetch?.()
+        }, 5000)
+      }
+    }
+
+    // Reset warning flag when subscription data is successfully loaded
+    if (hasSubscriptionData && hasShownInconsistencyWarning) {
+      console.log('[SUBSCRIPTION] Subscription data loaded successfully, resetting warning flag')
+      setHasShownInconsistencyWarning(false)
+    }
+  }, [auth?.session, apiData.subscription, apiData.isLoading, apiData.error, hasShownInconsistencyWarning, freemium.plan, apiData.refetch])
 
   // Build limits from API quotas (source of truth)
   const limitsFromApi: PlanLimits = useMemo(() => {
@@ -226,6 +330,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     openPricingModal,
     closePricingModal,
     pricingModalFeature,
+
+    reconcileSubscription,
   }), [
     // Plan data from API
     plan,
@@ -257,6 +363,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     // Keep functions stable
     openPricingModal,
     closePricingModal,
+    reconcileSubscription,
   ])
 
   return (
