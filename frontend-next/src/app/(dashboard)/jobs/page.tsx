@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,6 +30,7 @@ import { SearchFormInline, type SearchParams } from '@/components/jobs/search-fo
 import { featureFlags } from '@/lib/feature-flags'
 import { JobsPlaceholder } from '@/components/jobs/jobs-placeholder'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { AdvancedFiltersModal, type AdvancedFilters } from '@/components/jobs/advanced-filters-modal'
 
 export default function JobsPage() {
   const [jobTitle, setJobTitle] = useState('')
@@ -41,9 +43,17 @@ export default function JobsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
 
+  // Advanced filters state
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({})
+
   // Auth & Query Client
   const auth = useOptionalAuth()
   const queryClient = useQueryClient()
+
+  // Navigation
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Country autocomplete state
   const [countrySearch, setCountrySearch] = useState('')
@@ -124,6 +134,34 @@ export default function JobsPage() {
     setSelectedCity('')
     setCitySearch('')
   }, [selectedCountry])
+
+  // Load advanced filters from URL on mount
+  useEffect(() => {
+    const filters: AdvancedFilters = {}
+
+    const industries = searchParams.get('industries')
+    if (industries) filters.industries = industries.split(',')
+
+    const keywords = searchParams.get('keywords')
+    if (keywords) filters.keywords = keywords.split(',')
+
+    const experienceLevel = searchParams.get('experienceLevel')
+    if (experienceLevel) filters.experienceLevel = experienceLevel
+
+    const salaryMin = searchParams.get('salaryMin')
+    if (salaryMin) filters.salaryMin = Number(salaryMin)
+
+    const salaryMax = searchParams.get('salaryMax')
+    if (salaryMax) filters.salaryMax = Number(salaryMax)
+
+    const companySize = searchParams.get('companySize')
+    if (companySize) filters.companySize = companySize
+
+    if (Object.keys(filters).length > 0) {
+      setAdvancedFilters(filters)
+      console.log('[ADVANCED_FILTERS] Loaded from URL:', filters)
+    }
+  }, [searchParams])
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -280,7 +318,61 @@ export default function JobsPage() {
       openPricingModal('has_advanced_filters')
       return
     }
-    // TODO: Open advanced filters modal
+    setAdvancedFiltersOpen(true)
+  }
+
+  const handleApplyAdvancedFilters = (filters: AdvancedFilters) => {
+    setAdvancedFilters(filters)
+    setAdvancedFiltersOpen(false)
+
+    // Log for debugging
+    console.log('[ADVANCED_FILTERS] Applied filters:', filters)
+
+    // Persist in URL search params
+    const params = new URLSearchParams(searchParams.toString())
+
+    // Remove old advanced filter params
+    params.delete('industries')
+    params.delete('keywords')
+    params.delete('experienceLevel')
+    params.delete('salaryMin')
+    params.delete('salaryMax')
+    params.delete('companySize')
+
+    // Add new filter params
+    if (filters.industries && filters.industries.length > 0) {
+      params.set('industries', filters.industries.join(','))
+    }
+    if (filters.keywords && filters.keywords.length > 0) {
+      params.set('keywords', filters.keywords.join(','))
+    }
+    if (filters.experienceLevel) {
+      params.set('experienceLevel', filters.experienceLevel)
+    }
+    if (filters.salaryMin !== undefined && filters.salaryMin > 0) {
+      params.set('salaryMin', filters.salaryMin.toString())
+    }
+    if (filters.salaryMax !== undefined && filters.salaryMax > 0) {
+      params.set('salaryMax', filters.salaryMax.toString())
+    }
+    if (filters.companySize) {
+      params.set('companySize', filters.companySize)
+    }
+
+    // Update URL without page reload
+    router.push(`/jobs?${params.toString()}`, { scroll: false })
+
+    // TODO: Apply filters to job search query (backend integration)
+
+    // Show confirmation toast
+    const filtersCount = Object.keys(filters).length
+    if (filtersCount > 0) {
+      toast.success(`${filtersCount} filtre(s) avancé(s) appliqué(s)`, {
+        description: 'Vous pouvez partager ce lien pour conserver vos filtres',
+      })
+    } else {
+      toast.info('Filtres avancés réinitialisés')
+    }
   }
 
   const handleViewDetails = (job: Job) => {
@@ -843,6 +935,14 @@ export default function JobsPage() {
         job={selectedJob}
         open={modalOpen}
         onOpenChange={setModalOpen}
+      />
+
+      {/* Advanced Filters Modal */}
+      <AdvancedFiltersModal
+        isOpen={advancedFiltersOpen}
+        onClose={() => setAdvancedFiltersOpen(false)}
+        onApply={handleApplyAdvancedFilters}
+        initialFilters={advancedFilters}
       />
     </div>
   )
