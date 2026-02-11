@@ -42,20 +42,25 @@ export function LandingHeader() {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-          <Link href="/jobs" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}>
+          <Link href="/jobs" className={`relative text-base font-bold transition-colors pb-1 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}>
             Recherche d&apos;emploi
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          <Link href="/cv-analysis" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}>
+          <Link href="/cv-analysis" className={`relative text-base font-bold transition-colors pb-1 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}>
             Analyse CV
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          <Link href="/assistant" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}>
+          <Link href="/assistant" className={`relative text-base font-bold transition-colors pb-1 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}>
             Assistant Carrière
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          <Link href="/salons" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}>
+          <Link href="/salons" className={`relative text-base font-bold transition-colors pb-1 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}>
             Salons & Forums
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          <Link href="/pricing" className={`text-sm font-medium transition-colors ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}>
+          <Link href="/pricing" className={`relative text-base font-bold transition-colors pb-1 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}>
             Tarifs
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
         </nav>
 
@@ -112,37 +117,42 @@ export function LandingHeader() {
             <Link
               href="/jobs"
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-sm font-medium transition-colors py-2 ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}
+              className={`relative text-base font-bold transition-colors py-2 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}
             >
               Recherche d&apos;emploi
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link
               href="/cv-analysis"
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-sm font-medium transition-colors py-2 ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}
+              className={`relative text-base font-bold transition-colors py-2 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}
             >
               Analyse CV
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link
               href="/assistant"
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-sm font-medium transition-colors py-2 ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}
+              className={`relative text-base font-bold transition-colors py-2 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}
             >
               Assistant Carrière
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link
               href="/salons"
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-sm font-medium transition-colors py-2 ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}
+              className={`relative text-base font-bold transition-colors py-2 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}
             >
               Salons & Forums
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link
               href="/pricing"
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-sm font-medium transition-colors py-2 ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/80 hover:text-white'}`}
+              className={`relative text-base font-bold transition-colors py-2 group ${isScrolled ? 'text-gray-700 hover:text-black' : 'text-white/90 hover:text-white'}`}
             >
               Tarifs
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </nav>
         </motion.div>
