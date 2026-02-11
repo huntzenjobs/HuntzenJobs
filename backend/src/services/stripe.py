@@ -658,6 +658,9 @@ async def handle_checkout_completed(session: Dict[str, Any]):
 
     except Exception as e:
         logger.error(f"Failed to update subscription in database: {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        # Re-raise so Stripe knows the webhook failed and will retry
+        raise
 
 
 async def handle_subscription_updated(subscription: Dict[str, Any]):
@@ -729,6 +732,9 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
 
     except Exception as e:
         logger.error(f"Failed to update subscription in database: {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        # Re-raise so Stripe knows the webhook failed and will retry
+        raise
 
 
 async def handle_subscription_deleted(subscription: Dict[str, Any]):
