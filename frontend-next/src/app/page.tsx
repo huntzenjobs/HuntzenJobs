@@ -39,11 +39,11 @@ export default function HomePage() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-            <Link href="/pricing" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-              Tarifs
-            </Link>
             <Link href="/jobs" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               Recherche d&apos;emploi
+            </Link>
+            <Link href="/cv-analysis" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+              Analyse CV
             </Link>
             <Link href="/assistant" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               Assistant Carrière
@@ -51,8 +51,8 @@ export default function HomePage() {
             <Link href="/salons" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
               Salons & Forums
             </Link>
-            <Link href="/cv-analysis" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-              Analyse CV
+            <Link href="/pricing" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
+              Tarifs
             </Link>
           </nav>
 
@@ -107,18 +107,18 @@ export default function HomePage() {
           >
             <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
               <Link
-                href="/pricing"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
-              >
-                Tarifs
-              </Link>
-              <Link
                 href="/jobs"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
               >
                 Recherche d&apos;emploi
+              </Link>
+              <Link
+                href="/cv-analysis"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
+              >
+                Analyse CV
               </Link>
               <Link
                 href="/assistant"
@@ -135,11 +135,11 @@ export default function HomePage() {
                 Salons & Forums
               </Link>
               <Link
-                href="/cv-analysis"
+                href="/pricing"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
               >
-                Analyse CV
+                Tarifs
               </Link>
             </nav>
           </motion.div>
