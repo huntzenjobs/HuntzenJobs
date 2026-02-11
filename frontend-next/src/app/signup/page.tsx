@@ -8,13 +8,13 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle2, User, Mail, Lock as LockIcon } from 'lucide-react'
+import { Loader2, CheckCircle2, User, Mail, Lock as LockIcon, X } from 'lucide-react'
 import { AuthLayout } from '@/components/auth/auth-layout'
 
 function SignupForm() {
@@ -27,12 +27,24 @@ function SignupForm() {
   const message = searchParams.get('message')
   const showCVMessage = redirectTo === '/cv-analysis' || message === 'auth_required'
 
+  // Detect success state
+  const success = searchParams.get('success')
+  const emailFromUrl = searchParams.get('email')
+  const [showSuccessModal, setShowSuccessModal] = useState(success === 'true')
+
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [passwordError, setPasswordError] = useState('')
+
+  // Close modal and clean URL
+  const closeSuccessModal = () => {
+    setShowSuccessModal(false)
+    // Clean URL without reload
+    window.history.replaceState({}, '', '/signup')
+  }
 
   const handleGoogleSignIn = async () => {
     try {
@@ -77,6 +89,86 @@ function SignupForm() {
 
   return (
     <AuthLayout type="signup">
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={closeSuccessModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closeSuccessModal}
+                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+
+              {/* Success icon */}
+              <div className="flex justify-center mb-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+                </div>
+              </div>
+
+              {/* Title */}
+              <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">
+                Inscription réussie ! 🎉
+              </h2>
+
+              {/* Message */}
+              <div className="space-y-4 mb-6">
+                <p className="text-center text-gray-700 leading-relaxed">
+                  Nous venons d'envoyer un email de confirmation à :
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-center font-semibold text-blue-900 break-all">
+                    {emailFromUrl || email}
+                  </p>
+                </div>
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                  <p className="text-sm text-gray-700">
+                    <strong>Vérifiez votre boîte mail</strong> (et vos spams) pour confirmer votre adresse email avant de vous connecter.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="space-y-3">
+                <Link href="/login" className="block">
+                  <Button className="w-full bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 rounded-xl font-semibold">
+                    Aller à la connexion
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  onClick={closeSuccessModal}
+                  className="w-full h-12 rounded-xl border-2"
+                >
+                  Fermer
+                </Button>
+              </div>
+
+              {/* Help text */}
+              <p className="text-xs text-center text-gray-500 mt-4">
+                Vous n'avez pas reçu l'email ? Attendez quelques minutes ou vérifiez vos spams.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="space-y-8">
         {/* Header */}
         <div>

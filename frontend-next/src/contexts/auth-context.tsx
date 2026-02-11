@@ -225,7 +225,19 @@ export function AuthProvider({
       setTimeout(() => setLoading(false), 100);
     } catch (err: any) {
       console.error("Email sign in error:", err);
-      setError(err.message || "Invalid email or password");
+
+      // Détection d'email non confirmé
+      const isEmailNotConfirmed =
+        err.message?.toLowerCase().includes("email not confirmed") ||
+        err.message?.toLowerCase().includes("user not confirmed") ||
+        err.message?.toLowerCase().includes("confirm your email");
+
+      if (isEmailNotConfirmed) {
+        setError("Veuillez confirmer votre adresse email. Nous vous avons envoyé un email de confirmation lors de votre inscription. Vérifiez votre boîte mail (et vos spams).");
+      } else {
+        setError(err.message || "Email ou mot de passe invalide");
+      }
+
       setLoading(false);
 
       // Log failed login (non-blocking)
@@ -278,8 +290,8 @@ export function AuthProvider({
       // Show success message
       setError(null);
 
-      // Redirect to login with success message
-      router.push("/login?message=Check your email to confirm your account");
+      // Redirect to signup success (will show modal)
+      router.push("/signup?success=true&email=" + encodeURIComponent(email));
 
       // Reset loading
       setTimeout(() => setLoading(false), 100);

@@ -281,6 +281,14 @@ async def handle_checkout_completed(session: Dict[str, Any]):
     stripe_subscription_id = session.get("subscription")
     stripe_customer_id = session.get("customer")
 
+    # 🔧 FIX: Verify subscription ID exists
+    if not stripe_subscription_id:
+        logger.error(f"No subscription ID in checkout session {session.get('id')}")
+        raise HTTPException(
+            status_code=400,
+            detail="No subscription found in checkout session"
+        )
+
     if not supabase_client:
         logger.error("Supabase client not configured")
         return
@@ -300,24 +308,33 @@ async def handle_checkout_completed(session: Dict[str, Any]):
         plan_id = plan_response.data["id"]
 
         # Get subscription data from Stripe (source of truth)
-        stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+        # 🔧 FIX: Add try/except for Stripe API call
+        try:
+            stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+        except stripe.error.StripeError as e:
+            logger.error(f"Failed to retrieve subscription {stripe_subscription_id}: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to retrieve subscription: {str(e)}"
+            )
 
+        # 🔧 FIX: Safely extract subscription data with defaults
         subscription_data = {
             "user_id": user_id,
             "plan_id": plan_id,
-            "status": stripe_subscription["status"],
+            "status": stripe_subscription.get("status", "active"),
             "stripe_subscription_id": stripe_subscription_id,
             "stripe_customer_id": stripe_customer_id,
             "stripe_price_id": stripe_subscription["items"]["data"][0]["price"]["id"],
             "current_period_start": datetime.fromtimestamp(
-                stripe_subscription["current_period_start"],
+                stripe_subscription.get("current_period_start", int(datetime.now(timezone.utc).timestamp())),
                 tz=timezone.utc
             ).isoformat(),
             "current_period_end": datetime.fromtimestamp(
-                stripe_subscription["current_period_end"],
+                stripe_subscription.get("current_period_end", int(datetime.now(timezone.utc).timestamp()) + 2592000),  # +30 days
                 tz=timezone.utc
             ).isoformat(),
-            "cancel_at_period_end": stripe_subscription["cancel_at_period_end"],
+            "cancel_at_period_end": stripe_subscription.get("cancel_at_period_end", False),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
 
