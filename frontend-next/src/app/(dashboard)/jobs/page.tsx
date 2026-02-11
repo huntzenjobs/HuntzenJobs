@@ -220,14 +220,16 @@ export default function JobsPage() {
       return
     }
 
-    // Show jobs progressively (5 at a time, every 150ms)
-    const BATCH_SIZE = 5
-    const REVEAL_INTERVAL = 150
+    // Show jobs progressively (3 at a time, every 300ms for better visibility)
+    const BATCH_SIZE = 3
+    const REVEAL_INTERVAL = 300
+    const INITIAL_DELAY = 400 // Wait before starting progressive reveal
 
     if (visibleJobsCount < jobs.length) {
+      const delay = visibleJobsCount === 0 ? INITIAL_DELAY : REVEAL_INTERVAL
       const timer = setTimeout(() => {
         setVisibleJobsCount(prev => Math.min(prev + BATCH_SIZE, jobs.length))
-      }, REVEAL_INTERVAL)
+      }, delay)
 
       return () => clearTimeout(timer)
     }
@@ -262,6 +264,16 @@ export default function JobsPage() {
         throw new Error('Limite de recherches atteinte')
       }
 
+      // Debug: Log search parameters
+      console.log('🔍 [SEARCH] Paramètres de recherche:', {
+        query: params.query,
+        location: params.location,
+        country: params.country,
+        radiusKm: params.radiusKm,
+        includeRemote: params.includeRemote,
+        contractType,
+      })
+
       return huntzenApi.searchJobs({
         job_title: params.query,
         country_code: params.country,
@@ -279,11 +291,18 @@ export default function JobsPage() {
       })
     },
     onSuccess: (data) => {
+      console.log('✅ [SEARCH] Résultats reçus:', {
+        totalJobs: data.jobs.length,
+        correctedQuery: data.corrected_query
+      })
       setJobs(data.jobs)
       setVisibleJobsCount(0) // Reset counter for progressive reveal
       setCorrectedQuery(data.corrected_query || null)
       // Increment search usage
       incrementUsage('job_search')
+    },
+    onError: (error) => {
+      console.error('❌ [SEARCH] Erreur de recherche:', error)
     },
   })
 

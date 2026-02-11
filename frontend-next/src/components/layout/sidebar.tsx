@@ -156,11 +156,11 @@ export function Sidebar({ className }: SidebarProps) {
                     isLocked && 'opacity-50'
                   )}
                 >
-                  {/* Active indicator */}
+                  {/* Active indicator - positioned at sidebar edge */}
                   {isActive && (
                     <motion.span
                       layoutId="activeTab"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-[70%] bg-[#00D9FF] rounded-r"
+                      className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-[70%] bg-[#00D9FF] rounded-r"
                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     />
                   )}
