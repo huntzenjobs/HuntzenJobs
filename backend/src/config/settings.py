@@ -5,10 +5,20 @@ Centralized configuration using Pydantic Settings with validation.
 """
 
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal, Union
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import BeforeValidator, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def parse_cors_origins(v: Union[str, list[str]]) -> list[str]:
+    """Parse CORS_ORIGINS from comma-separated string or list."""
+    if isinstance(v, str):
+        if ',' in v:
+            return [origin.strip() for origin in v.split(',') if origin.strip()]
+        else:
+            return [v.strip()] if v.strip() else ["*"]
+    return v
 
 
 class Settings(BaseSettings):
@@ -102,20 +112,11 @@ class Settings(BaseSettings):
     # --------------------------------------------------------------------------
     # Security
     # --------------------------------------------------------------------------
-    cors_origins: list[str] = Field(default=["*"], description="Allowed CORS origins")
+    cors_origins: Annotated[list[str], BeforeValidator(parse_cors_origins)] = Field(
+        default=["*"],
+        description="Allowed CORS origins (comma-separated string or list)"
+    )
     rate_limit_per_minute: int = Field(default=60, ge=10, le=1000)
-
-    @field_validator('cors_origins', mode='before')
-    @classmethod
-    def parse_cors_origins(cls, v):
-        """Parse CORS_ORIGINS from comma-separated string or list."""
-        if isinstance(v, str):
-            # Parse comma-separated string into list
-            if ',' in v:
-                return [origin.strip() for origin in v.split(',') if origin.strip()]
-            else:
-                return [v.strip()] if v.strip() else ["*"]
-        return v
 
     # --------------------------------------------------------------------------
     # Redis Cache (Upstash)
