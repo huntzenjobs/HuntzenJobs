@@ -105,6 +105,18 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(default=["*"], description="Allowed CORS origins")
     rate_limit_per_minute: int = Field(default=60, ge=10, le=1000)
 
+    def __init__(self, **kwargs):
+        """Parse CORS_ORIGINS from comma-separated string if needed."""
+        # Check if cors_origins was passed as string (from env var)
+        if 'cors_origins' in kwargs and isinstance(kwargs['cors_origins'], str):
+            # Parse comma-separated string into list
+            cors_string = kwargs['cors_origins']
+            if ',' in cors_string:
+                kwargs['cors_origins'] = [origin.strip() for origin in cors_string.split(',')]
+            else:
+                kwargs['cors_origins'] = [cors_string.strip()] if cors_string.strip() else ["*"]
+        super().__init__(**kwargs)
+
     # --------------------------------------------------------------------------
     # Redis Cache (Upstash)
     # --------------------------------------------------------------------------
