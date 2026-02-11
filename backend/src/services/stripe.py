@@ -329,15 +329,26 @@ async def handle_checkout_completed(session: Dict[str, Any]):
             .execute()
 
         if existing.data and len(existing.data) > 0:
-            # Update existing
+            # OPTION B: Preserve history - Cancel old subscription + Insert new
+            # Step 1: Archive old subscription (keeps history for analytics/audit)
             supabase_client.table("user_subscriptions")\
-                .update(subscription_data)\
+                .update({
+                    "status": "canceled",
+                    "canceled_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                })\
                 .eq("user_id", user_id)\
                 .eq("status", "active")\
                 .execute()
-            logger.info(f"Subscription updated for user {user_id}: {plan_name}")
+
+            # Step 2: Create new subscription record
+            supabase_client.table("user_subscriptions")\
+                .insert(subscription_data)\
+                .execute()
+
+            logger.info(f"Subscription upgraded for user {user_id}: {plan_name} (history preserved)")
         else:
-            # Insert new
+            # Insert new subscription (first time)
             supabase_client.table("user_subscriptions")\
                 .insert(subscription_data)\
                 .execute()
