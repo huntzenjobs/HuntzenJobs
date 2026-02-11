@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/contexts/auth-context'
-import { createClient } from '@/lib/supabase/client'
+import { tokenRefreshService } from '@/lib/auth/token-refresh-service'
 
 // Types from backend API response
 interface UserData {
@@ -81,8 +81,6 @@ export function useSubscriptionApi(): SubscriptionApiData {
 
   // Use ref to avoid recreating interval on every render
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  // Prevent multiple simultaneous refresh attempts
-  const isRefreshingRef = useRef(false)
 
   /**
    * Load cached data from localStorage
@@ -126,12 +124,6 @@ export function useSubscriptionApi(): SubscriptionApiData {
    * Fetch subscription data from backend API
    */
   const fetchSubscription = useCallback(async () => {
-    // Prevent multiple simultaneous refresh attempts
-    if (isRefreshingRef.current) {
-      console.warn('[SubscriptionAPI] Already refreshing, skipping...')
-      return
-    }
-
     // CRITICAL FIX: Wait for auth to finish loading before checking session
     if (authLoading) {
       console.log('[SubscriptionAPI] Waiting for auth to finish loading...')
@@ -181,56 +173,67 @@ export function useSubscriptionApi(): SubscriptionApiData {
       )
 
       if (!response.ok) {
-        // Handle 401 - Token expired, try refresh (only once)
-        if (response.status === 401 && !isRefreshingRef.current) {
-          console.warn('[SubscriptionAPI] Token expired (401), trying to refresh...')
-          isRefreshingRef.current = true
+        // Handle 401 - Token expired, use centralized refresh service
+        if (response.status === 401) {
+          console.warn('[SubscriptionAPI] Token expired (401), getting new token...')
 
-          try {
-            const supabase = createClient()
-            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
+          const newToken = await tokenRefreshService.getValidToken()
 
-            if (refreshError || !refreshData.session) {
-              console.error('[SubscriptionAPI] Session refresh failed:', refreshError)
-              throw new Error('Session expirée - veuillez vous reconnecter')
+          if (!newToken) {
+            // Fallback to cache if available
+            const cachedData = loadCache()
+            if (cachedData) {
+              console.warn('[SubscriptionAPI] Using cached data as fallback after token refresh failed')
+              setData({
+                user: cachedData.user,
+                subscription: cachedData.subscription,
+                quotas: cachedData.quotas,
+                isLoading: false,
+                error: null,
+                isFromCache: true,
+              })
+              return
             }
 
-            console.log('[SubscriptionAPI] Session refreshed, retrying...')
-
-            // Retry with new token
-            const retryResponse = await fetch(
-              `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`,
-              {
-                headers: {
-                  Authorization: `Bearer ${refreshData.session.access_token}`,
-                  'Content-Type': 'application/json',
-                },
-              }
-            )
-
-            if (!retryResponse.ok) {
-              throw new Error(`Erreur ${retryResponse.status} après refresh`)
-            }
-
-            const retryData: ApiResponse = await retryResponse.json()
-
-            if (!retryData.success) {
-              throw new Error(retryData.error || 'Erreur lors du chargement des données')
-            }
-
-            // Save to cache and update state
-            saveCache(retryData)
             setData({
-              user: retryData.user,
-              subscription: retryData.subscription,
-              quotas: retryData.quotas,
+              user: null,
+              subscription: null,
+              quotas: null,
               isLoading: false,
-              error: null,
+              error: 'Session expirée - veuillez vous reconnecter',
               isFromCache: false,
             })
             return
-          } finally {
-            isRefreshingRef.current = false
+          }
+
+          console.log('[SubscriptionAPI] Got new token, retrying request...')
+
+          // Retry with new token
+          const retryResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`,
+            {
+              headers: {
+                Authorization: `Bearer ${newToken}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          )
+
+          if (retryResponse.ok) {
+            const retryData: ApiResponse = await retryResponse.json()
+
+            if (retryData.success) {
+              saveCache(retryData)
+              setData({
+                user: retryData.user,
+                subscription: retryData.subscription,
+                quotas: retryData.quotas,
+                isLoading: false,
+                error: null,
+                isFromCache: false,
+              })
+              return
+            }
           }
         }
 

@@ -224,6 +224,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
   }, [auth?.session, apiData.subscription, apiData.isLoading, apiData.error, hasShownInconsistencyWarning, freemium.plan, apiData.refetch])
 
+  // Listen for token-expired event and show reconnect toast
+  useEffect(() => {
+    const handleTokenExpired = () => {
+      toast.error('Session expirée', {
+        description: 'Votre session a expiré. Veuillez vous reconnecter.',
+        action: {
+          label: 'Reconnecter',
+          onClick: () => window.location.href = '/login'
+        },
+        duration: 10000,
+      })
+    }
+
+    window.addEventListener('token-expired', handleTokenExpired)
+    return () => window.removeEventListener('token-expired', handleTokenExpired)
+  }, [])
+
   // Build limits from API quotas (source of truth)
   const limitsFromApi: PlanLimits = useMemo(() => {
     if (!apiData.quotas) {

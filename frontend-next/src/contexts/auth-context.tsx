@@ -16,6 +16,7 @@ import {
   logSecurityEvent,
 } from '@/lib/security/logger'
 import { detectFailedLoginAnomaly } from '@/lib/security/anomaly-detection'
+import { tokenRefreshService } from '@/lib/auth/token-refresh-service'
 
 interface AuthContextType {
   user: User | null
@@ -113,6 +114,8 @@ export function AuthProvider({
           case 'TOKEN_REFRESHED':
             // Token was automatically refreshed by Supabase
             console.log('[AuthContext] Token refreshed successfully')
+            // Invalidate caches to force refetch with new token
+            tokenRefreshService.invalidateCaches()
             break
 
           case 'SIGNED_OUT':
