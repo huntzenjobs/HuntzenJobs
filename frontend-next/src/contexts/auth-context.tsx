@@ -1,239 +1,254 @@
-'use client'
+"use client";
 
 /**
  * Auth Context Provider
  * Manages authentication state using Supabase Auth
  */
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { User, Session, AuthError } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
+import { createContext, useContext, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User, Session, AuthError } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 import {
   logLoginSuccess,
   logLoginFailed,
   logLogout,
   logSecurityEvent,
-} from '@/lib/security/logger'
-import { detectFailedLoginAnomaly } from '@/lib/security/anomaly-detection'
-import { tokenRefreshService } from '@/lib/auth/token-refresh-service'
+} from "@/lib/security/logger";
+import { detectFailedLoginAnomaly } from "@/lib/security/anomaly-detection";
+import { tokenRefreshService } from "@/lib/auth/token-refresh-service";
 
 interface AuthContextType {
-  user: User | null
-  session: Session | null
-  loading: boolean
-  signInWithGoogle: () => Promise<void>
-  signInWithEmail: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (email: string, password: string, fullName: string) => Promise<void>
-  signOut: () => Promise<void>
-  error: string | null
-  clearError: () => void
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => Promise<void>;
+  signOut: () => Promise<void>;
+  error: string | null;
+  clearError: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Create Supabase client ONCE outside component to avoid re-initialization
-const supabaseClient = createClient()
+const supabaseClient = createClient();
 
 export function AuthProvider({
   children,
-  initialUser = null
+  initialUser = null,
 }: {
-  children: React.ReactNode
-  initialUser?: User | null
+  children: React.ReactNode;
+  initialUser?: User | null;
 }) {
-  const [user, setUser] = useState<User | null>(initialUser)
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(!initialUser)
-  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(!initialUser);
+  const [error, setError] = useState<string | null>(null);
 
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     const initializeAuth = async () => {
       if (initialUser) {
         // User fourni par SSR, fetch seulement session
         try {
-          const { data: { session } } = await supabaseClient.auth.getSession()
-          setSession(session)
+          const {
+            data: { session },
+          } = await supabaseClient.auth.getSession();
+          setSession(session);
           // Ne pas toucher user (déjà set par initialUser)
         } catch (err) {
-          console.error('Failed to get session:', err)
+          console.error("Failed to get session:", err);
         }
         // Pas de setLoading(false) - déjà false
       } else {
         // Pas d'initialUser, fetch complet
         try {
-          const { data: { session } } = await supabaseClient.auth.getSession()
-          setSession(session)
-          setUser(session?.user ?? null)
+          const {
+            data: { session },
+          } = await supabaseClient.auth.getSession();
+          setSession(session);
+          setUser(session?.user ?? null);
         } catch (err) {
-          console.error('Failed to get session:', err)
+          console.error("Failed to get session:", err);
         } finally {
-          setLoading(false)
+          setLoading(false);
         }
       }
-    }
+    };
 
-    initializeAuth()
+    initializeAuth();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabaseClient.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('[AuthContext] Auth state changed:', event, session ? 'session active' : 'no session')
+    } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      console.log(
+        "[AuthContext] Auth state changed:",
+        event,
+        session ? "session active" : "no session",
+      );
 
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
 
-        // Handle different auth events
-        switch (event) {
-          case 'SIGNED_IN':
-            // Log OAuth login success (non-blocking)
-            if (session?.user) {
-              const provider = session.user.app_metadata?.provider
-              if (provider === 'google') {
-                logLoginSuccess(session.user.id, {
-                  email: session.user.email,
-                  method: 'oauth_google',
-                  provider: 'google'
-                }).catch(err => {
-                  console.error('Failed to log OAuth login (non-critical):', err)
-                })
-              }
+      // Handle different auth events
+      switch (event) {
+        case "SIGNED_IN":
+          // Log OAuth login success (non-blocking)
+          if (session?.user) {
+            const provider = session.user.app_metadata?.provider;
+            if (provider === "google") {
+              logLoginSuccess(session.user.id, {
+                email: session.user.email,
+                method: "oauth_google",
+                provider: "google",
+              }).catch((err) => {
+                console.error("Failed to log OAuth login (non-critical):", err);
+              });
             }
+          }
 
-            // Clear old subscription cache and trigger refresh
-            localStorage.removeItem('huntzen_subscription_cache')
-            localStorage.removeItem('huntzen_subscription_cache_expiry')
-            window.dispatchEvent(new Event('subscription-changed'))
-            break
+          // Clear old subscription cache and trigger refresh
+          localStorage.removeItem("huntzen_subscription_cache");
+          localStorage.removeItem("huntzen_subscription_cache_expiry");
+          window.dispatchEvent(new Event("subscription-changed"));
+          break;
 
-          case 'TOKEN_REFRESHED':
-            // Token was automatically refreshed by Supabase
-            console.log('[AuthContext] Token refreshed successfully')
-            // Invalidate caches to force refetch with new token
-            tokenRefreshService.invalidateCaches()
-            break
+        case "TOKEN_REFRESHED":
+          // Token was automatically refreshed by Supabase
+          console.log("[AuthContext] Token refreshed successfully");
+          // Invalidate caches to force refetch with new token
+          tokenRefreshService.invalidateCaches();
+          break;
 
-          case 'SIGNED_OUT':
-            // User signed out or token expired permanently
-            console.log('[AuthContext] User signed out')
-            setSession(null)
-            setUser(null)
+        case "SIGNED_OUT":
+          // User signed out or token expired permanently
+          console.log("[AuthContext] User signed out");
+          setSession(null);
+          setUser(null);
 
-            // Clear subscription cache to prevent data leakage
-            localStorage.removeItem('huntzen_subscription_cache')
-            localStorage.removeItem('huntzen_subscription_cache_expiry')
-            break
+          // Clear subscription cache to prevent data leakage
+          localStorage.removeItem("huntzen_subscription_cache");
+          localStorage.removeItem("huntzen_subscription_cache_expiry");
+          break;
 
-          case 'USER_UPDATED':
-            // User metadata updated
-            console.log('[AuthContext] User updated')
-            break
-        }
+        case "USER_UPDATED":
+          // User metadata updated
+          console.log("[AuthContext] User updated");
+          break;
       }
-    )
+    });
 
-    return () => subscription.unsubscribe()
-  }, [initialUser])
+    return () => subscription.unsubscribe();
+  }, [initialUser]);
 
-  const clearError = () => setError(null)
+  const clearError = () => setError(null);
 
   const signInWithGoogle = async () => {
     try {
-      setError(null)
+      setError(null);
 
       // Capturer redirectTo et stocker dans cookie avant OAuth
-      const params = new URLSearchParams(window.location.search)
-      const redirectTo = params.get('redirectTo')
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirectTo");
 
       if (redirectTo) {
-        document.cookie = `huntzen_redirect_after_auth=${encodeURIComponent(redirectTo)}; path=/; max-age=600; SameSite=Lax`
+        document.cookie = `huntzen_redirect_after_auth=${encodeURIComponent(redirectTo)}; path=/; max-age=600; SameSite=Lax`;
       }
 
       const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
     } catch (err: any) {
-      console.error('Google sign in error:', err)
-      setError(err.message || 'Failed to sign in with Google')
-      setLoading(false)
+      console.error("Google sign in error:", err);
+      setError(err.message || "Failed to sign in with Google");
+      setLoading(false);
 
       // Log OAuth failure (non-blocking)
       logSecurityEvent({
-        eventType: 'auth.oauth_failed',
-        severity: 'warning',
-        metadata: { provider: 'google', error: err.message }
-      }).catch(logErr => {
-        console.error('Failed to log OAuth failure (non-critical):', logErr)
-      })
+        eventType: "auth.oauth_failed",
+        severity: "warning",
+        metadata: { provider: "google", error: err.message },
+      }).catch((logErr) => {
+        console.error("Failed to log OAuth failure (non-critical):", logErr);
+      });
 
-      throw err
+      throw err;
     }
-  }
+  };
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
-      setError(null)
-      setLoading(true)
+      setError(null);
+      setLoading(true);
 
       const { data, error } = await supabaseClient.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       // Log successful login (non-blocking)
       if (data.user) {
-        logLoginSuccess(data.user.id, { email, method: 'email' }).catch(err => {
-          console.error('Failed to log login success (non-critical):', err)
-        })
+        logLoginSuccess(data.user.id, { email, method: "email" }).catch(
+          (err) => {
+            console.error("Failed to log login success (non-critical):", err);
+          },
+        );
       }
 
       // Check for redirectTo parameter in URL for deep links
-      const params = new URLSearchParams(window.location.search)
-      const redirectTo = params.get('redirectTo')
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirectTo");
 
-      if (redirectTo && redirectTo.startsWith('/')) {
-        router.push(redirectTo)
+      if (redirectTo && redirectTo.startsWith("/")) {
+        router.push(redirectTo);
       } else {
-        router.push('/jobs')
+        router.push("/jobs");
       }
 
       // Reset loading après navigation initiale
-      setTimeout(() => setLoading(false), 100)
-
+      setTimeout(() => setLoading(false), 100);
     } catch (err: any) {
-      console.error('Email sign in error:', err)
-      setError(err.message || 'Invalid email or password')
-      setLoading(false)
+      console.error("Email sign in error:", err);
+      setError(err.message || "Invalid email or password");
+      setLoading(false);
 
       // Log failed login (non-blocking)
-      logLoginFailed(email, err.message).catch(logErr => {
-        console.error('Failed to log login failure (non-critical):', logErr)
-      })
+      logLoginFailed(email, err.message).catch((logErr) => {
+        console.error("Failed to log login failure (non-critical):", logErr);
+      });
 
       // Check for anomalies (multiple failed attempts)
       // Note: We don't have userId yet, so we can't check here
       // This will be checked by backend/database triggers
 
-      throw err
+      throw err;
     }
-  }
+  };
 
-  const signUpWithEmail = async (email: string, password: string, fullName: string) => {
+  const signUpWithEmail = async (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => {
     try {
-      setError(null)
-      setLoading(true)
+      setError(null);
+      setLoading(true);
 
       const { data, error } = await supabaseClient.auth.signUp({
         email,
@@ -244,77 +259,78 @@ export function AuthProvider({
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       // Log successful signup (non-blocking)
       if (data.user) {
         logSecurityEvent({
-          eventType: 'auth.signup',
-          severity: 'info',
+          eventType: "auth.signup",
+          severity: "info",
           userId: data.user.id,
-          metadata: { email, full_name: fullName, method: 'email' },
-        }).catch(err => {
-          console.error('Failed to log signup (non-critical):', err)
-        })
+          metadata: { email, full_name: fullName, method: "email" },
+        }).catch((err) => {
+          console.error("Failed to log signup (non-critical):", err);
+        });
       }
 
       // Show success message
-      setError(null)
+      setError(null);
 
       // Redirect to login with success message
-      router.push('/login?message=Check your email to confirm your account')
+      router.push("/login?message=Check your email to confirm your account");
 
       // Reset loading
-      setTimeout(() => setLoading(false), 100)
-
+      setTimeout(() => setLoading(false), 100);
     } catch (err: any) {
-      console.error('Sign up error:', err)
-      setError(err.message || 'Failed to create account')
-      setLoading(false)
-      throw err
+      console.error("Sign up error:", err);
+      setError(err.message || "Failed to create account");
+      setLoading(false);
+      throw err;
     }
-  }
+  };
 
   const signOut = async () => {
     try {
-      setError(null)
+      setError(null);
 
       // Log logout in background (non-blocking)
       // Don't await to prevent logout delays if logging fails
       if (user) {
-        logLogout(user.id).catch(err => {
-          console.error('Failed to log logout (non-critical):', err)
-        })
+        logLogout(user.id).catch((err) => {
+          console.error("Failed to log logout (non-critical):", err);
+        });
       }
 
       // Attempt to sign out from Supabase
       // If session is already expired, this will fail - that's OK
-      const { error } = await supabaseClient.auth.signOut()
+      const { error } = await supabaseClient.auth.signOut();
 
       if (error) {
         // Log the error but don't block logout
         // Session might already be expired (AbortError)
-        console.warn('Sign out warning (continuing anyway):', error)
+        console.warn("Sign out warning (continuing anyway):", error);
       }
     } catch (err: any) {
       // Catch any exception (AbortError, network issues, etc.)
-      console.warn('Sign out exception (continuing anyway):', err)
+      console.warn("Sign out exception (continuing anyway):", err);
     } finally {
       // ALWAYS clean up local state and redirect, even if signOut failed
       // If session was already expired, we still need to clear local data
-      setSession(null)
-      setUser(null)
+      setSession(null);
+      setUser(null);
 
       // Clear subscription cache to prevent data leakage between users
-      localStorage.removeItem('huntzen_subscription_cache')
-      localStorage.removeItem('huntzen_subscription_cache_expiry')
+      localStorage.removeItem("huntzen_subscription_cache");
+      localStorage.removeItem("huntzen_subscription_cache_expiry");
 
-      // Redirect to login page
-      router.push('/login')
+      // CRITICAL: Use window.location.href instead of router.push()
+      // to force a full page reload and clear all in-memory state
+      // This prevents "session expired" errors after logout/login
+      window.location.href = "/login";
     }
-  }
+  };
 
   return (
     <AuthContext.Provider
@@ -332,15 +348,15 @@ export function AuthProvider({
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
+    throw new Error("useAuth must be used within AuthProvider");
   }
-  return context
+  return context;
 }
 
 /**
@@ -351,6 +367,6 @@ export function useAuth() {
  * (par exemple le Sidebar qui peut recevoir user via props OU via contexte)
  */
 export function useOptionalAuth() {
-  const context = useContext(AuthContext)
-  return context ?? null
+  const context = useContext(AuthContext);
+  return context ?? null;
 }
