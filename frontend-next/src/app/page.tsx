@@ -1,153 +1,29 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { useOptionalAuth } from '@/contexts/auth-context'
 import {
   TrendingUp,
   FileText,
   Search,
   Users,
-  User,
   Target,
   CheckCircle2,
   AlertCircle,
-  Menu,
-  X,
   Sparkles,
   Briefcase,
   Calendar,
   MessageSquare
 } from 'lucide-react'
+import { LandingHeader } from '@/components/landing-header'
 
 export default function HomePage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const auth = useOptionalAuth()
-  const user = auth?.user
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Header - Black background */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
-        <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-white font-bold text-lg sm:text-xl tracking-tight">HuntZen</span>
-            <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-            <Link href="/jobs" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-              Recherche d&apos;emploi
-            </Link>
-            <Link href="/cv-analysis" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-              Analyse CV
-            </Link>
-            <Link href="/assistant" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-              Assistant Carrière
-            </Link>
-            <Link href="/salons" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-              Salons & Forums
-            </Link>
-            <Link href="/pricing" className="text-white/80 hover:text-white text-sm font-medium transition-colors">
-              Tarifs
-            </Link>
-          </nav>
-
-          {/* Auth Buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {user ? (
-              <Link href="/jobs">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                  <div className="w-7 h-7 rounded-full bg-[#00D9FF]/20 flex items-center justify-center">
-                    <User className="w-4 h-4 text-[#00D9FF]" />
-                  </div>
-                  <span className="text-sm font-medium text-white hidden md:inline">
-                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
-                  </span>
-                </div>
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="hidden md:inline-flex items-center px-4 lg:px-5 py-2 rounded-lg text-sm font-semibold text-white hover:text-[#00D9FF] transition-colors"
-                >
-                  CONNEXION
-                </Link>
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-lg hover:shadow-[#00D9FF]/50"
-                >
-                  S&apos;INSCRIRE
-                </Link>
-              </>
-            )}
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden text-white p-2"
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden absolute top-16 left-0 right-0 bg-black/95 backdrop-blur-sm border-b border-white/10"
-          >
-            <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
-              <Link
-                href="/jobs"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
-              >
-                Recherche d&apos;emploi
-              </Link>
-              <Link
-                href="/cv-analysis"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
-              >
-                Analyse CV
-              </Link>
-              <Link
-                href="/assistant"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
-              >
-                Assistant Carrière
-              </Link>
-              <Link
-                href="/salons"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
-              >
-                Salons & Forums
-              </Link>
-              <Link
-                href="/pricing"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-white/80 hover:text-white text-sm font-medium transition-colors py-2"
-              >
-                Tarifs
-              </Link>
-            </nav>
-          </motion.div>
-        )}
-      </header>
+      <LandingHeader />
 
       {/* Hero Section with Background Image */}
-      <section className="relative min-h-[65vh] sm:min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-16">
+      <section className="relative min-h-[65vh] sm:min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-20">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <div

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { LandingHeader } from '@/components/landing-header'
 import {
   Check,
   X,
@@ -245,42 +246,10 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
-        <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-white font-bold text-lg sm:text-xl tracking-tight">HuntZen</span>
-            <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
-          </Link>
-          <div className="flex items-center gap-3 sm:gap-4">
-            <Link href="/" className="text-white/70 hover:text-white text-sm transition-colors hidden sm:flex items-center gap-1">
-              <ArrowLeft className="w-4 h-4" />
-              Retour
-            </Link>
-            {user ? (
-              <Link href="/jobs">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
-                  <div className="w-7 h-7 rounded-full bg-[#00D9FF]/20 flex items-center justify-center">
-                    <User className="w-4 h-4 text-[#00D9FF]" />
-                  </div>
-                  <span className="text-sm font-medium text-white hidden sm:inline">
-                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
-                  </span>
-                </div>
-              </Link>
-            ) : (
-              <Link href="/login">
-                <Button size="sm" className="bg-[#00D9FF] hover:bg-[#00C4EA] text-white">
-                  Connexion
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Hero Section */}
-      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-24 pb-16">
+      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-20 pb-16">
         {/* Background effects */}
         <div className="absolute inset-0">
           <div

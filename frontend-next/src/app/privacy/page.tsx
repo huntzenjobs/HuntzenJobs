@@ -3,31 +3,15 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Shield, Lock, Eye, FileText, ChevronRight } from 'lucide-react'
+import { LandingHeader } from '@/components/landing-header'
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-white font-bold text-xl tracking-tight">HuntZen</span>
-              <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
-            </Link>
-
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm font-semibold text-white hover:text-[#00D9FF] transition-colors"
-            >
-              Retour à l'accueil
-            </Link>
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Hero Section */}
-      <div className="pt-16 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+      <div className="pt-20 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
