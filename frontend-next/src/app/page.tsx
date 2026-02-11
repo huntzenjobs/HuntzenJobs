@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
   TrendingUp,
@@ -132,11 +131,10 @@ export default function HomePage() {
       <section className="relative min-h-[65vh] sm:min-h-[70vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-16">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
-          {/* Placeholder gradient until real image - remplacer src par votre vraie image */}
           <div
             className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-gray-900/40"
             style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340")',
+              backgroundImage: 'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop")',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               filter: 'brightness(0.3) saturate(0.8)'
@@ -511,12 +509,11 @@ export default function HomePage() {
                 transition={{ duration: 0.6 }}
                 className="relative rounded-3xl overflow-hidden aspect-square border-2 border-gray-200 shadow-xl"
               >
-                <Image
-                  src="/images/cv-analysis-feature.png"
-                  alt="Interface d'analyse de CV montrant les compétences et recommandations"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{
+                    backgroundImage: 'url("https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2340&auto=format&fit=crop")'
+                  }}
                 />
               </motion.div>
             </div>
@@ -530,12 +527,11 @@ export default function HomePage() {
                 transition={{ duration: 0.6 }}
                 className="relative rounded-3xl overflow-hidden aspect-square border-2 border-gray-200 shadow-xl md:order-1"
               >
-                <Image
-                  src="/images/job-matching-feature.png"
-                  alt="Interface de recherche d'emploi avec scores de compatibilité"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{
+                    backgroundImage: 'url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2340&auto=format&fit=crop")'
+                  }}
                 />
               </motion.div>
               <motion.div
@@ -723,7 +719,7 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`bg-white rounded-2xl p-5 sm:p-6 border-2 ${
                   plan.popular ? 'border-[#00D9FF] shadow-xl lg:scale-105' : 'border-gray-200'
-                } hover:shadow-lg transition-all relative`}
+                } hover:shadow-lg transition-all relative flex flex-col h-full`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#00D9FF] text-white text-xs font-bold rounded-full">
@@ -744,7 +740,7 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <ul className="space-y-2.5 sm:space-y-3 mb-6">
+                <ul className="space-y-2.5 sm:space-y-3 mb-6 flex-grow">
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm">
                       <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: plan.color }} />
@@ -761,7 +757,7 @@ export default function HomePage() {
 
                 <Link
                   href="/signup"
-                  className="block w-full text-center px-4 py-2.5 sm:py-3 rounded-xl font-semibold text-white text-xs sm:text-sm transition-all hover:shadow-lg"
+                  className="block w-full text-center px-4 py-2.5 sm:py-3 rounded-xl font-semibold text-white text-xs sm:text-sm transition-all hover:shadow-lg mt-auto"
                   style={{ backgroundColor: plan.color }}
                 >
                   {plan.cta}
