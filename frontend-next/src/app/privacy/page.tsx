@@ -125,7 +125,7 @@ export default function PrivacyPage() {
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <ChevronRight className="w-5 h-5 text-[#00D9FF] mt-0.5 flex-shrink-0" />
-                    <span><strong>E-mail :</strong> geral@huntzen.co</span>
+                    <span><strong>E-mail :</strong> contact@huntzenjobs.co</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <ChevronRight className="w-5 h-5 text-[#00D9FF] mt-0.5 flex-shrink-0" />
@@ -186,7 +186,7 @@ export default function PrivacyPage() {
             <div className="space-y-4 text-gray-700">
               <p>HUNTZEN pourra transférer des données à caractère personnel vers des pays tiers (hors de l'Union européenne ou de l'Espace économique européen), dans le cadre des finalités prévues par la présente politique, pour lesquelles il n'existe aucune décision d'adéquation prise par la Commission Européenne.</p>
               <p>Dans ce cas, HUNTZEN s'engage à prendre les mesures de sécurité appropriées afin d'assurer la confidentialité et la protection des données à caractère personnel, conformément à la législation applicable en matière de protection des données à caractère personnel.</p>
-              <p>L'Utilisateur peut demander des informations sur ces transferts en contactant geral@huntzen.co.</p>
+              <p>L'Utilisateur peut demander des informations sur ces transferts en contactant contact@huntzenjobs.co.</p>
             </div>
           </section>
 
@@ -209,7 +209,7 @@ export default function PrivacyPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <ChevronRight className="w-5 h-5 text-[#00D9FF] mt-0.5 flex-shrink-0" />
-                    <span><strong>E-mail :</strong> geral@huntzen.co</span>
+                    <span><strong>E-mail :</strong> contact@huntzenjobs.co</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <ChevronRight className="w-5 h-5 text-[#00D9FF] mt-0.5 flex-shrink-0" />
@@ -263,7 +263,7 @@ export default function PrivacyPage() {
               <ul className="space-y-2 text-sm text-white/70">
                 <li>+351 21 111 9967</li>
                 <li>+33 (1) 84 19 26 61</li>
-                <li>geral@huntzen.co</li>
+                <li>contact@huntzenjobs.co</li>
               </ul>
             </div>
           </div>

@@ -93,7 +93,7 @@ export default function TermsPage() {
             <div className="mt-6 space-y-4 text-gray-700">
               <p>Nous vous remercions de prendre quelques minutes pour lire nos CGVU du Site <strong>https://huntzenjobs.fr</strong> (ci-après « Site »), édité par la société HUNTZEN.</p>
               <p>Les présentes CGVU contiennent des informations importantes pour vous en tant qu'utilisateur de notre Site et acheteur de nos services, et s'appliquent à tous les services utilisés ou achetés sur notre Site.</p>
-              <p>Si vous avez des questions sur ces CGVU, vous pouvez nous contacter par courrier à l'adresse Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal, par email à l'adresse <strong>geral@huntzen.co</strong> ou par téléphone :</p>
+              <p>Si vous avez des questions sur ces CGVU, vous pouvez nous contacter par courrier à l'adresse Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal, par email à l'adresse <strong>contact@huntzenjobs.co</strong> ou par téléphone :</p>
               <ul className="list-none pl-0 space-y-2">
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-5 h-5 text-[#00D9FF] mt-0.5 flex-shrink-0" />
@@ -381,7 +381,7 @@ export default function TermsPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-5 h-5 text-[#00D9FF] mt-0.5 flex-shrink-0" />
-                  <span>E-mail : geral@huntzen.co</span>
+                  <span>E-mail : contact@huntzenjobs.co</span>
                 </li>
               </ul>
             </div>
@@ -423,7 +423,7 @@ export default function TermsPage() {
               <ul className="space-y-2 text-sm text-white/70">
                 <li>+351 21 111 9967</li>
                 <li>+33 (1) 84 19 26 61</li>
-                <li>geral@huntzen.co</li>
+                <li>contact@huntzenjobs.co</li>
               </ul>
             </div>
           </div>

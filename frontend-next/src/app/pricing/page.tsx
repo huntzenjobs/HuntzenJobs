@@ -763,13 +763,13 @@ export default function PricingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
             <p>&copy; {new Date().getFullYear()} HuntZen. Tous droits réservés.</p>
             <div className="flex items-center gap-4 sm:gap-6">
-              <Link href="#" className="hover:text-[#00D9FF] transition-colors">
-                Confidentialité
+              <Link href="/privacy" className="hover:text-[#00D9FF] transition-colors">
+                Politique de confidentialité
               </Link>
-              <Link href="#" className="hover:text-[#00D9FF] transition-colors">
-                CGU
+              <Link href="/terms" className="hover:text-[#00D9FF] transition-colors">
+                Conditions générales
               </Link>
-              <Link href="#" className="hover:text-[#00D9FF] transition-colors">
+              <Link href="mailto:contact@huntzenjobs.co" className="hover:text-[#00D9FF] transition-colors">
                 Contact
               </Link>
             </div>
