@@ -520,15 +520,25 @@ async def handle_checkout_completed(session: Dict[str, Any]):
         return
 
     # Otherwise, handle as subscription checkout
-    user_id = session["metadata"]["user_id"]
-    plan_name = session["metadata"]["plan_name"]
-    stripe_subscription_id = session["subscription"]
-    stripe_customer_id = session["customer"]
+    # CRITICAL FIX: Verify user_id exists before accessing
+    user_id = metadata.get("user_id")
+    plan_name = metadata.get("plan_name")
+
+    if not user_id:
+        logger.error(f"Missing user_id in checkout session metadata. Session ID: {session.get('id')}")
+        raise HTTPException(status_code=400, detail="Missing user_id in session metadata")
+
+    if not plan_name:
+        logger.error(f"Missing plan_name in checkout session metadata. Session ID: {session.get('id')}")
+        raise HTTPException(status_code=400, detail="Missing plan_name in session metadata")
+
+    stripe_subscription_id = session.get("subscription")
+    stripe_customer_id = session.get("customer")
 
     # Check if this is a plan change (upgrade/downgrade)
-    is_plan_change = session["metadata"].get("is_plan_change") == "true"
-    previous_subscription_id = session["metadata"].get("previous_subscription_id")
-    previous_plan = session["metadata"].get("previous_plan")
+    is_plan_change = metadata.get("is_plan_change") == "true"
+    previous_subscription_id = metadata.get("previous_subscription_id")
+    previous_plan = metadata.get("previous_plan")
 
     logger.info(f"Checkout completed for user {user_id}: {plan_name}")
     if is_plan_change:
