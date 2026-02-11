@@ -567,11 +567,11 @@ async def handle_checkout_completed(session: Dict[str, Any]):
 
         # Use Stripe's actual period dates instead of hardcoded calculations
         current_period_start = datetime.fromtimestamp(
-            stripe_subscription.current_period_start,
+            stripe_subscription["current_period_start"],
             tz=timezone.utc
         )
         current_period_end = datetime.fromtimestamp(
-            stripe_subscription.current_period_end,
+            stripe_subscription["current_period_end"],
             tz=timezone.utc
         )
 
@@ -587,13 +587,13 @@ async def handle_checkout_completed(session: Dict[str, Any]):
         subscription_data = {
             "user_id": user_id,
             "plan_id": plan_id,
-            "status": stripe_subscription.status,  # Use Stripe's actual status
+            "status": stripe_subscription["status"],  # Use Stripe's actual status
             "stripe_subscription_id": stripe_subscription_id,
             "stripe_customer_id": stripe_customer_id,
             "stripe_price_id": stripe_subscription["items"]["data"][0]["price"]["id"],
             "current_period_start": current_period_start.isoformat(),
             "current_period_end": current_period_end.isoformat(),
-            "cancel_at_period_end": stripe_subscription.cancel_at_period_end,
+            "cancel_at_period_end": stripe_subscription["cancel_at_period_end"],
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
 
