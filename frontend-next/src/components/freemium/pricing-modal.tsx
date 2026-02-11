@@ -158,8 +158,15 @@ export function PricingModal() {
     }
 
     try {
-      toast.loading('Redirection vers le paiement...', { id: 'stripe-redirect' })
+      toast.loading('Préparation du paiement...', { id: 'stripe-redirect' })
       closePricingModal()
+
+      // ✅ FIX 5: Rafraîchir la session avant le checkout pour garantir user_id valide
+      const { data: { session }, error: sessionError } = await auth.supabase.auth.refreshSession()
+
+      if (sessionError || !session) {
+        throw new Error('Votre session a expiré. Veuillez vous reconnecter.')
+      }
 
       // Call backend to create Stripe checkout session
       const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL
@@ -168,7 +175,7 @@ export function PricingModal() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer ${auth.session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,  // ✅ Utiliser le token rafraîchi
         },
         body: new URLSearchParams({
           plan_name: planId,

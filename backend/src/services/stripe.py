@@ -117,6 +117,22 @@ async def create_checkout_session(
         raise HTTPException(status_code=500, detail="Database not configured")
 
     try:
+        # ✅ FIX 1: Vérifier que l'utilisateur existe dans la DB
+        logger.info(f"[CHECKOUT] Verifying user {user_id} exists in database")
+        user_check = supabase_client.table("profiles")\
+            .select("id")\
+            .eq("id", user_id)\
+            .execute()
+
+        if not user_check.data or len(user_check.data) == 0:
+            logger.error(f"[CHECKOUT] User {user_id} not found in database")
+            raise HTTPException(
+                status_code=400,
+                detail="User not found. Please logout and login again."
+            )
+
+        logger.info(f"[CHECKOUT] User {user_id} verified successfully")
+
         # Get price_id from database
         price_response = supabase_client.rpc("get_stripe_price_id", {
             "p_plan_name": plan_name,
@@ -235,7 +251,25 @@ async def handle_stripe_webhook(
     event_type = event["type"]
     event_id = event.get("id", "unknown")
 
-    logger.info(f"Received Stripe webhook: {event_type} (ID: {event_id})")
+    logger.info(f"[WEBHOOK] Received Stripe webhook: {event_type} (ID: {event_id})")
+
+    # ✅ FIX 3: Vérifier idempotence (évite de traiter 2x le même event)
+    if supabase_client:
+        try:
+            is_processed = supabase_client.rpc(
+                "is_webhook_event_processed",
+                {"p_event_id": event_id}
+            ).execute()
+
+            if is_processed.data:
+                logger.info(f"[WEBHOOK] Event {event_id} already processed, skipping")
+                return {
+                    "status": "success",
+                    "event": event_type,
+                    "note": "already_processed"
+                }
+        except Exception as e:
+            logger.warning(f"[WEBHOOK] Failed to check idempotence: {e} (continuing anyway)")
 
     # Handle different event types
     try:
@@ -248,7 +282,22 @@ async def handle_stripe_webhook(
         elif event_type == "invoice.payment_failed":
             await handle_payment_failed(event["data"]["object"])
         else:
-            logger.info(f"Unhandled webhook event: {event_type}")
+            logger.info(f"[WEBHOOK] Unhandled webhook event: {event_type}")
+
+        # ✅ FIX 3: Marquer comme traité après succès
+        if supabase_client:
+            try:
+                supabase_client.rpc(
+                    "mark_webhook_event_processed",
+                    {
+                        "p_event_id": event_id,
+                        "p_event_type": event_type,
+                        "p_payload": event
+                    }
+                ).execute()
+                logger.info(f"[WEBHOOK] Marked event {event_id} as processed")
+            except Exception as e:
+                logger.warning(f"[WEBHOOK] Failed to mark as processed: {e}")
 
         return {"status": "success", "event": event_type}
 
@@ -273,9 +322,23 @@ async def handle_checkout_completed(session: Dict[str, Any]):
 
     user_id = metadata.get("user_id")
     plan_name = metadata.get("plan_name")
+    session_id = session.get("id", "unknown")
 
     if not user_id or not plan_name:
-        logger.error(f"Missing user_id or plan_name in checkout metadata")
+        error_msg = f"Missing user_id or plan_name in checkout metadata"
+        logger.error(f"[WEBHOOK] {error_msg}")
+
+        # ✅ FIX 2: Logger dans webhook_failures
+        if supabase_client:
+            try:
+                supabase_client.rpc("log_webhook_failure", {
+                    "p_event_id": session_id,
+                    "p_event_type": "checkout.session.completed",
+                    "p_error_message": error_msg
+                }).execute()
+            except Exception as log_err:
+                logger.error(f"Failed to log webhook failure: {log_err}")
+
         raise HTTPException(status_code=400, detail="Missing metadata")
 
     stripe_subscription_id = session.get("subscription")
@@ -292,6 +355,40 @@ async def handle_checkout_completed(session: Dict[str, Any]):
     if not supabase_client:
         logger.error("Supabase client not configured")
         return
+
+    # ✅ FIX 2: Vérifier que l'utilisateur existe AVANT de traiter
+    logger.info(f"[WEBHOOK] Verifying user {user_id} exists in database")
+    try:
+        user_check = supabase_client.table("profiles")\
+            .select("id")\
+            .eq("id", user_id)\
+            .execute()
+
+        if not user_check.data or len(user_check.data) == 0:
+            error_msg = f"User {user_id} not found in database (may have been deleted or never existed)"
+            logger.error(f"[WEBHOOK] {error_msg}")
+
+            # Logger dans webhook_failures
+            try:
+                supabase_client.rpc("log_webhook_failure", {
+                    "p_event_id": session_id,
+                    "p_event_type": "checkout.session.completed",
+                    "p_error_message": error_msg
+                }).execute()
+                logger.info(f"[WEBHOOK] Logged failure for event {session_id}")
+            except Exception as log_err:
+                logger.error(f"Failed to log webhook failure: {log_err}")
+
+            raise HTTPException(status_code=400, detail="User not found in database")
+
+        logger.info(f"[WEBHOOK] User {user_id} verified successfully")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = f"Failed to verify user existence: {str(e)}"
+        logger.error(f"[WEBHOOK] {error_msg}")
+        raise HTTPException(status_code=500, detail="User verification failed")
 
     try:
         # Get plan_id from database
