@@ -188,15 +188,15 @@ export function PricingModal() {
       if (data.modified) {
         // Subscription was modified immediately (upgrade) or scheduled (downgrade)
         if (data.immediate) {
-          toast.success('✨ Abonnement mis à niveau ! Les changements sont actifs immédiatement.')
+          toast.success('✨ Abonnement mis à niveau ! Vérification en cours...')
         } else {
           toast.success('📅 Changement planifié ! Votre nouveau plan sera actif à la fin de la période actuelle.')
         }
 
-        // Refresh the page to update subscription status
-        setTimeout(() => {
-          window.location.reload()
-        }, 2000)
+        // Redirect to success page with polling to verify update
+        // Use a fake session_id to trigger the polling mechanism
+        const sessionId = `mod_${Date.now()}`
+        window.location.href = `/payment/success?session_id=${sessionId}&type=modification`
       } else {
         // New subscription - redirect to Stripe Checkout
         window.location.href = data.checkout_url
