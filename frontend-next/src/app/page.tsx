@@ -9,6 +9,7 @@ import {
   FileText,
   Search,
   Users,
+  User,
   Target,
   CheckCircle2,
   AlertCircle,
