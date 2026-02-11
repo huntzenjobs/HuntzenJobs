@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useOptionalAuth } from '@/contexts/auth-context'
 import {
   TrendingUp,
   FileText,
@@ -21,6 +22,8 @@ import {
 
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const auth = useOptionalAuth()
+  const user = auth?.user
 
   return (
     <div className="min-h-screen bg-white">
@@ -54,18 +57,33 @@ export default function HomePage() {
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/login"
-              className="hidden md:inline-flex items-center px-4 lg:px-5 py-2 rounded-lg text-sm font-semibold text-white hover:text-[#00D9FF] transition-colors"
-            >
-              CONNEXION
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-lg hover:shadow-[#00D9FF]/50"
-            >
-              S&apos;INSCRIRE
-            </Link>
+            {user ? (
+              <Link href="/jobs">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-[#00D9FF]/20 flex items-center justify-center">
+                    <User className="w-4 h-4 text-[#00D9FF]" />
+                  </div>
+                  <span className="text-sm font-medium text-white hidden md:inline">
+                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="hidden md:inline-flex items-center px-4 lg:px-5 py-2 rounded-lg text-sm font-semibold text-white hover:text-[#00D9FF] transition-colors"
+                >
+                  CONNEXION
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-lg hover:shadow-[#00D9FF]/50"
+                >
+                  S&apos;INSCRIRE
+                </Link>
+              </>
+            )}
 
             {/* Mobile Menu Button */}
             <button

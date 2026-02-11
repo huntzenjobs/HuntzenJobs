@@ -191,7 +191,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 h-12 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
@@ -203,7 +203,7 @@ function LoginForm() {
               </Label>
               <Link
                 href="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="text-sm text-[#00D9FF] hover:text-[#00C4EA] font-medium transition-colors"
               >
                 Mot de passe oublié ?
               </Link>
@@ -218,14 +218,14 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 h-12 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
 
           <Button
             type="submit"
-            className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all"
+            className="w-full h-12 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold shadow-lg shadow-[#00D9FF]/30 transition-all rounded-xl"
             size="lg"
             disabled={loading}
           >
@@ -248,7 +248,7 @@ function LoginForm() {
           className="text-center text-sm text-gray-600"
         >
           Pas encore de compte ?{' '}
-          <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+          <Link href="/signup" className="text-[#00D9FF] hover:text-[#00C4EA] font-semibold transition-colors">
             Créer un compte gratuitement
           </Link>
         </motion.p>
@@ -280,7 +280,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#00D9FF]" />
         </div>
       }
     >

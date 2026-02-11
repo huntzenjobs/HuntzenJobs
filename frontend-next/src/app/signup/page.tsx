@@ -229,7 +229,7 @@ function SignupForm() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 h-12 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
@@ -248,7 +248,7 @@ function SignupForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 h-12 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
@@ -268,7 +268,7 @@ function SignupForm() {
                 required
                 disabled={loading}
                 minLength={6}
-                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 h-12 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
@@ -287,14 +287,14 @@ function SignupForm() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 h-12 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
 
           <Button
             type="submit"
-            className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all mt-6"
+            className="w-full h-12 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold shadow-lg shadow-[#00D9FF]/30 transition-all mt-6 rounded-xl"
             size="lg"
             disabled={loading}
           >
@@ -317,7 +317,7 @@ function SignupForm() {
           className="text-center text-sm text-gray-600"
         >
           Vous avez déjà un compte ?{' '}
-          <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+          <Link href="/login" className="text-[#00D9FF] hover:text-[#00C4EA] font-semibold transition-colors">
             Se connecter
           </Link>
         </motion.p>
@@ -349,7 +349,7 @@ export default function SignupPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#00D9FF]" />
         </div>
       }
     >

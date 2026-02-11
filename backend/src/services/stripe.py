@@ -565,15 +565,26 @@ async def handle_checkout_completed(session: Dict[str, Any]):
         # Get actual subscription data from Stripe (use real periods, not calculated)
         stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
 
+        # 🔍 DEBUG: Log subscription object keys
+        logger.info(f"Stripe subscription keys: {list(stripe_subscription.keys())}")
+        logger.info(f"Stripe subscription ID: {stripe_subscription.get('id')}")
+        logger.info(f"Stripe subscription status: {stripe_subscription.get('status')}")
+
         # Use Stripe's actual period dates instead of hardcoded calculations
-        current_period_start = datetime.fromtimestamp(
-            stripe_subscription["current_period_start"],
-            tz=timezone.utc
-        )
-        current_period_end = datetime.fromtimestamp(
-            stripe_subscription["current_period_end"],
-            tz=timezone.utc
-        )
+        # Use .get() with fallback to handle missing keys
+        period_start = stripe_subscription.get("current_period_start")
+        period_end = stripe_subscription.get("current_period_end")
+
+        if not period_start or not period_end:
+            logger.error(f"Missing period dates in Stripe subscription: {stripe_subscription_id}")
+            logger.error(f"Available keys: {list(stripe_subscription.keys())}")
+            raise HTTPException(
+                status_code=500,
+                detail="Invalid Stripe subscription data: missing period dates"
+            )
+
+        current_period_start = datetime.fromtimestamp(period_start, tz=timezone.utc)
+        current_period_end = datetime.fromtimestamp(period_end, tz=timezone.utc)
 
         logger.info(f"Subscription period from Stripe: {current_period_start} → {current_period_end}")
 
