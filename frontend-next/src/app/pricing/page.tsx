@@ -303,16 +303,16 @@ export default function PricingPage() {
 
         // Subscription was modified immediately (upgrade) or scheduled (downgrade)
         if (data.immediate) {
-          toast.success('✨ Abonnement mis à niveau ! Les changements sont actifs immédiatement.')
+          toast.success('✨ Abonnement mis à niveau ! Vérification en cours...')
         } else {
           toast.success('📅 Changement planifié ! Votre nouveau plan sera actif à la fin de la période actuelle.')
         }
 
-        // Refresh the page to update subscription status
-        setTimeout(() => {
-          console.log('[CHECKOUT] 🔄 Reloading page...')
-          window.location.reload()
-        }, 2000)
+        // Redirect to success page with polling to verify update
+        // Use a fake session_id to trigger the polling mechanism
+        const sessionId = `mod_${Date.now()}`
+        console.log('[CHECKOUT] 🔄 Redirecting to success page for verification:', sessionId)
+        window.location.href = `/payment/success?session_id=${sessionId}&type=modification`
       } else {
         // New subscription - redirect to Stripe Checkout
         console.log('[CHECKOUT] 💳 New checkout session - redirecting to Stripe')
