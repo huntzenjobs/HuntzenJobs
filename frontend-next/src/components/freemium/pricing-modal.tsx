@@ -10,6 +10,7 @@ import { useOptionalAuth } from '@/contexts/auth-context'
 import { PlanType } from '@/hooks/use-freemium-limits'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 interface PricingPlan {
   id: PlanType
@@ -162,7 +163,8 @@ export function PricingModal() {
       closePricingModal()
 
       // ✅ FIX 5: Rafraîchir la session avant le checkout pour garantir user_id valide
-      const { data: { session }, error: sessionError } = await auth.supabase.auth.refreshSession()
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession()
 
       if (sessionError || !session) {
         throw new Error('Votre session a expiré. Veuillez vous reconnecter.')

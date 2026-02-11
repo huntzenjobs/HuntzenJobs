@@ -409,7 +409,7 @@ export default function JobsPage() {
   // Split jobs into visible and blurred
   const visibleJobs = jobs.slice(0, jobsVisibleLimit)
   const blurredJobsCount = Math.max(0, jobs.length - jobsVisibleLimit)
-  const showBlurredCards = isFreePlan && blurredJobsCount > 0
+  const showBlurredCards = isFreePlan && blurredJobsCount > 0;
 
   return (
     <div className="space-y-6">
@@ -421,7 +421,12 @@ export default function JobsPage() {
         className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 shadow-sm"
       >
         <div className="flex-1">
-          <div className="flex items-center gap-4 mb-3">
+          <motion.div
+            className="flex items-center gap-4 mb-3"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
