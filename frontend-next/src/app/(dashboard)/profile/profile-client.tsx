@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { User, CreditCard, Settings, UserCircle } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AvatarUpload } from '@/components/profile/avatar-upload'
@@ -42,39 +43,54 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
   return (
     <div className="space-y-6">
       {/* Hero Header - HuntZen Style */}
-      <div className="bg-white p-8 rounded-2xl border-2 border-gray-200 shadow-sm">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-12 h-12 rounded-xl bg-huntzen-blue flex items-center justify-center">
-            <UserCircle className="w-6 h-6 text-white" />
-          </div>
-          <h1 className="text-4xl font-black text-gray-900">Mon Profil</h1>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 shadow-sm"
+      >
+        <div className="flex items-center gap-4 mb-3">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
+          >
+            <UserCircle className="w-7 h-7 text-white" />
+          </motion.div>
+          <h1 className="text-4xl font-black text-black">Mon Profil</h1>
         </div>
-        <p className="text-lg text-gray-600">
+        <p className="text-base text-gray-700 leading-relaxed">
           Gérez vos informations personnelles, votre abonnement et vos préférences
         </p>
-      </div>
+      </motion.div>
 
       {/* Main Content with Tabs */}
-      <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm"
+      >
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
             <TabsTrigger
               value="profile"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-huntzen-blue rounded-none px-6 py-4"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <User className="w-4 h-4 mr-2" />
               Profil
             </TabsTrigger>
             <TabsTrigger
               value="subscription"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-huntzen-blue rounded-none px-6 py-4"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <CreditCard className="w-4 h-4 mr-2" />
               Abonnement
             </TabsTrigger>
             <TabsTrigger
               value="settings"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-huntzen-blue rounded-none px-6 py-4"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <Settings className="w-4 h-4 mr-2" />
               Paramètres
@@ -83,7 +99,12 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="p-8 space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            >
               {/* Avatar Section */}
               <div className="lg:col-span-1 flex justify-center lg:justify-start">
                 <AvatarUpload
@@ -106,14 +127,19 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
                   onSaveSuccess={handleProfileSave}
                 />
               </div>
-            </div>
+            </motion.div>
           </TabsContent>
 
           {/* Subscription Tab */}
           <TabsContent value="subscription" className="p-8">
-            <div className="max-w-3xl space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="max-w-3xl space-y-6"
+            >
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl font-bold text-black mb-2">
                   Votre abonnement
                 </h2>
                 <p className="text-gray-600">
@@ -124,14 +150,19 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
 
               {/* Subscription Card with Plan & Quotas */}
               <SubscriptionCard />
-            </div>
+            </motion.div>
           </TabsContent>
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="p-8">
-            <div className="max-w-3xl">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="max-w-3xl"
+            >
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Paramètres</h2>
+                <h2 className="text-2xl font-bold text-black mb-2">Paramètres</h2>
                 <p className="text-gray-600">
                   Personnalisez votre expérience HuntZen avec vos préférences
                 </p>
@@ -145,34 +176,39 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
                   newsletter_subscribed: profile.newsletter_subscribed,
                 }}
               />
-            </div>
+            </motion.div>
           </TabsContent>
         </Tabs>
-      </div>
+      </motion.div>
 
       {/* Help Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
-        <h3 className="font-semibold text-blue-900 mb-2">Besoin d'aide ?</h3>
-        <p className="text-blue-700 text-sm mb-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/30 rounded-2xl p-6"
+      >
+        <h3 className="font-bold text-black mb-2">Besoin d'aide ?</h3>
+        <p className="text-gray-700 text-sm mb-4">
           Notre équipe support est là pour vous aider. N'hésitez pas à nous contacter si
           vous avez des questions sur votre compte ou votre abonnement.
         </p>
         <div className="flex gap-3">
           <a
             href="mailto:support@huntzen.com"
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+            className="text-sm text-[#00D9FF] hover:text-black hover:underline font-medium transition-colors"
           >
             support@huntzen.com
           </a>
-          <span className="text-blue-400">•</span>
+          <span className="text-gray-400">•</span>
           <a
             href="/help"
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+            className="text-sm text-[#00D9FF] hover:text-black hover:underline font-medium transition-colors"
           >
             Centre d'aide
           </a>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

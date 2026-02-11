@@ -1,6 +1,7 @@
 'use client'
 
 import { FileText, Loader2, AlertCircle } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/auth-context'
 import { useSubscription } from '@/contexts/subscription-context'
 import { UsageCounter } from '@/components/freemium/usage-counter'
@@ -24,7 +25,7 @@ export default function CVAnalysisPage() {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-[#00D9FF] mb-4" />
           <p className="text-gray-600">Chargement de votre espace...</p>
         </div>
       </div>
@@ -35,22 +36,40 @@ export default function CVAnalysisPage() {
   const pageContent = (
     <div className="space-y-6">
       {/* Hero Header - HuntZen Style */}
-      <div className="flex items-start justify-between gap-4 bg-white p-8 rounded-2xl border-2 border-gray-200 shadow-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 shadow-sm"
+      >
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-xl bg-huntzen-blue flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-4xl font-black text-gray-900">Analyse CV</h1>
+          <div className="flex items-center gap-4 mb-3">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
+            >
+              <FileText className="w-7 h-7 text-white" />
+            </motion.div>
+            <h1 className="text-4xl font-black text-black">Analyse CV</h1>
           </div>
-          <p className="text-lg text-gray-600">
-            Optimisez votre CV pour maximiser vos chances de décrocher un entretien
+          <p className="text-base text-gray-700 leading-relaxed max-w-3xl">
+            Optimisez votre CV pour maximiser vos chances de décrocher un entretien. Obtenez une analyse détaillée et des recommandations personnalisées.
           </p>
         </div>
 
         {/* Usage Counter - only shown when authenticated */}
-        {session && <UsageCounter feature="cv_analysis" />}
-      </div>
+        {session && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <UsageCounter feature="cv_analysis" />
+          </motion.div>
+        )}
+      </motion.div>
 
       {/* Full Wizard with all features - Wrapped with ErrorBoundary */}
       <ErrorBoundary fallback={
@@ -64,7 +83,12 @@ export default function CVAnalysisPage() {
           </p>
         </Card>
       }>
-        <div className="bg-white p-8 rounded-2xl border-2 border-gray-200 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm"
+        >
           <CVUploadAsyncWizard
             canUse={canUse}
             incrementUsage={incrementUsage}
@@ -74,7 +98,7 @@ export default function CVAnalysisPage() {
               hasPDFExport: hasFeature('has_pdf_export')
             }}
           />
-        </div>
+        </motion.div>
       </ErrorBoundary>
     </div>
   )

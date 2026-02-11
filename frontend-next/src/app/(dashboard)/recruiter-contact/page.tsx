@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -81,74 +82,104 @@ export default function RecruiterContactPage() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
-      {/* Hero Premium - NOUVEAU */}
+      {/* Hero Premium */}
       <HeroSection />
 
-      {/* Stats rapides - NOUVEAU */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
-        <div className="text-center p-6 bg-white rounded-xl border-2 border-huntzen-blue/20 hover:border-huntzen-blue hover:shadow-lg transition-all">
-          <div className="text-4xl font-black text-huntzen-blue mb-2">127</div>
+      {/* Stats rapides */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+          className="text-center p-6 bg-white rounded-xl border-2 border-[#00D9FF]/20 hover:border-[#00D9FF] hover:shadow-lg transition-all"
+        >
+          <div className="text-4xl font-black text-[#00D9FF] mb-2">127</div>
           <p className="text-sm text-gray-600">Consultations réussies</p>
-        </div>
-        <div className="text-center p-6 bg-white rounded-xl border-2 border-huntzen-turquoise/20 hover:border-huntzen-turquoise hover:shadow-lg transition-all">
-          <div className="text-4xl font-black text-huntzen-turquoise mb-2">4.9/5</div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center p-6 bg-white rounded-xl border-2 border-[#00C4EA]/20 hover:border-[#00C4EA] hover:shadow-lg transition-all"
+        >
+          <div className="text-4xl font-black text-[#00C4EA] mb-2">4.9/5</div>
           <p className="text-sm text-gray-600">Satisfaction moyenne</p>
-        </div>
-        <div className="text-center p-6 bg-white rounded-xl border-2 border-blue-500/20 hover:border-blue-500 hover:shadow-lg transition-all">
-          <div className="text-4xl font-black text-blue-500 mb-2">48h</div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-center p-6 bg-white rounded-xl border-2 border-[#00D9FF]/20 hover:border-[#00D9FF] hover:shadow-lg transition-all"
+        >
+          <div className="text-4xl font-black text-[#00D9FF] mb-2">48h</div>
           <p className="text-sm text-gray-600">Délai moyen</p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Benefits Section */}
       <div className="grid md:grid-cols-3 gap-6 mb-16">
-        <Card className="border-2 hover:border-huntzen-blue hover:shadow-lg transition-all">
-          <CardContent className="pt-6">
-            <div className="w-12 h-12 rounded-lg bg-huntzen-blue/20 flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-6 h-6 text-huntzen-blue" />
-            </div>
-            <h3 className="font-semibold text-lg mb-2">Conseils personnalisés</h3>
-            <p className="text-gray-600 text-sm">
-              Un recruteur expert analyse votre profil et vous donne des recommandations sur-mesure
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 hover:border-huntzen-blue hover:shadow-lg transition-all">
-          <CardContent className="pt-6">
-            <div className="w-12 h-12 rounded-lg bg-huntzen-blue/20 flex items-center justify-center mb-4">
-              <Star className="w-6 h-6 text-huntzen-blue" />
-            </div>
-            <h3 className="font-semibold text-lg mb-2">Expertise professionnelle</h3>
-            <p className="text-gray-600 text-sm">
-              Nos recruteurs ont 10+ ans d'expérience dans le recrutement de cadres et talents
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 hover:border-huntzen-blue hover:shadow-lg transition-all">
-          <CardContent className="pt-6">
-            <div className="w-12 h-12 rounded-lg bg-huntzen-blue/20 flex items-center justify-center mb-4">
-              <Clock className="w-6 h-6 text-huntzen-blue" />
-            </div>
-            <h3 className="font-semibold text-lg mb-2">Réponse rapide</h3>
-            <p className="text-gray-600 text-sm">
-              Vous serez contacté sous 48h pour planifier votre consultation de 30 minutes
-            </p>
-          </CardContent>
-        </Card>
+        {[
+          {
+            icon: CheckCircle2,
+            title: "Conseils personnalisés",
+            description: "Un recruteur expert analyse votre profil et vous donne des recommandations sur-mesure",
+            delay: 0.7
+          },
+          {
+            icon: Star,
+            title: "Expertise professionnelle",
+            description: "Nos recruteurs ont 10+ ans d'expérience dans le recrutement de cadres et talents",
+            delay: 0.8
+          },
+          {
+            icon: Clock,
+            title: "Réponse rapide",
+            description: "Vous serez contacté sous 48h pour planifier votre consultation de 30 minutes",
+            delay: 0.9
+          }
+        ].map((benefit, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: benefit.delay }}
+          >
+            <Card className="border-2 border-gray-200 hover:border-[#00D9FF] hover:shadow-lg transition-all h-full">
+              <CardContent className="pt-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center mb-4 shadow-lg shadow-[#00D9FF]/30">
+                  <benefit.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="font-bold text-lg text-black mb-2">{benefit.title}</h3>
+                <p className="text-gray-600 text-sm">
+                  {benefit.description}
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Process Steps - NOUVEAU */}
+      {/* Process Steps */}
       <ProcessSteps />
 
-      {/* Testimonials - NOUVEAU */}
+      {/* Testimonials */}
       <TestimonialsSection />
 
-      <div id="contact-form" className="grid lg:grid-cols-2 gap-8">
+      <motion.div
+        id="contact-form"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.0 }}
+        className="grid lg:grid-cols-2 gap-8"
+      >
         {/* Pricing Card */}
-        <Card className="border-2 border-huntzen-blue shadow-lg overflow-hidden">
-          <CardHeader className="bg-gradient-to-br from-huntzen-blue to-blue-600 text-white">
+        <Card className="border-2 border-[#00D9FF] shadow-lg overflow-hidden h-fit">
+          <CardHeader className="bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] text-white">
             <CardTitle className="text-2xl flex items-center gap-2">
               <Sparkles className="w-6 h-6" />
               Consultation Recruteur
@@ -160,44 +191,45 @@ export default function RecruiterContactPage() {
           <CardContent className="pt-6">
             <div className="mb-6">
               <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-5xl font-bold text-gray-900">50€</span>
+                <span className="text-5xl font-bold text-black">50€</span>
                 <span className="text-gray-600">/ consultation</span>
               </div>
               <p className="text-sm text-gray-600">Paiement unique, aucun abonnement</p>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-huntzen-blue mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">Session vidéo de 30 minutes</p>
-                  <p className="text-sm text-gray-600">Échange en direct avec un expert</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-huntzen-blue mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">Analyse personnalisée</p>
-                  <p className="text-sm text-gray-600">CV, profil LinkedIn, stratégie de recherche</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-huntzen-blue mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">Plan d'action concret</p>
-                  <p className="text-sm text-gray-600">Recommandations actionnables immédiatement</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-huntzen-blue mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">Compte-rendu écrit</p>
-                  <p className="text-sm text-gray-600">Résumé détaillé après la consultation</p>
-                </div>
-              </div>
+              {[
+                {
+                  title: "Session vidéo de 30 minutes",
+                  description: "Échange en direct avec un expert"
+                },
+                {
+                  title: "Analyse personnalisée",
+                  description: "CV, profil LinkedIn, stratégie de recherche"
+                },
+                {
+                  title: "Plan d'action concret",
+                  description: "Recommandations actionnables immédiatement"
+                },
+                {
+                  title: "Compte-rendu écrit",
+                  description: "Résumé détaillé après la consultation"
+                }
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.1 + index * 0.1 }}
+                  className="flex items-start gap-3"
+                >
+                  <CheckCircle2 className="w-5 h-5 text-[#00D9FF] mt-0.5" />
+                  <div>
+                    <p className="font-medium text-black">{item.title}</p>
+                    <p className="text-sm text-gray-600">{item.description}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
 
             <div className="mt-6 pt-6 border-t">
@@ -210,9 +242,9 @@ export default function RecruiterContactPage() {
         </Card>
 
         {/* Request Form */}
-        <Card>
+        <Card className="border-2 border-gray-200 h-fit">
           <CardHeader>
-            <CardTitle>Réserver ma consultation</CardTitle>
+            <CardTitle className="text-black">Réserver ma consultation</CardTitle>
             <CardDescription>
               Remplissez le formulaire pour être contacté par un recruteur expert
             </CardDescription>
@@ -228,6 +260,7 @@ export default function RecruiterContactPage() {
                     value={formData.fullName}
                     onChange={(e) => handleChange('fullName', e.target.value)}
                     required
+                    className="border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
                   />
                 </div>
 
@@ -239,7 +272,7 @@ export default function RecruiterContactPage() {
                       id="email"
                       type="email"
                       placeholder="jean.dupont@example.com"
-                      className="pl-10"
+                      className="pl-10 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
                       value={formData.email}
                       onChange={(e) => handleChange('email', e.target.value)}
                       required
@@ -255,7 +288,7 @@ export default function RecruiterContactPage() {
                       id="phone"
                       type="tel"
                       placeholder="+33 6 12 34 56 78"
-                      className="pl-10"
+                      className="pl-10 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
                       value={formData.phone}
                       onChange={(e) => handleChange('phone', e.target.value)}
                     />
@@ -314,7 +347,7 @@ export default function RecruiterContactPage() {
                     <Input
                       id="preferredDate"
                       type="date"
-                      className="pl-10"
+                      className="pl-10 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
                       value={formData.preferredDate}
                       onChange={(e) => handleChange('preferredDate', e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
@@ -331,13 +364,14 @@ export default function RecruiterContactPage() {
                     value={formData.message}
                     onChange={(e) => handleChange('message', e.target.value)}
                     required
+                    className="border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
                   />
                 </div>
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-12 text-base font-bold bg-gradient-to-r from-huntzen-blue to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-12 text-base font-bold bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                 disabled={isSubmitting || !formData.fullName || !formData.email}
               >
                 {isSubmitting ? (
@@ -359,13 +393,18 @@ export default function RecruiterContactPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
-      {/* FAQ Interactive - NOUVEAU */}
+      {/* FAQ Interactive */}
       <FAQSection />
 
-      {/* CTA Bottom - NOUVEAU */}
-      <div className="bg-gradient-to-r from-huntzen-blue to-blue-700 text-white p-12 rounded-3xl text-center mt-12">
+      {/* CTA Bottom */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2 }}
+        className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] text-white p-12 rounded-3xl text-center mt-12 shadow-xl"
+      >
         <h3 className="text-3xl font-bold mb-4">
           Prêt à booster votre carrière ?
         </h3>
@@ -374,7 +413,7 @@ export default function RecruiterContactPage() {
         </p>
         <Button
           size="lg"
-          className="h-14 px-12 bg-white text-huntzen-blue hover:bg-gray-100 font-bold"
+          className="h-14 px-12 bg-white text-[#00D9FF] hover:bg-gray-100 font-bold transition-all duration-300 hover:scale-105"
           onClick={() => {
             const formSection = document.getElementById('contact-form')
             formSection?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -382,7 +421,7 @@ export default function RecruiterContactPage() {
         >
           Réserver maintenant (50€)
         </Button>
-      </div>
+      </motion.div>
     </div>
   )
 }

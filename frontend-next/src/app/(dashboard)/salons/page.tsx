@@ -28,9 +28,10 @@ function stripHtml(html: string): string {
     ALLOWED_TAGS: [] // Ne garder aucune balise = texte brut
   })
 
-  // Remplacer les entités HTML
+  // Remplacer les entités HTML - Safe: content is already sanitized by DOMPurify above
+  // This is only used for decoding HTML entities, not for rendering user content
   const txt = document.createElement('textarea')
-  txt.innerHTML = clean
+  txt.innerHTML = clean // Safe: sanitized content
   return txt.value.trim()
 }
 
@@ -113,18 +114,37 @@ export default function SalonsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Header with gradient */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-huntzen-blue to-blue-600 bg-clip-text text-transparent">
+      {/* Hero Header - HuntZen Style */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 shadow-sm mb-8"
+      >
+        <div className="flex-1">
+          <div className="flex items-center gap-4 mb-3">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
+            >
+              <Calendar className="w-7 h-7 text-white" />
+            </motion.div>
+            <h1 className="text-4xl font-black text-black">
               Salons & Forums Emploi
             </h1>
-            <p className="text-gray-600 mt-2 text-lg">
-              Découvrez les événements emploi près de chez vous et rencontrez des recruteurs
-            </p>
           </div>
+          <p className="text-base text-gray-700 leading-relaxed max-w-3xl">
+            Découvrez les événements emploi près de chez vous et rencontrez des recruteurs en personne ou en ligne
+          </p>
+        </div>
 
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           <Button
             variant="outline"
             size="lg"
@@ -132,33 +152,38 @@ export default function SalonsPage() {
             className={cn(
               "flex items-center gap-2 border-2 transition-all",
               showFilters
-                ? "border-blue-300 bg-blue-50 text-huntzen-blue hover:bg-blue-100"
-                : "border-gray-300 hover:border-blue-300"
+                ? "border-[#00D9FF] bg-[#00D9FF]/10 text-black hover:bg-[#00D9FF]/20"
+                : "border-gray-300 hover:border-[#00D9FF]"
             )}
           >
             <Filter className="size-4" />
             {showFilters ? 'Masquer filtres' : 'Afficher filtres'}
           </Button>
-        </div>
+        </motion.div>
+      </motion.div>
 
-        {/* Stats bar */}
-        {!loading && !error && (
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <Calendar className="size-4 text-huntzen-blue" />
-              <span className="font-medium">
-                {events.length} événement{events.length > 1 ? 's' : ''} disponible{events.length > 1 ? 's' : ''}
-              </span>
-            </div>
-            {hasActiveFilters && (
-              <div className="flex items-center gap-2 text-amber-600">
-                <TrendingUp className="size-4" />
-                <span>Résultats filtrés</span>
-              </div>
-            )}
+      {/* Stats bar */}
+      {!loading && !error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex items-center gap-4 text-sm text-gray-600 mb-6"
+        >
+          <div className="flex items-center gap-2">
+            <Calendar className="size-4 text-[#00D9FF]" />
+            <span className="font-medium">
+              {events.length} événement{events.length > 1 ? 's' : ''} disponible{events.length > 1 ? 's' : ''}
+            </span>
           </div>
-        )}
-      </div>
+          {hasActiveFilters && (
+            <div className="flex items-center gap-2 text-amber-600">
+              <TrendingUp className="size-4" />
+              <span>Résultats filtrés</span>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Filters - Wrapped with ErrorBoundary */}
       <AnimatePresence>
@@ -178,21 +203,21 @@ export default function SalonsPage() {
                 </p>
               </Card>
             }>
-              <Card className="border-2 border-blue-100 shadow-lg bg-gradient-to-br from-white to-blue-50/30">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-100">
+              <Card className="border-2 border-gray-200 shadow-sm bg-white">
+              <CardHeader className="bg-gradient-to-br from-white to-gray-50 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-huntzen-blue to-blue-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30">
                       <Filter className="size-4 text-white" />
                     </div>
-                    <CardTitle className="text-lg font-bold text-gray-900">Filtres de recherche</CardTitle>
+                    <CardTitle className="text-lg font-bold text-black">Filtres de recherche</CardTitle>
                   </div>
                   {hasActiveFilters && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={clearFilters}
-                      className="text-xs text-huntzen-blue hover:text-huntzen-blue hover:bg-blue-100"
+                      className="text-xs text-[#00D9FF] hover:text-black hover:bg-gray-100"
                     >
                       <X className="size-3 mr-1" />
                       Réinitialiser
@@ -296,7 +321,7 @@ export default function SalonsPage() {
                     onClick={searchEvents}
                     disabled={loading}
                     size="lg"
-                    className="bg-gradient-to-r from-huntzen-blue to-blue-600 hover:from-blue-700 hover:to-blue-800 shadow-md text-white font-semibold"
+                    className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white font-semibold transition-all duration-300"
                   >
                     {loading ? (
                       <>
@@ -343,18 +368,25 @@ export default function SalonsPage() {
       {loading && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="animate-pulse border-2 border-blue-100">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
-                <div className="h-6 bg-blue-200 rounded-lg w-3/4 mb-2" />
-                <div className="h-4 bg-blue-100 rounded-lg w-1/2" />
-              </CardHeader>
-              <CardContent className="space-y-4 pt-4">
-                <div className="h-4 bg-gray-200 rounded-lg" />
-                <div className="h-4 bg-gray-200 rounded-lg w-5/6" />
-                <div className="h-4 bg-gray-200 rounded-lg w-4/6" />
-                <div className="h-10 bg-blue-100 rounded-lg w-full mt-4" />
-              </CardContent>
-            </Card>
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+            >
+              <Card className="animate-pulse border-2 border-gray-200">
+                <CardHeader className="bg-gradient-to-br from-white to-gray-50">
+                  <div className="h-6 bg-gray-200 rounded-lg w-3/4 mb-2" />
+                  <div className="h-4 bg-gray-100 rounded-lg w-1/2" />
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="h-4 bg-gray-200 rounded-lg" />
+                  <div className="h-4 bg-gray-200 rounded-lg w-5/6" />
+                  <div className="h-4 bg-gray-200 rounded-lg w-4/6" />
+                  <div className="h-10 bg-gray-100 rounded-lg w-full mt-4" />
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       )}
@@ -379,12 +411,17 @@ export default function SalonsPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="col-span-full"
             >
-              <Card className="border-2 border-dashed border-blue-200 bg-gradient-to-br from-blue-50/50 to-cyan-50/50">
+              <Card className="border-2 border-dashed border-gray-300 bg-gradient-to-br from-gray-50 to-white">
                 <CardContent className="flex flex-col items-center justify-center py-16">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center mb-4">
-                    <Calendar className="size-8 text-huntzen-blue" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00D9FF]/20 to-[#00C4EA]/20 flex items-center justify-center mb-4"
+                  >
+                    <Calendar className="size-8 text-[#00D9FF]" />
+                  </motion.div>
+                  <h3 className="text-xl font-bold text-black mb-2">
                     Aucun événement trouvé
                   </h3>
                   <p className="text-gray-600 text-center max-w-md">
@@ -396,7 +433,7 @@ export default function SalonsPage() {
                     <Button
                       variant="outline"
                       onClick={clearFilters}
-                      className="mt-6 border-blue-300 text-huntzen-blue hover:bg-blue-50"
+                      className="mt-6 border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF]/10"
                     >
                       <X className="size-4 mr-2" />
                       Effacer les filtres
@@ -431,11 +468,11 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
   const getFormatBadgeColor = (format: string) => {
     switch (format.toLowerCase()) {
       case 'physique':
-        return 'bg-blue-500 text-white'
+        return 'bg-[#00D9FF] text-white'
       case 'virtuel':
-        return 'bg-blue-500 text-white'
+        return 'bg-[#00D9FF] text-white'
       case 'hybride':
-        return 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+        return 'bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] text-white'
       default:
         return 'bg-gray-500 text-white'
     }
@@ -444,9 +481,9 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
   const getEventTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case 'salon':
-        return 'bg-blue-100 text-huntzen-blue border-blue-200'
+        return 'bg-[#00D9FF]/10 text-[#00D9FF] border-[#00D9FF]/30'
       case 'forum':
-        return 'bg-blue-100 text-blue-700 border-blue-200'
+        return 'bg-[#00D9FF]/10 text-[#00D9FF] border-[#00D9FF]/30'
       case 'job_dating':
         return 'bg-pink-100 text-pink-700 border-pink-200'
       case 'webinar':
@@ -463,16 +500,16 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className="h-full"
     >
-      <Card className="h-full flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 border-blue-100 hover:border-blue-300 bg-white overflow-hidden">
+      <Card className="h-full flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 border-gray-200 hover:border-[#00D9FF]/50 bg-white overflow-hidden">
         {/* Header - hauteur fixe */}
-        <div className="bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 border-b border-blue-100 p-4 h-[88px] flex items-center">
+        <div className="bg-gradient-to-br from-white to-gray-50 border-b border-gray-200 p-4 h-[88px] flex items-center">
           <div className="flex items-start justify-between gap-3 w-full">
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold line-clamp-1 text-gray-900 mb-1.5 leading-tight">
+              <h3 className="text-base font-bold line-clamp-1 text-black mb-1.5 leading-tight">
                 {event.title}
               </h3>
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-gradient-to-br from-huntzen-blue to-blue-600 flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shrink-0 shadow-sm shadow-[#00D9FF]/30">
                   <Building2 className="size-3 text-white" />
                 </div>
                 <span className="font-medium text-gray-700 text-xs truncate">{event.organizer}</span>
@@ -487,13 +524,13 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
         {/* Content - structure fixe sans padding-top du CardContent */}
         <div className="flex-1 flex flex-col p-4 pt-3 space-y-2.5">
           {/* Date */}
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 h-14">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-[#00D9FF]/10 to-[#00C4EA]/10 border border-[#00D9FF]/30 h-14">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shrink-0 shadow-sm shadow-[#00D9FF]/30">
               <Calendar className="size-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[9px] text-blue-600 font-medium uppercase tracking-wide leading-none mb-0.5">Date</p>
-              <p className="text-xs font-semibold text-gray-900 line-clamp-1 leading-tight">
+              <p className="text-[9px] text-[#00D9FF] font-medium uppercase tracking-wide leading-none mb-0.5">Date</p>
+              <p className="text-xs font-semibold text-black line-clamp-1 leading-tight">
                 {formatDate(event.date_start)}
                 {event.date_end && event.date_end !== event.date_start && (
                   <span className="text-gray-500 text-[10px]"> → {formatDate(event.date_end)}</span>
@@ -509,7 +546,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] text-red-600 font-medium uppercase tracking-wide leading-none mb-0.5">Lieu</p>
-              <p className="text-xs font-semibold text-gray-900 line-clamp-1 leading-tight">
+              <p className="text-xs font-semibold text-black line-clamp-1 leading-tight">
                 {event.city}, {event.region}
               </p>
             </div>
@@ -522,7 +559,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] text-green-600 font-medium uppercase tracking-wide leading-none mb-0.5">Horaires</p>
-              <p className="text-xs font-semibold text-gray-900 line-clamp-1 leading-tight">
+              <p className="text-xs font-semibold text-black line-clamp-1 leading-tight">
                 {event.time_start ? (
                   <>
                     {event.time_start}
@@ -571,7 +608,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             <Button
               asChild
               size="sm"
-              className="w-full bg-gradient-to-r from-huntzen-blue to-blue-600 hover:from-blue-700 hover:to-blue-800 shadow-md font-semibold text-xs h-9"
+              className="w-full bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white font-semibold text-xs h-9 transition-all duration-300"
             >
               <a href={event.url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-3 mr-1.5" />

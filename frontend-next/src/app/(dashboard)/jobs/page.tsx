@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -413,28 +414,43 @@ export default function JobsPage() {
   return (
     <div className="space-y-6">
       {/* Hero Header - HuntZen Style */}
-      <div className="flex items-start justify-between gap-4 bg-white p-8 rounded-2xl border-2 border-gray-200 shadow-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 shadow-sm"
+      >
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-xl bg-huntzen-blue flex items-center justify-center">
-              <Search className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-4xl font-black text-gray-900">
-              Recherche d&apos;Emplois Intelligente
+          <div className="flex items-center gap-4 mb-3">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
+            >
+              <Search className="w-7 h-7 text-white" />
+            </motion.div>
+            <h1 className="text-4xl font-black text-black">
+              Recherche d&apos;Emplois
             </h1>
-          </div>
-          <p className="text-gray-600 text-base max-w-3xl leading-relaxed">
-            Accédez à des milliers d&apos;offres d&apos;emploi agrégées depuis les meilleures sources : Adzuna, Google Jobs, RemoteOK et bien plus encore.
+          </motion.div>
+          <p className="text-gray-700 text-base max-w-3xl leading-relaxed">
+            Accédez à des milliers d&apos;offres d&apos;emploi provenant des meilleures plateformes de recrutement, agrégées et mises à jour quotidiennement.
           </p>
         </div>
 
         {/* Usage counter for free users */}
         {isFreePlan && (
-          <div className="shrink-0">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="shrink-0"
+          >
             <UsageCounter feature="job_search" compact />
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Search Form - V2 (Inline) or V1 (Vertical) - Wrapped with ErrorBoundary */}
       <ErrorBoundary fallback={
@@ -671,7 +687,7 @@ export default function JobsPage() {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all h-12 px-8"
+                className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
                 disabled={searchMutation.isPending || !jobTitle.trim() || !selectedCountry || (!canUse('job_search') && isFreePlan)}
               >
                 {searchMutation.isPending ? (
@@ -684,7 +700,7 @@ export default function JobsPage() {
                     <Search className="mr-2 h-5 w-5" />
                     Lancer la recherche
                     {isFreePlan && searchesRemaining <= 3 && searchesRemaining > 0 && (
-                      <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                      <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-semibold">
                         {searchesRemaining} restante{searchesRemaining !== 1 ? 's' : ''}
                       </span>
                     )}
@@ -698,10 +714,10 @@ export default function JobsPage() {
                   variant="outline"
                   size="lg"
                   onClick={() => openPricingModal('job_searches_per_day')}
-                  className="gap-2 border-2 border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 h-12"
+                  className="gap-2 border-2 border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF]/10 h-12 font-semibold"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Debloquer les recherches illimitees
+                  Débloquer les recherches illimitées
                 </Button>
               )}
             </div>
@@ -729,19 +745,26 @@ export default function JobsPage() {
       )}
 
       {/* Query correction */}
-      {correctedQuery && (
-        <div className="rounded-lg bg-blue-50 p-5 border-l-4 border-blue-500">
-          <div className="flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="font-semibold text-blue-700 mb-1">Recherche optimisee</h3>
-              <p className="text-sm text-blue-600">
-                Nous avons ameliore votre recherche : <strong className="font-bold">{correctedQuery}</strong>
-              </p>
+      <AnimatePresence>
+        {correctedQuery && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="rounded-xl bg-[#00D9FF]/10 p-5 border-l-4 border-[#00D9FF]"
+          >
+            <div className="flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-black mb-1">Recherche améliorée</h3>
+                <p className="text-sm text-gray-700">
+                  Nous avons optimisé votre recherche : <strong className="font-bold text-[#00D9FF]">{correctedQuery}</strong>
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Results */}
       {searchMutation.isPending && (
@@ -773,36 +796,51 @@ export default function JobsPage() {
           </Card>
         }>
           <div className="space-y-6">
-          <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-xl border border-green-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-white" />
-              </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-2xl border border-emerald-200/50 shadow-sm"
+          >
+            <div className="flex items-center gap-4">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-lg"
+              >
+                <CheckCircle className="w-6 h-6 text-white" />
+              </motion.div>
               <div>
-                <h2 className="text-2xl font-bold text-green-700">
-                  {jobs.length} offre{jobs.length > 1 ? 's' : ''} trouvee{jobs.length > 1 ? 's' : ''}
+                <h2 className="text-2xl font-black text-emerald-700">
+                  {jobs.length} offre{jobs.length > 1 ? 's' : ''} trouvée{jobs.length > 1 ? 's' : ''}
                 </h2>
-                <p className="text-sm text-green-600">
-                  Resultats agreges depuis plusieurs sources
+                <p className="text-sm text-emerald-600 font-medium">
+                  Résultats récents et pertinents
                 </p>
               </div>
             </div>
             {isFreePlan && (
-              <div className="text-right">
-                <p className="text-sm font-semibold text-muted-foreground">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="text-right"
+              >
+                <p className="text-sm font-bold text-gray-700">
                   {Math.min(jobs.length, jobsVisibleLimit)} visible{Math.min(jobs.length, jobsVisibleLimit) > 1 ? 's' : ''} sur {jobs.length}
                 </p>
                 <Button
                   variant="link"
                   size="sm"
                   onClick={() => openPricingModal('jobs_visible')}
-                  className="text-xs text-primary hover:text-primary/80 p-0 h-auto"
+                  className="text-xs text-[#00D9FF] hover:text-[#00C4EA] p-0 h-auto font-semibold"
                 >
-                  Debloquer toutes les offres →
+                  Débloquer toutes les offres →
                 </Button>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
 
           <div className={`grid gap-6 auto-rows-fr ${
             featureFlags.useJobsV2
@@ -811,25 +849,31 @@ export default function JobsPage() {
           }`}>
             {/* Visible jobs */}
             {visibleJobs.map((job, index) => (
-              <Card key={job.id || index} className="hover:shadow-xl hover:border-primary/50 transition-all duration-300 group flex flex-col border-2 overflow-hidden">
-                <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-white">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-xl line-clamp-2 font-bold group-hover:text-primary transition-colors">
-                        {job.title}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-2 mt-2 text-base">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-                          <Building className="h-4 w-4 text-white" />
-                        </div>
-                        <span className="font-medium">{job.company}</span>
-                      </CardDescription>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <Badge variant="secondary" className="shrink-0 font-semibold px-3 py-1">
-                        {formatJobSource(job.source)}
-                      </Badge>
-                      <button
+              <motion.div
+                key={job.id || index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Card className="hover:shadow-2xl hover:border-[#00D9FF]/30 transition-all duration-300 group flex flex-col border border-gray-200 overflow-hidden h-full bg-white">
+                  <CardHeader className="pb-4 bg-gradient-to-br from-gray-50 to-white border-b border-gray-100">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-xl line-clamp-2 font-black group-hover:text-[#00D9FF] transition-colors text-black">
+                          {job.title}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-3 text-base">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center flex-shrink-0 shadow-md">
+                            <Building className="h-5 w-5 text-white" />
+                          </div>
+                          <span className="font-semibold text-gray-800">{job.company}</span>
+                        </CardDescription>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge variant="secondary" className="shrink-0 font-bold px-3 py-1 bg-gray-100 text-gray-700 border border-gray-200">
+                          {formatJobSource(job.source)}
+                        </Badge>
+                        <button
                         onClick={() => handleSaveJob(job)}
                         className={cn(
                           "relative p-2 rounded-full hover:bg-red-50 transition-all",
@@ -883,19 +927,20 @@ export default function JobsPage() {
                     </p>
                   </div>
 
-                  {/* Button always at bottom */}
-                  <div className="flex gap-2 pt-5 mt-auto">
-                    <Button
-                      size="lg"
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-semibold shadow-md hover:shadow-lg transition-all h-11"
-                      onClick={() => handleViewDetails(job)}
-                    >
-                      Voir détails
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                    {/* Button always at bottom */}
+                    <div className="flex gap-2 pt-5 mt-auto">
+                      <Button
+                        size="lg"
+                        className="flex-1 bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-md hover:shadow-lg hover:shadow-[#00D9FF]/30 transition-all h-11"
+                        onClick={() => handleViewDetails(job)}
+                      >
+                        Voir détails
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
 
             {/* Gradient job cards for free users */}
