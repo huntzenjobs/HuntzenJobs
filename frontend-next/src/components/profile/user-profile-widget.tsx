@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { User, Crown, Loader2, AlertCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { createClient } from '@/lib/supabase/client'
+import { useAuthenticatedFetch } from '@/hooks/use-authenticated-fetch'
 
 interface UserData {
   user: {
@@ -118,7 +118,8 @@ interface UserProfileWidgetProps {
 }
 
 export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
-  const { user, session } = useAuth()
+  const { session } = useAuth()
+  const { authenticatedFetch } = useAuthenticatedFetch()
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -139,50 +140,11 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
           throw new Error('NEXT_PUBLIC_BACKEND_URL is not configured')
         }
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        })
+        const response = await authenticatedFetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`
+        )
 
         if (!response.ok) {
-          // Handle 401 specifically - expired or invalid token
-          if (response.status === 401) {
-            console.warn('[UserProfile] Token expired (401), trying to refresh session...')
-
-            // Try to refresh the session
-            const supabase = createClient()
-            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
-
-            if (refreshError || !refreshData.session) {
-              console.error('[UserProfile] Session refresh failed:', refreshError)
-              throw new Error('Session expirée - veuillez vous reconnecter')
-            }
-
-            console.log('[UserProfile] Session refreshed successfully, retrying...')
-
-            // Retry with new token
-            const retryResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
-              headers: {
-                'Authorization': `Bearer ${refreshData.session.access_token}`,
-                'Content-Type': 'application/json'
-              }
-            })
-
-            if (!retryResponse.ok) {
-              throw new Error(`Erreur ${retryResponse.status} après refresh: ${retryResponse.statusText}`)
-            }
-
-            const retryData = await retryResponse.json()
-            if (!retryData.success) {
-              throw new Error(retryData.error || 'Erreur lors du chargement des données')
-            }
-
-            setUserData(retryData)
-            return
-          }
-
           throw new Error(`Erreur ${response.status}: ${response.statusText}`)
         }
 
@@ -202,7 +164,7 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
     }
 
     fetchUserData()
-  }, [session?.access_token])
+  }, [session, authenticatedFetch])
 
   if (loading) {
     return (
