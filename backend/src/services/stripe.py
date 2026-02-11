@@ -15,7 +15,7 @@ import os
 import stripe
 import traceback
 from typing import Optional, Dict, Any, Literal
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from structlog import get_logger
 from fastapi import HTTPException
 from supabase import create_client, Client
@@ -180,7 +180,7 @@ async def modify_existing_subscription(
                 update_data = {
                     "plan_id": plan_response.data["id"],
                     "stripe_price_id": new_price_id,  # CRITICAL: Sync price_id to prevent desync
-                    "updated_at": datetime.utcnow().isoformat()
+                    "updated_at": datetime.now(timezone.utc).isoformat()
                 }
 
                 # Only update period_end if we have a valid value
@@ -567,10 +567,12 @@ async def handle_checkout_completed(session: Dict[str, Any]):
 
         # Use Stripe's actual period dates instead of hardcoded calculations
         current_period_start = datetime.fromtimestamp(
-            stripe_subscription.current_period_start
+            stripe_subscription.current_period_start,
+            tz=timezone.utc
         )
         current_period_end = datetime.fromtimestamp(
-            stripe_subscription.current_period_end
+            stripe_subscription.current_period_end,
+            tz=timezone.utc
         )
 
         logger.info(f"Subscription period from Stripe: {current_period_start} → {current_period_end}")
@@ -592,7 +594,7 @@ async def handle_checkout_completed(session: Dict[str, Any]):
             "current_period_start": current_period_start.isoformat(),
             "current_period_end": current_period_end.isoformat(),
             "cancel_at_period_end": stripe_subscription.cancel_at_period_end,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.now(timezone.utc).isoformat()
         }
 
         # For plan changes: UPDATE DB entry FIRST, then cancel old subscription in Stripe
@@ -689,7 +691,7 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
                 subscription["current_period_end"]
             ).isoformat(),
             "cancel_at_period_end": subscription.get("cancel_at_period_end", False),
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.now(timezone.utc).isoformat()
         }
 
         # If plan changed, update plan_id too
@@ -744,8 +746,8 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
         result = supabase_client.table("user_subscriptions")\
             .update({
                 "status": "cancelled",
-                "cancelled_at": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat()
+                "cancelled_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
             })\
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .execute()
@@ -778,7 +780,7 @@ async def handle_payment_failed(invoice: Dict[str, Any]):
         result = supabase_client.table("user_subscriptions")\
             .update({
                 "status": "past_due",
-                "updated_at": datetime.utcnow().isoformat()
+                "updated_at": datetime.now(timezone.utc).isoformat()
             })\
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .execute()
