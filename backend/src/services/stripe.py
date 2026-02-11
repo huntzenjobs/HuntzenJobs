@@ -142,11 +142,17 @@ async def create_checkout_session(
         # If user has active subscription, cancel it first (Stripe will handle via webhook)
         if existing_subscription and existing_subscription.get("stripe_subscription_id"):
             old_subscription_id = existing_subscription["stripe_subscription_id"]
-            try:
-                stripe.Subscription.delete(old_subscription_id)
-                logger.info(f"Cancelled old subscription: {old_subscription_id}")
-            except Exception as e:
-                logger.warning(f"Failed to cancel old subscription: {e}")
+
+            # CRITICAL FIX: Only cancel if it's a real Stripe subscription ID
+            # Ignore fake test subscriptions (e.g., "sub_test_manual_insert")
+            if old_subscription_id.startswith("sub_") and len(old_subscription_id) > 20:
+                try:
+                    stripe.Subscription.delete(old_subscription_id)
+                    logger.info(f"Cancelled old subscription: {old_subscription_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to cancel old subscription: {e}")
+            else:
+                logger.info(f"Skipping cancel of non-Stripe subscription ID: {old_subscription_id}")
 
         # Create checkout session (Stripe handles everything)
         session = stripe.checkout.Session.create(
