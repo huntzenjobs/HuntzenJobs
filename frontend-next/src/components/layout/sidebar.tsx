@@ -21,8 +21,7 @@ import {
   LogIn,
   Calendar,
   Activity,
-  Users,
-  Loader2
+  Users
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
@@ -58,7 +57,6 @@ export function Sidebar({ className }: SidebarProps) {
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUsageModalOpen, setIsUsageModalOpen] = useState(false)
-  const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
 
   // Use auth context as single source of truth
   const auth = useOptionalAuth()
@@ -133,7 +131,6 @@ export function Sidebar({ className }: SidebarProps) {
           {navigation.map((item, index) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             const isLocked = item.premium && (!user || isFreePlan)
-            const isNavigating = navigatingTo === item.href
 
             return (
               <motion.div
@@ -148,8 +145,6 @@ export function Sidebar({ className }: SidebarProps) {
                     if (isLocked && user) {
                       e.preventDefault()
                       openPricingModal()
-                    } else if (!isLocked) {
-                      setNavigatingTo(item.href)
                     }
                     setIsMobileMenuOpen(false)
                   }}
@@ -169,14 +164,10 @@ export function Sidebar({ className }: SidebarProps) {
                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     />
                   )}
-                  {isNavigating ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-[#00D9FF]" />
-                  ) : (
-                    <item.icon className={cn(
-                      'w-5 h-5 transition-all',
-                      isActive ? 'text-[#00D9FF]' : 'text-gray-600 group-hover:text-[#00D9FF]'
-                    )} />
-                  )}
+                  <item.icon className={cn(
+                    'w-5 h-5 transition-all',
+                    isActive ? 'text-[#00D9FF]' : 'text-gray-600 group-hover:text-[#00D9FF]'
+                  )} />
                   <span className="nav-label flex-1">{item.name}</span>
                   {/* Badge (ex: "50€" pour contact recruteur) */}
                   {'badge' in item && item.badge && (

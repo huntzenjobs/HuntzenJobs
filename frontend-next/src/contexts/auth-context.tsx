@@ -2,7 +2,10 @@
 
 /**
  * Auth Context Provider
- * Manages authentication state using Supabase Auth
+ * Manages authentication state using Supabase Auth with Hybrid Solution
+ * - Auto-refresh token before expiration
+ * - Activity detection and inactivity timeout
+ * - Cookie-based session persistence
  */
 
 import { createContext, useContext, useEffect, useState } from "react";
@@ -17,6 +20,7 @@ import {
 } from "@/lib/security/logger";
 import { detectFailedLoginAnomaly } from "@/lib/security/anomaly-detection";
 import { tokenRefreshService } from "@/lib/auth/token-refresh-service";
+import { useAutoRefreshSession } from "@/hooks/use-auto-refresh-session";
 
 interface AuthContextType {
   user: User | null;
@@ -52,6 +56,9 @@ export function AuthProvider({
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
+
+  // Hybrid Solution: Auto-refresh + Activity detection + Inactivity timeout
+  useAutoRefreshSession();
 
   useEffect(() => {
     const initializeAuth = async () => {

@@ -37,6 +37,7 @@ function stripHtml(html: string): string {
 
 export default function SalonsPage() {
   const [events, setEvents] = useState<JobFair[]>([])
+  const [visibleEventsCount, setVisibleEventsCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -88,6 +89,7 @@ export default function SalonsPage() {
       })
 
       setEvents(result.events)
+      setVisibleEventsCount(0) // Reset counter for progressive reveal
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la recherche')
     } finally {
@@ -99,6 +101,26 @@ export default function SalonsPage() {
   useEffect(() => {
     searchEvents()
   }, [])
+
+  // Progressive reveal of events for better UX
+  useEffect(() => {
+    if (events.length === 0) {
+      setVisibleEventsCount(0)
+      return
+    }
+
+    // Show events progressively (5 at a time, every 150ms)
+    const BATCH_SIZE = 5
+    const REVEAL_INTERVAL = 150
+
+    if (visibleEventsCount < events.length) {
+      const timer = setTimeout(() => {
+        setVisibleEventsCount(prev => Math.min(prev + BATCH_SIZE, events.length))
+      }, REVEAL_INTERVAL)
+
+      return () => clearTimeout(timer)
+    }
+  }, [events.length, visibleEventsCount])
 
   // Clear filters
   function clearFilters() {
@@ -443,9 +465,27 @@ export default function SalonsPage() {
               </Card>
             </motion.div>
           ) : (
-            events.map((event, index) => (
-              <EventCard key={`${event.url}-${index}`} event={event} index={index} />
-            ))
+            <>
+              {events.slice(0, visibleEventsCount).map((event, index) => (
+                <EventCard key={`${event.url}-${index}`} event={event} index={index} />
+              ))}
+
+              {/* Loading indicator for progressive reveal */}
+              {visibleEventsCount < events.length && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-full flex items-center justify-center py-8"
+                >
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#00D9FF]" />
+                    <span className="text-sm font-medium">
+                      Chargement des événements... ({visibleEventsCount}/{events.length})
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </>
           )}
           </div>
         </ErrorBoundary>

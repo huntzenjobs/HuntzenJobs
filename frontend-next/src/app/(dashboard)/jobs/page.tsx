@@ -39,6 +39,7 @@ export default function JobsPage() {
   const [selectedCity, setSelectedCity] = useState('')
   const [contractType, setContractType] = useState('')
   const [jobs, setJobs] = useState<Job[]>([])
+  const [visibleJobsCount, setVisibleJobsCount] = useState(0)
   const [correctedQuery, setCorrectedQuery] = useState<string | null>(null)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -212,6 +213,26 @@ export default function JobsPage() {
     loadSavedJobs()
   }, [auth?.user, auth?.session?.access_token])
 
+  // Progressive reveal of jobs for better UX
+  useEffect(() => {
+    if (jobs.length === 0) {
+      setVisibleJobsCount(0)
+      return
+    }
+
+    // Show jobs progressively (5 at a time, every 150ms)
+    const BATCH_SIZE = 5
+    const REVEAL_INTERVAL = 150
+
+    if (visibleJobsCount < jobs.length) {
+      const timer = setTimeout(() => {
+        setVisibleJobsCount(prev => Math.min(prev + BATCH_SIZE, jobs.length))
+      }, REVEAL_INTERVAL)
+
+      return () => clearTimeout(timer)
+    }
+  }, [jobs.length, visibleJobsCount])
+
   // Handle country selection
   const handleCountrySelect = (country: { code: string; name: string }) => {
     setShowCountrySuggestions(false)
@@ -259,6 +280,7 @@ export default function JobsPage() {
     },
     onSuccess: (data) => {
       setJobs(data.jobs)
+      setVisibleJobsCount(0) // Reset counter for progressive reveal
       setCorrectedQuery(data.corrected_query || null)
       // Increment search usage
       incrementUsage('job_search')
@@ -407,9 +429,12 @@ export default function JobsPage() {
   }
 
   // Split jobs into visible and blurred
-  const visibleJobs = jobs.slice(0, jobsVisibleLimit)
+  // Progressive reveal: only show jobs up to visibleJobsCount
+  const progressiveJobs = jobs.slice(0, visibleJobsCount)
+  const visibleJobs = progressiveJobs.slice(0, jobsVisibleLimit)
   const blurredJobsCount = Math.max(0, jobs.length - jobsVisibleLimit)
-  const showBlurredCards = isFreePlan && blurredJobsCount > 0;
+  const showBlurredCards = isFreePlan && blurredJobsCount > 0
+  const isLoadingMore = visibleJobsCount < jobs.length
 
   return (
     <div className="space-y-6">
@@ -947,6 +972,22 @@ export default function JobsPage() {
                 </Card>
               </motion.div>
             ))}
+
+            {/* Loading indicator for progressive reveal */}
+            {isLoadingMore && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full flex items-center justify-center py-8"
+              >
+                <div className="flex items-center gap-3 text-gray-600">
+                  <Loader2 className="w-5 h-5 animate-spin text-[#00D9FF]" />
+                  <span className="text-sm font-medium">
+                    Chargement des offres... ({visibleJobsCount}/{jobs.length})
+                  </span>
+                </div>
+              </motion.div>
+            )}
 
             {/* Gradient job cards for free users */}
             {showBlurredCards && (

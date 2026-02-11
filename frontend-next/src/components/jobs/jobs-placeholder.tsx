@@ -29,6 +29,26 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
       transition={{ duration: 0.5 }}
       className="space-y-12 py-8"
     >
+      {/* Recherches populaires */}
+      <div>
+        <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <TrendingUp className="w-6 h-6 text-huntzen-blue" />
+          Recherches populaires en ce moment
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {popularSearches.map((job) => (
+            <Button
+              key={job}
+              variant="outline"
+              className="h-auto py-3 px-4 text-left justify-start border-2 border-gray-200 hover:border-huntzen-blue hover:text-huntzen-blue hover:bg-blue-50 transition-all"
+              onClick={() => onSearchClick?.(job)}
+            >
+              <span className="font-medium text-sm">{job}</span>
+            </Button>
+          ))}
+        </div>
+      </div>
+
       {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="text-center p-8 border-2 border-huntzen-blue/30 hover:border-huntzen-blue transition-all hover:shadow-xl">
@@ -63,26 +83,6 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
             Nouvelles offres quotidiennes
           </Badge>
         </Card>
-      </div>
-
-      {/* Recherches populaires */}
-      <div>
-        <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-huntzen-blue" />
-          Recherches populaires en ce moment
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {popularSearches.map((job) => (
-            <Button
-              key={job}
-              variant="outline"
-              className="h-auto py-3 px-4 text-left justify-start border-2 border-gray-200 hover:border-huntzen-blue hover:text-huntzen-blue hover:bg-blue-50 transition-all"
-              onClick={() => onSearchClick?.(job)}
-            >
-              <span className="font-medium text-sm">{job}</span>
-            </Button>
-          ))}
-        </div>
       </div>
 
       {/* Tips visuels */}

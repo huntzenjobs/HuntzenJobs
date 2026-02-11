@@ -545,7 +545,7 @@ export function CVUploadAsyncWizard({
             value={wizardState.cvText}
             onChange={(e) => handleTextChange(e.target.value)}
             placeholder="Collez le contenu de votre CV ici (minimum 100 caractères)..."
-            className="w-full h-64 p-4 border-2 border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full h-64 p-4 bg-white text-gray-900 placeholder:text-gray-400 border-2 border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-2">
             {wizardState.cvText.length} caractères (minimum 100)
