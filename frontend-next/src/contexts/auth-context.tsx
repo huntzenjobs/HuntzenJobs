@@ -297,11 +297,11 @@ export function AuthProvider({
       // Show success message
       setError(null);
 
+      // Reset loading AVANT la redirection
+      setLoading(false);
+
       // Redirect to signup success (will show modal)
       router.push("/signup?success=true&email=" + encodeURIComponent(email));
-
-      // Reset loading
-      setTimeout(() => setLoading(false), 100);
     } catch (err: any) {
       console.error("Sign up error:", err);
       setError(err.message || "Failed to create account");
