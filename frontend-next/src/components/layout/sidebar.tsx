@@ -1,9 +1,10 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { TextLogo } from "@/components/ui/adaptive-logo";
 import {
   Briefcase,
   FileText,
@@ -21,75 +22,111 @@ import {
   LogIn,
   Calendar,
   Activity,
-  Users
-} from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { useOptionalSubscription } from '@/contexts/subscription-context'
-import { useOptionalAuth } from '@/contexts/auth-context'
-import { UsageSummary } from '@/components/freemium/usage-counter'
-import { UsageModal } from '@/components/freemium/usage-modal'
+  Users,
+} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useOptionalSubscription } from "@/contexts/subscription-context";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { UsageSummary } from "@/components/freemium/usage-counter";
+import { UsageModal } from "@/components/freemium/usage-modal";
 
 const navigation = [
-  { name: 'Recherche d\'emplois', href: '/jobs', icon: Briefcase, premium: false },
-  { name: 'Analyse CV', href: '/cv-analysis', icon: FileText, premium: false },
-  { name: 'Assistant Carrière', href: '/assistant', icon: MessageSquare, premium: false },
-  { name: 'Salons & Forums', href: '/salons', icon: Calendar, premium: false },
-  { name: 'Jobs sauvegardés', href: '/saved-jobs', icon: Bookmark, premium: true },
-  { name: 'Contact Recruteur', href: '/recruiter-contact', icon: Users, premium: false, badge: '50€' },
-]
+  {
+    name: "Recherche d'emplois",
+    href: "/jobs",
+    icon: Briefcase,
+    premium: false,
+  },
+  { name: "Analyse CV", href: "/cv-analysis", icon: FileText, premium: false },
+  {
+    name: "Assistant Carrière",
+    href: "/assistant",
+    icon: MessageSquare,
+    premium: false,
+  },
+  { name: "Salons & Forums", href: "/salons", icon: Calendar, premium: false },
+  {
+    name: "Jobs sauvegardés",
+    href: "/saved-jobs",
+    icon: Bookmark,
+    premium: true,
+  },
+  {
+    name: "Contact Recruteur",
+    href: "/recruiter-contact",
+    icon: Users,
+    premium: false,
+    badge: "50€",
+  },
+];
 
 interface SidebarProps {
-  className?: string
+  className?: string;
 }
 
-const PLAN_BADGES: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  free: { label: 'Gratuit', color: 'bg-gray-500', icon: null },
-  starter: { label: 'Starter', color: 'bg-blue-500', icon: <Sparkles className="w-3 h-3" /> },
-  pro: { label: 'Pro', color: 'bg-violet-500', icon: <Sparkles className="w-3 h-3" /> },
-  premium: { label: 'Premium', color: 'bg-amber-500', icon: <Crown className="w-3 h-3" /> },
-}
+const PLAN_BADGES: Record<
+  string,
+  { label: string; color: string; icon: React.ReactNode }
+> = {
+  free: { label: "Gratuit", color: "bg-gray-500", icon: null },
+  starter: {
+    label: "Starter",
+    color: "bg-blue-500",
+    icon: <Sparkles className="w-3 h-3" />,
+  },
+  pro: {
+    label: "Pro",
+    color: "bg-violet-500",
+    icon: <Sparkles className="w-3 h-3" />,
+  },
+  premium: {
+    label: "Premium",
+    color: "bg-amber-500",
+    icon: <Crown className="w-3 h-3" />,
+  },
+};
 
 export function Sidebar({ className }: SidebarProps) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isUsageModalOpen, setIsUsageModalOpen] = useState(false)
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
 
   // Use auth context as single source of truth
-  const auth = useOptionalAuth()
-  const isAuthLoading = auth?.loading ?? true
-  const user = auth?.user ?? null
+  const auth = useOptionalAuth();
+  const isAuthLoading = auth?.loading ?? true;
+  const user = auth?.user ?? null;
 
   // Use subscription context - with fallback for when context is not available
-  const subscription = useOptionalSubscription()
-  const plan = subscription?.plan || 'free'
-  const isFreePlan = subscription?.isFreePlan ?? true
-  const openPricingModal = subscription?.openPricingModal || (() => {})
+  const subscription = useOptionalSubscription();
+  const plan = subscription?.plan || "free";
+  const isFreePlan = subscription?.isFreePlan ?? true;
+  const openPricingModal = subscription?.openPricingModal || (() => {});
 
-  const planBadge = PLAN_BADGES[plan]
+  const planBadge = PLAN_BADGES[plan];
 
   const handleLogout = async () => {
     try {
       // Use the Auth context signOut which handles logging and state management
       if (auth?.signOut) {
-        await auth.signOut()
+        await auth.signOut();
       } else {
         // Fallback if context not available
-        const supabase = createClient()
-        await supabase.auth.signOut()
-        router.push('/login')
-        router.refresh()
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push("/login");
+        router.refresh();
       }
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error("Logout error:", error);
       // Still redirect on error
-      router.push('/login')
-      router.refresh()
+      router.push("/login");
+      router.refresh();
     }
-  }
+  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-white">
@@ -99,15 +136,16 @@ export function Sidebar({ className }: SidebarProps) {
         animate={{ opacity: 1, y: 0 }}
         className="sidebar-header flex items-center justify-between p-6 border-b border-gray-200"
       >
-        <Link href="/jobs" className="sidebar-logo flex items-center gap-2.5 group">
-          <span className="logo-text text-black font-bold text-2xl tracking-tight group-hover:text-[#00D9FF] transition-colors">
-            HuntZen
-          </span>
-          <motion.span
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="w-2 h-2 rounded-full bg-[#00D9FF]"
-          ></motion.span>
+        <Link
+          href="/jobs"
+          className="sidebar-logo flex items-center gap-2.5 group"
+        >
+          <TextLogo
+            isDark
+            size="md"
+            showPulse
+            className="group-hover:opacity-80 transition-opacity"
+          />
         </Link>
         <button
           className="lg:hidden text-gray-600 hover:text-black p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -129,8 +167,9 @@ export function Sidebar({ className }: SidebarProps) {
           </motion.span>
 
           {navigation.map((item, index) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-            const isLocked = item.premium && (!user || isFreePlan)
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
+            const isLocked = item.premium && (!user || isFreePlan);
 
             return (
               <motion.div
@@ -140,20 +179,20 @@ export function Sidebar({ className }: SidebarProps) {
                 transition={{ delay: index * 0.05 }}
               >
                 <Link
-                  href={isLocked ? (user ? '#' : '/login') : item.href}
+                  href={isLocked ? (user ? "#" : "/login") : item.href}
                   onClick={(e) => {
                     if (isLocked && user) {
-                      e.preventDefault()
-                      openPricingModal()
+                      e.preventDefault();
+                      openPricingModal();
                     }
-                    setIsMobileMenuOpen(false)
+                    setIsMobileMenuOpen(false);
                   }}
                   className={cn(
-                    'nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all relative group',
+                    "nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all relative group",
                     isActive
-                      ? 'bg-[#00D9FF]/10 text-black'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-black',
-                    isLocked && 'opacity-50'
+                      ? "bg-[#00D9FF]/10 text-black"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-black",
+                    isLocked && "opacity-50",
                   )}
                 >
                   {/* Active indicator - positioned at sidebar edge */}
@@ -161,26 +200,32 @@ export function Sidebar({ className }: SidebarProps) {
                     <motion.span
                       layoutId="activeTab"
                       className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-[70%] bg-[#00D9FF] rounded-r"
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
                     />
                   )}
-                  <item.icon className={cn(
-                    'w-5 h-5 transition-all',
-                    isActive ? 'text-[#00D9FF]' : 'text-gray-600 group-hover:text-[#00D9FF]'
-                  )} />
+                  <item.icon
+                    className={cn(
+                      "w-5 h-5 transition-all",
+                      isActive
+                        ? "text-[#00D9FF]"
+                        : "text-gray-600 group-hover:text-[#00D9FF]",
+                    )}
+                  />
                   <span className="nav-label flex-1">{item.name}</span>
                   {/* Badge (ex: "50€" pour contact recruteur) */}
-                  {'badge' in item && item.badge && (
+                  {"badge" in item && item.badge && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-200">
                       {item.badge}
                     </span>
                   )}
-                  {isLocked && (
-                    <Lock className="w-4 h-4 text-gray-400" />
-                  )}
+                  {isLocked && <Lock className="w-4 h-4 text-gray-400" />}
                 </Link>
               </motion.div>
-            )
+            );
           })}
 
           {/* Mon Utilisation button - only show if logged in */}
@@ -190,13 +235,15 @@ export function Sidebar({ className }: SidebarProps) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: navigation.length * 0.05 }}
               onClick={() => {
-                setIsUsageModalOpen(true)
-                setIsMobileMenuOpen(false)
+                setIsUsageModalOpen(true);
+                setIsMobileMenuOpen(false);
               }}
               className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-gray-700 hover:bg-gray-100 hover:text-black w-full group"
             >
               <Activity className="w-5 h-5 text-gray-600 group-hover:text-[#00D9FF] transition-colors" />
-              <span className="nav-label flex-1 text-left">Mon Utilisation</span>
+              <span className="nav-label flex-1 text-left">
+                Mon Utilisation
+              </span>
             </motion.button>
           )}
         </div>
@@ -239,23 +286,23 @@ export function Sidebar({ className }: SidebarProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-black truncate group-hover:text-[#00D9FF] transition-colors">
-                    {user.user_metadata?.full_name || 'Utilisateur'}
+                    {user.user_metadata?.full_name || "Utilisateur"}
                   </p>
                   {subscription === null ? (
                     <span className="bg-gray-200 animate-pulse rounded-full px-2 py-0.5 w-14 h-4" />
                   ) : planBadge ? (
-                    <span className={cn(
-                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white',
-                      planBadge.color
-                    )}>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white",
+                        planBadge.color,
+                      )}
+                    >
                       {planBadge.icon}
                       {planBadge.label}
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-gray-500 truncate">
-                  {user.email}
-                </p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
             </Link>
           </motion.div>
@@ -341,7 +388,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}
       </div>
     </div>
-  )
+  );
 
   return (
     <>
@@ -354,13 +401,21 @@ export function Sidebar({ className }: SidebarProps) {
           <Menu className="w-6 h-6" />
         </button>
 
-        <Link href="/jobs" className="mobile-logo flex items-center gap-2 group">
-          <span className="text-lg font-bold text-black group-hover:text-[#00D9FF] transition-colors">HuntZen</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[#00D9FF]"></span>
+        <Link
+          href="/jobs"
+          className="mobile-logo flex items-center gap-2 group"
+        >
+          <TextLogo
+            isDark
+            size="sm"
+            showPulse
+            className="group-hover:opacity-80 transition-opacity"
+          />
         </Link>
 
         <span className="mobile-tool-name text-gray-600 text-sm font-medium">
-          {navigation.find(n => pathname.startsWith(n.href))?.name || 'HuntZen'}
+          {navigation.find((n) => pathname.startsWith(n.href))?.name ||
+            "HuntZen"}
         </span>
       </div>
 
@@ -393,7 +448,10 @@ export function Sidebar({ className }: SidebarProps) {
       </aside>
 
       {/* Usage Modal */}
-      <UsageModal isOpen={isUsageModalOpen} onClose={() => setIsUsageModalOpen(false)} />
+      <UsageModal
+        isOpen={isUsageModalOpen}
+        onClose={() => setIsUsageModalOpen(false)}
+      />
     </>
-  )
+  );
 }
