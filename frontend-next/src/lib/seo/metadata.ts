@@ -86,6 +86,7 @@ export const defaultMetadata: Metadata = {
  * Metadata pour la page d'accueil
  */
 export const homeMetadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Recherche d'Emploi, CV, Salons | HuntZen Jobs - Votre Allié Carrière",
   description:
     "Trouvez votre emploi idéal parmi +100 000 offres. Analyse CV ATS, coaching carrière, salons emploi, alternance. Plateforme gratuite de recherche d'emploi en France.",
@@ -109,6 +110,9 @@ export const homeMetadata: Metadata = {
     "marseille",
   ],
   openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: SITE_NAME,
     title:
       "Recherche d'Emploi, CV, Salons | HuntZen Jobs - Votre Allié Carrière",
     description:
@@ -117,14 +121,27 @@ export const homeMetadata: Metadata = {
     images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
+    card: "summary_large_image",
     title:
       "Recherche d'Emploi, CV, Salons | HuntZen Jobs - Votre Allié Carrière",
     description:
       "Trouvez votre emploi idéal parmi +100 000 offres. Analyse CV ATS, coaching carrière, salons emploi, alternance.",
     images: [DEFAULT_OG_IMAGE],
+    creator: "@huntzen",
   },
   alternates: {
     canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
