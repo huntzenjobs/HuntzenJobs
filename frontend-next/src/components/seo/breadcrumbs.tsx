@@ -32,7 +32,7 @@ export function Breadcrumbs({ items, className = "" }: BreadcrumbsProps) {
       "@type": "ListItem",
       position: index + 1,
       name: item.label,
-      item: `https://huntzenjobs.fr${item.href}`,
+      item: `https://huntzenjobs.com${item.href}`,
     })),
   };
 

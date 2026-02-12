@@ -5,7 +5,7 @@ import { MetadataRoute } from "next";
  * Next.js génère automatiquement /sitemap.xml
  */
 
-const SITE_URL = "https://huntzenjobs.fr";
+const SITE_URL = "https://huntzenjobs.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // Pages principales statiques

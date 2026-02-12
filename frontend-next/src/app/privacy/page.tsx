@@ -68,7 +68,7 @@ export default function PrivacyPage() {
         >
           <div className="mb-12 p-6 bg-blue-50 border-l-4 border-[#00D9FF] rounded-r-lg">
             <p className="text-gray-700 leading-relaxed m-0">
-              La présente Politique de Confidentialité réglemente le traitement des données à caractère personnel des utilisateurs (ci-après « Utilisateur » ou « Utilisateurs »), collectées dans le cadre de l'utilisation du site Internet <strong>https://huntzenjobs.fr</strong> (ci-après « Site »), par <strong>HUNTZEN, Unipessoal Lda.</strong>, Sociedade Unipessoal por Quotas au capital de 15.000,00 euros, dont le siège social est situé à Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal et titulaire du numéro d'identification de personne morale et d'immatriculation 516481320 (ci-après « HUNTZEN »), en tant qu'entité responsable du traitement.
+              La présente Politique de Confidentialité réglemente le traitement des données à caractère personnel des utilisateurs (ci-après « Utilisateur » ou « Utilisateurs »), collectées dans le cadre de l'utilisation du site Internet <strong>https://huntzenjobs.com</strong> (ci-après « Site »), par <strong>HUNTZEN, Unipessoal Lda.</strong>, Sociedade Unipessoal por Quotas au capital de 15.000,00 euros, dont le siège social est situé à Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal et titulaire du numéro d'identification de personne morale et d'immatriculation 516481320 (ci-après « HUNTZEN »), en tant qu'entité responsable du traitement.
             </p>
           </div>
 

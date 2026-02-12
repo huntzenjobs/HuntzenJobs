@@ -229,7 +229,7 @@ export default async function OpenGraphImage() {
           display: "flex",
         }}
       >
-        huntzenjobs.fr
+        huntzenjobs.com
       </div>
     </div>,
     {

@@ -5,7 +5,7 @@ import { Metadata } from "next";
  * Score SEO cible : 100/100
  */
 
-const SITE_URL = "https://huntzenjobs.fr";
+const SITE_URL = "https://huntzenjobs.com";
 const SITE_NAME = "HuntZen Jobs";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 
@@ -76,7 +76,7 @@ export const defaultMetadata: Metadata = {
     },
   },
   verification: {
-    google: "GOOGLE_VERIFICATION_CODE", // À remplacer
+    google: "GY_SUMwiyE8JIoIt58aBkI92-NMA0Q0n_FnjfFfLGBw",
     // yandex: 'YANDEX_VERIFICATION_CODE',
     // bing: 'BING_VERIFICATION_CODE',
   },

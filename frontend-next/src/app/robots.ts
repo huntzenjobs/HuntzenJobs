@@ -44,6 +44,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: "/",
       },
     ],
-    sitemap: "https://huntzenjobs.fr/sitemap.xml",
+    sitemap: "https://huntzenjobs.com/sitemap.xml",
   };
 }

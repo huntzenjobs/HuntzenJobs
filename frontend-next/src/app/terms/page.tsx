@@ -75,7 +75,7 @@ export default function TermsPage() {
               </p>
             </div>
             <div className="mt-6 space-y-4 text-gray-700">
-              <p>Nous vous remercions de prendre quelques minutes pour lire nos CGVU du Site <strong>https://huntzenjobs.fr</strong> (ci-après « Site »), édité par la société HUNTZEN.</p>
+              <p>Nous vous remercions de prendre quelques minutes pour lire nos CGVU du Site <strong>https://huntzenjobs.com</strong> (ci-après « Site »), édité par la société HUNTZEN.</p>
               <p>Les présentes CGVU contiennent des informations importantes pour vous en tant qu'utilisateur de notre Site et acheteur de nos services, et s'appliquent à tous les services utilisés ou achetés sur notre Site.</p>
               <p>Si vous avez des questions sur ces CGVU, vous pouvez nous contacter par courrier à l'adresse Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal, par email à l'adresse <strong>contact@huntzenjobs.co</strong> ou par téléphone :</p>
               <ul className="list-none pl-0 space-y-2">
