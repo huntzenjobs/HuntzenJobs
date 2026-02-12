@@ -58,7 +58,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       {/* Main Content */}
       <div className="pt-20 min-h-screen flex">
         {/* Left Side - Form */}
-        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 bg-gradient-to-br from-gray-50 to-white">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 bg-white">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -210,7 +210,11 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       <style jsx global>{`
-        
+        /* Force white header on auth pages */
+        header {
+          background-color: rgba(255, 255, 255, 0.95) !important;
+          border-color: rgba(0, 0, 0, 0.1) !important;
+        }
 
         body {
           font-family:

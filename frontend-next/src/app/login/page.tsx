@@ -166,7 +166,7 @@ function LoginForm() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-gray-50 text-gray-500 font-medium">
+            <span className="px-4 bg-white text-gray-500 font-medium">
               Ou avec email
             </span>
           </div>
@@ -197,7 +197,7 @@ function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+                className="pl-10 h-12 bg-white border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
@@ -227,7 +227,7 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+                className="pl-10 h-12 bg-white border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
