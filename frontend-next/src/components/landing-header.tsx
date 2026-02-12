@@ -34,8 +34,8 @@ export function LandingHeader() {
     >
       <div className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="relative w-10 h-10 sm:w-12 sm:h-12">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20">
             <Image
               src="/logo.png"
               alt="HuntZen"
@@ -44,11 +44,11 @@ export function LandingHeader() {
               priority
             />
           </div>
-          <div className="flex items-center gap-1">
-            <span className={`font-black text-xl sm:text-2xl tracking-tight transition-colors ${isScrolled ? 'text-black' : 'text-white'}`}>
+          <div className="flex items-center gap-1.5">
+            <span className={`font-black text-2xl sm:text-3xl tracking-tight transition-colors ${isScrolled ? 'text-black' : 'text-white'}`}>
               Jobs
             </span>
-            <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#00D9FF] animate-pulse"></span>
           </div>
         </Link>
 
