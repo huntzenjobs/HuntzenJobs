@@ -1,16 +1,162 @@
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-fonts-webfonts',
+        expiration: {
+          maxEntries: 4,
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 an
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/fonts\.(?:googleapis)\.com\/.*/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'google-fonts-stylesheets',
+        expiration: {
+          maxEntries: 4,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 1 semaine
+        },
+      },
+    },
+    {
+      urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'static-font-assets',
+        expiration: {
+          maxEntries: 4,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 1 semaine
+        },
+      },
+    },
+    {
+      urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp|avif)$/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'static-image-assets',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 24 * 60 * 60, // 24 heures
+        },
+      },
+    },
+    {
+      urlPattern: /\/_next\/image\?url=.+$/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'next-image',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 24 * 60 * 60, // 24 heures
+        },
+      },
+    },
+    {
+      urlPattern: /\.(?:js)$/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'static-js-assets',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 24 heures
+        },
+      },
+    },
+    {
+      urlPattern: /\.(?:css|less)$/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'static-style-assets',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 24 heures
+        },
+      },
+    },
+    {
+      urlPattern: /\/_next\/data\/.+\/.+\.json$/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'next-data',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 24 heures
+        },
+      },
+    },
+    {
+      urlPattern: /\/api\/.*$/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'api-cache',
+        expiration: {
+          maxEntries: 16,
+          maxAgeSeconds: 5 * 60, // 5 minutes
+        },
+        networkTimeoutSeconds: 10, // Fall back to cache after 10s
+      },
+    },
+    {
+      urlPattern: /.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'others',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 24 heures
+        },
+        networkTimeoutSeconds: 10,
+      },
+    },
+  ],
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Output standalone for Docker deployment
   output: 'standalone',
 
-  // Image optimization
+  // React Strict Mode pour détecter les problèmes
+  reactStrictMode: true,
+
+  // Compression (gzip/brotli) automatique
+  compress: true,
+
+  // SWC Minification (plus rapide que Terser)
+  swcMinify: true,
+
+  // Optimizations de production
+  poweredByHeader: false, // Retire header "X-Powered-By: Next.js"
+
+  // Image optimization - Optimisé pour Core Web Vitals
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: '*.supabase.co',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
     ],
+    // Formats optimisés (WebP prioritaire, AVIF si supporté)
+    formats: ['image/avif', 'image/webp'],
+    // Tailles d'images personnalisées
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Cache optimization
+    minimumCacheTTL: 60 * 60 * 24 * 365, // 1 an
+    // Disable dangerouslyAllowSVG si non nécessaire (sécurité)
+    dangerouslyAllowSVG: false,
   },
 
   // Security headers
@@ -95,4 +241,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = withPWA(nextConfig)

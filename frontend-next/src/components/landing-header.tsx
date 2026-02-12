@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { useOptionalAuth } from '@/contexts/auth-context'
 import { Menu, X, User } from 'lucide-react'
@@ -34,10 +35,21 @@ export function LandingHeader() {
       <div className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <span className={`font-bold text-lg sm:text-xl tracking-tight transition-colors ${isScrolled ? 'text-black' : 'text-white'}`}>
-            HuntZen
-          </span>
-          <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
+          <div className="relative w-10 h-10 sm:w-12 sm:h-12">
+            <Image
+              src="/logo.png"
+              alt="HuntZen"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className={`font-black text-xl sm:text-2xl tracking-tight transition-colors ${isScrolled ? 'text-black' : 'text-white'}`}>
+              Jobs
+            </span>
+            <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}

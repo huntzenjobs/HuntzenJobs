@@ -2,11 +2,12 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AssistantProvider } from '@/contexts/assistant-context'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { initWebVitalsMonitoring } from '@/lib/performance/web-vitals'
 import type { User } from '@supabase/supabase-js'
 
 export function Providers({
@@ -27,6 +28,11 @@ export function Providers({
         },
       })
   )
+
+  // Initialiser le monitoring des Core Web Vitals
+  useEffect(() => {
+    initWebVitalsMonitoring()
+  }, [])
 
   return (
     <ErrorBoundary>

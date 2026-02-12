@@ -210,7 +210,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       <style jsx global>{`
-        @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap");
+        
 
         body {
           font-family:
