@@ -93,9 +93,11 @@ class Settings(BaseSettings):
     max_search_results: int = Field(default=25, ge=5, le=100)
     cache_ttl_seconds: int = Field(default=3600, ge=60)
     
-    # LLM Models
-    llm_model_fast: str = "llama-3.1-8b-instant"  # Fast model for extraction/analysis
-    llm_model_powerful: str = "llama-3.3-70b-versatile"  # Powerful model for rewriting
+    # LLM Models (Groq)
+    # - Fast: For quick extraction/analysis tasks (needs to be resistant to jailbreaks)
+    # - Powerful: For complex rewriting/generation tasks
+    llm_model_fast: str = "meta-llama/llama-4-maverick-17b-128e-instruct"  # Llama 4, jailbreak-resistant
+    llm_model_powerful: str = "moonshotai/kimi-k2-instruct"  # Most powerful (262k ctx)
     llm_temperature: float = Field(default=0.3, ge=0.0, le=1.0)
     llm_max_tokens: int = Field(default=2048, ge=256, le=8192)
     
