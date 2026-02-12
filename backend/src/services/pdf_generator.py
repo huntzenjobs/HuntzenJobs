@@ -15,6 +15,7 @@ import io
 import logging
 import os
 import tempfile
+import threading
 from pathlib import Path
 from typing import Any, Optional
 
@@ -294,13 +295,19 @@ class PDFGenerator:
             raise
 
 
-# Singleton instance
+# Singleton instance - Thread-safe
 _pdf_generator: Optional[PDFGenerator] = None
+_pdf_generator_lock = threading.Lock()
 
 
 def get_pdf_generator() -> PDFGenerator:
-    """Get PDF generator singleton."""
+    """Get PDF generator singleton (thread-safe)."""
     global _pdf_generator
-    if _pdf_generator is None:
-        _pdf_generator = PDFGenerator()
+
+    if _pdf_generator is None:  # Fast path (no lock)
+        with _pdf_generator_lock:
+            if _pdf_generator is None:  # Double-check inside lock
+                _pdf_generator = PDFGenerator()
+                logger.info("[pdf_generator] PDFGenerator singleton created")
+
     return _pdf_generator

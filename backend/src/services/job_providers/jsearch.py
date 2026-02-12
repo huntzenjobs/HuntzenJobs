@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 
 from src.config.settings import settings
-from src.services.job_providers.base import BaseJobProvider
+from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
 from src.utils.geo import country_code_to_name, format_location_query
 
 logger = logging.getLogger(__name__)
@@ -52,6 +52,7 @@ class JSearchProvider(BaseJobProvider):
     BASE_URL = "https://jsearch.p.rapidapi.com/search"
     HOST = "jsearch.p.rapidapi.com"
 
+    @handle_provider_errors
     async def search(
         self,
         query: str,
@@ -103,39 +104,28 @@ class JSearchProvider(BaseJobProvider):
             "num_pages": str(num_pages),
         }
 
-        try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
-                response = await client.get(self.BASE_URL, headers=headers, params=params)
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.get(self.BASE_URL, headers=headers, params=params)
 
-                if response.status_code == 429:
-                    logger.warning(f"[{self.name}] Rate limit exceeded")
-                    return []
-
-                response.raise_for_status()
-                data = response.json()
-
-            results = data.get("data", [])
-            if not isinstance(results, list):
+            if response.status_code == 429:
+                logger.warning(f"[{self.name}] Rate limit exceeded")
                 return []
 
-            jobs = []
-            for item in results[:max_results]:
-                job = self._normalize_jsearch_job(item, location_str)
-                if job:
-                    jobs.append(job)
+            response.raise_for_status()
+            data = response.json()
 
-            logger.info(f"[{self.name}] Found {len(jobs)} jobs for '{query}' in {location_str}")
-            return jobs
+        results = data.get("data", [])
+        if not isinstance(results, list):
+            return []
 
-        except httpx.TimeoutException:
-            logger.warning(f"[{self.name}] Request timeout")
-            return []
-        except httpx.HTTPStatusError as e:
-            logger.error(f"[{self.name}] HTTP {e.response.status_code}: {e.response.text[:200]}")
-            return []
-        except Exception as e:
-            logger.error(f"[{self.name}] Error: {e}")
-            return []
+        jobs = []
+        for item in results[:max_results]:
+            job = self._normalize_jsearch_job(item, location_str)
+            if job:
+                jobs.append(job)
+
+        logger.info(f"[{self.name}] Found {len(jobs)} jobs for '{query}' in {location_str}")
+        return jobs
 
     def _normalize_jsearch_job(self, item: dict, fallback_location: str) -> dict[str, Any] | None:
         """

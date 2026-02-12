@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-from src.services.job_providers.base import BaseJobProvider
+from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,8 @@ class RemoteOKProvider(BaseJobProvider):
     supported_countries = set()  # Remote = all countries
     
     BASE_URL = "https://remoteok.com/api"
-    
+
+    @handle_provider_errors
     async def search(
         self,
         query: str,
@@ -51,43 +52,35 @@ class RemoteOKProvider(BaseJobProvider):
         Returns:
             List of normalized job listings
         """
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(
-                    self.BASE_URL,
-                    headers={"User-Agent": "HuntZen/3.0"},
-                )
-                response.raise_for_status()
-                data = response.json()
-            
-            # Filter by query
-            query_lower = query.lower()
-            query_words = set(query_lower.split())
-            
-            jobs = []
-            for item in data[1:]:  # Skip first item (legal notice)
-                if not isinstance(item, dict):
-                    continue
-                
-                # Check relevance
-                position = (item.get("position") or "").lower()
-                tags = " ".join(item.get("tags", [])).lower()
-                
-                if any(word in position or word in tags for word in query_words):
-                    jobs.append(self._normalize_remoteok_job(item))
-                    
-                    if len(jobs) >= max_results:
-                        break
-            
-            logger.info(f"[{self.name}] Found {len(jobs)} remote jobs for '{query}'")
-            return jobs
-            
-        except httpx.TimeoutException:
-            logger.warning(f"[{self.name}] Request timeout")
-            return []
-        except Exception as e:
-            logger.error(f"[{self.name}] Error: {e}")
-            return []
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                self.BASE_URL,
+                headers={"User-Agent": "HuntZen/3.0"},
+            )
+            response.raise_for_status()
+            data = response.json()
+
+        # Filter by query
+        query_lower = query.lower()
+        query_words = set(query_lower.split())
+
+        jobs = []
+        for item in data[1:]:  # Skip first item (legal notice)
+            if not isinstance(item, dict):
+                continue
+
+            # Check relevance
+            position = (item.get("position") or "").lower()
+            tags = " ".join(item.get("tags", [])).lower()
+
+            if any(word in position or word in tags for word in query_words):
+                jobs.append(self._normalize_remoteok_job(item))
+
+                if len(jobs) >= max_results:
+                    break
+
+        logger.info(f"[{self.name}] Found {len(jobs)} remote jobs for '{query}'")
+        return jobs
     
     def _normalize_remoteok_job(self, item: dict) -> dict[str, Any]:
         """Normalize RemoteOK job response."""

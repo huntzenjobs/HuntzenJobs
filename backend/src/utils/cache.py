@@ -23,6 +23,7 @@ from functools import wraps
 from typing import Any, Callable
 import json
 import hashlib
+import threading
 
 from upstash_redis import Redis
 
@@ -31,29 +32,39 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Singleton Redis client
+# Singleton Redis client - Thread-safe
 _redis_client: Redis | None = None
+_redis_client_lock = threading.Lock()
 
 
 def get_redis() -> Redis | None:
     """
-    Get or create Redis client singleton.
+    Get or create Redis client singleton (thread-safe).
 
     Returns:
         Redis client instance or None if disabled/unavailable
     """
     global _redis_client
 
-    if _redis_client is None and settings.cache_enabled and settings.redis_url:
-        try:
-            _redis_client = Redis(
-                url=settings.redis_url,
-                token=settings.get_redis_token()
-            )
-            logger.info("✅ Redis client initialized successfully")
-        except Exception as e:
-            logger.error(f"❌ Failed to initialize Redis client: {e}")
-            return None
+    # Fast path: return if already initialized or cache disabled
+    if _redis_client is not None:
+        return _redis_client
+
+    if not settings.cache_enabled or not settings.redis_url:
+        return None
+
+    # Slow path: thread-safe initialization
+    with _redis_client_lock:
+        if _redis_client is None:  # Double-check inside lock
+            try:
+                _redis_client = Redis(
+                    url=settings.redis_url,
+                    token=settings.get_redis_token()
+                )
+                logger.info("✅ Redis client singleton created (thread-safe)")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize Redis client: {e}")
+                return None
 
     return _redis_client
 

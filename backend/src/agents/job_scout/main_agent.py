@@ -312,16 +312,19 @@ class JobScoutAgent(BaseAgent):
         return await self.refine_query(user_query)
 
 
-# Singleton instance
-_scout_instance: Optional[JobScoutAgent] = None
-
-
 def get_job_scout() -> JobScoutAgent:
-    """Get or create the singleton JobScout instance."""
-    global _scout_instance
-    if _scout_instance is None:
-        _scout_instance = JobScoutAgent()
-    return _scout_instance
+    """
+    Get JobScout singleton instance.
+
+    DEPRECATED: This function is maintained for backward compatibility only.
+    New code should use src.api.deps.get_scout_agent() instead, which provides
+    thread-safe singleton initialization.
+
+    Returns:
+        JobScoutAgent singleton instance (thread-safe via deps.py)
+    """
+    from src.api.deps import get_scout_agent
+    return get_scout_agent()
 
 
 async def search_jobs(

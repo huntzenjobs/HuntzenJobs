@@ -278,16 +278,19 @@ class CVAnalyzerAgent(BaseAgent):
         return await self._match_job(cv_text, job_description)
 
 
-# Singleton instance
-_analyzer_instance: Optional[CVAnalyzerAgent] = None
-
-
 def get_cv_analyzer() -> CVAnalyzerAgent:
-    """Get or create the singleton CVAnalyzer instance."""
-    global _analyzer_instance
-    if _analyzer_instance is None:
-        _analyzer_instance = CVAnalyzerAgent()
-    return _analyzer_instance
+    """
+    Get CVAnalyzer singleton instance.
+
+    DEPRECATED: This function is maintained for backward compatibility only.
+    New code should use src.api.deps.get_cv_analyzer_main() instead, which provides
+    thread-safe singleton initialization.
+
+    Returns:
+        CVAnalyzerAgent singleton instance (thread-safe via deps.py)
+    """
+    from src.api.deps import get_cv_analyzer_main
+    return get_cv_analyzer_main()
 
 
 async def analyze_cv(

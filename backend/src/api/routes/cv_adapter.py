@@ -11,23 +11,23 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from src.agents.cv_adapter import CVAdapterAgent
+from src.api.deps import get_cv_adapter_main
 from src.services.pdf_generator import get_pdf_generator
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Agent singleton
-_adapter_agent: CVAdapterAgent | None = None
 
+def get_adapter_agent() -> "CVAdapterAgent":
+    """
+    Get CV Adapter agent singleton.
 
-def get_adapter_agent() -> CVAdapterAgent:
-    """Get CV Adapter agent singleton."""
-    global _adapter_agent
-    if _adapter_agent is None:
-        _adapter_agent = CVAdapterAgent()
-    return _adapter_agent
+    DEPRECATED: Redirects to deps.get_cv_adapter_main() for thread-safe singleton.
+    This function is maintained for backward compatibility with existing routes.
+    """
+    from src.agents.cv_adapter import CVAdapterAgent  # Import for type hint
+    return get_cv_adapter_main()
 
 
 def generate_pdf_sync(cv_data: dict, template: str, language: str, photo_base64: str = None) -> bytes:

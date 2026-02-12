@@ -6,6 +6,7 @@ Handles recruiter consultation requests and Stripe payment processing.
 Sprint 3: 50€ one-time payment for 30-minute consultation with expert recruiter.
 """
 
+import logging
 import uuid
 from typing import Optional
 from datetime import date, datetime
@@ -20,6 +21,8 @@ from src.services.email import (
     send_recruiter_request_confirmation,
     send_recruiter_request_notification,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
@@ -332,7 +335,7 @@ async def stripe_webhook(request: Request):
                         preferred_date=request_data.get("preferred_date"),
                     )
 
-                    print(f"✅ Payment confirmed for request {request_id} - Emails sent")
+                    logger.info(f"✅ Payment confirmed for request {request_id} - Emails sent")
 
         return {"status": "success"}
 

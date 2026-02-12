@@ -4,12 +4,15 @@ Auth API Routes
 User authentication and profile management.
 """
 
+import logging
 from typing import Optional
 from fastapi import APIRouter, Header, HTTPException, status, Request
 from supabase import create_client, Client
 
 from src.api.middleware import limiter
 from src.config.settings import get_settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
@@ -70,7 +73,7 @@ def get_user_from_token(authorization: Optional[str]) -> Optional[dict]:
                 "user_metadata": response.user.user_metadata,
             }
     except Exception as e:
-        print(f"Error getting user from token: {e}")
+        logger.error(f"Error getting user from token: {e}")
 
     return None
 
@@ -123,10 +126,10 @@ async def get_current_user_info(
         profile = profile_response.data[0]
 
         # 🔍 DEBUG: Log user info before RPC call
-        print(f"\n{'='*70}")
-        print(f"[AUTH_ME DEBUG] User ID: {user_id}")
-        print(f"[AUTH_ME DEBUG] Email: {profile.get('email')}")
-        print(f"{'='*70}\n")
+        logger.debug("="*70)
+        logger.debug(f"[AUTH_ME DEBUG] User ID: {user_id}")
+        logger.debug(f"[AUTH_ME DEBUG] Email: {profile.get('email')}")
+        logger.debug("="*70)
 
         # Get user's active subscription using RPC (with ORDER BY fix)
         # This ensures we always get the highest-priority plan (paid > free)
@@ -136,12 +139,12 @@ async def get_current_user_info(
         ).execute()
 
         # 🔍 DEBUG: Log raw RPC response
-        print(f"\n{'='*70}")
-        print(f"[AUTH_ME DEBUG] RPC get_user_current_subscription Response:")
-        print(f"  - Data: {subscription_response.data}")
-        print(f"  - Type: {type(subscription_response.data)}")
-        print(f"  - Length: {len(subscription_response.data) if subscription_response.data else 0}")
-        print(f"{'='*70}\n")
+        logger.debug("="*70)
+        logger.debug(f"[AUTH_ME DEBUG] RPC get_user_current_subscription Response:")
+        logger.debug(f"  - Data: {subscription_response.data}")
+        logger.debug(f"  - Type: {type(subscription_response.data)}")
+        logger.debug(f"  - Length: {len(subscription_response.data) if subscription_response.data else 0}")
+        logger.debug("="*70)
 
         # Default to free plan if no active subscription
         subscription_data = {
@@ -156,14 +159,14 @@ async def get_current_user_info(
             sub = subscription_response.data[0]
 
             # 🔍 DEBUG: Log subscription object details
-            print(f"\n{'='*70}")
-            print(f"[AUTH_ME DEBUG] ✅ Subscription FOUND:")
-            print(f"  - plan_name: {sub.get('plan_name')}")
-            print(f"  - plan_display_name: {sub.get('plan_display_name')}")
-            print(f"  - subscription_status: {sub.get('subscription_status')}")
-            print(f"  - current_period_end: {sub.get('current_period_end')}")
-            print(f"  - stripe_subscription_id: {sub.get('stripe_subscription_id')}")
-            print(f"{'='*70}\n")
+            logger.debug("="*70)
+            logger.debug(f"[AUTH_ME DEBUG] ✅ Subscription FOUND:")
+            logger.debug(f"  - plan_name: {sub.get('plan_name')}")
+            logger.debug(f"  - plan_display_name: {sub.get('plan_display_name')}")
+            logger.debug(f"  - subscription_status: {sub.get('subscription_status')}")
+            logger.debug(f"  - current_period_end: {sub.get('current_period_end')}")
+            logger.debug(f"  - stripe_subscription_id: {sub.get('stripe_subscription_id')}")
+            logger.debug("="*70)
 
             # Fetch plan prices dynamically from subscription_plans table
             try:
@@ -188,10 +191,10 @@ async def get_current_user_info(
             }
         else:
             # 🔍 DEBUG: No subscription found
-            print(f"\n{'='*70}")
-            print(f"[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
-            print(f"  - User ID: {user_id}")
-            print(f"  - Email: {user['email']}")
+            logger.debug("="*70)
+            logger.debug(f"[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
+            logger.debug(f"  - User ID: {user_id}")
+            logger.debug(f"  - Email: {user['email']}")
 
             # Check if user has stripe_subscription_id in profiles but no active subscription
             # This would indicate a desync between Stripe and Supabase
@@ -207,22 +210,22 @@ async def get_current_user_info(
                     stripe_customer_id = profile_check.data.get("stripe_customer_id")
 
                     if stripe_sub_id:
-                        print(f"\n  🚨 DESYNC DETECTED:")
-                        print(f"     - Stripe Subscription ID in profiles: {stripe_sub_id}")
-                        print(f"     - Stripe Customer ID: {stripe_customer_id}")
-                        print(f"     - BUT no active subscription in user_subscriptions table!")
-                        print(f"     - This indicates a webhook failure or manual DB modification")
-                        print(f"\n  Possible causes:")
-                        print(f"     1. Stripe webhook failed to process subscription.created")
-                        print(f"     2. user_subscriptions.status is not 'active' or 'trialing'")
-                        print(f"     3. user_subscriptions.current_period_end has expired")
-                        print(f"     4. Manual deletion from user_subscriptions table")
+                        logger.warning(f"🚨 DESYNC DETECTED:")
+                        logger.warning(f"   - Stripe Subscription ID in profiles: {stripe_sub_id}")
+                        logger.warning(f"   - Stripe Customer ID: {stripe_customer_id}")
+                        logger.warning(f"   - BUT no active subscription in user_subscriptions table!")
+                        logger.warning(f"   - This indicates a webhook failure or manual DB modification")
+                        logger.warning(f"Possible causes:")
+                        logger.warning(f"   1. Stripe webhook failed to process subscription.created")
+                        logger.warning(f"   2. user_subscriptions.status is not 'active' or 'trialing'")
+                        logger.warning(f"   3. user_subscriptions.current_period_end has expired")
+                        logger.warning(f"   4. Manual deletion from user_subscriptions table")
                     else:
-                        print(f"  ℹ️ No Stripe subscription IDs in profiles (user never subscribed)")
+                        logger.debug(f"ℹ️ No Stripe subscription IDs in profiles (user never subscribed)")
             except Exception as check_error:
-                print(f"  ⚠️ Failed to check profiles for Stripe IDs: {check_error}")
+                logger.error(f"⚠️ Failed to check profiles for Stripe IDs: {check_error}")
 
-            print(f"{'='*70}\n")
+            logger.debug("="*70)
 
         # Get quota status using Supabase RPC
         quota_response = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
@@ -256,19 +259,19 @@ async def get_current_user_info(
         }
 
         # 🔍 DEBUG: Log final response
-        print(f"\n{'='*70}")
-        print(f"[AUTH_ME DEBUG] 📤 FINAL RESPONSE to frontend:")
-        print(f"  - subscription.plan_name: {subscription_data.get('plan_name')}")
-        print(f"  - subscription.plan_display_name: {subscription_data.get('plan_display_name')}")
-        print(f"  - subscription.status: {subscription_data.get('status')}")
-        print(f"{'='*70}\n")
+        logger.debug("="*70)
+        logger.debug(f"[AUTH_ME DEBUG] 📤 FINAL RESPONSE to frontend:")
+        logger.debug(f"  - subscription.plan_name: {subscription_data.get('plan_name')}")
+        logger.debug(f"  - subscription.plan_display_name: {subscription_data.get('plan_display_name')}")
+        logger.debug(f"  - subscription.status: {subscription_data.get('status')}")
+        logger.debug("="*70)
 
         return response_data
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[AUTH_ME] Error: {e}")
+        logger.error(f"[AUTH_ME] Error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get user info: {str(e)}"

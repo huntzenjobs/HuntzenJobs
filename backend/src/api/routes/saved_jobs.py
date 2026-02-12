@@ -4,12 +4,15 @@ Saved Jobs API Routes
 Manage user's saved/bookmarked jobs.
 """
 
+import logging
 from typing import Optional, List
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel
 from supabase import create_client, Client
 
 from src.config.settings import get_settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
@@ -50,7 +53,7 @@ def get_user_id_from_header(authorization: Optional[str]) -> Optional[str]:
         if response and response.user:
             return response.user.id
     except Exception as e:
-        print(f"Error getting user ID: {e}")
+        logger.error(f"Error getting user ID: {e}")
 
     return None
 
@@ -87,7 +90,7 @@ async def get_saved_jobs(authorization: Optional[str] = Header(None)):
         return response.data or []
 
     except Exception as e:
-        print(f"Error fetching saved jobs: {e}")
+        logger.error(f"Error fetching saved jobs: {e}")
         # Return empty list on error (graceful degradation)
         return []
 
@@ -142,7 +145,7 @@ async def save_job(
         return {"message": "Job saved successfully"}
 
     except Exception as e:
-        print(f"Error saving job: {e}")
+        logger.error(f"Error saving job: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to save job"
@@ -186,7 +189,7 @@ async def unsave_job(
         return {"message": "Job removed from saved"}
 
     except Exception as e:
-        print(f"Error removing saved job: {e}")
+        logger.error(f"Error removing saved job: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to remove saved job"

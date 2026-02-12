@@ -6,11 +6,41 @@ Abstract base class for all job providers.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
+from functools import wraps
+from typing import Any, Callable
 
+import httpx
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+
+
+def handle_provider_errors(func: Callable) -> Callable:
+    """
+    Decorator to handle common provider errors (DRY pattern).
+
+    Catches:
+    - httpx.TimeoutException
+    - httpx.HTTPStatusError
+    - General exceptions
+
+    Returns empty list on error to allow graceful degradation.
+    """
+    @wraps(func)
+    async def wrapper(self, *args, **kwargs) -> list[dict[str, Any]]:
+        try:
+            return await func(self, *args, **kwargs)
+        except httpx.TimeoutException:
+            self.logger.warning(f"[{self.name}] Request timeout")
+            return []
+        except httpx.HTTPStatusError as e:
+            self.logger.error(f"[{self.name}] HTTP error: {e.response.status_code}")
+            return []
+        except Exception as e:
+            self.logger.error(f"[{self.name}] Error: {e}")
+            return []
+
+    return wrapper
 
 
 class JobListing(BaseModel):

@@ -4,6 +4,7 @@ CV Analysis API Routes
 Endpoints for AI-powered CV analysis.
 """
 
+import logging
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, status, Request, Header
 from typing import Optional
 import uuid
@@ -11,6 +12,8 @@ import uuid
 from src.api.deps import CVAgentDep, SupabaseClientDep, get_user_id_from_token
 from src.api.middleware import limiter
 from src.models.schemas import CVAnalysisRequest, CVAnalysisResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -135,7 +138,7 @@ async def analyze_cv_file(
         file_url = signed_url_response.get("signedURL", "")
     except Exception as e:
         # Log error but don't fail the request (graceful degradation)
-        print(f"⚠️ Storage upload failed: {e}")
+        logger.warning(f"⚠️ Storage upload failed: {e}")
         file_url = None
 
     # Extract text based on file type

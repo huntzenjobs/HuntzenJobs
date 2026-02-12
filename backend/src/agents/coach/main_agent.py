@@ -577,16 +577,19 @@ class CareerCoachAgent(BaseAgent):
         return self._parse_json_response(result) or {}
 
 
-# Singleton instance
-_coach_instance: Optional[CareerCoachAgent] = None
-
-
 def get_career_coach() -> CareerCoachAgent:
-    """Get or create the singleton CareerCoach instance."""
-    global _coach_instance
-    if _coach_instance is None:
-        _coach_instance = CareerCoachAgent()
-    return _coach_instance
+    """
+    Get CareerCoach singleton instance.
+
+    DEPRECATED: This function is maintained for backward compatibility only.
+    New code should use src.api.deps.get_coach_agent() instead, which provides
+    thread-safe singleton initialization.
+
+    Returns:
+        CareerCoachAgent singleton instance (thread-safe via deps.py)
+    """
+    from src.api.deps import get_coach_agent
+    return get_coach_agent()
 
 
 async def career_coach_chat(

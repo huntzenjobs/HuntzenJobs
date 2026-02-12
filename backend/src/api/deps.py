@@ -4,6 +4,9 @@ API Dependencies
 Dependency injection for FastAPI routes.
 """
 
+import logging
+import threading
+from collections import defaultdict
 from typing import Annotated, Generator, Optional
 
 from fastapi import Depends, Header, HTTPException, status
@@ -12,10 +15,14 @@ from supabase import create_client, Client
 from src.agents.coach import CareerCoachAgent
 from src.agents.job_scout.main_agent import JobScoutAgent
 from src.agents.job_scout.conversational_agent import JobScoutConversationalAgent
+from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
 from src.agents.cv_analyzer.conversational_agent import CVAnalyzerConversationalAgent
+from src.agents.cv_adapter.main_agent import CVAdapterAgent
 from src.agents.cv_adapter.conversational_agent import CVAdapterConversationalAgent
 from src.agents.interview_sim.conversational_agent import InterviewSimAgent
 from src.config.settings import Settings, get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def get_settings_dep() -> Settings:
@@ -26,15 +33,15 @@ def get_settings_dep() -> Settings:
 SettingsDep = Annotated[Settings, Depends(get_settings_dep)]
 
 
-# Session storage (in-memory for now)
-_sessions: dict[str, list[dict]] = {}
+# Session storage (in-memory for now) - Thread-safe
+_sessions_lock = threading.Lock()
+_sessions: dict[str, list[dict]] = defaultdict(list)
 
 
 def get_session_history(session_id: str) -> list[dict]:
-    """Get conversation history for a session."""
-    if session_id not in _sessions:
-        _sessions[session_id] = []
-    return _sessions[session_id]
+    """Get conversation history for a session (thread-safe)."""
+    with _sessions_lock:
+        return _sessions[session_id].copy()  # Return copy to avoid external mutation
 
 
 def update_session_history(
@@ -42,77 +49,152 @@ def update_session_history(
     user_message: str,
     assistant_response: str,
 ) -> None:
-    """Update conversation history."""
-    history = get_session_history(session_id)
-    history.append({"role": "user", "content": user_message})
-    history.append({"role": "assistant", "content": assistant_response})
-    
-    # Keep only last 10 exchanges
-    if len(history) > 20:
-        _sessions[session_id] = history[-20:]
+    """Update conversation history (thread-safe)."""
+    with _sessions_lock:
+        _sessions[session_id].append({"role": "user", "content": user_message})
+        _sessions[session_id].append({"role": "assistant", "content": assistant_response})
+
+        # Keep only last 10 exchanges (20 messages)
+        if len(_sessions[session_id]) > 20:
+            _sessions[session_id] = _sessions[session_id][-20:]
 
 
 def clear_session(session_id: str) -> None:
-    """Clear a session's history."""
-    if session_id in _sessions:
-        del _sessions[session_id]
+    """Clear a session's history (thread-safe)."""
+    with _sessions_lock:
+        if session_id in _sessions:
+            del _sessions[session_id]
 
 
-# Agent singletons
+# Agent singletons - Thread-safe initialization
 _coach_agent: CareerCoachAgent | None = None
-_scout_agent: JobScoutAgent | None = None  # Main agent for direct search
-_scout_conversational_agent: JobScoutConversationalAgent | None = None  # Chat agent
+_coach_agent_lock = threading.Lock()
+
+_scout_agent: JobScoutAgent | None = None
+_scout_agent_lock = threading.Lock()
+
+_scout_conversational_agent: JobScoutConversationalAgent | None = None
+_scout_conversational_agent_lock = threading.Lock()
+
 _cv_agent: CVAnalyzerConversationalAgent | None = None
+_cv_agent_lock = threading.Lock()
+
 _cv_adapter_agent: CVAdapterConversationalAgent | None = None
+_cv_adapter_agent_lock = threading.Lock()
+
 _interview_sim_agent: InterviewSimAgent | None = None
+_interview_sim_agent_lock = threading.Lock()
+
+# Main (non-conversational) agents
+_cv_analyzer_main_agent: CVAnalyzerAgent | None = None
+_cv_analyzer_main_lock = threading.Lock()
+
+_cv_adapter_main_agent: CVAdapterAgent | None = None
+_cv_adapter_main_lock = threading.Lock()
 
 
 def get_coach_agent() -> CareerCoachAgent:
-    """Get CareerCoach agent singleton."""
+    """Get CareerCoach agent singleton (thread-safe)."""
     global _coach_agent
-    if _coach_agent is None:
-        _coach_agent = CareerCoachAgent()
+
+    if _coach_agent is None:  # Fast path (no lock)
+        with _coach_agent_lock:
+            if _coach_agent is None:  # Double-check inside lock
+                _coach_agent = CareerCoachAgent()
+                logger.info("[deps] CareerCoachAgent singleton created")
+
     return _coach_agent
 
 
 def get_scout_agent() -> JobScoutAgent:
-    """Get JobScout main agent singleton (for direct job search)."""
+    """Get JobScout main agent singleton (for direct job search, thread-safe)."""
     global _scout_agent
-    if _scout_agent is None:
-        _scout_agent = JobScoutAgent()
+
+    if _scout_agent is None:  # Fast path (no lock)
+        with _scout_agent_lock:
+            if _scout_agent is None:  # Double-check inside lock
+                _scout_agent = JobScoutAgent()
+                logger.info("[deps] JobScoutAgent singleton created")
+
     return _scout_agent
 
 
 def get_scout_conversational_agent() -> JobScoutConversationalAgent:
-    """Get JobScout conversational agent singleton (for chat)."""
+    """Get JobScout conversational agent singleton (for chat, thread-safe)."""
     global _scout_conversational_agent
-    if _scout_conversational_agent is None:
-        _scout_conversational_agent = JobScoutConversationalAgent()
+
+    if _scout_conversational_agent is None:  # Fast path (no lock)
+        with _scout_conversational_agent_lock:
+            if _scout_conversational_agent is None:  # Double-check inside lock
+                _scout_conversational_agent = JobScoutConversationalAgent()
+                logger.info("[deps] JobScoutConversationalAgent singleton created")
+
     return _scout_conversational_agent
 
 
 def get_cv_agent() -> CVAnalyzerConversationalAgent:
-    """Get CVAnalyzer conversational agent singleton."""
+    """Get CVAnalyzer conversational agent singleton (thread-safe)."""
     global _cv_agent
-    if _cv_agent is None:
-        _cv_agent = CVAnalyzerConversationalAgent()
+
+    if _cv_agent is None:  # Fast path (no lock)
+        with _cv_agent_lock:
+            if _cv_agent is None:  # Double-check inside lock
+                _cv_agent = CVAnalyzerConversationalAgent()
+                logger.info("[deps] CVAnalyzerConversationalAgent singleton created")
+
     return _cv_agent
 
 
 def get_cv_adapter_agent() -> CVAdapterConversationalAgent:
-    """Get CV Adapter conversational agent singleton."""
+    """Get CV Adapter conversational agent singleton (thread-safe)."""
     global _cv_adapter_agent
-    if _cv_adapter_agent is None:
-        _cv_adapter_agent = CVAdapterConversationalAgent()
+
+    if _cv_adapter_agent is None:  # Fast path (no lock)
+        with _cv_adapter_agent_lock:
+            if _cv_adapter_agent is None:  # Double-check inside lock
+                _cv_adapter_agent = CVAdapterConversationalAgent()
+                logger.info("[deps] CVAdapterConversationalAgent singleton created")
+
     return _cv_adapter_agent
 
 
 def get_interview_sim_agent() -> InterviewSimAgent:
-    """Get Interview Simulation agent singleton."""
+    """Get Interview Simulation agent singleton (thread-safe)."""
     global _interview_sim_agent
-    if _interview_sim_agent is None:
-        _interview_sim_agent = InterviewSimAgent()
+
+    if _interview_sim_agent is None:  # Fast path (no lock)
+        with _interview_sim_agent_lock:
+            if _interview_sim_agent is None:  # Double-check inside lock
+                _interview_sim_agent = InterviewSimAgent()
+                logger.info("[deps] InterviewSimAgent singleton created")
+
     return _interview_sim_agent
+
+
+def get_cv_analyzer_main() -> CVAnalyzerAgent:
+    """Get CVAnalyzer main agent singleton (thread-safe)."""
+    global _cv_analyzer_main_agent
+
+    if _cv_analyzer_main_agent is None:  # Fast path (no lock)
+        with _cv_analyzer_main_lock:
+            if _cv_analyzer_main_agent is None:  # Double-check inside lock
+                _cv_analyzer_main_agent = CVAnalyzerAgent()
+                logger.info("[deps] CVAnalyzerAgent (main) singleton created")
+
+    return _cv_analyzer_main_agent
+
+
+def get_cv_adapter_main() -> CVAdapterAgent:
+    """Get CVAdapter main agent singleton (thread-safe)."""
+    global _cv_adapter_main_agent
+
+    if _cv_adapter_main_agent is None:  # Fast path (no lock)
+        with _cv_adapter_main_lock:
+            if _cv_adapter_main_agent is None:  # Double-check inside lock
+                _cv_adapter_main_agent = CVAdapterAgent()
+                logger.info("[deps] CVAdapterAgent (main) singleton created")
+
+    return _cv_adapter_main_agent
 
 
 CoachAgentDep = Annotated[CareerCoachAgent, Depends(get_coach_agent)]
@@ -122,14 +204,19 @@ CVAgentDep = Annotated[CVAnalyzerConversationalAgent, Depends(get_cv_agent)]
 CVAdapterAgentDep = Annotated[CVAdapterConversationalAgent, Depends(get_cv_adapter_agent)]
 InterviewSimAgentDep = Annotated[InterviewSimAgent, Depends(get_interview_sim_agent)]
 
+# Main (non-conversational) agent dependencies
+CVAnalyzerMainDep = Annotated[CVAnalyzerAgent, Depends(get_cv_analyzer_main)]
+CVAdapterMainDep = Annotated[CVAdapterAgent, Depends(get_cv_adapter_main)]
 
-# Supabase Client
+
+# Supabase Client - Thread-safe
 _supabase_client: Client | None = None
+_supabase_client_lock = threading.Lock()
 
 
 def get_supabase_client() -> Client:
     """
-    Get Supabase client singleton with service role key.
+    Get Supabase client singleton with service role key (thread-safe).
 
     Uses service role key for full database and storage access.
 
@@ -137,12 +224,17 @@ def get_supabase_client() -> Client:
         Supabase client instance
     """
     global _supabase_client
-    if _supabase_client is None:
-        settings = get_settings()
-        _supabase_client = create_client(
-            settings.supabase_url,
-            settings.get_supabase_service_role_key()
-        )
+
+    if _supabase_client is None:  # Fast path (no lock)
+        with _supabase_client_lock:
+            if _supabase_client is None:  # Double-check inside lock
+                settings = get_settings()
+                _supabase_client = create_client(
+                    settings.supabase_url,
+                    settings.get_supabase_service_role_key()
+                )
+                logger.info("[deps] Supabase client singleton created")
+
     return _supabase_client
 
 
@@ -173,7 +265,7 @@ def get_user_id_from_token(authorization: Optional[str]) -> Optional[str]:
             return response.user.id
     except Exception as e:
         # Log error but don't raise (graceful degradation)
-        print(f"⚠️ Error extracting user ID from token: {e}")
+        logger.warning(f"⚠️ Error extracting user ID from token: {e}")
 
     return None
 

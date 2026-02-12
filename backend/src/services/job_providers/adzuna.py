@@ -11,7 +11,7 @@ from typing import Any
 import httpx
 
 from src.config.settings import settings
-from src.services.job_providers.base import BaseJobProvider
+from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,8 @@ class AdzunaProvider(BaseJobProvider):
     }
     
     BASE_URL = "https://api.adzuna.com/v1/api/jobs"
-    
+
+    @handle_provider_errors
     async def search(
         self,
         query: str,
@@ -92,29 +93,18 @@ class AdzunaProvider(BaseJobProvider):
             }
             if contract_type.lower() in contract_map:
                 params["contract_type"] = contract_map[contract_type.lower()]
-        
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                data = response.json()
-            
-            jobs = []
-            for item in data.get("results", []):
-                jobs.append(self._normalize_adzuna_job(item))
-            
-            logger.info(f"[{self.name}] Found {len(jobs)} jobs for '{query}' in {cc}")
-            return jobs
-            
-        except httpx.TimeoutException:
-            logger.warning(f"[{self.name}] Request timeout")
-            return []
-        except httpx.HTTPStatusError as e:
-            logger.error(f"[{self.name}] HTTP error: {e.response.status_code}")
-            return []
-        except Exception as e:
-            logger.error(f"[{self.name}] Error: {e}")
-            return []
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+        jobs = []
+        for item in data.get("results", []):
+            jobs.append(self._normalize_adzuna_job(item))
+
+        logger.info(f"[{self.name}] Found {len(jobs)} jobs for '{query}' in {cc}")
+        return jobs
     
     def _normalize_adzuna_job(self, item: dict) -> dict[str, Any]:
         """Normalize Adzuna job response."""
