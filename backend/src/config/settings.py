@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     app_name: str = "HuntZen"
     app_version: str = "3.0.0"
     debug: bool = Field(default=False, description="Enable debug mode")
-    environment: Literal["development", "staging", "production"] = "development"
+    environment: Literal["development", "staging", "production", "test"] = "development"
     
     # --------------------------------------------------------------------------
     # Server
