@@ -1,80 +1,81 @@
-'use client'
+"use client";
 
 /**
  * Login Page - Modern Design
  * Email/Password + Google OAuth sign in
  */
 
-import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { useAuth } from '@/contexts/auth-context'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Mail, Lock as LockIcon } from 'lucide-react'
-import { AuthLayout } from '@/components/auth/auth-layout'
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Mail, Lock as LockIcon } from "lucide-react";
+import { AuthLayout } from "@/components/auth/auth-layout";
 
 // Separate component that uses useSearchParams (must be wrapped in Suspense)
 function LoginForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { user, signInWithGoogle, signInWithEmail, error, clearError } = useAuth()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, signInWithGoogle, signInWithEmail, error, clearError } =
+    useAuth();
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   // Check for success/error messages in URL
   useEffect(() => {
-    const msg = searchParams.get('message')
-    const err = searchParams.get('error')
+    const msg = searchParams.get("message");
+    const err = searchParams.get("error");
 
-    if (msg) setMessage(msg)
-    if (err) setMessage(err)
+    if (msg) setMessage(msg);
+    if (err) setMessage(err);
 
     // Auto-clear après 5s
     if (msg || err) {
       const timer = setTimeout(() => {
-        setMessage(null)
+        setMessage(null);
         // Nettoyer URL sans reload
-        window.history.replaceState({}, '', window.location.pathname)
-      }, 5000)
+        window.history.replaceState({}, "", window.location.pathname);
+      }, 5000);
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   const handleGoogleSignIn = async () => {
     try {
-      setLoading(true)
-      clearError()
-      await signInWithGoogle()
+      setLoading(true);
+      clearError();
+      await signInWithGoogle();
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      setLoading(true)
-      clearError()
-      await signInWithEmail(email, password)
+      setLoading(true);
+      clearError();
+      await signInWithEmail(email, password);
 
       // Reset form après succès
-      setEmail('')
-      setPassword('')
+      setEmail("");
+      setPassword("");
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <AuthLayout type="login">
+    <AuthLayout>
       <div className="space-y-8">
         {/* Header */}
         <div>
@@ -165,7 +166,9 @@ function LoginForm() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-gray-50 text-gray-500 font-medium">Ou avec email</span>
+            <span className="px-4 bg-gray-50 text-gray-500 font-medium">
+              Ou avec email
+            </span>
           </div>
         </div>
 
@@ -178,7 +181,10 @@ function LoginForm() {
           className="space-y-5"
         >
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700"
+            >
               Adresse email
             </Label>
             <div className="relative">
@@ -198,7 +204,10 @@ function LoginForm() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700"
+              >
                 Mot de passe
               </Label>
               <Link
@@ -235,7 +244,7 @@ function LoginForm() {
                 Connexion en cours...
               </>
             ) : (
-              'Se connecter'
+              "Se connecter"
             )}
           </Button>
         </motion.form>
@@ -247,8 +256,11 @@ function LoginForm() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="text-center text-sm text-gray-600"
         >
-          Pas encore de compte ?{' '}
-          <Link href="/signup" className="text-[#00D9FF] hover:text-[#00C4EA] font-semibold transition-colors">
+          Pas encore de compte ?{" "}
+          <Link
+            href="/signup"
+            className="text-[#00D9FF] hover:text-[#00C4EA] font-semibold transition-colors"
+          >
             Créer un compte gratuitement
           </Link>
         </motion.p>
@@ -260,18 +272,24 @@ function LoginForm() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="text-center text-xs text-gray-500 pt-4"
         >
-          En continuant, vous acceptez nos{' '}
-          <Link href="/terms" className="underline hover:text-gray-700 transition-colors">
+          En continuant, vous acceptez nos{" "}
+          <Link
+            href="/terms"
+            className="underline hover:text-gray-700 transition-colors"
+          >
             Conditions d'utilisation
-          </Link>{' '}
-          et notre{' '}
-          <Link href="/privacy" className="underline hover:text-gray-700 transition-colors">
+          </Link>{" "}
+          et notre{" "}
+          <Link
+            href="/privacy"
+            className="underline hover:text-gray-700 transition-colors"
+          >
             Politique de confidentialité
           </Link>
         </motion.p>
       </div>
     </AuthLayout>
-  )
+  );
 }
 
 // Main page component with Suspense boundary
@@ -286,5 +304,5 @@ export default function LoginPage() {
     >
       <LoginForm />
     </Suspense>
-  )
+  );
 }

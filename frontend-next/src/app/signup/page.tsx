@@ -1,94 +1,103 @@
-'use client'
+"use client";
 
 /**
  * Signup Page - Modern Design
  * Email/Password + Google OAuth registration
  */
 
-import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useAuth } from '@/contexts/auth-context'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle2, User, Mail, Lock as LockIcon, X } from 'lucide-react'
-import { AuthLayout } from '@/components/auth/auth-layout'
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Loader2,
+  CheckCircle2,
+  User,
+  Mail,
+  Lock as LockIcon,
+  X,
+} from "lucide-react";
+import { AuthLayout } from "@/components/auth/auth-layout";
 
 function SignupForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { user, signInWithGoogle, signUpWithEmail, error, clearError } = useAuth()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, signInWithGoogle, signUpWithEmail, error, clearError } =
+    useAuth();
 
   // Detect CV analysis redirect
-  const redirectTo = searchParams.get('redirectTo')
-  const message = searchParams.get('message')
-  const showCVMessage = redirectTo === '/cv-analysis' || message === 'auth_required'
+  const redirectTo = searchParams.get("redirectTo");
+  const message = searchParams.get("message");
+  const showCVMessage =
+    redirectTo === "/cv-analysis" || message === "auth_required";
 
   // Detect success state
-  const success = searchParams.get('success')
-  const emailFromUrl = searchParams.get('email')
-  const [showSuccessModal, setShowSuccessModal] = useState(success === 'true')
+  const success = searchParams.get("success");
+  const emailFromUrl = searchParams.get("email");
+  const [showSuccessModal, setShowSuccessModal] = useState(success === "true");
 
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [passwordError, setPasswordError] = useState('')
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
 
   // Close modal and clean URL
   const closeSuccessModal = () => {
-    setShowSuccessModal(false)
+    setShowSuccessModal(false);
     // Clean URL without reload
-    window.history.replaceState({}, '', '/signup')
-  }
+    window.history.replaceState({}, "", "/signup");
+  };
 
   const handleGoogleSignIn = async () => {
     try {
-      setLoading(true)
-      clearError()
-      await signInWithGoogle()
+      setLoading(true);
+      clearError();
+      await signInWithGoogle();
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Validate password match
     if (password !== confirmPassword) {
-      setPasswordError('Les mots de passe ne correspondent pas')
-      return
+      setPasswordError("Les mots de passe ne correspondent pas");
+      return;
     }
 
     // Validate password strength
     if (password.length < 6) {
-      setPasswordError('Le mot de passe doit contenir au moins 6 caractères')
-      return
+      setPasswordError("Le mot de passe doit contenir au moins 6 caractères");
+      return;
     }
 
     try {
-      setLoading(true)
-      setPasswordError('')
-      clearError()
-      await signUpWithEmail(email, password, fullName)
+      setLoading(true);
+      setPasswordError("");
+      clearError();
+      await signUpWithEmail(email, password, fullName);
 
       // Reset form après succès
-      setFullName('')
-      setEmail('')
-      setPassword('')
-      setConfirmPassword('')
+      setFullName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <AuthLayout type="signup">
+    <AuthLayout>
       {/* Success Modal */}
       <AnimatePresence>
         {showSuccessModal && (
@@ -139,7 +148,8 @@ function SignupForm() {
                 </div>
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
                   <p className="text-sm text-gray-700">
-                    <strong>Vérifiez votre boîte mail</strong> (et vos spams) pour confirmer votre adresse email avant de vous connecter.
+                    <strong>Vérifiez votre boîte mail</strong> (et vos spams)
+                    pour confirmer votre adresse email avant de vous connecter.
                   </p>
                 </div>
               </div>
@@ -162,7 +172,8 @@ function SignupForm() {
 
               {/* Help text */}
               <p className="text-xs text-center text-gray-500 mt-4">
-                Vous n'avez pas reçu l'email ? Attendez quelques minutes ou vérifiez vos spams.
+                Vous n'avez pas reçu l'email ? Attendez quelques minutes ou
+                vérifiez vos spams.
               </p>
             </motion.div>
           </motion.div>
@@ -187,9 +198,8 @@ function SignupForm() {
             className="text-gray-600"
           >
             {showCVMessage
-              ? 'Commencez votre analyse CV gratuitement'
-              : 'Rejoignez HuntZen et boostez votre carrière'
-            }
+              ? "Commencez votre analyse CV gratuitement"
+              : "Rejoignez HuntZen et boostez votre carrière"}
           </motion.p>
         </div>
 
@@ -208,19 +218,27 @@ function SignupForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span><strong>1 analyse CV gratuite</strong> par jour</span>
+                <span>
+                  <strong>1 analyse CV gratuite</strong> par jour
+                </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span><strong>Score ATS détaillé</strong></span>
+                <span>
+                  <strong>Score ATS détaillé</strong>
+                </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span><strong>Matching emploi</strong></span>
+                <span>
+                  <strong>Matching emploi</strong>
+                </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span><strong>Historique</strong> complet</span>
+                <span>
+                  <strong>Historique</strong> complet
+                </span>
               </div>
             </div>
           </motion.div>
@@ -295,7 +313,9 @@ function SignupForm() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-gray-50 text-gray-500 font-medium">Ou avec email</span>
+            <span className="px-4 bg-gray-50 text-gray-500 font-medium">
+              Ou avec email
+            </span>
           </div>
         </div>
 
@@ -308,7 +328,10 @@ function SignupForm() {
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="fullName"
+              className="text-sm font-medium text-gray-700"
+            >
               Nom complet
             </Label>
             <div className="relative">
@@ -327,7 +350,10 @@ function SignupForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700"
+            >
               Adresse email
             </Label>
             <div className="relative">
@@ -346,7 +372,10 @@ function SignupForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="password"
+              className="text-sm font-medium text-gray-700"
+            >
               Mot de passe
             </Label>
             <div className="relative">
@@ -366,7 +395,10 @@ function SignupForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="confirmPassword"
+              className="text-sm font-medium text-gray-700"
+            >
               Confirmer le mot de passe
             </Label>
             <div className="relative">
@@ -396,7 +428,7 @@ function SignupForm() {
                 Création en cours...
               </>
             ) : (
-              'Créer mon compte gratuitement'
+              "Créer mon compte gratuitement"
             )}
           </Button>
         </motion.form>
@@ -408,8 +440,11 @@ function SignupForm() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="text-center text-sm text-gray-600"
         >
-          Vous avez déjà un compte ?{' '}
-          <Link href="/login" className="text-[#00D9FF] hover:text-[#00C4EA] font-semibold transition-colors">
+          Vous avez déjà un compte ?{" "}
+          <Link
+            href="/login"
+            className="text-[#00D9FF] hover:text-[#00C4EA] font-semibold transition-colors"
+          >
             Se connecter
           </Link>
         </motion.p>
@@ -421,18 +456,24 @@ function SignupForm() {
           transition={{ duration: 0.5, delay: 0.6 }}
           className="text-center text-xs text-gray-500 pt-4"
         >
-          En créant un compte, vous acceptez nos{' '}
-          <Link href="/terms" className="underline hover:text-gray-700 transition-colors">
+          En créant un compte, vous acceptez nos{" "}
+          <Link
+            href="/terms"
+            className="underline hover:text-gray-700 transition-colors"
+          >
             Conditions d'utilisation
-          </Link>{' '}
-          et notre{' '}
-          <Link href="/privacy" className="underline hover:text-gray-700 transition-colors">
+          </Link>{" "}
+          et notre{" "}
+          <Link
+            href="/privacy"
+            className="underline hover:text-gray-700 transition-colors"
+          >
             Politique de confidentialité
           </Link>
         </motion.p>
       </div>
     </AuthLayout>
-  )
+  );
 }
 
 // Main page component with Suspense boundary
@@ -447,5 +488,5 @@ export default function SignupPage() {
     >
       <SignupForm />
     </Suspense>
-  )
+  );
 }
