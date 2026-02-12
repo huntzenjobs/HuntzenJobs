@@ -9,7 +9,9 @@ Architecture:
 - SubAgent: Lightweight agent for delegation
 """
 
+import json
 import logging
+import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -184,6 +186,50 @@ class BaseAgent(ABC):
         messages = self.build_messages(message, history)
         response = await self.llm.ainvoke(messages)
         return response.content
+    
+    def _parse_json(self, text: str) -> dict | None:
+        """
+        Parse JSON from LLM response text.
+        
+        Handles common issues like markdown code blocks and trailing text.
+        
+        Args:
+            text: Raw LLM response text
+            
+        Returns:
+            Parsed dict or None if parsing fails
+        """
+        if not text:
+            return None
+        
+        try:
+            # Try direct parse first
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+        
+        # Try to extract JSON from markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
+        if json_match:
+            try:
+                return json.loads(json_match.group(1))
+            except json.JSONDecodeError:
+                pass
+        
+        # Try to find JSON object in text
+        brace_match = re.search(r'\{[\s\S]*\}', text)
+        if brace_match:
+            try:
+                return json.loads(brace_match.group(0))
+            except json.JSONDecodeError:
+                pass
+        
+        logger.warning(f"[{self.name}] Failed to parse JSON from response")
+        return None
+    
+    def _parse_json_response(self, text: str) -> dict | None:
+        """Alias for _parse_json for backwards compatibility."""
+        return self._parse_json(text)
     
     @abstractmethod
     async def run(self, **kwargs: Any) -> dict[str, Any]:
