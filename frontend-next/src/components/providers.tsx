@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AssistantProvider } from '@/contexts/assistant-context'
+import { I18nProvider } from '@/contexts/i18n-context'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { initWebVitalsMonitoring } from '@/lib/performance/web-vitals'
 import type { User } from '@supabase/supabase-js'
@@ -37,19 +38,21 @@ export function Providers({
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider initialUser={initialUser}>
-          <AssistantProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-              <Toaster position="top-right" />
-            </ThemeProvider>
-          </AssistantProvider>
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider initialUser={initialUser}>
+            <AssistantProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+                <Toaster position="top-right" />
+              </ThemeProvider>
+            </AssistantProvider>
+          </AuthProvider>
+        </I18nProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   )

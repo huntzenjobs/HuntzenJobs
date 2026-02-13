@@ -1,6 +1,29 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Supported locales
+const SUPPORTED_LOCALES = ['fr', 'en', 'es', 'pt'] as const
+const DEFAULT_LOCALE = 'fr'
+
+// Country to language mapping (IP geolocation)
+const COUNTRY_TO_LANG: Record<string, string> = {
+  // French-speaking
+  FR: 'fr', BE: 'fr', LU: 'fr', CH: 'fr', MC: 'fr',
+  SN: 'fr', CI: 'fr', ML: 'fr', BF: 'fr', NE: 'fr',
+  CD: 'fr', CG: 'fr', MG: 'fr', CM: 'fr', TG: 'fr',
+  // English-speaking
+  GB: 'en', US: 'en', CA: 'en', AU: 'en', NZ: 'en',
+  IE: 'en', IN: 'en', ZA: 'en', NG: 'en', KE: 'en',
+  // Spanish-speaking
+  ES: 'es', MX: 'es', AR: 'es', CO: 'es', CL: 'es',
+  PE: 'es', VE: 'es', EC: 'es', GT: 'es', CU: 'es',
+  BO: 'es', DO: 'es', HN: 'es', PY: 'es', SV: 'es',
+  // Portuguese-speaking
+  BR: 'pt', PT: 'pt', AO: 'pt', MZ: 'pt', GW: 'pt',
+  // Morocco/MENA (French as default)
+  MA: 'fr', DZ: 'fr', TN: 'fr',
+}
+
 // Generate a client ID for freemium tracking
 function generateClientId(): string {
   return 'hzn_' + crypto.randomUUID().replace(/-/g, '')
@@ -45,6 +68,42 @@ export async function middleware(request: NextRequest) {
   if (!clientIdCookie) {
     const newClientId = generateClientId()
     supabaseResponse.cookies.set('huntzen_client_id', newClientId, {
+      path: '/',
+      maxAge: 365 * 24 * 60 * 60, // 1 year
+      sameSite: 'lax',
+    })
+  }
+
+  // ============================================================================
+  // Language Detection (IP-based with fallbacks)
+  // ============================================================================
+
+  // Check if locale already set (user preference takes priority)
+  const existingLocaleCookie = request.cookies.get('NEXT_LOCALE')
+
+  if (!existingLocaleCookie) {
+    let detectedLocale = DEFAULT_LOCALE
+
+    // Priority 1: IP Geolocation (Vercel Edge provides request.geo automatically)
+    const geo = request.geo
+    const countryCode = geo?.country // ISO country code (e.g., "FR", "US", "BR")
+
+    if (countryCode && COUNTRY_TO_LANG[countryCode]) {
+      detectedLocale = COUNTRY_TO_LANG[countryCode]
+    } else {
+      // Priority 2: Accept-Language header
+      const acceptLanguage = request.headers.get('accept-language')
+      if (acceptLanguage) {
+        // Parse "fr-FR,fr;q=0.9,en;q=0.8" → extract primary language
+        const primaryLang = acceptLanguage.split(',')[0].split('-')[0].toLowerCase()
+        if (SUPPORTED_LOCALES.includes(primaryLang as any)) {
+          detectedLocale = primaryLang
+        }
+      }
+    }
+
+    // Set locale cookie (1 year expiry)
+    supabaseResponse.cookies.set('NEXT_LOCALE', detectedLocale, {
       path: '/',
       maxAge: 365 * 24 * 60 * 60, // 1 year
       sameSite: 'lax',
