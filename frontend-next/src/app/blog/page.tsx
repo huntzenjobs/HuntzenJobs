@@ -45,7 +45,7 @@ const blogPosts = [
 
 export default function BlogPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header SEO optimisé */}
       <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,7 +75,7 @@ export default function BlogPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-200 dark:border-gray-700"
             >
               {/* Image placeholder */}
               <div className="h-48 bg-gradient-to-br from-[#00D9FF] to-blue-600 relative overflow-hidden">
@@ -90,7 +90,7 @@ export default function BlogPage() {
               {/* Content */}
               <div className="p-6">
                 {/* Meta */}
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     <span>
@@ -104,12 +104,12 @@ export default function BlogPage() {
                 </div>
 
                 {/* Title */}
-                <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#00D9FF] transition-colors">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-[#00D9FF] transition-colors">
                   {post.title}
                 </h2>
 
                 {/* Excerpt */}
-                <p className="text-gray-600 mb-4 line-clamp-3">
+                <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
                   {post.excerpt}
                 </p>
 
@@ -133,11 +133,11 @@ export default function BlogPage() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-16 text-center"
         >
-          <div className="inline-block bg-gradient-to-r from-[#00D9FF]/10 to-blue-500/10 rounded-2xl px-8 py-6">
-            <p className="text-gray-700 font-semibold mb-2">
+          <div className="inline-block bg-gradient-to-r from-[#00D9FF]/10 to-blue-500/10 dark:from-[#00D9FF]/20 dark:to-blue-500/20 rounded-2xl px-8 py-6 border border-[#00D9FF]/20 dark:border-[#00D9FF]/30">
+            <p className="text-gray-700 dark:text-gray-300 font-semibold mb-2">
               📚 Plus d'articles arrivent bientôt !
             </p>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Abonnez-vous pour ne rien manquer des conseils HuntZen Jobs
             </p>
           </div>

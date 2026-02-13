@@ -23,7 +23,7 @@ import {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,7 +46,7 @@ export default function AboutPage() {
       </div>
 
       {/* Qui est HuntZen Section */}
-      <div className="py-20 bg-white">
+      <div className="py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <motion.div
@@ -55,11 +55,11 @@ export default function AboutPage() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-4xl font-black text-gray-900 mb-8">
+              <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-8">
                 Qui est HuntZen ?
               </h2>
 
-              <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed space-y-6">
+              <div className="prose prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed space-y-6">
                 <p>
                   <strong>HuntZen Jobs</strong> est la plateforme de recherche
                   d'emploi nouvelle génération qui transforme la façon dont les
@@ -94,7 +94,7 @@ export default function AboutPage() {
       </div>
 
       {/* Pourquoi choisir HuntZen Section */}
-      <div className="py-20 bg-gradient-to-br from-gray-50 to-white">
+      <div className="py-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <motion.div
@@ -104,10 +104,10 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl font-black text-gray-900 mb-6">
+              <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-6">
                 Pourquoi choisir HuntZen Jobs ?
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
                 <strong>HuntZen Jobs</strong> vous offre bien plus qu'une simple
                 liste d'offres d'emploi. Découvrez nos 3 piliers qui font de{" "}
                 <strong>HuntZen</strong> la plateforme N°1.
@@ -121,15 +121,15 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
+                className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
               >
-                <div className="w-16 h-16 bg-[#00D9FF]/10 rounded-2xl flex items-center justify-center mb-6">
+                <div className="w-16 h-16 bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 rounded-2xl flex items-center justify-center mb-6">
                   <Target className="w-8 h-8 text-[#00D9FF]" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                   1. La plus grande base d'offres d'emploi
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   <strong>HuntZen Jobs</strong> agrège +100 000 offres d'emploi
                   en France depuis les plus grandes plateformes : Indeed,
                   LinkedIn, Pôle Emploi, APEC et bien d'autres. Avec{" "}
@@ -144,15 +144,15 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
+                className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
               >
-                <div className="w-16 h-16 bg-[#00D9FF]/10 rounded-2xl flex items-center justify-center mb-6">
+                <div className="w-16 h-16 bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 rounded-2xl flex items-center justify-center mb-6">
                   <Sparkles className="w-8 h-8 text-[#00D9FF]" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                   2. Analyse CV experte avec HuntZen
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Notre technologie <strong>HuntZen</strong> analyse votre CV en
                   profondeur et vous donne un score ATS précis. L'outil
                   d'analyse CV <strong>HuntZen Jobs</strong> identifie les
@@ -167,15 +167,15 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
                 viewport={{ once: true }}
-                className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
+                className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
               >
-                <div className="w-16 h-16 bg-[#00D9FF]/10 rounded-2xl flex items-center justify-center mb-6">
+                <div className="w-16 h-16 bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 rounded-2xl flex items-center justify-center mb-6">
                   <TrendingUp className="w-8 h-8 text-[#00D9FF]" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                   3. Coach IA HuntZen 24/7
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   L'assistant carrière <strong>HuntZen</strong> vous accompagne
                   à chaque étape : préparation d'entretien, négociation
                   salariale, optimisation LinkedIn. Avec{" "}
@@ -189,7 +189,7 @@ export default function AboutPage() {
       </div>
 
       {/* L'histoire de HuntZen Section */}
-      <div className="py-20 bg-white">
+      <div className="py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <motion.div
@@ -198,11 +198,11 @@ export default function AboutPage() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-4xl font-black text-gray-900 mb-8">
+              <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-8">
                 L'histoire de HuntZen Jobs
               </h2>
 
-              <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed space-y-6">
+              <div className="prose prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed space-y-6">
                 <p>
                   Fondée en 2024, <strong>HuntZen Jobs</strong> révolutionne le
                   marché de la recherche d'emploi en France. L'équipe{" "}
@@ -308,7 +308,7 @@ export default function AboutPage() {
       </div>
 
       {/* HuntZen vs autres plateformes */}
-      <div className="py-20 bg-white">
+      <div className="py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-5xl mx-auto">
             <motion.div
@@ -318,10 +318,10 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl font-black text-gray-900 mb-6">
+              <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-6">
                 HuntZen Jobs vs autres plateformes
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-gray-600 dark:text-gray-300">
                 Découvrez pourquoi <strong>HuntZen Jobs</strong> surpasse
                 Indeed, LinkedIn et les autres
               </p>
@@ -366,14 +366,14 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
-                  className="flex items-start gap-4 bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border border-gray-200"
+                  className="flex items-start gap-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 p-6 rounded-xl border border-gray-200 dark:border-gray-600"
                 >
                   <CheckCircle2 className="w-6 h-6 text-[#00D9FF] flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="font-bold text-gray-900 mb-2">
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-2">
                       {item.title}
                     </h3>
-                    <p className="text-gray-600 text-sm">{item.description}</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">{item.description}</p>
                   </div>
                 </motion.div>
               ))}

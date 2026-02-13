@@ -20,7 +20,7 @@ import { InternalLinksFooter } from '@/components/seo/internal-links'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <LandingHeader />
 
       {/* Hero Section with Background Image */}
@@ -139,7 +139,7 @@ export default function HomePage() {
       </section>
 
       {/* Nos Outils - Enhanced Section */}
-      <section className="py-12 sm:py-16 bg-white" id="features">
+      <section className="py-12 sm:py-16 bg-white dark:bg-gray-900" id="features">
         <div className="container mx-auto px-4 sm:px-6">
           {/* Section Header */}
           <div className="text-center mb-10 sm:mb-12">
@@ -147,7 +147,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold tracking-widest uppercase mb-4"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 text-[#00D9FF] text-xs font-bold tracking-widest uppercase mb-4"
             >
               <Sparkles className="w-3 h-3" />
               Tous nos outils
@@ -157,7 +157,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3"
             >
               Une plateforme complète pour réussir votre recherche d&apos;emploi
             </motion.h2>
@@ -166,7 +166,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base px-4"
+              className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-sm sm:text-base px-4"
             >
               Des outils pensés pour vous accompagner à chaque étape : de la recherche d&apos;offres à la négociation salariale
             </motion.p>
@@ -241,7 +241,7 @@ export default function HomePage() {
                 className="group"
               >
                 <Link href={tool.href} className="block h-full">
-                  <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 sm:p-6 hover:border-gray-200 hover:shadow-xl transition-all h-full flex flex-col">
+                  <div className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 sm:p-6 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-xl transition-all h-full flex flex-col">
                     <div
                       className="w-12 h-12 sm:w-14 sm:h-14 mb-3 sm:mb-4 flex items-center justify-center rounded-2xl transition-all"
                       style={{
@@ -253,10 +253,10 @@ export default function HomePage() {
                         style={{ color: tool.color }}
                       />
                     </div>
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2 leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
                       {tool.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed flex-grow">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed flex-grow">
                       {tool.description}
                     </p>
                     <div
@@ -274,14 +274,14 @@ export default function HomePage() {
       </section>
 
       {/* La recherche d'emploi aujourd'hui */}
-      <section className="py-12 sm:py-16 bg-gray-50">
+      <section className="py-12 sm:py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-10 sm:mb-12">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3"
             >
               Chercher un emploi ne devrait pas être un parcours du combattant
             </motion.h2>
@@ -325,17 +325,17 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-2xl p-5 sm:p-6 border-2 border-gray-100 hover:border-[#00D9FF]/30 hover:shadow-lg transition-all group"
+                className="bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-6 border-2 border-gray-100 dark:border-gray-700 hover:border-[#00D9FF]/30 hover:shadow-lg transition-all group"
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 flex items-center justify-center bg-[#00D9FF]/10 rounded-xl group-hover:bg-[#00D9FF]/20 transition-colors flex-shrink-0">
+                  <div className="w-10 h-10 flex items-center justify-center bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 rounded-xl group-hover:bg-[#00D9FF]/20 dark:group-hover:bg-[#00D9FF]/30 transition-colors flex-shrink-0">
                     <item.icon className="w-5 h-5 text-[#00D9FF]" />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-[#00D9FF]">
                     {item.title}
                   </h3>
                 </div>
-                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed">
+                <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed">
                   {item.description}
                 </p>
               </motion.div>
@@ -345,14 +345,14 @@ export default function HomePage() {
       </section>
 
       {/* Votre allié carrière */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12 sm:mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3"
+              className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3"
             >
               Votre <span className="text-[#00D9FF]">allié carrière</span> au quotidien
             </motion.h2>
@@ -361,7 +361,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto"
+              className="text-gray-600 dark:text-gray-300 text-base sm:text-lg max-w-2xl mx-auto"
             >
               Des outils puissants et un accompagnement personnalisé pour transformer votre recherche d&apos;emploi
             </motion.p>
@@ -377,10 +377,10 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
                   <span className="text-[#00D9FF]">Analyse experte</span> et optimisation de votre CV
                 </h3>
-                <p className="text-gray-700 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
+                <p className="text-gray-700 dark:text-gray-300 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
                   Bénéficiez d&apos;une analyse approfondie de votre profil pour identifier précisément vos atouts
                   et les compétences recherchées par le marché. Recevez des recommandations concrètes
                   pour maximiser vos chances.
@@ -393,7 +393,7 @@ export default function HomePage() {
                   ].map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm sm:text-base">{item}</span>
+                      <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -464,7 +464,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section - UPDATED */}
-      <section className="py-12 sm:py-16 bg-gray-50">
+      <section className="py-12 sm:py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -472,10 +472,10 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-10 sm:mb-12"
           >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
               Ils nous font confiance
             </h2>
-            <p className="text-gray-600 text-sm sm:text-base">Des milliers de candidats ont déjà trouvé leur voie avec HuntZen</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Des milliers de candidats ont déjà trouvé leur voie avec HuntZen</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
@@ -490,10 +490,10 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="text-center bg-white rounded-2xl p-6 sm:p-8 border-2 border-gray-100 hover:border-[#00D9FF]/30 hover:shadow-lg transition-all group"
+                className="text-center bg-white dark:bg-gray-700 rounded-2xl p-6 sm:p-8 border-2 border-gray-100 dark:border-gray-600 hover:border-[#00D9FF]/30 hover:shadow-lg transition-all group"
               >
                 <div className="flex justify-center mb-4">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-[#00D9FF]/10 rounded-2xl group-hover:bg-[#00D9FF]/20 transition-colors">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 rounded-2xl group-hover:bg-[#00D9FF]/20 dark:group-hover:bg-[#00D9FF]/30 transition-colors">
                     <stat.icon className="w-6 h-6 sm:w-7 sm:h-7 text-[#00D9FF]" />
                   </div>
                 </div>
@@ -503,7 +503,7 @@ export default function HomePage() {
                 >
                   {stat.value}
                 </div>
-                <div className="text-gray-600 font-medium text-sm sm:text-base">{stat.label}</div>
+                <div className="text-gray-600 dark:text-gray-300 font-medium text-sm sm:text-base">{stat.label}</div>
               </motion.div>
             ))}
           </div>
@@ -511,14 +511,14 @@ export default function HomePage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-10 sm:mb-12">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3"
             >
               Choisissez le plan qui vous correspond
             </motion.h2>
@@ -527,7 +527,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto"
+              className="text-gray-600 dark:text-gray-300 text-sm sm:text-base max-w-2xl mx-auto"
             >
               Commencez gratuitement et évoluez vers le plan adapté à vos besoins
             </motion.p>
@@ -613,8 +613,8 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`bg-white rounded-2xl p-5 sm:p-6 border-2 ${
-                  plan.popular ? 'border-[#00D9FF] shadow-xl lg:scale-105' : 'border-gray-200'
+                className={`bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-6 border-2 ${
+                  plan.popular ? 'border-[#00D9FF] shadow-xl lg:scale-105' : 'border-gray-200 dark:border-gray-700'
                 } hover:shadow-lg transition-all relative flex flex-col h-full`}
               >
                 {plan.popular && (
@@ -624,7 +624,7 @@ export default function HomePage() {
                 )}
 
                 <div className="text-center mb-6">
-                  <div className="text-gray-600 font-bold text-xs sm:text-sm mb-2">{plan.name}</div>
+                  <div className="text-gray-600 dark:text-gray-400 font-bold text-xs sm:text-sm mb-2">{plan.name}</div>
                   <div className="flex items-baseline justify-center gap-1">
                     <span
                       className="text-4xl sm:text-5xl font-black"
@@ -632,7 +632,7 @@ export default function HomePage() {
                     >
                       {plan.price}
                     </span>
-                    <span className="text-gray-500 text-xs sm:text-sm">{plan.period}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{plan.period}</span>
                   </div>
                 </div>
 
@@ -640,11 +640,11 @@ export default function HomePage() {
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm">
                       <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: plan.color }} />
-                      <span className="text-gray-700">{feature}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
                     </li>
                   ))}
                   {plan.unavailable.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-gray-400">
+                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </li>

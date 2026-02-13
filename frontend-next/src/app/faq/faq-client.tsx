@@ -150,7 +150,7 @@ export function FAQClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -171,13 +171,13 @@ export function FAQClient() {
 
             {/* Search bar */}
             <div className="max-w-2xl mx-auto relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Rechercher une question sur HuntZen Jobs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-2xl text-white placeholder-white/60 focus:outline-none focus:border-[#00D9FF] transition-all"
+                className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 dark:border-white/30 rounded-2xl text-white placeholder-white/60 focus:outline-none focus:border-[#00D9FF] transition-all"
               />
             </div>
           </motion.div>
@@ -197,7 +197,7 @@ export function FAQClient() {
                   transition={{ duration: 0.5, delay: categoryIndex * 0.1 }}
                 >
                   {/* Catégorie titre */}
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
                     <div className="w-2 h-8 bg-[#00D9FF] rounded-full" />
                     {category.category}
                   </h2>
@@ -217,7 +217,7 @@ export function FAQClient() {
                             duration: 0.3,
                             delay: questionIndex * 0.05,
                           }}
-                          className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden"
+                          className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden border border-gray-200 dark:border-gray-700"
                         >
                           {/* Question */}
                           <button
@@ -226,7 +226,7 @@ export function FAQClient() {
                             }
                             className="w-full px-6 py-5 flex items-center justify-between gap-4 text-left group"
                           >
-                            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-[#00D9FF] transition-colors flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#00D9FF] transition-colors flex-1">
                               {item.q}
                             </h3>
                             <motion.div
@@ -235,7 +235,7 @@ export function FAQClient() {
                               className="flex-shrink-0"
                             >
                               <ChevronDown
-                                className={`w-6 h-6 ${isOpen ? "text-[#00D9FF]" : "text-gray-400"} transition-colors`}
+                                className={`w-6 h-6 ${isOpen ? "text-[#00D9FF]" : "text-gray-400 dark:text-gray-500"} transition-colors`}
                               />
                             </motion.div>
                           </button>
@@ -250,8 +250,8 @@ export function FAQClient() {
                                 transition={{ duration: 0.3 }}
                                 className="overflow-hidden"
                               >
-                                <div className="px-6 pb-5 pt-2 border-t border-gray-100">
-                                  <p className="text-gray-700 leading-relaxed">
+                                <div className="px-6 pb-5 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                                     {item.a}
                                   </p>
                                 </div>
@@ -271,13 +271,13 @@ export function FAQClient() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
-                <Search className="w-10 h-10 text-gray-400" />
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full mb-6">
+                <Search className="w-10 h-10 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                 Aucune question trouvée
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Essayez un autre mot-clé ou contactez notre support
               </p>
               <Link

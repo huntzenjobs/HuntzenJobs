@@ -70,7 +70,7 @@ export function TestimonialsClient({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -118,28 +118,28 @@ export function TestimonialsClient({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="bg-white rounded-2xl shadow-xl p-6 max-w-5xl mx-auto"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 max-w-5xl mx-auto border border-gray-200 dark:border-gray-700"
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Rechercher un témoignage..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
 
             {/* Tag filter */}
             <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <select
                 value={selectedTag || ""}
                 onChange={(e) => setSelectedTag(e.target.value || null)}
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all appearance-none bg-white"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">Tous les métiers</option>
                 {allTags.map((tag) => (
@@ -152,7 +152,7 @@ export function TestimonialsClient({
 
             {/* Rating filter */}
             <div className="relative">
-              <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Star className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <select
                 value={selectedRating || ""}
                 onChange={(e) =>
@@ -160,7 +160,7 @@ export function TestimonialsClient({
                     e.target.value ? parseInt(e.target.value) : null,
                   )
                 }
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all appearance-none bg-white"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">Toutes les notes</option>
                 <option value="5">5 étoiles</option>
@@ -215,7 +215,7 @@ export function TestimonialsClient({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.05 }}
-                  className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6"
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 border border-gray-200 dark:border-gray-700"
                 >
                   {/* Header */}
                   <div className="flex items-start gap-4 mb-4">
@@ -226,13 +226,13 @@ export function TestimonialsClient({
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 truncate">
+                      <h3 className="font-bold text-gray-900 dark:text-white truncate">
                         {testimonial.name}
                       </h3>
-                      <p className="text-sm text-gray-600 truncate">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                         {testimonial.role}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {testimonial.location}
                       </p>
                     </div>
@@ -241,18 +241,18 @@ export function TestimonialsClient({
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-3">
                     {renderStars(testimonial.rating)}
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {new Date(testimonial.date).toLocaleDateString("fr-FR")}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h4 className="font-bold text-gray-900 mb-2 line-clamp-2">
+                  <h4 className="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
                     {testimonial.title}
                   </h4>
 
                   {/* Content */}
-                  <p className="text-gray-700 text-sm leading-relaxed mb-4 line-clamp-4">
+                  <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-4 line-clamp-4">
                     {testimonial.content}
                   </p>
 
@@ -261,13 +261,13 @@ export function TestimonialsClient({
                     {testimonial.tags.slice(0, 2).map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium"
+                        className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium"
                       >
                         {tag}
                       </span>
                     ))}
                     {testimonial.tags.length > 2 && (
-                      <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs">
+                      <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-xs">
                         +{testimonial.tags.length - 2}
                       </span>
                     )}
@@ -291,7 +291,7 @@ export function TestimonialsClient({
                   Voir plus de témoignages
                   <ChevronDown className="w-5 h-5" />
                 </button>
-                <p className="text-gray-600 mt-4">
+                <p className="text-gray-600 dark:text-gray-300 mt-4">
                   {displayCount} sur {filteredTestimonials.length} témoignages
                   affichés
                 </p>
@@ -304,13 +304,13 @@ export function TestimonialsClient({
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-16"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
-              <Search className="w-10 h-10 text-gray-400" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full mb-6">
+              <Search className="w-10 h-10 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
               Aucun témoignage trouvé
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Essayez d'autres critères de recherche
             </p>
             <button

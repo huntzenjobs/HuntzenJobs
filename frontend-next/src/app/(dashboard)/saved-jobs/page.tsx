@@ -172,7 +172,7 @@ export default function SavedJobsPage() {
             placeholder="Rechercher dans mes favoris..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 h-12 text-base border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+            className="pl-12 text-base border-gray-300 dark:border-gray-600 focus:border-[#00D9FF] focus:ring-[#00D9FF] dark:bg-gray-700 dark:text-white"
           />
         </div>
       </motion.div>

@@ -246,7 +246,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <LandingHeader />
 
       {/* Hero Section */}
@@ -331,10 +331,10 @@ export default function PricingPage() {
       </section>
 
       {/* Billing Toggle */}
-      <section className="py-8 bg-white">
+      <section className="py-8 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <span className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === 'monthly' ? 'text-gray-900' : 'text-gray-400'}`}>
+            <span className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === 'monthly' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}`}>
               Mensuel
             </span>
             <button
@@ -352,7 +352,7 @@ export default function PricingPage() {
                 }}
               />
             </button>
-            <span className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === 'yearly' ? 'text-gray-900' : 'text-gray-400'}`}>
+            <span className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === 'yearly' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}`}>
               Annuel
             </span>
             {billingPeriod === 'yearly' && (
@@ -369,7 +369,7 @@ export default function PricingPage() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="py-12 sm:py-16 bg-white">
+      <section className="py-12 sm:py-16 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
             {plans.map((plan, index) => (
@@ -379,10 +379,10 @@ export default function PricingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`relative rounded-3xl border-2 p-6 sm:p-8 bg-white transition-all hover:shadow-2xl flex flex-col h-full ${
+                className={`relative rounded-3xl border-2 p-6 sm:p-8 bg-white dark:bg-gray-800 transition-all hover:shadow-2xl flex flex-col h-full ${
                   plan.popular
                     ? 'border-[#00D9FF] shadow-2xl lg:scale-105'
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 {/* Popular badge */}
@@ -405,14 +405,14 @@ export default function PricingPage() {
                   >
                     <plan.icon className="w-7 h-7 sm:w-8 sm:h-8" style={{ color: plan.color }} />
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-black mb-2">{plan.name}</h3>
+                  <h3 className="text-2xl sm:text-3xl font-black mb-2 text-gray-900 dark:text-white">{plan.name}</h3>
                   {!plan.popular && (
-                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide">{plan.tagline}</p>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{plan.tagline}</p>
                   )}
                 </div>
 
                 {/* Price */}
-                <div className="text-center mb-6 py-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100">
+                <div className="text-center mb-6 py-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
                   {plan.id !== 'free' && billingPeriod === 'yearly' && (
                     <div className="mb-2">
                       <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
@@ -422,30 +422,30 @@ export default function PricingPage() {
                   )}
                   <div className="flex items-baseline justify-center gap-1">
                     {plan.id === 'free' ? (
-                      <span className="text-4xl sm:text-5xl font-black text-gray-900">
+                      <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">
                         Gratuit
                       </span>
                     ) : (
                       <>
-                        <span className="text-4xl sm:text-5xl font-black text-gray-900">
+                        <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">
                           {billingPeriod === 'monthly' ? plan.priceMonthly : getMonthlyEquivalent(plan.priceYearly)}€
                         </span>
-                        <span className="text-lg text-gray-600 font-semibold">/mois</span>
+                        <span className="text-lg text-gray-600 dark:text-gray-300 font-semibold">/mois</span>
                       </>
                     )}
                   </div>
                   {plan.id !== 'free' && billingPeriod === 'yearly' && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {plan.priceYearly}€ facturé annuellement
                     </p>
                   )}
                   {plan.id !== 'free' && billingPeriod === 'monthly' && (
-                    <p className="text-sm text-gray-600 mt-1 font-medium">Sans engagement</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 font-medium">Sans engagement</p>
                   )}
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed">
+                <p className="text-sm text-gray-600 dark:text-gray-300 text-center mb-6 leading-relaxed">
                   {plan.description}
                 </p>
 
@@ -461,7 +461,7 @@ export default function PricingPage() {
                       >
                         <feature.icon className="w-4 h-4" style={{ color: plan.color }} />
                       </div>
-                      <span className="text-sm text-gray-700 font-medium leading-relaxed pt-1">
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-medium leading-relaxed pt-1">
                         {feature.name}
                       </span>
                     </li>
@@ -505,14 +505,14 @@ export default function PricingPage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900"
+              className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
             >
               Ils ont transformé leur recherche d&apos;emploi
             </motion.h2>
@@ -521,7 +521,7 @@ export default function PricingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto"
+              className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
             >
               Découvrez comment HuntZen a aidé des milliers de professionnels
             </motion.p>
@@ -535,18 +535,18 @@ export default function PricingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+                className="bg-white dark:bg-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
               >
                 <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-4 leading-relaxed">&ldquo;{testimonial.content}&rdquo;</p>
+                <p className="text-gray-700 dark:text-gray-200 mb-4 leading-relaxed">&ldquo;{testimonial.content}&rdquo;</p>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-gray-900">{testimonial.name}</p>
-                    <p className="text-sm text-gray-600">{testimonial.role}</p>
+                    <p className="font-bold text-gray-900 dark:text-white">{testimonial.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{testimonial.role}</p>
                   </div>
                   <span className="px-3 py-1 bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold rounded-full">
                     {testimonial.plan}
@@ -559,14 +559,14 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900"
+              className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
             >
               Questions fréquentes
             </motion.h2>
@@ -575,7 +575,7 @@ export default function PricingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto"
+              className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
             >
               Tout ce que vous devez savoir sur nos abonnements
             </motion.p>
@@ -589,15 +589,15 @@ export default function PricingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-gray-50 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
+                className="bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <button
                   onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                   className="w-full px-6 py-5 flex items-center justify-between text-left"
                 >
-                  <h3 className="font-bold text-base sm:text-lg text-gray-900 pr-4">{faq.question}</h3>
+                  <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white pr-4">{faq.question}</h3>
                   <ChevronDown
-                    className={`w-5 h-5 text-gray-600 flex-shrink-0 transition-transform ${
+                    className={`w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0 transition-transform ${
                       expandedFaq === index ? 'rotate-180' : ''
                     }`}
                   />
@@ -609,7 +609,7 @@ export default function PricingPage() {
                     exit={{ opacity: 0, height: 0 }}
                     className="px-6 pb-5"
                   >
-                    <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{faq.answer}</p>
                   </motion.div>
                 )}
               </motion.div>
@@ -617,8 +617,8 @@ export default function PricingPage() {
           </div>
 
           <div className="text-center mt-12">
-            <p className="text-gray-600 mb-4">Vous avez d&apos;autres questions ?</p>
-            <Button variant="outline" size="lg" className="rounded-xl border-2 hover:bg-gray-50">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Vous avez d&apos;autres questions ?</p>
+            <Button variant="outline" size="lg" className="rounded-xl border-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
               Contactez notre support
             </Button>
           </div>

@@ -49,11 +49,56 @@ export default function RecruiterContactPage() {
     message: '',
     preferredDate: '',
   })
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  // Validation functions
+  const validateField = (field: string, value: string): string => {
+    switch (field) {
+      case 'fullName':
+        if (!value.trim()) return 'Le nom complet est requis'
+        if (value.trim().length < 2) return 'Le nom doit contenir au moins 2 caractères'
+        return ''
+      case 'email':
+        if (!value.trim()) return 'L\'email est requis'
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(value)) return 'Format d\'email invalide'
+        return ''
+      case 'phone':
+        if (value && !/^[\d\s+()-]+$/.test(value)) return 'Format de téléphone invalide'
+        return ''
+      case 'sector':
+        if (!value) return 'Le secteur d\'activité est requis'
+        return ''
+      case 'experienceLevel':
+        if (!value) return 'Le niveau d\'expérience est requis'
+        return ''
+      case 'message':
+        if (!value.trim()) return 'Le message est requis'
+        if (value.trim().length < 10) return 'Le message doit contenir au moins 10 caractères'
+        return ''
+      default:
+        return ''
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) {
       router.push('/login?redirectTo=' + encodeURIComponent('/recruiter-contact'))
+      return
+    }
+
+    // Validate all fields before submit
+    const newErrors: Record<string, string> = {}
+    Object.keys(formData).forEach((field) => {
+      const error = validateField(field, formData[field as keyof typeof formData])
+      if (error) newErrors[field] = error
+    })
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      setTouched(Object.keys(formData).reduce((acc, key) => ({ ...acc, [key]: true }), {}))
       return
     }
 
@@ -78,6 +123,16 @@ export default function RecruiterContactPage() {
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }))
+    }
+  }
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+    const error = validateField(field, formData[field as keyof typeof formData])
+    setErrors((prev) => ({ ...prev, [field]: error }))
   }
 
   return (
@@ -259,50 +314,72 @@ export default function RecruiterContactPage() {
                     placeholder="Jean Dupont"
                     value={formData.fullName}
                     onChange={(e) => handleChange('fullName', e.target.value)}
+                    onBlur={() => handleBlur('fullName')}
                     required
-                    className="border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+                    className={`border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.fullName && errors.fullName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    aria-invalid={touched.fullName && !!errors.fullName}
                   />
+                  {touched.fullName && errors.fullName && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.fullName}</p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="email">Email *</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500" />
                     <Input
                       id="email"
                       type="email"
                       placeholder="jean.dupont@example.com"
-                      className="pl-10 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+                      className={`pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.email && errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       value={formData.email}
                       onChange={(e) => handleChange('email', e.target.value)}
+                      onBlur={() => handleBlur('email')}
                       required
+                      aria-invalid={touched.email && !!errors.email}
                     />
                   </div>
+                  {touched.email && errors.email && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.email}</p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="phone">Téléphone</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                    <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500" />
                     <Input
                       id="phone"
                       type="tel"
                       placeholder="+33 6 12 34 56 78"
-                      className="pl-10 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+                      className={`pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.phone && errors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                       value={formData.phone}
                       onChange={(e) => handleChange('phone', e.target.value)}
+                      onBlur={() => handleBlur('phone')}
+                      aria-invalid={touched.phone && !!errors.phone}
                     />
                   </div>
+                  {touched.phone && errors.phone && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.phone}</p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="sector">Secteur d'activité *</Label>
                   <Select
                     value={formData.sector}
-                    onValueChange={(value) => handleChange('sector', value)}
+                    onValueChange={(value) => {
+                      handleChange('sector', value)
+                      handleBlur('sector')
+                    }}
                     required
                   >
-                    <SelectTrigger id="sector">
+                    <SelectTrigger
+                      id="sector"
+                      className={`${touched.sector && errors.sector ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                      aria-invalid={touched.sector && !!errors.sector}
+                    >
                       <SelectValue placeholder="Sélectionnez votre secteur" />
                     </SelectTrigger>
                     <SelectContent>
@@ -317,16 +394,26 @@ export default function RecruiterContactPage() {
                       <SelectItem value="other">Autre</SelectItem>
                     </SelectContent>
                   </Select>
+                  {touched.sector && errors.sector && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.sector}</p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="experienceLevel">Niveau d'expérience *</Label>
                   <Select
                     value={formData.experienceLevel}
-                    onValueChange={(value) => handleChange('experienceLevel', value)}
+                    onValueChange={(value) => {
+                      handleChange('experienceLevel', value)
+                      handleBlur('experienceLevel')
+                    }}
                     required
                   >
-                    <SelectTrigger id="experienceLevel">
+                    <SelectTrigger
+                      id="experienceLevel"
+                      className={`${touched.experienceLevel && errors.experienceLevel ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                      aria-invalid={touched.experienceLevel && !!errors.experienceLevel}
+                    >
                       <SelectValue placeholder="Sélectionnez votre niveau" />
                     </SelectTrigger>
                     <SelectContent>
@@ -338,6 +425,9 @@ export default function RecruiterContactPage() {
                       <SelectItem value="executive">Executive / C-level</SelectItem>
                     </SelectContent>
                   </Select>
+                  {touched.experienceLevel && errors.experienceLevel && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.experienceLevel}</p>
+                  )}
                 </div>
 
                 <div>
@@ -363,9 +453,14 @@ export default function RecruiterContactPage() {
                     rows={4}
                     value={formData.message}
                     onChange={(e) => handleChange('message', e.target.value)}
+                    onBlur={() => handleBlur('message')}
                     required
-                    className="border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+                    className={`border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.message && errors.message ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    aria-invalid={touched.message && !!errors.message}
                   />
+                  {touched.message && errors.message && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.message}</p>
+                  )}
                 </div>
               </div>
 

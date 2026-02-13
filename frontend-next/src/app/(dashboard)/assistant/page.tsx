@@ -88,8 +88,8 @@ export default function AssistantPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Warning threshold (1 minute)
-  const isTimeWarning = isFreePlan && coachTimeRemaining <= 60 && coachTimeRemaining > 0
+  // Warning threshold (3 minutes)
+  const isTimeWarning = isFreePlan && coachTimeRemaining <= 180 && coachTimeRemaining > 0
 
   // Removed auto-scroll for better UX - user controls scrolling manually
 
@@ -372,7 +372,7 @@ export default function AssistantPage() {
               >
                 <AlertTriangle className="w-4 h-4" />
                 <span className="text-sm font-medium">
-                  Il vous reste moins d&apos;une minute ! Passez Premium pour un temps illimité.
+                  Il vous reste moins de 3 minutes ! Passez Premium pour un temps illimité.
                 </span>
                 <Button
                   size="sm"
