@@ -1,15 +1,10 @@
-import { Metadata } from "next";
-import { aboutMetadata } from "@/lib/seo/metadata";
-
-export const metadata: Metadata = aboutMetadata;
+"use client";
 
 /**
  * Page À Propos HuntZen Jobs - CRITIQUE pour SEO
  * Optimisée pour dominer les recherches "huntzen" et "huntzenjobs"
  * Contenu: 1700+ mots avec densité mot-clé "huntzen" 2-3%
  */
-
-("use client");
 
 import { motion } from "framer-motion";
 import Link from "next/link";
