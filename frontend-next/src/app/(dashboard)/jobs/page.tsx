@@ -1112,10 +1112,22 @@ export default function JobsPage() {
       {/* Placeholder avant première recherche - NOUVEAU */}
       {!searchMutation.isPending && !searchMutation.isSuccess && jobs.length === 0 && (
         <JobsPlaceholder
-          onSearchClick={(jobTitle) => {
-            // TODO: Trigger search with popular job title
-            // This would require access to the search form state
-            console.log('Search for:', jobTitle)
+          onSearchClick={(popularJobTitle) => {
+            // Set job title and trigger search
+            setJobTitle(popularJobTitle)
+
+            // Search in France by default if no country selected
+            const searchCountry = selectedCountry || 'FR'
+            if (!selectedCountry) {
+              setSelectedCountry('FR')
+            }
+
+            // Trigger search
+            handleSearch({
+              query: popularJobTitle,
+              country: searchCountry,
+              location: selectedCity,
+            })
           }}
         />
       )}

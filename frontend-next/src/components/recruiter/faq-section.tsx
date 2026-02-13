@@ -29,7 +29,7 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section className="mb-16">
+    <section className="mb-20 pb-8">
       <div className="text-center mb-12">
         <HelpCircle className="w-12 h-12 text-huntzen-blue mx-auto mb-4" />
         <h2 className="text-3xl font-bold">Questions fréquentes</h2>

@@ -228,7 +228,7 @@ export default function AssistantPage() {
   const showWelcome = messages.length === 0
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)]">
+    <div className="flex flex-col min-h-screen">
       {/* Hero Header - HuntZen Style (Adapté dark mode) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -358,9 +358,9 @@ export default function AssistantPage() {
         </motion.div>
       </motion.div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         {/* Chat Section - Full width */}
-        <Card className="w-full flex flex-col overflow-hidden shadow-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <Card className="w-full flex flex-col shadow-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           {/* Time warning banner */}
           <AnimatePresence>
             {isTimeWarning && (
@@ -386,7 +386,7 @@ export default function AssistantPage() {
             )}
           </AnimatePresence>
 
-          <CardContent className="flex-1 overflow-y-auto p-6 space-y-4">
+          <CardContent className="p-6 space-y-4">
             {/* Welcome screen - Always visible but compact when there are messages */}
             {showWelcome ? (
               <motion.div
@@ -501,7 +501,9 @@ export default function AssistantPage() {
                     minHeight={44}
                     maxHeight={120}
                     onKeyDown={(e) => {
-                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                      // Entrée simple = envoyer message
+                      // Shift+Entrée = nouvelle ligne (comportement natif)
+                      if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault()
                         if (input.trim() && !loading) {
                           sendMessage(input)
