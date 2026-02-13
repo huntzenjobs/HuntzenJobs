@@ -660,11 +660,7 @@ export default function JobsPage() {
                     }
                   }}
                   onFocus={() => setShowCountrySuggestions(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setShowCountrySuggestions(false)
-                    }
-                  }}
+                  onKeyDown={handleCountryKeyDown}
                   autoComplete="off"
                   role="combobox"
                   aria-autocomplete="list"
@@ -675,7 +671,6 @@ export default function JobsPage() {
                       ? `country-${filteredCountries[selectedCountryIndex]?.code}`
                       : undefined
                   }
-                  onKeyDown={handleCountryKeyDown}
                   required
                 />
                 {showCountrySuggestions && countrySearch && filteredCountries.length > 0 && (
