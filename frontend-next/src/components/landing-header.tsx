@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { Menu, X, User } from "lucide-react";
 import { AdaptiveLogo } from "@/components/ui/adaptive-logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 interface LandingHeaderProps {
   forceWhite?: boolean;
@@ -117,6 +118,9 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
 
         {/* Auth Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {user ? (
             <Link href="/jobs">
               <div

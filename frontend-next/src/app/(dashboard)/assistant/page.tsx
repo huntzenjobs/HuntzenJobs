@@ -229,12 +229,12 @@ export default function AssistantPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)]">
-      {/* Hero Header - HuntZen Style (White) */}
+      {/* Hero Header - HuntZen Style (Adapté dark mode) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-center justify-between gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-sm border border-gray-200"
+        className="flex items-center justify-between gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700"
       >
         {/* BotSelector compact à gauche */}
         <motion.div
@@ -264,7 +264,7 @@ export default function AssistantPage() {
             </motion.div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-black truncate">
+                <h1 className="text-2xl font-black text-black dark:text-white truncate">
                   {assistantConfig.name}
                 </h1>
                 {assistantConfig.certificationBadge && (
@@ -273,7 +273,7 @@ export default function AssistantPage() {
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-700 truncate">
+              <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
                 {assistantConfig.description}
               </p>
             </div>
@@ -360,7 +360,7 @@ export default function AssistantPage() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Chat Section - Full width */}
-        <Card className="w-full flex flex-col overflow-hidden shadow-sm border-2 border-gray-200">
+        <Card className="w-full flex flex-col overflow-hidden shadow-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           {/* Time warning banner */}
           <AnimatePresence>
             {isTimeWarning && (
@@ -537,10 +537,10 @@ export default function AssistantPage() {
                 >
                   <Clock className="w-6 h-6 text-gray-400" />
                 </motion.div>
-                <p className="font-bold text-black mb-1">
+                <p className="font-bold text-black dark:text-white mb-1">
                   Temps écoulé
                 </p>
-                <p className="text-sm text-gray-700 mb-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                   Vous avez utilisé vos {limits.coach_minutes_per_day} minutes gratuites
                 </p>
                 <Button

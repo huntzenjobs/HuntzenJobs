@@ -47,6 +47,7 @@ function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [isTimeout, setIsTimeout] = useState(false);
 
   // Close modal and clean URL
   const closeSuccessModal = () => {
@@ -83,7 +84,9 @@ function SignupForm() {
     try {
       setLoading(true);
       setPasswordError("");
+      setIsTimeout(false);
       clearError();
+
       await signUpWithEmail(email, password, fullName);
 
       // Reset form après succès
@@ -91,7 +94,15 @@ function SignupForm() {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
-    } catch (err) {
+    } catch (err: any) {
+      console.error("[SIGNUP] Error:", err);
+
+      // Détecter timeout pour afficher message spécifique
+      if (err.message?.includes("prend trop de temps") || err.message?.includes("timeout")) {
+        setIsTimeout(true);
+      }
+    } finally {
+      // ⚠️ CRITIQUE: Toujours arrêter le loading, même en cas d'erreur
       setLoading(false);
     }
   };
@@ -263,6 +274,23 @@ function SignupForm() {
           >
             <Alert variant="destructive">
               <AlertDescription>{passwordError}</AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
+        {/* Timeout Warning */}
+        {isTimeout && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert variant="destructive" className="border-orange-200 bg-orange-50">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>Connexion lente détectée</strong>
+                <br />
+                La requête a pris trop de temps. Vérifiez votre connexion internet et réessayez dans quelques instants.
+              </AlertDescription>
             </Alert>
           </motion.div>
         )}

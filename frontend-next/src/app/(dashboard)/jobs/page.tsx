@@ -463,7 +463,7 @@ export default function JobsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 shadow-sm"
+        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
       >
         <div className="flex-1">
           <motion.div
@@ -480,11 +480,11 @@ export default function JobsPage() {
             >
               <Search className="w-7 h-7 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-black text-black">
+            <h1 className="text-4xl font-black text-black dark:text-white">
               Recherche d&apos;Emplois
             </h1>
           </motion.div>
-          <p className="text-gray-700 text-base max-w-3xl leading-relaxed">
+          <p className="text-gray-700 dark:text-gray-300 text-base max-w-3xl leading-relaxed">
             Accédez à des milliers d&apos;offres d&apos;emploi provenant des meilleures plateformes de recrutement, agrégées et mises à jour quotidiennement.
           </p>
         </div>
@@ -518,15 +518,15 @@ export default function JobsPage() {
             disabled={false}
           />
         ) : (
-          <Card className="shadow-sm border-2 border-gray-200">
-          <CardHeader className="pb-6 bg-white border-b-2 border-gray-200">
+          <Card className="shadow-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <CardHeader className="pb-6 bg-white dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl font-bold flex items-center gap-2.5 text-gray-900">
+                <CardTitle className="text-2xl font-bold flex items-center gap-2.5 text-gray-900 dark:text-gray-100">
                   <Filter className="w-6 h-6 text-huntzen-blue" />
                   Définissez vos critères de recherche
                 </CardTitle>
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                   Remplissez les champs ci-dessous pour trouver les offres qui correspondent à votre profil
                 </p>
               </div>

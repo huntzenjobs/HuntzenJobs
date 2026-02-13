@@ -4,6 +4,9 @@
 
 /* Fonts chargées via next/font/google dans layout.tsx pour performance optimale */
 
+/* Dark Mode Variables */
+@import '../styles/dark-mode.css';
+
 /* =========================================
    HUNTZEN DESIGN SYSTEM - CSS VARIABLES
    ========================================= */
@@ -83,25 +86,35 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* HuntZen Dark Mode - Slate palette pour cohérence */
+    --background: 222 47% 11%;           /* #0f172a - Slate-900 */
+    --foreground: 210 40% 98%;           /* #f8fafc - Slate-50 */
+
+    --card: 217 33% 17%;                 /* #1e293b - Slate-800 */
+    --card-foreground: 210 40% 98%;      /* #f8fafc - Slate-50 */
+
+    --popover: 217 33% 17%;              /* #1e293b - Slate-800 */
+    --popover-foreground: 210 40% 98%;   /* #f8fafc - Slate-50 */
+
+    /* Primary = HuntZen Blue (plus clair pour dark) */
+    --primary: 199 89% 48%;              /* #06b6d4 - Cyan-500 */
+    --primary-foreground: 210 40% 98%;   /* #f8fafc */
+
+    --secondary: 215 25% 27%;            /* #334155 - Slate-700 */
+    --secondary-foreground: 210 40% 98%; /* #f8fafc */
+
+    --muted: 215 25% 27%;                /* #334155 - Slate-700 */
+    --muted-foreground: 215 16% 47%;     /* #64748b - Slate-500 */
+
+    --accent: 215 25% 27%;               /* #334155 - Slate-700 */
+    --accent-foreground: 210 40% 98%;    /* #f8fafc */
+
+    --destructive: 0 63% 31%;            /* #991b1b - Red-800 */
+    --destructive-foreground: 210 40% 98%; /* #f8fafc */
+
+    --border: 215 25% 27%;               /* #334155 - Slate-700 */
+    --input: 215 20% 20%;                /* #1e293b + darker */
+    --ring: 199 89% 48%;                 /* #06b6d4 - Cyan (HuntZen) */
   }
 
   * {

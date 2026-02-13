@@ -269,16 +269,34 @@ export function AuthProvider({
       setError(null);
       setLoading(true);
 
-      const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+      // ⚡ FIX: Timeout de 30s pour éviter le loading infini
+      const SIGNUP_TIMEOUT_MS = 30000;
+
+      // Créer une promesse de timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new Error(
+              "La requête prend trop de temps. Vérifiez votre connexion internet et réessayez."
+            )
+          );
+        }, SIGNUP_TIMEOUT_MS);
       });
+
+      // Course entre signup et timeout
+      const { data, error } = await Promise.race([
+        supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        }),
+        timeoutPromise,
+      ]);
 
       if (error) throw error;
 
@@ -304,7 +322,13 @@ export function AuthProvider({
       router.push("/signup?success=true&email=" + encodeURIComponent(email));
     } catch (err: any) {
       console.error("Sign up error:", err);
-      setError(err.message || "Failed to create account");
+
+      // Message d'erreur plus clair pour timeout
+      const errorMessage = err.message?.includes("prend trop de temps")
+        ? err.message
+        : err.message || "Échec de la création du compte";
+
+      setError(errorMessage);
       setLoading(false);
       throw err;
     }
