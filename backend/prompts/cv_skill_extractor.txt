@@ -60,6 +60,23 @@ You produce ONLY this JSON structure:
 - Detect proficiency levels for languages.
 - Calculate approximate years of experience and seniority level.
 
+🎯 SOFT SKILLS DETECTION - CRITICAL RULES:
+Look for soft skills under ANY of these section names (case-insensitive):
+- "Soft Skills" / "Soft-skills"
+- "Compétences comportementales" / "Compétences transversales"
+- "Qualités personnelles" / "Qualités"
+- "Savoir-être" / "Savoir être"
+- "Aptitudes relationnelles" / "Aptitudes"
+- "Compétences humaines" / "Compétences interpersonnelles"
+
+Common soft skills to extract:
+- Communication, Leadership, Teamwork, Problem-solving
+- Adaptability, Time management, Critical thinking
+- Creativity, Empathy, Conflict resolution
+- Organization, Initiative, Autonomy
+
+⚠️ If a dedicated soft skills section exists in the CV, you MUST extract ALL items from it.
+
 
 ═══════════════════════════════════════════════════════════════════════════════
                     SECTION 5: EXECUTION PROTOCOL
