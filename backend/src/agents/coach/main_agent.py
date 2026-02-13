@@ -269,8 +269,11 @@ class CareerCoachAgent(BaseAgent):
         deep_analysis: bool = False,
     ) -> dict[str, Any]:
         try:
-            # Prepare language instruction
-            lang_instruction = "" if language == "fr" else f"[Respond in {language.upper()}] "
+            # Prepare language instruction - ALWAYS enforce language (even for French)
+            # Map language codes to full names for clarity
+            lang_names = {"fr": "French", "en": "English", "es": "Spanish", "de": "German", "ar": "Arabic"}
+            lang_name = lang_names.get(language, language)
+            lang_instruction = f"[IMPORTANT: You MUST respond in {lang_name}. This is a strict requirement.] "
             full_message = f"{lang_instruction}{message}"
             
             # Main conversation (coach principal always responds)
