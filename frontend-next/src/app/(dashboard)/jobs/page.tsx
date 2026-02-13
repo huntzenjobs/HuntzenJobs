@@ -738,11 +738,7 @@ export default function JobsPage() {
                     }
                   }}
                   onFocus={() => setShowCitySuggestions(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setShowCitySuggestions(false)
-                    }
-                  }}
+                  onKeyDown={handleCityKeyDown}
                   disabled={!selectedCountry}
                   autoComplete="off"
                   role="combobox"
@@ -754,7 +750,6 @@ export default function JobsPage() {
                       ? `city-${filteredCities[selectedCityIndex]}`
                       : undefined
                   }
-                  onKeyDown={handleCityKeyDown}
                 />
                 {showCitySuggestions && citySearch && filteredCities.length > 0 && (
                   <div
