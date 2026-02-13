@@ -16,6 +16,7 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { LandingHeader } from '@/components/landing-header'
+import { InternalLinksFooter } from '@/components/seo/internal-links'
 
 export default function HomePage() {
   return (
@@ -662,6 +663,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Internal Links Footer for SEO */}
+      <InternalLinksFooter />
 
       {/* Footer */}
       <footer className="bg-black text-white py-10 sm:py-12">

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { LandingHeader } from '@/components/landing-header'
+import { InternalLinksFooter } from '@/components/seo/internal-links'
 import {
   Check,
   X,
@@ -715,6 +716,9 @@ export default function PricingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Internal Links Footer for SEO */}
+      <InternalLinksFooter />
 
       {/* Footer */}
       <footer className="bg-black text-white py-10 sm:py-12">

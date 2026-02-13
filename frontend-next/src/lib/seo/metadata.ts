@@ -21,6 +21,9 @@ export const defaultMetadata: Metadata = {
   description:
     "Plateforme complète pour réussir votre recherche d'emploi : offres ciblées, analyse CV experte, et coaching personnalisé",
   keywords: [
+    "huntzenjobs",
+    "huntzen jobs",
+    "huntzen emploi",
     "recherche emploi",
     "offre emploi",
     "cv",
@@ -31,9 +34,9 @@ export const defaultMetadata: Metadata = {
     "coaching carrière",
     "france",
   ],
-  authors: [{ name: "HuntZen" }],
-  creator: "HuntZen",
-  publisher: "HuntZen",
+  authors: [{ name: "HuntZen Jobs" }],
+  creator: "HuntZen Jobs",
+  publisher: "HuntZen Jobs",
   formatDetection: {
     email: false,
     address: false,
@@ -87,9 +90,10 @@ export const defaultMetadata: Metadata = {
  */
 export const homeMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Recherche d'Emploi, CV, Salons | HuntZen Jobs - Votre Allié Carrière",
+  title:
+    "HuntZen Jobs - N°1 Recherche Emploi, CV, Coaching Carrière | huntzenjobs.com",
   description:
-    "Trouvez votre emploi idéal parmi +100 000 offres. Analyse CV ATS, coaching carrière, salons emploi, alternance. Plateforme gratuite de recherche d'emploi en France.",
+    "HuntZen Jobs : Plateforme N°1 pour votre recherche d'emploi en France. +100 000 offres, analyse CV ATS, coaching IA 24/7. Rejoignez huntzenjobs.com dès maintenant ! ⭐⭐⭐⭐⭐",
   keywords: [
     "recherche emploi",
     "offre emploi",
@@ -399,11 +403,169 @@ export const privacyMetadata: Metadata = {
 };
 
 /**
+ * Metadata pour la page À Propos (CRITIQUE pour SEO)
+ */
+export const aboutMetadata: Metadata = {
+  title: "À Propos HuntZen Jobs - Plateforme N°1 Recherche Emploi France",
+  description:
+    "Découvrez HuntZen Jobs, la plateforme N°1 de recherche d'emploi en France. +100 000 offres, analyse CV ATS, coaching IA. Histoire, mission et valeurs de HuntZen.",
+  keywords: [
+    "huntzenjobs",
+    "huntzen jobs",
+    "huntzen",
+    "à propos huntzen",
+    "qui est huntzen",
+    "huntzenjobs.com",
+    "plateforme emploi",
+    "recherche emploi france",
+    "huntzen avis",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: SITE_NAME,
+    title: "À Propos HuntZen Jobs - Plateforme N°1 Recherche Emploi",
+    description:
+      "Découvrez HuntZen Jobs : +100K offres, analyse CV, coaching IA 24/7. La révolution de la recherche d'emploi en France.",
+    url: `${SITE_URL}/about`,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "À Propos HuntZen Jobs - Plateforme N°1",
+    description:
+      "La plateforme qui révolutionne la recherche d'emploi en France.",
+    images: [DEFAULT_OG_IMAGE],
+    creator: "@huntzen",
+  },
+  alternates: {
+    canonical: `${SITE_URL}/about`,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+};
+
+/**
+ * Metadata pour la page FAQ (CRITIQUE pour SEO Featured Snippets)
+ */
+export const faqMetadata: Metadata = {
+  title: "FAQ HuntZen Jobs - Questions Fréquentes Recherche Emploi",
+  description:
+    "Toutes vos questions sur HuntZen Jobs : comment ça marche, tarifs, analyse CV ATS, recherche d'emploi, coaching IA. Réponses complètes et support 24/7.",
+  keywords: [
+    "faq huntzen",
+    "questions huntzen jobs",
+    "huntzenjobs faq",
+    "aide huntzen",
+    "comment utiliser huntzen",
+    "tarifs huntzen",
+    "analyse cv huntzen",
+    "support huntzen",
+    "huntzen gratuit",
+    "huntzen vs indeed",
+    "huntzen vs linkedin",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: SITE_NAME,
+    title: "FAQ HuntZen Jobs - Questions Fréquentes",
+    description:
+      "Toutes vos questions sur HuntZen Jobs : fonctionnement, tarifs, analyse CV, coaching carrière.",
+    url: `${SITE_URL}/faq`,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FAQ HuntZen Jobs",
+    description:
+      "Questions fréquentes sur la plateforme N°1 de recherche d'emploi.",
+    images: [DEFAULT_OG_IMAGE],
+    creator: "@huntzen",
+  },
+  alternates: {
+    canonical: `${SITE_URL}/faq`,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+};
+
+/**
+ * Metadata pour la page Témoignages (CRITIQUE pour Social Proof SEO)
+ */
+export const testimonialsMetadata: Metadata = {
+  title: "Témoignages HuntZen Jobs - Avis Utilisateurs & Success Stories",
+  description:
+    "Découvrez les témoignages de +10 000 utilisateurs HuntZen Jobs. Avis vérifiés, success stories, retours d'expérience sur la plateforme N°1 de recherche d'emploi en France.",
+  keywords: [
+    "avis huntzen jobs",
+    "témoignages huntzen",
+    "huntzenjobs avis",
+    "retours huntzen",
+    "success stories huntzen",
+    "avis utilisateurs huntzen",
+    "expérience huntzen jobs",
+    "huntzen jobs témoignages",
+    "évaluations huntzen",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: SITE_NAME,
+    title: "Témoignages HuntZen Jobs - Avis & Success Stories",
+    description:
+      "+10 000 utilisateurs satisfaits. Découvrez comment HuntZen Jobs a transformé leur recherche d'emploi.",
+    url: `${SITE_URL}/temoignages`,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Témoignages HuntZen Jobs",
+    description:
+      "Success stories et avis vérifiés de nos utilisateurs satisfaits.",
+    images: [DEFAULT_OG_IMAGE],
+    creator: "@huntzen",
+  },
+  alternates: {
+    canonical: `${SITE_URL}/temoignages`,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+};
+
+/**
  * Helper pour générer metadata dynamiques (pages ville, secteur, etc.)
  */
 export function generateLocationMetadata(
   city: string,
-  citySlug: string,
+  citySlug: string
 ): Metadata {
   return {
     title: `Offres d'Emploi à ${city} - CDI, CDD, Alternance | HuntZen`,
@@ -430,7 +592,7 @@ export function generateLocationMetadata(
 
 export function generateSectorMetadata(
   sector: string,
-  sectorSlug: string,
+  sectorSlug: string
 ): Metadata {
   return {
     title: `Offres d'Emploi en ${sector} - France | HuntZen`,

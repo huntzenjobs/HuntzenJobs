@@ -52,8 +52,8 @@ const testimonials = [
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header - Using LandingHeader for consistency */}
-      <LandingHeader />
+      {/* Header - Using LandingHeader with forced white background */}
+      <LandingHeader forceWhite />
 
       {/* Main Content */}
       <div className="pt-20 min-h-screen flex">
@@ -210,12 +210,6 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       </div>
 
       <style jsx global>{`
-        /* Force white header on auth pages */
-        header {
-          background-color: rgba(255, 255, 255, 0.95) !important;
-          border-color: rgba(0, 0, 0, 0.1) !important;
-        }
-
         body {
           font-family:
             "DM Sans",

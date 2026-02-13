@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ExpandableTextarea } from '@/components/ui/expandable-textarea'
+import { InternalLinksFooter } from '@/components/seo/internal-links'
 import {
   Send,
   Loader2,
@@ -554,6 +555,9 @@ export default function AssistantPage() {
           </div>
         </Card>
       </div>
+
+      {/* Internal Links Footer for SEO */}
+      <InternalLinksFooter />
     </div>
   )
 }

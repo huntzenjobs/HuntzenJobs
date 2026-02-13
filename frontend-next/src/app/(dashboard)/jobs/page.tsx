@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Search, MapPin, Building, ExternalLink, Loader2, Lock, Heart, Sparkles, Filter, AlertCircle, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { InternalLinksFooter } from '@/components/seo/internal-links'
 import { huntzenApi, type Job } from '@/lib/api/huntzen-client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSubscription } from '@/contexts/subscription-context'
@@ -1079,6 +1080,9 @@ export default function JobsPage() {
         onApply={handleApplyAdvancedFilters}
         initialFilters={advancedFilters}
       />
+
+      {/* Internal Links Footer for SEO */}
+      <InternalLinksFooter />
     </div>
   )
 }

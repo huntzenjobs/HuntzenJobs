@@ -8,6 +8,7 @@ import { UsageCounter } from '@/components/freemium/usage-counter'
 import { CVUploadAsyncWizard } from '@/components/cv/cv-upload-async-wizard'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Card } from '@/components/ui/card'
+import { InternalLinksFooter } from '@/components/seo/internal-links'
 
 export default function CVAnalysisPage() {
   const { session, loading } = useAuth()
@@ -100,6 +101,9 @@ export default function CVAnalysisPage() {
           />
         </motion.div>
       </ErrorBoundary>
+
+      {/* Internal Links Footer for SEO */}
+      <InternalLinksFooter />
     </div>
   )
 

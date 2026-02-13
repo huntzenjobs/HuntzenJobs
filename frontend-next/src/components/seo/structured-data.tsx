@@ -5,7 +5,7 @@
 
 import Script from "next/script";
 
-const SITE_URL = "https://huntzenjobs.fr";
+const SITE_URL = "https://huntzenjobs.com";
 const SITE_NAME = "HuntZen Jobs";
 
 export function OrganizationSchema() {
@@ -13,10 +13,21 @@ export function OrganizationSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: SITE_NAME,
+    alternateName: ["HuntZen", "HuntZenJobs", "huntzen jobs"],
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     description:
-      "Plateforme complète pour réussir votre recherche d'emploi en France",
+      "Plateforme N°1 de recherche d'emploi en France - HuntZen Jobs. +100 000 offres, analyse CV ATS, coaching IA personnalisé.",
+    sameAs: [
+      "https://www.linkedin.com/company/huntzenjobs",
+      "https://twitter.com/huntzenjobs",
+      "https://www.facebook.com/huntzenjobs",
+    ],
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer service",
+      availableLanguage: ["French"],
+    },
   };
 
   return (
