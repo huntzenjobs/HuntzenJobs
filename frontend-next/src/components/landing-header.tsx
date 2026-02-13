@@ -67,11 +67,11 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
           <AdaptiveLogo
-            isDark={isScrolled}
+            isDark={shouldBeWhite}
             size="lg"
             showText
             showPulse
-            textColor={isScrolled ? "text-black" : "text-white"}
+            textColor={shouldBeWhite ? "text-black" : "text-white"}
           />
         </Link>
 
