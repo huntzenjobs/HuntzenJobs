@@ -23,6 +23,7 @@ import {
   X,
   Eye,
   EyeOff,
+  AlertCircle,
 } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
 
