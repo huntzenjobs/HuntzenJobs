@@ -92,7 +92,7 @@ class JobScoutAgent(BaseAgent):
         
         logger.info(f"[{self.name}] Initialized 3 sub-agents + {len(self.providers)} providers")
 
-    @redis_cache(ttl=300, prefix="jobs")  # Cache job searches for 5 minutes
+    @redis_cache(ttl=900, prefix="jobs")  # Cache job searches for 15 minutes
     async def run(
         self,
         job_title: str,

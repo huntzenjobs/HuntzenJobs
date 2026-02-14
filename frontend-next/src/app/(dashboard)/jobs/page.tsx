@@ -329,36 +329,44 @@ export default function JobsPage() {
     setCitySearch(city)
   }
 
-  // Search mutation
-  const searchMutation = useMutation({
-    mutationFn: async (params: SearchParams) => {
-      if (!params.query.trim() || !params.country) {
-        throw new Error('Veuillez remplir le titre du poste et le pays')
-      }
+  // Search state for caching with React Query
+  const [jobSearchParams, setJobSearchParams] = useState<SearchParams | null>(null)
+  const [shouldSearch, setShouldSearch] = useState(false)
 
-      // Check if user can search
-      if (!canUse('job_search')) {
-        openPricingModal('job_searches_per_day')
-        throw new Error('Limite de recherches atteinte')
+  // Search query with intelligent caching
+  const searchQuery = useQuery({
+    queryKey: [
+      'job-search',
+      jobSearchParams?.query,
+      jobSearchParams?.country,
+      jobSearchParams?.location,
+      jobSearchParams?.radiusKm,
+      jobSearchParams?.includeRemote,
+      contractType,
+      advancedFilters,
+    ],
+    queryFn: async () => {
+      if (!jobSearchParams?.query.trim() || !jobSearchParams?.country) {
+        throw new Error('Veuillez remplir le titre du poste et le pays')
       }
 
       // Debug: Log search parameters
       console.log('🔍 [SEARCH] Paramètres de recherche:', {
-        query: params.query,
-        location: params.location,
-        country: params.country,
-        radiusKm: params.radiusKm,
-        includeRemote: params.includeRemote,
+        query: jobSearchParams.query,
+        location: jobSearchParams.location,
+        country: jobSearchParams.country,
+        radiusKm: jobSearchParams.radiusKm,
+        includeRemote: jobSearchParams.includeRemote,
         contractType,
       })
 
-      return huntzenApi.searchJobs({
-        job_title: params.query,
-        country_code: params.country,
-        city: params.location,
+      const data = await huntzenApi.searchJobs({
+        job_title: jobSearchParams.query,
+        country_code: jobSearchParams.country,
+        city: jobSearchParams.location,
         contract_type: contractType,
-        radiusKm: params.radiusKm,
-        includeRemote: params.includeRemote,
+        radiusKm: jobSearchParams.radiusKm,
+        includeRemote: jobSearchParams.includeRemote,
         // Advanced filters (Premium feature)
         industries: advancedFilters.industries?.join(','),
         keywords: advancedFilters.keywords?.join(','),
@@ -367,30 +375,49 @@ export default function JobsPage() {
         salaryMax: advancedFilters.salaryMax,
         companySize: advancedFilters.companySize,
       })
-    },
-    onSuccess: (data) => {
+
       console.log('✅ [SEARCH] Résultats reçus:', {
         totalJobs: data.jobs.length,
         correctedQuery: data.corrected_query
       })
-      setJobs(data.jobs)
-      setVisibleJobsCount(0) // Reset counter for progressive reveal
-      setCorrectedQuery(data.corrected_query || null)
-      // Increment search usage
-      incrementUsage('job_search')
+
+      return data
     },
-    onError: (error) => {
-      console.error('❌ [SEARCH] Erreur de recherche:', error)
-    },
+    enabled: shouldSearch && !!jobSearchParams,
+    staleTime: 1000 * 60 * 5, // 5 minutes - results stay fresh
+    gcTime: 1000 * 60 * 15, // 15 minutes - keep in cache for reuse
+    retry: 1,
   })
 
+  // Handle search query results
+  useEffect(() => {
+    if (searchQuery.data) {
+      setJobs(searchQuery.data.jobs)
+      setVisibleJobsCount(0) // Reset counter for progressive reveal
+      setCorrectedQuery(searchQuery.data.corrected_query || null)
+      // Increment search usage only on new searches (not cached)
+      if (searchQuery.isFetching && !searchQuery.isPending) {
+        incrementUsage('job_search')
+      }
+      setShouldSearch(false) // Reset trigger
+    }
+  }, [searchQuery.data, searchQuery.isFetching, searchQuery.isPending, incrementUsage])
+
   const handleSearch = (params: SearchParams) => {
+    // Check if user can search (quota check)
+    if (!canUse('job_search')) {
+      openPricingModal('job_searches_per_day')
+      return
+    }
+
     // Update form state for backward compatibility
     setJobTitle(params.query)
     setSelectedCountry(params.country)
     setSelectedCity(params.location)
 
-    searchMutation.mutate(params)
+    // Trigger search with caching
+    setJobSearchParams(params)
+    setShouldSearch(true)
   }
 
   const handleSearchLegacy = (e: React.FormEvent) => {
@@ -591,7 +618,7 @@ export default function JobsPage() {
         {featureFlags.useJobsV2 ? (
           <SearchFormInline
             onSearch={handleSearch}
-            isLoading={searchMutation.isPending}
+            isLoading={searchQuery.isPending}
             disabled={false}
           />
         ) : (
@@ -817,9 +844,9 @@ export default function JobsPage() {
                 type="submit"
                 size="lg"
                 className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
-                disabled={searchMutation.isPending || !jobTitle.trim() || !selectedCountry || (!canUse('job_search') && isFreePlan)}
+                disabled={searchQuery.isPending || !jobTitle.trim() || !selectedCountry || (!canUse('job_search') && isFreePlan)}
               >
-                {searchMutation.isPending ? (
+                {searchQuery.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Recherche en cours...
@@ -857,15 +884,15 @@ export default function JobsPage() {
       </ErrorBoundary>
 
       {/* Error */}
-      {searchMutation.isError && searchMutation.error?.message !== 'Limite de recherches atteinte' && (
+      {searchQuery.isError && searchQuery.error?.message !== 'Limite de recherches atteinte' && (
         <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-5 border-l-4 border-red-500 dark:border-red-400">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="font-semibold text-red-700 dark:text-red-400 mb-1">Erreur lors de la recherche</h3>
               <p className="text-sm text-red-600 dark:text-red-300">
-                {searchMutation.error instanceof Error
-                  ? searchMutation.error.message
+                {searchQuery.error instanceof Error
+                  ? searchQuery.error.message
                   : 'Une erreur est survenue lors de la recherche. Veuillez reessayer.'}
               </p>
             </div>
@@ -896,7 +923,7 @@ export default function JobsPage() {
       </AnimatePresence>
 
       {/* Results */}
-      {searchMutation.isPending && (
+      {searchQuery.isPending && (
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
@@ -912,7 +939,7 @@ export default function JobsPage() {
         </div>
       )}
 
-      {!searchMutation.isPending && jobs.length > 0 && (
+      {!searchQuery.isPending && jobs.length > 0 && (
         <ErrorBoundary fallback={
           <Card className="p-8 text-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
@@ -1110,7 +1137,7 @@ export default function JobsPage() {
       )}
 
       {/* Placeholder avant première recherche - NOUVEAU */}
-      {!searchMutation.isPending && !searchMutation.isSuccess && jobs.length === 0 && (
+      {!searchQuery.isPending && !searchQuery.isSuccess && jobs.length === 0 && (
         <JobsPlaceholder
           onSearchClick={(popularJobTitle) => {
             // Set job title and trigger search
@@ -1132,7 +1159,7 @@ export default function JobsPage() {
         />
       )}
 
-      {!searchMutation.isPending && searchMutation.isSuccess && jobs.length === 0 && (
+      {!searchQuery.isPending && searchQuery.isSuccess && jobs.length === 0 && (
         <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
           <CardContent className="py-16 text-center">
             <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">
