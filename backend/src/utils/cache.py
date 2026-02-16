@@ -1,208 +1,262 @@
 """
-Distributed Redis Cache Manager
-=================================
-Replaces in-memory TTLCache with distributed Upstash Redis for production scalability.
+Distributed Redis Cache Manager (Async)
+=========================================
+Fully async Redis cache using redis.asyncio for non-blocking I/O.
+
+Fixes applied:
+- Uses redis.asyncio instead of upstash_redis (was blocking async event loop)
+- Cache keys exclude `self` from instance methods (was including memory address,
+     causing cache to break on every restart/across workers)
+- Same redis.asyncio client as app/cache.py (unified)
 
 Architecture:
 - Shared cache across all workers and instances
 - Automatic serialization/deserialization with JSON
 - Graceful degradation if Redis unavailable
 - TTL-based expiration
-- MD5 key hashing for consistent cache keys
+- MD5 key hashing for stable, consistent cache keys
 
 Usage:
     from src.utils.cache import redis_cache
 
     @redis_cache(ttl=300, prefix="jobs")
     async def expensive_operation(param1, param2):
-        # Your expensive operation
         return result
 """
 
+import hashlib
+import inspect
+import json
+import os
+import threading
 from functools import wraps
 from typing import Any, Callable
-import json
-import hashlib
-import threading
 
-from upstash_redis import Redis
+import redis.asyncio as aioredis
 
 from src.config.settings import settings
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Singleton Redis client - Thread-safe
-_redis_client: Redis | None = None
+# ═══════════════════════════════════════════════════════════════════════════════
+# ASYNC REDIS CLIENT — Singleton with thread-safe init
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_redis_client: aioredis.Redis | None = None
 _redis_client_lock = threading.Lock()
+_redis_initialized = False
 
 
-def get_redis() -> Redis | None:
+def _build_redis_url() -> str | None:
     """
-    Get or create Redis client singleton (thread-safe).
+    Build a proper rediss:// URL for Upstash (requires SSL on port 6380).
+
+    Tries multiple config sources:
+    1. UPSTASH_REDIS_URL env var (redis://default:TOKEN@host:6379)
+    2. settings.redis_limiter_url (same format)
+    3. settings.redis_url + redis_token (REST style fallback)
+    """
+    # Source 1: direct env var (most common in Railway/prod)
+    raw_url = os.getenv("UPSTASH_REDIS_URL", "") or settings.redis_limiter_url
+
+    if raw_url:
+        if raw_url.startswith("redis://"):
+            raw_url = raw_url.replace("redis://", "rediss://", 1)
+        if ":6379" in raw_url:
+            raw_url = raw_url.replace(":6379", ":6380")
+        return raw_url
+
+    # Source 2: REST URL + token (old config style)
+    rest_url = settings.redis_url
+    token = settings.get_redis_token()
+    if rest_url and token:
+        host = rest_url.replace("https://", "").replace("http://", "").rstrip("/")
+        return f"rediss://default:{token}@{host}:6380"
+
+    return None
+
+
+async def get_redis() -> aioredis.Redis | None:
+    """
+    Get or create async Redis client singleton.
 
     Returns:
-        Redis client instance or None if disabled/unavailable
+        Async Redis client or None if disabled/unavailable.
     """
-    global _redis_client
+    global _redis_client, _redis_initialized
 
-    # Fast path: return if already initialized or cache disabled
-    if _redis_client is not None:
+    # Fast path
+    if _redis_initialized:
         return _redis_client
 
-    if not settings.cache_enabled or not settings.redis_url:
+    if not settings.cache_enabled:
         return None
 
-    # Slow path: thread-safe initialization
+    # Thread-safe init
     with _redis_client_lock:
-        if _redis_client is None:  # Double-check inside lock
-            try:
-                _redis_client = Redis(
-                    url=settings.redis_url,
-                    token=settings.get_redis_token()
-                )
-                logger.info("✅ Redis client singleton created (thread-safe)")
-            except Exception as e:
-                logger.error(f"❌ Failed to initialize Redis client: {e}")
-                return None
+        if _redis_initialized:
+            return _redis_client
 
-    return _redis_client
+        url = _build_redis_url()
+        if not url:
+            logger.warning("⚠️ No Redis URL configured — caching disabled")
+            _redis_initialized = True
+            return None
+
+        try:
+            _redis_client = aioredis.from_url(
+                url,
+                encoding="utf-8",
+                decode_responses=True,
+                max_connections=20,
+                socket_connect_timeout=5,
+                socket_keepalive=True,
+            )
+            await _redis_client.ping()
+            logger.info("✅ Async Redis client initialized (redis.asyncio)")
+        except Exception as e:
+            logger.error(f"❌ Redis init failed: {e}")
+            _redis_client = None
+
+        _redis_initialized = True
+        return _redis_client
 
 
-def cache_key(*args, **kwargs) -> str:
+async def close_redis() -> None:
+    """Close the Redis connection pool (call on app shutdown)."""
+    global _redis_client, _redis_initialized
+    if _redis_client:
+        try:
+            await _redis_client.close()
+            logger.info("Redis connection closed")
+        except Exception as e:
+            logger.error(f"Redis close error: {e}")
+        finally:
+            _redis_client = None
+            _redis_initialized = False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STABLE CACHE KEY — Excludes `self` from instance methods
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _make_cache_key(func: Callable, args: tuple, kwargs: dict) -> str:
     """
-    Generate MD5 cache key from function arguments.
+    Generate a stable MD5 cache key from function arguments.
 
-    Args:
-        *args: Positional arguments
-        **kwargs: Keyword arguments
-
-    Returns:
-        MD5 hash of serialized arguments
+    If func is an instance/class method, the first arg (self/cls) is
+    excluded so the key does NOT contain the object's memory address.
+    This ensures cache keys survive server restarts and work across workers.
     """
-    key_str = f"{args}:{sorted(kwargs.items())}"
-    return hashlib.md5(key_str.encode()).hexdigest()
+    sig = inspect.signature(func)
+    params = list(sig.parameters.keys())
+    clean_args = args
 
+    if params and params[0] in ("self", "cls") and len(args) > 0:
+        clean_args = args[1:]
+
+    parts = []
+    for arg in clean_args:
+        try:
+            parts.append(json.dumps(arg, sort_keys=True, default=str))
+        except (TypeError, ValueError):
+            parts.append(str(arg))
+
+    for k, v in sorted(kwargs.items()):
+        try:
+            parts.append(f"{k}={json.dumps(v, sort_keys=True, default=str)}")
+        except (TypeError, ValueError):
+            parts.append(f"{k}={v}")
+
+    return hashlib.md5("|".join(parts).encode()).hexdigest()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CACHE DECORATOR — Fully async, non-blocking
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def redis_cache(ttl: int = 300, prefix: str = ""):
     """
-    Decorator for caching function results in Redis.
+    Async decorator for caching function results in Redis.
 
     Args:
-        ttl: Time-to-live in seconds (default: 5min)
+        ttl: Time-to-live in seconds (default: 5 min)
         prefix: Cache key prefix for organization
-
-    Returns:
-        Decorated function with caching
 
     Example:
         @redis_cache(ttl=300, prefix="jobs")
         async def search_jobs(title: str, country: str):
-            # Expensive API call
             return results
     """
     def decorator(func: Callable):
         @wraps(func)
-        async def async_wrapper(*args, **kwargs):
-            redis = get_redis()
+        async def wrapper(*args, **kwargs):
+            redis = await get_redis()
 
-            # Fallback to direct execution if Redis unavailable
-            if not redis or not settings.cache_enabled:
-                logger.debug(f"⚠️ Cache disabled, executing {func.__name__} directly")
+            if not redis:
                 return await func(*args, **kwargs)
 
-            # Generate cache key
-            key = f"{prefix}:{func.__name__}:{cache_key(args, kwargs)}"
+            # Stable cache key (excludes self)
+            key_hash = _make_cache_key(func, args, kwargs)
+            key = f"{prefix}:{func.__name__}:{key_hash}" if prefix else f"{func.__name__}:{key_hash}"
 
-            # Try to get from cache
+            # Try GET (non-blocking)
             try:
-                cached = redis.get(key)
-                if cached:
-                    logger.debug(f"✅ Cache HIT: {key}")
+                cached = await redis.get(key)
+                if cached is not None:
+                    logger.debug(f"✅ Cache HIT: {key[:60]}")
                     return json.loads(cached)
             except Exception as e:
-                logger.warning(f"⚠️ Cache GET error for {key}: {e}")
+                logger.warning(f"⚠️ Cache GET error: {e}")
 
-            # Execute function if cache miss
-            logger.debug(f"❌ Cache MISS: {key}")
+            # MISS → execute function
+            logger.debug(f"❌ Cache MISS: {key[:60]}")
             result = await func(*args, **kwargs)
 
-            # Store in cache
+            # SET (non-blocking)
             try:
-                serialized = json.dumps(result)
-                redis.setex(key, ttl, serialized)
-                logger.debug(f"💾 Cached {key} (TTL: {ttl}s)")
+                serialized = json.dumps(result, default=str)
+                await redis.setex(key, ttl, serialized)
+                logger.debug(f"💾 Cached: {key[:60]} (TTL: {ttl}s)")
             except Exception as e:
-                logger.warning(f"⚠️ Cache SET error for {key}: {e}")
+                logger.warning(f"⚠️ Cache SET error: {e}")
 
             return result
 
-        @wraps(func)
-        def sync_wrapper(*args, **kwargs):
-            redis = get_redis()
-
-            if not redis or not settings.cache_enabled:
-                logger.debug(f"⚠️ Cache disabled, executing {func.__name__} directly")
-                return func(*args, **kwargs)
-
-            key = f"{prefix}:{func.__name__}:{cache_key(args, kwargs)}"
-
-            try:
-                cached = redis.get(key)
-                if cached:
-                    logger.debug(f"✅ Cache HIT: {key}")
-                    return json.loads(cached)
-            except Exception as e:
-                logger.warning(f"⚠️ Cache GET error for {key}: {e}")
-
-            logger.debug(f"❌ Cache MISS: {key}")
-            result = func(*args, **kwargs)
-
-            try:
-                serialized = json.dumps(result)
-                redis.setex(key, ttl, serialized)
-                logger.debug(f"💾 Cached {key} (TTL: {ttl}s)")
-            except Exception as e:
-                logger.warning(f"⚠️ Cache SET error for {key}: {e}")
-
-            return result
-
-        # Return appropriate wrapper based on function type
-        import asyncio
-        if asyncio.iscoroutinefunction(func):
-            return async_wrapper
-        return sync_wrapper
-
+        return wrapper
     return decorator
 
 
-def invalidate_cache(prefix: str = "", pattern: str = "*") -> int:
+# ═══════════════════════════════════════════════════════════════════════════════
+# CACHE INVALIDATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def invalidate_cache(prefix: str = "", pattern: str = "*") -> int:
     """
-    Invalidate cache keys matching pattern.
+    Invalidate cache keys matching a pattern.
 
     Args:
         prefix: Cache key prefix
-        pattern: Redis key pattern (default: all keys with prefix)
+        pattern: Key pattern (default: all keys with prefix)
 
     Returns:
         Number of keys deleted
-
-    Example:
-        invalidate_cache(prefix="jobs", pattern="*paris*")
     """
-    redis = get_redis()
+    redis = await get_redis()
     if not redis:
-        logger.warning("⚠️ Redis unavailable, cannot invalidate cache")
         return 0
 
-    search_pattern = f"{prefix}:*{pattern}*" if prefix else pattern
+    search_pattern = f"{prefix}:*{pattern}*" if prefix else f"*{pattern}*"
 
     try:
-        # Note: Upstash Redis doesn't support SCAN, using KEYS (acceptable for small caches)
-        keys = redis.keys(search_pattern)
+        keys = []
+        async for key in redis.scan_iter(match=search_pattern, count=100):
+            keys.append(key)
+
         if keys:
-            deleted = redis.delete(*keys)
-            logger.info(f"🗑️  Invalidated {deleted} cache keys matching {search_pattern}")
+            deleted = await redis.delete(*keys)
+            logger.info(f"🗑️ Invalidated {deleted} keys matching '{search_pattern}'")
             return deleted
         return 0
     except Exception as e:

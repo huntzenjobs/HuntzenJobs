@@ -29,8 +29,7 @@ structlog  # Structured logging
 
 # Rate Limiting & Cache (Phase 1) - Updated 2026-02-07
 slowapi==0.1.9  # Rate limiting for FastAPI
-redis==5.0.1  # Redis client for SlowAPI backend (REQUIRED for distributed rate limiting)
-upstash-redis==0.15.0  # Upstash Redis REST API client for cache
+redis==5.0.1  # Redis client for SlowAPI + async cache (REQUIRED)
 
 # Database & Storage
 supabase==2.3.4  # Supabase Python client
