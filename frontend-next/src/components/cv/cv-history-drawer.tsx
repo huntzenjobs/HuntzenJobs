@@ -101,10 +101,12 @@ export function CVHistoryDrawer({
                       {item.fileName}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {formatDistanceToNow(item.analyzedAt, {
-                        addSuffix: true,
-                        locale: fr,
-                      })}
+                      {item.analyzedAt && !isNaN(new Date(item.analyzedAt).getTime())
+                        ? formatDistanceToNow(new Date(item.analyzedAt), {
+                            addSuffix: true,
+                            locale: fr,
+                          })
+                        : 'Date inconnue'}
                     </p>
                   </div>
 

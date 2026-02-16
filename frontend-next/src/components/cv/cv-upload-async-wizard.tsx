@@ -240,7 +240,12 @@ export function CVUploadAsyncWizard({
 
           if (response.ok) {
             const data = await response.json();
-            setHistory(data.analyses || []);
+            // Parse dates from API (string → Date)
+            const parsedAnalyses = (data.analyses || []).map((item: any) => ({
+              ...item,
+              analyzedAt: item.analyzedAt ? new Date(item.analyzedAt) : new Date(),
+            }));
+            setHistory(parsedAnalyses);
           }
         } catch (error) {
           console.error('Failed to load CV history:', error);
@@ -269,7 +274,12 @@ export function CVUploadAsyncWizard({
 
           if (response.ok) {
             const data = await response.json();
-            setHistory(data.analyses || []);
+            // Parse dates from API (string → Date)
+            const parsedAnalyses = (data.analyses || []).map((item: any) => ({
+              ...item,
+              analyzedAt: item.analyzedAt ? new Date(item.analyzedAt) : new Date(),
+            }));
+            setHistory(parsedAnalyses);
           }
         } catch (error) {
           console.error('Failed to reload CV history:', error);
