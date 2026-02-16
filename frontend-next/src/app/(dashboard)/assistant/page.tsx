@@ -323,7 +323,7 @@ export default function AssistantPage() {
               variant="outline"
               size="sm"
               onClick={() => openPricingModal('has_coach_history')}
-              className="gap-2 bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200 hover:border-[#00D9FF] hover:text-black"
+              className="gap-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-[#00D9FF] hover:text-black dark:hover:text-white"
             >
               <History className="w-4 h-4" />
               Historique
@@ -337,7 +337,7 @@ export default function AssistantPage() {
               variant="outline"
               size="sm"
               onClick={handleNewConversation}
-              className="gap-2 bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200 hover:border-[#00D9FF] hover:text-black"
+              className="gap-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-[#00D9FF] hover:text-black dark:hover:text-white"
             >
               <Plus className="w-4 h-4" />
               Nouvelle
@@ -411,7 +411,7 @@ export default function AssistantPage() {
                     <assistantConfig.icon className="w-6 h-6" style={{ color: assistantConfig.color }} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-black flex items-center gap-2">
+                    <h3 className="font-bold text-black dark:text-white flex items-center gap-2">
                       {assistantConfig.shortName}
                       {assistantConfig.certificationBadge && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
@@ -419,7 +419,7 @@ export default function AssistantPage() {
                         </span>
                       )}
                     </h3>
-                    <p className="text-sm text-gray-700">{assistantConfig.description}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{assistantConfig.description}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -485,7 +485,7 @@ export default function AssistantPage() {
           </CardContent>
 
           {/* Input section */}
-          <div className="border-t-2 border-gray-200 p-4">
+          <div className="border-t-2 border-gray-200 dark:border-gray-700 p-4">
             {canChat ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}

@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, MapPin, Building, ExternalLink, Loader2, Lock, Heart, Sparkles, Filter, AlertCircle, CheckCircle } from 'lucide-react'
+import { Search, MapPin, Building, ExternalLink, Loader2, Lock, Heart, Sparkles, Filter, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { InternalLinksFooter } from '@/components/seo/internal-links'
 import { huntzenApi, type Job } from '@/lib/api/huntzen-client'
@@ -331,7 +331,15 @@ export default function JobsPage() {
 
   // Search state for caching with React Query
   const [jobSearchParams, setJobSearchParams] = useState<SearchParams | null>(null)
-  const [shouldSearch, setShouldSearch] = useState(false)
+
+  /**
+   * Tracks whether quota has been incremented for current search params.
+   * Reset when search parameters change to allow quota counting for new searches.
+   *
+   * @internal
+   * @see https://tanstack.com/query/latest/docs/react/guides/caching
+   */
+  const hasIncrementedQuotaRef = useRef(false)
 
   // Search query with intelligent caching
   const searchQuery = useQuery({
@@ -383,11 +391,53 @@ export default function JobsPage() {
 
       return data
     },
-    enabled: shouldSearch && !!jobSearchParams,
+    enabled: !!jobSearchParams, // Simplified: no need for shouldSearch flag
     staleTime: 1000 * 60 * 5, // 5 minutes - results stay fresh
     gcTime: 1000 * 60 * 15, // 15 minutes - keep in cache for reuse
     retry: 1,
   })
+
+  /**
+   * Reset quota increment flag when search parameters change.
+   * This allows a new search with different params to increment quota again.
+   */
+  useEffect(() => {
+    hasIncrementedQuotaRef.current = false
+  }, [jobSearchParams])
+
+  /**
+   * Increments user's job_search quota when a NEW fetch completes successfully.
+   *
+   * Rules:
+   * - ✅ Count on first successful fetch
+   * - ❌ Don't count on cache hits (isFetched && !isFetching check)
+   * - ✅ Count on refetch after staleTime expiration
+   * - ❌ Don't count on API errors (isSuccess check)
+   *
+   * @example
+   * // First search: "dev" → Quota++
+   * // Repeat search: "dev" → Quota unchanged (cache hit)
+   * // New search: "designer" → Quota++
+   */
+  useEffect(() => {
+    if (
+      searchQuery.isSuccess &&           // Fetch succeeded
+      searchQuery.data &&                // Data available
+      searchQuery.isFetched &&           // At least 1 fetch completed
+      !searchQuery.isFetching &&         // Not currently fetching
+      !hasIncrementedQuotaRef.current    // Not already counted
+    ) {
+      console.log('📊 [QUOTA] Incrementing usage for job_search')
+      incrementUsage('job_search')
+      hasIncrementedQuotaRef.current = true
+    }
+  }, [
+    searchQuery.isSuccess,
+    searchQuery.data,
+    searchQuery.isFetched,
+    searchQuery.isFetching,
+    incrementUsage,
+  ])
 
   // Handle search query results
   useEffect(() => {
@@ -395,13 +445,8 @@ export default function JobsPage() {
       setJobs(searchQuery.data.jobs)
       setVisibleJobsCount(0) // Reset counter for progressive reveal
       setCorrectedQuery(searchQuery.data.corrected_query || null)
-      // Increment search usage only on new searches (not cached)
-      if (searchQuery.isFetching && !searchQuery.isPending) {
-        incrementUsage('job_search')
-      }
-      setShouldSearch(false) // Reset trigger
     }
-  }, [searchQuery.data, searchQuery.isFetching, searchQuery.isPending, incrementUsage])
+  }, [searchQuery.data])
 
   const handleSearch = (params: SearchParams) => {
     // Check if user can search (quota check)
@@ -416,8 +461,8 @@ export default function JobsPage() {
     setSelectedCity(params.location)
 
     // Trigger search with caching
+    // Setting params will enable the query and trigger fetch
     setJobSearchParams(params)
-    setShouldSearch(true)
   }
 
   const handleSearchLegacy = (e: React.FormEvent) => {
@@ -968,13 +1013,75 @@ export default function JobsPage() {
                 <CheckCircle className="w-6 h-6 text-white" />
               </motion.div>
               <div>
-                <h2 className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
-                  {jobs.length} offre{jobs.length > 1 ? 's' : ''} trouvée{jobs.length > 1 ? 's' : ''}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                    {jobs.length} offre{jobs.length > 1 ? 's' : ''} trouvée{jobs.length > 1 ? 's' : ''}
+                  </h2>
+                  {/* Cache badge - Shows when data is from cache */}
+                  {searchQuery.isFetched && !searchQuery.isFetching && searchQuery.dataUpdatedAt && (
+                    <Badge
+                      variant="outline"
+                      className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                    >
+                      💾 Cache
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-emerald-600 dark:text-emerald-500 font-medium">
-                  Résultats récents et pertinents
+                  {searchQuery.isFetching ? (
+                    'Actualisation en cours...'
+                  ) : searchQuery.dataUpdatedAt ? (
+                    (() => {
+                      const now = Date.now()
+                      const updatedAt = searchQuery.dataUpdatedAt
+                      const diffMs = now - updatedAt
+                      const diffMinutes = Math.floor(diffMs / 60000)
+                      const diffSeconds = Math.floor(diffMs / 1000)
+
+                      // Determine staleness level
+                      const isStale = diffMinutes >= 5
+                      const isVeryStale = diffMinutes >= 10
+
+                      let timeText = ''
+                      if (diffMinutes < 1) {
+                        timeText = 'à l\'instant'
+                      } else if (diffMinutes === 1) {
+                        timeText = 'il y a 1 minute'
+                      } else {
+                        timeText = `il y a ${diffMinutes} minutes`
+                      }
+
+                      return (
+                        <span className={isVeryStale ? 'text-orange-600 dark:text-orange-400' : isStale ? 'text-yellow-600 dark:text-yellow-400' : ''}>
+                          {isVeryStale ? '⚠️ ' : isStale ? '⏰ ' : '✓ '}
+                          Actualisé {timeText}
+                          {isStale && ' - Actualisation recommandée'}
+                        </span>
+                      )
+                    })()
+                  ) : (
+                    'Résultats récents et pertinents'
+                  )}
                 </p>
               </div>
+              {/* Refresh button - Force new fetch even from cache */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  console.log('🔄 [REFRESH] Forcing refetch (bypassing cache)')
+                  searchQuery.refetch()
+                }}
+                disabled={searchQuery.isFetching}
+                className="ml-4 gap-2 bg-white dark:bg-gray-800 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:border-emerald-400 dark:hover:border-emerald-600"
+                title="Actualiser les résultats depuis le serveur"
+              >
+                <RefreshCw className={cn(
+                  "w-4 h-4",
+                  searchQuery.isFetching && "animate-spin"
+                )} />
+                <span className="hidden sm:inline">Actualiser</span>
+              </Button>
             </div>
             {isFreePlan && (
               <motion.div
