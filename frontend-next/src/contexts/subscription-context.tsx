@@ -1,321 +1,385 @@
-'use client'
+"use client";
 
-import { createContext, useContext, ReactNode, useEffect, useState, useMemo, useCallback } from 'react'
+import {
+  createContext,
+  useContext,
+  ReactNode,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   useFreemiumLimits,
   PlanType,
   FeatureType,
   PLAN_LIMITS,
-} from '@/hooks/use-freemium-limits'
-import { useSubscriptionApi } from '@/hooks/use-subscription-api'
-import { useOptionalAuth } from '@/contexts/auth-context'
-import { toast } from 'sonner'
+} from "@/hooks/use-freemium-limits";
+import { useSubscriptionApi } from "@/hooks/use-subscription-api";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { toast } from "sonner";
 
-type PlanLimits = (typeof PLAN_LIMITS)[PlanType]
+type PlanLimits = (typeof PLAN_LIMITS)[PlanType];
 
 interface SubscriptionContextType {
   // Plan info
-  plan: PlanType
-  planName: string
-  isFreePlan: boolean
-  isPaidPlan: boolean
+  plan: PlanType;
+  planName: string;
+  isFreePlan: boolean;
+  isPaidPlan: boolean;
 
   // Usage tracking
-  canUse: (feature: FeatureType) => boolean
-  getRemaining: (feature: FeatureType) => number
-  incrementUsage: (feature: FeatureType, amount?: number) => void
+  canUse: (feature: FeatureType) => boolean;
+  getRemaining: (feature: FeatureType) => number;
+  incrementUsage: (feature: FeatureType, amount?: number) => void;
   usage: {
-    searchesToday: number
-    jobsViewedToday: number
-    cvAnalysesToday: number
-    coachSecondsUsedToday: number
-    lastResetDate: string
-  }
+    searchesToday: number;
+    jobsViewedToday: number;
+    cvAnalysesToday: number;
+    coachSecondsUsedToday: number;
+    lastResetDate: string;
+  };
 
   // Feature access
-  hasFeature: (feature: keyof PlanLimits) => boolean
-  getRequiredPlan: (feature: keyof PlanLimits) => PlanType
+  hasFeature: (feature: keyof PlanLimits) => boolean;
+  getRequiredPlan: (feature: keyof PlanLimits) => PlanType;
 
   // Coach timer
-  coachTimeRemaining: number
-  startCoachSession: () => void
-  stopCoachSession: () => void
-  isCoachSessionActive: boolean
+  coachTimeRemaining: number;
+  startCoachSession: () => void;
+  stopCoachSession: () => void;
+  isCoachSessionActive: boolean;
 
   // Limits
-  limits: PlanLimits
+  limits: PlanLimits;
 
   // Actions
-  setPlan: (plan: PlanType, expiresAt?: string) => void
+  setPlan: (plan: PlanType, expiresAt?: string) => void;
 
   // Loading state
-  isLoaded: boolean
+  isLoaded: boolean;
 
   // Modal control
-  showPricingModal: boolean
-  openPricingModal: (feature?: string) => void
-  closePricingModal: () => void
-  pricingModalFeature: string | null
+  showPricingModal: boolean;
+  openPricingModal: (feature?: string) => void;
+  closePricingModal: () => void;
+  pricingModalFeature: string | null;
 
   // Subscription sync
-  reconcileSubscription: () => Promise<void>
+  reconcileSubscription: () => Promise<void>;
 }
 
-const SubscriptionContext = createContext<SubscriptionContextType | null>(null)
+const SubscriptionContext = createContext<SubscriptionContextType | null>(null);
 
 const PLAN_NAMES: Record<PlanType, string> = {
-  free: 'Gratuit',
-  starter: 'Starter',
-  pro: 'Pro',
-  premium: 'Premium',
-}
+  free: "Gratuit",
+  starter: "Starter",
+  pro: "Pro",
+  premium: "Premium",
+};
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // NEW: Fetch subscription data from backend API
-  const apiData = useSubscriptionApi()
+  const apiData = useSubscriptionApi();
 
   // KEEP: Local state for setPlan() and coach session until Stripe integration
-  const freemium = useFreemiumLimits()
+  const freemium = useFreemiumLimits();
 
   // Get auth session for inconsistency detection
-  const auth = useOptionalAuth()
+  const auth = useOptionalAuth();
 
-  const [showPricingModal, setShowPricingModal] = useState(false)
-  const [pricingModalFeature, setPricingModalFeature] = useState<string | null>(null)
-  const [coachTimeRemaining, setCoachTimeRemaining] = useState(0)
-  const [hasShownInconsistencyWarning, setHasShownInconsistencyWarning] = useState(false)
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingModalFeature, setPricingModalFeature] = useState<string | null>(
+    null,
+  );
+  const [coachTimeRemaining, setCoachTimeRemaining] = useState(0);
+  const [hasShownInconsistencyWarning, setHasShownInconsistencyWarning] =
+    useState(false);
 
   // Update coach time remaining every second when session is active
   useEffect(() => {
-    if (!freemium.isLoaded) return
+    if (!freemium.isLoaded) return;
 
     // Only run timer logic if coach session is active
     if (freemium.isCoachSessionActive) {
       const updateTime = () => {
-        setCoachTimeRemaining(freemium.getCoachTimeRemaining())
-      }
+        setCoachTimeRemaining(freemium.getCoachTimeRemaining());
+      };
 
-      updateTime() // Initial update only when active
-      const interval = setInterval(updateTime, 1000)
-      return () => clearInterval(interval)
+      updateTime(); // Initial update only when active
+      const interval = setInterval(updateTime, 1000);
+      return () => clearInterval(interval);
     } else {
       // Calculate once when not active (no recurring updates)
-      const totalAllowed = freemium.limits.coach_minutes_per_day * 60
-      const remaining = Math.max(0, totalAllowed - freemium.usage.coachSecondsUsedToday)
-      setCoachTimeRemaining(remaining)
+      const totalAllowed = freemium.limits.coach_minutes_per_day * 60;
+      const remaining = Math.max(
+        0,
+        totalAllowed - freemium.usage.coachSecondsUsedToday,
+      );
+      setCoachTimeRemaining(remaining);
     }
   }, [
     freemium.isLoaded,
     freemium.isCoachSessionActive,
     freemium.limits.coach_minutes_per_day,
     freemium.usage.coachSecondsUsedToday,
-  ])
+  ]);
 
   const openPricingModal = useCallback((feature?: string) => {
-    setPricingModalFeature(feature || null)
-    setShowPricingModal(true)
-  }, [])
+    setPricingModalFeature(feature || null);
+    setShowPricingModal(true);
+  }, []);
 
   const closePricingModal = useCallback((open?: boolean) => {
     // Si un paramètre est fourni (par le Dialog onOpenChange), on l'utilise
     // Sinon on ferme par défaut
-    setShowPricingModal(open ?? false)
+    setShowPricingModal(open ?? false);
     if (open === false || open === undefined) {
-      setPricingModalFeature(null)
+      setPricingModalFeature(null);
     }
-  }, [])
+  }, []);
 
   // Manual reconciliation function (for debugging or user-triggered sync)
   const reconcileSubscription = useCallback(async () => {
-    console.log('[SUBSCRIPTION] Manual reconciliation triggered')
+    console.log("[SUBSCRIPTION] Manual reconciliation triggered");
 
     // Clear local cache
     try {
-      localStorage.removeItem('huntzen_subscription_cache')
-      localStorage.removeItem('huntzen_subscription_cache_expiry')
-      console.log('[SUBSCRIPTION] Local cache cleared')
+      localStorage.removeItem("huntzen_subscription_cache");
+      localStorage.removeItem("huntzen_subscription_cache_expiry");
+      console.log("[SUBSCRIPTION] Local cache cleared");
     } catch (error) {
-      console.error('[SUBSCRIPTION] Failed to clear cache:', error)
+      console.error("[SUBSCRIPTION] Failed to clear cache:", error);
     }
 
     // Force refetch from API
     if (apiData.refetch) {
-      await apiData.refetch()
-      toast.success('Abonnement synchronisé', {
-        description: 'Vos informations d\'abonnement ont été actualisées.',
-      })
+      await apiData.refetch();
+      toast.success("Abonnement synchronisé", {
+        description: "Vos informations d'abonnement ont été actualisées.",
+      });
     } else {
-      toast.error('Synchronisation impossible', {
-        description: 'La fonction de synchronisation n\'est pas disponible.',
-      })
+      toast.error("Synchronisation impossible", {
+        description: "La fonction de synchronisation n'est pas disponible.",
+      });
     }
 
     // Reset warning flag
-    setHasShownInconsistencyWarning(false)
-  }, [apiData.refetch])
+    setHasShownInconsistencyWarning(false);
+  }, [apiData.refetch]);
 
   // Map API data to interface (distinguish loading/error/no-subscription states)
   const plan: PlanType = (() => {
     // During loading, use localStorage fallback to prevent UI flicker
-    if (apiData.isLoading) return freemium.plan
+    if (apiData.isLoading) return freemium.plan;
 
     // On error, log warning and fallback (user should see error state elsewhere)
     if (apiData.error) {
-      console.error('[Subscription] API error, check authentication:', apiData.error)
-      return freemium.plan
+      console.error(
+        "[Subscription] API error, check authentication:",
+        apiData.error,
+      );
+      return freemium.plan;
     }
 
     // No subscription data = new user or free user, default to 'free'
-    return apiData.subscription?.plan_name || 'free'
-  })()
-  const planName = PLAN_NAMES[plan]
+    return apiData.subscription?.plan_name || "free";
+  })();
+  const planName = PLAN_NAMES[plan];
 
   // Detect inconsistency: user authenticated but no subscription data from API
   useEffect(() => {
-    const isAuthenticated = auth?.session !== null && auth?.session !== undefined
-    const hasSubscriptionData = apiData.subscription !== null && apiData.subscription !== undefined
-    const isApiLoading = apiData.isLoading
-    const isApiError = apiData.error !== null
+    const isAuthenticated =
+      auth?.session !== null && auth?.session !== undefined;
+    const hasSubscriptionData =
+      apiData.subscription !== null && apiData.subscription !== undefined;
+    const isApiLoading = apiData.isLoading;
+    const isApiError = apiData.error !== null;
 
     // Only check when:
     // - User is authenticated
     // - API has finished loading
     // - No subscription data received from API
     // - Haven't already shown warning this session
-    if (isAuthenticated && !isApiLoading && !hasSubscriptionData && !hasShownInconsistencyWarning) {
+    if (
+      isAuthenticated &&
+      !isApiLoading &&
+      !hasSubscriptionData &&
+      !hasShownInconsistencyWarning
+    ) {
       console.warn(
-        '[SUBSCRIPTION] Inconsistency detected: authenticated but no subscription data from API',
+        "[SUBSCRIPTION] Inconsistency detected: authenticated but no subscription data from API",
         {
           hasSession: !!auth?.session,
           apiSubscription: apiData.subscription,
           fallbackPlan: freemium.plan,
-          apiError: apiData.error
-        }
-      )
+          apiError: apiData.error,
+        },
+      );
 
       // Show user-visible warning
       if (isApiError) {
-        toast.error('Erreur de chargement de votre abonnement', {
-          description: 'Impossible de récupérer vos informations d\'abonnement. Veuillez vous reconnecter.',
+        toast.error("Erreur de chargement de votre abonnement", {
+          description:
+            "Impossible de récupérer vos informations d'abonnement. Veuillez vous reconnecter.",
           duration: 6000,
-        })
+        });
       } else {
-        toast.warning('Chargement de votre abonnement en cours...', {
-          description: 'Si le problème persiste, veuillez vous reconnecter.',
+        toast.warning("Chargement de votre abonnement en cours...", {
+          description: "Si le problème persiste, veuillez vous reconnecter.",
           duration: 5000,
-        })
+        });
       }
 
-      setHasShownInconsistencyWarning(true)
+      setHasShownInconsistencyWarning(true);
 
       // Auto-refetch after 5 seconds if not an error
       if (!isApiError) {
         setTimeout(() => {
-          console.log('[SUBSCRIPTION] Auto-refetching subscription data...')
-          apiData.refetch?.()
-        }, 5000)
+          console.log("[SUBSCRIPTION] Auto-refetching subscription data...");
+          apiData.refetch?.();
+        }, 5000);
       }
     }
 
     // Reset warning flag when subscription data is successfully loaded
     if (hasSubscriptionData && hasShownInconsistencyWarning) {
-      console.log('[SUBSCRIPTION] Subscription data loaded successfully, resetting warning flag')
-      setHasShownInconsistencyWarning(false)
+      console.log(
+        "[SUBSCRIPTION] Subscription data loaded successfully, resetting warning flag",
+      );
+      setHasShownInconsistencyWarning(false);
     }
-  }, [auth?.session, apiData.subscription, apiData.isLoading, apiData.error, hasShownInconsistencyWarning, freemium.plan, apiData.refetch])
+  }, [
+    auth?.session,
+    apiData.subscription,
+    apiData.isLoading,
+    apiData.error,
+    hasShownInconsistencyWarning,
+    freemium.plan,
+    apiData.refetch,
+  ]);
 
   // Listen for token-expired event and show reconnect toast
   useEffect(() => {
     const handleTokenExpired = () => {
-      toast.error('Session expirée', {
-        description: 'Votre session a expiré. Veuillez vous reconnecter.',
+      toast.error("Session expirée", {
+        description: "Votre session a expiré. Veuillez vous reconnecter.",
         action: {
-          label: 'Reconnecter',
-          onClick: () => window.location.href = '/login'
+          label: "Reconnecter",
+          onClick: () => (window.location.href = "/login"),
         },
         duration: 10000,
-      })
-    }
+      });
+    };
 
-    window.addEventListener('token-expired', handleTokenExpired)
-    return () => window.removeEventListener('token-expired', handleTokenExpired)
-  }, [])
+    window.addEventListener("token-expired", handleTokenExpired);
+    return () =>
+      window.removeEventListener("token-expired", handleTokenExpired);
+  }, []);
 
   // Build limits from API quotas (source of truth)
   const limitsFromApi: PlanLimits = useMemo(() => {
     if (!apiData.quotas) {
       // Fallback to hardcoded limits if API data not available
-      return PLAN_LIMITS[plan]
+      return PLAN_LIMITS[plan];
     }
 
     // Get base plan limits for feature flags
-    const baseLimits = PLAN_LIMITS[plan]
+    const baseLimits = PLAN_LIMITS[plan];
 
     // Override numeric limits from API, keep feature flags from PLAN_LIMITS
     return {
       ...baseLimits,
       // Override with API data
-      cv_analyses_per_day: apiData.quotas.cv_analysis.limit === -1 ? Infinity : apiData.quotas.cv_analysis.limit,
-      coach_minutes_per_day: apiData.quotas.coach.limit === -1 ? Infinity : Math.round(apiData.quotas.coach.limit / 60),
-      job_searches_per_day: apiData.quotas.job_search.limit === -1 ? Infinity : apiData.quotas.job_search.limit,
-    } as PlanLimits
-  }, [apiData.quotas, plan])
+      cv_analyses_per_day:
+        apiData.quotas.cv_analysis.limit === -1
+          ? Infinity
+          : apiData.quotas.cv_analysis.limit,
+      coach_minutes_per_day:
+        apiData.quotas.coach.limit === -1
+          ? Infinity
+          : Math.round(apiData.quotas.coach.limit / 60),
+      job_searches_per_day:
+        apiData.quotas.job_search.limit === -1
+          ? Infinity
+          : apiData.quotas.job_search.limit,
+    } as PlanLimits;
+  }, [apiData.quotas, plan]);
 
   // Build usage from API quotas (source of truth)
-  const usageFromApi = useMemo(() => ({
-    // From API backend (using ?? to avoid treating 0 as falsy)
-    searchesToday: apiData.quotas?.job_search.used ?? 0,
-    cvAnalysesToday: apiData.quotas?.cv_analysis.used ?? 0,
-    coachSecondsUsedToday: apiData.quotas?.coach.used ?? 0,
+  const usageFromApi = useMemo(
+    () => ({
+      // From API backend (using ?? to avoid treating 0 as falsy)
+      searchesToday: apiData.quotas?.job_search.used ?? 0,
+      cvAnalysesToday: apiData.quotas?.cv_analysis.used ?? 0,
+      coachSecondsUsedToday: apiData.quotas?.coach.used ?? 0,
 
-    // From localStorage (not tracked in backend)
-    jobsViewedToday: freemium.usage.jobsViewedToday,
-    lastResetDate: apiData.quotas?.cv_analysis.reset_at ?? freemium.usage.lastResetDate,
-  }), [
-    apiData.quotas,
-    freemium.usage.jobsViewedToday,
-    freemium.usage.lastResetDate,
-  ])
+      // From localStorage (not tracked in backend)
+      jobsViewedToday: freemium.usage.jobsViewedToday,
+      lastResetDate:
+        apiData.quotas?.cv_analysis.reset_at ?? freemium.usage.lastResetDate,
+    }),
+    [
+      apiData.quotas,
+      freemium.usage.jobsViewedToday,
+      freemium.usage.lastResetDate,
+    ],
+  );
 
   // canUse helper: Check if user can use a feature based on API quotas
-  const canUse = useCallback((feature: FeatureType): boolean => {
-    if (!apiData.quotas) return freemium.canUse(feature)
+  const canUse = useCallback(
+    (feature: FeatureType): boolean => {
+      if (!apiData.quotas) return freemium.canUse(feature);
 
-    switch (feature) {
-      case 'cv_analysis':
-        return apiData.quotas.cv_analysis.has_access
-      case 'coach_time':
-        return apiData.quotas.coach.has_access
-      case 'job_search':
-        return apiData.quotas.job_search.has_access
-      default:
-        return freemium.canUse(feature)
-    }
-  }, [apiData.quotas, freemium])
+      switch (feature) {
+        case "cv_analysis":
+          return apiData.quotas.cv_analysis.has_access;
+        case "coach_time":
+          return apiData.quotas.coach.has_access;
+        case "job_search":
+          return apiData.quotas.job_search.has_access;
+        default:
+          return freemium.canUse(feature);
+      }
+    },
+    [apiData.quotas, freemium],
+  );
 
   // getRemaining helper: Get remaining quota based on API data
-  const getRemaining = useCallback((feature: FeatureType): number => {
-    if (!apiData.quotas) return freemium.getRemaining(feature)
+  const getRemaining = useCallback(
+    (feature: FeatureType): number => {
+      if (!apiData.quotas) return freemium.getRemaining(feature);
 
-    switch (feature) {
-      case 'cv_analysis':
-        return apiData.quotas.cv_analysis.remaining === -1 ? Infinity : apiData.quotas.cv_analysis.remaining
-      case 'coach_time':
-        // Convert seconds to minutes
-        return apiData.quotas.coach.remaining === -1 ? Infinity : Math.round(apiData.quotas.coach.remaining / 60)
-      case 'job_search':
-        return apiData.quotas.job_search.remaining === -1 ? Infinity : apiData.quotas.job_search.remaining
-      default:
-        return freemium.getRemaining(feature)
-    }
-  }, [apiData.quotas, freemium])
+      switch (feature) {
+        case "cv_analysis":
+          return apiData.quotas.cv_analysis.remaining === -1
+            ? Infinity
+            : apiData.quotas.cv_analysis.remaining;
+        case "coach_time":
+          // Convert seconds to minutes
+          return apiData.quotas.coach.remaining === -1
+            ? Infinity
+            : Math.round(apiData.quotas.coach.remaining / 60);
+        case "job_search":
+          return apiData.quotas.job_search.remaining === -1
+            ? Infinity
+            : apiData.quotas.job_search.remaining;
+        default:
+          return freemium.getRemaining(feature);
+      }
+    },
+    [apiData.quotas, freemium],
+  );
 
   // incrementUsage: Keep local for now (will be removed when backend tracks all usage)
-  const incrementUsage = useCallback((feature: FeatureType, amount?: number) => {
-    // Local increment for immediate UI feedback
-    freemium.incrementUsage(feature, amount)
-    // Backend will update on next API refresh (5 min)
-  }, [freemium])
+  const incrementUsage = useCallback(
+    (feature: FeatureType, amount?: number) => {
+      // Local increment for immediate UI feedback
+      freemium.incrementUsage(feature, amount);
+      // Backend will update on next API refresh (5 min)
+    },
+    [freemium],
+  );
 
   // hasFeature: Check feature availability based on API plan (source of truth)
   const hasFeature = useCallback((feature: keyof PlanLimits): boolean => {
@@ -327,109 +391,114 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [apiData.subscription?.plan_name, freemium.plan])
 
   // useMemo with ONLY primitive dependencies that actually change
-  const value: SubscriptionContextType = useMemo(() => ({
-    plan,
-    planName,
-    isFreePlan: plan === 'free',
-    isPaidPlan: plan !== 'free',
+  const value: SubscriptionContextType = useMemo(
+    () => ({
+      plan,
+      planName,
+      isFreePlan: plan === "free",
+      isPaidPlan: plan !== "free",
 
-    canUse,
-    getRemaining,
-    incrementUsage,
-    usage: usageFromApi,
+      canUse,
+      getRemaining,
+      incrementUsage,
+      usage: usageFromApi,
 
-    hasFeature,
-    getRequiredPlan: freemium.getRequiredPlan,
+      hasFeature,
+      getRequiredPlan: freemium.getRequiredPlan,
 
-    coachTimeRemaining,
-    startCoachSession: freemium.startCoachSession,
-    stopCoachSession: freemium.stopCoachSession,
-    isCoachSessionActive: freemium.isCoachSessionActive,
+      coachTimeRemaining,
+      startCoachSession: freemium.startCoachSession,
+      stopCoachSession: freemium.stopCoachSession,
+      isCoachSessionActive: freemium.isCoachSessionActive,
 
-    limits: limitsFromApi,
+      limits: limitsFromApi,
 
-    setPlan: freemium.setPlan, // KEEP local until Stripe integration
+      setPlan: freemium.setPlan, // KEEP local until Stripe integration
 
-    isLoaded: !apiData.isLoading && freemium.isLoaded,
+      isLoaded: !apiData.isLoading && freemium.isLoaded,
 
-    showPricingModal,
-    openPricingModal,
-    closePricingModal,
-    pricingModalFeature,
+      showPricingModal,
+      openPricingModal,
+      closePricingModal,
+      pricingModalFeature,
 
-    reconcileSubscription,
-  }), [
-    // Plan data from API
-    plan,
-    planName,
+      reconcileSubscription,
+    }),
+    [
+      // Plan data from API
+      plan,
+      planName,
 
-    // Helpers
-    canUse,
-    getRemaining,
-    incrementUsage,
-    hasFeature,
+      // Helpers
+      canUse,
+      getRemaining,
+      incrementUsage,
+      hasFeature,
 
-    // Usage from API
-    usageFromApi,
+      // Usage from API
+      usageFromApi,
 
-    // Limits from API
-    limitsFromApi,
+      // Limits from API
+      limitsFromApi,
 
-    // Coach timer
-    coachTimeRemaining,
-    freemium.isCoachSessionActive,
+      // Coach timer
+      coachTimeRemaining,
+      freemium.isCoachSessionActive,
 
-    // Loading states
-    apiData.isLoading,
-    freemium.isLoaded,
+      // Loading states
+      apiData.isLoading,
+      freemium.isLoaded,
 
-    // Modal state
-    showPricingModal,
-    pricingModalFeature,
+      // Modal state
+      showPricingModal,
+      pricingModalFeature,
 
-    // Keep functions stable
-    openPricingModal,
-    closePricingModal,
-    reconcileSubscription,
-  ])
+      // Keep functions stable
+      openPricingModal,
+      closePricingModal,
+      reconcileSubscription,
+    ],
+  );
 
   return (
     <SubscriptionContext.Provider value={value}>
       {children}
     </SubscriptionContext.Provider>
-  )
+  );
 }
 
 export function useSubscription() {
-  const context = useContext(SubscriptionContext)
+  const context = useContext(SubscriptionContext);
   if (!context) {
-    throw new Error('useSubscription must be used within a SubscriptionProvider')
+    throw new Error(
+      "useSubscription must be used within a SubscriptionProvider",
+    );
   }
-  return context
+  return context;
 }
 
 // Hook optional qui ne throw pas d'erreur (pour Sidebar)
 export function useOptionalSubscription() {
-  const context = useContext(SubscriptionContext)
-  return context
+  const context = useContext(SubscriptionContext);
+  return context;
 }
 
 // Helper hook for checking specific features
 export function useFeatureAccess(feature: keyof PlanLimits) {
-  const { hasFeature, getRequiredPlan, openPricingModal } = useSubscription()
+  const { hasFeature, getRequiredPlan, openPricingModal } = useSubscription();
 
-  const hasAccess = hasFeature(feature)
-  const requiredPlan = getRequiredPlan(feature)
+  const hasAccess = hasFeature(feature);
+  const requiredPlan = getRequiredPlan(feature);
 
   const requestAccess = () => {
     if (!hasAccess) {
-      openPricingModal(feature)
+      openPricingModal(feature);
     }
-  }
+  };
 
   return {
     hasAccess,
     requiredPlan,
     requestAccess,
-  }
+  };
 }

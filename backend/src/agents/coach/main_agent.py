@@ -36,8 +36,8 @@ class CareerCoachAgent(BaseAgent):
         """Initialize the Career Coach with its sub-agents."""
         config = AgentConfig(
             name="CareerCoach",
-            model=settings.llm_model_powerful,
-            temperature=0.5,
+            model=settings.llm_model_fast,  # User-facing → needs jailbreak resistance (Llama 4)
+            temperature=0.3,
             max_tokens=2048,
             system_prompt_file="coach_main.txt",
         )
@@ -269,8 +269,24 @@ class CareerCoachAgent(BaseAgent):
         deep_analysis: bool = False,
     ) -> dict[str, Any]:
         try:
-            # Prepare language instruction
-            lang_instruction = "" if language == "fr" else f"[Respond in {language.upper()}] "
+            # Prepare language instruction - ALWAYS enforce language (even for French)
+            # Map language codes to full names for clarity
+            lang_names = {"fr": "French", "en": "English", "es": "Spanish", "de": "German", "ar": "Arabic"}
+            lang_name = lang_names.get(language, language)
+            lang_instruction = f"[IMPORTANT: You MUST respond in {lang_name}. This is a strict requirement.] "
+
+            # Add code hint only for genuine code requests (from PR #16)
+            # Avoid false positives: "code du travail", "code postal", "code NAF", "dress code"
+            msg_lower = message.lower()
+            _CODE_PATTERNS = [
+                "python", "javascript", "sql", "html", "css", "java ",
+                "react", "docker", "bash", "script", "regex", "api",
+                "écrire du code", "write code", "code python", "code sql",
+                "fonction", "function", "algorithme", "algorithm",
+            ]
+            if any(p in msg_lower for p in _CODE_PATTERNS):
+                lang_instruction += "[If the user asks for code, provide it in a Markdown code block.] "
+
             full_message = f"{lang_instruction}{message}"
             
             # Main conversation (coach principal always responds)
