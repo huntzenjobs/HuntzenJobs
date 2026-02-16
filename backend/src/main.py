@@ -41,6 +41,9 @@ async def lifespan(app: FastAPI):
     
     yield
     
+    # Clean shutdown: close Redis connection pool
+    from src.utils.cache import close_redis
+    await close_redis()
     logger.info(f"{settings.app_name} shutting down...")
 
 

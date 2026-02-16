@@ -6,6 +6,7 @@ Combines results from multiple job providers.
 
 import asyncio
 import logging
+from difflib import SequenceMatcher
 from typing import Any
 
 from src.services.job_providers.base import BaseJobProvider
@@ -86,43 +87,67 @@ def deduplicate_jobs(
     similarity_threshold: float = 0.85,
 ) -> list[dict[str, Any]]:
     """
-    Remove duplicate job listings.
+    Remove duplicate job listings using fuzzy matching.
     
-    Uses title + company matching to identify duplicates.
+    Uses title + company similarity to catch near-duplicates like:
+    - "Data Scientist" vs "Data Scientist - Paris"
+    - "Software Engineer" vs "Software Engineer (H/F)"
     
     Args:
         jobs: List of job listings
-        similarity_threshold: Similarity threshold for duplicates
+        similarity_threshold: Min similarity ratio (0-1) to consider duplicate.
+                              0.85 = 85% match → duplicate. Lower = more aggressive.
         
     Returns:
-        Deduplicated list
+        Deduplicated list (keeps the first occurrence)
     """
     if not jobs:
         return []
     
-    seen_fingerprints = set()
-    unique_jobs = []
+    unique_jobs: list[dict[str, Any]] = []
+    fingerprints: list[str] = []
     
     for job in jobs:
-        fingerprint = _create_fingerprint(job)
+        fp = _create_fingerprint(job)
         
-        if fingerprint not in seen_fingerprints:
-            seen_fingerprints.add(fingerprint)
+        # Check against all kept fingerprints for fuzzy match
+        is_duplicate = False
+        for existing_fp in fingerprints:
+            ratio = SequenceMatcher(None, fp, existing_fp).ratio()
+            if ratio >= similarity_threshold:
+                is_duplicate = True
+                break
+        
+        if not is_duplicate:
+            fingerprints.append(fp)
             unique_jobs.append(job)
+    
+    if len(jobs) != len(unique_jobs):
+        logger.info(
+            f"[Dedup] {len(jobs)} → {len(unique_jobs)} "
+            f"(removed {len(jobs) - len(unique_jobs)} duplicates, threshold={similarity_threshold})"
+        )
     
     return unique_jobs
 
 
 def _create_fingerprint(job: dict) -> str:
-    """Create a fingerprint for deduplication."""
-    title = (job.get("title") or "").lower()
-    company = (job.get("company") or "").lower()
+    """
+    Create a normalized fingerprint for deduplication.
+    
+    Uses full title + company (not truncated) so SequenceMatcher
+    can properly measure similarity between near-duplicates.
+    """
+    title = (job.get("title") or "").lower().strip()
+    company = (job.get("company") or "").lower().strip()
     
     # Normalize common variations
     title = title.replace("senior", "sr").replace("junior", "jr")
+    # Remove common suffixes that inflate difference
+    for noise in ("(h/f)", "(f/h)", "(m/w/d)", "- cdi", "- cdd"):
+        title = title.replace(noise, "")
     
-    # Use first 30 chars of title and 20 of company
-    return f"{title[:30].strip()}|{company[:20].strip()}"
+    return f"{title.strip()}|{company.strip()}"
 
 
 def sort_jobs_by_relevance(

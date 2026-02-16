@@ -17,7 +17,6 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from src.config.settings import settings
-from src.utils.cache import get_redis
 
 logger = logging.getLogger(__name__)
 
