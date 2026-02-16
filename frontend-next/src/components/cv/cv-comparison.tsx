@@ -28,11 +28,11 @@ interface CVComparisonProps {
 // ============================================================================
 
 function getNewStrengths(v1: CVAnalysisResult, v2: CVAnalysisResult): string[] {
-  return v2.strengths.filter((strength) => !v1.strengths.includes(strength))
+  return (v2.strengths || []).filter((strength) => !(v1.strengths || []).includes(strength))
 }
 
 function getResolvedWeaknesses(v1: CVAnalysisResult, v2: CVAnalysisResult): string[] {
-  return v1.weaknesses.filter((weakness) => !v2.weaknesses.includes(weakness))
+  return (v1.weaknesses || []).filter((weakness) => !(v2.weaknesses || []).includes(weakness))
 }
 
 function calculateScoreDelta(v1: CVAnalysisResult, v2: CVAnalysisResult): number {

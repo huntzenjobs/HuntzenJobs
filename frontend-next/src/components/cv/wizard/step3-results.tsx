@@ -197,9 +197,9 @@ export function Step3Results({
       {/* Results Accordion */}
       <ResultsAccordion
         breakdown={result.breakdown}
-        strengths={result.strengths}
-        weaknesses={result.weaknesses}
-        suggestions={result.suggestions}
+        strengths={result.strengths || []}
+        weaknesses={result.weaknesses || []}
+        suggestions={result.suggestions || []}
         rawAnalysis={result.rawAnalysis}
         currentScore={result.score}
       />
