@@ -54,7 +54,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // Update locale and cookie
   const setLocale = useCallback((newLocale: Locale) => {
     if (!SUPPORTED_LOCALES.includes(newLocale)) {
-      console.warn(`Unsupported locale: ${newLocale}, falling back to ${DEFAULT_LOCALE}`);
+      console.warn(
+        `Unsupported locale: ${newLocale}, falling back to ${DEFAULT_LOCALE}`,
+      );
       newLocale = DEFAULT_LOCALE;
     }
 
@@ -96,7 +98,13 @@ export function useLocale() {
  */
 export function useOptionalLocale() {
   const context = useContext(I18nContext);
-  return context || { locale: DEFAULT_LOCALE, setLocale: () => {}, supportedLocales: SUPPORTED_LOCALES };
+  return (
+    context || {
+      locale: DEFAULT_LOCALE,
+      setLocale: () => {},
+      supportedLocales: SUPPORTED_LOCALES,
+    }
+  );
 }
 
 // ============================================================================

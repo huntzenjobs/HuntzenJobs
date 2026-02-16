@@ -381,29 +381,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     [freemium],
   );
 
-  // hasFeature: Check feature access based on API plan (not localStorage)
-  const hasFeature = useCallback(
-    (feature: keyof PlanLimits): boolean => {
-      // Use API plan if available, otherwise fallback to freemium
-      const currentPlan = plan || freemium.plan;
-      const planLimits = PLAN_LIMITS[currentPlan];
-      const featureValue = planLimits[feature];
-
-      // Boolean features: check if true
-      if (typeof featureValue === "boolean") {
-        return featureValue;
-      }
-
-      // Numeric features: check if > 0 or Infinity
-      if (typeof featureValue === "number") {
-        return featureValue > 0 || featureValue === Infinity;
-      }
-
-      // Default: feature not available
-      return false;
-    },
-    [plan, freemium.plan],
-  );
+  // hasFeature: Check feature availability based on API plan (source of truth)
+  const hasFeature = useCallback((feature: keyof PlanLimits): boolean => {
+    // Use API plan as source of truth (not localStorage fallback)
+    // This ensures Premium users get Premium features even after cache expiry
+    const currentPlan = apiData.subscription?.plan_name || freemium.plan
+    const limits = PLAN_LIMITS[currentPlan]
+    return !!limits[feature]
+  }, [apiData.subscription?.plan_name, freemium.plan])
 
   // useMemo with ONLY primitive dependencies that actually change
   const value: SubscriptionContextType = useMemo(
@@ -448,6 +433,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       canUse,
       getRemaining,
       incrementUsage,
+      hasFeature,
 
       // Usage from API
       usageFromApi,

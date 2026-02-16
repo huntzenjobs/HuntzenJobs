@@ -41,24 +41,19 @@ export default function SavedJobsPage() {
     try {
       const supabase = createClient()
 
-      // TODO: Implémenter la table saved_jobs dans Supabase
-      // Pour l'instant, retourner un tableau vide
       const { data, error } = await supabase
         .from('saved_jobs')
         .select('*')
         .eq('user_id', user?.id)
         .order('saved_at', { ascending: false })
 
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 = table doesn't exist
-        console.error('Error fetching saved jobs:', error)
+      if (error) {
         throw error
       }
 
       setSavedJobs(data || [])
     } catch (error) {
-      console.error('Failed to fetch saved jobs:', error)
-      // Don't show error toast if table doesn't exist yet
+      // Silently handle errors - table exists but may have RLS issues
       setSavedJobs([])
     } finally {
       setLoading(false)

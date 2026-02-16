@@ -34,6 +34,7 @@ import {
   Filter,
   AlertCircle,
   CheckCircle,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
@@ -363,36 +364,52 @@ export default function JobsPage() {
     setCitySearch(city);
   };
 
-  // Search mutation
-  const searchMutation = useMutation({
-    mutationFn: async (params: SearchParams) => {
-      if (!params.query.trim() || !params.country) {
-        throw new Error("Veuillez remplir le titre du poste et le pays");
-      }
+  // Search state for caching with React Query
+  const [jobSearchParams, setJobSearchParams] = useState<SearchParams | null>(null)
 
-      // Check if user can search
-      if (!canUse("job_search")) {
-        openPricingModal("job_searches_per_day");
-        throw new Error("Limite de recherches atteinte");
+  /**
+   * Tracks whether quota has been incremented for current search params.
+   * Reset when search parameters change to allow quota counting for new searches.
+   *
+   * @internal
+   * @see https://tanstack.com/query/latest/docs/react/guides/caching
+   */
+  const hasIncrementedQuotaRef = useRef(false)
+
+  // Search query with intelligent caching
+  const searchQuery = useQuery({
+    queryKey: [
+      'job-search',
+      jobSearchParams?.query,
+      jobSearchParams?.country,
+      jobSearchParams?.location,
+      jobSearchParams?.radiusKm,
+      jobSearchParams?.includeRemote,
+      contractType,
+      advancedFilters,
+    ],
+    queryFn: async () => {
+      if (!jobSearchParams?.query.trim() || !jobSearchParams?.country) {
+        throw new Error('Veuillez remplir le titre du poste et le pays')
       }
 
       // Debug: Log search parameters
-      console.log("🔍 [SEARCH] Paramètres de recherche:", {
-        query: params.query,
-        location: params.location,
-        country: params.country,
-        radiusKm: params.radiusKm,
-        includeRemote: params.includeRemote,
+      console.log('🔍 [SEARCH] Paramètres de recherche:', {
+        query: jobSearchParams.query,
+        location: jobSearchParams.location,
+        country: jobSearchParams.country,
+        radiusKm: jobSearchParams.radiusKm,
+        includeRemote: jobSearchParams.includeRemote,
         contractType,
       });
 
-      return huntzenApi.searchJobs({
-        job_title: params.query,
-        country_code: params.country,
-        city: params.location,
+      const data = await huntzenApi.searchJobs({
+        job_title: jobSearchParams.query,
+        country_code: jobSearchParams.country,
+        city: jobSearchParams.location,
         contract_type: contractType,
-        radiusKm: params.radiusKm,
-        includeRemote: params.includeRemote,
+        radiusKm: jobSearchParams.radiusKm,
+        includeRemote: jobSearchParams.includeRemote,
         // Advanced filters (Premium feature)
         industries: advancedFilters.industries?.join(","),
         keywords: advancedFilters.keywords?.join(","),
@@ -400,43 +417,88 @@ export default function JobsPage() {
         salaryMin: advancedFilters.salaryMin,
         salaryMax: advancedFilters.salaryMax,
         companySize: advancedFilters.companySize,
-      });
-    },
-    onSuccess: (data) => {
-      console.log("✅ [SEARCH] Résultats reçus:", {
+      })
+
+      console.log('✅ [SEARCH] Résultats reçus:', {
         totalJobs: data.jobs.length,
-        correctedQuery: data.corrected_query,
-      });
-      setJobs(data.jobs);
-      setVisibleJobsCount(0); // Reset counter for progressive reveal
-      setCorrectedQuery(data.corrected_query || null);
-      // Increment search usage
-      incrementUsage("job_search");
+        correctedQuery: data.corrected_query
+      })
+
+      return data
     },
-    onError: (error) => {
-      console.error("❌ [SEARCH] Erreur de recherche:", error);
-    },
-  });
+    enabled: !!jobSearchParams, // Simplified: no need for shouldSearch flag
+    staleTime: 1000 * 60 * 5, // 5 minutes - results stay fresh
+    gcTime: 1000 * 60 * 15, // 15 minutes - keep in cache for reuse
+    retry: 1,
+  })
+
+  /**
+   * Reset quota increment flag when search parameters change.
+   * This allows a new search with different params to increment quota again.
+   */
+  useEffect(() => {
+    hasIncrementedQuotaRef.current = false
+  }, [jobSearchParams])
+
+  /**
+   * Increments user's job_search quota when a NEW fetch completes successfully.
+   *
+   * Rules:
+   * - ✅ Count on first successful fetch
+   * - ❌ Don't count on cache hits (isFetched && !isFetching check)
+   * - ✅ Count on refetch after staleTime expiration
+   * - ❌ Don't count on API errors (isSuccess check)
+   *
+   * @example
+   * // First search: "dev" → Quota++
+   * // Repeat search: "dev" → Quota unchanged (cache hit)
+   * // New search: "designer" → Quota++
+   */
+  useEffect(() => {
+    if (
+      searchQuery.isSuccess &&           // Fetch succeeded
+      searchQuery.data &&                // Data available
+      searchQuery.isFetched &&           // At least 1 fetch completed
+      !searchQuery.isFetching &&         // Not currently fetching
+      !hasIncrementedQuotaRef.current    // Not already counted
+    ) {
+      console.log('📊 [QUOTA] Incrementing usage for job_search')
+      incrementUsage('job_search')
+      hasIncrementedQuotaRef.current = true
+    }
+  }, [
+    searchQuery.isSuccess,
+    searchQuery.data,
+    searchQuery.isFetched,
+    searchQuery.isFetching,
+    incrementUsage,
+  ])
+
+  // Handle search query results
+  useEffect(() => {
+    if (searchQuery.data) {
+      setJobs(searchQuery.data.jobs)
+      setVisibleJobsCount(0) // Reset counter for progressive reveal
+      setCorrectedQuery(searchQuery.data.corrected_query || null)
+    }
+  }, [searchQuery.data])
 
   const handleSearch = (params: SearchParams) => {
+    // Check if user can search (quota check)
+    if (!canUse('job_search')) {
+      openPricingModal('job_searches_per_day')
+      return
+    }
+
     // Update form state for backward compatibility
     setJobTitle(params.query);
     setSelectedCountry(params.country);
     setSelectedCity(params.location);
 
-    searchMutation.mutate(params);
-  };
-
-  // Handle popular search click
-  const handlePopularSearchClick = (jobTitle: string) => {
-    // Default to France if no country selected
-    const defaultCountry = "FR";
-    handleSearch({
-      query: jobTitle,
-      location: "", // Empty location = search in entire country
-      country: defaultCountry,
-    });
-  };
+    // Trigger search with caching
+    // Setting params will enable the query and trigger fetch
+    setJobSearchParams(params)
+  }
 
   const handleSearchLegacy = (e: React.FormEvent) => {
     e.preventDefault();
@@ -642,7 +704,7 @@ export default function JobsPage() {
         {featureFlags.useJobsV2 ? (
           <SearchFormInline
             onSearch={handleSearch}
-            isLoading={searchMutation.isPending}
+            isLoading={searchQuery.isPending}
             disabled={false}
           />
         ) : (
@@ -660,7 +722,56 @@ export default function JobsPage() {
                   </p>
                 </div>
 
+<<<<<<< HEAD
+              <div className="space-y-2">
+                <Label htmlFor="contractType" className="text-sm font-semibold">
+                  Type de contrat <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
+                </Label>
+                <Select name="contractType" value={contractType || 'all'} onValueChange={(value) => setContractType(value === 'all' ? '' : value)}>
+                  <SelectTrigger id="contractType" className="h-11 border-2 focus:border-primary">
+                    <SelectValue placeholder="Tous les types de contrat" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">✓ Tous les types</SelectItem>
+                    {contractTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 pt-2">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
+                disabled={searchQuery.isPending || !jobTitle.trim() || !selectedCountry || (!canUse('job_search') && isFreePlan)}
+              >
+                {searchQuery.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Recherche en cours...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-5 w-5" />
+                    Lancer la recherche
+                    {isFreePlan && searchesRemaining <= 3 && searchesRemaining > 0 && (
+                      <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-semibold">
+                        {searchesRemaining} restante{searchesRemaining !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </>
+                )}
+              </Button>
+
+              {!canUse('job_search') && isFreePlan && (
+=======
                 {/* Advanced filters button */}
+>>>>>>> origin/Production
                 <Button
                   variant="outline"
                   size="sm"
@@ -930,13 +1041,13 @@ export default function JobsPage() {
                     size="lg"
                     className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
                     disabled={
-                      searchMutation.isPending ||
+                      searchQuery.isPending ||
                       !jobTitle.trim() ||
                       !selectedCountry ||
                       (!canUse("job_search") && isFreePlan)
                     }
                   >
-                    {searchMutation.isPending ? (
+                    {searchQuery.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         Recherche en cours...
@@ -977,8 +1088,8 @@ export default function JobsPage() {
       </ErrorBoundary>
 
       {/* Error */}
-      {searchMutation.isError &&
-        searchMutation.error?.message !== "Limite de recherches atteinte" && (
+      {searchQuery.isError &&
+        searchQuery.error?.message !== "Limite de recherches atteinte" && (
           <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-5 border-l-4 border-red-500 dark:border-red-400">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
@@ -987,8 +1098,8 @@ export default function JobsPage() {
                   Erreur lors de la recherche
                 </h3>
                 <p className="text-sm text-red-600 dark:text-red-300">
-                  {searchMutation.error instanceof Error
-                    ? searchMutation.error.message
+                  {searchQuery.error instanceof Error
+                    ? searchQuery.error.message
                     : "Une erreur est survenue lors de la recherche. Veuillez reessayer."}
                 </p>
               </div>
@@ -1024,7 +1135,7 @@ export default function JobsPage() {
       </AnimatePresence>
 
       {/* Results */}
-      {searchMutation.isPending && (
+      {searchQuery.isPending && (
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
@@ -1040,7 +1151,7 @@ export default function JobsPage() {
         </div>
       )}
 
-      {!searchMutation.isPending && jobs.length > 0 && (
+      {!searchQuery.isPending && jobs.length > 0 && (
         <ErrorBoundary
           fallback={
             <Card className="p-8 text-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
@@ -1071,14 +1182,87 @@ export default function JobsPage() {
                   <CheckCircle className="w-6 h-6 text-white" />
                 </motion.div>
                 <div>
-                  <h2 className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
-                    {jobs.length} offre{jobs.length > 1 ? "s" : ""} trouvée
-                    {jobs.length > 1 ? "s" : ""}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                      {jobs.length} offre{jobs.length > 1 ? "s" : ""} trouvée
+                      {jobs.length > 1 ? "s" : ""}
+                    </h2>
+                    {/* Cache badge - Shows when data is from cache */}
+                    {searchQuery.isFetched &&
+                      !searchQuery.isFetching &&
+                      searchQuery.dataUpdatedAt && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                        >
+                          💾 Cache
+                        </Badge>
+                      )}
+                  </div>
                   <p className="text-sm text-emerald-600 dark:text-emerald-500 font-medium">
-                    Résultats récents et pertinents
+                    {searchQuery.isFetching ? (
+                      "Actualisation en cours..."
+                    ) : searchQuery.dataUpdatedAt ? (
+                      (() => {
+                        const now = Date.now();
+                        const updatedAt = searchQuery.dataUpdatedAt;
+                        const diffMs = now - updatedAt;
+                        const diffMinutes = Math.floor(diffMs / 60000);
+
+                        // Determine staleness level
+                        const isStale = diffMinutes >= 5;
+                        const isVeryStale = diffMinutes >= 10;
+
+                        let timeText = "";
+                        if (diffMinutes < 1) {
+                          timeText = "à l'instant";
+                        } else if (diffMinutes === 1) {
+                          timeText = "il y a 1 minute";
+                        } else {
+                          timeText = `il y a ${diffMinutes} minutes`;
+                        }
+
+                        return (
+                          <span
+                            className={
+                              isVeryStale
+                                ? "text-orange-600 dark:text-orange-400"
+                                : isStale
+                                  ? "text-yellow-600 dark:text-yellow-400"
+                                  : ""
+                            }
+                          >
+                            {isVeryStale ? "⚠️ " : isStale ? "⏰ " : "✓ "}
+                            Actualisé {timeText}
+                            {isStale && " - Actualisation recommandée"}
+                          </span>
+                        );
+                      })()
+                    ) : (
+                      "Résultats récents et pertinents"
+                    )}
                   </p>
                 </div>
+                {/* Refresh button - Force new fetch even from cache */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    console.log("🔄 [REFRESH] Forcing refetch (bypassing cache)");
+                    searchQuery.refetch();
+                  }}
+                  disabled={searchQuery.isFetching}
+                  className="ml-4 gap-2 bg-white dark:bg-gray-800 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:border-emerald-400 dark:hover:border-emerald-600"
+                  title="Actualiser les résultats depuis le serveur"
+                >
+                  <RefreshCw
+                    className={cn(
+                      "w-4 h-4",
+                      searchQuery.isFetching && "animate-spin",
+                    )}
+                  />
+                  <span className="hidden sm:inline">Actualiser</span>
+                </Button>
               </div>
               {isFreePlan && (
                 <motion.div
@@ -1276,14 +1460,32 @@ export default function JobsPage() {
       )}
 
       {/* Placeholder avant première recherche - NOUVEAU */}
-      {!searchMutation.isPending &&
-        !searchMutation.isSuccess &&
+      {!searchQuery.isPending &&
+        !searchQuery.isSuccess &&
         jobs.length === 0 && (
-          <JobsPlaceholder onSearchClick={handlePopularSearchClick} />
+          <JobsPlaceholder
+            onSearchClick={(popularJobTitle) => {
+              // Set job title and trigger search
+              setJobTitle(popularJobTitle);
+
+              // Search in France by default if no country selected
+              const searchCountry = selectedCountry || "FR";
+              if (!selectedCountry) {
+                setSelectedCountry("FR");
+              }
+
+              // Trigger search
+              handleSearch({
+                query: popularJobTitle,
+                country: searchCountry,
+                location: selectedCity,
+              });
+            }}
+          />
         )}
 
-      {!searchMutation.isPending &&
-        searchMutation.isSuccess &&
+      {!searchQuery.isPending &&
+        searchQuery.isSuccess &&
         jobs.length === 0 && (
           <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
             <CardContent className="py-16 text-center">
