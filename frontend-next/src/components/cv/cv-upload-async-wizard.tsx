@@ -66,6 +66,24 @@ interface WizardState {
 }
 
 // ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Parse date from API response (ISO string → Date object)
+ * Handles null/undefined/invalid dates gracefully
+ */
+function parseAnalysisDate(dateString: string | null | undefined): Date {
+  if (!dateString) return new Date();
+  const parsed = new Date(dateString);
+  if (isNaN(parsed.getTime())) {
+    console.error('[CV History] Invalid date from API:', dateString);
+    return new Date();
+  }
+  return parsed;
+}
+
+// ============================================
 // ANIMATION VARIANTS
 // ============================================
 
@@ -243,7 +261,7 @@ export function CVUploadAsyncWizard({
             // Parse dates from API (string → Date)
             const parsedAnalyses = (data.analyses || []).map((item: any) => ({
               ...item,
-              analyzedAt: item.analyzedAt ? new Date(item.analyzedAt) : new Date(),
+              analyzedAt: parseAnalysisDate(item.analyzedAt),
             }));
             setHistory(parsedAnalyses);
           }
@@ -277,7 +295,7 @@ export function CVUploadAsyncWizard({
             // Parse dates from API (string → Date)
             const parsedAnalyses = (data.analyses || []).map((item: any) => ({
               ...item,
-              analyzedAt: item.analyzedAt ? new Date(item.analyzedAt) : new Date(),
+              analyzedAt: parseAnalysisDate(item.analyzedAt),
             }));
             setHistory(parsedAnalyses);
           }
