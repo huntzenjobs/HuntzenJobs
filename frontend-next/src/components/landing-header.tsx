@@ -35,10 +35,16 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (outilsRef.current && !outilsRef.current.contains(event.target as Node)) {
+      if (
+        outilsRef.current &&
+        !outilsRef.current.contains(event.target as Node)
+      ) {
         setOutilsOpen(false);
       }
-      if (ressourcesRef.current && !ressourcesRef.current.contains(event.target as Node)) {
+      if (
+        ressourcesRef.current &&
+        !ressourcesRef.current.contains(event.target as Node)
+      ) {
         setRessourcesOpen(false);
       }
     };
@@ -51,7 +57,11 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
 
   return (
     <motion.header
-      initial={{ backgroundColor: forceWhite ? "rgba(255, 255, 255, 0.95)" : "rgba(0, 0, 0, 0.05)" }}
+      initial={{
+        backgroundColor: forceWhite
+          ? "rgba(255, 255, 255, 0.95)"
+          : "rgba(0, 0, 0, 0.05)",
+      }}
       animate={{
         backgroundColor: shouldBeWhite
           ? "rgba(255, 255, 255, 0.95)"
@@ -80,7 +90,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           {/* Recherche d'emploi - Direct */}
           <Link
             href="/jobs"
-            className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white" : "text-white/90 hover:text-white"}`}
+            className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
           >
             Recherche d&apos;emploi
             <span className="absolute bottom-0 left-0 w-0 h-1 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
@@ -89,7 +99,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           {/* Analyse CV - Direct */}
           <Link
             href="/cv-analysis"
-            className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white" : "text-white/90 hover:text-white"}`}
+            className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
           >
             Analyse CV
             <span className="absolute bottom-0 left-0 w-0 h-1 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
@@ -100,10 +110,12 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             <button
               onClick={() => setOutilsOpen(!outilsOpen)}
               onMouseEnter={() => setOutilsOpen(true)}
-              className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white" : "text-white/90 hover:text-white"}`}
+              className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
             >
               Outils
-              <ChevronDown className={`w-4 h-4 transition-transform ${outilsOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${outilsOpen ? "rotate-180" : ""}`}
+              />
             </button>
             <AnimatePresence>
               {outilsOpen && (
@@ -124,7 +136,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setOutilsOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -135,7 +147,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setOutilsOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -151,10 +163,12 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             <button
               onClick={() => setRessourcesOpen(!ressourcesOpen)}
               onMouseEnter={() => setRessourcesOpen(true)}
-              className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white" : "text-white/90 hover:text-white"}`}
+              className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
             >
               Ressources
-              <ChevronDown className={`w-4 h-4 transition-transform ${ressourcesOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${ressourcesOpen ? "rotate-180" : ""}`}
+              />
             </button>
             <AnimatePresence>
               {ressourcesOpen && (
@@ -175,7 +189,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -186,7 +200,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -197,7 +211,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -211,7 +225,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           {/* Tarifs - Direct */}
           <Link
             href="/pricing"
-            className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white" : "text-white/90 hover:text-white"}`}
+            className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
           >
             Tarifs
             <span className="absolute bottom-0 left-0 w-0 h-1 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
@@ -232,7 +246,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                   <User className="w-4 h-4 text-[#00D9FF]" />
                 </div>
                 <span
-                  className={`text-sm font-medium hidden md:inline ${shouldBeWhite ? "text-black dark:text-white" : "text-white"}`}
+                  className={`text-sm font-medium hidden md:inline ${shouldBeWhite ? "text-black" : "text-white"}`}
                 >
                   {user.user_metadata?.full_name || user.email?.split("@")[0]}
                 </span>
@@ -242,7 +256,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             <>
               <Link
                 href="/login"
-                className={`hidden md:inline-flex items-center px-4 lg:px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-[#00D9FF]" : "text-white hover:text-[#00D9FF]"}`}
+                className={`hidden md:inline-flex items-center px-4 lg:px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white hover:text-[#00D9FF]"}`}
               >
                 CONNEXION
               </Link>
@@ -258,7 +272,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`lg:hidden p-2 transition-colors ${shouldBeWhite ? "text-black dark:text-white" : "text-white"}`}
+            className={`lg:hidden p-2 transition-colors ${shouldBeWhite ? "text-black" : "text-white"}`}
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
@@ -282,62 +296,70 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             <Link
               href="/jobs"
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-base font-bold transition-colors py-2 ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
+              className={`text-base font-bold transition-colors py-2 ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
             >
               Recherche d&apos;emploi
             </Link>
             <Link
               href="/cv-analysis"
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-base font-bold transition-colors py-2 ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
+              className={`text-base font-bold transition-colors py-2 ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
             >
               Analyse CV
             </Link>
 
             {/* Outils Section */}
-            <div className={`border-t pt-3 mt-2 ${shouldBeWhite ? "border-gray-200 dark:border-gray-700" : "border-white/10"}`}>
-              <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500 dark:text-gray-400" : "text-white/60"}`}>
+            <div
+              className={`border-t pt-3 mt-2 ${shouldBeWhite ? "border-gray-200 dark:border-gray-700" : "border-white/10"}`}
+            >
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500 dark:text-gray-400" : "text-white/60"}`}
+              >
                 Outils
               </p>
               <Link
                 href="/assistant"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-600 dark:text-gray-300 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
+                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
                 Assistant Carrière
               </Link>
               <Link
                 href="/salons"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-600 dark:text-gray-300 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
+                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
                 Salons & Forums
               </Link>
             </div>
 
             {/* Ressources Section */}
-            <div className={`border-t pt-3 ${shouldBeWhite ? "border-gray-200 dark:border-gray-700" : "border-white/10"}`}>
-              <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500 dark:text-gray-400" : "text-white/60"}`}>
+            <div
+              className={`border-t pt-3 ${shouldBeWhite ? "border-gray-200 dark:border-gray-700" : "border-white/10"}`}
+            >
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500 dark:text-gray-400" : "text-white/60"}`}
+              >
                 Ressources
               </p>
               <Link
                 href="/blog"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-600 dark:text-gray-300 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
+                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
                 Blog
               </Link>
               <Link
                 href="/faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-600 dark:text-gray-300 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
+                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
                 FAQ
               </Link>
               <Link
                 href="/temoignages"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-600 dark:text-gray-300 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
+                className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
                 Avis
               </Link>
@@ -346,7 +368,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             <Link
               href="/pricing"
               onClick={() => setMobileMenuOpen(false)}
-              className={`text-base font-bold transition-colors py-2 mt-2 ${shouldBeWhite ? "text-gray-700 dark:text-gray-200 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
+              className={`text-base font-bold transition-colors py-2 mt-2 ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
             >
               Tarifs
             </Link>
