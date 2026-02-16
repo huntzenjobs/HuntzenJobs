@@ -722,7 +722,6 @@ export default function JobsPage() {
                   </p>
                 </div>
 
-<<<<<<< HEAD
               <div className="space-y-2">
                 <Label htmlFor="contractType" className="text-sm font-semibold">
                   Type de contrat <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
@@ -768,23 +767,20 @@ export default function JobsPage() {
                 )}
               </Button>
 
-              {!canUse('job_search') && isFreePlan && (
-=======
-                {/* Advanced filters button */}
->>>>>>> origin/Production
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAdvancedFilters}
-                  className="gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Filtres avancés
-                  {!hasFeature("has_advanced_filters") && (
-                    <Lock className="w-3.5 h-3.5" />
-                  )}
-                </Button>
-              </div>
+              {/* Advanced filters button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAdvancedFilters}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                Filtres avancés
+                {!hasFeature("has_advanced_filters") && (
+                  <Lock className="w-3.5 h-3.5" />
+                )}
+              </Button>
+            </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSearchLegacy} className="space-y-4">
