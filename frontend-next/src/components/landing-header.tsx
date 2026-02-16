@@ -246,7 +246,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                   <User className="w-4 h-4 text-[#00D9FF]" />
                 </div>
                 <span
-                  className={`text-sm font-medium hidden md:inline ${shouldBeWhite ? "text-black" : "text-white"}`}
+                  className={`text-sm font-medium hidden md:inline ${shouldBeWhite ? "text-black dark:text-white" : "text-white"}`}
                 >
                   {user.user_metadata?.full_name || user.email?.split("@")[0]}
                 </span>
