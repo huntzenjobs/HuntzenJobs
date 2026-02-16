@@ -39,8 +39,9 @@ export function ThemeToggle({ className }: { className?: string }) {
           aria-label="Changer le thème"
         >
           <motion.div
+            className="flex items-center justify-center"
             initial={false}
-            animate={{ rotate: resolvedTheme === "dark" ? 180 : 0 }}
+            animate={{ rotate: resolvedTheme === "dark" ? 0 : 180 }}
             transition={{ duration: 0.3 }}
           >
             {resolvedTheme === "dark" ? (
