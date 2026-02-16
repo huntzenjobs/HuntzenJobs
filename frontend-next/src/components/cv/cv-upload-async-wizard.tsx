@@ -812,8 +812,8 @@ export function CVUploadAsyncWizard({
               { label: 'Structure', value: displayResult.ats_score.structure_score, max: 100 },
               { label: 'Lisibilité', value: displayResult.ats_score.readability_score, max: 100 },
             ]}
-            strengths={displayResult.strengths}
-            weaknesses={displayResult.improvements}
+            strengths={displayResult.strengths || []}
+            weaknesses={displayResult.improvements || []}
             suggestions={transformedSuggestions}
             currentScore={displayResult.ats_score.overall_score}
           />

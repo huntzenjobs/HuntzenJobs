@@ -174,6 +174,7 @@ const nextConfig = {
               "img-src 'self' data: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https://ngiakfikbuyugqfqtfwp.supabase.co https://*.supabase.co https://huntzenjobs-production.up.railway.app http://localhost:* ws://localhost:* wss://ngiakfikbuyugqfqtfwp.supabase.co",
+              "frame-src 'self' https://vercel.live",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
