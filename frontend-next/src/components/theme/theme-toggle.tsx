@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * Theme Toggle Component
@@ -6,9 +6,9 @@
  * Utilise next-themes (déjà installé)
  */
 
-import { Moon, Sun, Monitor } from 'lucide-react'
-import { useTheme } from 'next-themes'
-import { Button } from '@/components/ui/button'
+import { Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,11 +16,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
-import { motion } from 'framer-motion'
+} from "@/components/ui/dropdown-menu";
+import { motion } from "framer-motion";
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const { theme, setTheme, resolvedTheme } = useTheme()
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   return (
     <DropdownMenu>
@@ -40,10 +40,10 @@ export function ThemeToggle({ className }: { className?: string }) {
         >
           <motion.div
             initial={false}
-            animate={{ rotate: resolvedTheme === 'dark' ? 180 : 0 }}
+            animate={{ rotate: resolvedTheme === "dark" ? 180 : 0 }}
             transition={{ duration: 0.3 }}
           >
-            {resolvedTheme === 'dark' ? (
+            {resolvedTheme === "dark" ? (
               <Moon className="h-5 w-5 text-gray-300" />
             ) : (
               <Sun className="h-5 w-5 text-[#00D9FF]" />
@@ -60,64 +60,64 @@ export function ThemeToggle({ className }: { className?: string }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
         <DropdownMenuItem
-          onClick={() => setTheme('light')}
+          onClick={() => setTheme("light")}
           className={`
             cursor-pointer
             hover:bg-gray-100 dark:hover:bg-gray-700
             text-gray-900 dark:text-gray-100
-            ${theme === 'light' ? 'bg-gray-100 dark:bg-gray-700' : ''}
+            ${theme === "light" ? "bg-gray-100 dark:bg-gray-700" : ""}
           `}
         >
           <Sun className="mr-2 h-4 w-4" />
           <span>Clair</span>
-          {theme === 'light' && (
+          {theme === "light" && (
             <span className="ml-auto text-[#00D9FF]">✓</span>
           )}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme('dark')}
+          onClick={() => setTheme("dark")}
           className={`
             cursor-pointer
             hover:bg-gray-100 dark:hover:bg-gray-700
             text-gray-900 dark:text-gray-100
-            ${theme === 'dark' ? 'bg-gray-100 dark:bg-gray-700' : ''}
+            ${theme === "dark" ? "bg-gray-100 dark:bg-gray-700" : ""}
           `}
         >
           <Moon className="mr-2 h-4 w-4" />
           <span>Sombre</span>
-          {theme === 'dark' && (
+          {theme === "dark" && (
             <span className="ml-auto text-[#00D9FF]">✓</span>
           )}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => setTheme('system')}
+          onClick={() => setTheme("system")}
           className={`
             cursor-pointer
             hover:bg-gray-100 dark:hover:bg-gray-700
             text-gray-900 dark:text-gray-100
-            ${theme === 'system' ? 'bg-gray-100 dark:bg-gray-700' : ''}
+            ${theme === "system" ? "bg-gray-100 dark:bg-gray-700" : ""}
           `}
         >
           <Monitor className="mr-2 h-4 w-4" />
           <span>Système</span>
-          {theme === 'system' && (
+          {theme === "system" && (
             <span className="ml-auto text-[#00D9FF]">✓</span>
           )}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 /**
  * Variant simplifié - Juste toggle light/dark
  */
 export function ThemeToggleSimple({ className }: { className?: string }) {
-  const { resolvedTheme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
-  }
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
 
   return (
     <Button
@@ -132,19 +132,20 @@ export function ThemeToggleSimple({ className }: { className?: string }) {
         transition-all duration-300
         ${className}
       `}
-      aria-label={`Passer en mode ${resolvedTheme === 'dark' ? 'clair' : 'sombre'}`}
+      aria-label={`Passer en mode ${resolvedTheme === "dark" ? "clair" : "sombre"}`}
     >
       <motion.div
+        className="flex items-center justify-center"
         initial={false}
-        animate={{ rotate: resolvedTheme === 'dark' ? 180 : 0 }}
+        animate={{ rotate: resolvedTheme === "dark" ? 180 : 0 }}
         transition={{ duration: 0.3 }}
       >
-        {resolvedTheme === 'dark' ? (
+        {resolvedTheme === "dark" ? (
           <Moon className="h-5 w-5 text-gray-300" />
         ) : (
           <Sun className="h-5 w-5 text-[#00D9FF]" />
         )}
       </motion.div>
     </Button>
-  )
+  );
 }
