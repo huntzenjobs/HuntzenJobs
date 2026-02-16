@@ -22,6 +22,12 @@ import { detectFailedLoginAnomaly } from "@/lib/security/anomaly-detection";
 import { tokenRefreshService } from "@/lib/auth/token-refresh-service";
 import { useAutoRefreshSession } from "@/hooks/use-auto-refresh-session";
 
+// Development-only logging utility
+const isDev = process.env.NODE_ENV !== "production";
+const devLog = (...args: any[]) => isDev && console.log(...args);
+const devError = (...args: any[]) => isDev && console.error(...args);
+const devWarn = (...args: any[]) => isDev && console.warn(...args);
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -71,7 +77,7 @@ export function AuthProvider({
           setSession(session);
           // Ne pas toucher user (déjà set par initialUser)
         } catch (err) {
-          console.error("Failed to get session:", err);
+          devError("Failed to get session:", err);
         }
         // Pas de setLoading(false) - déjà false
       } else {
@@ -83,7 +89,7 @@ export function AuthProvider({
           setSession(session);
           setUser(session?.user ?? null);
         } catch (err) {
-          console.error("Failed to get session:", err);
+          devError("Failed to get session:", err);
         } finally {
           setLoading(false);
         }
@@ -96,7 +102,7 @@ export function AuthProvider({
     const {
       data: { subscription },
     } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
-      console.log(
+      devLog(
         "[AuthContext] Auth state changed:",
         event,
         session ? "session active" : "no session",
@@ -118,7 +124,7 @@ export function AuthProvider({
                 method: "oauth_google",
                 provider: "google",
               }).catch((err) => {
-                console.error("Failed to log OAuth login (non-critical):", err);
+                devError("Failed to log OAuth login (non-critical):", err);
               });
             }
           }
@@ -131,14 +137,14 @@ export function AuthProvider({
 
         case "TOKEN_REFRESHED":
           // Token was automatically refreshed by Supabase
-          console.log("[AuthContext] Token refreshed successfully");
+          devLog("[AuthContext] Token refreshed successfully");
           // Invalidate caches to force refetch with new token
           tokenRefreshService.invalidateCaches();
           break;
 
         case "SIGNED_OUT":
           // User signed out or token expired permanently
-          console.log("[AuthContext] User signed out");
+          devLog("[AuthContext] User signed out");
           setSession(null);
           setUser(null);
 
@@ -149,7 +155,7 @@ export function AuthProvider({
 
         case "USER_UPDATED":
           // User metadata updated
-          console.log("[AuthContext] User updated");
+          devLog("[AuthContext] User updated");
           break;
       }
     });
@@ -180,7 +186,7 @@ export function AuthProvider({
 
       if (error) throw error;
     } catch (err: any) {
-      console.error("Google sign in error:", err);
+      devError("Google sign in error:", err);
       setError(err.message || "Failed to sign in with Google");
       setLoading(false);
 
@@ -190,7 +196,7 @@ export function AuthProvider({
         severity: "warning",
         metadata: { provider: "google", error: err.message },
       }).catch((logErr) => {
-        console.error("Failed to log OAuth failure (non-critical):", logErr);
+        devError("Failed to log OAuth failure (non-critical):", logErr);
       });
 
       throw err;
@@ -213,7 +219,7 @@ export function AuthProvider({
       if (data.user) {
         logLoginSuccess(data.user.id, { email, method: "email" }).catch(
           (err) => {
-            console.error("Failed to log login success (non-critical):", err);
+            devError("Failed to log login success (non-critical):", err);
           },
         );
       }
@@ -231,7 +237,7 @@ export function AuthProvider({
       // Reset loading après navigation initiale
       setTimeout(() => setLoading(false), 100);
     } catch (err: any) {
-      console.error("Email sign in error:", err);
+      devError("Email sign in error:", err);
 
       // Détection d'email non confirmé
       const isEmailNotConfirmed =
@@ -249,7 +255,7 @@ export function AuthProvider({
 
       // Log failed login (non-blocking)
       logLoginFailed(email, err.message).catch((logErr) => {
-        console.error("Failed to log login failure (non-critical):", logErr);
+        devError("Failed to log login failure (non-critical):", logErr);
       });
 
       // Check for anomalies (multiple failed attempts)
@@ -308,7 +314,7 @@ export function AuthProvider({
           userId: data.user.id,
           metadata: { email, full_name: fullName, method: "email" },
         }).catch((err) => {
-          console.error("Failed to log signup (non-critical):", err);
+          devError("Failed to log signup (non-critical):", err);
         });
       }
 
@@ -321,7 +327,7 @@ export function AuthProvider({
       // Redirect to signup success (will show modal)
       router.push("/signup?success=true&email=" + encodeURIComponent(email));
     } catch (err: any) {
-      console.error("Sign up error:", err);
+      devError("Sign up error:", err);
 
       // Message d'erreur plus clair pour timeout
       const errorMessage = err.message?.includes("prend trop de temps")
@@ -342,7 +348,7 @@ export function AuthProvider({
       // Don't await to prevent logout delays if logging fails
       if (user) {
         logLogout(user.id).catch((err) => {
-          console.error("Failed to log logout (non-critical):", err);
+          devError("Failed to log logout (non-critical):", err);
         });
       }
 
@@ -353,11 +359,11 @@ export function AuthProvider({
       if (error) {
         // Log the error but don't block logout
         // Session might already be expired (AbortError)
-        console.warn("Sign out warning (continuing anyway):", error);
+        devWarn("Sign out warning (continuing anyway):", error);
       }
     } catch (err: any) {
       // Catch any exception (AbortError, network issues, etc.)
-      console.warn("Sign out exception (continuing anyway):", err);
+      devWarn("Sign out exception (continuing anyway):", err);
     } finally {
       // ALWAYS clean up local state and redirect, even if signOut failed
       // If session was already expired, we still need to clear local data

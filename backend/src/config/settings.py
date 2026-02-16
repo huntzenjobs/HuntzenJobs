@@ -97,7 +97,7 @@ class Settings(BaseSettings):
     # - Fast: For quick extraction/analysis tasks (needs to be resistant to jailbreaks)
     # - Powerful: For complex rewriting/generation tasks
     llm_model_fast: str = "meta-llama/llama-4-maverick-17b-128e-instruct"  # Llama 4, jailbreak-resistant
-    llm_model_powerful: str = "moonshotai/kimi-k2-instruct"  # Most powerful (262k ctx)
+    llm_model_powerful: str = "llama-3.3-70b-versatile"  # Stable, powerful model (Groq)
     llm_temperature: float = Field(default=0.3, ge=0.0, le=1.0)
     llm_max_tokens: int = Field(default=2048, ge=256, le=8192)
     
