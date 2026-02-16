@@ -186,7 +186,7 @@ export function WizardContainer({
 
   const handleExportPDF = () => {
     // TODO: Implement PDF export
-    console.log('Export PDF not yet implemented')
+    // Feature not yet implemented
   }
 
   // ============================================================================
