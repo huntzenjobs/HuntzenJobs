@@ -66,6 +66,24 @@ interface WizardState {
 }
 
 // ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Parse date from API response (ISO string → Date object)
+ * Handles null/undefined/invalid dates gracefully
+ */
+function parseAnalysisDate(dateString: string | null | undefined): Date {
+  if (!dateString) return new Date();
+  const parsed = new Date(dateString);
+  if (isNaN(parsed.getTime())) {
+    console.error('[CV History] Invalid date from API:', dateString);
+    return new Date();
+  }
+  return parsed;
+}
+
+// ============================================
 // ANIMATION VARIANTS
 // ============================================
 
@@ -240,7 +258,12 @@ export function CVUploadAsyncWizard({
 
           if (response.ok) {
             const data = await response.json();
-            setHistory(data.analyses || []);
+            // Parse dates from API (string → Date)
+            const parsedAnalyses = (data.analyses || []).map((item: any) => ({
+              ...item,
+              analyzedAt: parseAnalysisDate(item.analyzedAt),
+            }));
+            setHistory(parsedAnalyses);
           }
         } catch (error) {
           console.error('Failed to load CV history:', error);
@@ -269,7 +292,12 @@ export function CVUploadAsyncWizard({
 
           if (response.ok) {
             const data = await response.json();
-            setHistory(data.analyses || []);
+            // Parse dates from API (string → Date)
+            const parsedAnalyses = (data.analyses || []).map((item: any) => ({
+              ...item,
+              analyzedAt: parseAnalysisDate(item.analyzedAt),
+            }));
+            setHistory(parsedAnalyses);
           }
         } catch (error) {
           console.error('Failed to reload CV history:', error);
