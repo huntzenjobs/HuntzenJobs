@@ -105,16 +105,17 @@ export default function RecruiterContactPage() {
     setIsSubmitting(true)
 
     try {
-      // TODO: Implement API call to create recruiter request
-      // const response = await huntzenApi.createRecruiterRequest(formData)
-      // const checkoutUrl = response.checkoutUrl
+      // Create recruiter request
+      const response = await huntzenApi.createRecruiterRequest(formData)
 
-      // For now, just show success
-      alert('Demande envoyée ! Redirection vers le paiement...')
+      // Create Stripe payment session
+      const paymentResponse = await huntzenApi.createRecruiterPayment(response.request_id)
 
-      // router.push(checkoutUrl)
-    } catch (error) {
-      console.error('Error submitting request:', error)
+      // Redirect to Stripe checkout
+      if (paymentResponse.checkout_url) {
+        window.location.href = paymentResponse.checkout_url
+      }
+    } catch (error: any) {
       alert('Une erreur est survenue. Veuillez réessayer.')
     } finally {
       setIsSubmitting(false)

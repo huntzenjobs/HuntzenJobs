@@ -483,6 +483,61 @@ class HuntzenApiClient {
     )
     return response.event_types || []
   }
+
+  // Recruiter Consultation Request
+  async createRecruiterRequest(data: {
+    fullName: string
+    email: string
+    phone?: string
+    sector: string
+    experienceLevel: string
+    message: string
+    preferredDate?: string
+  }): Promise<{ request_id: string; status: string; message: string }> {
+    return this.fetch<{ request_id: string; status: string; message: string }>(
+      '/api/recruiter/request',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          full_name: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          sector: data.sector,
+          experience_level: data.experienceLevel,
+          message: data.message,
+          preferred_date: data.preferredDate,
+        }),
+      }
+    )
+  }
+
+  async createRecruiterPayment(
+    requestId: string
+  ): Promise<{ checkout_url: string; session_id: string }> {
+    return this.fetch<{ checkout_url: string; session_id: string }>(
+      '/api/recruiter/create-payment',
+      {
+        method: 'POST',
+        body: JSON.stringify({ request_id: requestId }),
+      }
+    )
+  }
+
+  async getRecruiterRequestStatus(requestId: string): Promise<{
+    request_id: string
+    payment_status: string
+    request_status: string
+    created_at: string
+    scheduled_at?: string
+  }> {
+    return this.fetch<{
+      request_id: string
+      payment_status: string
+      request_status: string
+      created_at: string
+      scheduled_at?: string
+    }>(`/api/recruiter/status/${requestId}`)
+  }
 }
 
 export const huntzenApi = new HuntzenApiClient()

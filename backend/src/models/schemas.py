@@ -29,7 +29,7 @@ class CoachRequest(BaseModel):
     """Request model for career coach chat."""
     message: str = Field(..., min_length=1, max_length=2000, description="User message")
     session_id: str = Field(..., pattern=r"^[a-f0-9-]{36}$", description="Session UUID")
-    language: Literal["fr", "en", "es", "de"] = Field(default="en")
+    language: Literal["fr", "en", "es", "pt"] = Field(default="fr")
     
     model_config = {"json_schema_extra": {"example": {
         "message": "How can I improve my CV for a Data Engineer position?",
@@ -51,7 +51,7 @@ class TrainingRecommendation(BaseModel):
 class CoachResponse(BaseResponse):
     """Response model for career coach."""
     response: str = Field(..., description="Coach response")
-    language: str = "en"
+    language: str = "fr"
     training_suggestions: list[TrainingRecommendation] = Field(default_factory=list)
     career_insights: dict[str, Any] = Field(default_factory=dict)
 

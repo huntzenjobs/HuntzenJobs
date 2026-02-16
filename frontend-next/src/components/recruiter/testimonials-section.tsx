@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Star, Quote } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Testimonial {
-  name: string
-  role: string
-  company: string
-  content: string
-  rating: 5
-  avatar: string
+  name: string;
+  role: string;
+  company: string;
+  content: string;
+  rating: 5;
+  avatar: string;
 }
 
 const testimonials: Testimonial[] = [
@@ -19,30 +19,33 @@ const testimonials: Testimonial[] = [
     name: "Sophie Martin",
     role: "Product Manager",
     company: "Datadog",
-    content: "La consultation m'a permis d'identifier mes points faibles et de décrocher 3 entretiens en 2 semaines. Le recruteur connaît vraiment son métier !",
+    content:
+      "La consultation m'a permis d'identifier mes points faibles et de décrocher 3 entretiens en 2 semaines. Le recruteur connaît vraiment son métier !",
     rating: 5,
-    avatar: "SM"
+    avatar: "SM",
   },
   {
     name: "Thomas Dubois",
     role: "Développeur Full Stack",
     company: "Contentsquare",
-    content: "J'étais bloqué dans ma recherche depuis 6 mois. Après cette consultation, j'ai revu mon CV et ma stratégie. J'ai signé un CDI 3 semaines plus tard.",
+    content:
+      "J'étais bloqué dans ma recherche depuis 6 mois. Après cette consultation, j'ai revu mon CV et ma stratégie. J'ai signé un CDI 3 semaines plus tard.",
     rating: 5,
-    avatar: "TD"
+    avatar: "TD",
   },
   {
     name: "Julie Bernard",
     role: "UX Designer",
     company: "Alan",
-    content: "Investissement qui vaut vraiment le coup ! Les conseils sont ultra personnalisés et le recruteur prend le temps de comprendre votre profil.",
+    content:
+      "Investissement qui vaut vraiment le coup ! Les conseils sont ultra personnalisés et le recruteur prend le temps de comprendre votre profil.",
     rating: 5,
-    avatar: "JB"
-  }
-]
+    avatar: "JB",
+  },
+];
 
 export function TestimonialsSection() {
-  const [current, setCurrent] = useState(0)
+  const [current, setCurrent] = useState(0);
 
   return (
     <section className="mb-16 bg-gradient-to-br from-blue-50 to-cyan-50 py-16 px-6 rounded-3xl">
@@ -63,7 +66,10 @@ export function TestimonialsSection() {
 
             <div className="flex gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                <Star
+                  key={i}
+                  className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                />
               ))}
             </div>
 
@@ -90,8 +96,12 @@ export function TestimonialsSection() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setCurrent((current - 1 + testimonials.length) % testimonials.length)}
-            className="rounded-full"
+            onClick={() =>
+              setCurrent(
+                (current - 1 + testimonials.length) % testimonials.length,
+              )
+            }
+            className="rounded-full bg-white hover:bg-gray-50 border-gray-300 text-gray-700"
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -99,12 +109,12 @@ export function TestimonialsSection() {
             variant="outline"
             size="icon"
             onClick={() => setCurrent((current + 1) % testimonials.length)}
-            className="rounded-full"
+            className="rounded-full bg-white hover:bg-gray-50 border-gray-300 text-gray-700"
           >
             <ChevronRight className="w-5 h-5" />
           </Button>
         </div>
       </div>
     </section>
-  )
+  );
 }
