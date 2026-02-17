@@ -19,24 +19,34 @@
  * @date 2026-01-28
  */
 
-'use client';
+"use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, Loader2, CheckCircle2, XCircle, Clock, ArrowLeft, ArrowRight, History } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'next/navigation';
-import { useCVAnalysis } from '@/hooks/use-cv-analysis';
-import { useSubscriptionApi } from '@/hooks/use-subscription-api';
-import { CVHistoryDrawer } from '@/components/cv/cv-history-drawer';
-import { WizardSteps } from '@/components/cv/wizard-steps';
-import { ResultsAccordion } from '@/components/cv/results-accordion';
-import { CVInfoPanel } from '@/components/cv/cv-info-panel';
-import { ScoreRing } from '@/components/cv/score-ring';
-import { ProcessingSteps } from '@/components/cv/processing-steps';
-import { exportCVAnalysisToPDF } from '@/utils/export-cv-pdf';
-import type { FeatureType } from '@/hooks/use-freemium-limits';
-import type { Suggestion } from '@/components/cv/actionable-suggestions';
+import React, { useState, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Upload,
+  FileText,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ArrowLeft,
+  ArrowRight,
+  History,
+} from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { useCVAnalysis } from "@/hooks/use-cv-analysis";
+import { useSubscriptionApi } from "@/hooks/use-subscription-api";
+import { CVHistoryDrawer } from "@/components/cv/cv-history-drawer";
+import { WizardSteps } from "@/components/cv/wizard-steps";
+import { ResultsAccordion } from "@/components/cv/results-accordion";
+import { CVInfoPanel } from "@/components/cv/cv-info-panel";
+import { ScoreRing } from "@/components/cv/score-ring";
+import { ProcessingSteps } from "@/components/cv/processing-steps";
+import { exportCVAnalysisToPDF } from "@/utils/export-cv-pdf";
+import type { FeatureType } from "@/hooks/use-freemium-limits";
+import type { Suggestion } from "@/components/cv/actionable-suggestions";
 
 // ============================================
 // TYPES
@@ -53,8 +63,8 @@ interface CVUploadAsyncWizardProps {
 }
 
 type WizardStep = 1 | 2 | 3;
-type UploadMethod = 'file' | 'text';
-type AnalysisType = 'global' | 'match';
+type UploadMethod = "file" | "text";
+type AnalysisType = "global" | "match";
 
 interface WizardState {
   currentStep: WizardStep;
@@ -77,7 +87,7 @@ function parseAnalysisDate(dateString: string | null | undefined): Date {
   if (!dateString) return new Date();
   const parsed = new Date(dateString);
   if (isNaN(parsed.getTime())) {
-    console.error('[CV History] Invalid date from API:', dateString);
+    console.error("[CV History] Invalid date from API:", dateString);
     return new Date();
   }
   return parsed;
@@ -90,7 +100,7 @@ function parseAnalysisDate(dateString: string | null | undefined): Date {
 const stepVariants = {
   enter: { opacity: 0, x: 100 },
   center: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -100 }
+  exit: { opacity: 0, x: -100 },
 };
 
 // ============================================
@@ -101,7 +111,7 @@ export function CVUploadAsyncWizard({
   canUse,
   incrementUsage,
   openPricingModal,
-  hasFeatures
+  hasFeatures,
 }: CVUploadAsyncWizardProps) {
   const { session, user, loading } = useAuth();
   const router = useRouter();
@@ -144,23 +154,33 @@ export function CVUploadAsyncWizard({
 
           {/* Benefits */}
           <div className="bg-white rounded-xl p-6 mb-6">
-            <h4 className="font-bold text-gray-900 mb-4">Ce que vous obtenez gratuitement :</h4>
+            <h4 className="font-bold text-gray-900 mb-4">
+              Ce que vous obtenez gratuitement :
+            </h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span><strong>1 analyse CV gratuite</strong> par jour</span>
+                <span>
+                  <strong>1 analyse CV gratuite</strong> par jour
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span><strong>Score ATS détaillé</strong> avec recommandations</span>
+                <span>
+                  <strong>Score ATS détaillé</strong> avec recommandations
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span><strong>Analyse de compatibilité</strong> avec offres d'emploi</span>
+                <span>
+                  <strong>Analyse de compatibilité</strong> avec offres d'emploi
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span><strong>Sauvegarde de vos analyses</strong> et historique</span>
+                <span>
+                  <strong>Sauvegarde de vos analyses</strong> et historique
+                </span>
               </li>
             </ul>
           </div>
@@ -168,13 +188,21 @@ export function CVUploadAsyncWizard({
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => router.push('/signup?redirectTo=' + encodeURIComponent('/cv-analysis'))}
+              onClick={() =>
+                router.push(
+                  "/signup?redirectTo=" + encodeURIComponent("/cv-analysis"),
+                )
+              }
               className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
             >
               Créer un compte gratuit
             </button>
             <button
-              onClick={() => router.push('/login?redirectTo=' + encodeURIComponent('/cv-analysis'))}
+              onClick={() =>
+                router.push(
+                  "/login?redirectTo=" + encodeURIComponent("/cv-analysis"),
+                )
+              }
               className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-blue-500 transition-all"
             >
               J'ai déjà un compte
@@ -205,11 +233,11 @@ export function CVUploadAsyncWizard({
   // Wizard state
   const [wizardState, setWizardState] = useState<WizardState>({
     currentStep: 1,
-    uploadMethod: 'file',
+    uploadMethod: "file",
     file: null,
-    cvText: '',
+    cvText: "",
     analysisType: null,
-    jobDescription: '',
+    jobDescription: "",
   });
 
   const [isDragging, setIsDragging] = useState(false);
@@ -241,32 +269,43 @@ export function CVUploadAsyncWizard({
       const loadHistory = async () => {
         try {
           // Get token from Supabase (optional - only for authenticated users)
-          const { createClient } = await import('@/lib/supabase/client');
+          const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
 
           if (!session?.access_token) {
             // Not authenticated - skip history loading
             return;
           }
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/list`, {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/list`,
+            {
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+              },
             },
-          });
+          );
 
           if (response.ok) {
             const data = await response.json();
-            // Parse dates from API (string → Date)
+            // Map backend fields to CVAnalysisResult format
             const parsedAnalyses = (data.analyses || []).map((item: any) => ({
               ...item,
-              analyzedAt: parseAnalysisDate(item.analyzedAt),
+              id: item.cv_id,
+              fileName: `Analyse du ${new Date(item.created_at).toLocaleDateString("fr-FR")}`,
+              analyzedAt: parseAnalysisDate(item.created_at),
+              score: item.score ?? 0,
+              strengths: item.strengths || [],
+              weaknesses: item.weaknesses || [],
+              suggestions: item.suggestions || [],
             }));
             setHistory(parsedAnalyses);
           }
         } catch (error) {
-          console.error('Failed to load CV history:', error);
+          console.error("Failed to load CV history:", error);
         }
       };
 
@@ -276,31 +315,42 @@ export function CVUploadAsyncWizard({
 
   // Reload history when analysis completes
   useEffect(() => {
-    if (status === 'completed' && hasFeatures.hasCVHistory) {
+    if (status === "completed" && hasFeatures.hasCVHistory) {
       const reloadHistory = async () => {
         try {
           // Get token from Supabase
-          const { createClient } = await import('@/lib/supabase/client');
+          const { createClient } = await import("@/lib/supabase/client");
           const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
 
           if (!session?.access_token) return;
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/list`, {
-            headers: { 'Authorization': `Bearer ${session.access_token}` },
-          });
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/list`,
+            {
+              headers: { Authorization: `Bearer ${session.access_token}` },
+            },
+          );
 
           if (response.ok) {
             const data = await response.json();
-            // Parse dates from API (string → Date)
+            // Map backend fields to CVAnalysisResult format
             const parsedAnalyses = (data.analyses || []).map((item: any) => ({
               ...item,
-              analyzedAt: parseAnalysisDate(item.analyzedAt),
+              id: item.cv_id,
+              fileName: `Analyse du ${new Date(item.created_at).toLocaleDateString("fr-FR")}`,
+              analyzedAt: parseAnalysisDate(item.created_at),
+              score: item.score ?? 0,
+              strengths: item.strengths || [],
+              weaknesses: item.weaknesses || [],
+              suggestions: item.suggestions || [],
             }));
             setHistory(parsedAnalyses);
           }
         } catch (error) {
-          console.error('Failed to reload CV history:', error);
+          console.error("Failed to reload CV history:", error);
         }
       };
 
@@ -313,13 +363,18 @@ export function CVUploadAsyncWizard({
   // ============================================
 
   const handleMethodChange = (method: UploadMethod) => {
-    setWizardState(prev => ({ ...prev, uploadMethod: method, file: null, cvText: '' }));
+    setWizardState((prev) => ({
+      ...prev,
+      uploadMethod: method,
+      file: null,
+      cvText: "",
+    }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setWizardState(prev => ({ ...prev, file }));
+      setWizardState((prev) => ({ ...prev, file }));
     }
   };
 
@@ -337,24 +392,25 @@ export function CVUploadAsyncWizard({
     setIsDragging(false);
 
     const file = e.dataTransfer.files[0];
-    if (file && file.name.toLowerCase().endsWith('.pdf')) {
-      setWizardState(prev => ({ ...prev, file }));
+    if (file && file.name.toLowerCase().endsWith(".pdf")) {
+      setWizardState((prev) => ({ ...prev, file }));
     } else {
-      alert('Seuls les fichiers PDF sont acceptés');
+      alert("Seuls les fichiers PDF sont acceptés");
     }
   };
 
   const handleTextChange = (text: string) => {
-    setWizardState(prev => ({ ...prev, cvText: text }));
+    setWizardState((prev) => ({ ...prev, cvText: text }));
   };
 
   const canGoToStep2 =
-    (wizardState.uploadMethod === 'file' && wizardState.file !== null) ||
-    (wizardState.uploadMethod === 'text' && wizardState.cvText.trim().length > 100);
+    (wizardState.uploadMethod === "file" && wizardState.file !== null) ||
+    (wizardState.uploadMethod === "text" &&
+      wizardState.cvText.trim().length > 100);
 
   const handleStep1Next = () => {
     if (canGoToStep2) {
-      setWizardState(prev => ({ ...prev, currentStep: 2 }));
+      setWizardState((prev) => ({ ...prev, currentStep: 2 }));
     }
   };
 
@@ -363,51 +419,55 @@ export function CVUploadAsyncWizard({
   // ============================================
 
   const handleAnalysisTypeChange = (type: AnalysisType) => {
-    setWizardState(prev => ({ ...prev, analysisType: type }));
+    setWizardState((prev) => ({ ...prev, analysisType: type }));
   };
 
   const handleJobDescriptionChange = (text: string) => {
-    setWizardState(prev => ({ ...prev, jobDescription: text }));
+    setWizardState((prev) => ({ ...prev, jobDescription: text }));
   };
 
   const canAnalyze =
     wizardState.analysisType !== null &&
-    (wizardState.analysisType === 'global' || wizardState.jobDescription.trim().length > 20);
+    (wizardState.analysisType === "global" ||
+      wizardState.jobDescription.trim().length > 20);
 
   const handleStep2Back = () => {
-    setWizardState(prev => ({ ...prev, currentStep: 1 }));
+    setWizardState((prev) => ({ ...prev, currentStep: 1 }));
   };
 
   const handleStep2Analyze = async () => {
     if (!canAnalyze) return;
 
     // Check freemium limit
-    if (!canUse('cv_analysis')) {
-      openPricingModal('cv_analyses_per_day');
+    if (!canUse("cv_analysis")) {
+      openPricingModal("cv_analyses_per_day");
       return;
     }
 
     // Move to step 3
-    setWizardState(prev => ({ ...prev, currentStep: 3 }));
+    setWizardState((prev) => ({ ...prev, currentStep: 3 }));
 
     try {
-      const jobDesc = wizardState.analysisType === 'match' ? wizardState.jobDescription : undefined;
+      const jobDesc =
+        wizardState.analysisType === "match"
+          ? wizardState.jobDescription
+          : undefined;
 
-      if (wizardState.uploadMethod === 'file' && wizardState.file) {
+      if (wizardState.uploadMethod === "file" && wizardState.file) {
         // PDF mode
-        await uploadCV(wizardState.file, jobDesc, 'fr');
+        await uploadCV(wizardState.file, jobDesc, "fr");
         // Force refresh subscription data to get updated usage from backend
         await refetchSubscription();
-      } else if (wizardState.uploadMethod === 'text' && wizardState.cvText) {
+      } else if (wizardState.uploadMethod === "text" && wizardState.cvText) {
         // Text mode
-        await uploadCVText(wizardState.cvText, jobDesc, 'fr');
+        await uploadCVText(wizardState.cvText, jobDesc, "fr");
         // Force refresh subscription data to get updated usage from backend
         await refetchSubscription();
       } else {
-        throw new Error('Veuillez fournir un fichier PDF ou du texte de CV');
+        throw new Error("Veuillez fournir un fichier PDF ou du texte de CV");
       }
     } catch (err) {
-      console.error('Analysis error:', err);
+      console.error("Analysis error:", err);
     }
   };
 
@@ -418,11 +478,11 @@ export function CVUploadAsyncWizard({
   const handleReset = () => {
     setWizardState({
       currentStep: 1,
-      uploadMethod: 'file',
+      uploadMethod: "file",
       file: null,
-      cvText: '',
+      cvText: "",
       analysisType: null,
-      jobDescription: '',
+      jobDescription: "",
     });
     resetAnalysis();
     setLoadedHistoryResult(null);
@@ -431,44 +491,51 @@ export function CVUploadAsyncWizard({
   const handleLoadFromHistory = async (analysis: any) => {
     try {
       // Get token from Supabase (optional)
-      const { createClient } = await import('@/lib/supabase/client');
+      const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       const headers: Record<string, string> = {};
       if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
+        headers["Authorization"] = `Bearer ${session.access_token}`;
       }
 
       // Fetch full result from API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/status/${analysis.cv_id}`, {
-        headers,
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/status/${analysis.cv_id}`,
+        {
+          headers,
+        },
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to load analysis');
+        throw new Error("Failed to load analysis");
       }
 
       const data = await response.json();
 
-      if (data.status === 'completed' && data.result) {
+      if (data.status === "completed" && data.result) {
         // Set loaded result and navigate to step 3
         setLoadedHistoryResult(data.result);
         setWizardState({
           currentStep: 3,
-          uploadMethod: 'file',
+          uploadMethod: "file",
           file: null,
-          cvText: '',
-          analysisType: 'global',
-          jobDescription: '',
+          cvText: "",
+          analysisType: "global",
+          jobDescription: "",
         });
         setShowHistory(false);
       } else {
-        alert(`Cette analyse n'est pas encore terminée (status: ${data.status})`);
+        alert(
+          `Cette analyse n'est pas encore terminée (status: ${data.status})`,
+        );
       }
     } catch (error) {
-      console.error('Failed to load from history:', error);
-      alert('Erreur lors du chargement de l\'analyse');
+      console.error("Failed to load from history:", error);
+      alert("Erreur lors du chargement de l'analyse");
     }
   };
 
@@ -488,11 +555,11 @@ export function CVUploadAsyncWizard({
       {/* Method Choice */}
       <div className="flex gap-4 mb-6">
         <button
-          onClick={() => handleMethodChange('file')}
+          onClick={() => handleMethodChange("file")}
           className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-            wizardState.uploadMethod === 'file'
-              ? 'border-huntzen-blue bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
+            wizardState.uploadMethod === "file"
+              ? "border-huntzen-blue bg-blue-50"
+              : "border-gray-300 hover:border-gray-400"
           }`}
         >
           <FileText className="w-8 h-8 mx-auto mb-2 text-huntzen-blue" />
@@ -501,11 +568,11 @@ export function CVUploadAsyncWizard({
         </button>
 
         <button
-          onClick={() => handleMethodChange('text')}
+          onClick={() => handleMethodChange("text")}
           className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-            wizardState.uploadMethod === 'text'
-              ? 'border-huntzen-blue bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
+            wizardState.uploadMethod === "text"
+              ? "border-huntzen-blue bg-blue-50"
+              : "border-gray-300 hover:border-gray-400"
           }`}
         >
           <FileText className="w-8 h-8 mx-auto mb-2 text-huntzen-blue" />
@@ -515,7 +582,7 @@ export function CVUploadAsyncWizard({
       </div>
 
       {/* File Upload */}
-      {wizardState.uploadMethod === 'file' && (
+      {wizardState.uploadMethod === "file" && (
         <>
           {!wizardState.file ? (
             <div
@@ -524,11 +591,13 @@ export function CVUploadAsyncWizard({
               onDrop={handleDrop}
               className={`
                 border-2 border-dashed rounded-lg p-12 text-center transition-colors
-                ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+                ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
               `}
             >
               <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg font-medium mb-2">Glissez-déposez votre CV ici</p>
+              <p className="text-lg font-medium mb-2">
+                Glissez-déposez votre CV ici
+              </p>
               <p className="text-gray-500 mb-4">ou</p>
               <label className="inline-block">
                 <input
@@ -548,14 +617,18 @@ export function CVUploadAsyncWizard({
                 <div className="flex items-center gap-3">
                   <FileText className="w-8 h-8 text-blue-600" />
                   <div>
-                    <p className="font-semibold text-gray-900">{wizardState.file.name}</p>
+                    <p className="font-semibold text-gray-900">
+                      {wizardState.file.name}
+                    </p>
                     <p className="text-sm text-gray-600">
                       {(wizardState.file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setWizardState(prev => ({ ...prev, file: null }))}
+                  onClick={() =>
+                    setWizardState((prev) => ({ ...prev, file: null }))
+                  }
                   className="text-sm text-gray-600 hover:text-red-600 underline"
                 >
                   Changer
@@ -567,7 +640,7 @@ export function CVUploadAsyncWizard({
       )}
 
       {/* Text Upload */}
-      {wizardState.uploadMethod === 'text' && (
+      {wizardState.uploadMethod === "text" && (
         <div>
           <textarea
             value={wizardState.cvText}
@@ -588,8 +661,8 @@ export function CVUploadAsyncWizard({
           disabled={!canGoToStep2}
           className={`px-8 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all ${
             canGoToStep2
-              ? 'bg-huntzen-blue text-white hover:bg-huntzen-blue/90'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? "bg-huntzen-blue text-white hover:bg-huntzen-blue/90"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
           Suivant
@@ -617,28 +690,31 @@ export function CVUploadAsyncWizard({
       {/* Analysis Type Choice */}
       <div className="space-y-4 mb-6">
         <button
-          onClick={() => handleAnalysisTypeChange('global')}
+          onClick={() => handleAnalysisTypeChange("global")}
           className={`w-full p-6 rounded-lg border-2 text-left transition-all ${
-            wizardState.analysisType === 'global'
-              ? 'border-huntzen-blue bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
+            wizardState.analysisType === "global"
+              ? "border-huntzen-blue bg-blue-50"
+              : "border-gray-300 hover:border-gray-400"
           }`}
         >
           <p className="font-bold text-lg mb-2">📊 Analyse globale (ATS)</p>
           <p className="text-sm text-gray-600">
-            Score ATS complet avec analyse du format, structure, mots-clés et lisibilité
+            Score ATS complet avec analyse du format, structure, mots-clés et
+            lisibilité
           </p>
         </button>
 
         <button
-          onClick={() => handleAnalysisTypeChange('match')}
+          onClick={() => handleAnalysisTypeChange("match")}
           className={`w-full p-6 rounded-lg border-2 text-left transition-all ${
-            wizardState.analysisType === 'match'
-              ? 'border-huntzen-blue bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
+            wizardState.analysisType === "match"
+              ? "border-huntzen-blue bg-blue-50"
+              : "border-gray-300 hover:border-gray-400"
           }`}
         >
-          <p className="font-bold text-lg mb-2">🎯 Matching avec offre d'emploi</p>
+          <p className="font-bold text-lg mb-2">
+            🎯 Matching avec offre d'emploi
+          </p>
           <p className="text-sm text-gray-600">
             Score de compatibilité avec une offre d'emploi spécifique
           </p>
@@ -646,7 +722,7 @@ export function CVUploadAsyncWizard({
       </div>
 
       {/* Job Description (if match selected) */}
-      {wizardState.analysisType === 'match' && (
+      {wizardState.analysisType === "match" && (
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2">
             Description du poste <span className="text-red-500">*</span>
@@ -678,8 +754,8 @@ export function CVUploadAsyncWizard({
           disabled={!canAnalyze}
           className={`px-8 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all ${
             canAnalyze
-              ? 'bg-huntzen-blue text-white hover:bg-huntzen-blue/90'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? "bg-huntzen-blue text-white hover:bg-huntzen-blue/90"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
           🚀 Analyser
@@ -694,7 +770,7 @@ export function CVUploadAsyncWizard({
 
   const renderStep3 = () => {
     // Processing - New visual steps with percentage
-    if (isUploading || status === 'pending' || status === 'processing') {
+    if (isUploading || status === "pending" || status === "processing") {
       return (
         <motion.div
           key="step3-processing"
@@ -709,11 +785,15 @@ export function CVUploadAsyncWizard({
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-3 mb-3">
               <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-              <div className="text-5xl font-black text-blue-600">{progress}%</div>
+              <div className="text-5xl font-black text-blue-600">
+                {progress}%
+              </div>
             </div>
             <h3 className="text-2xl font-bold mb-2">Analyse en cours...</h3>
             <p className="text-gray-600">
-              {isUploading ? 'Téléchargement vers Supabase Storage...' : 'Traitement en cours avec notre IA'}
+              {isUploading
+                ? "Téléchargement vers Supabase Storage..."
+                : "Traitement en cours avec notre IA"}
             </p>
           </div>
 
@@ -736,7 +816,7 @@ export function CVUploadAsyncWizard({
     }
 
     // Error
-    if (status === 'failed' || error) {
+    if (status === "failed" || error) {
       return (
         <motion.div
           key="step3-error"
@@ -748,8 +828,12 @@ export function CVUploadAsyncWizard({
           className="text-center py-12"
         >
           <XCircle className="w-16 h-16 text-red-600 mx-auto mb-6" />
-          <h3 className="text-2xl font-bold text-red-900 mb-2">Erreur d'analyse</h3>
-          <p className="text-red-700 mb-8">{error || 'Une erreur est survenue'}</p>
+          <h3 className="text-2xl font-bold text-red-900 mb-2">
+            Erreur d'analyse
+          </h3>
+          <p className="text-red-700 mb-8">
+            {error || "Une erreur est survenue"}
+          </p>
 
           <button
             onClick={handleReset}
@@ -764,12 +848,14 @@ export function CVUploadAsyncWizard({
     // Results (either from new analysis or loaded from history)
     const displayResult = loadedHistoryResult || result;
 
-    if ((status === 'completed' && result) || loadedHistoryResult) {
-      const transformedSuggestions: Suggestion[] = (displayResult.improvements || []).map((text: string) => ({
+    if ((status === "completed" && result) || loadedHistoryResult) {
+      const transformedSuggestions: Suggestion[] = (
+        displayResult.improvements || []
+      ).map((text: string) => ({
         text,
         impact: 5,
-        category: 'other' as const,
-        actionable: true
+        category: "other" as const,
+        actionable: true,
       }));
 
       return (
@@ -787,13 +873,14 @@ export function CVUploadAsyncWizard({
               <CheckCircle2 className="w-8 h-8 text-green-600" />
               <div>
                 <h3 className="text-xl font-bold text-green-900">
-                  {loadedHistoryResult ? 'Analyse depuis l\'historique' : 'Analyse terminée !'}
+                  {loadedHistoryResult
+                    ? "Analyse depuis l'historique"
+                    : "Analyse terminée !"}
                 </h3>
                 <p className="text-green-700 text-sm">
                   {loadedHistoryResult
-                    ? 'Résultats précédemment générés'
-                    : `Traité en ${displayResult.processing_time_seconds || elapsedTime} secondes avec Modal Labs`
-                  }
+                    ? "Résultats précédemment générés"
+                    : `Traité en ${displayResult.processing_time_seconds || elapsedTime} secondes avec Modal Labs`}
                 </p>
               </div>
             </div>
@@ -801,16 +888,35 @@ export function CVUploadAsyncWizard({
 
           {/* Score Ring */}
           <div className="flex justify-center mb-8">
-            <ScoreRing score={displayResult.ats_score.overall_score} size={200} />
+            <ScoreRing
+              score={displayResult.ats_score.overall_score}
+              size={200}
+            />
           </div>
 
           {/* Results Accordion */}
           <ResultsAccordion
             breakdown={[
-              { label: 'Format', value: displayResult.ats_score.formatting_score, max: 100 },
-              { label: 'Mots-clés', value: displayResult.ats_score.keywords_score, max: 100 },
-              { label: 'Structure', value: displayResult.ats_score.structure_score, max: 100 },
-              { label: 'Lisibilité', value: displayResult.ats_score.readability_score, max: 100 },
+              {
+                label: "Format",
+                value: displayResult.ats_score.formatting_score,
+                max: 100,
+              },
+              {
+                label: "Mots-clés",
+                value: displayResult.ats_score.keywords_score,
+                max: 100,
+              },
+              {
+                label: "Structure",
+                value: displayResult.ats_score.structure_score,
+                max: 100,
+              },
+              {
+                label: "Lisibilité",
+                value: displayResult.ats_score.readability_score,
+                max: 100,
+              },
             ]}
             strengths={displayResult.strengths || []}
             weaknesses={displayResult.improvements || []}
@@ -840,7 +946,7 @@ export function CVUploadAsyncWizard({
                   try {
                     await exportCVAnalysisToPDF(displayResult);
                   } catch (error) {
-                    alert('Erreur lors de l\'export PDF');
+                    alert("Erreur lors de l'export PDF");
                     console.error(error);
                   }
                 }}
@@ -873,7 +979,9 @@ export function CVUploadAsyncWizard({
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
           >
             <History className="w-4 h-4" />
-            <span className="text-sm font-medium">Historique ({history.length})</span>
+            <span className="text-sm font-medium">
+              Historique ({history.length})
+            </span>
           </button>
         )}
       </div>
