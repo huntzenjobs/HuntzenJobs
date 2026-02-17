@@ -77,6 +77,7 @@ class JobScoutAgent(BaseAgent):
         self.job_ranker = SubAgent(
             name="JobRanker",
             system_prompt=load_prompt("job_scout_ranker.txt"),
+            model=settings.llm_model_powerful,
             temperature=0.1,
             max_tokens=256,
         )
