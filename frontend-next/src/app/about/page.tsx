@@ -9,7 +9,6 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { InternalLinksFooter } from "@/components/seo/internal-links";
 import {
   Target,
   Sparkles,
@@ -373,7 +372,9 @@ export default function AboutPage() {
                     <h3 className="font-bold text-gray-900 dark:text-white mb-2">
                       {item.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">{item.description}</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm">
+                      {item.description}
+                    </p>
                   </div>
                 </motion.div>
               ))}
@@ -427,9 +428,6 @@ export default function AboutPage() {
           </motion.div>
         </div>
       </div>
-
-      {/* Internal Links Footer for SEO */}
-      <InternalLinksFooter />
     </div>
   );
 }
