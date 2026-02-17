@@ -180,7 +180,7 @@ export default function HomePage() {
             </motion.p>
           </div>
 
-          {/* Tools Grid - Editorial style */}
+          {/* Tools Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 max-w-7xl mx-auto">
             {[
               {
@@ -190,7 +190,6 @@ export default function HomePage() {
                 description:
                   "Toutes les offres du marché centralisées et filtrées pour vous",
                 href: "/jobs",
-                color: "#00D9FF",
               },
               {
                 icon: Target,
@@ -199,7 +198,6 @@ export default function HomePage() {
                 description:
                   "Découvrez les offres qui vous correspondent vraiment",
                 href: "/jobs",
-                color: "#00D9FF",
               },
               {
                 icon: FileText,
@@ -207,7 +205,6 @@ export default function HomePage() {
                 title: "Analyse CV experte",
                 description: "Optimisez votre CV pour chaque candidature",
                 href: "/cv-analysis",
-                color: "#8B5CF6",
               },
               {
                 icon: Sparkles,
@@ -215,7 +212,6 @@ export default function HomePage() {
                 title: "Diagnostic compétences",
                 description: "Identifiez vos forces et axes d'amélioration",
                 href: "/cv-analysis",
-                color: "#8B5CF6",
               },
               {
                 icon: Users,
@@ -223,7 +219,6 @@ export default function HomePage() {
                 title: "Simulation d'entretien",
                 description: "Entraînez-vous en conditions réelles avec l'IA",
                 href: "/assistant",
-                color: "#F97316",
               },
               {
                 icon: MessageSquare,
@@ -231,7 +226,6 @@ export default function HomePage() {
                 title: "Coach carrière 24/7",
                 description: "Un accompagnement personnalisé à chaque étape",
                 href: "/assistant",
-                color: "#F97316",
               },
               {
                 icon: TrendingUp,
@@ -240,7 +234,6 @@ export default function HomePage() {
                 description:
                   "Négociez avec les bons arguments et les bons chiffres",
                 href: "/assistant",
-                color: "#F97316",
               },
               {
                 icon: Calendar,
@@ -249,7 +242,6 @@ export default function HomePage() {
                 description:
                   "Rencontrez directement les recruteurs en personne",
                 href: "/salons",
-                color: "#10B981",
               },
             ].map((tool, index) => (
               <motion.div
@@ -260,44 +252,27 @@ export default function HomePage() {
                 transition={{ duration: 0.4, delay: index * 0.06 }}
               >
                 <Link href={tool.href} className="block h-full group">
-                  <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden flex flex-col">
-                    {/* Accent stripe gauche */}
-                    <div
-                      className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
-                      style={{ background: tool.color }}
-                    />
-                    {/* Numéro décoratif */}
-                    <span className="absolute -top-2 -right-1 text-7xl font-black leading-none select-none pointer-events-none text-gray-50 dark:text-gray-800">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    {/* Catégorie + icône */}
-                    <div className="flex items-center gap-1.5 mb-3 pl-2">
-                      <tool.icon
-                        className="w-3.5 h-3.5 flex-shrink-0"
-                        style={{ color: tool.color }}
-                      />
-                      <span
-                        className="text-[10px] font-bold uppercase tracking-widest"
-                        style={{ color: tool.color }}
-                      >
-                        {tool.category}
-                      </span>
+                  <div className="h-full bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700/60 hover:border-[#00D9FF]/40 dark:hover:border-[#00D9FF]/30 hover:shadow-[0_4px_24px_rgba(0,217,255,0.08)] transition-all duration-300 flex flex-col">
+                    {/* Icon container */}
+                    <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-[#00D9FF]/10 transition-colors duration-300">
+                      <tool.icon className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-[#00D9FF] transition-colors duration-300" />
                     </div>
-                    {/* Titre */}
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white leading-tight mb-2 flex-grow pl-2">
+                    {/* Category */}
+                    <span className="text-[10px] font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
+                      {tool.category}
+                    </span>
+                    {/* Title */}
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug mb-2 flex-grow">
                       {tool.title}
                     </h3>
                     {/* Description */}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4 pl-2">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mb-4">
                       {tool.description}
                     </p>
                     {/* CTA */}
-                    <div
-                      className="flex items-center gap-1 text-xs font-semibold pl-2"
-                      style={{ color: tool.color }}
-                    >
+                    <div className="flex items-center gap-1 text-xs font-medium text-slate-300 dark:text-slate-600 group-hover:text-[#00D9FF] transition-colors duration-300">
                       <span>Explorer</span>
-                      <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-1" />
+                      <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
                     </div>
                   </div>
                 </Link>
