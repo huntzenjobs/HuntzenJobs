@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -326,24 +327,19 @@ export default function JobsPage() {
     loadSavedJobs();
   }, [auth?.user, auth?.session?.access_token]);
 
-  // Progressive reveal of jobs for better UX
+  // Progressive reveal: 1 job every 120ms for a "streaming" feel
   useEffect(() => {
     if (jobs.length === 0) {
       setVisibleJobsCount(0);
       return;
     }
 
-    // Show jobs progressively (3 at a time, every 300ms for better visibility)
-    const BATCH_SIZE = 3;
-    const REVEAL_INTERVAL = 300;
-    const INITIAL_DELAY = 400; // Wait before starting progressive reveal
-
     if (visibleJobsCount < jobs.length) {
-      const delay = visibleJobsCount === 0 ? INITIAL_DELAY : REVEAL_INTERVAL;
+      // First job appears after 200ms, then 1 per 120ms
+      const delay = visibleJobsCount === 0 ? 200 : 120;
       const timer = setTimeout(() => {
-        setVisibleJobsCount((prev) => Math.min(prev + BATCH_SIZE, jobs.length));
+        setVisibleJobsCount((prev) => Math.min(prev + 1, jobs.length));
       }, delay);
-
       return () => clearTimeout(timer);
     }
   }, [jobs.length, visibleJobsCount]);
@@ -511,13 +507,24 @@ export default function JobsPage() {
     });
   };
 
-  // Save job mutation
+  // Save job mutation — uses Supabase directly (same schema as saved-jobs page)
   const saveJobMutation = useMutation({
     mutationFn: async (job: Job) => {
-      if (!auth?.session?.access_token) {
+      if (!auth?.user?.id) {
         throw new Error("Vous devez être connecté pour sauvegarder des offres");
       }
-      return huntzenApi.saveJob(job, auth.session.access_token);
+      const supabase = createClient();
+      const { error } = await supabase.from("saved_jobs").insert({
+        user_id: auth.user.id,
+        job_title: job.title,
+        company: job.company,
+        location: job.location || null,
+        salary: job.salary || null,
+        job_url: job.url,
+        description: job.description || null,
+        external_job_id: job.id,
+      });
+      if (error) throw new Error(error.message);
     },
     onSuccess: (_, job) => {
       setSavedJobIds((prev) => new Set(prev).add(job.id));
@@ -1155,6 +1162,48 @@ export default function JobsPage() {
         )}
       </AnimatePresence>
 
+      {/* Skeleton grid — shown while fetching (before results arrive) */}
+      {searchQuery.isFetching && (
+        <div
+          className={`grid gap-6 auto-rows-fr ${
+            featureFlags.useJobsV2
+              ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+              : "md:grid-cols-2"
+          }`}
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <motion.div
+              key={`skeleton-${i}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.07 }}
+            >
+              <Card className="flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden h-full bg-white dark:bg-gray-800">
+                <CardHeader className="pb-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-100 dark:border-gray-700">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 space-y-3">
+                      <Skeleton className="h-6 w-3/4" />
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-9 w-9 rounded-xl" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col pt-4 space-y-3">
+                  <Skeleton className="h-8 w-full rounded-lg" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/6" />
+                  <Skeleton className="h-11 w-full rounded-md mt-auto" />
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       {/* Results */}
 
       {!searchQuery.isFetching && jobs.length > 0 && (
@@ -1423,22 +1472,40 @@ export default function JobsPage() {
                 </motion.div>
               ))}
 
-              {/* Loading indicator for progressive reveal */}
-              {isLoadingMore && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="col-span-full flex items-center justify-center py-8"
-                >
-                  <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                    <Loader2 className="w-5 h-5 animate-spin text-[#00D9FF]" />
-                    <span className="text-sm font-medium">
-                      Chargement des offres... ({visibleJobsCount}/{jobs.length}
-                      )
-                    </span>
-                  </div>
-                </motion.div>
-              )}
+              {/* Skeleton placeholders for jobs not yet revealed */}
+              {isLoadingMore &&
+                Array.from({
+                  length: Math.min(4, jobs.length - visibleJobsCount),
+                }).map((_, i) => (
+                  <motion.div
+                    key={`reveal-skeleton-${i}`}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                  >
+                    <Card className="flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden h-full bg-white dark:bg-gray-800">
+                      <CardHeader className="pb-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-100 dark:border-gray-700">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 space-y-3">
+                            <Skeleton className="h-6 w-3/4" />
+                            <div className="flex items-center gap-2">
+                              <Skeleton className="h-9 w-9 rounded-xl" />
+                              <Skeleton className="h-4 w-1/2" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col pt-4 space-y-3">
+                        <Skeleton className="h-8 w-full rounded-lg" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-4/6" />
+                        <Skeleton className="h-11 w-full rounded-md mt-auto" />
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
 
               {/* Gradient job cards for free users */}
               {showBlurredCards && (
