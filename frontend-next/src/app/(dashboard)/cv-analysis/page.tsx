@@ -1,25 +1,20 @@
-'use client'
+"use client";
 
-import { FileText, Loader2, AlertCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useAuth } from '@/contexts/auth-context'
-import { useSubscription } from '@/contexts/subscription-context'
-import { UsageCounter } from '@/components/freemium/usage-counter'
-import { CVUploadAsyncWizard } from '@/components/cv/cv-upload-async-wizard'
-import { ErrorBoundary } from '@/components/error-boundary'
-import { Card } from '@/components/ui/card'
-import { InternalLinksFooter } from '@/components/seo/internal-links'
+import { FileText, Loader2, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
+import { UsageCounter } from "@/components/freemium/usage-counter";
+import { CVUploadAsyncWizard } from "@/components/cv/cv-upload-async-wizard";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { Card } from "@/components/ui/card";
 
 export default function CVAnalysisPage() {
-  const { session, loading } = useAuth()
+  const { session, loading } = useAuth();
 
   // Freemium state
-  const {
-    canUse,
-    incrementUsage,
-    hasFeature,
-    openPricingModal,
-  } = useSubscription()
+  const { canUse, incrementUsage, hasFeature, openPricingModal } =
+    useSubscription();
 
   // Skeleton pendant vérification auth
   if (loading) {
@@ -27,10 +22,12 @@ export default function CVAnalysisPage() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-col items-center justify-center min-h-[400px]">
           <Loader2 className="w-12 h-12 animate-spin text-[#00D9FF] mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Chargement de votre espace...</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Chargement de votre espace...
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   // Main page content
@@ -53,10 +50,14 @@ export default function CVAnalysisPage() {
             >
               <FileText className="w-7 h-7 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-black text-black dark:text-white">Analyse CV</h1>
+            <h1 className="text-4xl font-black text-black dark:text-white">
+              Analyse CV
+            </h1>
           </div>
           <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed max-w-3xl">
-            Optimisez votre CV pour maximiser vos chances de décrocher un entretien. Obtenez une analyse détaillée et des recommandations personnalisées.
+            Optimisez votre CV pour maximiser vos chances de décrocher un
+            entretien. Obtenez une analyse détaillée et des recommandations
+            personnalisées.
           </p>
         </div>
 
@@ -73,17 +74,19 @@ export default function CVAnalysisPage() {
       </motion.div>
 
       {/* Full Wizard with all features - Wrapped with ErrorBoundary */}
-      <ErrorBoundary fallback={
-        <Card className="p-8 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
-          <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 text-center">
-            Erreur lors du chargement de l'analyse CV
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-center">
-            Une erreur s'est produite. Veuillez rafraîchir la page.
-          </p>
-        </Card>
-      }>
+      <ErrorBoundary
+        fallback={
+          <Card className="p-8 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+            <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2 text-center">
+              Erreur lors du chargement de l'analyse CV
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center">
+              Une erreur s'est produite. Veuillez rafraîchir la page.
+            </p>
+          </Card>
+        }
+      >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -95,18 +98,15 @@ export default function CVAnalysisPage() {
             incrementUsage={incrementUsage}
             openPricingModal={openPricingModal}
             hasFeatures={{
-              hasCVHistory: hasFeature('has_cv_history'),
-              hasPDFExport: hasFeature('has_pdf_export')
+              hasCVHistory: hasFeature("has_cv_history"),
+              hasPDFExport: hasFeature("has_pdf_export"),
             }}
           />
         </motion.div>
       </ErrorBoundary>
-
-      {/* Internal Links Footer for SEO */}
-      <InternalLinksFooter />
     </div>
-  )
+  );
 
   // Always show page content (authentication is handled by CVUploadAsyncWizard)
-  return pageContent
+  return pageContent;
 }

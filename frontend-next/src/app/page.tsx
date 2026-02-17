@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { motion } from 'framer-motion'
+import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   TrendingUp,
   FileText,
@@ -13,10 +13,10 @@ import {
   Sparkles,
   Briefcase,
   Calendar,
-  MessageSquare
-} from 'lucide-react'
-import { LandingHeader } from '@/components/landing-header'
-import { InternalLinksFooter } from '@/components/seo/internal-links'
+  MessageSquare,
+  ArrowRight,
+} from "lucide-react";
+import { LandingHeader } from "@/components/landing-header";
 
 export default function HomePage() {
   return (
@@ -30,10 +30,11 @@ export default function HomePage() {
           <div
             className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-gray-900/40"
             style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              filter: 'brightness(0.3) saturate(0.8)'
+              backgroundImage:
+                'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop")',
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "brightness(0.3) saturate(0.8)",
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-gray-900" />
@@ -43,8 +44,9 @@ export default function HomePage() {
         <div
           className="absolute inset-0 opacity-20"
           style={{
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%2300D9FF\' fill-opacity=\'0.15\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-            backgroundSize: '60px 60px'
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300D9FF' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundSize: "60px 60px",
           }}
         />
 
@@ -52,25 +54,25 @@ export default function HomePage() {
         <motion.div
           animate={{
             scale: [1, 1.2, 1],
-            opacity: [0.1, 0.15, 0.1]
+            opacity: [0.1, 0.15, 0.1],
           }}
           transition={{
             duration: 8,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
           className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-[#00D9FF]/10 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
             scale: [1, 1.3, 1],
-            opacity: [0.08, 0.12, 0.08]
+            opacity: [0.08, 0.12, 0.08],
           }}
           transition={{
             duration: 10,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: 1
+            delay: 1,
           }}
           className="absolute bottom-1/4 right-1/4 w-64 sm:w-80 h-64 sm:h-80 bg-purple-500/10 rounded-full blur-3xl"
         />
@@ -89,7 +91,8 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tight mb-4 relative"
               style={{
-                textShadow: '0 0 40px rgba(0, 217, 255, 0.3), 0 0 80px rgba(0, 217, 255, 0.1)'
+                textShadow:
+                  "0 0 40px rgba(0, 217, 255, 0.3), 0 0 80px rgba(0, 217, 255, 0.1)",
               }}
             >
               HUNTZEN
@@ -105,8 +108,9 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-base sm:text-lg md:text-xl text-white/90 max-w-3xl mx-auto mb-8 px-4 leading-relaxed"
           >
-            Votre allié carrière complet pour décrocher l&apos;emploi qui vous ressemble.
-            Recherche ciblée, CV optimisé, et accompagnement personnalisé à chaque étape.
+            Votre allié carrière complet pour décrocher l&apos;emploi qui vous
+            ressemble. Recherche ciblée, CV optimisé, et accompagnement
+            personnalisé à chaque étape.
           </motion.p>
 
           <motion.div
@@ -139,7 +143,10 @@ export default function HomePage() {
       </section>
 
       {/* Nos Outils - Enhanced Section */}
-      <section className="py-12 sm:py-16 bg-white dark:bg-gray-900" id="features">
+      <section
+        className="py-12 sm:py-16 bg-white dark:bg-gray-900"
+        id="features"
+      >
         <div className="container mx-auto px-4 sm:px-6">
           {/* Section Header */}
           <div className="text-center mb-10 sm:mb-12">
@@ -168,102 +175,129 @@ export default function HomePage() {
               transition={{ delay: 0.2 }}
               className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-sm sm:text-base px-4"
             >
-              Des outils pensés pour vous accompagner à chaque étape : de la recherche d&apos;offres à la négociation salariale
+              Des outils pensés pour vous accompagner à chaque étape : de la
+              recherche d&apos;offres à la négociation salariale
             </motion.p>
           </div>
 
-          {/* Tools Grid - Enhanced with 8 tools */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 max-w-7xl mx-auto">
+          {/* Tools Grid - Editorial style */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 max-w-7xl mx-auto">
             {[
               {
                 icon: Search,
+                category: "Recherche",
                 title: "Agrégateur d'offres intelligent",
-                description: "Toutes les offres d'emploi en un seul endroit",
+                description:
+                  "Toutes les offres du marché centralisées et filtrées pour vous",
                 href: "/jobs",
-                color: "#00D9FF"
+                color: "#00D9FF",
               },
               {
                 icon: Target,
+                category: "Recherche",
                 title: "Score de compatibilité",
-                description: "Trouvez les offres qui vous correspondent vraiment",
+                description:
+                  "Découvrez les offres qui vous correspondent vraiment",
                 href: "/jobs",
-                color: "#00D9FF"
+                color: "#00D9FF",
               },
               {
                 icon: FileText,
+                category: "CV",
                 title: "Analyse CV experte",
-                description: "Optimisez votre candidature pour chaque offre",
+                description: "Optimisez votre CV pour chaque candidature",
                 href: "/cv-analysis",
-                color: "#9333EA"
+                color: "#8B5CF6",
               },
               {
                 icon: Sparkles,
+                category: "CV",
                 title: "Diagnostic compétences",
                 description: "Identifiez vos forces et axes d'amélioration",
                 href: "/cv-analysis",
-                color: "#9333EA"
+                color: "#8B5CF6",
               },
               {
                 icon: Users,
+                category: "Coaching",
                 title: "Simulation d'entretien",
-                description: "Entraînez-vous en conditions réelles",
+                description: "Entraînez-vous en conditions réelles avec l'IA",
                 href: "/assistant",
-                color: "#F97316"
+                color: "#F97316",
               },
               {
                 icon: MessageSquare,
-                title: "Coach carrière personnel",
-                description: "Un accompagnement sur-mesure 24/7",
+                category: "Coaching",
+                title: "Coach carrière 24/7",
+                description: "Un accompagnement personnalisé à chaque étape",
                 href: "/assistant",
-                color: "#F97316"
+                color: "#F97316",
               },
               {
                 icon: TrendingUp,
+                category: "Coaching",
                 title: "Projections salariales",
-                description: "Négociez avec les bons arguments",
+                description:
+                  "Négociez avec les bons arguments et les bons chiffres",
                 href: "/assistant",
-                color: "#10B981"
+                color: "#F97316",
               },
               {
                 icon: Calendar,
+                category: "Networking",
                 title: "Salons & Forums emploi",
-                description: "Rencontrez directement les recruteurs",
+                description:
+                  "Rencontrez directement les recruteurs en personne",
                 href: "/salons",
-                color: "#10B981"
-              }
+                color: "#10B981",
+              },
             ].map((tool, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.08 }}
-                className="group"
+                transition={{ duration: 0.4, delay: index * 0.06 }}
               >
-                <Link href={tool.href} className="block h-full">
-                  <div className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 sm:p-6 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-xl transition-all h-full flex flex-col">
+                <Link href={tool.href} className="block h-full group">
+                  <div className="relative h-full bg-white dark:bg-gray-900 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden flex flex-col">
+                    {/* Accent stripe gauche */}
                     <div
-                      className="w-12 h-12 sm:w-14 sm:h-14 mb-3 sm:mb-4 flex items-center justify-center rounded-2xl transition-all"
-                      style={{
-                        backgroundColor: `${tool.color}15`,
-                      }}
-                    >
+                      className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
+                      style={{ background: tool.color }}
+                    />
+                    {/* Numéro décoratif */}
+                    <span className="absolute -top-2 -right-1 text-7xl font-black leading-none select-none pointer-events-none text-gray-50 dark:text-gray-800">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    {/* Catégorie + icône */}
+                    <div className="flex items-center gap-1.5 mb-3 pl-2">
                       <tool.icon
-                        className="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:scale-110"
+                        className="w-3.5 h-3.5 flex-shrink-0"
                         style={{ color: tool.color }}
                       />
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-widest"
+                        style={{ color: tool.color }}
+                      >
+                        {tool.category}
+                      </span>
                     </div>
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
+                    {/* Titre */}
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white leading-tight mb-2 flex-grow pl-2">
                       {tool.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed flex-grow">
+                    {/* Description */}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4 pl-2">
                       {tool.description}
                     </p>
+                    {/* CTA */}
                     <div
-                      className="text-xs sm:text-sm font-semibold mt-3 sm:mt-4 inline-flex items-center gap-1 transition-transform group-hover:translate-x-1"
+                      className="flex items-center gap-1 text-xs font-semibold pl-2"
                       style={{ color: tool.color }}
                     >
-                      Découvrir →
+                      <span>Explorer</span>
+                      <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-1" />
                     </div>
                   </div>
                 </Link>
@@ -292,7 +326,8 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-[#00D9FF] font-semibold uppercase text-xs sm:text-sm tracking-wide"
             >
-              Pourtant, les candidats perdent des mois à naviguer à l&apos;aveugle
+              Pourtant, les candidats perdent des mois à naviguer à
+              l&apos;aveugle
             </motion.p>
           </div>
 
@@ -300,24 +335,28 @@ export default function HomePage() {
             {[
               {
                 title: "GHOSTING PERMANENT",
-                description: "73% des candidats n'obtiennent jamais de retour, même après plusieurs relances",
-                icon: AlertCircle
+                description:
+                  "73% des candidats n'obtiennent jamais de retour, même après plusieurs relances",
+                icon: AlertCircle,
               },
               {
                 title: "RECHERCHE ÉPUISANTE",
-                description: "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier",
-                icon: Search
+                description:
+                  "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier",
+                icon: Search,
               },
               {
                 title: "NÉGOCIATION À L'AVEUGLE",
-                description: "Impossible de connaître les salaires réels selon votre expérience et localisation",
-                icon: TrendingUp
+                description:
+                  "Impossible de connaître les salaires réels selon votre expérience et localisation",
+                icon: TrendingUp,
               },
               {
                 title: "MANQUE DE FEEDBACK",
-                description: "Aucun accompagnement, aucune visibilité sur vos points forts et axes d'amélioration",
-                icon: Target
-              }
+                description:
+                  "Aucun accompagnement, aucune visibilité sur vos points forts et axes d'amélioration",
+                icon: Target,
+              },
             ].map((item, index) => (
               <motion.div
                 key={index}
@@ -354,7 +393,8 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3"
             >
-              Votre <span className="text-[#00D9FF]">allié carrière</span> au quotidien
+              Votre <span className="text-[#00D9FF]">allié carrière</span> au
+              quotidien
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -363,7 +403,8 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-gray-600 dark:text-gray-300 text-base sm:text-lg max-w-2xl mx-auto"
             >
-              Des outils puissants et un accompagnement personnalisé pour transformer votre recherche d&apos;emploi
+              Des outils puissants et un accompagnement personnalisé pour
+              transformer votre recherche d&apos;emploi
             </motion.p>
           </div>
 
@@ -378,22 +419,26 @@ export default function HomePage() {
                 transition={{ duration: 0.6 }}
               >
                 <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                  <span className="text-[#00D9FF]">Analyse experte</span> et optimisation de votre CV
+                  <span className="text-[#00D9FF]">Analyse experte</span> et
+                  optimisation de votre CV
                 </h3>
                 <p className="text-gray-700 dark:text-gray-300 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
-                  Bénéficiez d&apos;une analyse approfondie de votre profil pour identifier précisément vos atouts
-                  et les compétences recherchées par le marché. Recevez des recommandations concrètes
-                  pour maximiser vos chances.
+                  Bénéficiez d&apos;une analyse approfondie de votre profil pour
+                  identifier précisément vos atouts et les compétences
+                  recherchées par le marché. Recevez des recommandations
+                  concrètes pour maximiser vos chances.
                 </p>
                 <ul className="space-y-3">
                   {[
                     "Évaluation détaillée de vos compétences techniques et humaines",
                     "Recommandations de formations certifiantes ciblées",
-                    "Score d'employabilité actualisé en temps réel"
+                    "Score d'employabilité actualisé en temps réel",
                   ].map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{item}</span>
+                      <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">
+                        {item}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -408,7 +453,8 @@ export default function HomePage() {
                 <div
                   className="absolute inset-0 bg-cover bg-center"
                   style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2340&auto=format&fit=crop")'
+                    backgroundImage:
+                      'url("https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2340&auto=format&fit=crop")',
                   }}
                 />
               </motion.div>
@@ -426,7 +472,8 @@ export default function HomePage() {
                 <div
                   className="absolute inset-0 bg-cover bg-center"
                   style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2340&auto=format&fit=crop")'
+                    backgroundImage:
+                      'url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2340&auto=format&fit=crop")',
                   }}
                 />
               </motion.div>
@@ -438,22 +485,26 @@ export default function HomePage() {
                 className="md:order-2"
               >
                 <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
-                  <span className="text-[#00D9FF]">Matching intelligent</span> et recherche ciblée
+                  <span className="text-[#00D9FF]">Matching intelligent</span>{" "}
+                  et recherche ciblée
                 </h3>
                 <p className="text-gray-700 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
-                  Fini les heures perdues à scroller des offres non pertinentes. Notre agrégateur centralise
-                  toutes les opportunités de +20 plateformes et vous présente uniquement celles qui correspondent
-                  réellement à votre profil.
+                  Fini les heures perdues à scroller des offres non pertinentes.
+                  Notre agrégateur centralise toutes les opportunités de +20
+                  plateformes et vous présente uniquement celles qui
+                  correspondent réellement à votre profil.
                 </p>
                 <ul className="space-y-3">
                   {[
                     "Score de compatibilité précis (0-100%) pour chaque offre",
                     "Alertes instantanées sur les opportunités à fort potentiel",
-                    "Système de favoris pour suivre vos candidatures"
+                    "Système de favoris pour suivre vos candidatures",
                   ].map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm sm:text-base">{item}</span>
+                      <span className="text-gray-700 text-sm sm:text-base">
+                        {item}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -475,14 +526,31 @@ export default function HomePage() {
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
               Ils nous font confiance
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Des milliers de candidats ont déjà trouvé leur voie avec HuntZen</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
+              Des milliers de candidats ont déjà trouvé leur voie avec HuntZen
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {[
-              { value: "+ 100 000", label: "Candidats accompagnés", icon: Users, color: "#00D9FF" },
-              { value: "87%", label: "Taux de réponse positif", icon: CheckCircle2, color: "#00D9FF" },
-              { value: "+ 35%", label: "De salaire négocié en moyenne", icon: TrendingUp, color: "#00D9FF" }
+              {
+                value: "+ 100 000",
+                label: "Candidats accompagnés",
+                icon: Users,
+                color: "#00D9FF",
+              },
+              {
+                value: "87%",
+                label: "Taux de réponse positif",
+                icon: CheckCircle2,
+                color: "#00D9FF",
+              },
+              {
+                value: "+ 35%",
+                label: "De salaire négocié en moyenne",
+                icon: TrendingUp,
+                color: "#00D9FF",
+              },
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -503,7 +571,9 @@ export default function HomePage() {
                 >
                   {stat.value}
                 </div>
-                <div className="text-gray-600 dark:text-gray-300 font-medium text-sm sm:text-base">{stat.label}</div>
+                <div className="text-gray-600 dark:text-gray-300 font-medium text-sm sm:text-base">
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </div>
@@ -529,7 +599,8 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-gray-600 dark:text-gray-300 text-sm sm:text-base max-w-2xl mx-auto"
             >
-              Commencez gratuitement et évoluez vers le plan adapté à vos besoins
+              Commencez gratuitement et évoluez vers le plan adapté à vos
+              besoins
             </motion.p>
           </div>
 
@@ -545,14 +616,14 @@ export default function HomePage() {
                   "10 offres d'emploi visibles maximum",
                   "1 analyse de CV par jour",
                   "5 minutes de coaching personnel",
-                  "Support standard"
+                  "Support standard",
                 ],
                 unavailable: [
                   "Filtres avancés",
                   "Gestion favoris",
-                  "Export PDF rapports"
+                  "Export PDF rapports",
                 ],
-                cta: "Commencer gratuitement"
+                cta: "Commencer gratuitement",
               },
               {
                 name: "ESSENTIEL",
@@ -567,10 +638,10 @@ export default function HomePage() {
                   "Gestion de vos favoris",
                   "Analyses de CV illimitées",
                   "Score de compatibilité détaillé",
-                  "Coaching personnalisé (30 min/jour)"
+                  "Coaching personnalisé (30 min/jour)",
                 ],
                 unavailable: ["Export PDF rapports"],
-                cta: "Commencer avec Essentiel"
+                cta: "Commencer avec Essentiel",
               },
               {
                 name: "PRO",
@@ -583,10 +654,10 @@ export default function HomePage() {
                   "Export PDF professionnel",
                   "Simulations d'entretien réalistes",
                   "Feedback détaillé sur vos performances",
-                  "Support prioritaire par email"
+                  "Support prioritaire par email",
                 ],
                 unavailable: [],
-                cta: "Commencer avec Pro"
+                cta: "Commencer avec Pro",
               },
               {
                 name: "PREMIUM",
@@ -601,11 +672,11 @@ export default function HomePage() {
                   "Historique complet coaching",
                   "Accès anticipé nouvelles fonctionnalités",
                   "Support VIP prioritaire",
-                  "Rapports mensuels de progression"
+                  "Rapports mensuels de progression",
                 ],
                 unavailable: [],
-                cta: "Commencer avec Premium"
-              }
+                cta: "Commencer avec Premium",
+              },
             ].map((plan, index) => (
               <motion.div
                 key={index}
@@ -614,7 +685,9 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-6 border-2 ${
-                  plan.popular ? 'border-[#00D9FF] shadow-xl lg:scale-105' : 'border-gray-200 dark:border-gray-700'
+                  plan.popular
+                    ? "border-[#00D9FF] shadow-xl lg:scale-105"
+                    : "border-gray-200 dark:border-gray-700"
                 } hover:shadow-lg transition-all relative flex flex-col h-full`}
               >
                 {plan.popular && (
@@ -624,7 +697,9 @@ export default function HomePage() {
                 )}
 
                 <div className="text-center mb-6">
-                  <div className="text-gray-600 dark:text-gray-400 font-bold text-xs sm:text-sm mb-2">{plan.name}</div>
+                  <div className="text-gray-600 dark:text-gray-400 font-bold text-xs sm:text-sm mb-2">
+                    {plan.name}
+                  </div>
                   <div className="flex items-baseline justify-center gap-1">
                     <span
                       className="text-4xl sm:text-5xl font-black"
@@ -632,19 +707,32 @@ export default function HomePage() {
                     >
                       {plan.price}
                     </span>
-                    <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{plan.period}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
+                      {plan.period}
+                    </span>
                   </div>
                 </div>
 
                 <ul className="space-y-2.5 sm:space-y-3 mb-6 flex-grow">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm">
-                      <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: plan.color }} />
-                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-xs sm:text-sm"
+                    >
+                      <CheckCircle2
+                        className="w-4 h-4 flex-shrink-0 mt-0.5"
+                        style={{ color: plan.color }}
+                      />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {feature}
+                      </span>
                     </li>
                   ))}
                   {plan.unavailable.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-xs sm:text-sm text-gray-400 dark:text-gray-500"
+                    >
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </li>
@@ -665,7 +753,6 @@ export default function HomePage() {
       </section>
 
       {/* Internal Links Footer for SEO */}
-      <InternalLinksFooter />
 
       {/* Footer */}
       <footer className="bg-black text-white py-10 sm:py-12">
@@ -676,20 +763,32 @@ export default function HomePage() {
               <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
             </div>
             <p className="text-white/60 text-xs sm:text-sm text-center md:text-right max-w-md">
-              Votre allié carrière pour transformer votre recherche d&apos;emploi en succès.
+              Votre allié carrière pour transformer votre recherche
+              d&apos;emploi en succès.
             </p>
           </div>
           <hr className="border-white/10 mb-8" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
-            <p>&copy; {new Date().getFullYear()} HuntZen. Tous droits réservés.</p>
+            <p>
+              &copy; {new Date().getFullYear()} HuntZen. Tous droits réservés.
+            </p>
             <div className="flex items-center gap-4 sm:gap-6">
-              <Link href="/privacy" className="hover:text-[#00D9FF] transition-colors">
+              <Link
+                href="/privacy"
+                className="hover:text-[#00D9FF] transition-colors"
+              >
                 Politique de confidentialité
               </Link>
-              <Link href="/terms" className="hover:text-[#00D9FF] transition-colors">
+              <Link
+                href="/terms"
+                className="hover:text-[#00D9FF] transition-colors"
+              >
                 Conditions générales
               </Link>
-              <Link href="mailto:contact@huntzenjobs.co" className="hover:text-[#00D9FF] transition-colors">
+              <Link
+                href="mailto:contact@huntzenjobs.co"
+                className="hover:text-[#00D9FF] transition-colors"
+              >
                 Contact
               </Link>
             </div>
@@ -698,12 +797,15 @@ export default function HomePage() {
       </footer>
 
       <style jsx global>{`
-        
-
         body {
-          font-family: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-family:
+            var(--font-dm-sans),
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
         }
       `}</style>
     </div>
-  )
+  );
 }
