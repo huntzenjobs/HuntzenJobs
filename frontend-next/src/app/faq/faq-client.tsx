@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Search, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
+import { LandingHeader } from "@/components/landing-header";
 import { faqCategories } from "./faq-data";
 
 export function FAQClient() {
@@ -22,7 +23,7 @@ export function FAQClient() {
       questions: category.questions.filter(
         (item) =>
           item.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.a.toLowerCase().includes(searchQuery.toLowerCase())
+          item.a.toLowerCase().includes(searchQuery.toLowerCase()),
       ),
     }))
     .filter((category) => category.questions.length > 0);
@@ -34,6 +35,7 @@ export function FAQClient() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <LandingHeader />
       {/* Header */}
       <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,9 +49,8 @@ export function FAQClient() {
               Questions Fréquentes
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              Tout ce que vous devez savoir sur{" "}
-              <strong>HuntZen Jobs</strong>, la plateforme N°1 de recherche
-              d'emploi en France
+              Tout ce que vous devez savoir sur <strong>HuntZen Jobs</strong>,
+              la plateforme N°1 de recherche d'emploi en France
             </p>
 
             {/* Search bar */}

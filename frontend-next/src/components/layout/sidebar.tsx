@@ -148,10 +148,7 @@ export function Sidebar({ className }: SidebarProps) {
         animate={{ opacity: 1, y: 0 }}
         className="sidebar-header flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700"
       >
-        <Link
-          href="/jobs"
-          className="sidebar-logo flex items-center gap-2.5 group"
-        >
+        <Link href="/" className="sidebar-logo flex items-center gap-2.5 group">
           <TextLogo
             isDark
             size="md"
@@ -235,7 +232,9 @@ export function Sidebar({ className }: SidebarProps) {
                       {item.badge}
                     </span>
                   )}
-                  {isLocked && <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500" />}
+                  {isLocked && (
+                    <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  )}
                 </Link>
               </motion.div>
             );
@@ -315,7 +314,9 @@ export function Sidebar({ className }: SidebarProps) {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {user.email}
+                </p>
               </div>
             </Link>
           </motion.div>
@@ -366,7 +367,9 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="sidebar-footer px-4 py-3 border-t border-gray-200 dark:border-gray-700">
         {/* Theme Toggle */}
         <div className="flex items-center justify-between px-4 py-2.5 mb-2">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Thème</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            Thème
+          </span>
           <ThemeToggleSimple />
         </div>
 
@@ -422,10 +425,7 @@ export function Sidebar({ className }: SidebarProps) {
           <Menu className="w-6 h-6" />
         </button>
 
-        <Link
-          href="/jobs"
-          className="mobile-logo flex items-center gap-2 group"
-        >
+        <Link href="/" className="mobile-logo flex items-center gap-2 group">
           <TextLogo
             isDark
             size="sm"
@@ -482,7 +482,8 @@ export function Sidebar({ className }: SidebarProps) {
               Confirmer la déconnexion
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
-              Êtes-vous sûr de vouloir vous déconnecter ? Vos données sauvegardées seront conservées.
+              Êtes-vous sûr de vouloir vous déconnecter ? Vos données
+              sauvegardées seront conservées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
