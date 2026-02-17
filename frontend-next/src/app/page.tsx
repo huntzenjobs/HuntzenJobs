@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -144,7 +145,7 @@ export default function HomePage() {
 
       {/* Nos Outils - Enhanced Section */}
       <section
-        className="py-12 sm:py-16 bg-white dark:bg-gray-900"
+        className="py-12 sm:py-16 bg-slate-50 dark:bg-gray-900"
         id="features"
       >
         <div className="container mx-auto px-4 sm:px-6">
@@ -180,144 +181,185 @@ export default function HomePage() {
             </motion.p>
           </div>
 
-          {/* Tools — Feature Directory */}
-          <div className="max-w-3xl mx-auto w-full space-y-8">
-            {[
-              {
-                category: "Recherche",
-                tools: [
-                  {
-                    icon: Search,
-                    title: "Agrégateur d'offres intelligent",
-                    description:
-                      "Toutes les offres du marché centralisées et filtrées",
-                    href: "/jobs",
-                  },
-                  {
-                    icon: Target,
-                    title: "Score de compatibilité",
-                    description:
-                      "Découvrez les offres qui vous correspondent vraiment",
-                    href: "/jobs",
-                  },
-                ],
-              },
-              {
-                category: "CV",
-                tools: [
-                  {
-                    icon: FileText,
-                    title: "Analyse CV experte",
-                    description: "Optimisez votre CV pour chaque candidature",
-                    href: "/cv-analysis",
-                  },
-                  {
-                    icon: Sparkles,
-                    title: "Diagnostic compétences",
-                    description: "Identifiez vos forces et axes d'amélioration",
-                    href: "/cv-analysis",
-                  },
-                ],
-              },
-              {
-                category: "Coaching",
-                tools: [
-                  {
-                    icon: Users,
-                    title: "Simulation d'entretien",
-                    description:
-                      "Entraînez-vous en conditions réelles avec l'IA",
-                    href: "/assistant",
-                  },
-                  {
-                    icon: MessageSquare,
-                    title: "Coach carrière 24/7",
-                    description:
-                      "Un accompagnement personnalisé à chaque étape",
-                    href: "/assistant",
-                  },
-                  {
-                    icon: TrendingUp,
-                    title: "Projections salariales",
-                    description:
-                      "Négociez avec les bons arguments et les bons chiffres",
-                    href: "/assistant",
-                  },
-                ],
-              },
-              {
-                category: "Networking",
-                tools: [
-                  {
-                    icon: Calendar,
-                    title: "Salons & Forums emploi",
-                    description:
-                      "Rencontrez directement les recruteurs en personne",
-                    href: "/salons",
-                  },
-                ],
-              },
-            ].map((group, groupIndex) => (
-              <motion.div
-                key={group.category}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: groupIndex * 0.08 }}
-              >
-                {/* Category header */}
-                <div className="flex items-center gap-4 mb-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 flex-shrink-0">
-                    {group.category}
-                  </span>
-                  <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-                </div>
+          {/* Tools — Bento Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
+            {(
+              [
+                {
+                  type: "featured",
+                  icon: Search,
+                  category: "Recherche",
+                  title: "Agrégateur d\u2019offres intelligent",
+                  description:
+                    "Toutes les offres du marché centralisées et filtrées pour vous",
+                  href: "/jobs",
+                },
+                {
+                  type: "regular",
+                  icon: Target,
+                  category: "Recherche",
+                  title: "Score de compatibilité",
+                  description:
+                    "Découvrez les offres qui vous correspondent vraiment",
+                  href: "/jobs",
+                },
+                {
+                  type: "regular",
+                  icon: FileText,
+                  category: "CV",
+                  title: "Analyse CV experte",
+                  description: "Optimisez votre CV pour chaque candidature",
+                  href: "/cv-analysis",
+                },
+                {
+                  type: "regular",
+                  icon: Sparkles,
+                  category: "CV",
+                  title: "Diagnostic compétences",
+                  description:
+                    "Identifiez vos forces et axes d\u2019amélioration",
+                  href: "/cv-analysis",
+                },
+                {
+                  type: "regular",
+                  icon: Users,
+                  category: "Coaching",
+                  title: "Simulation d\u2019entretien",
+                  description:
+                    "Entraînez-vous en conditions réelles avec l\u2019IA",
+                  href: "/assistant",
+                },
+                {
+                  type: "featured",
+                  icon: MessageSquare,
+                  category: "Coaching",
+                  title: "Coach carrière 24/7",
+                  description: "Un accompagnement personnalisé à chaque étape",
+                  href: "/assistant",
+                },
+                {
+                  type: "medium",
+                  icon: TrendingUp,
+                  category: "Coaching",
+                  title: "Projections salariales",
+                  description:
+                    "Négociez avec les bons arguments et les bons chiffres",
+                  href: "/assistant",
+                },
+                {
+                  type: "medium",
+                  icon: Calendar,
+                  category: "Networking",
+                  title: "Salons & Forums emploi",
+                  description:
+                    "Rencontrez directement les recruteurs en personne",
+                  href: "/salons",
+                },
+              ] as Array<{
+                type: string;
+                icon: React.ElementType;
+                category: string;
+                title: string;
+                description: string;
+                href: string;
+              }>
+            ).map((tool, index) => {
+              const Icon = tool.icon;
+              const isFeatured = tool.type === "featured";
+              const isMedium = tool.type === "medium";
+              const colSpan =
+                isFeatured || isMedium ? "col-span-2" : "col-span-1";
 
-                {/* Tool rows */}
-                <div>
-                  {group.tools.map((tool, toolIndex) => (
-                    <motion.div
-                      key={toolIndex}
-                      initial={{ opacity: 0, x: -6 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{
-                        duration: 0.3,
-                        delay: groupIndex * 0.08 + toolIndex * 0.05 + 0.06,
-                      }}
-                    >
-                      <Link href={tool.href} className="group block">
-                        <div className="relative flex items-center gap-4 px-3 py-3 -mx-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200">
-                          {/* Left cyan accent on hover */}
-                          <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-[#00D9FF] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-
-                          {/* Icon */}
-                          <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
-                            <tool.icon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-[#00D9FF] transition-colors duration-200" />
-                          </div>
-
-                          {/* Title */}
-                          <span className="text-sm font-medium text-slate-800 dark:text-slate-200 flex-shrink-0 group-hover:text-slate-900 dark:group-hover:text-white transition-colors duration-200">
-                            {tool.title}
-                          </span>
-
-                          {/* Dotted leader line */}
-                          <span className="flex-1 border-b border-dashed border-slate-200 dark:border-slate-800 hidden sm:block" />
-
-                          {/* Description */}
-                          <span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0 hidden sm:block max-w-[220px] text-right leading-relaxed">
-                            {tool.description}
-                          </span>
-
-                          {/* Arrow */}
-                          <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-[#00D9FF] group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0" />
+              return (
+                <motion.div
+                  key={index}
+                  className={colSpan}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: index * 0.055 }}
+                >
+                  <Link href={tool.href} className="group block h-full">
+                    {isFeatured ? (
+                      /* FEATURED DARK CARD */
+                      <div
+                        className="relative h-full overflow-hidden rounded-2xl bg-slate-900 dark:bg-[#050A14] border border-slate-800/60 p-6 sm:p-8 flex flex-col"
+                        style={{ minHeight: "210px" }}
+                      >
+                        {/* Ambient cyan glow */}
+                        <div className="absolute -top-12 -left-12 w-56 h-56 bg-[#00D9FF] opacity-[0.10] blur-[70px] rounded-full pointer-events-none" />
+                        {/* Watermark icon */}
+                        <Icon className="absolute -bottom-6 -right-6 w-40 h-40 text-white opacity-[0.04] pointer-events-none" />
+                        {/* Icon */}
+                        <div className="relative z-10 w-11 h-11 rounded-xl bg-[#00D9FF]/10 border border-[#00D9FF]/20 flex items-center justify-center mb-5">
+                          <Icon className="w-5 h-5 text-[#00D9FF]" />
                         </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
+                        <span className="relative z-10 text-[9px] font-bold uppercase tracking-[0.22em] text-slate-500 mb-2">
+                          {tool.category}
+                        </span>
+                        <h3 className="relative z-10 text-xl sm:text-2xl font-bold text-white leading-tight mb-3">
+                          {tool.title}
+                        </h3>
+                        <p className="relative z-10 text-sm text-slate-400 leading-relaxed flex-1">
+                          {tool.description}
+                        </p>
+                        <div className="relative z-10 mt-5 flex items-center gap-2 text-[#00D9FF] text-sm font-semibold">
+                          <span>Explorer</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                        </div>
+                      </div>
+                    ) : isMedium ? (
+                      /* MEDIUM HORIZONTAL CARD */
+                      <div className="relative h-full overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/60 p-5 sm:p-6 flex flex-row items-center gap-4 hover:border-[#00D9FF]/40 hover:shadow-[0_6px_24px_rgba(0,217,255,0.08)] transition-all duration-300">
+                        <Icon className="absolute -bottom-4 -right-4 w-24 h-24 text-slate-900 dark:text-white opacity-[0.03] pointer-events-none" />
+                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
+                          <Icon className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-[#00D9FF] transition-colors duration-200" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-slate-400 block mb-0.5">
+                            {tool.category}
+                          </span>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                            {tool.title}
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-1 leading-relaxed hidden sm:block">
+                            {tool.description}
+                          </p>
+                        </div>
+                        <div className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-slate-300 dark:text-slate-600 group-hover:text-[#00D9FF] transition-colors duration-200">
+                          <span className="hidden sm:block">Explorer</span>
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
+                        </div>
+                      </div>
+                    ) : (
+                      /* REGULAR CARD */
+                      <div
+                        className="relative h-full overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/60 p-5 flex flex-col hover:border-[#00D9FF]/40 hover:shadow-[0_8px_30px_rgba(0,217,255,0.08)] transition-all duration-300"
+                        style={{ minHeight: "210px" }}
+                      >
+                        <Icon className="absolute -bottom-3 -right-3 w-20 h-20 text-slate-900 dark:text-white opacity-[0.03] pointer-events-none" />
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
+                          <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-[#00D9FF] transition-colors duration-200" />
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-slate-400 mb-2">
+                          {tool.category}
+                        </span>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug flex-1">
+                          {tool.title}
+                        </h3>
+                        <p className="text-xs text-slate-400 leading-relaxed mt-2 mb-3">
+                          {tool.description}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 dark:text-slate-600 group-hover:text-[#00D9FF] transition-colors duration-200">
+                          <span>Explorer</span>
+                          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform duration-200" />
+                        </div>
+                      </div>
+                    )}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
