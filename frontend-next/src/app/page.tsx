@@ -180,102 +180,142 @@ export default function HomePage() {
             </motion.p>
           </div>
 
-          {/* Tools Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 max-w-7xl mx-auto">
+          {/* Tools — Feature Directory */}
+          <div className="max-w-3xl mx-auto w-full space-y-8">
             {[
               {
-                icon: Search,
                 category: "Recherche",
-                title: "Agrégateur d'offres intelligent",
-                description:
-                  "Toutes les offres du marché centralisées et filtrées pour vous",
-                href: "/jobs",
+                tools: [
+                  {
+                    icon: Search,
+                    title: "Agrégateur d'offres intelligent",
+                    description:
+                      "Toutes les offres du marché centralisées et filtrées",
+                    href: "/jobs",
+                  },
+                  {
+                    icon: Target,
+                    title: "Score de compatibilité",
+                    description:
+                      "Découvrez les offres qui vous correspondent vraiment",
+                    href: "/jobs",
+                  },
+                ],
               },
               {
-                icon: Target,
-                category: "Recherche",
-                title: "Score de compatibilité",
-                description:
-                  "Découvrez les offres qui vous correspondent vraiment",
-                href: "/jobs",
-              },
-              {
-                icon: FileText,
                 category: "CV",
-                title: "Analyse CV experte",
-                description: "Optimisez votre CV pour chaque candidature",
-                href: "/cv-analysis",
+                tools: [
+                  {
+                    icon: FileText,
+                    title: "Analyse CV experte",
+                    description: "Optimisez votre CV pour chaque candidature",
+                    href: "/cv-analysis",
+                  },
+                  {
+                    icon: Sparkles,
+                    title: "Diagnostic compétences",
+                    description: "Identifiez vos forces et axes d'amélioration",
+                    href: "/cv-analysis",
+                  },
+                ],
               },
               {
-                icon: Sparkles,
-                category: "CV",
-                title: "Diagnostic compétences",
-                description: "Identifiez vos forces et axes d'amélioration",
-                href: "/cv-analysis",
-              },
-              {
-                icon: Users,
                 category: "Coaching",
-                title: "Simulation d'entretien",
-                description: "Entraînez-vous en conditions réelles avec l'IA",
-                href: "/assistant",
+                tools: [
+                  {
+                    icon: Users,
+                    title: "Simulation d'entretien",
+                    description:
+                      "Entraînez-vous en conditions réelles avec l'IA",
+                    href: "/assistant",
+                  },
+                  {
+                    icon: MessageSquare,
+                    title: "Coach carrière 24/7",
+                    description:
+                      "Un accompagnement personnalisé à chaque étape",
+                    href: "/assistant",
+                  },
+                  {
+                    icon: TrendingUp,
+                    title: "Projections salariales",
+                    description:
+                      "Négociez avec les bons arguments et les bons chiffres",
+                    href: "/assistant",
+                  },
+                ],
               },
               {
-                icon: MessageSquare,
-                category: "Coaching",
-                title: "Coach carrière 24/7",
-                description: "Un accompagnement personnalisé à chaque étape",
-                href: "/assistant",
-              },
-              {
-                icon: TrendingUp,
-                category: "Coaching",
-                title: "Projections salariales",
-                description:
-                  "Négociez avec les bons arguments et les bons chiffres",
-                href: "/assistant",
-              },
-              {
-                icon: Calendar,
                 category: "Networking",
-                title: "Salons & Forums emploi",
-                description:
-                  "Rencontrez directement les recruteurs en personne",
-                href: "/salons",
+                tools: [
+                  {
+                    icon: Calendar,
+                    title: "Salons & Forums emploi",
+                    description:
+                      "Rencontrez directement les recruteurs en personne",
+                    href: "/salons",
+                  },
+                ],
               },
-            ].map((tool, index) => (
+            ].map((group, groupIndex) => (
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 16 }}
+                key={group.category}
+                initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.06 }}
+                transition={{ duration: 0.4, delay: groupIndex * 0.08 }}
               >
-                <Link href={tool.href} className="block h-full group">
-                  <div className="h-full bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700/60 hover:border-[#00D9FF]/40 dark:hover:border-[#00D9FF]/30 hover:shadow-[0_4px_24px_rgba(0,217,255,0.08)] transition-all duration-300 flex flex-col">
-                    {/* Icon container */}
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-[#00D9FF]/10 transition-colors duration-300">
-                      <tool.icon className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-[#00D9FF] transition-colors duration-300" />
-                    </div>
-                    {/* Category */}
-                    <span className="text-[10px] font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
-                      {tool.category}
-                    </span>
-                    {/* Title */}
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug mb-2 flex-grow">
-                      {tool.title}
-                    </h3>
-                    {/* Description */}
-                    <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mb-4">
-                      {tool.description}
-                    </p>
-                    {/* CTA */}
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-300 dark:text-slate-600 group-hover:text-[#00D9FF] transition-colors duration-300">
-                      <span>Explorer</span>
-                      <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
-                    </div>
-                  </div>
-                </Link>
+                {/* Category header */}
+                <div className="flex items-center gap-4 mb-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500 flex-shrink-0">
+                    {group.category}
+                  </span>
+                  <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+                </div>
+
+                {/* Tool rows */}
+                <div>
+                  {group.tools.map((tool, toolIndex) => (
+                    <motion.div
+                      key={toolIndex}
+                      initial={{ opacity: 0, x: -6 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{
+                        duration: 0.3,
+                        delay: groupIndex * 0.08 + toolIndex * 0.05 + 0.06,
+                      }}
+                    >
+                      <Link href={tool.href} className="group block">
+                        <div className="relative flex items-center gap-4 px-3 py-3 -mx-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200">
+                          {/* Left cyan accent on hover */}
+                          <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-[#00D9FF] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
+                          {/* Icon */}
+                          <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
+                            <tool.icon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-[#00D9FF] transition-colors duration-200" />
+                          </div>
+
+                          {/* Title */}
+                          <span className="text-sm font-medium text-slate-800 dark:text-slate-200 flex-shrink-0 group-hover:text-slate-900 dark:group-hover:text-white transition-colors duration-200">
+                            {tool.title}
+                          </span>
+
+                          {/* Dotted leader line */}
+                          <span className="flex-1 border-b border-dashed border-slate-200 dark:border-slate-800 hidden sm:block" />
+
+                          {/* Description */}
+                          <span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0 hidden sm:block max-w-[220px] text-right leading-relaxed">
+                            {tool.description}
+                          </span>
+
+                          {/* Arrow */}
+                          <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-[#00D9FF] group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0" />
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
               </motion.div>
             ))}
           </div>
