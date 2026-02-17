@@ -8,6 +8,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
+import { LandingHeader } from "@/components/landing-header";
 
 // Articles de blog (à terme, viendra d'une base de données ou CMS)
 const blogPosts = [
@@ -46,6 +47,7 @@ const blogPosts = [
 export default function BlogPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <LandingHeader />
       {/* Header SEO optimisé */}
       <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

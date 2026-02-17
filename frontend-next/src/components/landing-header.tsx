@@ -109,7 +109,10 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           <div ref={outilsRef} className="relative">
             <button
               onClick={() => setOutilsOpen(!outilsOpen)}
-              onMouseEnter={() => setOutilsOpen(true)}
+              onMouseEnter={() => {
+                setOutilsOpen(true);
+                setRessourcesOpen(false);
+              }}
               className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
             >
               Outils
@@ -136,7 +139,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setOutilsOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -147,7 +150,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setOutilsOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -162,7 +165,10 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           <div ref={ressourcesRef} className="relative">
             <button
               onClick={() => setRessourcesOpen(!ressourcesOpen)}
-              onMouseEnter={() => setRessourcesOpen(true)}
+              onMouseEnter={() => {
+                setRessourcesOpen(true);
+                setOutilsOpen(false);
+              }}
               className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
             >
               Ressources
@@ -189,7 +195,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -200,7 +206,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -211,7 +217,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
