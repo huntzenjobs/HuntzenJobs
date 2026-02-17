@@ -294,39 +294,39 @@ export default function HomePage() {
                         <div className="relative z-10 w-11 h-11 rounded-xl bg-[#00D9FF]/10 border border-[#00D9FF]/20 flex items-center justify-center mb-5">
                           <Icon className="w-5 h-5 text-[#00D9FF]" />
                         </div>
-                        <span className="relative z-10 text-[9px] font-bold uppercase tracking-[0.22em] text-slate-500 mb-2">
+                        <span className="relative z-10 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500 mb-2">
                           {tool.category}
                         </span>
-                        <h3 className="relative z-10 text-xl sm:text-2xl font-bold text-white leading-tight mb-3">
+                        <h3 className="relative z-10 text-2xl sm:text-3xl font-bold text-white leading-tight mb-3">
                           {tool.title}
                         </h3>
-                        <p className="relative z-10 text-sm text-slate-400 leading-relaxed flex-1">
+                        <p className="relative z-10 text-base text-slate-400 leading-relaxed flex-1">
                           {tool.description}
                         </p>
-                        <div className="relative z-10 mt-5 flex items-center gap-2 text-[#00D9FF] text-sm font-semibold">
+                        <div className="relative z-10 mt-5 flex items-center gap-2 text-[#00D9FF] text-base font-semibold">
                           <span>Explorer</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                         </div>
                       </div>
                     ) : isMedium ? (
                       /* MEDIUM HORIZONTAL CARD */
-                      <div className="relative h-full overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/60 p-5 sm:p-6 flex flex-row items-center gap-4 hover:border-[#00D9FF]/40 hover:shadow-[0_6px_24px_rgba(0,217,255,0.08)] transition-all duration-300">
-                        <Icon className="absolute -bottom-4 -right-4 w-24 h-24 text-slate-900 dark:text-white opacity-[0.03] pointer-events-none" />
-                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
-                          <Icon className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-[#00D9FF] transition-colors duration-200" />
+                      <div className="relative h-full overflow-hidden rounded-2xl bg-white dark:bg-white border border-slate-200/80 dark:border-slate-200/80 p-5 sm:p-6 flex flex-row items-center gap-4 hover:border-[#00D9FF]/40 hover:shadow-[0_6px_24px_rgba(0,217,255,0.08)] transition-all duration-300">
+                        <Icon className="absolute -bottom-4 -right-4 w-24 h-24 text-slate-900 opacity-[0.03] pointer-events-none" />
+                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
+                          <Icon className="w-5 h-5 text-slate-400 group-hover:text-[#00D9FF] transition-colors duration-200" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-slate-400 block mb-0.5">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 block mb-0.5">
                             {tool.category}
                           </span>
-                          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                          <h3 className="text-base font-bold text-slate-900 leading-snug">
                             {tool.title}
                           </h3>
-                          <p className="text-xs text-slate-400 mt-1 leading-relaxed hidden sm:block">
+                          <p className="text-sm text-slate-500 mt-1 leading-relaxed hidden sm:block">
                             {tool.description}
                           </p>
                         </div>
-                        <div className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold text-slate-300 dark:text-slate-600 group-hover:text-[#00D9FF] transition-colors duration-200">
+                        <div className="flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold text-slate-300 group-hover:text-[#00D9FF] transition-colors duration-200">
                           <span className="hidden sm:block">Explorer</span>
                           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
                         </div>
@@ -334,25 +334,25 @@ export default function HomePage() {
                     ) : (
                       /* REGULAR CARD */
                       <div
-                        className="relative h-full overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/60 p-5 flex flex-col hover:border-[#00D9FF]/40 hover:shadow-[0_8px_30px_rgba(0,217,255,0.08)] transition-all duration-300"
+                        className="relative h-full overflow-hidden rounded-2xl bg-white dark:bg-white border border-slate-200/80 dark:border-slate-200/80 p-5 flex flex-col hover:border-[#00D9FF]/40 hover:shadow-[0_8px_30px_rgba(0,217,255,0.08)] transition-all duration-300"
                         style={{ minHeight: "210px" }}
                       >
-                        <Icon className="absolute -bottom-3 -right-3 w-20 h-20 text-slate-900 dark:text-white opacity-[0.03] pointer-events-none" />
-                        <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
-                          <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-[#00D9FF] transition-colors duration-200" />
+                        <Icon className="absolute -bottom-3 -right-3 w-20 h-20 text-slate-900 opacity-[0.03] pointer-events-none" />
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center mb-4 group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
+                          <Icon className="w-4 h-4 text-slate-400 group-hover:text-[#00D9FF] transition-colors duration-200" />
                         </div>
-                        <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-slate-400 mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mb-2">
                           {tool.category}
                         </span>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug flex-1">
+                        <h3 className="text-base font-bold text-slate-900 leading-snug flex-1">
                           {tool.title}
                         </h3>
-                        <p className="text-xs text-slate-400 leading-relaxed mt-2 mb-3">
+                        <p className="text-sm text-slate-500 leading-relaxed mt-2 mb-3">
                           {tool.description}
                         </p>
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 dark:text-slate-600 group-hover:text-[#00D9FF] transition-colors duration-200">
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-300 group-hover:text-[#00D9FF] transition-colors duration-200">
                           <span>Explorer</span>
-                          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform duration-200" />
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
                         </div>
                       </div>
                     )}
