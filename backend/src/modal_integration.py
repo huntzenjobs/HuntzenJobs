@@ -500,13 +500,22 @@ async def list_user_cv_analyses(
                 completed = datetime.fromisoformat(row["completed_at"].replace("Z", "+00:00"))
                 processing_time = (completed - created).total_seconds()
 
+            # Extract summary fields from result JSON for history display
+            result_data = row.get("result") or {}
+            ats_score = result_data.get("ats_score") or {}
+
             analyses.append({
                 "cv_id": row["id"],
                 "status": row["status"],
                 "created_at": row["created_at"],
                 "completed_at": row.get("completed_at"),
                 "processing_time_seconds": processing_time,
-                "has_result": bool(row.get("result"))
+                "has_result": bool(result_data),
+                # Summary fields for history drawer display
+                "score": ats_score.get("overall_score"),
+                "strengths": result_data.get("strengths", []),
+                "weaknesses": result_data.get("improvements", result_data.get("weaknesses", [])),
+                "suggestions": [],
             })
 
         return {
