@@ -14,6 +14,7 @@ import json
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
+from difflib import SequenceMatcher
 from typing import Any, Optional
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
@@ -155,8 +156,12 @@ class JobScoutAgent(BaseAgent):
             # Step 3: Deduplicate
             unique_jobs = self._deduplicate_jobs(raw_jobs)
             
+            # Step 3.5: Pre-filter by relevance (safety net)
+            filtered_jobs = self._pre_filter_by_relevance(unique_jobs, search_query)
+            logger.info(f"[{self.name}] Pre-filter: {len(unique_jobs)} → {len(filtered_jobs)} jobs")
+            
             # Step 4: Rank with AI (sample for performance)
-            ranked_jobs = await self._rank_jobs(unique_jobs[:max_results * 2], job_title)
+            ranked_jobs = await self._rank_jobs(filtered_jobs[:max_results * 2], job_title)
             
             # Step 5: Limit results
             final_jobs = ranked_jobs[:max_results]
@@ -212,9 +217,14 @@ class JobScoutAgent(BaseAgent):
                 task = f"Query: {query}\nJob: {job.get('title')} at {job.get('company')}"
                 result = await self.job_ranker.run(task=task)
                 data = self._parse_json(result)
-                job["score"] = data.get("score", 0.5) if data else 0.5
+                if data:
+                    job["score"] = data.get("score", 0.5)
+                    job["is_spam"] = data.get("is_spam", False)
+                else:
+                    # Parse failed → push to bottom instead of middle
+                    job["score"] = 0.1
             except Exception:
-                job["score"] = 0.5
+                job["score"] = 0.1
             return job
         
         # Score sample jobs in parallel
@@ -267,6 +277,70 @@ class JobScoutAgent(BaseAgent):
                 unique.append(job)
         
         return unique
+
+    @staticmethod
+    def _pre_filter_by_relevance(jobs: list[dict], query: str, min_similarity: float = 0.25) -> list[dict]:
+        """
+        Safety-net filter: remove jobs whose title has NO relation to the search query.
+        
+        This runs BEFORE the AI ranker. Even if the ranker crashes,
+        obviously irrelevant jobs (e.g. "Scrum Master" for query "boulanger")
+        will never reach the frontend.
+        
+        Uses word overlap + fuzzy matching to be flexible:
+        - "boulanger" matches "Boulanger H/F" ✅
+        - "boulanger" matches "Vendeur en boulangerie" ✅ (fuzzy)
+        - "boulanger" does NOT match "Scrum Master" ❌
+        """
+        if not jobs or not query:
+            return jobs
+        
+        query_words = set(query.lower().split())
+        filtered = []
+        
+        for job in jobs:
+            title = (job.get("title") or "").lower()
+            company = (job.get("company") or "").lower()
+            title_words = set(title.split())
+            
+            # Check 1: Direct word overlap between query and title
+            overlap = query_words & title_words
+            if overlap:
+                filtered.append(job)
+                continue
+            
+            # Check 2: Fuzzy match (partial word match like "boulang" in "boulangerie")
+            has_fuzzy = False
+            for qw in query_words:
+                if len(qw) < 3:
+                    continue
+                for tw in title_words:
+                    if qw in tw or tw in qw:
+                        has_fuzzy = True
+                        break
+                    # SequenceMatcher for near-matches
+                    if SequenceMatcher(None, qw, tw).ratio() >= 0.7:
+                        has_fuzzy = True
+                        break
+                if has_fuzzy:
+                    break
+            
+            if has_fuzzy:
+                filtered.append(job)
+                continue
+            
+            # Check 3: Company name matches query (keep "Conseiller chez Boulanger")
+            for qw in query_words:
+                if qw in company:
+                    filtered.append(job)
+                    break
+        
+        # Fallback: if filter is too aggressive and removes everything, return originals
+        if not filtered:
+            logger.warning(f"[JobScout] Pre-filter removed ALL jobs, falling back to original list")
+            return jobs
+        
+        return filtered
     
     async def refine_query(self, query: str) -> dict:
         """
