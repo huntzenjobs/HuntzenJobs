@@ -110,6 +110,13 @@ export default function AssistantPage() {
     };
   }, [isCoachSessionActive, stopCoachSession]);
 
+  // Keep a stable ref to saveConversation to avoid re-triggering the auto-save
+  // effect every time saveMutation state changes (which would cause an infinite loop)
+  const saveConversationRef = useRef(saveConversation);
+  useEffect(() => {
+    saveConversationRef.current = saveConversation;
+  }, [saveConversation]);
+
   // Auto-save conversation (debounced)
   useEffect(() => {
     if (
@@ -119,20 +126,17 @@ export default function AssistantPage() {
     ) {
       const coachMessages = debouncedMessages.map(toCoachMessage);
 
-      saveConversation(
-        coachMessages,
-        sessionId,
-        currentConversationId || undefined,
-      ).then((id) => {
-        if (id && !currentConversationId) {
-          setCurrentConversationId(id);
-        }
-      });
+      saveConversationRef
+        .current(coachMessages, sessionId, currentConversationId || undefined)
+        .then((id) => {
+          if (id && !currentConversationId) {
+            setCurrentConversationId(id);
+          }
+        });
     }
   }, [
     debouncedMessages,
     loading,
-    saveConversation,
     sessionId,
     currentConversationId,
     hasFeature,
