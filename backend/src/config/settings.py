@@ -90,7 +90,7 @@ class Settings(BaseSettings):
     # Agent Configuration
     # --------------------------------------------------------------------------
     default_language: Literal["fr", "en", "es", "de"] = "en"
-    max_search_results: int = Field(default=25, ge=5, le=100)
+    max_search_results: int = Field(default=100, ge=5, le=200)
     cache_ttl_seconds: int = Field(default=3600, ge=60)
     
     # LLM Models (Groq)
