@@ -9,7 +9,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
-import { useAuth } from "@/lib/auth/jwt-provider";
+import { useAuth } from "@/contexts/auth-context";
 import { useSubscription } from "@/contexts/subscription-context";
 import { toast } from "sonner";
 import type {
@@ -113,7 +113,8 @@ function loadFromLocalStorage(): ConversationMetadata[] {
 // ============================================================================
 
 export function useCoachHistory(): UseCoachHistoryReturn {
-  const { userId } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const { hasFeature } = useSubscription();
   const queryClient = useQueryClient();
 
