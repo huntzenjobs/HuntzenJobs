@@ -706,7 +706,7 @@ export default function JobsPage() {
         {featureFlags.useJobsV2 ? (
           <SearchFormInline
             onSearch={handleSearch}
-            isLoading={searchQuery.isPending}
+            isLoading={searchQuery.isFetching}
             disabled={false}
           />
         ) : (
@@ -765,13 +765,13 @@ export default function JobsPage() {
                   size="lg"
                   className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
                   disabled={
-                    searchQuery.isPending ||
+                    searchQuery.isFetching ||
                     !jobTitle.trim() ||
                     !selectedCountry ||
                     (!canUse("job_search") && isFreePlan)
                   }
                 >
-                  {searchQuery.isPending ? (
+                  {searchQuery.isFetching ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       Recherche en cours...
@@ -1062,13 +1062,13 @@ export default function JobsPage() {
                     size="lg"
                     className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
                     disabled={
-                      searchQuery.isPending ||
+                      searchQuery.isFetching ||
                       !jobTitle.trim() ||
                       !selectedCountry ||
                       (!canUse("job_search") && isFreePlan)
                     }
                   >
-                    {searchQuery.isPending ? (
+                    {searchQuery.isFetching ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         Recherche en cours...
@@ -1157,7 +1157,7 @@ export default function JobsPage() {
 
       {/* Results */}
 
-      {!searchQuery.isPending && jobs.length > 0 && (
+      {!searchQuery.isFetching && jobs.length > 0 && (
         <ErrorBoundary
           fallback={
             <Card className="p-8 text-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
@@ -1467,7 +1467,7 @@ export default function JobsPage() {
       )}
 
       {/* Placeholder avant première recherche - NOUVEAU */}
-      {!searchQuery.isPending &&
+      {!searchQuery.isFetching &&
         !searchQuery.isSuccess &&
         jobs.length === 0 && (
           <JobsPlaceholder
@@ -1491,7 +1491,7 @@ export default function JobsPage() {
           />
         )}
 
-      {!searchQuery.isPending && searchQuery.isSuccess && jobs.length === 0 && (
+      {!searchQuery.isFetching && searchQuery.isSuccess && jobs.length === 0 && (
         <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
           <CardContent className="py-16 text-center">
             <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">
