@@ -32,7 +32,6 @@ import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { UsageSummary } from "@/components/freemium/usage-counter";
 import { UsageModal } from "@/components/freemium/usage-modal";
-import { ThemeToggleSimple } from "@/components/theme/theme-toggle";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -141,12 +140,12 @@ export function Sidebar({ className }: SidebarProps) {
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800">
+    <div className="flex flex-col h-full bg-[#0D1F3C]">
       {/* Header with Logo */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="sidebar-header flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700"
+        className="sidebar-header flex items-center justify-between p-6 border-b border-white/10"
       >
         <Link href="/" className="sidebar-logo flex items-center gap-2.5 group">
           <TextLogo
@@ -157,7 +156,7 @@ export function Sidebar({ className }: SidebarProps) {
           />
         </Link>
         <button
-          className="lg:hidden text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="lg:hidden text-white/70 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
           onClick={() => setIsMobileMenuOpen(false)}
           aria-label="Fermer le menu de navigation"
         >
@@ -171,7 +170,7 @@ export function Sidebar({ className }: SidebarProps) {
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="nav-section-label block text-gray-500 dark:text-gray-400 text-[0.65rem] font-bold tracking-widest px-3 mb-4"
+            className="nav-section-label block text-white/40 text-[0.65rem] font-bold tracking-widest px-3 mb-4"
           >
             NAVIGATION
           </motion.span>
@@ -200,8 +199,8 @@ export function Sidebar({ className }: SidebarProps) {
                   className={cn(
                     "nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all relative group",
                     isActive
-                      ? "bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 text-black dark:text-white"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
+                      ? "bg-[#00D9FF]/15 text-white"
+                      : "text-white/70 hover:bg-white/8 hover:text-white",
                     isLocked && "opacity-50",
                   )}
                 >
@@ -222,7 +221,7 @@ export function Sidebar({ className }: SidebarProps) {
                       "w-5 h-5 transition-all",
                       isActive
                         ? "text-[#00D9FF]"
-                        : "text-gray-600 dark:text-gray-400 group-hover:text-[#00D9FF]",
+                        : "text-white/50 group-hover:text-[#00D9FF]",
                     )}
                   />
                   <span className="nav-label flex-1">{item.name}</span>
@@ -232,9 +231,7 @@ export function Sidebar({ className }: SidebarProps) {
                       {item.badge}
                     </span>
                   )}
-                  {isLocked && (
-                    <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                  )}
+                  {isLocked && <Lock className="w-4 h-4 text-white/30" />}
                 </Link>
               </motion.div>
             );
@@ -250,9 +247,9 @@ export function Sidebar({ className }: SidebarProps) {
                 setIsUsageModalOpen(true);
                 setIsMobileMenuOpen(false);
               }}
-              className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white w-full group"
+              className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-white/70 hover:bg-white/8 hover:text-white w-full group"
             >
-              <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-[#00D9FF] transition-colors" />
+              <Activity className="w-5 h-5 text-white/50 group-hover:text-[#00D9FF] transition-colors" />
               <span className="nav-label flex-1 text-left">
                 Mon Utilisation
               </span>
@@ -267,13 +264,13 @@ export function Sidebar({ className }: SidebarProps) {
             animate={{ opacity: 1, y: 0 }}
             className="px-4 mt-6"
           >
-            <UsageSummary className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600" />
+            <UsageSummary className="p-4 rounded-xl bg-white/5 border border-white/10" />
           </motion.div>
         )}
       </nav>
 
       {/* User section */}
-      <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="px-4 py-4 border-t border-white/10">
         {isAuthLoading ? (
           <div className="flex items-center gap-3 px-3 py-2 mb-3">
             <Skeleton className="w-10 h-10 rounded-full bg-gray-200" />
@@ -290,14 +287,14 @@ export function Sidebar({ className }: SidebarProps) {
             <Link
               href="/profile"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 mb-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer group"
+              className="flex items-center gap-3 px-3 py-2.5 mb-3 rounded-xl hover:bg-white/8 transition-colors cursor-pointer group"
             >
-              <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:bg-[#00D9FF]/10 dark:group-hover:bg-[#00D9FF]/20 transition-colors border border-gray-200 dark:border-gray-600">
-                <User className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-[#00D9FF] transition-colors" />
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#00D9FF]/15 transition-colors border border-white/10">
+                <User className="w-5 h-5 text-white/60 group-hover:text-[#00D9FF] transition-colors" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-black dark:text-white truncate group-hover:text-[#00D9FF] transition-colors">
+                  <p className="text-sm font-semibold text-white truncate group-hover:text-[#00D9FF] transition-colors">
                     {user.user_metadata?.full_name || "Utilisateur"}
                   </p>
                   {subscription === null ? (
@@ -314,9 +311,7 @@ export function Sidebar({ className }: SidebarProps) {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {user.email}
-                </p>
+                <p className="text-xs text-white/50 truncate">{user.email}</p>
               </div>
             </Link>
           </motion.div>
@@ -324,26 +319,14 @@ export function Sidebar({ className }: SidebarProps) {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="px-3 py-2 mb-3"
           >
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Connectez-vous pour sauvegarder vos données
-            </p>
-            <div className="flex gap-2">
-              <Link
-                href="/login"
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-[#00D9FF] text-white text-sm font-semibold hover:bg-[#00C4EA] transition-colors"
-              >
-                <LogIn className="w-4 h-4" />
-                Connexion
-              </Link>
-              <Link
-                href="/signup"
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-black dark:text-white text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-200 dark:border-gray-600"
-              >
-                S&apos;inscrire
-              </Link>
-            </div>
+            <Link
+              href="/login"
+              className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-white/70 hover:bg-white/8 hover:text-white w-full group"
+            >
+              <LogIn className="w-5 h-5 text-white/50 group-hover:text-[#00D9FF] transition-colors" />
+              <span className="nav-label flex-1 text-left">Se connecter</span>
+            </Link>
           </motion.div>
         )}
 
@@ -364,18 +347,10 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* Footer Navigation */}
-      <div className="sidebar-footer px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-        {/* Theme Toggle */}
-        <div className="flex items-center justify-between px-4 py-2.5 mb-2">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-            Thème
-          </span>
-          <ThemeToggleSimple />
-        </div>
-
+      <div className="sidebar-footer px-4 py-3 border-t border-white/10">
         <Link
           href="/pricing"
-          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/8 hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <Crown className="w-4 h-4 group-hover:text-[#00D9FF] transition-colors" />
           <span className="nav-label">Tarifs</span>
@@ -383,7 +358,7 @@ export function Sidebar({ className }: SidebarProps) {
 
         <Link
           href="mailto:contact@huntzenjobs.co"
-          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/8 hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <HelpCircle className="w-4 h-4 group-hover:text-[#00D9FF] transition-colors" />
           <span className="nav-label">Aide</span>
@@ -393,7 +368,7 @@ export function Sidebar({ className }: SidebarProps) {
           href="https://huntzen.co"
           target="_blank"
           rel="noopener noreferrer"
-          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/8 hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <ArrowLeft className="w-4 h-4 group-hover:text-[#00D9FF] transition-colors" />
           <span className="nav-label">Retour à huntzen.co</span>
@@ -402,10 +377,10 @@ export function Sidebar({ className }: SidebarProps) {
         {user && (
           <button
             onClick={() => setShowLogoutDialog(true)}
-            className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all w-full group"
+            className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-red-500/10 hover:text-red-400 transition-all w-full group"
             aria-label="Se déconnecter"
           >
-            <LogOut className="w-4 h-4 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
+            <LogOut className="w-4 h-4 group-hover:text-red-400 transition-colors" />
             <span className="nav-label">Déconnexion</span>
           </button>
         )}
@@ -416,9 +391,9 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <>
       {/* Mobile header */}
-      <div className="mobile-header lg:hidden fixed top-0 left-0 right-0 z-[50] h-14 flex items-center justify-between px-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="mobile-header lg:hidden fixed top-0 left-0 right-0 z-[50] h-14 flex items-center justify-between px-4 bg-white border-b border-slate-200 shadow-sm">
         <button
-          className="hamburger-btn text-black dark:text-white p-2 hover:text-[#00D9FF] transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="hamburger-btn text-slate-700 p-2 hover:text-[#00D9FF] transition-colors rounded-lg hover:bg-slate-100"
           onClick={() => setIsMobileMenuOpen(true)}
           aria-label="Ouvrir le menu de navigation"
         >
@@ -434,10 +409,27 @@ export function Sidebar({ className }: SidebarProps) {
           />
         </Link>
 
-        <span className="mobile-tool-name text-gray-600 dark:text-gray-400 text-sm font-medium">
-          {navigation.find((n) => pathname.startsWith(n.href))?.name ||
-            "HuntZen"}
-        </span>
+        {user ? (
+          <span className="mobile-tool-name text-slate-500 text-sm font-medium">
+            {navigation.find((n) => pathname.startsWith(n.href))?.name ||
+              "HuntZen"}
+          </span>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className="px-3 py-1.5 bg-[#00D9FF] text-white text-xs font-semibold rounded-lg hover:bg-[#00C4EA] transition-colors"
+            >
+              Connexion
+            </Link>
+            <Link
+              href="/signup"
+              className="px-3 py-1.5 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              S&apos;inscrire
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Mobile backdrop */}
@@ -458,13 +450,13 @@ export function Sidebar({ className }: SidebarProps) {
         initial={{ x: -280 }}
         animate={{ x: isMobileMenuOpen ? 0 : -280 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="huntzen-sidebar lg:hidden fixed inset-y-0 left-0 z-[50] w-[280px] bg-white dark:bg-gray-800 shadow-2xl"
+        className="huntzen-sidebar lg:hidden fixed inset-y-0 left-0 z-[50] w-[280px] bg-[#0D1F3C] shadow-2xl"
       >
         <SidebarContent />
       </motion.aside>
 
       {/* Desktop sidebar */}
-      <aside className="huntzen-sidebar hidden lg:flex lg:flex-col lg:w-[280px] lg:fixed lg:inset-y-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+      <aside className="huntzen-sidebar hidden lg:flex lg:flex-col lg:w-[280px] lg:fixed lg:inset-y-0 bg-[#0D1F3C] border-r border-white/10">
         <SidebarContent />
       </aside>
 
@@ -476,20 +468,18 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Logout Confirmation Dialog */}
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+        <AlertDialogContent className="bg-white border-slate-200">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-gray-900 dark:text-white">
+            <AlertDialogTitle className="text-slate-900">
               Confirmer la déconnexion
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
+            <AlertDialogDescription className="text-slate-600">
               Êtes-vous sûr de vouloir vous déconnecter ? Vos données
               sauvegardées seront conservées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">
-              Annuler
-            </AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLogout}
               className="bg-red-600 hover:bg-red-700 text-white"

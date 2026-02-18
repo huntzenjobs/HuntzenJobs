@@ -246,7 +246,7 @@ export default function AssistantPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-center justify-between gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700"
+        className="flex items-center justify-between gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-sm border border-slate-200"
       >
         {/* BotSelector compact à gauche */}
         <motion.div
@@ -276,7 +276,7 @@ export default function AssistantPage() {
             </motion.div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-black dark:text-white truncate">
+                <h1 className="text-2xl font-black text-slate-900 truncate">
                   {assistantConfig.name}
                 </h1>
                 {assistantConfig.certificationBadge && (
@@ -285,7 +285,7 @@ export default function AssistantPage() {
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+              <p className="text-sm text-slate-700 truncate">
                 {assistantConfig.description}
               </p>
             </div>
@@ -336,7 +336,7 @@ export default function AssistantPage() {
               variant="outline"
               size="sm"
               onClick={() => openPricingModal("has_coach_history")}
-              className="gap-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-[#00D9FF] hover:text-black dark:hover:text-white"
+              className="gap-2 bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#00D9FF] hover:text-slate-900"
             >
               <History className="w-4 h-4" />
               Historique
@@ -350,7 +350,7 @@ export default function AssistantPage() {
               variant="outline"
               size="sm"
               onClick={handleNewConversation}
-              className="gap-2 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-[#00D9FF] hover:text-black dark:hover:text-white"
+              className="gap-2 bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#00D9FF] hover:text-slate-900"
             >
               <Plus className="w-4 h-4" />
               Nouvelle
@@ -373,7 +373,7 @@ export default function AssistantPage() {
 
       <div className="flex flex-1">
         {/* Chat Section - Full width */}
-        <Card className="w-full flex flex-col shadow-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <Card className="w-full flex flex-col shadow-sm border-2 border-slate-200 bg-white">
           {/* Time warning banner */}
           <AnimatePresence>
             {isTimeWarning && (
@@ -428,7 +428,7 @@ export default function AssistantPage() {
                     />
                   </div>
                   <div>
-                    <h3 className="font-bold text-black dark:text-white flex items-center gap-2">
+                    <h3 className="font-bold text-slate-900 flex items-center gap-2">
                       {assistantConfig.shortName}
                       {assistantConfig.certificationBadge && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
@@ -436,7 +436,7 @@ export default function AssistantPage() {
                         </span>
                       )}
                     </h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-slate-700">
                       {assistantConfig.description}
                     </p>
                   </div>
@@ -503,7 +503,7 @@ export default function AssistantPage() {
           </CardContent>
 
           {/* Input section */}
-          <div className="border-t-2 border-gray-200 dark:border-gray-700 p-4">
+          <div className="border-t-2 border-slate-200 p-4">
             {canChat ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -563,10 +563,8 @@ export default function AssistantPage() {
                 >
                   <Clock className="w-6 h-6 text-gray-400" />
                 </motion.div>
-                <p className="font-bold text-black dark:text-white mb-1">
-                  Temps écoulé
-                </p>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                <p className="font-bold text-slate-900 mb-1">Temps écoulé</p>
+                <p className="text-sm text-slate-700 mb-3">
                   Vous avez utilisé vos {limits.coach_minutes_per_day} minutes
                   gratuites
                 </p>

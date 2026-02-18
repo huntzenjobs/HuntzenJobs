@@ -658,7 +658,7 @@ export default function JobsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
+        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl border border-slate-200 shadow-sm"
       >
         <div className="flex-1">
           <motion.div
@@ -675,11 +675,11 @@ export default function JobsPage() {
             >
               <Search className="w-7 h-7 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-black text-black dark:text-white">
+            <h1 className="text-4xl font-black text-slate-900">
               Recherche d&apos;Emplois
             </h1>
           </motion.div>
-          <p className="text-gray-700 dark:text-gray-300 text-base max-w-3xl leading-relaxed">
+          <p className="text-slate-700 text-base max-w-3xl leading-relaxed">
             Accédez à des milliers d&apos;offres d&apos;emploi provenant des
             meilleures plateformes de recrutement, agrégées et mises à jour
             quotidiennement.
@@ -702,9 +702,9 @@ export default function JobsPage() {
       {/* Search Form - V2 (Inline) or V1 (Vertical) - Wrapped with ErrorBoundary */}
       <ErrorBoundary
         fallback={
-          <Card className="p-6 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
-            <AlertCircle className="w-8 h-8 text-red-500 dark:text-red-400 mx-auto mb-3" />
-            <p className="text-red-700 dark:text-red-400 text-center">
+          <Card className="p-6 bg-red-50 border-red-200">
+            <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
+            <p className="text-red-700 text-center">
               Erreur lors du chargement du formulaire. Veuillez rafraîchir la
               page.
             </p>
@@ -718,15 +718,15 @@ export default function JobsPage() {
             disabled={false}
           />
         ) : (
-          <Card className="shadow-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader className="pb-6 bg-white dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700">
+          <Card className="shadow-sm border-2 border-slate-200 bg-white">
+            <CardHeader className="pb-6 bg-white border-b-2 border-slate-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-2xl font-bold flex items-center gap-2.5 text-gray-900 dark:text-gray-100">
+                  <CardTitle className="text-2xl font-bold flex items-center gap-2.5 text-slate-900">
                     <Filter className="w-6 h-6 text-huntzen-blue" />
                     Définissez vos critères de recherche
                   </CardTitle>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  <p className="text-sm text-slate-600 mt-2">
                     Remplissez les champs ci-dessous pour trouver les offres qui
                     correspondent à votre profil
                   </p>
@@ -884,7 +884,7 @@ export default function JobsPage() {
                           ref={countrySuggestionsRef}
                           id="country-suggestions"
                           role="listbox"
-                          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-[200px] overflow-y-auto pointer-events-auto"
+                          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-[200px] overflow-y-auto pointer-events-auto"
                         >
                           {filteredCountries.map((country, index) => (
                             <button
@@ -897,11 +897,11 @@ export default function JobsPage() {
                                 selectedCountryIndex === index
                               }
                               className={cn(
-                                "w-full px-3 py-2 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700 focus:outline-none transition-colors",
+                                "w-full px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none transition-colors",
                                 selectedCountry === country.code &&
-                                  "bg-blue-50 dark:bg-blue-900/50 font-medium",
+                                  "bg-blue-50 font-medium",
                                 selectedCountryIndex === index &&
-                                  "bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20",
+                                  "bg-[#00D9FF]/10",
                               )}
                               onClick={() => handleCountrySelect(country)}
                               onKeyDown={(e) => {
@@ -920,7 +920,7 @@ export default function JobsPage() {
                       filteredCountries.length === 0 && (
                         <div
                           ref={countrySuggestionsRef}
-                          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 text-sm text-gray-600 dark:text-gray-400 pointer-events-auto"
+                          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-sm text-slate-600 pointer-events-auto"
                         >
                           Aucun pays trouvé
                         </div>
@@ -984,7 +984,7 @@ export default function JobsPage() {
                           ref={citySuggestionsRef}
                           id="city-suggestions"
                           role="listbox"
-                          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-[200px] overflow-y-auto pointer-events-auto"
+                          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-[200px] overflow-y-auto pointer-events-auto"
                         >
                           {filteredCities.map((city, index) => (
                             <button
@@ -997,11 +997,11 @@ export default function JobsPage() {
                                 selectedCityIndex === index
                               }
                               className={cn(
-                                "w-full px-3 py-2 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700 focus:outline-none transition-colors",
+                                "w-full px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none transition-colors",
                                 selectedCity === city &&
-                                  "bg-blue-50 dark:bg-blue-900/50 font-medium",
+                                  "bg-blue-50 font-medium",
                                 selectedCityIndex === index &&
-                                  "bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20",
+                                  "bg-[#00D9FF]/10",
                               )}
                               onClick={() => handleCitySelect(city)}
                               onKeyDown={(e) => {
@@ -1022,7 +1022,7 @@ export default function JobsPage() {
                       allCities.length > 0 && (
                         <div
                           ref={citySuggestionsRef}
-                          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 text-sm text-gray-600 dark:text-gray-400 pointer-events-auto"
+                          className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-sm text-slate-600 pointer-events-auto"
                         >
                           Aucune ville trouvée
                         </div>
@@ -1119,14 +1119,14 @@ export default function JobsPage() {
       {/* Error */}
       {searchQuery.isError &&
         searchQuery.error?.message !== "Limite de recherches atteinte" && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-5 border-l-4 border-red-500 dark:border-red-400">
+          <div className="rounded-lg bg-red-50 p-5 border-l-4 border-red-500">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-red-700 dark:text-red-400 mb-1">
+                <h3 className="font-semibold text-red-700 mb-1">
                   Erreur lors de la recherche
                 </h3>
-                <p className="text-sm text-red-600 dark:text-red-300">
+                <p className="text-sm text-red-600">
                   {searchQuery.error instanceof Error
                     ? searchQuery.error.message
                     : "Une erreur est survenue lors de la recherche. Veuillez reessayer."}
@@ -1143,15 +1143,15 @@ export default function JobsPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="rounded-xl bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 p-5 border-l-4 border-[#00D9FF]"
+            className="rounded-xl bg-[#00D9FF]/10 p-5 border-l-4 border-[#00D9FF]"
           >
             <div className="flex items-start gap-3">
               <Sparkles className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-bold text-black dark:text-white mb-1">
+                <h3 className="font-bold text-slate-900 mb-1">
                   Recherche améliorée
                 </h3>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
+                <p className="text-sm text-slate-700">
                   Nous avons optimisé votre recherche :{" "}
                   <strong className="font-bold text-[#00D9FF]">
                     {correctedQuery}
@@ -1179,8 +1179,8 @@ export default function JobsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07 }}
             >
-              <Card className="flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden h-full bg-white dark:bg-gray-800">
-                <CardHeader className="pb-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-100 dark:border-gray-700">
+              <Card className="flex flex-col border border-slate-200 overflow-hidden h-full bg-white">
+                <CardHeader className="pb-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 space-y-3">
                       <Skeleton className="h-6 w-3/4" />
@@ -1210,12 +1210,12 @@ export default function JobsPage() {
       {!searchQuery.isFetching && jobs.length > 0 && (
         <ErrorBoundary
           fallback={
-            <Card className="p-8 text-center bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-              <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <Card className="p-8 text-center bg-white border-slate-200">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-slate-900 mb-2">
                 Erreur lors de l'affichage des résultats
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-slate-600">
                 Une erreur s'est produite. Veuillez réessayer.
               </p>
             </Card>
@@ -1226,7 +1226,7 @@ export default function JobsPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 p-6 rounded-2xl border border-emerald-200/50 dark:border-emerald-700/50 shadow-sm"
+              className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-2xl border border-emerald-200/50 shadow-sm"
             >
               <div className="flex items-center gap-4">
                 <motion.div
@@ -1239,7 +1239,7 @@ export default function JobsPage() {
                 </motion.div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                    <h2 className="text-2xl font-black text-emerald-700">
                       {jobs.length} offre{jobs.length > 1 ? "s" : ""} trouvée
                       {jobs.length > 1 ? "s" : ""}
                     </h2>
@@ -1249,13 +1249,13 @@ export default function JobsPage() {
                       searchQuery.dataUpdatedAt && (
                         <Badge
                           variant="outline"
-                          className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                          className="text-xs bg-blue-50 text-blue-700 border-blue-200"
                         >
                           💾 Cache
                         </Badge>
                       )}
                   </div>
-                  <p className="text-sm text-emerald-600 dark:text-emerald-500 font-medium">
+                  <p className="text-sm text-emerald-600 font-medium">
                     {searchQuery.isFetching
                       ? "Actualisation en cours..."
                       : searchQuery.dataUpdatedAt
@@ -1282,9 +1282,9 @@ export default function JobsPage() {
                               <span
                                 className={
                                   isVeryStale
-                                    ? "text-orange-600 dark:text-orange-400"
+                                    ? "text-orange-600"
                                     : isStale
-                                      ? "text-yellow-600 dark:text-yellow-400"
+                                      ? "text-yellow-600"
                                       : ""
                                 }
                               >
@@ -1308,7 +1308,7 @@ export default function JobsPage() {
                     searchQuery.refetch();
                   }}
                   disabled={searchQuery.isFetching}
-                  className="ml-4 gap-2 bg-white dark:bg-gray-800 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:border-emerald-400 dark:hover:border-emerald-600"
+                  className="ml-4 gap-2 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400"
                   title="Actualiser les résultats depuis le serveur"
                 >
                   <RefreshCw
@@ -1327,7 +1327,7 @@ export default function JobsPage() {
                   transition={{ delay: 0.4 }}
                   className="text-right"
                 >
-                  <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                  <p className="text-sm font-bold text-slate-700">
                     {Math.min(jobs.length, jobsVisibleLimit)} visible
                     {Math.min(jobs.length, jobsVisibleLimit) > 1
                       ? "s"
@@ -1360,18 +1360,18 @@ export default function JobsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className="hover:shadow-2xl hover:border-[#00D9FF]/30 transition-all duration-300 group flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden h-full bg-white dark:bg-gray-800">
-                    <CardHeader className="pb-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-100 dark:border-gray-700">
+                  <Card className="hover:shadow-2xl hover:border-[#00D9FF]/30 transition-all duration-300 group flex flex-col border border-slate-200 overflow-hidden h-full bg-white">
+                    <CardHeader className="pb-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-xl line-clamp-2 font-black group-hover:text-[#00D9FF] transition-colors text-black dark:text-white">
+                          <CardTitle className="text-xl line-clamp-2 font-black group-hover:text-[#00D9FF] transition-colors text-slate-900">
                             {job.title}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2 mt-3 text-base">
                             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center flex-shrink-0 shadow-md">
                               <Building className="h-5 w-5 text-white" />
                             </div>
-                            <span className="font-semibold text-gray-800 dark:text-gray-200">
+                            <span className="font-semibold text-slate-800">
                               {job.company}
                             </span>
                           </CardDescription>
@@ -1379,14 +1379,14 @@ export default function JobsPage() {
                         <div className="flex flex-col items-end gap-2">
                           <Badge
                             variant="secondary"
-                            className="shrink-0 font-bold px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600"
+                            className="shrink-0 font-bold px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200"
                           >
                             {formatJobSource(job.source)}
                           </Badge>
                           <button
                             onClick={() => handleSaveJob(job)}
                             className={cn(
-                              "relative p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-all",
+                              "relative p-2 rounded-full hover:bg-red-50 transition-all",
                               savedJobIds.has(job.id)
                                 ? "opacity-100"
                                 : "opacity-60 hover:opacity-100 group-hover:opacity-100",
@@ -1484,8 +1484,8 @@ export default function JobsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.06 }}
                   >
-                    <Card className="flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden h-full bg-white dark:bg-gray-800">
-                      <CardHeader className="pb-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-100 dark:border-gray-700">
+                    <Card className="flex flex-col border border-slate-200 overflow-hidden h-full bg-white">
+                      <CardHeader className="pb-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 space-y-3">
                             <Skeleton className="h-6 w-3/4" />
@@ -1559,35 +1559,37 @@ export default function JobsPage() {
           />
         )}
 
-      {!searchQuery.isFetching && searchQuery.isSuccess && jobs.length === 0 && (
-        <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <CardContent className="py-16 text-center">
-            <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">
-              <Search className="h-10 w-10 text-muted-foreground/50 dark:text-gray-500" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Aucune offre trouvee
-            </h3>
-            <p className="text-base text-muted-foreground dark:text-gray-400 mb-6 max-w-md mx-auto">
-              Nous n&apos;avons pas trouve d&apos;offres correspondant a vos
-              criteres pour le moment.
-            </p>
-            <div className="space-y-2 text-sm text-muted-foreground dark:text-gray-400 max-w-lg mx-auto">
-              <p className="font-semibold">💡 Suggestions :</p>
-              <ul className="text-left space-y-1 inline-block">
-                <li>• Essayez avec des mots-cles plus generaux</li>
-                <li>• Verifiez l&apos;orthographe du titre de poste</li>
-                <li>
-                  • Elargissez votre zone geographique (ville → pays entier)
-                </li>
-                <li>
-                  • Selectionnez &quot;Tous les types&quot; pour le contrat
-                </li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {!searchQuery.isFetching &&
+        searchQuery.isSuccess &&
+        jobs.length === 0 && (
+          <Card className="border-2 border-dashed border-slate-300 bg-white">
+            <CardContent className="py-16 text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-6">
+                <Search className="h-10 w-10 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-700 mb-2">
+                Aucune offre trouvee
+              </h3>
+              <p className="text-base text-muted-foreground mb-6 max-w-md mx-auto">
+                Nous n&apos;avons pas trouve d&apos;offres correspondant a vos
+                criteres pour le moment.
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground max-w-lg mx-auto">
+                <p className="font-semibold">💡 Suggestions :</p>
+                <ul className="text-left space-y-1 inline-block">
+                  <li>• Essayez avec des mots-cles plus generaux</li>
+                  <li>• Verifiez l&apos;orthographe du titre de poste</li>
+                  <li>
+                    • Elargissez votre zone geographique (ville → pays entier)
+                  </li>
+                  <li>
+                    • Selectionnez &quot;Tous les types&quot; pour le contrat
+                  </li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Job Details Modal */}
       <JobDetailsModal
