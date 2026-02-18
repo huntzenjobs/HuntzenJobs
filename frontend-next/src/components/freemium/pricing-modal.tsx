@@ -245,7 +245,7 @@ export function PricingModal() {
 
   return (
     <Dialog open={showPricingModal} onOpenChange={closePricingModal}>
-      <DialogContent className="max-w-[95vw] w-full lg:max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col">
+      <DialogContent className="max-w-[95vw] w-full lg:max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-white text-gray-900">
         <DialogHeader className="px-6 pt-6 pb-3 flex-shrink-0">
           <DialogTitle className="text-2xl font-bold text-center">
             Debloquez toutes les fonctionnalites
@@ -337,11 +337,7 @@ export function PricingModal() {
                           </div>
                         )}
                         <span
-                          className={
-                            feature.included
-                              ? ""
-                              : "text-gray-400"
-                          }
+                          className={feature.included ? "" : "text-gray-400"}
                         >
                           {feature.name}
                         </span>
@@ -464,11 +460,7 @@ export function PricingCards({
                       <X className="w-3 h-3 text-gray-400" />
                     </div>
                   )}
-                  <span
-                    className={
-                      feature.included ? "" : "text-gray-400"
-                    }
-                  >
+                  <span className={feature.included ? "" : "text-gray-400"}>
                     {feature.name}
                   </span>
                 </li>

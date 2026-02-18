@@ -226,7 +226,7 @@ export function SearchFormInline({
                 }}
                 className={`
                   w-full pl-10 pr-4 py-3
-                  bg-white
+                  bg-white text-gray-900
                   border rounded-lg
                   text-sm font-medium
                   placeholder:text-gray-400 placeholder:font-normal
@@ -370,7 +370,7 @@ export function SearchFormInline({
               }}
               className={`
                 w-full pl-10 pr-4 py-3
-                bg-white
+                bg-white text-gray-900
                 border rounded-lg
                 text-sm font-medium
                 placeholder:text-gray-400 placeholder:font-normal

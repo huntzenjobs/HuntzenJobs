@@ -1,26 +1,33 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { TrendingUp, CheckCircle, Sparkles, BarChart3, Globe, Zap } from 'lucide-react'
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  TrendingUp,
+  CheckCircle,
+  Sparkles,
+  BarChart3,
+  Globe,
+  Zap,
+} from "lucide-react";
 
 interface JobsPlaceholderProps {
-  onSearchClick?: (jobTitle: string) => void
+  onSearchClick?: (jobTitle: string) => void;
 }
 
 export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
   const popularSearches = [
-    'Développeur Full Stack',
-    'Product Manager',
-    'Data Scientist',
-    'DevOps Engineer',
-    'UX Designer',
-    'Business Developer',
-    'Growth Hacker',
-    'Backend Developer'
-  ]
+    "Développeur Full Stack",
+    "Product Manager",
+    "Data Scientist",
+    "DevOps Engineer",
+    "UX Designer",
+    "Business Developer",
+    "Growth Hacker",
+    "Backend Developer",
+  ];
 
   return (
     <motion.div
@@ -31,7 +38,7 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
     >
       {/* Recherches populaires */}
       <div>
-        <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
           <TrendingUp className="w-6 h-6 text-huntzen-blue" />
           Recherches populaires en ce moment
         </h3>
@@ -40,7 +47,7 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
             <Button
               key={job}
               variant="outline"
-              className="h-auto py-3 px-4 text-left justify-start border-2 border-gray-200 hover:border-huntzen-blue hover:text-huntzen-blue hover:bg-blue-50 transition-all"
+              className="h-auto py-3 px-4 text-left justify-start border-2 border-gray-200 text-gray-900 hover:border-huntzen-blue hover:text-huntzen-blue hover:bg-blue-50 transition-all"
               onClick={() => onSearchClick?.(job)}
             >
               <span className="font-medium text-sm">{job}</span>
@@ -53,9 +60,7 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="text-center p-8 border-2 border-huntzen-blue/30 hover:border-huntzen-blue transition-all hover:shadow-xl">
           <BarChart3 className="w-12 h-12 text-huntzen-blue mx-auto mb-4" />
-          <div className="text-5xl font-black text-huntzen-blue mb-2">
-            10K+
-          </div>
+          <div className="text-5xl font-black text-huntzen-blue mb-2">10K+</div>
           <p className="text-gray-600 font-medium">Offres d'emploi agrégées</p>
           <Badge className="mt-3 bg-blue-50 text-huntzen-blue border-0">
             Mise à jour 24h/24
@@ -67,7 +72,9 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
           <div className="text-5xl font-black text-huntzen-turquoise mb-2">
             15+
           </div>
-          <p className="text-gray-600 font-medium">Sources d'emploi partenaires</p>
+          <p className="text-gray-600 font-medium">
+            Sources d'emploi partenaires
+          </p>
           <Badge className="mt-3 bg-cyan-50 text-huntzen-turquoise border-0">
             LinkedIn, Indeed, APEC...
           </Badge>
@@ -75,9 +82,7 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
 
         <Card className="text-center p-8 border-2 border-blue-500/30 hover:border-blue-500 transition-all hover:shadow-xl">
           <Zap className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-          <div className="text-5xl font-black text-blue-500 mb-2">
-            24h
-          </div>
+          <div className="text-5xl font-black text-blue-500 mb-2">24h</div>
           <p className="text-gray-600 font-medium">Délai de mise à jour max</p>
           <Badge className="mt-3 bg-blue-50 text-blue-500 border-0">
             Nouvelles offres quotidiennes
@@ -100,7 +105,8 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
                 Soyez spécifique
               </div>
               <p className="text-sm text-gray-600">
-                Utilisez des mots-clés précis comme "React" au lieu de "développeur"
+                Utilisez des mots-clés précis comme "React" au lieu de
+                "développeur"
               </p>
             </div>
           </div>
@@ -143,5 +149,5 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
         </div>
       </Card>
     </motion.div>
-  )
+  );
 }
