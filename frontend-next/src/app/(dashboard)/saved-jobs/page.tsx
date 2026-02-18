@@ -1,90 +1,99 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Bookmark, Briefcase, MapPin, Clock, ExternalLink, Trash2, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useOptionalAuth } from '@/contexts/auth-context'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
-import { Skeleton } from '@/components/ui/skeleton'
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Bookmark,
+  Briefcase,
+  MapPin,
+  Clock,
+  ExternalLink,
+  Trash2,
+  Search,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SavedJob {
-  id: string
-  job_title: string
-  company: string
-  location: string
-  salary?: string
-  job_url: string
-  saved_at: string
-  description?: string
+  id: string;
+  job_title: string;
+  company: string;
+  location: string;
+  salary?: string;
+  job_url: string;
+  saved_at: string;
+  description?: string;
 }
 
 export default function SavedJobsPage() {
-  const auth = useOptionalAuth()
-  const user = auth?.user
+  const auth = useOptionalAuth();
+  const user = auth?.user;
 
-  const [savedJobs, setSavedJobs] = useState<SavedJob[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (user) {
-      fetchSavedJobs()
+      fetchSavedJobs();
     } else {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [user])
+  }, [user]);
 
   const fetchSavedJobs = async () => {
     try {
-      const supabase = createClient()
+      const supabase = createClient();
 
       const { data, error } = await supabase
-        .from('saved_jobs')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('saved_at', { ascending: false })
+        .from("saved_jobs")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("saved_at", { ascending: false });
 
       if (error) {
-        throw error
+        throw error;
       }
 
-      setSavedJobs(data || [])
+      setSavedJobs(data || []);
     } catch (error) {
       // Silently handle errors - table exists but may have RLS issues
-      setSavedJobs([])
+      setSavedJobs([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleRemoveSavedJob = async (jobId: string) => {
     try {
-      const supabase = createClient()
+      const supabase = createClient();
 
       const { error } = await supabase
-        .from('saved_jobs')
+        .from("saved_jobs")
         .delete()
-        .eq('id', jobId)
-        .eq('user_id', user?.id)
+        .eq("id", jobId)
+        .eq("user_id", user?.id);
 
-      if (error) throw error
+      if (error) throw error;
 
-      setSavedJobs(prev => prev.filter(job => job.id !== jobId))
-      toast.success('Offre retirée des favoris')
+      setSavedJobs((prev) => prev.filter((job) => job.id !== jobId));
+      toast.success("Offre retirée des favoris");
     } catch (error) {
-      console.error('Failed to remove saved job:', error)
-      toast.error('Erreur lors de la suppression')
+      console.error("Failed to remove saved job:", error);
+      toast.error("Erreur lors de la suppression");
     }
-  }
+  };
 
-  const filteredJobs = savedJobs.filter(job =>
-    job.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.location.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredJobs = savedJobs.filter(
+    (job) =>
+      job.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.location.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   if (!user) {
     return (
@@ -103,19 +112,22 @@ export default function SavedJobsPage() {
           >
             <Bookmark className="w-10 h-10 text-[#00D9FF]" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-black">Connectez-vous pour sauvegarder des offres</h2>
-          <p className="text-gray-600 max-w-md mx-auto">
-            Créez un compte gratuit pour sauvegarder vos offres d'emploi favorites et y accéder facilement.
+          <h2 className="text-2xl font-bold text-black">
+            Connectez-vous pour sauvegarder des offres
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+            Créez un compte gratuit pour sauvegarder vos offres d'emploi
+            favorites et y accéder facilement.
           </p>
           <Button
-            onClick={() => window.location.href = '/login'}
+            onClick={() => (window.location.href = "/login")}
             className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
           >
             Se connecter
           </Button>
         </motion.div>
       </div>
-    )
+    );
   }
 
   return (
@@ -125,7 +137,7 @@ export default function SavedJobsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 shadow-sm"
+        className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm"
       >
         <div className="flex items-center gap-4 mb-3">
           <motion.div
@@ -138,7 +150,7 @@ export default function SavedJobsPage() {
           </motion.div>
           <h1 className="text-4xl font-black text-black">Jobs Sauvegardés</h1>
         </div>
-        <p className="text-base text-gray-700 leading-relaxed">
+        <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
           Retrouvez toutes vos offres d'emploi favorites en un seul endroit
         </p>
         {!loading && (
@@ -148,7 +160,8 @@ export default function SavedJobsPage() {
             transition={{ delay: 0.4 }}
             className="text-sm text-[#00D9FF] font-medium mt-2"
           >
-            {savedJobs.length} offre{savedJobs.length > 1 ? 's' : ''} sauvegardée{savedJobs.length > 1 ? 's' : ''}
+            {savedJobs.length} offre{savedJobs.length > 1 ? "s" : ""}{" "}
+            sauvegardée{savedJobs.length > 1 ? "s" : ""}
           </motion.p>
         )}
       </motion.div>
@@ -158,10 +171,10 @@ export default function SavedJobsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white p-6 rounded-2xl border-2 border-gray-200 shadow-sm"
+        className="bg-white dark:bg-gray-800 p-6 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-sm"
       >
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <Input
             type="text"
             placeholder="Rechercher dans mes favoris..."
@@ -177,10 +190,10 @@ export default function SavedJobsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm"
+        className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-sm"
       >
         {loading ? (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {[1, 2, 3].map((i) => (
               <motion.div
                 key={i}
@@ -214,7 +227,7 @@ export default function SavedJobsPage() {
                 <h3 className="text-xl font-bold text-black mb-2">
                   Aucun résultat trouvé
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Essayez de modifier votre recherche
                 </p>
               </>
@@ -223,11 +236,12 @@ export default function SavedJobsPage() {
                 <h3 className="text-xl font-bold text-black mb-2">
                   Aucune offre sauvegardée
                 </h3>
-                <p className="text-gray-600 mb-4">
-                  Commencez à sauvegarder vos offres favorites depuis la page de recherche
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Commencez à sauvegarder vos offres favorites depuis la page de
+                  recherche
                 </p>
                 <Button
-                  onClick={() => window.location.href = '/jobs'}
+                  onClick={() => (window.location.href = "/jobs")}
                   className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                 >
                   <Briefcase className="w-4 h-4 mr-2" />
@@ -237,7 +251,7 @@ export default function SavedJobsPage() {
             )}
           </motion.div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             <AnimatePresence mode="popLayout">
               {filteredJobs.map((job, index) => (
                 <motion.div
@@ -246,7 +260,7 @@ export default function SavedJobsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -100 }}
                   transition={{ delay: index * 0.05 }}
-                  className="p-6 hover:bg-gray-50 transition-colors"
+                  className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-3">
@@ -255,13 +269,13 @@ export default function SavedJobsPage() {
                         <h3 className="text-xl font-bold text-black mb-1">
                           {job.job_title}
                         </h3>
-                        <p className="text-base text-gray-700 font-medium">
+                        <p className="text-base text-gray-700 dark:text-gray-300 font-medium">
                           {job.company}
                         </p>
                       </div>
 
                       {/* Location & Salary */}
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="w-4 h-4" />
                           <span>{job.location}</span>
@@ -271,17 +285,18 @@ export default function SavedJobsPage() {
                             <span>{job.salary}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-1.5 text-gray-400">
+                        <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
                           <Clock className="w-4 h-4" />
                           <span>
-                            Sauvegardé le {new Date(job.saved_at).toLocaleDateString('fr-FR')}
+                            Sauvegardé le{" "}
+                            {new Date(job.saved_at).toLocaleDateString("fr-FR")}
                           </span>
                         </div>
                       </div>
 
                       {/* Description preview */}
                       {job.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                           {job.description}
                         </p>
                       )}
@@ -290,7 +305,7 @@ export default function SavedJobsPage() {
                     {/* Actions */}
                     <div className="flex flex-col gap-2">
                       <Button
-                        onClick={() => window.open(job.job_url, '_blank')}
+                        onClick={() => window.open(job.job_url, "_blank")}
                         size="sm"
                         className="whitespace-nowrap bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                       >
@@ -325,12 +340,11 @@ export default function SavedJobsPage() {
             transition={{ delay: 0.5 }}
             className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/30 rounded-2xl p-6"
           >
-            <h3 className="font-bold text-black mb-2">
-              💡 Astuce
-            </h3>
-            <p className="text-gray-700 text-sm">
-              Utilisez la barre de recherche pour retrouver rapidement une offre spécifique parmi vos favoris.
-              Vos offres sauvegardées sont synchronisées sur tous vos appareils.
+            <h3 className="font-bold text-black mb-2">💡 Astuce</h3>
+            <p className="text-gray-700 dark:text-gray-300 text-sm">
+              Utilisez la barre de recherche pour retrouver rapidement une offre
+              spécifique parmi vos favoris. Vos offres sauvegardées sont
+              synchronisées sur tous vos appareils.
             </p>
           </motion.div>
         )}
@@ -341,12 +355,10 @@ export default function SavedJobsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6"
+        className="bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-6"
       >
-        <h3 className="font-bold text-black mb-3">
-          🚀 Prochainement
-        </h3>
-        <ul className="space-y-2 text-sm text-gray-700">
+        <h3 className="font-bold text-black mb-3">🚀 Prochainement</h3>
+        <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
           <motion.li
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -377,5 +389,5 @@ export default function SavedJobsPage() {
         </ul>
       </motion.div>
     </div>
-  )
+  );
 }

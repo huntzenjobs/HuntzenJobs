@@ -542,8 +542,8 @@ export default function HomePage() {
                 className="md:order-2"
               >
                 <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                  <span className="text-[#00D9FF]">Matching intelligent</span>{" "}
-                  et <span className="text-[#00D9FF]">recherche ciblée</span>
+                  <span className="text-[#00D9FF]">Matching intelligent et</span>{" "}
+                   <span className="text-[#00D9FF]">recherche ciblée</span>
                 </h3>
                 <p className="text-gray-700 dark:text-white/80 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
                   Fini les heures perdues à scroller des offres non pertinentes.
