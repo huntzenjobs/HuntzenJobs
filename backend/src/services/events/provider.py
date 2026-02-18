@@ -2,7 +2,7 @@
 Job Fairs / Professional Events Provider
 =========================================
 Scrapes job fairs and professional events from various French public sources.
-Sources supported: France Travail, CCI France, APEC, L'Etudiant.
+Sources supported: France Travail, CCI France, APEC, L'Etudiant, Studyrama, CIDJ.
 
 Follows PEP 8 standards and uses English for code/comments.
 """
@@ -128,7 +128,12 @@ async def scrape_france_travail_events(region: str = "", sector: str = "") -> Li
 
 
 async def scrape_letudiant_salons() -> List[JobFair]:
-    """Scrape student fairs from L'Etudiant."""
+    """
+    Scrape student fairs from L'Etudiant.
+
+    Structure: <article> tags with <time datetime="YYYY-MM-DD"> for date.
+    City is extracted from the title pattern: "Salon ... à Lyon".
+    """
     events = []
     try:
         base_url = "https://www.letudiant.fr/etudes/salons.html"
@@ -141,22 +146,43 @@ async def scrape_letudiant_salons() -> List[JobFair]:
                     continue
 
                 soup = BeautifulSoup(response.text, 'html.parser')
-                salon_cards = soup.select(
-                    '.salon-card, .event-item, .salon-item, article, .item-salon'
-                )
+                salon_cards = soup.select('article')
 
                 for card in salon_cards:
                     try:
-                        title_el = card.select_one('h2, h3, .salon-title, .title')
-                        date_el = card.select_one('.date, .salon-date, time')
-                        location_el = card.select_one('.location, .salon-city, .city')
-                        link_el = card.select_one('a[href]')
+                        # Get title from full card text (filter out date/button noise)
+                        full_text = card.get_text(' ', strip=True)
 
-                        if not title_el:
+                        # Extract title: pattern "Le Salon de l'Etudiant ... à CityName"
+                        title_match = re.search(
+                            r'((?:Le )?Salon[^\d]+?)(?:\d|Découvrir|Ajouter)', full_text
+                        )
+                        title = title_match.group(1).strip() if title_match else ""
+                        if not title or len(title) < 10:
                             continue
 
-                        title = title_el.get_text(strip=True)
-                        city = location_el.get_text(strip=True) if location_el else "Paris"
+                        # Extract city from title: "... à Lyon" → "Lyon"
+                        city = "Paris"
+                        city_match = re.search(r'à\s+([A-ZÀ-Ü][a-zà-ÿ-]+(?:\s+[a-zà-ÿ-]+)?)', title)
+                        if city_match:
+                            city = city_match.group(1).strip()
+
+                        # Clean title (remove trailing city repetition)
+                        title = re.sub(r'\d{1,2}\s*[-–]?\s*\d{0,2}\s*$', '', title).strip()
+
+                        # Date from <time datetime="YYYY-MM-DD">
+                        time_el = card.select_one('time[datetime]')
+                        date_start = time_el.get('datetime', '') if time_el else ""
+                        if not date_start:
+                            date_start = parse_french_date(full_text)
+
+                        # Link
+                        link_el = card.select_one('a[href]')
+                        href = ""
+                        if link_el:
+                            href = link_el.get('href', '')
+                            if href and not href.startswith('http'):
+                                href = f"https://www.letudiant.fr{href}"
 
                         event = JobFair(
                             title=title,
@@ -164,9 +190,7 @@ async def scrape_letudiant_salons() -> List[JobFair]:
                             public="students",
                             sector=classify_sector(title),
                             level=detect_level(title),
-                            date_start=parse_french_date(
-                                date_el.get_text(strip=True) if date_el else ""
-                            ),
+                            date_start=date_start,
                             date_end=None,
                             time_start=None,
                             time_end=None,
@@ -176,14 +200,179 @@ async def scrape_letudiant_salons() -> List[JobFair]:
                             format="physical",
                             organizer="L'Etudiant",
                             description=None,
-                            url=link_el.get('href', target_url) if link_el else target_url,
+                            url=href or target_url,
                             source="letudiant"
                         )
                         events.append(event)
                     except Exception:
                         continue
+
+        logger.info(f"[Events] L'Etudiant: found {len(events)} salons")
     except Exception as e:
         logger.error(f"[Events] L'Etudiant scraping error: {e}")
+    return events
+
+
+async def scrape_studyrama_salons() -> List[JobFair]:
+    """
+    Scrape salons from Studyrama.
+
+    Page: /salons/tous-les-salons
+    Structure: Each .salon is an <a> tag with href to individual salon page.
+    Contains .city, .label (h3), and .date sub-elements.
+    """
+    events = []
+    try:
+        url = "https://www.studyrama.com/salons/tous-les-salons"
+        async with httpx.AsyncClient(timeout=15, headers=HEADERS, follow_redirects=True) as client:
+            response = await client.get(url)
+            if response.status_code != 200:
+                logger.warning(f"[Events] Studyrama returned {response.status_code}")
+                return events
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # Each .salon is an <a> tag: <a class="salon physique" href="/salons/...">
+            salon_cards = soup.select('a.salon')
+
+            for card in salon_cards:
+                try:
+                    label_el = card.select_one('.label h3, .label')
+                    city_el = card.select_one('.city')
+                    date_el = card.select_one('.date')
+
+                    title = label_el.get_text(strip=True) if label_el else ""
+                    city = city_el.get_text(strip=True) if city_el else ""
+                    date_text = date_el.get_text(strip=True) if date_el else ""
+
+                    # Skip noise: must have a title and a city
+                    if not title or len(title) < 5 or not city:
+                        continue
+
+                    # The card itself is the <a> tag with the individual salon URL
+                    href = card.get('href', '')
+                    if href and not href.startswith('http'):
+                        href = f"https://www.studyrama.com{href}"
+
+                    event = JobFair(
+                        title=title,
+                        event_type=classify_event_type(title),
+                        public="students",
+                        sector=classify_sector(title),
+                        level=detect_level(title),
+                        date_start=parse_french_date(date_text),
+                        date_end=None,
+                        time_start=None,
+                        time_end=None,
+                        city=city,
+                        region=detect_region(city),
+                        address=None,
+                        format="physical",
+                        organizer="Studyrama",
+                        description=None,
+                        url=href or url,
+                        source="studyrama",
+                        is_free=True
+                    )
+                    events.append(event)
+                except Exception:
+                    continue
+
+        logger.info(f"[Events] Studyrama: found {len(events)} salons")
+    except Exception as e:
+        logger.error(f"[Events] Studyrama scraping error: {e}")
+    return events
+
+
+async def scrape_cidj_events() -> List[JobFair]:
+    """
+    Scrape events from CIDJ (Centre d'Information et Documentation Jeunesse).
+
+    Page: /agenda
+    Structure: .content-item-post-card with date and location text.
+    Events include forums, salons, and orientation sessions.
+    """
+    events = []
+    try:
+        url = "https://www.cidj.com/agenda"
+        async with httpx.AsyncClient(timeout=15, headers=HEADERS, follow_redirects=True) as client:
+            response = await client.get(url)
+            if response.status_code != 200:
+                logger.warning(f"[Events] CIDJ returned {response.status_code}")
+                return events
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+            cards = soup.select('.views-row.item-post-card')
+
+            for card in cards:
+                try:
+                    # Title: p.title-post-card > a
+                    title_el = card.select_one('p.title-post-card a, .title-post-card a')
+                    if not title_el:
+                        continue
+
+                    title = title_el.get_text(strip=True)
+                    href = title_el.get('href', '')
+                    if href and not href.startswith('http'):
+                        href = f"https://www.cidj.com{href}"
+
+                    # Skip noise
+                    if not title or len(title) < 5:
+                        continue
+
+                    # City: span.adress-item-post-card → "Paris (75)", "Montreuil (93)"
+                    city = "France"
+                    addr_el = card.select_one('span.adress-item-post-card, .adress-item-post-card')
+                    if addr_el:
+                        addr_text = addr_el.get_text(strip=True)
+                        city_match = re.search(r'([A-ZÀ-Üa-zà-ÿ][a-zà-ÿA-ZÀ-Ü\s-]+)\s*\(\d{2,3}\)', addr_text)
+                        if city_match:
+                            city = city_match.group(1).strip()
+
+                    # Date: p.date-range-post-card → "Du19/02/2026Au19/02/2026"
+                    date_el = card.select_one('p.date-range-post-card, .date-range-post-card')
+                    date_text = date_el.get_text(strip=True) if date_el else ""
+                    date_match = re.search(r'Du(\d{2}/\d{2}/\d{4})', date_text)
+                    date_end_match = re.search(r'Au(\d{2}/\d{2}/\d{4})', date_text)
+                    date_start = parse_french_date(date_match.group(1)) if date_match else datetime.now().strftime("%Y-%m-%d")
+                    date_end = parse_french_date(date_end_match.group(1)) if date_end_match else None
+
+                    event = JobFair(
+                        title=title,
+                        event_type=classify_event_type(title),
+                        public="students",
+                        sector=classify_sector(title),
+                        level="all",
+                        date_start=date_start,
+                        date_end=date_end,
+                        time_start=None,
+                        time_end=None,
+                        city=city,
+                        region=detect_region(city),
+                        address=None,
+                        format="physical",
+                        organizer="CIDJ",
+                        description=None,
+                        url=href,
+                        source="cidj",
+                        is_free=True
+                    )
+                    events.append(event)
+                except Exception:
+                    continue
+
+        # Deduplicate CIDJ results (cards can have nested duplicates)
+        seen = set()
+        unique = []
+        for e in events:
+            key = (e.title, e.city)
+            if key not in seen:
+                seen.add(key)
+                unique.append(e)
+        events = unique
+
+        logger.info(f"[Events] CIDJ: found {len(events)} events")
+    except Exception as e:
+        logger.error(f"[Events] CIDJ scraping error: {e}")
     return events
 
 
@@ -433,6 +622,8 @@ async def search_job_fairs(
     tasks = [
         ("france_travail", scrape_france_travail_events(region, sector)),
         ("letudiant", scrape_letudiant_salons()),
+        ("studyrama", scrape_studyrama_salons()),
+        ("cidj", scrape_cidj_events()),
         ("apec", scrape_apec_events()),
         ("cci", scrape_cci_events(region)),
     ]
@@ -464,6 +655,16 @@ async def search_job_fairs(
     # Filter by date (only upcoming)
     today = datetime.now().strftime("%Y-%m-%d")
     filtered = [e for e in filtered if e.date_start >= today]
+
+    # Deduplicate across sources (same title + same city = same event)
+    seen_keys: set = set()
+    deduped: List[JobFair] = []
+    for event in filtered:
+        key = (event.title.lower().strip(), event.city.lower().strip())
+        if key not in seen_keys:
+            seen_keys.add(key)
+            deduped.append(event)
+    filtered = deduped
 
     # Sort chronological
     filtered.sort(key=lambda e: e.date_start)
