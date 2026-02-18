@@ -1540,21 +1540,8 @@ export default function JobsPage() {
         jobs.length === 0 && (
           <JobsPlaceholder
             onSearchClick={(popularJobTitle) => {
-              // Set job title and trigger search
+              // Fill the input only — user confirms search manually
               setJobTitle(popularJobTitle);
-
-              // Search in France by default if no country selected
-              const searchCountry = selectedCountry || "FR";
-              if (!selectedCountry) {
-                setSelectedCountry("FR");
-              }
-
-              // Trigger search
-              handleSearch({
-                query: popularJobTitle,
-                country: searchCountry,
-                location: selectedCity,
-              });
             }}
           />
         )}
