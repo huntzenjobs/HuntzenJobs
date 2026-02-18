@@ -113,7 +113,7 @@ export const GradientJobCard = React.forwardRef<
       className={cn(
         "relative overflow-hidden cursor-pointer group",
         "border-2 border-dashed border-violet-200",
-        "bg-white dark:bg-gray-800",
+        "bg-white",
         "transition-all duration-300",
         "hover:border-violet-300 hover:shadow-lg",
         className,
@@ -127,7 +127,7 @@ export const GradientJobCard = React.forwardRef<
     >
       {/* Preview content - reduced opacity */}
       <div className="relative z-10 select-none pointer-events-none">
-        <CardHeader className="pb-3 bg-gray-50 dark:bg-gray-800/80">
+        <CardHeader className="pb-3 bg-gray-50">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0 opacity-30">
               <div className="flex items-center gap-2 mb-2">
@@ -148,7 +148,7 @@ export const GradientJobCard = React.forwardRef<
 
             {/* Source badge */}
             <div className="opacity-25">
-              <div className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-xs">
+              <div className="px-2 py-1 rounded bg-gray-100 text-xs">
                 {formatJobSource(job.source)}
               </div>
             </div>
@@ -184,7 +184,7 @@ export const GradientJobCard = React.forwardRef<
       <div
         className={cn(
           "absolute inset-0 z-20",
-          "bg-gradient-to-t from-white via-white/95 to-white/80 dark:from-gray-800 dark:via-gray-800/95 dark:to-gray-800/80",
+          "bg-gradient-to-t from-white via-white/95 to-white/80",
           "pointer-events-none",
         )}
         aria-hidden="true"
@@ -199,10 +199,10 @@ export const GradientJobCard = React.forwardRef<
 
         {/* Text content */}
         <div className="text-center space-y-1 mb-4">
-          <h4 className="font-semibold text-gray-800 dark:text-gray-100">
+          <h4 className="font-semibold text-gray-800">
             Offre verrouillée
           </h4>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-sm text-gray-600">
             Passez Premium pour voir cette offre
           </p>
         </div>
@@ -249,7 +249,7 @@ export const JobsLimitReached = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "col-span-full p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-2 border-dashed border-violet-200 dark:border-violet-800 text-center",
+        "col-span-full p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-dashed border-violet-200 text-center",
         className,
       )}
     >
