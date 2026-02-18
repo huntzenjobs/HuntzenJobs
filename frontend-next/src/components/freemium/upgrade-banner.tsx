@@ -44,7 +44,7 @@ export function UpgradeBanner({
       <div
         className={`flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b border-violet-200 ${className}`}
       >
-        <p className="text-sm text-violet-700 dark:text-violet-300">
+        <p className="text-sm text-violet-700">
           <Sparkles className="w-4 h-4 inline mr-1" />
           Passez Premium pour debloquer toutes les fonctionnalites
         </p>
@@ -115,17 +115,17 @@ export function UpgradeBanner({
   // Default variant
   return (
     <div
-      className={`flex items-center justify-between gap-4 px-4 py-3 bg-gradient-to-r from-blue-50 via-violet-50 to-purple-50 dark:from-blue-950/30 dark:via-violet-950/30 dark:to-purple-950/30 border border-violet-200 dark:border-violet-800 rounded-lg ${className}`}
+      className={`flex items-center justify-between gap-4 px-4 py-3 bg-gradient-to-r from-blue-50 via-violet-50 to-purple-50 border border-violet-200 rounded-lg ${className}`}
     >
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div>
-          <p className="font-medium text-gray-900 dark:text-gray-100">
+          <p className="font-medium text-gray-900">
             Debloquez tout le potentiel de HuntZen
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600">
             Recherches illimitees, export PDF, simulation entretien et plus
           </p>
         </div>
@@ -141,7 +141,7 @@ export function UpgradeBanner({
         </Button>
         <button
           onClick={handleDismiss}
-          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          className="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
         >
           <X className="w-4 h-4 text-gray-500" />
         </button>
@@ -167,7 +167,7 @@ export function FeatureUpgradePrompt({
 
   return (
     <div
-      className={`p-6 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 text-center ${className}`}
+      className={`p-6 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 text-center ${className}`}
     >
       <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-4">
         <Sparkles className="w-6 h-6 text-white" />

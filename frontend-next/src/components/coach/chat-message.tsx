@@ -127,9 +127,9 @@ export function ChatMessage({
                   "shadow-md hover:shadow-lg",
                 ]
               : [
-                  "bg-white dark:bg-gray-800",
-                  "text-gray-900 dark:text-gray-100",
-                  "border-2 border-gray-200 dark:border-gray-700",
+                  "bg-white",
+                  "text-gray-900",
+                  "border-2 border-gray-200",
                   "rounded-bl-md", // Sharp corner bottom-left
                   "shadow-sm hover:shadow-md",
                 ],
@@ -150,7 +150,7 @@ export function ChatMessage({
                 components={{
                   // Customize markdown rendering
                   p: ({ children }) => (
-                    <p className="mb-2 last:mb-0 leading-relaxed text-gray-800 dark:text-gray-100">
+                    <p className="mb-2 last:mb-0 leading-relaxed text-gray-800">
                       {children}
                     </p>
                   ),
@@ -165,28 +165,28 @@ export function ChatMessage({
                     </ol>
                   ),
                   li: ({ children }) => (
-                    <li className="text-gray-800 dark:text-gray-100">
+                    <li className="text-gray-800">
                       {children}
                     </li>
                   ),
                   code: ({ inline, children, ...props }: any) =>
                     inline ? (
                       <code
-                        className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-violet-600 dark:text-violet-400 rounded text-xs font-mono"
+                        className="px-1.5 py-0.5 bg-gray-100 text-violet-600 rounded text-xs font-mono"
                         {...props}
                       >
                         {children}
                       </code>
                     ) : (
                       <code
-                        className="block p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-xs font-mono overflow-x-auto"
+                        className="block p-3 bg-gray-50 rounded-lg text-xs font-mono overflow-x-auto"
                         {...props}
                       >
                         {children}
                       </code>
                     ),
                   strong: ({ children }) => (
-                    <strong className="font-semibold text-gray-800 dark:text-gray-100">
+                    <strong className="font-semibold text-gray-800">
                       {children}
                     </strong>
                   ),
@@ -214,7 +214,7 @@ export function ChatMessage({
               className={cn(
                 "absolute -top-2 -right-2",
                 "size-6 rounded-full",
-                "bg-gray-800 hover:bg-gray-900",
+                "bg-[#0D1F3C] hover:bg-[#0D1F3C]/90",
                 "flex items-center justify-center",
                 "shadow-md",
                 "transition-all duration-150",
@@ -259,7 +259,7 @@ export function ChatMessage({
         {showTimestamp && (
           <div
             className={cn(
-              "text-xs text-gray-400 dark:text-gray-500",
+              "text-xs text-gray-400",
               "opacity-0 group-hover:opacity-100",
               "transition-opacity duration-150",
               "px-2",
@@ -300,18 +300,18 @@ export function TypingIndicator() {
       </div>
 
       {/* Typing dots */}
-      <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white border-2 border-gray-200 shadow-sm">
         <div className="flex gap-1">
           <div
-            className="size-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce"
+            className="size-2 rounded-full bg-gray-400 animate-bounce"
             style={{ animationDelay: "0ms", animationDuration: "1s" }}
           />
           <div
-            className="size-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce"
+            className="size-2 rounded-full bg-gray-400 animate-bounce"
             style={{ animationDelay: "200ms", animationDuration: "1s" }}
           />
           <div
-            className="size-2 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce"
+            className="size-2 rounded-full bg-gray-400 animate-bounce"
             style={{ animationDelay: "400ms", animationDuration: "1s" }}
           />
         </div>

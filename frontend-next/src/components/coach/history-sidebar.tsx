@@ -110,7 +110,7 @@ export function HistorySidebar({
         <Button
           variant="outline"
           size="sm"
-          className="gap-2 border-2 border-gray-200 dark:border-gray-600 hover:border-huntzen-blue hover:bg-huntzen-blue/5"
+          className="gap-2 border-2 border-gray-200 hover:border-huntzen-blue hover:bg-huntzen-blue/5"
         >
           <History className="w-4 h-4" />
           Historique
@@ -134,10 +134,10 @@ export function HistorySidebar({
           </SheetHeader>
 
           {/* Search and Filters */}
-          <div className="p-4 space-y-3 border-b bg-gray-50 dark:bg-gray-800/50">
+          <div className="p-4 space-y-3 border-b bg-gray-50">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 ref={searchInputRef}
                 type="text"
@@ -149,7 +149,7 @@ export function HistorySidebar({
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -188,7 +188,7 @@ export function HistorySidebar({
                     setSearchQuery("");
                     setShowFavoritesOnly(false);
                   }}
-                  className="text-gray-600 dark:text-gray-400"
+                  className="text-gray-600"
                 >
                   Réinitialiser
                 </Button>
@@ -208,19 +208,19 @@ export function HistorySidebar({
             ) : conversations.length === 0 ? (
               // Empty state
               <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                   {searchQuery || showFavoritesOnly ? (
-                    <Search className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                    <Search className="w-8 h-8 text-gray-400" />
                   ) : (
-                    <MessageSquarePlus className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                    <MessageSquarePlus className="w-8 h-8 text-gray-400" />
                   )}
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="font-semibold text-gray-900 mb-2">
                   {searchQuery || showFavoritesOnly
                     ? "Aucune conversation trouvée"
                     : "Pas encore de conversations"}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm text-gray-600 mb-4">
                   {searchQuery || showFavoritesOnly
                     ? "Essayez de modifier vos filtres de recherche"
                     : "Vos conversations avec le Coach IA apparaîtront ici"}
@@ -255,8 +255,8 @@ export function HistorySidebar({
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t bg-gray-50 dark:bg-gray-800/50">
-            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+          <div className="p-4 border-t bg-gray-50">
+            <div className="text-xs text-gray-600 space-y-1">
               <div className="flex items-center justify-between">
                 <span>Total:</span>
                 <span className="font-medium">

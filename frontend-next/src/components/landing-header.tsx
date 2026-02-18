@@ -130,7 +130,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                   onMouseLeave={() => setOutilsOpen(false)}
                   className={`absolute top-full left-0 mt-2 w-56 rounded-xl shadow-2xl border backdrop-blur-md overflow-hidden ${
                     shouldBeWhite
-                      ? "bg-white/95 dark:bg-gray-800/95 border-gray-200 dark:border-gray-700"
+                      ? "bg-white/95 border-gray-200"
                       : "bg-black/95 border-white/10"
                   }`}
                 >
@@ -139,7 +139,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setOutilsOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -150,7 +150,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setOutilsOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -186,7 +186,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                   onMouseLeave={() => setRessourcesOpen(false)}
                   className={`absolute top-full left-0 mt-2 w-56 rounded-xl shadow-2xl border backdrop-blur-md overflow-hidden ${
                     shouldBeWhite
-                      ? "bg-white/95 dark:bg-gray-800/95 border-gray-200 dark:border-gray-700"
+                      ? "bg-white/95 border-gray-200"
                       : "bg-black/95 border-white/10"
                   }`}
                 >
@@ -195,7 +195,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -206,7 +206,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -217,7 +217,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
-                        ? "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#00D9FF]"
+                        ? "text-gray-900 hover:bg-gray-100 hover:text-[#00D9FF]"
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
@@ -246,13 +246,13 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           {user ? (
             <Link href="/jobs">
               <div
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${shouldBeWhite ? "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600" : "bg-white/10 hover:bg-white/20"}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${shouldBeWhite ? "bg-gray-100 hover:bg-gray-200" : "bg-white/10 hover:bg-white/20"}`}
               >
                 <div className="w-7 h-7 rounded-full bg-[#00D9FF]/20 flex items-center justify-center">
                   <User className="w-4 h-4 text-[#00D9FF]" />
                 </div>
                 <span
-                  className={`text-sm font-medium hidden md:inline ${shouldBeWhite ? "text-black dark:text-white" : "text-white"}`}
+                  className={`text-sm font-medium hidden md:inline ${shouldBeWhite ? "text-black" : "text-white"}`}
                 >
                   {user.user_metadata?.full_name || user.email?.split("@")[0]}
                 </span>
@@ -296,7 +296,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className={`lg:hidden absolute top-20 left-0 right-0 backdrop-blur-md border-b ${shouldBeWhite ? "bg-white/95 dark:bg-gray-800/95 border-gray-200 dark:border-gray-700" : "bg-black/95 border-white/10"}`}
+          className={`lg:hidden absolute top-20 left-0 right-0 backdrop-blur-md border-b ${shouldBeWhite ? "bg-white/95 border-gray-200" : "bg-black/95 border-white/10"}`}
         >
           <nav className="container mx-auto px-6 py-4 flex flex-col gap-3">
             <Link
@@ -316,10 +316,10 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
 
             {/* Outils Section */}
             <div
-              className={`border-t pt-3 mt-2 ${shouldBeWhite ? "border-gray-200 dark:border-gray-700" : "border-white/10"}`}
+              className={`border-t pt-3 mt-2 ${shouldBeWhite ? "border-gray-200" : "border-white/10"}`}
             >
               <p
-                className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500 dark:text-gray-400" : "text-white/60"}`}
+                className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500" : "text-white/60"}`}
               >
                 Outils
               </p>
@@ -341,10 +341,10 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
 
             {/* Ressources Section */}
             <div
-              className={`border-t pt-3 ${shouldBeWhite ? "border-gray-200 dark:border-gray-700" : "border-white/10"}`}
+              className={`border-t pt-3 ${shouldBeWhite ? "border-gray-200" : "border-white/10"}`}
             >
               <p
-                className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500 dark:text-gray-400" : "text-white/60"}`}
+                className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500" : "text-white/60"}`}
               >
                 Ressources
               </p>

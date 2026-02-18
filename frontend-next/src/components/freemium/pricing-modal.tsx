@@ -266,7 +266,7 @@ export function PricingModal() {
                 className={`relative rounded-xl border-2 p-5 transition-all hover:shadow-lg ${
                   plan.popular
                     ? "border-violet-500 shadow-violet-100 shadow-lg"
-                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 {/* Popular Badge */}
@@ -290,18 +290,18 @@ export function PricingModal() {
                 </div>
 
                 {/* Price */}
-                <div className="text-center mb-4 py-3 bg-white dark:bg-gray-800 rounded-lg">
+                <div className="text-center mb-4 py-3 bg-white rounded-lg">
                   <div className="flex items-baseline justify-center gap-1">
                     {plan.id === "free" ? (
-                      <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                      <span className="text-3xl font-bold text-gray-900">
                         Gratuit
                       </span>
                     ) : (
                       <>
-                        <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <span className="text-3xl font-bold text-gray-900">
                           {plan.price}€
                         </span>
-                        <span className="text-base text-gray-600 dark:text-gray-400">
+                        <span className="text-base text-gray-600">
                           {plan.period}
                         </span>
                       </>
@@ -332,7 +332,7 @@ export function PricingModal() {
                             <Check className="w-2.5 h-2.5 text-white" />
                           </div>
                         ) : (
-                          <div className="w-4 h-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                             <X className="w-2.5 h-2.5 text-gray-400" />
                           </div>
                         )}
@@ -340,7 +340,7 @@ export function PricingModal() {
                           className={
                             feature.included
                               ? ""
-                              : "text-gray-400 dark:text-gray-500"
+                              : "text-gray-400"
                           }
                         >
                           {feature.name}
@@ -405,7 +405,7 @@ export function PricingCards({
           className={`relative rounded-2xl border-2 p-6 transition-all hover:shadow-xl ${
             plan.popular
               ? "border-violet-500 shadow-violet-100 shadow-lg scale-[1.02]"
-              : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+              : "border-gray-200 hover:border-gray-300"
           }`}
         >
           {plan.popular && (
@@ -460,13 +460,13 @@ export function PricingCards({
                       <Check className="w-3 h-3 text-white" />
                     </div>
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
                       <X className="w-3 h-3 text-gray-400" />
                     </div>
                   )}
                   <span
                     className={
-                      feature.included ? "" : "text-gray-400 dark:text-gray-500"
+                      feature.included ? "" : "text-gray-400"
                     }
                   >
                     {feature.name}
