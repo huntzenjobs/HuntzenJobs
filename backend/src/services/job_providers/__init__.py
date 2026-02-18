@@ -9,6 +9,7 @@ from src.services.job_providers.adzuna import AdzunaProvider
 from src.services.job_providers.serpapi import SerpAPIProvider
 from src.services.job_providers.remoteok import RemoteOKProvider
 from src.services.job_providers.jsearch import JSearchProvider
+from src.services.job_providers.france_travail import FranceTravailProvider
 from src.services.job_providers.aggregator import aggregate_jobs
 
 __all__ = [
@@ -17,5 +18,7 @@ __all__ = [
     "SerpAPIProvider",
     "RemoteOKProvider",
     "JSearchProvider",
+    "FranceTravailProvider",
     "aggregate_jobs",
 ]
+

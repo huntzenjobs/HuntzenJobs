@@ -22,6 +22,7 @@ from src.config.settings import settings
 from src.models.schemas import Job, JobSearchResponse, SearchMetadata
 from src.services.job_providers import (
     AdzunaProvider,
+    FranceTravailProvider,
     JSearchProvider,
     RemoteOKProvider,
     SerpAPIProvider,
@@ -60,6 +61,9 @@ class JobScoutAgent(BaseAgent):
             JSearchProvider(),
             RemoteOKProvider(),
         ]
+        
+        # France-only provider (activated conditionally in run())
+        self.france_travail = FranceTravailProvider()
         
         # Initialize sub-agents
         self._init_sub_agents()
@@ -133,14 +137,20 @@ class JobScoutAgent(BaseAgent):
 
             logger.info(f"[{self.name}] Searching: '{search_query}' in {country_code}")
 
-            # Step 2: Filter providers based on include_remote setting
-            # If user doesn't want remote jobs, exclude RemoteOK provider
-            active_providers = self.providers
+            # Step 2: Filter providers based on settings
+            active_providers = list(self.providers)
+            
+            # Add France Travail only for French searches
+            if country_code.lower() == "fr":
+                active_providers.append(self.france_travail)
+                logger.info(f"[{self.name}] France Travail activated (country=fr)")
+            
+            # Remove RemoteOK if user doesn't want remote jobs
             if not include_remote:
-                active_providers = [p for p in self.providers if p.name != "remoteok"]
-                logger.info(f"[{self.name}] Remote jobs excluded, using {len(active_providers)} providers")
-            else:
-                logger.info(f"[{self.name}] Remote jobs included, using all {len(active_providers)} providers")
+                active_providers = [p for p in active_providers if p.name != "remoteok"]
+                logger.info(f"[{self.name}] Remote jobs excluded")
+            
+            logger.info(f"[{self.name}] Using {len(active_providers)} providers")
 
             # Step 3: Aggregate from active providers
             raw_jobs = await aggregate_jobs(
