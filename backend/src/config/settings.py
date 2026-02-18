@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     adzuna_app_id: str = Field(default="", description="Adzuna App ID")
     adzuna_api_key: SecretStr = Field(default=SecretStr(""), description="Adzuna API Key")
     rapidapi_key: SecretStr = Field(default=SecretStr(""), description="RapidAPI Key")
+    france_travail_client_id: str = Field(default="", alias="CLIENT_ID", description="France Travail OAuth2 Client ID")
+    france_travail_client_secret: str = Field(default="", alias="CLIENT_SECRET", description="France Travail OAuth2 Client Secret")
 
     # --------------------------------------------------------------------------
     # Database (Optional - Supabase)
