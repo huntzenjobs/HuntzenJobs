@@ -96,12 +96,12 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             <span className="absolute bottom-0 left-0 w-0 h-1 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
-          {/* Analyse CV - Direct */}
+          {/* Salons & Forums - Direct */}
           <Link
-            href="/cv-analysis"
+            href="/salons"
             className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
           >
-            Analyse CV
+            Salons &amp; Forums
             <span className="absolute bottom-0 left-0 w-0 h-1 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
@@ -146,7 +146,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     Assistant Carrière
                   </Link>
                   <Link
-                    href="/salons"
+                    href="/cv-analysis"
                     onClick={() => setOutilsOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
@@ -154,7 +154,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
-                    Salons & Forums
+                    Analyse CV
                   </Link>
                 </motion.div>
               )}
@@ -307,11 +307,11 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
               Recherche d&apos;emploi
             </Link>
             <Link
-              href="/cv-analysis"
+              href="/salons"
               onClick={() => setMobileMenuOpen(false)}
               className={`text-base font-bold transition-colors py-2 ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
             >
-              Analyse CV
+              Salons &amp; Forums
             </Link>
 
             {/* Outils Section */}
@@ -331,11 +331,11 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                 Assistant Carrière
               </Link>
               <Link
-                href="/salons"
+                href="/cv-analysis"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
-                Salons & Forums
+                Analyse CV
               </Link>
             </div>
 
