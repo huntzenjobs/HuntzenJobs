@@ -14,7 +14,7 @@ export default async function DashboardLayout({
 }) {
   return (
     <SubscriptionProvider>
-      <div className="min-h-screen bg-white">
+      <div className="dashboard-force-light min-h-screen bg-white">
         <NavigationLoader />
         <Sidebar />
 
