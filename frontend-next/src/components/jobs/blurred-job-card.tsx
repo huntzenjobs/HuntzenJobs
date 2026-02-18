@@ -66,15 +66,15 @@ export function BlurredJobCard({ index, className = '' }: BlurredJobCardProps) {
       </div>
 
       {/* Lock overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-white/90 via-white/70 to-white/50 dark:from-gray-900/90 dark:via-gray-900/70 dark:to-gray-900/50 pointer-events-none">
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-white/90 via-white/70 to-white/50 pointer-events-none">
         <div className="text-center p-4 transform transition-transform group-hover:scale-105 pointer-events-auto">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-3 shadow-lg shadow-violet-200 dark:shadow-violet-900/30 animate-pulse">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-3 shadow-lg shadow-violet-200 animate-pulse">
             <Lock className="w-6 h-6 text-white" />
           </div>
-          <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
+          <p className="font-semibold text-gray-800 mb-1">
             Offre verrouillee
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          <p className="text-sm text-gray-600 mb-3">
             Passez Premium pour voir cette offre
           </p>
           <Button
@@ -111,7 +111,7 @@ export function JobsLimitReached({
 
   return (
     <div
-      className={`col-span-full p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border-2 border-dashed border-violet-200 dark:border-violet-800 text-center ${className}`}
+      className={`col-span-full p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-dashed border-violet-200 text-center ${className}`}
     >
       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-4 shadow-lg">
         <Lock className="w-8 h-8 text-white" />
