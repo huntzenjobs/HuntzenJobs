@@ -541,11 +541,11 @@ export default function HomePage() {
                 transition={{ duration: 0.6 }}
                 className="md:order-2"
               >
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
                   <span className="text-[#00D9FF]">Matching intelligent</span>{" "}
-                  et recherche ciblée
+                  et <span className="text-[#00D9FF]">recherche ciblée</span>
                 </h3>
-                <p className="text-gray-700 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
+                <p className="text-gray-700 dark:text-white/80 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
                   Fini les heures perdues à scroller des offres non pertinentes.
                   Notre agrégateur centralise toutes les opportunités de +20
                   plateformes et vous présente uniquement celles qui
@@ -559,7 +559,7 @@ export default function HomePage() {
                   ].map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm sm:text-base">
+                      <span className="text-gray-700 dark:text-white/85 text-sm sm:text-base">
                         {item}
                       </span>
                     </li>
