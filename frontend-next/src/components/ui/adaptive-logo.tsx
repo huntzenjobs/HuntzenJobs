@@ -105,7 +105,7 @@ export function TextLogo({
       <span
         className={`font-bold ${sizeClasses.text} tracking-tight transition-colors ${textColor}`}
       >
-        HuntZen
+        HuntZen <span className="text-[#00D9FF]">Jobs</span>
       </span>
       {showPulse && (
         <motion.span

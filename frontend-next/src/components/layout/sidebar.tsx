@@ -149,7 +149,6 @@ export function Sidebar({ className }: SidebarProps) {
       >
         <Link href="/" className="sidebar-logo flex items-center gap-2.5 group">
           <TextLogo
-            isDark
             size="md"
             showPulse
             className="group-hover:opacity-80 transition-opacity"
