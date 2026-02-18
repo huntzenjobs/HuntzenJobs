@@ -200,7 +200,7 @@ async def search_jobs_get(
     country: str = Query(default="us", description="Country code"),
     city: str = Query(default="", description="City"),
     contract: str = Query(default="", description="Contract type"),
-    limit: int = Query(default=25, ge=5, le=100),
+    limit: int = Query(default=100, ge=5, le=200),
     radius: int = Query(default=None, ge=1, le=100, description="Search radius in km"),
     include_remote: bool = Query(default=True, description="Include remote jobs"),
     # Advanced filters (Premium feature)
