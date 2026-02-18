@@ -1540,8 +1540,13 @@ export default function JobsPage() {
         jobs.length === 0 && (
           <JobsPlaceholder
             onSearchClick={(popularJobTitle) => {
-              // Fill the input only — user confirms search manually
+              // Fill the input and scroll to it so user can see & confirm
               setJobTitle(popularJobTitle);
+              setTimeout(() => {
+                const input = document.getElementById("jobTitle");
+                input?.scrollIntoView({ behavior: "smooth", block: "center" });
+                input?.focus();
+              }, 50);
             }}
           />
         )}
