@@ -115,11 +115,11 @@ export function SubscriptionCard() {
           <div>
             <p className="text-2xl font-bold">
               {planConfig.price}
-              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+              <span className="text-sm font-normal text-gray-500">
                 {planConfig.period}
               </span>
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600">
               {planConfig.description}
             </p>
           </div>
@@ -142,7 +142,7 @@ export function SubscriptionCard() {
 
       {/* Features List */}
       <div className="space-y-3">
-        <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-300">
+        <h3 className="font-semibold text-sm text-gray-700">
           Fonctionnalités incluses
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -151,7 +151,7 @@ export function SubscriptionCard() {
               key={key}
               className={cn(
                 "flex items-center gap-2 text-sm",
-                enabled ? "text-gray-700 dark:text-gray-300" : "text-gray-400",
+                enabled ? "text-gray-700" : "text-gray-400",
               )}
             >
               {enabled ? (
@@ -171,7 +171,7 @@ export function SubscriptionCard() {
         </div>
 
         {/* Quota limits */}
-        <div className="pt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+        <div className="pt-2 space-y-1 text-sm text-gray-600">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
             <span>
@@ -203,13 +203,13 @@ export function SubscriptionCard() {
 
       {/* Usage Quotas */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-300">
+        <h3 className="font-semibold text-sm text-gray-700">
           Utilisation du jour
         </h3>
 
         {/* CV Analysis */}
         <div className="space-y-1">
-          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+          <p className="text-xs text-gray-500 font-medium">
             Analyses CV
           </p>
           <UsageCounter feature="cv_analysis" showIcon={false} />
@@ -217,7 +217,7 @@ export function SubscriptionCard() {
 
         {/* Coach Time */}
         <div className="space-y-1">
-          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+          <p className="text-xs text-gray-500 font-medium">
             Temps Coach IA
           </p>
           <UsageCounter feature="coach_time" showIcon={false} />
@@ -225,7 +225,7 @@ export function SubscriptionCard() {
 
         {/* Job Searches */}
         <div className="space-y-1">
-          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+          <p className="text-xs text-gray-500 font-medium">
             Recherches d'emploi
           </p>
           <UsageCounter feature="job_search" showIcon={false} />
@@ -236,17 +236,17 @@ export function SubscriptionCard() {
       {isFreePlan && (
         <>
           <Separator />
-          <div className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border border-violet-200 dark:border-violet-700 rounded-lg p-4 space-y-3">
+          <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
               <Crown
                 className="w-5 h-5 text-violet-600 shrink-0 mt-0.5"
                 aria-hidden="true"
               />
               <div className="space-y-1">
-                <p className="font-semibold text-violet-900 dark:text-violet-100">
+                <p className="font-semibold text-violet-900">
                   Débloquez tout le potentiel de HuntZen
                 </p>
-                <p className="text-sm text-violet-700 dark:text-violet-300">
+                <p className="text-sm text-violet-700">
                   Passez à un plan payant pour des analyses illimitées, plus de
                   temps de coaching, et des fonctionnalités exclusives.
                 </p>
@@ -285,7 +285,7 @@ export function SubscriptionCard() {
               Annuler l'abonnement
             </Button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+          <p className="text-xs text-gray-500 text-center">
             💡 L'annulation d'abonnement sera disponible prochainement
           </p>
         </>

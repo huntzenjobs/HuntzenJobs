@@ -49,12 +49,12 @@ export function FeatureLockOverlay({
       </div>
 
       {/* Lock overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 backdrop-blur-[2px] rounded-lg pointer-events-none">
+      <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px] rounded-lg pointer-events-none">
         <div className="text-center p-4 pointer-events-auto">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-3 animate-pulse">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3 animate-pulse">
             <Lock className="w-6 h-6 text-gray-500" />
           </div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <p className="text-sm font-medium text-gray-700 mb-1">
             {message || `Disponible avec ${PLAN_NAMES[requiredPlan]}`}
           </p>
           <Button
