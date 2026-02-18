@@ -66,6 +66,9 @@ import {
 
 export default function JobsPage() {
   const [jobTitle, setJobTitle] = useState("");
+  const [popularQuery, setPopularQuery] = useState<string | undefined>(
+    undefined,
+  );
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [contractType, setContractType] = useState("");
@@ -716,6 +719,7 @@ export default function JobsPage() {
             onSearch={handleSearch}
             isLoading={searchQuery.isFetching}
             disabled={false}
+            initialQuery={popularQuery}
           />
         ) : (
           <Card className="shadow-sm border-2 border-slate-200 bg-white">
@@ -1540,10 +1544,11 @@ export default function JobsPage() {
         jobs.length === 0 && (
           <JobsPlaceholder
             onSearchClick={(popularJobTitle) => {
-              // Fill the input and scroll to it so user can see & confirm
-              setJobTitle(popularJobTitle);
+              setPopularQuery(popularJobTitle);
               setTimeout(() => {
-                const input = document.getElementById("jobTitle");
+                const input =
+                  document.getElementById("query-inline") ??
+                  document.getElementById("query-mobile");
                 input?.scrollIntoView({ behavior: "smooth", block: "center" });
                 input?.focus();
               }, 50);
