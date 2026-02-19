@@ -377,62 +377,112 @@ async def scrape_cidj_events() -> List[JobFair]:
 
 
 async def scrape_apec_events() -> List[JobFair]:
-    """Scrape specialized events from APEC for professionals."""
+    """
+    Fetch events from APEC internal JSON API.
+
+    Endpoint: POST /cms/webservices/rechercheEvenement
+    Returns structured JSON with title, date, city, type, public, etc.
+    Typically 500+ professional events (ateliers, webconférences, forums).
+    """
     events = []
+
+    # APEC internal codes → our model
+    PUBLIC_MAP = {
+        101961: "pros",      # Candidat
+        101962: "pros",      # Recruteur / Partenaire
+    }
+    MODALITE_MAP = {
+        102070: "virtual",   # À distance
+        102072: "physical",  # Présentiel
+        102071: "hybrid",    # Hybride
+    }
+    TYPE_MAP = {
+        20474: "webinar",    # Webconférence
+        101936: "webinar",   # Web Atelier
+        20475: "salon",      # Atelier présentiel
+        20473: "forum",      # Forum
+        20467: "job_dating", # Job Dating
+        20468: "salon",      # Parcours
+    }
+
     try:
-        url = "https://www.apec.fr/candidat/nos-evenements.html"
-        async with httpx.AsyncClient(timeout=15, headers=HEADERS, follow_redirects=True) as client:
-            response = await client.get(url)
+        api_url = "https://www.apec.fr/cms/webservices/rechercheEvenement"
+        api_headers = {
+            **HEADERS,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Referer": "https://www.apec.fr/nos-evenements.html/liste",
+        }
+
+        async with httpx.AsyncClient(timeout=20, headers=api_headers, follow_redirects=True) as client:
+            # POST with empty body returns all events
+            response = await client.post(api_url, json={})
             if response.status_code != 200:
-                logger.warning(f"[Events] APEC returned {response.status_code}")
+                logger.warning(f"[Events] APEC API returned {response.status_code}")
                 return events
 
-            soup = BeautifulSoup(response.text, 'html.parser')
-            event_cards = soup.select(
-                '.event-card, .evenement, article, .card, .block-evenement'
-            )
+            data = response.json()
+            resultats = data.get("resultats", [])
 
-            for card in event_cards:
+            for item in resultats:
                 try:
-                    title_el = card.select_one('h2, h3, .event-title, .card-title, .title')
-                    if not title_el:
+                    title = item.get("titre_evenement", "").strip()
+                    if not title or len(title) < 5:
                         continue
 
-                    title = title_el.get_text(strip=True)
-                    # Filter out non-event text
-                    if len(title) < 5 or any(kw in title.lower() for kw in ['error', 'cookie', 'mention']):
-                        continue
+                    # Date: "2026-02-20T13:00:00.000+0000" → "2026-02-20"
+                    date_raw = item.get("date_debut", "")
+                    date_start = date_raw[:10] if date_raw else datetime.now().strftime("%Y-%m-%d")
 
-                    date_el = card.select_one('.date, time, .card-date')
-                    location_el = card.select_one('.location, .ville, .card-location')
-                    link_el = card.select_one('a[href]')
+                    # City from libelle_ville: "Paris 12 - 75" → "Paris"
+                    libelle_ville = item.get("libelle_ville", "")
+                    if libelle_ville == "A distance" or not libelle_ville:
+                        city = "En ligne"
+                        event_format = "virtual"
+                    else:
+                        # "Paris 12 - 75" → "Paris", "Puteaux - 92" → "Puteaux"
+                        city = re.sub(r'\s*\d*\s*-\s*\d+$', '', libelle_ville).strip()
+                        city = re.sub(r'\s+\d+$', '', city).strip()
+                        city = city.rstrip(' -')  # clean trailing separator
+                        event_format = "physical"
+
+                    # Map codes
+                    id_public = item.get("id_nom_public", 0)
+                    id_type = item.get("id_nom_type", 0)
+
+                    event_public = PUBLIC_MAP.get(id_public, "pros")
+                    event_type = TYPE_MAP.get(id_type, classify_event_type(title))
+
+                    # Build detail URL
+                    id_doc = item.get("id_document", "")
+                    detail_url = f"https://www.apec.fr/nos-evenements.html/detail?idDocument={id_doc}" if id_doc else "https://www.apec.fr/nos-evenements.html"
 
                     event = JobFair(
                         title=title,
-                        event_type=classify_event_type(title),
-                        public="pros",
+                        event_type=event_type,
+                        public=event_public,
                         sector=classify_sector(title),
                         level="bac+5",
-                        date_start=parse_french_date(
-                            date_el.get_text(strip=True) if date_el else ""
-                        ),
+                        date_start=date_start,
                         date_end=None,
                         time_start=None,
                         time_end=None,
-                        city=location_el.get_text(strip=True) if location_el else "France",
-                        region="France",
+                        city=city,
+                        region=detect_region(city),
                         address=None,
-                        format="physical",
+                        format=event_format,
                         organizer="APEC",
-                        description=None,
-                        url=link_el.get('href', url) if link_el else url,
+                        description=item.get("titre_accroche", None),
+                        url=detail_url,
                         source="apec"
                     )
                     events.append(event)
                 except Exception:
                     continue
+
+        logger.info(f"[Events] APEC API: found {len(events)} events")
     except Exception as e:
-        logger.error(f"[Events] APEC scraping error: {e}")
+        logger.error(f"[Events] APEC API error: {e}")
     return events
 
 
