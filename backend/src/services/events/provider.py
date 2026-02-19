@@ -2,7 +2,7 @@
 Job Fairs / Professional Events Provider
 =========================================
 Scrapes job fairs and professional events from various French public sources.
-Sources supported: France Travail, CCI France, APEC, L'Etudiant, Studyrama, CIDJ.
+    Sources supported: France Travail, CCI France, APEC, L'Etudiant, Studyrama, CIDJ.
 
 Follows PEP 8 standards and uses English for code/comments.
 """
@@ -619,6 +619,36 @@ async def search_job_fairs(
     include_mock: bool = False
 ) -> Dict[str, Any]:
     """Aggregate professional events from multiple sources."""
+
+    # ── FR→EN mapping: translate frontend French values to backend English ──
+    PUBLIC_MAP = {
+        "etudiants": "students", "étudiants": "students",
+        "pros": "pros", "professionnels": "pros",
+        "seniors": "seniors",
+        "reconversion": "seniors",   # reconversion maps to seniors target
+        "tous": "all", "all": "all",
+    }
+    FORMAT_MAP = {
+        "physique": "physical", "physical": "physical",
+        "virtuel": "virtual", "virtual": "virtual",
+        "hybride": "hybrid", "hybrid": "hybrid",
+    }
+    SECTOR_MAP = {
+        "tous": "all", "all": "all",
+        "sante": "health", "santé": "health", "health": "health",
+        "commerce": "retail", "retail": "retail",
+        "industrie": "industry", "industry": "industry",
+        "education": "all", "hotellerie": "all",
+        "construction": "industry", "transport": "all",
+        "communication": "all",
+        "tech": "tech", "finance": "finance", "public": "public",
+    }
+
+    # Normalize filter values
+    public = PUBLIC_MAP.get(public.lower().strip(), public) if public else ""
+    format_type = FORMAT_MAP.get(format_type.lower().strip(), format_type) if format_type else ""
+    sector = SECTOR_MAP.get(sector.lower().strip(), sector) if sector else ""
+
     tasks = [
         ("france_travail", scrape_france_travail_events(region, sector)),
         ("letudiant", scrape_letudiant_salons()),
