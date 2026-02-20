@@ -335,3 +335,62 @@ async def track_job_view(request: Request):
             "tracked": False,
             "error": str(e)
         }
+
+
+# ============================================================================
+# Recruiter Finder — "Hunt This Job"
+# ============================================================================
+
+@router.post("/find-recruiter")
+async def find_recruiter(request: Request):
+    """
+    Find the recruiter / decision-maker behind a job posting.
+
+    Expects JSON body:
+    {
+        "company_name": "HappyPal",
+        "company_domain": "happypal.fr",     // preferred
+        "company_website": "https://...",     // fallback
+        "job_title": "Full Stack Developer"   // for context
+    }
+
+    Returns recruiters (HR/managers), tech team, email pattern, and LinkedIn URLs.
+    """
+    try:
+        body = await request.json()
+        company_name = body.get("company_name", "")
+        company_domain = body.get("company_domain", "")
+        company_website = body.get("company_website", "")
+        job_title = body.get("job_title", "")
+
+        if not company_name and not company_domain and not company_website:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least company_name or company_domain is required",
+            )
+
+        from src.services.recruiter_finder.hunter import find_recruiters_for_job
+
+        result = await find_recruiters_for_job(
+            company_name=company_name,
+            company_domain=company_domain,
+            company_website=company_website,
+            job_title=job_title,
+        )
+
+        return {
+            "success": True,
+            **result,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "company": body.get("company_name", ""),
+            "recruiters": [],
+            "tech_team": [],
+            "total_found": 0,
+        }
