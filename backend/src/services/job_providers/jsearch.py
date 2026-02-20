@@ -102,9 +102,10 @@ class JSearchProvider(BaseJobProvider):
             "query": search_query,
             "page": "1",
             "num_pages": str(num_pages),
+            "country": country_code.lower(),
         }
 
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(self.BASE_URL, headers=headers, params=params)
 
             if response.status_code == 429:
