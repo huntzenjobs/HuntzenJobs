@@ -435,6 +435,12 @@
         "title": "Connexion lente détectée",
         "description": "La requête a pris trop de temps. Vérifiez votre connexion internet et réessayez dans quelques instants."
       }
+    },
+    "errors": {
+      "emailNotConfirmed": "Veuillez confirmer votre adresse email. Nous vous avons envoyé un email de confirmation lors de votre inscription. Vérifiez votre boîte mail (et vos spams).",
+      "invalidCredentials": "Email ou mot de passe invalide",
+      "timeout": "La requête prend trop de temps. Vérifiez votre connexion internet et réessayez.",
+      "signupFailed": "Échec de la création du compte"
     }
   },
   "dashboard": {
@@ -641,6 +647,62 @@
         "spots": "👥 5 consultations réservées cette semaine",
         "button": "Réserver maintenant (50€)"
       }
+    }
+  },
+  "error": {
+    "title": "Une erreur s'est produite",
+    "description": "Nous avons rencontré un problème inattendu. Notre équipe a été notifiée et travaille sur une solution.",
+    "retry": "Réessayer",
+    "home": "Accueil"
+  },
+  "offline": {
+    "title": "Mode hors ligne",
+    "description": "Il semblerait que vous soyez déconnecté d'Internet. Certaines fonctionnalités peuvent être limitées.",
+    "retry": "Réessayer",
+    "backHome": "Retour à l'accueil",
+    "featuresTitle": "💡 Fonctionnalités hors ligne",
+    "feature1": "Consultation des emplois mis en cache",
+    "feature2": "Visualisation de votre CV",
+    "feature3": "Accès à vos candidatures récentes",
+    "note": "Vérifiez votre connexion Internet et réessayez"
+  },
+  "payment": {
+    "success": {
+      "verifying": "Vérification de votre paiement...",
+      "invalidSession": "Session de paiement invalide",
+      "waitingAuth": "En attente de l'authentification...",
+      "verifyingAttempt": "Vérification en cours (tentative {attempt}/{max})...",
+      "timeoutMessage": "Délai dépassé. Votre abonnement sera visible dans quelques instants.",
+      "errorMessage": "Erreur lors de la vérification. Votre abonnement sera visible dans votre profil.",
+      "processingTitle": "Traitement en cours",
+      "processingSubtitle": "Le webhook Stripe prend plus de temps que prévu. Votre abonnement sera visible dans votre profil dans quelques instants.",
+      "goToProfile": "Aller au profil",
+      "errorTitle": "Erreur de vérification",
+      "viewProfile": "Voir mon profil",
+      "backToPricing": "Retour à la page Tarifs",
+      "successTitle": "Paiement réussi !",
+      "successSubtitle": "Bienvenue dans votre nouvel abonnement HuntZen 🚀",
+      "subscriptionActive": "Votre abonnement est maintenant actif ! Vous avez accès à toutes les fonctionnalités premium de votre plan.",
+      "benefit1": "Recherches d'offres illimitées",
+      "benefit2": "Analyses de CV illimitées avec IA",
+      "benefit3": "Coach IA disponible 24/7",
+      "startSearch": "Commencer la recherche",
+      "viewMyProfile": "Voir mon profil",
+      "emailSent": "Un email de confirmation vous a été envoyé avec les détails de votre abonnement.",
+      "question": "Une question ?",
+      "contactSupport": "Contactez notre support"
+    },
+    "cancel": {
+      "title": "Paiement annulé",
+      "subtitle": "Vous avez annulé le processus de paiement",
+      "noCharge": "Aucun montant n'a été débité de votre compte. Vous pouvez réessayer quand vous le souhaitez ou continuer avec le plan gratuit.",
+      "helpTitle": "Besoin d'aide ?",
+      "helpDesc": "Notre équipe support est disponible pour répondre à toutes vos questions sur nos abonnements.",
+      "backToPricing": "Retour aux tarifs",
+      "continueFree": "Continuer avec le plan gratuit",
+      "questionsTitle": "Des questions sur nos abonnements ?",
+      "contactSupport": "Contactez notre support →",
+      "tip": "Profitez du plan gratuit pour découvrir HuntZen avant de vous abonner"
     }
   }
 }

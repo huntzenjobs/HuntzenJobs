@@ -435,6 +435,12 @@
         "title": "Conexão lenta detectada",
         "description": "A solicitação demorou muito. Verifique sua conexão e tente novamente em breve."
       }
+    },
+    "errors": {
+      "emailNotConfirmed": "Por favor confirme seu endereço de e-mail. Enviamos um e-mail de confirmação quando você se cadastrou. Verifique sua caixa de entrada (e spam).",
+      "invalidCredentials": "E-mail ou senha inválidos",
+      "timeout": "A solicitação está demorando muito. Verifique sua conexão com a Internet e tente novamente.",
+      "signupFailed": "Falha ao criar a conta"
     }
   },
   "dashboard": {
@@ -641,6 +647,62 @@
         "spots": "👥 5 consultas reservadas esta semana",
         "button": "Reservar agora (50€)"
       }
+    }
+  },
+  "error": {
+    "title": "Ocorreu um erro",
+    "description": "Encontramos um problema inesperado. Nossa equipe foi notificada e está trabalhando em uma solução.",
+    "retry": "Tentar novamente",
+    "home": "Início"
+  },
+  "offline": {
+    "title": "Modo offline",
+    "description": "Parece que você está desconectado da Internet. Alguns recursos podem estar limitados.",
+    "retry": "Tentar novamente",
+    "backHome": "Voltar ao início",
+    "featuresTitle": "💡 Recursos offline",
+    "feature1": "Consultar vagas em cache",
+    "feature2": "Visualizar seu CV",
+    "feature3": "Acessar suas candidaturas recentes",
+    "note": "Verifique sua conexão com a Internet e tente novamente"
+  },
+  "payment": {
+    "success": {
+      "verifying": "Verificando seu pagamento...",
+      "invalidSession": "Sessão de pagamento inválida",
+      "waitingAuth": "Aguardando autenticação...",
+      "verifyingAttempt": "Verificando (tentativa {attempt}/{max})...",
+      "timeoutMessage": "Tempo esgotado. Sua assinatura ficará visível em instantes.",
+      "errorMessage": "Erro na verificação. Sua assinatura ficará visível no seu perfil.",
+      "processingTitle": "Processando",
+      "processingSubtitle": "O webhook do Stripe está demorando mais que o esperado. Sua assinatura ficará visível no seu perfil em breve.",
+      "goToProfile": "Ir ao perfil",
+      "errorTitle": "Erro de verificação",
+      "viewProfile": "Ver meu perfil",
+      "backToPricing": "Voltar aos preços",
+      "successTitle": "Pagamento bem-sucedido!",
+      "successSubtitle": "Bem-vindo à sua nova assinatura HuntZen 🚀",
+      "subscriptionActive": "Sua assinatura já está ativa! Você tem acesso a todos os recursos premium do seu plano.",
+      "benefit1": "Buscas de emprego ilimitadas",
+      "benefit2": "Análises de CV ilimitadas com IA",
+      "benefit3": "Coach IA disponível 24/7",
+      "startSearch": "Começar busca",
+      "viewMyProfile": "Ver meu perfil",
+      "emailSent": "Um e-mail de confirmação foi enviado com os detalhes da sua assinatura.",
+      "question": "Alguma dúvida?",
+      "contactSupport": "Contate nosso suporte"
+    },
+    "cancel": {
+      "title": "Pagamento cancelado",
+      "subtitle": "Você cancelou o processo de pagamento",
+      "noCharge": "Nenhum valor foi cobrado da sua conta. Você pode tentar novamente quando quiser ou continuar com o plano gratuito.",
+      "helpTitle": "Precisa de ajuda?",
+      "helpDesc": "Nossa equipe de suporte está disponível para responder todas as suas dúvidas sobre nossas assinaturas.",
+      "backToPricing": "Voltar aos preços",
+      "continueFree": "Continuar com o plano gratuito",
+      "questionsTitle": "Dúvidas sobre nossas assinaturas?",
+      "contactSupport": "Contate nosso suporte →",
+      "tip": "Experimente o plano gratuito para descobrir o HuntZen antes de assinar"
     }
   }
 }

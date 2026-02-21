@@ -435,6 +435,12 @@
         "title": "Slow connection detected",
         "description": "The request took too long. Check your internet connection and try again in a moment."
       }
+    },
+    "errors": {
+      "emailNotConfirmed": "Please confirm your email address. We sent you a confirmation email when you signed up. Check your inbox (and spam folder).",
+      "invalidCredentials": "Invalid email or password",
+      "timeout": "The request is taking too long. Check your internet connection and try again.",
+      "signupFailed": "Failed to create account"
     }
   },
   "dashboard": {
@@ -641,6 +647,62 @@
         "spots": "👥 5 consultations booked this week",
         "button": "Book now (€50)"
       }
+    }
+  },
+  "error": {
+    "title": "An error occurred",
+    "description": "We encountered an unexpected problem. Our team has been notified and is working on a solution.",
+    "retry": "Try again",
+    "home": "Home"
+  },
+  "offline": {
+    "title": "Offline mode",
+    "description": "It looks like you're disconnected from the Internet. Some features may be limited.",
+    "retry": "Try again",
+    "backHome": "Back to home",
+    "featuresTitle": "💡 Offline features",
+    "feature1": "Browse cached job listings",
+    "feature2": "View your CV",
+    "feature3": "Access your recent applications",
+    "note": "Check your Internet connection and try again"
+  },
+  "payment": {
+    "success": {
+      "verifying": "Verifying your payment...",
+      "invalidSession": "Invalid payment session",
+      "waitingAuth": "Waiting for authentication...",
+      "verifyingAttempt": "Verifying (attempt {attempt}/{max})...",
+      "timeoutMessage": "Timed out. Your subscription will be visible in a few moments.",
+      "errorMessage": "Verification error. Your subscription will be visible in your profile.",
+      "processingTitle": "Processing",
+      "processingSubtitle": "The Stripe webhook is taking longer than expected. Your subscription will be visible in your profile shortly.",
+      "goToProfile": "Go to profile",
+      "errorTitle": "Verification error",
+      "viewProfile": "View my profile",
+      "backToPricing": "Back to pricing",
+      "successTitle": "Payment successful!",
+      "successSubtitle": "Welcome to your new HuntZen subscription 🚀",
+      "subscriptionActive": "Your subscription is now active! You have access to all premium features of your plan.",
+      "benefit1": "Unlimited job searches",
+      "benefit2": "Unlimited AI-powered CV analysis",
+      "benefit3": "AI Coach available 24/7",
+      "startSearch": "Start searching",
+      "viewMyProfile": "View my profile",
+      "emailSent": "A confirmation email has been sent with your subscription details.",
+      "question": "Any questions?",
+      "contactSupport": "Contact our support"
+    },
+    "cancel": {
+      "title": "Payment cancelled",
+      "subtitle": "You cancelled the payment process",
+      "noCharge": "No amount has been charged to your account. You can try again whenever you want or continue with the free plan.",
+      "helpTitle": "Need help?",
+      "helpDesc": "Our support team is available to answer all your questions about our subscriptions.",
+      "backToPricing": "Back to pricing",
+      "continueFree": "Continue with free plan",
+      "questionsTitle": "Questions about our subscriptions?",
+      "contactSupport": "Contact our support →",
+      "tip": "Try the free plan to discover HuntZen before subscribing"
     }
   }
 }
