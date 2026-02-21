@@ -7,6 +7,11 @@ import { useOptionalAuth } from "@/contexts/auth-context";
 import { Menu, X, User, ChevronDown } from "lucide-react";
 import { AdaptiveLogo } from "@/components/ui/adaptive-logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import {
+  LanguageSwitcher,
+  LanguageSwitcherCompact,
+} from "@/components/language-switcher";
+import { useTranslations } from "next-intl";
 
 interface LandingHeaderProps {
   forceWhite?: boolean;
@@ -19,6 +24,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
   const [ressourcesOpen, setRessourcesOpen] = useState(false);
   const auth = useOptionalAuth();
   const user = auth?.user;
+  const t = useTranslations("nav");
 
   const outilsRef = useRef<HTMLDivElement>(null);
   const ressourcesRef = useRef<HTMLDivElement>(null);
@@ -92,7 +98,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             href="/jobs"
             className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
           >
-            Recherche d&apos;emploi
+            {t("jobs")}
             <span className="absolute bottom-0 left-0 w-0 h-1 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
@@ -101,7 +107,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             href="/salons"
             className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
           >
-            Salons &amp; Forums
+            {t("salons")}
             <span className="absolute bottom-0 left-0 w-0 h-1 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
 
@@ -115,7 +121,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
               }}
               className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
             >
-              Outils
+              {t("tools")}
               <ChevronDown
                 className={`w-4 h-4 transition-transform ${outilsOpen ? "rotate-180" : ""}`}
               />
@@ -143,7 +149,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
-                    Assistant Carrière
+                    {t("toolsItems.assistant")}
                   </Link>
                   <Link
                     href="/cv-analysis"
@@ -154,7 +160,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
-                    Analyse CV
+                    {t("toolsItems.cvAnalysis")}
                   </Link>
                 </motion.div>
               )}
@@ -171,7 +177,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
               }}
               className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
             >
-              Ressources
+              {t("resources")}
               <ChevronDown
                 className={`w-4 h-4 transition-transform ${ressourcesOpen ? "rotate-180" : ""}`}
               />
@@ -199,7 +205,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
-                    Blog
+                    {t("resourcesItems.blog")}
                   </Link>
                   <Link
                     href="/faq"
@@ -210,7 +216,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
-                    FAQ
+                    {t("resourcesItems.faq")}
                   </Link>
                   <Link
                     href="/temoignages"
@@ -221,7 +227,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                         : "text-white/90 hover:bg-white/10 hover:text-[#00D9FF]"
                     }`}
                   >
-                    Avis
+                    {t("resourcesItems.reviews")}
                   </Link>
                 </motion.div>
               )}
@@ -233,13 +239,16 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             href="/pricing"
             className={`relative text-base font-bold transition-colors pb-1 group ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
           >
-            Tarifs
+            {t("pricing")}
             <span className="absolute bottom-0 left-0 w-0 h-1 bg-[#00D9FF] transition-all duration-300 group-hover:w-full"></span>
           </Link>
         </nav>
 
         {/* Auth Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
           {/* Theme Toggle */}
           <ThemeToggle />
 
@@ -264,13 +273,13 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                 href="/login"
                 className={`hidden md:inline-flex items-center px-4 lg:px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white hover:text-[#00D9FF]"}`}
               >
-                CONNEXION
+                {t("login")}
               </Link>
               <Link
                 href="/signup"
                 className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-lg hover:shadow-[#00D9FF]/50"
               >
-                S&apos;INSCRIRE
+                {t("signup")}
               </Link>
             </>
           )}
@@ -304,14 +313,14 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
               onClick={() => setMobileMenuOpen(false)}
               className={`text-base font-bold transition-colors py-2 ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
             >
-              Recherche d&apos;emploi
+              {t("jobs")}
             </Link>
             <Link
               href="/salons"
               onClick={() => setMobileMenuOpen(false)}
               className={`text-base font-bold transition-colors py-2 ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
             >
-              Salons &amp; Forums
+              {t("salons")}
             </Link>
 
             {/* Outils Section */}
@@ -321,21 +330,21 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
               <p
                 className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500" : "text-white/60"}`}
               >
-                Outils
+                {t("tools")}
               </p>
               <Link
                 href="/assistant"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
-                Assistant Carrière
+                {t("toolsItems.assistant")}
               </Link>
               <Link
                 href="/cv-analysis"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
-                Analyse CV
+                {t("toolsItems.cvAnalysis")}
               </Link>
             </div>
 
@@ -346,28 +355,28 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
               <p
                 className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500" : "text-white/60"}`}
               >
-                Ressources
+                {t("resources")}
               </p>
               <Link
                 href="/blog"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
-                Blog
+                {t("resourcesItems.blog")}
               </Link>
               <Link
                 href="/faq"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
-                FAQ
+                {t("resourcesItems.faq")}
               </Link>
               <Link
                 href="/temoignages"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
-                Avis
+                {t("resourcesItems.reviews")}
               </Link>
             </div>
 
@@ -376,8 +385,20 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
               onClick={() => setMobileMenuOpen(false)}
               className={`text-base font-bold transition-colors py-2 mt-2 ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white/90 hover:text-[#00D9FF]"}`}
             >
-              Tarifs
+              {t("pricing")}
             </Link>
+
+            {/* Language Switcher Mobile */}
+            <div
+              className={`border-t pt-3 mt-2 ${shouldBeWhite ? "border-gray-200" : "border-white/10"}`}
+            >
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide mb-2 ${shouldBeWhite ? "text-gray-500" : "text-white/60"}`}
+              >
+                {t("language")}
+              </p>
+              <LanguageSwitcherCompact />
+            </div>
           </nav>
         </motion.div>
       )}

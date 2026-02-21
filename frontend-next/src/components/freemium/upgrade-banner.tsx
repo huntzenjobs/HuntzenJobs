@@ -1,52 +1,54 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { X, Sparkles, ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useSubscription } from '@/contexts/subscription-context'
+import { useState, useEffect } from "react";
+import { X, Sparkles, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useSubscription } from "@/contexts/subscription-context";
+import { useTranslations } from "next-intl";
 
-const BANNER_DISMISSED_KEY = 'huntzen_upgrade_banner_dismissed'
+const BANNER_DISMISSED_KEY = "huntzen_upgrade_banner_dismissed";
 
 interface UpgradeBannerProps {
-  className?: string
-  variant?: 'default' | 'minimal' | 'gradient'
+  className?: string;
+  variant?: "default" | "minimal" | "gradient";
 }
 
 export function UpgradeBanner({
-  className = '',
-  variant = 'default',
+  className = "",
+  variant = "default",
 }: UpgradeBannerProps) {
-  const { isFreePlan, openPricingModal } = useSubscription()
-  const [isDismissed, setIsDismissed] = useState(true)
+  const t = useTranslations("upgradeBanner");
+  const { isFreePlan, openPricingModal } = useSubscription();
+  const [isDismissed, setIsDismissed] = useState(true);
 
   useEffect(() => {
     // Check if banner was dismissed today
-    const dismissedDate = localStorage.getItem(BANNER_DISMISSED_KEY)
-    const today = new Date().toISOString().split('T')[0]
+    const dismissedDate = localStorage.getItem(BANNER_DISMISSED_KEY);
+    const today = new Date().toISOString().split("T")[0];
 
     if (dismissedDate !== today) {
-      setIsDismissed(false)
+      setIsDismissed(false);
     }
-  }, [])
+  }, []);
 
   const handleDismiss = () => {
-    const today = new Date().toISOString().split('T')[0]
-    localStorage.setItem(BANNER_DISMISSED_KEY, today)
-    setIsDismissed(true)
-  }
+    const today = new Date().toISOString().split("T")[0];
+    localStorage.setItem(BANNER_DISMISSED_KEY, today);
+    setIsDismissed(true);
+  };
 
   if (!isFreePlan || isDismissed) {
-    return null
+    return null;
   }
 
-  if (variant === 'minimal') {
+  if (variant === "minimal") {
     return (
       <div
         className={`flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b border-violet-200 ${className}`}
       >
         <p className="text-sm text-violet-700">
           <Sparkles className="w-4 h-4 inline mr-1" />
-          Passez Premium pour debloquer toutes les fonctionnalites
+          {t("minimal.text")}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -55,7 +57,7 @@ export function UpgradeBanner({
             onClick={() => openPricingModal()}
             className="text-violet-700 hover:text-violet-800 hover:bg-violet-100"
           >
-            Voir les offres
+            {t("minimal.cta")}
           </Button>
           <button
             onClick={handleDismiss}
@@ -65,10 +67,10 @@ export function UpgradeBanner({
           </button>
         </div>
       </div>
-    )
+    );
   }
 
-  if (variant === 'gradient') {
+  if (variant === "gradient") {
     return (
       <div
         className={`relative overflow-hidden rounded-lg bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 p-4 text-white ${className}`}
@@ -85,10 +87,8 @@ export function UpgradeBanner({
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-semibold">Passez a HuntZen Pro</p>
-              <p className="text-sm text-white/80">
-                Debloquez toutes les fonctionnalites et boostez votre carriere
-              </p>
+              <p className="font-semibold">{t("gradient.title")}</p>
+              <p className="text-sm text-white/80">{t("gradient.subtitle")}</p>
             </div>
           </div>
 
@@ -97,7 +97,7 @@ export function UpgradeBanner({
               onClick={() => openPricingModal()}
               className="bg-white text-violet-700 hover:bg-white/90"
             >
-              Voir les offres
+              {t("gradient.cta")}
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <button
@@ -109,7 +109,7 @@ export function UpgradeBanner({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Default variant
@@ -122,12 +122,8 @@ export function UpgradeBanner({
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div>
-          <p className="font-medium text-gray-900">
-            Debloquez tout le potentiel de HuntZen
-          </p>
-          <p className="text-sm text-gray-600">
-            Recherches illimitees, export PDF, simulation entretien et plus
-          </p>
+          <p className="font-medium text-gray-900">{t("default.title")}</p>
+          <p className="text-sm text-gray-600">{t("default.subtitle")}</p>
         </div>
       </div>
 
@@ -136,7 +132,7 @@ export function UpgradeBanner({
           onClick={() => openPricingModal()}
           className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
         >
-          Voir les offres
+          {t("default.cta")}
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
         <button
@@ -147,23 +143,24 @@ export function UpgradeBanner({
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 interface FeatureUpgradePromptProps {
-  feature: string
-  title: string
-  description: string
-  className?: string
+  feature: string;
+  title: string;
+  description: string;
+  className?: string;
 }
 
 export function FeatureUpgradePrompt({
   feature,
   title,
   description,
-  className = '',
+  className = "",
 }: FeatureUpgradePromptProps) {
-  const { openPricingModal } = useSubscription()
+  const tBanner = useTranslations("upgradeBanner");
+  const { openPricingModal } = useSubscription();
 
   return (
     <div
@@ -178,9 +175,9 @@ export function FeatureUpgradePrompt({
         onClick={() => openPricingModal(feature)}
         className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
       >
-        Debloquer cette fonctionnalite
+        {tBanner("featurePrompt.unlock")}
         <ArrowRight className="w-4 h-4 ml-1" />
       </Button>
     </div>
-  )
+  );
 }
