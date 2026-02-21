@@ -33,6 +33,7 @@ import { useOptionalAuth } from "@/contexts/auth-context";
 import { UsageSummary } from "@/components/freemium/usage-counter";
 import { UsageModal } from "@/components/freemium/usage-modal";
 import { useTranslations } from "next-intl";
+import { LanguageSwitcherCompact } from "@/components/language-switcher";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -351,6 +352,11 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Footer Navigation */}
       <div className="sidebar-footer px-4 py-3 border-t border-white/10">
+        {/* Language switcher */}
+        <div className="px-2 py-2 mb-1">
+          <LanguageSwitcherCompact />
+        </div>
+
         <Link
           href="/pricing"
           className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/8 hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"

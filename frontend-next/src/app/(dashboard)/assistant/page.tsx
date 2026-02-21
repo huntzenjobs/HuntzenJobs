@@ -36,8 +36,10 @@ import { HistorySidebar } from "@/components/coach/history-sidebar";
 import { ExportDialog } from "@/components/coach/export-dialog";
 import { useCoachHistory, useDebounce } from "@/hooks/use-coach-history";
 import { toCoachMessage, toChatMessage } from "@/types/coach-history";
+import { useTranslations } from "next-intl";
 
 export default function AssistantPage() {
+  const t = useTranslations("dashboard.assistant");
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -89,7 +91,7 @@ export default function AssistantPage() {
 
   // Format time as mm:ss
   const formatTime = (seconds: number) => {
-    if (seconds === Infinity || seconds > 3600 * 24) return "Illimite";
+    if (seconds === Infinity || seconds > 3600 * 24) return t("unlimited");
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -188,8 +190,7 @@ export default function AssistantPage() {
       const errorMessage: ChatMessageType = {
         id: uuidv4(),
         role: "assistant",
-        content:
-          "Desole, une erreur est survenue. Pouvez-vous reformuler votre question ?",
+        content: t("errorMessage"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -339,7 +340,7 @@ export default function AssistantPage() {
               className="gap-2 bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#00D9FF] hover:text-slate-900"
             >
               <History className="w-4 h-4" />
-              Historique
+              {t("history")}
               <Lock className="w-3 h-3" />
             </Button>
           )}
@@ -353,7 +354,7 @@ export default function AssistantPage() {
               className="gap-2 bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#00D9FF] hover:text-slate-900"
             >
               <Plus className="w-4 h-4" />
-              Nouvelle
+              {t("newConversation")}
             </Button>
           )}
 
@@ -365,7 +366,7 @@ export default function AssistantPage() {
             className="hidden gap-2"
           >
             <Mic className="w-4 h-4" />
-            Simulation
+            {t("simulation")}
             {!hasFeature("has_interview_sim") && <Lock className="w-3 h-3" />}
           </Button>
         </motion.div>
@@ -384,17 +385,14 @@ export default function AssistantPage() {
                 className="px-4 py-2 bg-amber-50 border-b border-amber-200 flex items-center gap-2 text-amber-700"
               >
                 <AlertTriangle className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  Il vous reste moins de 3 minutes ! Passez Premium pour un
-                  temps illimité.
-                </span>
+                <span className="text-sm font-medium">{t("timeWarning")}</span>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="ml-auto text-amber-700 hover:text-amber-800 hover:bg-amber-100"
                   onClick={() => openPricingModal("coach_minutes_per_day")}
                 >
-                  Passer Premium
+                  {t("upgradePremium")}
                 </Button>
               </motion.div>
             )}
@@ -514,7 +512,7 @@ export default function AssistantPage() {
                   <ExpandableTextarea
                     value={input}
                     onChange={setInput}
-                    placeholder="Posez votre question... (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)"
+                    placeholder={t("placeholder")}
                     disabled={loading}
                     minHeight={44}
                     maxHeight={120}
@@ -563,17 +561,20 @@ export default function AssistantPage() {
                 >
                   <Clock className="w-6 h-6 text-gray-400" />
                 </motion.div>
-                <p className="font-bold text-slate-900 mb-1">Temps écoulé</p>
+                <p className="font-bold text-slate-900 mb-1">
+                  {t("timeExpiredTitle")}
+                </p>
                 <p className="text-sm text-slate-700 mb-3">
-                  Vous avez utilisé vos {limits.coach_minutes_per_day} minutes
-                  gratuites
+                  {t("timeExpiredDesc", {
+                    minutes: limits.coach_minutes_per_day,
+                  })}
                 </p>
                 <Button
                   onClick={() => openPricingModal("coach_minutes_per_day")}
                   className="h-12 text-base font-bold bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
-                  Débloquer le temps illimité
+                  {t("unlockUnlimited")}
                 </Button>
               </motion.div>
             )}

@@ -26,12 +26,14 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { useTranslations } from "next-intl";
 
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, signInWithGoogle, signUpWithEmail, error, clearError } =
     useAuth();
+  const t = useTranslations("auth.signup");
 
   // Detect CV analysis redirect
   const redirectTo = searchParams.get("redirectTo");
@@ -76,13 +78,13 @@ function SignupForm() {
 
     // Validate password match
     if (password !== confirmPassword) {
-      setPasswordError("Les mots de passe ne correspondent pas");
+      setPasswordError(t("passwordMismatch"));
       return;
     }
 
     // Validate password strength
     if (password.length < 6) {
-      setPasswordError("Le mot de passe doit contenir au moins 6 caractères");
+      setPasswordError(t("passwordTooShort"));
       return;
     }
 
@@ -102,12 +104,10 @@ function SignupForm() {
     } catch (err: any) {
       console.error("[SIGNUP] Error:", err);
 
-      // Détecter timeout pour afficher message spécifique
       if (err.message?.includes("prend trop de temps") || err.message?.includes("timeout")) {
         setIsTimeout(true);
       }
     } finally {
-      // ⚠️ CRITIQUE: Toujours arrêter le loading, même en cas d'erreur
       setLoading(false);
     }
   };
@@ -149,13 +149,13 @@ function SignupForm() {
 
               {/* Title */}
               <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">
-                Inscription réussie ! 🎉
+                {t("success.title")}
               </h2>
 
               {/* Message */}
               <div className="space-y-4 mb-6">
                 <p className="text-center text-gray-700 leading-relaxed">
-                  Nous venons d'envoyer un email de confirmation à :
+                  {t("success.sentEmail")}
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-center font-semibold text-blue-900 break-all">
@@ -164,8 +164,8 @@ function SignupForm() {
                 </div>
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
                   <p className="text-sm text-gray-700">
-                    <strong>Vérifiez votre boîte mail</strong> (et vos spams)
-                    pour confirmer votre adresse email avant de vous connecter.
+                    <strong>{t("success.checkEmail")}</strong>{" "}
+                    {t("success.checkEmailDesc")}
                   </p>
                 </div>
               </div>
@@ -174,7 +174,7 @@ function SignupForm() {
               <div className="space-y-3">
                 <Link href="/login" className="block">
                   <Button className="w-full bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 rounded-xl font-semibold">
-                    Aller à la connexion
+                    {t("success.goToLogin")}
                   </Button>
                 </Link>
                 <Button
@@ -182,14 +182,13 @@ function SignupForm() {
                   onClick={closeSuccessModal}
                   className="w-full h-12 rounded-xl border-2"
                 >
-                  Fermer
+                  {t("success.close")}
                 </Button>
               </div>
 
               {/* Help text */}
               <p className="text-xs text-center text-gray-500 mt-4">
-                Vous n'avez pas reçu l'email ? Attendez quelques minutes ou
-                vérifiez vos spams.
+                {t("success.noEmail")}
               </p>
             </motion.div>
           </motion.div>
@@ -205,7 +204,7 @@ function SignupForm() {
             transition={{ duration: 0.5 }}
             className="text-3xl font-bold text-gray-900 mb-2"
           >
-            Créer votre compte
+            {t("title")}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: -10 }}
@@ -213,9 +212,7 @@ function SignupForm() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-gray-600"
           >
-            {showCVMessage
-              ? "Commencez votre analyse CV gratuitement"
-              : "Rejoignez HuntZen et boostez votre carrière"}
+            {showCVMessage ? t("subtitleCV") : t("subtitle")}
           </motion.p>
         </div>
 
@@ -229,31 +226,31 @@ function SignupForm() {
           >
             <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
               <span className="text-xl">🎯</span>
-              Offre de bienvenue :
+              {t("cvBanner.title")}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
                 <span>
-                  <strong>1 analyse CV gratuite</strong> par jour
+                  <strong>{t("cvBanner.feature1")}</strong>
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
                 <span>
-                  <strong>Score ATS détaillé</strong>
+                  <strong>{t("cvBanner.feature2")}</strong>
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
                 <span>
-                  <strong>Matching emploi</strong>
+                  <strong>{t("cvBanner.feature3")}</strong>
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
                 <span>
-                  <strong>Historique</strong> complet
+                  <strong>{t("cvBanner.feature4")}</strong>
                 </span>
               </div>
             </div>
@@ -292,9 +289,9 @@ function SignupForm() {
             <Alert variant="destructive" className="border-orange-200 bg-orange-50">
               <AlertCircle className="h-4 w-4 text-orange-600" />
               <AlertDescription className="text-orange-800">
-                <strong>Connexion lente détectée</strong>
+                <strong>{t("timeout.title")}</strong>
                 <br />
-                La requête a pris trop de temps. Vérifiez votre connexion internet et réessayez dans quelques instants.
+                {t("timeout.description")}
               </AlertDescription>
             </Alert>
           </motion.div>
@@ -334,7 +331,7 @@ function SignupForm() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                <span className="font-medium">S'inscrire avec Google</span>
+                <span className="font-medium">{t("googleCta")}</span>
               </>
             )}
           </Button>
@@ -347,7 +344,7 @@ function SignupForm() {
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-4 bg-white text-gray-500 font-medium">
-              Ou avec email
+              {t("divider")}
             </span>
           </div>
         </div>
@@ -365,14 +362,14 @@ function SignupForm() {
               htmlFor="fullName"
               className="text-sm font-medium text-gray-700"
             >
-              Nom complet
+              {t("fullNameLabel")}
             </Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Jean Dupont"
+                placeholder={t("fullNamePlaceholder")}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
@@ -387,14 +384,14 @@ function SignupForm() {
               htmlFor="email"
               className="text-sm font-medium text-gray-700"
             >
-              Adresse email
+              {t("emailLabel")}
             </Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="vous@example.com"
+                placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -409,14 +406,14 @@ function SignupForm() {
               htmlFor="password"
               className="text-sm font-medium text-gray-700"
             >
-              Mot de passe
+              {t("passwordLabel")}
             </Label>
             <div className="relative">
               <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Minimum 6 caractères"
+                placeholder={t("passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -428,7 +425,7 @@ function SignupForm() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -444,14 +441,14 @@ function SignupForm() {
               htmlFor="confirmPassword"
               className="text-sm font-medium text-gray-700"
             >
-              Confirmer le mot de passe
+              {t("confirmPasswordLabel")}
             </Label>
             <div className="relative">
               <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Retapez votre mot de passe"
+                placeholder={t("confirmPasswordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -462,7 +459,7 @@ function SignupForm() {
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                aria-label={showConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                aria-label={showConfirmPassword ? t("hidePassword") : t("showPassword")}
               >
                 {showConfirmPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -482,10 +479,10 @@ function SignupForm() {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Création en cours...
+                {t("loading")}
               </>
             ) : (
-              "Créer mon compte gratuitement"
+              t("cta")
             )}
           </Button>
         </motion.form>
@@ -497,12 +494,12 @@ function SignupForm() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="text-center text-sm text-gray-600"
         >
-          Vous avez déjà un compte ?{" "}
+          {t("hasAccount")}{" "}
           <Link
             href="/login"
             className="text-[#00D9FF] hover:text-[#00C4EA] font-semibold transition-colors"
           >
-            Se connecter
+            {t("loginLink")}
           </Link>
         </motion.p>
 
@@ -513,19 +510,19 @@ function SignupForm() {
           transition={{ duration: 0.5, delay: 0.6 }}
           className="text-center text-xs text-gray-500 pt-4"
         >
-          En créant un compte, vous acceptez nos{" "}
+          {t("termsPrefix")}{" "}
           <Link
             href="/terms"
             className="underline hover:text-gray-700 transition-colors"
           >
-            Conditions d'utilisation
+            {t("terms")}
           </Link>{" "}
-          et notre{" "}
+          {t("and")}{" "}
           <Link
             href="/privacy"
             className="underline hover:text-gray-700 transition-colors"
           >
-            Politique de confidentialité
+            {t("privacy")}
           </Link>
         </motion.p>
       </div>

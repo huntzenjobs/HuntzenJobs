@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Globe } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * Language Switcher Component
@@ -24,7 +25,7 @@ import { Globe } from "lucide-react";
  * @example
  * <LanguageSwitcher />
  */
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ className }: { className?: string }) {
   const { locale, setLocale, supportedLocales } = useLocale();
 
   return (
@@ -33,7 +34,7 @@ export function LanguageSwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-2"
+          className={cn("gap-2", className)}
           aria-label="Change language"
         >
           <Globe className="h-4 w-4" />

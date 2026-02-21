@@ -367,5 +367,280 @@
     "featurePrompt": {
       "unlock": "Unlock this feature"
     }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back!",
+      "subtitle": "Log in to access your workspace",
+      "googleCta": "Continue with Google",
+      "divider": "Or with email",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "forgotPassword": "Forgot password?",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "loading": "Logging in...",
+      "cta": "Log in",
+      "noAccount": "Don't have an account?",
+      "signupLink": "Create a free account",
+      "termsPrefix": "By continuing, you accept our",
+      "terms": "Terms of Service",
+      "and": "and our",
+      "privacy": "Privacy Policy"
+    },
+    "signup": {
+      "title": "Create your account",
+      "subtitle": "Join HuntZen and boost your career",
+      "subtitleCV": "Start your free CV analysis",
+      "passwordMismatch": "Passwords don't match",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "googleCta": "Sign up with Google",
+      "divider": "Or with email",
+      "fullNameLabel": "Full name",
+      "fullNamePlaceholder": "John Doe",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Minimum 6 characters",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "loading": "Creating...",
+      "cta": "Create my free account",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "termsPrefix": "By creating an account, you accept our",
+      "terms": "Terms of Service",
+      "and": "and our",
+      "privacy": "Privacy Policy",
+      "cvBanner": {
+        "title": "Welcome offer:",
+        "feature1": "1 free CV analysis per day",
+        "feature2": "Detailed ATS score",
+        "feature3": "Job matching",
+        "feature4": "Full history"
+      },
+      "success": {
+        "title": "Registration successful! 🎉",
+        "sentEmail": "We have sent a confirmation email to:",
+        "checkEmail": "Check your inbox",
+        "checkEmailDesc": "(and spam) to confirm your email address before logging in.",
+        "goToLogin": "Go to login",
+        "close": "Close",
+        "noEmail": "Didn't receive the email? Wait a few minutes or check your spam."
+      },
+      "timeout": {
+        "title": "Slow connection detected",
+        "description": "The request took too long. Check your internet connection and try again in a moment."
+      }
+    }
+  },
+  "dashboard": {
+    "jobs": {
+      "title": "Job Search",
+      "subtitle": "Access thousands of job listings from the best recruitment platforms, aggregated and updated daily.",
+      "form": {
+        "title": "Define your search criteria",
+        "subtitle": "Fill in the fields below to find offers that match your profile",
+        "contractType": "Contract type",
+        "optional": "(optional)",
+        "allContracts": "All contract types",
+        "allTypes": "✓ All types",
+        "jobTitle": "Job title",
+        "country": "Country",
+        "city": "City",
+        "cityHint": "Whole country if empty",
+        "selectCountryFirst": "Select a country first",
+        "loadingPlaceholder": "Loading...",
+        "jobTitlePlaceholder": "E.g: Full Stack Developer, Project Manager...",
+        "cityPlaceholder": "London, Paris, Brussels...",
+        "countryPlaceholder": "France, Belgium, Switzerland...",
+        "searching": "Searching...",
+        "search": "Start search",
+        "unlock": "Unlock unlimited searches",
+        "advancedFilters": "Advanced filters",
+        "remaining_one": "{count} remaining",
+        "remaining_other": "{count} remaining",
+        "noCountryFound": "No country found",
+        "noCityFound": "No city found"
+      },
+      "error": {
+        "title": "Search error",
+        "generic": "An error occurred during the search. Please try again.",
+        "formLoad": "Error loading the form. Please refresh the page.",
+        "fillRequired": "Please fill in the job title and country"
+      },
+      "corrected": {
+        "title": "Improved search",
+        "subtitle": "We optimized your search:"
+      },
+      "results": {
+        "count_one": "{count} offer found",
+        "count_other": "{count} offers found",
+        "refresh": "Refresh",
+        "updating": "Updating...",
+        "justNow": "just now",
+        "oneMinuteAgo": "1 minute ago",
+        "minutesAgo": "{n} minutes ago",
+        "staleWarning": "- Refresh recommended",
+        "updatedAt": "Updated {time}",
+        "recent": "Recent and relevant results",
+        "visibleOf": "{visible} visible out of {total}",
+        "unlockAll": "Unlock all offers →",
+        "cache": "💾 Cache"
+      },
+      "card": {
+        "details": "View details",
+        "save": "Save this offer",
+        "alreadySaved": "Already in favorites",
+        "premiumFeature": "Premium feature",
+        "locationUnknown": "Location not specified",
+        "alreadySavedShort": "Already saved",
+        "saveShort": "Save"
+      },
+      "empty": {
+        "title": "No offers found",
+        "subtitle": "We didn't find any offers matching your criteria at the moment.",
+        "tips": "💡 Tips:",
+        "tip1": "Try more general keywords",
+        "tip2": "Check the spelling of the job title",
+        "tip3": "Widen your geographic area (city → whole country)",
+        "tip4": "Select \"All types\" for the contract"
+      },
+      "toast": {
+        "saved": "Offer added to favorites ✨",
+        "saveError": "Error while saving",
+        "mustLogin": "Log in to save offers",
+        "mustLoginSave": "You must be logged in to save offers",
+        "alreadySaved": "This offer is already in your favorites",
+        "filtersApplied": "{count} advanced filter(s) applied",
+        "filtersAppliedDesc": "Search updated with new filters",
+        "filtersAppliedNext": "Filters will be applied to the next search",
+        "filtersReset": "Advanced filters reset"
+      }
+    },
+    "cvAnalysis": {
+      "title": "CV Analysis",
+      "loading": "Loading your workspace...",
+      "errorTitle": "Error loading CV analysis",
+      "errorDesc": "An error occurred. Please refresh the page.",
+      "subtitle": "Optimize your CV to maximize your chances of getting an interview. Get a detailed analysis and personalized recommendations."
+    },
+    "assistant": {
+      "title": "Career Assistant",
+      "history": "History",
+      "newConversation": "New",
+      "simulation": "Simulation",
+      "timeWarning": "Less than 3 minutes left! Go Premium for unlimited time.",
+      "upgradePremium": "Go Premium",
+      "placeholder": "Ask your question... (Enter to send, Shift+Enter for new line)",
+      "timeExpiredTitle": "Time's up",
+      "timeExpiredDesc": "You've used your {minutes} free minutes",
+      "unlockUnlimited": "Unlock unlimited time",
+      "errorMessage": "Sorry, an error occurred. Could you rephrase your question?",
+      "unlimited": "Unlimited"
+    },
+    "salons": {
+      "title": "Job Fairs & Forums"
+    },
+    "savedJobs": {
+      "title": "Saved Jobs",
+      "searchPlaceholder": "Search in your offers...",
+      "noJobs": "You haven't saved any offers yet",
+      "noJobsDesc": "Explore available offers and save the ones that interest you",
+      "loginRequired": "Log in to see your saved offers",
+      "deleteError": "Error while deleting",
+      "deleted": "Offer deleted",
+      "viewOffer": "View offer",
+      "delete": "Delete",
+      "savedAt": "Saved on",
+      "searchJobs": "Search for jobs"
+    },
+    "recruiterContact": {
+      "title": "Contact a Recruiter",
+      "stats": {
+        "consultations": "Successful consultations",
+        "satisfaction": "Average satisfaction",
+        "delay": "Average delay"
+      },
+      "benefits": {
+        "personalizedTitle": "Personalized advice",
+        "personalizedDesc": "An expert recruiter analyzes your profile and gives you tailored recommendations",
+        "expertiseTitle": "Professional expertise",
+        "expertiseDesc": "Our recruiters have 10+ years of experience in executive and talent recruitment",
+        "fastResponseTitle": "Fast response",
+        "fastResponseDesc": "You'll be contacted within 48h to schedule your 30-minute consultation"
+      },
+      "pricing": {
+        "title": "Recruiter Consultation",
+        "sessionDesc": "Individual 30-minute session",
+        "perConsultation": "/ consultation",
+        "noSubscription": "One-time payment, no subscription",
+        "item1Title": "30-minute video session",
+        "item1Desc": "Live exchange with an expert",
+        "item2Title": "Personalized analysis",
+        "item2Desc": "CV, LinkedIn profile, job search strategy",
+        "item3Title": "Concrete action plan",
+        "item3Desc": "Immediately actionable recommendations",
+        "item4Title": "Written summary",
+        "item4Desc": "Detailed recap after the consultation",
+        "securePay": "Secure payment by Stripe"
+      },
+      "form": {
+        "title": "Book my consultation",
+        "desc": "Fill in the form to be contacted by an expert recruiter",
+        "fullName": "Full name *",
+        "email": "Email *",
+        "phone": "Phone",
+        "sector": "Industry *",
+        "sectorPlaceholder": "Select your industry",
+        "experienceLevel": "Experience level *",
+        "experiencePlaceholder": "Select your level",
+        "preferredDate": "Preferred date (optional)",
+        "message": "Message / Questions *",
+        "messagePlaceholder": "Briefly describe your situation and professional goals...",
+        "submitting": "Processing...",
+        "submit": "Book my consultation (€50)",
+        "submitNote": "After validation, you'll be redirected to secure Stripe payment",
+        "error": "An error occurred. Please try again.",
+        "sectors": {
+          "tech": "Tech / IT",
+          "finance": "Finance / Banking",
+          "marketing": "Marketing / Communications",
+          "sales": "Sales / Business Development",
+          "hr": "HR / Recruitment",
+          "engineering": "Engineering",
+          "healthcare": "Healthcare",
+          "education": "Education",
+          "other": "Other"
+        },
+        "levels": {
+          "junior": "Junior (0-3 years)",
+          "confirmed": "Mid-level (3-7 years)",
+          "senior": "Senior (7-12 years)",
+          "expert": "Expert (12+ years)",
+          "manager": "Manager / Lead",
+          "executive": "Executive / C-level"
+        }
+      },
+      "validation": {
+        "fullNameRequired": "Full name is required",
+        "fullNameTooShort": "Name must contain at least 2 characters",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email format",
+        "phoneInvalid": "Invalid phone format",
+        "sectorRequired": "Industry is required",
+        "experienceRequired": "Experience level is required",
+        "messageRequired": "Message is required",
+        "messageTooShort": "Message must contain at least 10 characters"
+      },
+      "cta": {
+        "title": "Ready to boost your career?",
+        "spots": "👥 5 consultations booked this week",
+        "button": "Book now (€50)"
+      }
+    }
   }
 }
