@@ -16,6 +16,7 @@ import { PlanType } from "@/hooks/use-freemium-limits";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 interface PricingPlan {
   id: PlanType;
@@ -35,103 +36,59 @@ interface PricingPlan {
   }[];
 }
 
-const plans: PricingPlan[] = [
-  {
-    id: "free",
-    name: "Gratuit",
-    price: "0",
-    priceValue: 0,
-    period: "",
-    description: "Parfait pour decouvrir HuntZen",
-    icon: <Gift className="w-6 h-6" />,
-    color: "text-gray-600",
-    bgGradient: "from-gray-400 to-gray-500",
-    features: [
-      { name: "3 recherches par jour", included: true },
-      { name: "10 offres visibles max", included: true },
-      { name: "1 analyse CV par jour", included: true },
-      { name: "5 minutes de coaching IA", included: true },
-      { name: "Filtres avances", included: false },
-      { name: "Favoris", included: false },
-      { name: "Score visuel CV", included: false },
-      { name: "Export PDF", included: false },
-      { name: "Simulation entretien", included: false },
-    ],
-  },
-  {
-    id: "starter",
-    name: "Starter",
-    price: "8,90",
-    priceValue: 8.9,
-    period: "/mois",
-    description: "Ideal pour commencer votre recherche",
-    icon: <Zap className="w-6 h-6" />,
-    color: "text-blue-600",
-    bgGradient: "from-blue-500 to-blue-600",
-    features: [
-      { name: "Recherches illimitees", included: true, highlight: true },
-      { name: "Toutes les offres visibles", included: true, highlight: true },
-      { name: "Filtres avances", included: true },
-      { name: "Favoris", included: true },
-      { name: "CV illimite + Score visuel", included: true },
-      { name: "Coach IA 30 min/jour", included: true },
-      { name: "Export PDF", included: false },
-      { name: "Simulation entretien", included: false },
-      { name: "Alertes email", included: false },
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "13,90",
-    priceValue: 13.9,
-    period: "/mois",
-    description: "Le plus populaire pour booster sa carriere",
-    icon: <Sparkles className="w-6 h-6" />,
-    color: "text-violet-600",
-    bgGradient: "from-violet-500 to-purple-600",
-    popular: true,
-    features: [
-      { name: "Tout Starter inclus", included: true },
-      { name: "Coach IA illimite", included: true, highlight: true },
-      { name: "Export PDF rapports CV", included: true, highlight: true },
-      { name: "Simulation entretien IA", included: true, highlight: true },
-      { name: "Support prioritaire", included: true },
-      { name: "Historique CV", included: false },
-      { name: "Conseils personnalises", included: false },
-      { name: "Alertes email", included: false },
-      { name: "Historique sessions coach", included: false },
-    ],
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    price: "19,90",
-    priceValue: 19.9,
-    period: "/mois",
-    description: "Acces complet a toutes les fonctionnalites",
-    icon: <Crown className="w-6 h-6" />,
-    color: "text-amber-600",
-    bgGradient: "from-amber-500 to-orange-500",
-    features: [
-      { name: "Tout Pro inclus", included: true },
-      { name: "Historique CV illimite", included: true, highlight: true },
-      { name: "Conseils personnalises CV", included: true, highlight: true },
-      {
-        name: "Alertes email nouvelles offres",
-        included: true,
-        highlight: true,
-      },
-      { name: "Historique sessions coach", included: true },
-      { name: "Acces beta nouvelles fonctions", included: true },
-      { name: "Support VIP", included: true },
-      { name: "", included: true },
-      { name: "", included: true },
-    ],
-  },
-];
+// Static config: booleans only (no translatable text)
+const FEATURE_CONFIGS: Record<
+  string,
+  { included: boolean; highlight?: boolean }[]
+> = {
+  free: [
+    { included: true },
+    { included: true },
+    { included: true },
+    { included: true },
+    { included: false },
+    { included: false },
+    { included: false },
+    { included: false },
+    { included: false },
+  ],
+  starter: [
+    { included: true, highlight: true },
+    { included: true, highlight: true },
+    { included: true },
+    { included: true },
+    { included: true },
+    { included: true },
+    { included: false },
+    { included: false },
+    { included: false },
+  ],
+  pro: [
+    { included: true },
+    { included: true, highlight: true },
+    { included: true, highlight: true },
+    { included: true, highlight: true },
+    { included: true },
+    { included: false },
+    { included: false },
+    { included: false },
+    { included: false },
+  ],
+  premium: [
+    { included: true },
+    { included: true, highlight: true },
+    { included: true, highlight: true },
+    { included: true, highlight: true },
+    { included: true },
+    { included: true },
+    { included: true },
+    { included: true },
+    { included: true },
+  ],
+};
 
 export function PricingModal() {
+  const tModal = useTranslations("pricingModal");
   const {
     showPricingModal,
     closePricingModal,
@@ -140,6 +97,64 @@ export function PricingModal() {
   } = useSubscription();
   const auth = useOptionalAuth();
   const user = auth?.user;
+
+  const buildFeatures = (id: string) =>
+    (tModal.raw(`plans.${id}.featureNames`) as string[]).map((name, i) => ({
+      name,
+      ...(FEATURE_CONFIGS[id]?.[i] ?? { included: false }),
+    }));
+
+  const plans: PricingPlan[] = [
+    {
+      id: "free",
+      name: tModal("plans.free.name"),
+      price: "0",
+      priceValue: 0,
+      period: tModal("plans.free.period"),
+      description: tModal("plans.free.description"),
+      icon: <Gift className="w-6 h-6" />,
+      color: "text-gray-600",
+      bgGradient: "from-gray-400 to-gray-500",
+      features: buildFeatures("free"),
+    },
+    {
+      id: "starter",
+      name: tModal("plans.starter.name"),
+      price: "8,90",
+      priceValue: 8.9,
+      period: tModal("plans.starter.period"),
+      description: tModal("plans.starter.description"),
+      icon: <Zap className="w-6 h-6" />,
+      color: "text-blue-600",
+      bgGradient: "from-blue-500 to-blue-600",
+      features: buildFeatures("starter"),
+    },
+    {
+      id: "pro",
+      name: tModal("plans.pro.name"),
+      price: "13,90",
+      priceValue: 13.9,
+      period: tModal("plans.pro.period"),
+      description: tModal("plans.pro.description"),
+      icon: <Sparkles className="w-6 h-6" />,
+      color: "text-violet-600",
+      bgGradient: "from-violet-500 to-purple-600",
+      popular: true,
+      features: buildFeatures("pro"),
+    },
+    {
+      id: "premium",
+      name: tModal("plans.premium.name"),
+      price: "19,90",
+      priceValue: 19.9,
+      period: tModal("plans.premium.period"),
+      description: tModal("plans.premium.description"),
+      icon: <Crown className="w-6 h-6" />,
+      color: "text-amber-600",
+      bgGradient: "from-amber-500 to-orange-500",
+      features: buildFeatures("premium"),
+    },
+  ];
 
   // 🔥 FIX: Use useSubscriptionApi directly to get fresh data from backend
   const apiData = useSubscriptionApi();
@@ -157,14 +172,14 @@ export function PricingModal() {
 
   const handleSelectPlan = async (planId: PlanType) => {
     if (planId === "free" || planId === currentPlan) {
-      toast.info("Vous utilisez déjà ce plan");
+      toast.info(tModal("toasts.alreadyOnPlan"));
       closePricingModal();
       return;
     }
 
     // Check if user is authenticated
     if (!user || !auth?.session) {
-      toast.error("Vous devez être connecté pour souscrire à un plan");
+      toast.error(tModal("toasts.mustBeLoggedIn"));
       closePricingModal();
       // Redirect to login with pricing redirect
       window.location.href = "/login?redirectTo=/pricing";
@@ -172,7 +187,9 @@ export function PricingModal() {
     }
 
     try {
-      toast.loading("Préparation du paiement...", { id: "stripe-redirect" });
+      toast.loading(tModal("toasts.preparingPayment"), {
+        id: "stripe-redirect",
+      });
       closePricingModal();
 
       // ✅ FIX 5: Rafraîchir la session avant le checkout pour garantir user_id valide
@@ -183,7 +200,7 @@ export function PricingModal() {
       } = await supabase.auth.refreshSession();
 
       if (sessionError || !session) {
-        throw new Error("Votre session a expiré. Veuillez vous reconnecter.");
+        throw new Error(tModal("toasts.sessionExpired"));
       }
 
       // Call backend to create Stripe checkout session
@@ -217,13 +234,9 @@ export function PricingModal() {
       if (data.modified) {
         // Subscription was modified immediately (upgrade) or scheduled (downgrade)
         if (data.immediate) {
-          toast.success(
-            "✨ Abonnement mis à niveau ! Vérification en cours...",
-          );
+          toast.success(tModal("toasts.upgraded"));
         } else {
-          toast.success(
-            "📅 Changement planifié ! Votre nouveau plan sera actif à la fin de la période actuelle.",
-          );
+          toast.success(tModal("toasts.scheduled"));
         }
 
         // Redirect to success page with polling to verify update
@@ -237,9 +250,7 @@ export function PricingModal() {
     } catch (error: any) {
       console.error("Stripe checkout error:", error);
       toast.dismiss("stripe-redirect");
-      toast.error(
-        error.message || "Erreur lors de la création de la session de paiement",
-      );
+      toast.error(error.message || tModal("toasts.paymentError"));
     }
   };
 
@@ -248,11 +259,11 @@ export function PricingModal() {
       <DialogContent className="max-w-[95vw] w-full lg:max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-white text-gray-900">
         <DialogHeader className="px-6 pt-6 pb-3 flex-shrink-0">
           <DialogTitle className="text-2xl font-bold text-center">
-            Debloquez toutes les fonctionnalites
+            {tModal("title")}
           </DialogTitle>
           {pricingModalFeature && (
             <p className="text-center text-muted-foreground mt-2 text-sm">
-              Cette fonctionnalite necessite un abonnement
+              {tModal("featureRequired")}
             </p>
           )}
         </DialogHeader>
@@ -272,7 +283,7 @@ export function PricingModal() {
                 {/* Popular Badge */}
                 {plan.popular && (
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 text-xs py-1 px-3 whitespace-nowrap">
-                    Le plus populaire
+                    {tModal("popular")}
                   </Badge>
                 )}
 
@@ -294,7 +305,7 @@ export function PricingModal() {
                   <div className="flex items-baseline justify-center gap-1">
                     {plan.id === "free" ? (
                       <span className="text-3xl font-bold text-gray-900">
-                        Gratuit
+                        {tModal("free")}
                       </span>
                     ) : (
                       <>
@@ -345,8 +356,9 @@ export function PricingModal() {
                     ))}
                   {plan.features.filter((f) => f.name).length > 6 && (
                     <li className="text-xs text-muted-foreground italic pl-6">
-                      + {plan.features.filter((f) => f.name).length - 6} autres
-                      fonctionnalités
+                      {tModal("moreFeatures", {
+                        count: plan.features.filter((f) => f.name).length - 6,
+                      })}
                     </li>
                   )}
                 </ul>
@@ -362,7 +374,9 @@ export function PricingModal() {
                   variant={plan.popular ? "default" : "outline"}
                   disabled={plan.id === "free"}
                 >
-                  {plan.id === "free" ? "Plan actuel" : `Choisir ${plan.name}`}
+                  {plan.id === "free"
+                    ? tModal("currentPlan")
+                    : tModal("choosePlan", { name: plan.name })}
                 </Button>
               </div>
             ))}
@@ -371,14 +385,14 @@ export function PricingModal() {
           {/* Footer */}
           <div className="text-center mt-4 space-y-2">
             <p className="text-sm text-muted-foreground font-medium">
-              ✓ Satisfait ou rembourse pendant 14 jours
+              {tModal("guarantee")}
             </p>
             <Link
               href="/pricing"
               onClick={closePricingModal}
               className="text-xs text-primary hover:underline block"
             >
-              Voir le comparatif complet des fonctionnalites
+              {tModal("seeComparison")}
             </Link>
           </div>
         </div>
@@ -393,6 +407,66 @@ export function PricingCards({
 }: {
   onSelectPlan?: (plan: PlanType) => void;
 }) {
+  const tModal = useTranslations("pricingModal");
+
+  const buildFeatures = (id: string) =>
+    (tModal.raw(`plans.${id}.featureNames`) as string[]).map((name, i) => ({
+      name,
+      ...(FEATURE_CONFIGS[id]?.[i] ?? { included: false }),
+    }));
+
+  const plans: PricingPlan[] = [
+    {
+      id: "free",
+      name: tModal("plans.free.name"),
+      price: "0",
+      priceValue: 0,
+      period: tModal("plans.free.period"),
+      description: tModal("plans.free.description"),
+      icon: <Gift className="w-6 h-6" />,
+      color: "text-gray-600",
+      bgGradient: "from-gray-400 to-gray-500",
+      features: buildFeatures("free"),
+    },
+    {
+      id: "starter",
+      name: tModal("plans.starter.name"),
+      price: "8,90",
+      priceValue: 8.9,
+      period: tModal("plans.starter.period"),
+      description: tModal("plans.starter.description"),
+      icon: <Zap className="w-6 h-6" />,
+      color: "text-blue-600",
+      bgGradient: "from-blue-500 to-blue-600",
+      features: buildFeatures("starter"),
+    },
+    {
+      id: "pro",
+      name: tModal("plans.pro.name"),
+      price: "13,90",
+      priceValue: 13.9,
+      period: tModal("plans.pro.period"),
+      description: tModal("plans.pro.description"),
+      icon: <Sparkles className="w-6 h-6" />,
+      color: "text-violet-600",
+      bgGradient: "from-violet-500 to-purple-600",
+      popular: true,
+      features: buildFeatures("pro"),
+    },
+    {
+      id: "premium",
+      name: tModal("plans.premium.name"),
+      price: "19,90",
+      priceValue: 19.9,
+      period: tModal("plans.premium.period"),
+      description: tModal("plans.premium.description"),
+      icon: <Crown className="w-6 h-6" />,
+      color: "text-amber-600",
+      bgGradient: "from-amber-500 to-orange-500",
+      features: buildFeatures("premium"),
+    },
+  ];
+
   return (
     <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
       {plans.map((plan) => (
@@ -406,7 +480,7 @@ export function PricingCards({
         >
           {plan.popular && (
             <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 px-4">
-              Le plus populaire
+              {tModal("popular")}
             </Badge>
           )}
 
@@ -423,7 +497,7 @@ export function PricingCards({
           <div className="text-center mb-6">
             <div className="flex items-baseline justify-center gap-1">
               {plan.id === "free" ? (
-                <span className="text-5xl font-bold">Gratuit</span>
+                <span className="text-5xl font-bold">{tModal("free")}</span>
               ) : (
                 <>
                   <span className="text-5xl font-bold">{plan.price}</span>
@@ -478,7 +552,9 @@ export function PricingCards({
             size="lg"
             disabled={plan.id === "free"}
           >
-            {plan.id === "free" ? "Plan actuel" : `Commencer avec ${plan.name}`}
+            {plan.id === "free"
+              ? tModal("currentPlan")
+              : tModal("startWith", { name: plan.name })}
           </Button>
         </div>
       ))}

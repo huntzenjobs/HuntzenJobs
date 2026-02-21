@@ -18,8 +18,17 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
+import { useTranslations } from "next-intl";
 
 export default function HomePage() {
+  const tHero = useTranslations("hero");
+  const tTools = useTranslations("tools");
+  const tPain = useTranslations("painPoints");
+  const tFeatures = useTranslations("features");
+  const tStats = useTranslations("stats");
+  const tPricing = useTranslations("pricing");
+  const tPlans = useTranslations("pricingPlans");
+  const tFooter = useTranslations("footer");
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <LandingHeader />
@@ -109,9 +118,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-base sm:text-lg md:text-xl text-white/90 max-w-3xl mx-auto mb-8 px-4 leading-relaxed"
           >
-            Votre allié carrière complet pour décrocher l&apos;emploi qui vous
-            ressemble. Recherche ciblée, CV optimisé, et accompagnement
-            personnalisé à chaque étape.
+            {tHero("subtitle")}
           </motion.p>
 
           <motion.div
@@ -125,13 +132,13 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-2xl hover:shadow-[#00D9FF]/50 hover:-translate-y-1 w-full sm:w-auto justify-center"
             >
               <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-              Commencer ma recherche
+              {tHero("ctaSearch")}
             </Link>
             <a
               href="#features"
               className="text-white/70 hover:text-white text-sm sm:text-base font-medium transition-colors flex items-center gap-2"
             >
-              Découvrir nos outils
+              {tHero("ctaDiscover")}
               <motion.span
                 animate={{ y: [0, 4, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
@@ -158,7 +165,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 text-[#00D9FF] text-xs font-bold tracking-widest uppercase mb-4"
             >
               <Sparkles className="w-3 h-3" />
-              Tous nos outils
+              {tTools("badge")}
             </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -167,7 +174,7 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3"
             >
-              Une plateforme complète pour réussir votre recherche d&apos;emploi
+              {tTools("title")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -176,8 +183,7 @@ export default function HomePage() {
               transition={{ delay: 0.2 }}
               className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-sm sm:text-base px-4"
             >
-              Des outils pensés pour vous accompagner à chaque étape : de la
-              recherche d&apos;offres à la négociation salariale
+              {tTools("subtitle")}
             </motion.p>
           </div>
 
@@ -188,71 +194,65 @@ export default function HomePage() {
                 {
                   type: "featured",
                   icon: Search,
-                  category: "Recherche",
-                  title: "Agrégateur d\u2019offres intelligent",
-                  description:
-                    "Toutes les offres du marché centralisées et filtrées pour vous",
+                  category: tTools("items.jobSearch.category"),
+                  title: tTools("items.jobSearch.title"),
+                  description: tTools("items.jobSearch.description"),
                   href: "/jobs",
                 },
                 {
                   type: "regular",
                   icon: Target,
-                  category: "Recherche",
-                  title: "Score de compatibilité",
-                  description:
-                    "Découvrez les offres qui vous correspondent vraiment",
+                  category: tTools("items.compatibility.category"),
+                  title: tTools("items.compatibility.title"),
+                  description: tTools("items.compatibility.description"),
                   href: "/jobs",
                 },
                 {
                   type: "regular",
                   icon: FileText,
-                  category: "CV",
-                  title: "Analyse CV experte",
-                  description: "Optimisez votre CV pour chaque candidature",
+                  category: tTools("items.cvAnalysis.category"),
+                  title: tTools("items.cvAnalysis.title"),
+                  description: tTools("items.cvAnalysis.description"),
                   href: "/cv-analysis",
                 },
                 {
                   type: "regular",
                   icon: Sparkles,
-                  category: "CV",
-                  title: "Diagnostic compétences",
-                  description:
-                    "Identifiez vos forces et axes d\u2019amélioration",
+                  category: tTools("items.skills.category"),
+                  title: tTools("items.skills.title"),
+                  description: tTools("items.skills.description"),
                   href: "/cv-analysis",
                 },
                 {
                   type: "regular",
                   icon: Users,
-                  category: "Coaching",
-                  title: "Simulation d\u2019entretien",
-                  description:
-                    "Entraînez-vous en conditions réelles avec l\u2019IA",
+                  category: tTools("items.interview.category"),
+                  title: tTools("items.interview.title"),
+                  description: tTools("items.interview.description"),
                   href: "/assistant",
                 },
                 {
                   type: "featured",
                   icon: MessageSquare,
-                  category: "Coaching",
-                  title: "Coach carrière 24/7",
-                  description: "Un accompagnement personnalisé à chaque étape",
+                  category: tTools("items.coach.category"),
+                  title: tTools("items.coach.title"),
+                  description: tTools("items.coach.description"),
                   href: "/assistant",
                 },
                 {
                   type: "medium",
                   icon: TrendingUp,
-                  category: "Coaching",
-                  title: "Projections salariales",
-                  description:
-                    "Négociez avec les bons arguments et les bons chiffres",
+                  category: tTools("items.salary.category"),
+                  title: tTools("items.salary.title"),
+                  description: tTools("items.salary.description"),
                   href: "/assistant",
                 },
                 {
                   type: "medium",
                   icon: Calendar,
-                  category: "Networking",
-                  title: "Salons & Forums emploi",
-                  description:
-                    "Rencontrez directement les recruteurs en personne",
+                  category: tTools("items.salons.category"),
+                  title: tTools("items.salons.title"),
+                  description: tTools("items.salons.description"),
                   href: "/salons",
                 },
               ] as Array<{
@@ -304,7 +304,7 @@ export default function HomePage() {
                           {tool.description}
                         </p>
                         <div className="relative z-10 mt-5 flex items-center gap-2 text-[#00D9FF] text-base font-semibold">
-                          <span>Explorer</span>
+                          <span>{tTools("explore")}</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                         </div>
                       </div>
@@ -351,7 +351,7 @@ export default function HomePage() {
                           {tool.description}
                         </p>
                         <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-300 group-hover:text-[#00D9FF] transition-colors duration-200">
-                          <span>Explorer</span>
+                          <span>{tTools("explore")}</span>
                           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
                         </div>
                       </div>
@@ -374,7 +374,7 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3"
             >
-              Chercher un emploi ne devrait pas être un parcours du combattant
+              {tPain("title")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -383,35 +383,30 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-[#00D9FF] font-semibold uppercase text-xs sm:text-sm tracking-wide"
             >
-              Pourtant, les candidats perdent des mois à naviguer à
-              l&apos;aveugle
+              {tPain("subtitle")}
             </motion.p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
             {[
               {
-                title: "GHOSTING PERMANENT",
-                description:
-                  "73% des candidats n'obtiennent jamais de retour, même après plusieurs relances",
+                title: tPain("items.ghosting.title"),
+                description: tPain("items.ghosting.description"),
                 icon: AlertCircle,
               },
               {
-                title: "RECHERCHE ÉPUISANTE",
-                description:
-                  "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier",
+                title: tPain("items.exhausting.title"),
+                description: tPain("items.exhausting.description"),
                 icon: Search,
               },
               {
-                title: "NÉGOCIATION À L'AVEUGLE",
-                description:
-                  "Impossible de connaître les salaires réels selon votre expérience et localisation",
+                title: tPain("items.negotiation.title"),
+                description: tPain("items.negotiation.description"),
                 icon: TrendingUp,
               },
               {
-                title: "MANQUE DE FEEDBACK",
-                description:
-                  "Aucun accompagnement, aucune visibilité sur vos points forts et axes d'amélioration",
+                title: tPain("items.feedback.title"),
+                description: tPain("items.feedback.description"),
                 icon: Target,
               },
             ].map((item, index) => (
@@ -450,8 +445,19 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3"
             >
-              Votre <span className="text-[#00D9FF]">allié carrière</span> au
-              quotidien
+              {(() => {
+                const title = tFeatures("title");
+                const highlight = tFeatures("titleHighlight");
+                const idx = title.indexOf(highlight);
+                if (idx === -1) return title;
+                return (
+                  <>
+                    {title.slice(0, idx)}
+                    <span className="text-[#00D9FF]">{highlight}</span>
+                    {title.slice(idx + highlight.length)}
+                  </>
+                );
+              })()}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -460,8 +466,7 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-gray-600 dark:text-gray-300 text-base sm:text-lg max-w-2xl mx-auto"
             >
-              Des outils puissants et un accompagnement personnalisé pour
-              transformer votre recherche d&apos;emploi
+              {tFeatures("subtitle")}
             </motion.p>
           </div>
 
@@ -476,21 +481,24 @@ export default function HomePage() {
                 transition={{ duration: 0.6 }}
               >
                 <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                  <span className="text-[#00D9FF]">Analyse experte</span> et
-                  optimisation de votre CV
+                  {(() => {
+                    const title = tFeatures("cv.title");
+                    const highlight = tFeatures("cv.titleHighlight");
+                    const i = title.indexOf(highlight);
+                    if (i === -1) return title;
+                    return (
+                      <>
+                        <span className="text-[#00D9FF]">{highlight}</span>
+                        {title.slice(i + highlight.length)}
+                      </>
+                    );
+                  })()}
                 </h3>
                 <p className="text-gray-700 dark:text-gray-300 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
-                  Bénéficiez d&apos;une analyse approfondie de votre profil pour
-                  identifier précisément vos atouts et les compétences
-                  recherchées par le marché. Recevez des recommandations
-                  concrètes pour maximiser vos chances.
+                  {tFeatures("cv.description")}
                 </p>
                 <ul className="space-y-3">
-                  {[
-                    "Évaluation détaillée de vos compétences techniques et humaines",
-                    "Recommandations de formations certifiantes ciblées",
-                    "Score d'employabilité actualisé en temps réel",
-                  ].map((item, idx) => (
+                  {(tFeatures.raw("cv.items") as string[]).map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
                       <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">
@@ -542,28 +550,24 @@ export default function HomePage() {
                 className="md:order-2"
               >
                 <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                  <span className="text-[#00D9FF]">Matching intelligent et</span>{" "}
-                   <span className="text-[#00D9FF]">recherche ciblée</span>
+                  <span className="text-[#00D9FF]">
+                    {tFeatures("matching.title")}
+                  </span>
                 </h3>
                 <p className="text-gray-700 dark:text-white/80 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
-                  Fini les heures perdues à scroller des offres non pertinentes.
-                  Notre agrégateur centralise toutes les opportunités de +20
-                  plateformes et vous présente uniquement celles qui
-                  correspondent réellement à votre profil.
+                  {tFeatures("matching.description")}
                 </p>
                 <ul className="space-y-3">
-                  {[
-                    "Score de compatibilité précis (0-100%) pour chaque offre",
-                    "Alertes instantanées sur les opportunités à fort potentiel",
-                    "Système de favoris pour suivre vos candidatures",
-                  ].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 dark:text-white/85 text-sm sm:text-base">
-                        {item}
-                      </span>
-                    </li>
-                  ))}
+                  {(tFeatures.raw("matching.items") as string[]).map(
+                    (item, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-700 dark:text-white/85 text-sm sm:text-base">
+                          {item}
+                        </span>
+                      </li>
+                    ),
+                  )}
                 </ul>
               </motion.div>
             </div>
@@ -581,30 +585,30 @@ export default function HomePage() {
             className="text-center mb-10 sm:mb-12"
           >
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-              Ils nous font confiance
+              {tStats("title")}
             </h2>
             <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
-              Des milliers de candidats ont déjà trouvé leur voie avec HuntZen
+              {tStats("subtitle")}
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {[
               {
-                value: "+ 100 000",
-                label: "Candidats accompagnés",
+                value: tStats("candidates.value"),
+                label: tStats("candidates.label"),
                 icon: Users,
                 color: "#00D9FF",
               },
               {
-                value: "87%",
-                label: "Taux de réponse positif",
+                value: tStats("responseRate.value"),
+                label: tStats("responseRate.label"),
                 icon: CheckCircle2,
                 color: "#00D9FF",
               },
               {
-                value: "+ 35%",
-                label: "De salaire négocié en moyenne",
+                value: tStats("salary.value"),
+                label: tStats("salary.label"),
                 icon: TrendingUp,
                 color: "#00D9FF",
               },
@@ -647,7 +651,7 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3"
             >
-              Choisissez le plan qui vous correspond
+              {tPricing("title")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -656,83 +660,52 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-gray-600 dark:text-gray-300 text-sm sm:text-base max-w-2xl mx-auto"
             >
-              Commencez gratuitement et évoluez vers le plan adapté à vos
-              besoins
+              {tPricing("subtitle")}
             </motion.p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
             {[
               {
-                name: "GRATUIT",
+                name: tPlans("plans.free.name"),
                 price: "0€",
-                period: "/7 jours",
+                period: tPlans("plans.free.period"),
                 color: "#9CA3AF",
-                features: [
-                  "3 recherches d'offres par jour",
-                  "10 offres d'emploi visibles maximum",
-                  "1 analyse de CV par jour",
-                  "5 minutes de coaching personnel",
-                  "Support standard",
-                ],
-                unavailable: [
-                  "Filtres avancés",
-                  "Gestion favoris",
-                  "Export PDF rapports",
-                ],
-                cta: "Commencer gratuitement",
+                features: tPlans.raw("plans.free.features") as string[],
+                unavailable: tPlans.raw("plans.free.unavailable") as string[],
+                cta: tPlans("plans.free.cta"),
               },
               {
-                name: "ESSENTIEL",
+                name: tPlans("plans.essential.name"),
                 price: "8.90€",
-                period: "/mois",
+                period: tPlans("plans.essential.period"),
                 color: "#00D9FF",
                 popular: true,
-                features: [
-                  "Recherches d'offres illimitées",
-                  "Accès à toutes les offres d'emploi",
-                  "Filtres avancés (salaire, télétravail, date)",
-                  "Gestion de vos favoris",
-                  "Analyses de CV illimitées",
-                  "Score de compatibilité détaillé",
-                  "Coaching personnalisé (30 min/jour)",
-                ],
-                unavailable: ["Export PDF rapports"],
-                cta: "Commencer avec Essentiel",
+                features: tPlans.raw("plans.essential.features") as string[],
+                unavailable: tPlans.raw(
+                  "plans.essential.unavailable",
+                ) as string[],
+                cta: tPlans("plans.essential.cta"),
               },
               {
-                name: "PRO",
+                name: tPlans("plans.pro.name"),
                 price: "13.90€",
-                period: "/mois",
+                period: tPlans("plans.pro.period"),
                 color: "#9333EA",
-                features: [
-                  "Toutes les fonctionnalités Essentiel",
-                  "Coaching disponible 24/7 sans limite",
-                  "Export PDF professionnel",
-                  "Simulations d'entretien réalistes",
-                  "Feedback détaillé sur vos performances",
-                  "Support prioritaire par email",
-                ],
-                unavailable: [],
-                cta: "Commencer avec Pro",
+                features: tPlans.raw("plans.pro.features") as string[],
+                unavailable: tPlans.raw("plans.pro.unavailable") as string[],
+                cta: tPlans("plans.pro.cta"),
               },
               {
-                name: "PREMIUM",
+                name: tPlans("plans.premium.name"),
                 price: "19.90€",
-                period: "/mois",
+                period: tPlans("plans.premium.period"),
                 color: "#F97316",
-                features: [
-                  "Toutes les fonctionnalités Pro",
-                  "Historique illimité de vos analyses",
-                  "Conseils personnalisés ultra-ciblés",
-                  "Alertes email instantanées",
-                  "Historique complet coaching",
-                  "Accès anticipé nouvelles fonctionnalités",
-                  "Support VIP prioritaire",
-                  "Rapports mensuels de progression",
-                ],
-                unavailable: [],
-                cta: "Commencer avec Premium",
+                features: tPlans.raw("plans.premium.features") as string[],
+                unavailable: tPlans.raw(
+                  "plans.premium.unavailable",
+                ) as string[],
+                cta: tPlans("plans.premium.cta"),
               },
             ].map((plan, index) => (
               <motion.div
@@ -749,7 +722,7 @@ export default function HomePage() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#00D9FF] text-white text-xs font-bold rounded-full">
-                    POPULAIRE
+                    {tPlans("popular")}
                   </div>
                 )}
 
@@ -820,33 +793,32 @@ export default function HomePage() {
               <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
             </div>
             <p className="text-white/60 text-xs sm:text-sm text-center md:text-right max-w-md">
-              Votre allié carrière pour transformer votre recherche
-              d&apos;emploi en succès.
+              {tFooter("tagline")}
             </p>
           </div>
           <hr className="border-white/10 mb-8" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
             <p>
-              &copy; {new Date().getFullYear()} HuntZen. Tous droits réservés.
+              &copy; {new Date().getFullYear()} HuntZen. {tFooter("copyright")}
             </p>
             <div className="flex items-center gap-4 sm:gap-6">
               <Link
                 href="/privacy"
                 className="hover:text-[#00D9FF] transition-colors"
               >
-                Politique de confidentialité
+                {tFooter("privacy")}
               </Link>
               <Link
                 href="/terms"
                 className="hover:text-[#00D9FF] transition-colors"
               >
-                Conditions générales
+                {tFooter("terms")}
               </Link>
               <Link
                 href="mailto:contact@huntzenjobs.co"
                 className="hover:text-[#00D9FF] transition-colors"
               >
-                Contact
+                {tFooter("contact")}
               </Link>
             </div>
           </div>

@@ -1,0 +1,371 @@
+{
+  "nav": {
+    "jobs": "Job Search",
+    "salons": "Job Fairs & Forums",
+    "tools": "Tools",
+    "resources": "Resources",
+    "toolsItems": {
+      "assistant": "Career Assistant",
+      "cvAnalysis": "CV Analysis"
+    },
+    "resourcesItems": {
+      "blog": "Blog",
+      "faq": "FAQ",
+      "reviews": "Reviews"
+    },
+    "pricing": "Pricing",
+    "login": "LOG IN",
+    "signup": "SIGN UP",
+    "language": "Language"
+  },
+  "hero": {
+    "subtitle": "Your complete career ally for landing the job that truly fits you. Targeted search, optimized CV, and personalized guidance at every step.",
+    "ctaSearch": "Start my job search",
+    "ctaDiscover": "Discover our tools"
+  },
+  "tools": {
+    "badge": "All our tools",
+    "title": "A complete platform to succeed in your job search",
+    "subtitle": "Tools designed to guide you at every step: from job discovery to salary negotiation",
+    "explore": "Explore",
+    "items": {
+      "jobSearch": {
+        "category": "Search",
+        "title": "Smart job aggregator",
+        "description": "All market opportunities centralized and filtered for you"
+      },
+      "compatibility": {
+        "category": "Search",
+        "title": "Compatibility score",
+        "description": "Discover the jobs that truly match your profile"
+      },
+      "cvAnalysis": {
+        "category": "CV",
+        "title": "Expert CV analysis",
+        "description": "Optimize your CV for every application"
+      },
+      "skills": {
+        "category": "CV",
+        "title": "Skills diagnostic",
+        "description": "Identify your strengths and areas for improvement"
+      },
+      "interview": {
+        "category": "Coaching",
+        "title": "Interview simulation",
+        "description": "Practice in real conditions with AI"
+      },
+      "coach": {
+        "category": "Coaching",
+        "title": "Career coach 24/7",
+        "description": "Personalized guidance at every step"
+      },
+      "salary": {
+        "category": "Coaching",
+        "title": "Salary projections",
+        "description": "Negotiate with the right arguments and the right numbers"
+      },
+      "salons": {
+        "category": "Networking",
+        "title": "Job fairs & forums",
+        "description": "Meet recruiters directly in person"
+      }
+    }
+  },
+  "painPoints": {
+    "title": "Job searching shouldn't feel like an obstacle course",
+    "subtitle": "Yet candidates lose months navigating blindly",
+    "items": {
+      "ghosting": {
+        "title": "PERMANENT GHOSTING",
+        "description": "73% of candidates never get a response, even after multiple follow-ups"
+      },
+      "exhausting": {
+        "title": "EXHAUSTING SEARCH",
+        "description": "Dozens of sites to check, hundreds of irrelevant offers to sort through"
+      },
+      "negotiation": {
+        "title": "BLIND NEGOTIATION",
+        "description": "Impossible to know real salaries based on your experience and location"
+      },
+      "feedback": {
+        "title": "LACK OF FEEDBACK",
+        "description": "No guidance, no visibility on your strengths and areas for improvement"
+      }
+    }
+  },
+  "features": {
+    "title": "Your everyday career ally",
+    "titleHighlight": "career ally",
+    "subtitle": "Powerful tools and personalized support to transform your job search",
+    "cv": {
+      "title": "Expert analysis and CV optimization",
+      "titleHighlight": "Expert analysis",
+      "description": "Get an in-depth analysis of your profile to precisely identify your strengths and the skills the market is looking for. Receive concrete recommendations to maximize your chances.",
+      "items": [
+        "Detailed evaluation of your technical and soft skills",
+        "Targeted certified training recommendations",
+        "Real-time updated employability score"
+      ]
+    },
+    "matching": {
+      "title": "Smart matching and targeted search",
+      "titleHighlight": "Smart matching and targeted search",
+      "description": "No more hours wasted scrolling through irrelevant offers. Our aggregator centralizes all opportunities from 20+ platforms and shows you only those that truly match your profile.",
+      "items": [
+        "Precise compatibility score (0-100%) for each offer",
+        "Instant alerts on high-potential opportunities",
+        "Favorites system to track your applications"
+      ]
+    }
+  },
+  "stats": {
+    "title": "They trust us",
+    "subtitle": "Thousands of candidates have already found their path with HuntZen",
+    "candidates": {
+      "value": "+ 100,000",
+      "label": "Candidates supported"
+    },
+    "responseRate": {
+      "value": "87%",
+      "label": "Positive response rate"
+    },
+    "salary": {
+      "value": "+ 35%",
+      "label": "Average salary increase negotiated"
+    }
+  },
+  "pricing": {
+    "title": "Choose your plan",
+    "subtitle": "Start for free, scale as you grow"
+  },
+  "cta": {
+    "startFree": "Start for free",
+    "learnMore": "Learn more"
+  },
+  "footer": {
+    "tagline": "Your career ally to transform your job search into success.",
+    "copyright": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact"
+  },
+  "pricingPlans": {
+    "popular": "POPULAR",
+    "plans": {
+      "free": {
+        "name": "FREE",
+        "period": "/7 days",
+        "cta": "Start for free",
+        "features": [
+          "3 job searches per day",
+          "10 job listings visible maximum",
+          "1 CV analysis per day",
+          "5 minutes personal coaching",
+          "Standard support"
+        ],
+        "unavailable": [
+          "Advanced filters",
+          "Favorites management",
+          "PDF report export"
+        ]
+      },
+      "essential": {
+        "name": "ESSENTIAL",
+        "period": "/month",
+        "cta": "Start with Essential",
+        "features": [
+          "Unlimited job searches",
+          "Access to all job listings",
+          "Advanced filters (salary, remote, date)",
+          "Manage your favorites",
+          "Unlimited CV analyses",
+          "Detailed compatibility score",
+          "Personalized coaching (30 min/day)"
+        ],
+        "unavailable": [
+          "PDF report export"
+        ]
+      },
+      "pro": {
+        "name": "PRO",
+        "period": "/month",
+        "cta": "Start with Pro",
+        "features": [
+          "All Essential features",
+          "24/7 unlimited coaching",
+          "Professional PDF export",
+          "Realistic interview simulations",
+          "Detailed performance feedback",
+          "Priority email support"
+        ],
+        "unavailable": []
+      },
+      "premium": {
+        "name": "PREMIUM",
+        "period": "/month",
+        "cta": "Start with Premium",
+        "features": [
+          "All Pro features",
+          "Unlimited analysis history",
+          "Ultra-targeted personalized advice",
+          "Instant email alerts",
+          "Complete coaching history",
+          "Early access to new features",
+          "Priority VIP support",
+          "Monthly progress reports"
+        ],
+        "unavailable": []
+      }
+    }
+  },
+  "sidebar": {
+    "label": "NAVIGATION",
+    "nav": {
+      "jobs": "Job Search",
+      "cvAnalysis": "CV Analysis",
+      "assistant": "Career Assistant",
+      "salons": "Job Fairs & Forums",
+      "savedJobs": "Saved Jobs",
+      "recruiterContact": "Contact Recruiter",
+      "myUsage": "My Usage"
+    },
+    "plans": {
+      "free": "Free",
+      "starter": "Starter",
+      "pro": "Pro",
+      "premium": "Premium"
+    },
+    "user": {
+      "default": "User"
+    },
+    "upgradeCta": "Go Premium",
+    "footer": {
+      "pricing": "Pricing",
+      "help": "Help",
+      "back": "Back to huntzen.co",
+      "logout": "Log out",
+      "login": "Log in"
+    },
+    "mobile": {
+      "login": "Log in",
+      "signup": "Sign up"
+    },
+    "logout": {
+      "title": "Confirm logout",
+      "description": "Are you sure you want to log out? Your saved data will be kept.",
+      "cancel": "Cancel",
+      "confirm": "Log out"
+    },
+    "aria": {
+      "close": "Close navigation menu",
+      "open": "Open navigation menu",
+      "logout": "Log out"
+    }
+  },
+  "pricingModal": {
+    "title": "Unlock all features",
+    "featureRequired": "This feature requires a subscription",
+    "popular": "Most popular",
+    "free": "Free",
+    "currentPlan": "Current plan",
+    "choosePlan": "Choose {name}",
+    "startWith": "Start with {name}",
+    "moreFeatures": "+ {count} more features",
+    "guarantee": "✓ 14-day money-back guarantee",
+    "seeComparison": "See the full feature comparison",
+    "toasts": {
+      "alreadyOnPlan": "You are already on this plan",
+      "mustBeLoggedIn": "You must be logged in to subscribe to a plan",
+      "preparingPayment": "Preparing payment...",
+      "upgraded": "✨ Subscription upgraded! Verifying...",
+      "scheduled": "📅 Change scheduled! Your new plan will be active at the end of the current period.",
+      "sessionExpired": "Your session has expired. Please log in again.",
+      "paymentError": "Error creating payment session"
+    },
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "Perfect for discovering HuntZen",
+        "period": "",
+        "featureNames": [
+          "3 searches per day",
+          "10 visible jobs max",
+          "1 CV analysis per day",
+          "5 min AI coaching",
+          "Advanced filters",
+          "Favorites",
+          "Visual CV score",
+          "PDF export",
+          "Interview simulation"
+        ]
+      },
+      "starter": {
+        "name": "Starter",
+        "description": "Ideal for starting your job search",
+        "period": "/month",
+        "featureNames": [
+          "Unlimited searches",
+          "All jobs visible",
+          "Advanced filters",
+          "Favorites",
+          "Unlimited CV + Visual score",
+          "AI Coach 30 min/day",
+          "PDF export",
+          "Interview simulation",
+          "Email alerts"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Most popular to boost your career",
+        "period": "/month",
+        "featureNames": [
+          "All Starter included",
+          "Unlimited AI coach",
+          "PDF CV report export",
+          "AI interview simulation",
+          "Priority support",
+          "CV history",
+          "Personalized advice",
+          "Email alerts",
+          "Coach session history"
+        ]
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Full access to all features",
+        "period": "/month",
+        "featureNames": [
+          "All Pro included",
+          "Unlimited CV history",
+          "Personalized CV advice",
+          "New job email alerts",
+          "Coach session history",
+          "Beta access to new features",
+          "VIP support",
+          "",
+          ""
+        ]
+      }
+    }
+  },
+  "upgradeBanner": {
+    "minimal": {
+      "text": "Go Premium to unlock all features",
+      "cta": "See plans"
+    },
+    "gradient": {
+      "title": "Switch to HuntZen Pro",
+      "subtitle": "Unlock all features and boost your career",
+      "cta": "See plans"
+    },
+    "default": {
+      "title": "Unlock HuntZen's full potential",
+      "subtitle": "Unlimited searches, PDF export, interview simulation and more",
+      "cta": "See plans"
+    },
+    "featurePrompt": {
+      "unlock": "Unlock this feature"
+    }
+  }
+}

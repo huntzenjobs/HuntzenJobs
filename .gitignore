@@ -300,6 +300,13 @@ LOGO_*.md
 
 # Testing docs (temporary)
 TESTING_*.md
+TEST_PLAN_*.md
+TEST_EXECUTION_*.md
+TESTS_RESULTS_*.md
+*_SETUP.md
+ACTIONS_*.md
+DEPLOYMENT_ENV_VARS.md
+SUPABASE_JWT_SECRET_SETUP.md
 
 # SQL debug/cleanup scripts (keep migrations!)
 /*cleanup*.sql
@@ -309,6 +316,13 @@ TESTING_*.md
 /*test*.sql
 /schema_dump.sql
 apply_migrations_guide.md
+
+# Playwright test results
+test-results/
+test-results-production/
+playwright-report/
+playwright-report-production/
+.env.test
 
 # Exceptions: Keep important docs
 !README.md
