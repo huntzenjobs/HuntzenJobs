@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { huntzenApi } from "@/lib/api/huntzen-client";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { HeroSection } from "@/components/recruiter/hero-section";
 import { ProcessSteps } from "@/components/recruiter/process-steps";
@@ -41,6 +42,7 @@ import { TestimonialsSection } from "@/components/recruiter/testimonials-section
 import { FAQSection } from "@/components/recruiter/faq-section";
 
 export default function RecruiterContactPage() {
+  const t = useTranslations("dashboard.recruiterContact");
   const router = useRouter();
   const auth = useOptionalAuth();
   const user = auth?.user;
@@ -62,29 +64,27 @@ export default function RecruiterContactPage() {
   const validateField = (field: string, value: string): string => {
     switch (field) {
       case "fullName":
-        if (!value.trim()) return "Le nom complet est requis";
-        if (value.trim().length < 2)
-          return "Le nom doit contenir au moins 2 caractères";
+        if (!value.trim()) return t("validation.fullNameRequired");
+        if (value.trim().length < 2) return t("validation.fullNameTooShort");
         return "";
       case "email":
-        if (!value.trim()) return "L'email est requis";
+        if (!value.trim()) return t("validation.emailRequired");
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) return "Format d'email invalide";
+        if (!emailRegex.test(value)) return t("validation.emailInvalid");
         return "";
       case "phone":
         if (value && !/^[\d\s+()-]+$/.test(value))
-          return "Format de téléphone invalide";
+          return t("validation.phoneInvalid");
         return "";
       case "sector":
-        if (!value) return "Le secteur d'activité est requis";
+        if (!value) return t("validation.sectorRequired");
         return "";
       case "experienceLevel":
-        if (!value) return "Le niveau d'expérience est requis";
+        if (!value) return t("validation.experienceRequired");
         return "";
       case "message":
-        if (!value.trim()) return "Le message est requis";
-        if (value.trim().length < 10)
-          return "Le message doit contenir au moins 10 caractères";
+        if (!value.trim()) return t("validation.messageRequired");
+        if (value.trim().length < 10) return t("validation.messageTooShort");
         return "";
       default:
         return "";
@@ -137,7 +137,7 @@ export default function RecruiterContactPage() {
         window.location.href = paymentResponse.checkout_url;
       }
     } catch (error: any) {
-      alert("Une erreur est survenue. Veuillez réessayer.");
+      alert(t("form.error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -179,7 +179,7 @@ export default function RecruiterContactPage() {
           className="text-center p-6 bg-white rounded-xl border-2 border-[#00D9FF]/20 hover:border-[#00D9FF] hover:shadow-lg transition-all"
         >
           <div className="text-4xl font-black text-[#00D9FF] mb-2">127</div>
-          <p className="text-sm text-gray-600">Consultations réussies</p>
+          <p className="text-sm text-gray-600">{t("stats.consultations")}</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -188,7 +188,7 @@ export default function RecruiterContactPage() {
           className="text-center p-6 bg-white rounded-xl border-2 border-[#00C4EA]/20 hover:border-[#00C4EA] hover:shadow-lg transition-all"
         >
           <div className="text-4xl font-black text-[#00C4EA] mb-2">4.9/5</div>
-          <p className="text-sm text-gray-600">Satisfaction moyenne</p>
+          <p className="text-sm text-gray-600">{t("stats.satisfaction")}</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -197,7 +197,7 @@ export default function RecruiterContactPage() {
           className="text-center p-6 bg-white rounded-xl border-2 border-[#00D9FF]/20 hover:border-[#00D9FF] hover:shadow-lg transition-all"
         >
           <div className="text-4xl font-black text-[#00D9FF] mb-2">48h</div>
-          <p className="text-sm text-gray-600">Délai moyen</p>
+          <p className="text-sm text-gray-600">{t("stats.delay")}</p>
         </motion.div>
       </motion.div>
 
@@ -206,23 +206,20 @@ export default function RecruiterContactPage() {
         {[
           {
             icon: CheckCircle2,
-            title: "Conseils personnalisés",
-            description:
-              "Un recruteur expert analyse votre profil et vous donne des recommandations sur-mesure",
+            title: t("benefits.personalizedTitle"),
+            description: t("benefits.personalizedDesc"),
             delay: 0.7,
           },
           {
             icon: Star,
-            title: "Expertise professionnelle",
-            description:
-              "Nos recruteurs ont 10+ ans d'expérience dans le recrutement de cadres et talents",
+            title: t("benefits.expertiseTitle"),
+            description: t("benefits.expertiseDesc"),
             delay: 0.8,
           },
           {
             icon: Clock,
-            title: "Réponse rapide",
-            description:
-              "Vous serez contacté sous 48h pour planifier votre consultation de 30 minutes",
+            title: t("benefits.fastResponseTitle"),
+            description: t("benefits.fastResponseDesc"),
             delay: 0.9,
           },
         ].map((benefit, index) => (
@@ -265,40 +262,42 @@ export default function RecruiterContactPage() {
           <CardHeader className="bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] text-white">
             <CardTitle className="text-2xl flex items-center gap-2">
               <Sparkles className="w-6 h-6" />
-              Consultation Recruteur
+              {t("pricing.title")}
             </CardTitle>
             <CardDescription className="text-white/90 text-lg">
-              Session individuelle de 30 minutes
+              {t("pricing.sessionDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="mb-6">
               <div className="flex items-baseline gap-2 mb-2">
                 <span className="text-5xl font-bold text-black">50€</span>
-                <span className="text-gray-600">/ consultation</span>
+                <span className="text-gray-600">
+                  {t("pricing.perConsultation")}
+                </span>
               </div>
               <p className="text-sm text-gray-600">
-                Paiement unique, aucun abonnement
+                {t("pricing.noSubscription")}
               </p>
             </div>
 
             <div className="space-y-4">
               {[
                 {
-                  title: "Session vidéo de 30 minutes",
-                  description: "Échange en direct avec un expert",
+                  title: t("pricing.item1Title"),
+                  description: t("pricing.item1Desc"),
                 },
                 {
-                  title: "Analyse personnalisée",
-                  description: "CV, profil LinkedIn, stratégie de recherche",
+                  title: t("pricing.item2Title"),
+                  description: t("pricing.item2Desc"),
                 },
                 {
-                  title: "Plan d'action concret",
-                  description: "Recommandations actionnables immédiatement",
+                  title: t("pricing.item3Title"),
+                  description: t("pricing.item3Desc"),
                 },
                 {
-                  title: "Compte-rendu écrit",
-                  description: "Résumé détaillé après la consultation",
+                  title: t("pricing.item4Title"),
+                  description: t("pricing.item4Desc"),
                 },
               ].map((item, index) => (
                 <motion.div
@@ -320,7 +319,7 @@ export default function RecruiterContactPage() {
             <div className="mt-6 pt-6 border-t">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Shield className="w-4 h-4" />
-                <span>Paiement sécurisé par Stripe</span>
+                <span>{t("pricing.securePay")}</span>
               </div>
             </div>
           </CardContent>
@@ -329,19 +328,14 @@ export default function RecruiterContactPage() {
         {/* Request Form */}
         <Card className="border-2 border-gray-200 h-fit">
           <CardHeader>
-            <CardTitle className="text-black">
-              Réserver ma consultation
-            </CardTitle>
-            <CardDescription>
-              Remplissez le formulaire pour être contacté par un recruteur
-              expert
-            </CardDescription>
+            <CardTitle className="text-black">{t("form.title")}</CardTitle>
+            <CardDescription>{t("form.desc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-4">
                 <div>
-                  <Label htmlFor="fullName">Nom complet *</Label>
+                  <Label htmlFor="fullName">{t("form.fullName")}</Label>
                   <Input
                     id="fullName"
                     placeholder="Jean Dupont"
@@ -360,7 +354,7 @@ export default function RecruiterContactPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">{t("form.email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                     <Input
@@ -381,7 +375,7 @@ export default function RecruiterContactPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Téléphone</Label>
+                  <Label htmlFor="phone">{t("form.phone")}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                     <Input
@@ -401,7 +395,7 @@ export default function RecruiterContactPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="sector">Secteur d'activité *</Label>
+                  <Label htmlFor="sector">{t("form.sector")}</Label>
                   <Select
                     value={formData.sector}
                     onValueChange={(value) => {
@@ -415,20 +409,34 @@ export default function RecruiterContactPage() {
                       className={`${touched.sector && errors.sector ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                       aria-invalid={touched.sector && !!errors.sector}
                     >
-                      <SelectValue placeholder="Sélectionnez votre secteur" />
+                      <SelectValue placeholder={t("form.sectorPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tech">Tech / IT</SelectItem>
-                      <SelectItem value="finance">Finance / Banque</SelectItem>
-                      <SelectItem value="marketing">
-                        Marketing / Communication
+                      <SelectItem value="tech">
+                        {t("form.sectors.tech")}
                       </SelectItem>
-                      <SelectItem value="sales">Vente / Commercial</SelectItem>
-                      <SelectItem value="hr">RH / Recrutement</SelectItem>
-                      <SelectItem value="engineering">Ingénierie</SelectItem>
-                      <SelectItem value="healthcare">Santé</SelectItem>
-                      <SelectItem value="education">Éducation</SelectItem>
-                      <SelectItem value="other">Autre</SelectItem>
+                      <SelectItem value="finance">
+                        {t("form.sectors.finance")}
+                      </SelectItem>
+                      <SelectItem value="marketing">
+                        {t("form.sectors.marketing")}
+                      </SelectItem>
+                      <SelectItem value="sales">
+                        {t("form.sectors.sales")}
+                      </SelectItem>
+                      <SelectItem value="hr">{t("form.sectors.hr")}</SelectItem>
+                      <SelectItem value="engineering">
+                        {t("form.sectors.engineering")}
+                      </SelectItem>
+                      <SelectItem value="healthcare">
+                        {t("form.sectors.healthcare")}
+                      </SelectItem>
+                      <SelectItem value="education">
+                        {t("form.sectors.education")}
+                      </SelectItem>
+                      <SelectItem value="other">
+                        {t("form.sectors.other")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   {touched.sector && errors.sector && (
@@ -437,7 +445,9 @@ export default function RecruiterContactPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="experienceLevel">Niveau d'expérience *</Label>
+                  <Label htmlFor="experienceLevel">
+                    {t("form.experienceLevel")}
+                  </Label>
                   <Select
                     value={formData.experienceLevel}
                     onValueChange={(value) => {
@@ -453,18 +463,28 @@ export default function RecruiterContactPage() {
                         touched.experienceLevel && !!errors.experienceLevel
                       }
                     >
-                      <SelectValue placeholder="Sélectionnez votre niveau" />
+                      <SelectValue
+                        placeholder={t("form.experiencePlaceholder")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="junior">Junior (0-3 ans)</SelectItem>
-                      <SelectItem value="confirmed">
-                        Confirmé (3-7 ans)
+                      <SelectItem value="junior">
+                        {t("form.levels.junior")}
                       </SelectItem>
-                      <SelectItem value="senior">Senior (7-12 ans)</SelectItem>
-                      <SelectItem value="expert">Expert (12+ ans)</SelectItem>
-                      <SelectItem value="manager">Manager / Lead</SelectItem>
+                      <SelectItem value="confirmed">
+                        {t("form.levels.confirmed")}
+                      </SelectItem>
+                      <SelectItem value="senior">
+                        {t("form.levels.senior")}
+                      </SelectItem>
+                      <SelectItem value="expert">
+                        {t("form.levels.expert")}
+                      </SelectItem>
+                      <SelectItem value="manager">
+                        {t("form.levels.manager")}
+                      </SelectItem>
                       <SelectItem value="executive">
-                        Executive / C-level
+                        {t("form.levels.executive")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -477,7 +497,7 @@ export default function RecruiterContactPage() {
 
                 <div>
                   <Label htmlFor="preferredDate">
-                    Date préférée (optionnel)
+                    {t("form.preferredDate")}
                   </Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
@@ -495,10 +515,10 @@ export default function RecruiterContactPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="message">Message / Questions *</Label>
+                  <Label htmlFor="message">{t("form.message")}</Label>
                   <Textarea
                     id="message"
-                    placeholder="Décrivez brièvement votre situation et vos objectifs professionnels..."
+                    placeholder={t("form.messagePlaceholder")}
                     rows={4}
                     value={formData.message}
                     onChange={(e) => handleChange("message", e.target.value)}
@@ -523,19 +543,18 @@ export default function RecruiterContactPage() {
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Traitement en cours...</span>
+                    <span>{t("form.submitting")}</span>
                   </div>
                 ) : (
                   <>
-                    Réserver ma consultation (50€)
+                    {t("form.submit")}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
               </Button>
 
               <p className="text-xs text-gray-500 text-center">
-                Après validation, vous serez redirigé vers le paiement sécurisé
-                Stripe
+                {t("form.submitNote")}
               </p>
             </form>
           </CardContent>
@@ -552,12 +571,8 @@ export default function RecruiterContactPage() {
         transition={{ delay: 1.2 }}
         className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] text-white p-12 rounded-3xl text-center mt-12 shadow-xl"
       >
-        <h3 className="text-3xl font-bold mb-4">
-          Prêt à booster votre carrière ?
-        </h3>
-        <p className="text-xl text-white/90 mb-6">
-          👥 <strong>5 consultations</strong> réservées cette semaine
-        </p>
+        <h3 className="text-3xl font-bold mb-4">{t("cta.title")}</h3>
+        <p className="text-xl text-white/90 mb-6">{t("cta.spots")}</p>
         <Button
           size="lg"
           className="h-14 px-12 bg-white text-[#00D9FF] hover:bg-gray-100 font-bold transition-all duration-300 hover:scale-105"
@@ -566,7 +581,7 @@ export default function RecruiterContactPage() {
             formSection?.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
         >
-          Réserver maintenant (50€)
+          {t("cta.button")}
         </Button>
       </motion.div>
     </div>

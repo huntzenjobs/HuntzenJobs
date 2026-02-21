@@ -8,9 +8,11 @@ import { UsageCounter } from "@/components/freemium/usage-counter";
 import { CVUploadAsyncWizard } from "@/components/cv/cv-upload-async-wizard";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Card } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 
 export default function CVAnalysisPage() {
   const { session, loading } = useAuth();
+  const t = useTranslations("dashboard.cvAnalysis");
 
   // Freemium state
   const { canUse, incrementUsage, hasFeature, openPricingModal } =
@@ -22,7 +24,7 @@ export default function CVAnalysisPage() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-col items-center justify-center min-h-[400px]">
           <Loader2 className="w-12 h-12 animate-spin text-[#00D9FF] mb-4" />
-          <p className="text-slate-600">Chargement de votre espace...</p>
+          <p className="text-slate-600">{t("loading")}</p>
         </div>
       </div>
     );
@@ -48,13 +50,8 @@ export default function CVAnalysisPage() {
             >
               <FileText className="w-7 h-7 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-black text-slate-900">Analyse CV</h1>
+            <h1 className="text-4xl font-black text-slate-900">{t("title")}</h1>
           </div>
-          <p className="text-base text-slate-700 leading-relaxed max-w-3xl">
-            Optimisez votre CV pour maximiser vos chances de décrocher un
-            entretien. Obtenez une analyse détaillée et des recommandations
-            personnalisées.
-          </p>
         </div>
 
         {/* Usage Counter - only shown when authenticated */}
@@ -75,10 +72,10 @@ export default function CVAnalysisPage() {
           <Card className="p-8 bg-red-50 border-red-200">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-slate-900 mb-2 text-center">
-              Erreur lors du chargement de l'analyse CV
+              {t("errorTitle")}
             </h3>
             <p className="text-slate-600 text-center">
-              Une erreur s'est produite. Veuillez rafraîchir la page.
+              {t("errorDesc")}
             </p>
           </Card>
         }

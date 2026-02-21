@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -65,6 +66,7 @@ import {
 } from "@/components/jobs/advanced-filters-modal";
 
 export default function JobsPage() {
+  const t = useTranslations("dashboard.jobs");
   const [jobTitle, setJobTitle] = useState("");
   const [popularQuery, setPopularQuery] = useState<string | undefined>(
     undefined,
@@ -532,12 +534,12 @@ export default function JobsPage() {
     },
     onSuccess: (_, job) => {
       setSavedJobIds((prev) => new Set(prev).add(job.id));
-      toast.success("Offre ajoutée aux favoris ✨");
+      toast.success(t("toast.saved"));
       // Invalidate saved jobs query
       queryClient.invalidateQueries({ queryKey: ["saved-jobs"] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Erreur lors de la sauvegarde");
+      toast.error(error.message || t("toast.saveError"));
     },
   });
 
@@ -547,13 +549,13 @@ export default function JobsPage() {
       return;
     }
     if (!auth?.user) {
-      toast.error("Connectez-vous pour sauvegarder des offres");
+      toast.error(t("toast.mustLogin"));
       return;
     }
 
     // Check if already saved
     if (savedJobIds.has(job.id)) {
-      toast.info("Cette offre est déjà dans vos favoris");
+      toast.info(t("toast.alreadySaved"));
       return;
     }
 
@@ -622,14 +624,14 @@ export default function JobsPage() {
     // Show confirmation toast
     const filtersCount = Object.keys(filters).length;
     if (filtersCount > 0) {
-      toast.success(`${filtersCount} filtre(s) avancé(s) appliqué(s)`, {
+      toast.success(t("toast.filtersApplied", { count: filtersCount }), {
         description:
           filtersCount > 0 && jobs.length > 0
-            ? "Recherche mise à jour avec les nouveaux filtres"
-            : "Les filtres seront appliqués à la prochaine recherche",
+            ? t("toast.filtersAppliedDesc")
+            : t("toast.filtersAppliedNext"),
       });
     } else {
-      toast.info("Filtres avancés réinitialisés");
+      toast.info(t("toast.filtersReset"));
       // Re-run search to remove filters
       if (jobs.length > 0) {
         handleSearch({
@@ -678,14 +680,10 @@ export default function JobsPage() {
             >
               <Search className="w-7 h-7 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-black text-slate-900">
-              Recherche d&apos;Emplois
-            </h1>
+            <h1 className="text-4xl font-black text-slate-900">{t("title")}</h1>
           </motion.div>
           <p className="text-slate-700 text-base max-w-3xl leading-relaxed">
-            Accédez à des milliers d&apos;offres d&apos;emploi provenant des
-            meilleures plateformes de recrutement, agrégées et mises à jour
-            quotidiennement.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -707,10 +705,7 @@ export default function JobsPage() {
         fallback={
           <Card className="p-6 bg-red-50 border-red-200">
             <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
-            <p className="text-red-700 text-center">
-              Erreur lors du chargement du formulaire. Veuillez rafraîchir la
-              page.
-            </p>
+            <p className="text-red-700 text-center">{t("error.formLoad")}</p>
           </Card>
         }
       >
@@ -728,11 +723,10 @@ export default function JobsPage() {
                 <div>
                   <CardTitle className="text-2xl font-bold flex items-center gap-2.5 text-slate-900">
                     <Filter className="w-6 h-6 text-huntzen-blue" />
-                    Définissez vos critères de recherche
+                    {t("form.title")}
                   </CardTitle>
                   <p className="text-sm text-slate-600 mt-2">
-                    Remplissez les champs ci-dessous pour trouver les offres qui
-                    correspondent à votre profil
+                    {t("form.subtitle")}
                   </p>
                 </div>
 
@@ -741,9 +735,9 @@ export default function JobsPage() {
                     htmlFor="contractType"
                     className="text-sm font-semibold"
                   >
-                    Type de contrat{" "}
+                    {t("form.contractType")}{" "}
                     <span className="text-muted-foreground text-xs font-normal">
-                      (optionnel)
+                      {t("form.optional")}
                     </span>
                   </Label>
                   <Select
@@ -757,10 +751,10 @@ export default function JobsPage() {
                       id="contractType"
                       className="h-11 border-2 focus:border-primary"
                     >
-                      <SelectValue placeholder="Tous les types de contrat" />
+                      <SelectValue placeholder={t("form.allContracts")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">✓ Tous les types</SelectItem>
+                      <SelectItem value="all">{t("form.allTypes")}</SelectItem>
                       {contractTypes.map((type) => (
                         <SelectItem key={type.id} value={type.id}>
                           {type.label}
@@ -786,18 +780,22 @@ export default function JobsPage() {
                   {searchQuery.isFetching ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Recherche en cours...
+                      {t("form.searching")}
                     </>
                   ) : (
                     <>
                       <Search className="mr-2 h-5 w-5" />
-                      Lancer la recherche
+                      {t("form.search")}
                       {isFreePlan &&
                         searchesRemaining <= 3 &&
                         searchesRemaining > 0 && (
                           <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-semibold">
-                            {searchesRemaining} restante
-                            {searchesRemaining !== 1 ? "s" : ""}
+                            {t(
+                              searchesRemaining !== 1
+                                ? "form.remaining_other"
+                                : "form.remaining_one",
+                              { count: searchesRemaining },
+                            )}
                           </span>
                         )}
                     </>
@@ -812,7 +810,7 @@ export default function JobsPage() {
                   className="gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Filtres avancés
+                  {t("form.advancedFilters")}
                   {!hasFeature("has_advanced_filters") && (
                     <Lock className="w-3.5 h-3.5" />
                   )}
@@ -827,12 +825,13 @@ export default function JobsPage() {
                       htmlFor="jobTitle"
                       className="text-sm font-semibold flex items-center gap-1"
                     >
-                      Titre du poste <span className="text-red-500">*</span>
+                      {t("form.jobTitle")}{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="jobTitle"
                       name="jobTitle"
-                      placeholder="Ex: Developpeur Full Stack, Chef de Projet..."
+                      placeholder={t("form.jobTitlePlaceholder")}
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
                       required
@@ -845,7 +844,8 @@ export default function JobsPage() {
                       htmlFor="country"
                       className="text-sm font-semibold flex items-center gap-1"
                     >
-                      Pays <span className="text-red-500">*</span>
+                      {t("form.country")}{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       ref={countryInputRef}
@@ -853,8 +853,8 @@ export default function JobsPage() {
                       name="country"
                       placeholder={
                         loadingCountries
-                          ? "Chargement..."
-                          : "France, Belgique, Suisse..."
+                          ? t("form.loadingPlaceholder")
+                          : t("form.countryPlaceholder")
                       }
                       value={countrySearch}
                       className="h-11 border-2 focus:border-primary"
@@ -926,7 +926,7 @@ export default function JobsPage() {
                           ref={countrySuggestionsRef}
                           className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-sm text-slate-600 pointer-events-auto"
                         >
-                          Aucun pays trouvé
+                          {t("form.noCountryFound")}
                         </div>
                       )}
                   </div>
@@ -934,14 +934,14 @@ export default function JobsPage() {
                   <div className="space-y-2 relative">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="city" className="text-sm font-semibold">
-                        Ville{" "}
+                        {t("form.city")}{" "}
                         <span className="text-muted-foreground text-xs font-normal">
-                          (optionnel)
+                          {t("form.optional")}
                         </span>
                       </Label>
                       {selectedCountry && !citySearch && (
                         <span className="text-xs text-huntzen-blue font-medium">
-                          Tout le pays si vide
+                          {t("form.cityHint")}
                         </span>
                       )}
                     </div>
@@ -951,10 +951,10 @@ export default function JobsPage() {
                       name="city"
                       placeholder={
                         !selectedCountry
-                          ? "Selectionnez d'abord un pays"
+                          ? t("form.selectCountryFirst")
                           : loadingCities
-                            ? "Chargement..."
-                            : "Paris, Lyon, Bruxelles..."
+                            ? t("form.loadingPlaceholder")
+                            : t("form.cityPlaceholder")
                       }
                       value={citySearch}
                       className="h-11 border-2 focus:border-primary"
@@ -1028,7 +1028,7 @@ export default function JobsPage() {
                           ref={citySuggestionsRef}
                           className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-sm text-slate-600 pointer-events-auto"
                         >
-                          Aucune ville trouvée
+                          {t("form.noCityFound")}
                         </div>
                       )}
                   </div>
@@ -1038,9 +1038,9 @@ export default function JobsPage() {
                       htmlFor="contractType"
                       className="text-sm font-semibold"
                     >
-                      Type de contrat{" "}
+                      {t("form.contractType")}{" "}
                       <span className="text-muted-foreground text-xs font-normal">
-                        (optionnel)
+                        {t("form.optional")}
                       </span>
                     </Label>
                     <Select
@@ -1054,10 +1054,12 @@ export default function JobsPage() {
                         id="contractType"
                         className="h-11 border-2 focus:border-primary"
                       >
-                        <SelectValue placeholder="Tous les types de contrat" />
+                        <SelectValue placeholder={t("form.allContracts")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">✓ Tous les types</SelectItem>
+                        <SelectItem value="all">
+                          {t("form.allTypes")}
+                        </SelectItem>
                         {contractTypes.map((type) => (
                           <SelectItem key={type.id} value={type.id}>
                             {type.label}
@@ -1083,18 +1085,22 @@ export default function JobsPage() {
                     {searchQuery.isFetching ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Recherche en cours...
+                        {t("form.searching")}
                       </>
                     ) : (
                       <>
                         <Search className="mr-2 h-5 w-5" />
-                        Lancer la recherche
+                        {t("form.search")}
                         {isFreePlan &&
                           searchesRemaining <= 3 &&
                           searchesRemaining > 0 && (
                             <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-semibold">
-                              {searchesRemaining} restante
-                              {searchesRemaining !== 1 ? "s" : ""}
+                              {t(
+                                searchesRemaining !== 1
+                                  ? "form.remaining_other"
+                                  : "form.remaining_one",
+                                { count: searchesRemaining },
+                              )}
                             </span>
                           )}
                       </>
@@ -1110,7 +1116,7 @@ export default function JobsPage() {
                       className="gap-2 border-2 border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF]/10 h-12 font-semibold"
                     >
                       <Sparkles className="w-4 h-4" />
-                      Débloquer les recherches illimitées
+                      {t("form.unlock")}
                     </Button>
                   )}
                 </div>
@@ -1128,12 +1134,12 @@ export default function JobsPage() {
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-red-700 mb-1">
-                  Erreur lors de la recherche
+                  {t("error.title")}
                 </h3>
                 <p className="text-sm text-red-600">
                   {searchQuery.error instanceof Error
                     ? searchQuery.error.message
-                    : "Une erreur est survenue lors de la recherche. Veuillez reessayer."}
+                    : t("error.generic")}
                 </p>
               </div>
             </div>
@@ -1153,10 +1159,10 @@ export default function JobsPage() {
               <Sparkles className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-bold text-slate-900 mb-1">
-                  Recherche améliorée
+                  {t("corrected.title")}
                 </h3>
                 <p className="text-sm text-slate-700">
-                  Nous avons optimisé votre recherche :{" "}
+                  {t("corrected.subtitle")}{" "}
                   <strong className="font-bold text-[#00D9FF]">
                     {correctedQuery}
                   </strong>
@@ -1244,8 +1250,9 @@ export default function JobsPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-black text-emerald-700">
-                      {jobs.length} offre{jobs.length > 1 ? "s" : ""} trouvée
-                      {jobs.length > 1 ? "s" : ""}
+                      {jobs.length === 1
+                        ? t("results.count_one", { count: jobs.length })
+                        : t("results.count_other", { count: jobs.length })}
                     </h2>
                     {/* Cache badge - Shows when data is from cache */}
                     {searchQuery.isFetched &&
@@ -1321,7 +1328,9 @@ export default function JobsPage() {
                       searchQuery.isFetching && "animate-spin",
                     )}
                   />
-                  <span className="hidden sm:inline">Actualiser</span>
+                  <span className="hidden sm:inline">
+                    {t("results.refresh")}
+                  </span>
                 </Button>
               </div>
               {isFreePlan && (
@@ -1343,7 +1352,7 @@ export default function JobsPage() {
                     onClick={() => openPricingModal("jobs_visible")}
                     className="text-xs text-[#00D9FF] hover:text-[#00C4EA] p-0 h-auto font-semibold"
                   >
-                    Débloquer toutes les offres →
+                    {t("results.unlockAll")}
                   </Button>
                 </motion.div>
               )}
@@ -1400,15 +1409,15 @@ export default function JobsPage() {
                             )}
                             title={
                               !hasFeature("has_favorites")
-                                ? "Fonctionnalite Premium"
+                                ? t("card.premiumFeature")
                                 : savedJobIds.has(job.id)
-                                  ? "Deja dans vos favoris"
-                                  : "Sauvegarder cette offre"
+                                  ? t("card.alreadySaved")
+                                  : t("card.save")
                             }
                             aria-label={
                               savedJobIds.has(job.id)
-                                ? "Déjà sauvegardé"
-                                : "Sauvegarder"
+                                ? t("card.alreadySavedShort")
+                                : t("card.saveShort")
                             }
                             disabled={
                               saveJobMutation.isPending ||
@@ -1444,7 +1453,7 @@ export default function JobsPage() {
                         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-gray-50 px-3 py-2 rounded-lg">
                           <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
                           <span className="font-medium">
-                            {job.location || "Localisation non specifiee"}
+                            {job.location || t("card.locationUnknown")}
                           </span>
                         </div>
 
@@ -1468,7 +1477,7 @@ export default function JobsPage() {
                           className="flex-1 bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-md hover:shadow-lg hover:shadow-[#00D9FF]/30 transition-all h-11"
                           onClick={() => handleViewDetails(job)}
                         >
-                          Voir détails
+                          {t("card.details")}
                           <ExternalLink className="ml-2 h-4 w-4" />
                         </Button>
                       </div>
@@ -1565,23 +1574,18 @@ export default function JobsPage() {
                 <Search className="h-10 w-10 text-muted-foreground/50" />
               </div>
               <h3 className="text-2xl font-bold text-slate-700 mb-2">
-                Aucune offre trouvee
+                {t("empty.title")}
               </h3>
               <p className="text-base text-muted-foreground mb-6 max-w-md mx-auto">
-                Nous n&apos;avons pas trouve d&apos;offres correspondant a vos
-                criteres pour le moment.
+                {t("empty.subtitle")}
               </p>
               <div className="space-y-2 text-sm text-muted-foreground max-w-lg mx-auto">
-                <p className="font-semibold">💡 Suggestions :</p>
+                <p className="font-semibold">{t("empty.tips")}</p>
                 <ul className="text-left space-y-1 inline-block">
-                  <li>• Essayez avec des mots-cles plus generaux</li>
-                  <li>• Verifiez l&apos;orthographe du titre de poste</li>
-                  <li>
-                    • Elargissez votre zone geographique (ville → pays entier)
-                  </li>
-                  <li>
-                    • Selectionnez &quot;Tous les types&quot; pour le contrat
-                  </li>
+                  <li>• {t("empty.tip1")}</li>
+                  <li>• {t("empty.tip2")}</li>
+                  <li>• {t("empty.tip3")}</li>
+                  <li>• {t("empty.tip4")}</li>
                 </ul>
               </div>
             </CardContent>

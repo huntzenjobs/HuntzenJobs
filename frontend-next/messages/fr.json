@@ -367,5 +367,280 @@
     "featurePrompt": {
       "unlock": "Débloquer cette fonctionnalité"
     }
+  },
+  "auth": {
+    "login": {
+      "title": "Bon retour !",
+      "subtitle": "Connectez-vous pour accéder à votre espace",
+      "googleCta": "Continuer avec Google",
+      "divider": "Ou avec email",
+      "emailLabel": "Adresse email",
+      "emailPlaceholder": "vous@example.com",
+      "passwordLabel": "Mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "loading": "Connexion en cours...",
+      "cta": "Se connecter",
+      "noAccount": "Pas encore de compte ?",
+      "signupLink": "Créer un compte gratuitement",
+      "termsPrefix": "En continuant, vous acceptez nos",
+      "terms": "Conditions d'utilisation",
+      "and": "et notre",
+      "privacy": "Politique de confidentialité"
+    },
+    "signup": {
+      "title": "Créer votre compte",
+      "subtitle": "Rejoignez HuntZen et boostez votre carrière",
+      "subtitleCV": "Commencez votre analyse CV gratuitement",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
+      "googleCta": "S'inscrire avec Google",
+      "divider": "Ou avec email",
+      "fullNameLabel": "Nom complet",
+      "fullNamePlaceholder": "Jean Dupont",
+      "emailLabel": "Adresse email",
+      "emailPlaceholder": "vous@example.com",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "Minimum 6 caractères",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Retapez votre mot de passe",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "loading": "Création en cours...",
+      "cta": "Créer mon compte gratuitement",
+      "hasAccount": "Vous avez déjà un compte ?",
+      "loginLink": "Se connecter",
+      "termsPrefix": "En créant un compte, vous acceptez nos",
+      "terms": "Conditions d'utilisation",
+      "and": "et notre",
+      "privacy": "Politique de confidentialité",
+      "cvBanner": {
+        "title": "Offre de bienvenue :",
+        "feature1": "1 analyse CV gratuite par jour",
+        "feature2": "Score ATS détaillé",
+        "feature3": "Matching emploi",
+        "feature4": "Historique complet"
+      },
+      "success": {
+        "title": "Inscription réussie ! 🎉",
+        "sentEmail": "Nous venons d'envoyer un email de confirmation à :",
+        "checkEmail": "Vérifiez votre boîte mail",
+        "checkEmailDesc": "(et vos spams) pour confirmer votre adresse email avant de vous connecter.",
+        "goToLogin": "Aller à la connexion",
+        "close": "Fermer",
+        "noEmail": "Vous n'avez pas reçu l'email ? Attendez quelques minutes ou vérifiez vos spams."
+      },
+      "timeout": {
+        "title": "Connexion lente détectée",
+        "description": "La requête a pris trop de temps. Vérifiez votre connexion internet et réessayez dans quelques instants."
+      }
+    }
+  },
+  "dashboard": {
+    "jobs": {
+      "title": "Recherche d'Emplois",
+      "subtitle": "Accédez à des milliers d'offres d'emploi provenant des meilleures plateformes de recrutement, agrégées et mises à jour quotidiennement.",
+      "form": {
+        "title": "Définissez vos critères de recherche",
+        "subtitle": "Remplissez les champs ci-dessous pour trouver les offres qui correspondent à votre profil",
+        "contractType": "Type de contrat",
+        "optional": "(optionnel)",
+        "allContracts": "Tous les types de contrat",
+        "allTypes": "✓ Tous les types",
+        "jobTitle": "Titre du poste",
+        "country": "Pays",
+        "city": "Ville",
+        "cityHint": "Tout le pays si vide",
+        "selectCountryFirst": "Selectionnez d'abord un pays",
+        "loadingPlaceholder": "Chargement...",
+        "jobTitlePlaceholder": "Ex: Developpeur Full Stack, Chef de Projet...",
+        "cityPlaceholder": "Paris, Lyon, Bruxelles...",
+        "countryPlaceholder": "France, Belgique, Suisse...",
+        "searching": "Recherche en cours...",
+        "search": "Lancer la recherche",
+        "unlock": "Débloquer les recherches illimitées",
+        "advancedFilters": "Filtres avancés",
+        "remaining_one": "{count} restante",
+        "remaining_other": "{count} restantes",
+        "noCountryFound": "Aucun pays trouvé",
+        "noCityFound": "Aucune ville trouvée"
+      },
+      "error": {
+        "title": "Erreur lors de la recherche",
+        "generic": "Une erreur est survenue lors de la recherche. Veuillez reessayer.",
+        "formLoad": "Erreur lors du chargement du formulaire. Veuillez rafraîchir la page.",
+        "fillRequired": "Veuillez remplir le titre du poste et le pays"
+      },
+      "corrected": {
+        "title": "Recherche améliorée",
+        "subtitle": "Nous avons optimisé votre recherche :"
+      },
+      "results": {
+        "count_one": "{count} offre trouvée",
+        "count_other": "{count} offres trouvées",
+        "refresh": "Actualiser",
+        "updating": "Actualisation en cours...",
+        "justNow": "à l'instant",
+        "oneMinuteAgo": "il y a 1 minute",
+        "minutesAgo": "il y a {n} minutes",
+        "staleWarning": "- Actualisation recommandée",
+        "updatedAt": "Actualisé {time}",
+        "recent": "Résultats récents et pertinents",
+        "visibleOf": "{visible} visible{s} sur {total}",
+        "unlockAll": "Débloquer toutes les offres →",
+        "cache": "💾 Cache"
+      },
+      "card": {
+        "details": "Voir détails",
+        "save": "Sauvegarder cette offre",
+        "alreadySaved": "Déjà dans vos favoris",
+        "premiumFeature": "Fonctionnalite Premium",
+        "locationUnknown": "Localisation non specifiee",
+        "alreadySavedShort": "Déjà sauvegardé",
+        "saveShort": "Sauvegarder"
+      },
+      "empty": {
+        "title": "Aucune offre trouvee",
+        "subtitle": "Nous n'avons pas trouve d'offres correspondant a vos criteres pour le moment.",
+        "tips": "💡 Suggestions :",
+        "tip1": "Essayez avec des mots-cles plus generaux",
+        "tip2": "Verifiez l'orthographe du titre de poste",
+        "tip3": "Elargissez votre zone geographique (ville → pays entier)",
+        "tip4": "Selectionnez \"Tous les types\" pour le contrat"
+      },
+      "toast": {
+        "saved": "Offre ajoutée aux favoris ✨",
+        "saveError": "Erreur lors de la sauvegarde",
+        "mustLogin": "Connectez-vous pour sauvegarder des offres",
+        "mustLoginSave": "Vous devez être connecté pour sauvegarder des offres",
+        "alreadySaved": "Cette offre est déjà dans vos favoris",
+        "filtersApplied": "{count} filtre(s) avancé(s) appliqué(s)",
+        "filtersAppliedDesc": "Recherche mise à jour avec les nouveaux filtres",
+        "filtersAppliedNext": "Les filtres seront appliqués à la prochaine recherche",
+        "filtersReset": "Filtres avancés réinitialisés"
+      }
+    },
+    "cvAnalysis": {
+      "title": "Analyse de CV",
+      "loading": "Chargement de votre espace...",
+      "errorTitle": "Erreur lors du chargement de l'analyse CV",
+      "errorDesc": "Une erreur s'est produite. Veuillez rafraîchir la page.",
+      "subtitle": "Optimisez votre CV pour maximiser vos chances de décrocher un entretien. Obtenez une analyse détaillée et des recommandations personnalisées."
+    },
+    "assistant": {
+      "title": "Assistant Carrière",
+      "history": "Historique",
+      "newConversation": "Nouvelle",
+      "simulation": "Simulation",
+      "timeWarning": "Il vous reste moins de 3 minutes ! Passez Premium pour un temps illimité.",
+      "upgradePremium": "Passer Premium",
+      "placeholder": "Posez votre question... (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)",
+      "timeExpiredTitle": "Temps écoulé",
+      "timeExpiredDesc": "Vous avez utilisé vos {minutes} minutes gratuites",
+      "unlockUnlimited": "Débloquer le temps illimité",
+      "errorMessage": "Désolé, une erreur est survenue. Pouvez-vous reformuler votre question ?",
+      "unlimited": "Illimité"
+    },
+    "salons": {
+      "title": "Salons & Forums"
+    },
+    "savedJobs": {
+      "title": "Offres Sauvegardées",
+      "searchPlaceholder": "Rechercher dans vos offres...",
+      "noJobs": "Vous n'avez pas encore sauvegardé d'offres",
+      "noJobsDesc": "Explorez les offres disponibles et sauvegardez celles qui vous intéressent",
+      "loginRequired": "Connectez-vous pour voir vos offres sauvegardées",
+      "deleteError": "Erreur lors de la suppression",
+      "deleted": "Offre supprimée",
+      "viewOffer": "Voir l'offre",
+      "delete": "Supprimer",
+      "savedAt": "Sauvegardée le",
+      "searchJobs": "Rechercher des emplois"
+    },
+    "recruiterContact": {
+      "title": "Contacter un Recruteur",
+      "stats": {
+        "consultations": "Consultations réussies",
+        "satisfaction": "Satisfaction moyenne",
+        "delay": "Délai moyen"
+      },
+      "benefits": {
+        "personalizedTitle": "Conseils personnalisés",
+        "personalizedDesc": "Un recruteur expert analyse votre profil et vous donne des recommandations sur-mesure",
+        "expertiseTitle": "Expertise professionnelle",
+        "expertiseDesc": "Nos recruteurs ont 10+ ans d'expérience dans le recrutement de cadres et talents",
+        "fastResponseTitle": "Réponse rapide",
+        "fastResponseDesc": "Vous serez contacté sous 48h pour planifier votre consultation de 30 minutes"
+      },
+      "pricing": {
+        "title": "Consultation Recruteur",
+        "sessionDesc": "Session individuelle de 30 minutes",
+        "perConsultation": "/ consultation",
+        "noSubscription": "Paiement unique, aucun abonnement",
+        "item1Title": "Session vidéo de 30 minutes",
+        "item1Desc": "Échange en direct avec un expert",
+        "item2Title": "Analyse personnalisée",
+        "item2Desc": "CV, profil LinkedIn, stratégie de recherche",
+        "item3Title": "Plan d'action concret",
+        "item3Desc": "Recommandations actionnables immédiatement",
+        "item4Title": "Compte-rendu écrit",
+        "item4Desc": "Résumé détaillé après la consultation",
+        "securePay": "Paiement sécurisé par Stripe"
+      },
+      "form": {
+        "title": "Réserver ma consultation",
+        "desc": "Remplissez le formulaire pour être contacté par un recruteur expert",
+        "fullName": "Nom complet *",
+        "email": "Email *",
+        "phone": "Téléphone",
+        "sector": "Secteur d'activité *",
+        "sectorPlaceholder": "Sélectionnez votre secteur",
+        "experienceLevel": "Niveau d'expérience *",
+        "experiencePlaceholder": "Sélectionnez votre niveau",
+        "preferredDate": "Date préférée (optionnel)",
+        "message": "Message / Questions *",
+        "messagePlaceholder": "Décrivez brièvement votre situation et vos objectifs professionnels...",
+        "submitting": "Traitement en cours...",
+        "submit": "Réserver ma consultation (50€)",
+        "submitNote": "Après validation, vous serez redirigé vers le paiement sécurisé Stripe",
+        "error": "Une erreur est survenue. Veuillez réessayer.",
+        "sectors": {
+          "tech": "Tech / IT",
+          "finance": "Finance / Banque",
+          "marketing": "Marketing / Communication",
+          "sales": "Vente / Commercial",
+          "hr": "RH / Recrutement",
+          "engineering": "Ingénierie",
+          "healthcare": "Santé",
+          "education": "Éducation",
+          "other": "Autre"
+        },
+        "levels": {
+          "junior": "Junior (0-3 ans)",
+          "confirmed": "Confirmé (3-7 ans)",
+          "senior": "Senior (7-12 ans)",
+          "expert": "Expert (12+ ans)",
+          "manager": "Manager / Lead",
+          "executive": "Executive / C-level"
+        }
+      },
+      "validation": {
+        "fullNameRequired": "Le nom complet est requis",
+        "fullNameTooShort": "Le nom doit contenir au moins 2 caractères",
+        "emailRequired": "L'email est requis",
+        "emailInvalid": "Format d'email invalide",
+        "phoneInvalid": "Format de téléphone invalide",
+        "sectorRequired": "Le secteur d'activité est requis",
+        "experienceRequired": "Le niveau d'expérience est requis",
+        "messageRequired": "Le message est requis",
+        "messageTooShort": "Le message doit contenir au moins 10 caractères"
+      },
+      "cta": {
+        "title": "Prêt à booster votre carrière ?",
+        "spots": "👥 5 consultations réservées cette semaine",
+        "button": "Réserver maintenant (50€)"
+      }
+    }
   }
 }

@@ -247,7 +247,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
         {/* Auth Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Language Switcher */}
-          <LanguageSwitcher />
+          <LanguageSwitcher className={shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white hover:text-white"} />
 
           {/* Theme Toggle */}
           <ThemeToggle />

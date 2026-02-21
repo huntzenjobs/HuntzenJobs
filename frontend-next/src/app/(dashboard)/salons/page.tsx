@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import DOMPurify from "dompurify";
 import { FeaturedEventsCarousel } from "@/components/salons/featured-events-carousel";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { useTranslations } from "next-intl";
 
 // Fonction pour nettoyer le HTML et extraire le texte brut
 function stripHtml(html: string): string {
@@ -49,6 +50,7 @@ function stripHtml(html: string): string {
 }
 
 export default function SalonsPage() {
+  const t = useTranslations("dashboard.salons");
   const [events, setEvents] = useState<JobFair[]>([]);
   const [visibleEventsCount, setVisibleEventsCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -173,9 +175,7 @@ export default function SalonsPage() {
             >
               <Calendar className="w-7 h-7 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-black text-black">
-              Salons & Forums Emploi
-            </h1>
+            <h1 className="text-4xl font-black text-black">{t("title")}</h1>
           </div>
           <p className="text-base text-slate-700 leading-relaxed max-w-3xl">
             Découvrez les événements emploi près de chez vous et rencontrez des

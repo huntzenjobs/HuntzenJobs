@@ -17,6 +17,7 @@ import { useOptionalAuth } from "@/contexts/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslations } from "next-intl";
 
 interface SavedJob {
   id: string;
@@ -32,6 +33,7 @@ interface SavedJob {
 export default function SavedJobsPage() {
   const auth = useOptionalAuth();
   const user = auth?.user;
+  const t = useTranslations("dashboard.savedJobs");
 
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,10 +83,10 @@ export default function SavedJobsPage() {
       if (error) throw error;
 
       setSavedJobs((prev) => prev.filter((job) => job.id !== jobId));
-      toast.success("Offre retirée des favoris");
+      toast.success(t("deleted"));
     } catch (error) {
       console.error("Failed to remove saved job:", error);
-      toast.error("Erreur lors de la suppression");
+      toast.error(t("deleteError"));
     }
   };
 
@@ -113,17 +115,14 @@ export default function SavedJobsPage() {
             <Bookmark className="w-10 h-10 text-[#00D9FF]" />
           </motion.div>
           <h2 className="text-2xl font-bold text-black">
-            Connectez-vous pour sauvegarder des offres
+            {t("loginRequired")}
           </h2>
-          <p className="text-slate-600 max-w-md mx-auto">
-            Créez un compte gratuit pour sauvegarder vos offres d'emploi
-            favorites et y accéder facilement.
-          </p>
+          <p className="text-slate-600 max-w-md mx-auto">{t("noJobsDesc")}</p>
           <Button
             onClick={() => (window.location.href = "/login")}
             className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
           >
-            Se connecter
+            {t("searchJobs")}
           </Button>
         </motion.div>
       </div>
@@ -148,10 +147,10 @@ export default function SavedJobsPage() {
           >
             <Bookmark className="w-7 h-7 text-white" />
           </motion.div>
-          <h1 className="text-4xl font-black text-black">Jobs Sauvegardés</h1>
+          <h1 className="text-4xl font-black text-black">{t("title")}</h1>
         </div>
         <p className="text-base text-slate-700 leading-relaxed">
-          Retrouvez toutes vos offres d'emploi favorites en un seul endroit
+          {t("noJobsDesc")}
         </p>
         {!loading && (
           <motion.p
@@ -177,7 +176,7 @@ export default function SavedJobsPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <Input
             type="text"
-            placeholder="Rechercher dans mes favoris..."
+            placeholder={t("searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 text-base border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
@@ -225,27 +224,22 @@ export default function SavedJobsPage() {
             {searchQuery ? (
               <>
                 <h3 className="text-xl font-bold text-black mb-2">
-                  Aucun résultat trouvé
+                  {t("noJobs")}
                 </h3>
-                <p className="text-slate-600 mb-4">
-                  Essayez de modifier votre recherche
-                </p>
+                <p className="text-slate-600 mb-4">{t("noJobsDesc")}</p>
               </>
             ) : (
               <>
                 <h3 className="text-xl font-bold text-black mb-2">
-                  Aucune offre sauvegardée
+                  {t("noJobs")}
                 </h3>
-                <p className="text-slate-600 mb-4">
-                  Commencez à sauvegarder vos offres favorites depuis la page de
-                  recherche
-                </p>
+                <p className="text-slate-600 mb-4">{t("noJobsDesc")}</p>
                 <Button
                   onClick={() => (window.location.href = "/jobs")}
                   className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                 >
                   <Briefcase className="w-4 h-4 mr-2" />
-                  Rechercher des offres
+                  {t("searchJobs")}
                 </Button>
               </>
             )}
@@ -288,8 +282,8 @@ export default function SavedJobsPage() {
                         <div className="flex items-center gap-1.5 text-slate-400">
                           <Clock className="w-4 h-4" />
                           <span>
-                            Sauvegardé le{" "}
-                            {new Date(job.saved_at).toLocaleDateString("fr-FR")}
+                            {t("savedAt")}{" "}
+                            {new Date(job.saved_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
@@ -310,7 +304,7 @@ export default function SavedJobsPage() {
                         className="whitespace-nowrap bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Voir l'offre
+                        {t("viewOffer")}
                       </Button>
                       <Button
                         onClick={() => handleRemoveSavedJob(job.id)}
@@ -319,7 +313,7 @@ export default function SavedJobsPage() {
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
-                        Retirer
+                        {t("delete")}
                       </Button>
                     </div>
                   </div>
