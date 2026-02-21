@@ -12,6 +12,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User, Session, AuthError } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   logLoginSuccess,
   logLoginFailed,
@@ -56,6 +57,7 @@ export function AuthProvider({
   children: React.ReactNode;
   initialUser?: User | null;
 }) {
+  const tErr = useTranslations("auth.errors");
   const [user, setUser] = useState<User | null>(initialUser);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(!initialUser);
@@ -246,9 +248,9 @@ export function AuthProvider({
         err.message?.toLowerCase().includes("confirm your email");
 
       if (isEmailNotConfirmed) {
-        setError("Veuillez confirmer votre adresse email. Nous vous avons envoyé un email de confirmation lors de votre inscription. Vérifiez votre boîte mail (et vos spams).");
+        setError(tErr("emailNotConfirmed"));
       } else {
-        setError(err.message || "Email ou mot de passe invalide");
+        setError(err.message || tErr("invalidCredentials"));
       }
 
       setLoading(false);
@@ -281,11 +283,7 @@ export function AuthProvider({
       // Créer une promesse de timeout
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(
-            new Error(
-              "La requête prend trop de temps. Vérifiez votre connexion internet et réessayez."
-            )
-          );
+          reject(new Error(tErr("timeout")));
         }, SIGNUP_TIMEOUT_MS);
       });
 
@@ -330,9 +328,7 @@ export function AuthProvider({
       devError("Sign up error:", err);
 
       // Message d'erreur plus clair pour timeout
-      const errorMessage = err.message?.includes("prend trop de temps")
-        ? err.message
-        : err.message || "Échec de la création du compte";
+      const errorMessage = err.message || tErr("signupFailed");
 
       setError(errorMessage);
       setLoading(false);
