@@ -10,7 +10,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "sync-translations": "node ../scripts/sync-translations.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

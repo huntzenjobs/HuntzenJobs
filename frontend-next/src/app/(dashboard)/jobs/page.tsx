@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { useJobTranslation } from "@/hooks/use-job-translation";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -75,6 +76,7 @@ export default function JobsPage() {
   const [selectedCity, setSelectedCity] = useState("");
   const [contractType, setContractType] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
+  const { translatedJobs, isTranslating } = useJobTranslation(jobs);
   const [visibleJobsCount, setVisibleJobsCount] = useState(0);
   const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -650,7 +652,8 @@ export default function JobsPage() {
 
   // Split jobs into visible and blurred
   // Progressive reveal: only show jobs up to visibleJobsCount
-  const progressiveJobs = jobs.slice(0, visibleJobsCount);
+  // Use translatedJobs for display (auto-translated when locale ≠ fr)
+  const progressiveJobs = translatedJobs.slice(0, visibleJobsCount);
   const visibleJobs = progressiveJobs.slice(0, jobsVisibleLimit);
   const blurredJobsCount = Math.max(0, jobs.length - jobsVisibleLimit);
   const showBlurredCards = isFreePlan && blurredJobsCount > 0;
