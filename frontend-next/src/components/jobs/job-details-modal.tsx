@@ -62,20 +62,16 @@ export function JobDetailsModal({
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [recruiterDrawerOpen, setRecruiterDrawerOpen] = React.useState(false);
 
+  // All hooks must be called before any conditional return (Rules of Hooks)
+  const { openPricingModal } = useSubscription();
+  const { authenticatedFetch } = useAuthenticatedFetch();
+  const { description: fullDescription, loading: loadingDescription } =
+    useFullJobDescription(job?.url, job?.source);
+
   if (!job) return null;
 
   // Format source for display
   const displaySource = formatJobSource(job.source);
-
-  // Get subscription context for quota checks
-  const { canUse, openPricingModal } = useSubscription();
-
-  // Get authenticated fetch function
-  const { authenticatedFetch } = useAuthenticatedFetch();
-
-  // Fetch full description when modal opens
-  const { description: fullDescription, loading: loadingDescription } =
-    useFullJobDescription(job.url, job.source);
 
   // Use full description if available, fallback to job.description
   const displayDescription = fullDescription || job.description;
