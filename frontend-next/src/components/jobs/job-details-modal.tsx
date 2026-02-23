@@ -68,39 +68,7 @@ export function JobDetailsModal({
   const { description: fullDescription, loading: loadingDescription } =
     useFullJobDescription(job?.url, job?.source);
 
-  if (!job) return null;
-
-  // Format source for display
-  const displaySource = formatJobSource(job.source);
-
-  // Use full description if available, fallback to job.description
-  const displayDescription = fullDescription || job.description;
-
-  // Sanitize HTML to prevent XSS
-  const sanitizedDescription = DOMPurify.sanitize(displayDescription || "", {
-    ALLOWED_TAGS: [
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      "p",
-      "br",
-      "strong",
-      "em",
-      "u",
-      "ul",
-      "ol",
-      "li",
-      "a",
-      "span",
-      "div",
-    ],
-    ALLOWED_ATTR: ["href", "target", "rel", "class"],
-  });
-
-  // Track job view when modal opens (Issue 5 Fix)
+  // Track job view when modal opens — must be before early return (Rules of Hooks)
   React.useEffect(() => {
     if (!open || !job) return;
 
@@ -154,6 +122,38 @@ export function JobDetailsModal({
 
     trackView();
   }, [open, job, openPricingModal, onOpenChange, authenticatedFetch]);
+
+  if (!job) return null;
+
+  // Format source for display
+  const displaySource = formatJobSource(job.source);
+
+  // Use full description if available, fallback to job.description
+  const displayDescription = fullDescription || job.description;
+
+  // Sanitize HTML to prevent XSS
+  const sanitizedDescription = DOMPurify.sanitize(displayDescription || "", {
+    ALLOWED_TAGS: [
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "p",
+      "br",
+      "strong",
+      "em",
+      "u",
+      "ul",
+      "ol",
+      "li",
+      "a",
+      "span",
+      "div",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel", "class"],
+  });
 
   return (
     <>
