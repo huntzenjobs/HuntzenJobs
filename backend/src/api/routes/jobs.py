@@ -4,19 +4,12 @@ Job Search API Routes
 Endpoints for AI-powered job searching.
 """
 
-import asyncio
-import hashlib
-import json
-import time
 from typing import List
 from fastapi import APIRouter, HTTPException, status, Query, Request
-from sse_starlette.sse import EventSourceResponse
 
 from src.api.deps import ScoutAgentDep
 from src.api.middleware import limiter
 from src.models.schemas import JobSearchRequest, JobSearchResponse, SearchMetadata, Job
-from src.utils.cache import get_redis
-from src.agents.job_scout.main_agent import JobScoutAgent
 
 router = APIRouter()
 
@@ -248,167 +241,6 @@ async def search_jobs_get(
         result['metadata']['total_before_filters'] = len(jobs)
 
     return result
-
-
-@router.get("/search/stream")
-async def search_jobs_stream(
-    request: Request,
-    q: str = Query(..., description="Job title to search", min_length=2),
-    country: str = Query(default="fr"),
-    city: str = Query(default=""),
-    contract: str = Query(default=""),
-    limit: int = Query(default=50, ge=5, le=200),
-    radius: int = Query(default=None, ge=1, le=100),
-    include_remote: bool = Query(default=True),
-    agent: ScoutAgentDep = ...,
-):
-    """
-    Stream job results via SSE. Results appear as each provider responds.
-
-    SSE event types:
-    - query:  refined search query from LLM (~1s)
-    - jobs:   batch of jobs from one provider (multiple events, ~3-30s)
-    - ranked: AI-ranked full result list after all providers complete
-    - done:   metadata + signals stream end
-    - error:  fatal error during search
-
-    Redis cache: instant response on cache hit; saved after ranking on miss.
-    """
-    cache_key = "stream:" + hashlib.md5(
-        f"{q}|{country}|{city}|{contract}|{limit}|{radius}|{include_remote}".encode()
-    ).hexdigest()
-
-    async def event_generator():
-        start_time = time.time()
-
-        try:
-            # ── Cache check ──────────────────────────────────────────────────
-            redis = await get_redis()
-            if redis:
-                try:
-                    cached = await redis.get(cache_key)
-                    if cached:
-                        data = json.loads(cached)
-                        yield {
-                            "event": "jobs",
-                            "data": json.dumps({"source": "cache", "jobs": data["jobs"]}),
-                        }
-                        yield {
-                            "event": "done",
-                            "data": json.dumps({
-                                "total_raw": len(data["jobs"]),
-                                "sources_used": data.get("sources_used", []),
-                                "search_time_ms": int((time.time() - start_time) * 1000),
-                                "from_cache": True,
-                            }),
-                        }
-                        return
-                except Exception:
-                    pass  # Redis error → proceed normally
-
-            # ── Step 1: Refine query (LLM ~1-2s) ────────────────────────────
-            refined = await agent._refine_query(q)
-            search_query = refined.get("corrected_query", q)
-
-            yield {
-                "event": "query",
-                "data": json.dumps({"original_query": q, "refined_query": search_query}),
-            }
-
-            # ── Step 2: Determine active providers ───────────────────────────
-            active_providers = list(agent.providers)
-            if country.lower() == "fr":
-                active_providers.append(agent.france_travail)
-            if not include_remote:
-                active_providers = [p for p in active_providers if p.name != "remoteok"]
-
-            # ── Step 3: Per-provider search wrapper ──────────────────────────
-            async def search_one(provider):
-                kwargs = {
-                    "query": search_query,
-                    "location": city,
-                    "country_code": country,
-                    "max_results": limit,
-                }
-                if provider.name == "adzuna":
-                    kwargs["max_days"] = 7
-                    kwargs["contract_type"] = contract
-                if radius:
-                    kwargs["radius_km"] = radius
-                jobs = await provider.search(**kwargs)
-                return provider.name, jobs
-
-            # ── Step 4: Stream batches as providers complete ──────────────────
-            seen_ids: set[str] = set()
-            all_filtered: list[dict] = []
-            sources_used: list[str] = []
-            total_raw = 0
-
-            tasks = [asyncio.create_task(search_one(p)) for p in active_providers]
-
-            for coro in asyncio.as_completed(tasks):
-                if await request.is_disconnected():
-                    return
-
-                source_name, raw_batch = await coro
-                total_raw += len(raw_batch)
-
-                # Deduplicate across providers
-                new_jobs = [j for j in raw_batch if j.get("id") not in seen_ids]
-                seen_ids.update(j.get("id", "") for j in new_jobs if j.get("id"))
-
-                # School filter + relevance pre-filter
-                new_jobs = JobScoutAgent._filter_school_offers(new_jobs)
-                new_jobs = JobScoutAgent._pre_filter_by_relevance(new_jobs, search_query)
-
-                if new_jobs:
-                    sources_used.append(source_name)
-                    all_filtered.extend(new_jobs)
-                    yield {
-                        "event": "jobs",
-                        "data": json.dumps({"source": source_name, "jobs": new_jobs}),
-                    }
-
-            # ── Step 5: AI ranking on ALL collected jobs ──────────────────────
-            if all_filtered:
-                ranked = await agent._rank_jobs(all_filtered[: limit * 2], q)
-                final_jobs = ranked[:limit]
-            else:
-                final_jobs = []
-
-            yield {
-                "event": "ranked",
-                "data": json.dumps({"jobs": final_jobs}),
-            }
-
-            # ── Step 6: Done + cache save ─────────────────────────────────────
-            elapsed_ms = int((time.time() - start_time) * 1000)
-            yield {
-                "event": "done",
-                "data": json.dumps({
-                    "total_raw": total_raw,
-                    "total_unique": len(seen_ids),
-                    "sources_used": sources_used,
-                    "search_time_ms": elapsed_ms,
-                    "from_cache": False,
-                }),
-            }
-
-            # Save ranked result to Redis (15min TTL, graceful fail)
-            if redis and final_jobs:
-                try:
-                    await redis.setex(
-                        cache_key,
-                        900,
-                        json.dumps({"jobs": final_jobs, "sources_used": sources_used}),
-                    )
-                except Exception:
-                    pass
-
-        except Exception as e:
-            yield {"event": "error", "data": json.dumps({"error": str(e)})}
-
-    return EventSourceResponse(event_generator())
 
 
 @router.post("/analyze-query")
