@@ -488,11 +488,11 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
             "status": subscription["status"],
             "stripe_price_id": subscription["items"]["data"][0]["price"]["id"],
             "current_period_start": datetime.fromtimestamp(
-                subscription["current_period_start"],
+                subscription.get("current_period_start", int(datetime.now(timezone.utc).timestamp())),
                 tz=timezone.utc
             ).isoformat(),
             "current_period_end": datetime.fromtimestamp(
-                subscription["current_period_end"],
+                subscription.get("current_period_end", int(datetime.now(timezone.utc).timestamp())),
                 tz=timezone.utc
             ).isoformat(),
             "cancel_at_period_end": subscription.get("cancel_at_period_end", False),
