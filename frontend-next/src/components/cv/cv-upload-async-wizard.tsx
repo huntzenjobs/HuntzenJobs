@@ -128,113 +128,8 @@ export function CVUploadAsyncWizard({
   const router = useRouter();
 
   // ============================================
-  // LOADING CHECK - Skeleton pendant vérification auth
+  // ALL HOOKS — must be before any early return (Rules of Hooks)
   // ============================================
-
-  if (loading) {
-    return (
-      <div className="max-w-3xl mx-auto p-6">
-        <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
-          <p className="text-gray-600">Vérification de votre session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
-  // AUTH CHECK - Force authentication for CV analysis
-  // ============================================
-
-  if (!session || !user) {
-    return (
-      <div className="max-w-3xl mx-auto p-6">
-        <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200 rounded-2xl p-8 shadow-xl">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-4 shadow-lg">
-              <span className="text-3xl">🎯</span>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              Créez un compte gratuit pour analyser votre CV
-            </h3>
-            <p className="text-gray-600 text-lg">
-              Bénéficiez d'une analyse professionnelle de votre CV avec notre IA
-            </p>
-          </div>
-
-          {/* Benefits */}
-          <div className="bg-white rounded-xl p-6 mb-6">
-            <h4 className="font-bold text-gray-900 mb-4">
-              Ce que vous obtenez gratuitement :
-            </h4>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span>
-                  <strong>1 analyse CV gratuite</strong> par jour
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span>
-                  <strong>Score ATS détaillé</strong> avec recommandations
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span>
-                  <strong>Analyse de compatibilité</strong> avec offres d'emploi
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span>
-                  <strong>Sauvegarde de vos analyses</strong> et historique
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={() =>
-                router.push(
-                  "/signup?redirectTo=" + encodeURIComponent("/cv-analysis"),
-                )
-              }
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
-            >
-              Créer un compte gratuit
-            </button>
-            <button
-              onClick={() =>
-                router.push(
-                  "/login?redirectTo=" + encodeURIComponent("/cv-analysis"),
-                )
-              }
-              className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-blue-500 transition-all"
-            >
-              J'ai déjà un compte
-            </button>
-          </div>
-
-          {/* Trust indicators */}
-          <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              <span>Gratuit sans CB</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              <span>Inscription en 30 secondes</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // History from API (Supabase)
   const [history, setHistory] = useState<any[]>([]);
@@ -376,6 +271,104 @@ export function CVUploadAsyncWizard({
       reloadHistory();
     }
   }, [status, hasFeatures.hasCVHistory]);
+
+  // ============================================
+  // GUARDS — after all hooks (Rules of Hooks)
+  // ============================================
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+          <p className="text-gray-600">Vérification de votre session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session || !user) {
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200 rounded-2xl p-8 shadow-xl">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-4 shadow-lg">
+              <span className="text-3xl">🎯</span>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              Créez un compte gratuit pour analyser votre CV
+            </h3>
+            <p className="text-gray-600 text-lg">
+              Bénéficiez d'une analyse professionnelle de votre CV avec notre IA
+            </p>
+          </div>
+          <div className="bg-white rounded-xl p-6 mb-6">
+            <h4 className="font-bold text-gray-900 mb-4">
+              Ce que vous obtenez gratuitement :
+            </h4>
+            <ul className="space-y-3">
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <span>
+                  <strong>1 analyse CV gratuite</strong> par jour
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <span>
+                  <strong>Score ATS détaillé</strong> avec recommandations
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <span>
+                  <strong>Analyse de compatibilité</strong> avec offres d'emploi
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <span>
+                  <strong>Sauvegarde de vos analyses</strong> et historique
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() =>
+                router.push(
+                  "/signup?redirectTo=" + encodeURIComponent("/cv-analysis"),
+                )
+              }
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
+            >
+              Créer un compte gratuit
+            </button>
+            <button
+              onClick={() =>
+                router.push(
+                  "/login?redirectTo=" + encodeURIComponent("/cv-analysis"),
+                )
+              }
+              className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-blue-500 transition-all"
+            >
+              J'ai déjà un compte
+            </button>
+          </div>
+          <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              <span>Gratuit sans CB</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              <span>Inscription en 30 secondes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ============================================
   // STEP 1: FILE/TEXT HANDLERS
