@@ -517,6 +517,7 @@ export default function JobsPage() {
 
   // Save job mutation — uses Supabase directly (same schema as saved-jobs page)
   const saveJobMutation = useMutation({
+    retry: false, // Don't retry on failure — avoids 409 retry loop on duplicate saves
     mutationFn: async (job: Job) => {
       if (!auth?.user?.id) {
         throw new Error("Vous devez être connecté pour sauvegarder des offres");
@@ -532,7 +533,12 @@ export default function JobsPage() {
         description: job.description || null,
         external_job_id: job.id,
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        // 23505 = PostgreSQL unique constraint violation → job already saved
+        // Treat as success: onSuccess will sync UI state without showing error
+        if (error.code === "23505") return;
+        throw new Error(error.message);
+      }
     },
     onSuccess: (_, job) => {
       setSavedJobIds((prev) => new Set(prev).add(job.id));
