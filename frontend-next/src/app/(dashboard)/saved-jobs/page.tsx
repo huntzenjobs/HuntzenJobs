@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bookmark,
@@ -10,6 +10,10 @@ import {
   ExternalLink,
   Trash2,
   Search,
+  Sparkles,
+  FileText,
+  Mail,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +22,8 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
+import { useDocuments } from "@/hooks/use-documents";
+import { ApplyModal } from "@/components/jobs/apply-modal";
 
 interface SavedJob {
   id: string;
@@ -28,6 +34,8 @@ interface SavedJob {
   job_url: string;
   saved_at: string;
   description?: string;
+  applied_at?: string | null;
+  cv_document_id?: string | null;
 }
 
 export default function SavedJobsPage() {
@@ -38,14 +46,19 @@ export default function SavedJobsPage() {
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedJobForApply, setSelectedJobForApply] =
+    useState<SavedJob | null>(null);
+
+  const { documents, fetchDocuments } = useDocuments();
 
   useEffect(() => {
     if (user) {
       fetchSavedJobs();
+      fetchDocuments();
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchDocuments]);
 
   const fetchSavedJobs = async () => {
     try {
@@ -247,78 +260,127 @@ export default function SavedJobsPage() {
         ) : (
           <div className="divide-y divide-slate-200">
             <AnimatePresence mode="popLayout">
-              {filteredJobs.map((job, index) => (
-                <motion.div
-                  key={job.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="p-6 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-3">
-                      {/* Job Title & Company */}
-                      <div>
-                        <h3 className="text-xl font-bold text-black mb-1">
-                          {job.job_title}
-                        </h3>
-                        <p className="text-base text-slate-700 font-medium">
-                          {job.company}
-                        </p>
-                      </div>
+              {filteredJobs.map((job, index) => {
+                const jobDoc =
+                  documents.find((d) => d.saved_job_id === job.id) ?? null;
 
-                      {/* Location & Salary */}
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4" />
-                          <span>{job.location}</span>
+                return (
+                  <motion.div
+                    key={job.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="p-6 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-3">
+                        {/* Job Title & Company */}
+                        <div>
+                          <h3 className="text-xl font-bold text-black mb-1">
+                            {job.job_title}
+                          </h3>
+                          <p className="text-base text-slate-700 font-medium">
+                            {job.company}
+                          </p>
                         </div>
-                        {job.salary && (
-                          <div className="flex items-center gap-1.5 text-[#00D9FF] font-medium">
-                            <span>{job.salary}</span>
+
+                        {/* Location & Salary */}
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-4 h-4" />
+                            <span>{job.location}</span>
+                          </div>
+                          {job.salary && (
+                            <div className="flex items-center gap-1.5 text-[#00D9FF] font-medium">
+                              <span>{job.salary}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1.5 text-slate-400">
+                            <Clock className="w-4 h-4" />
+                            <span>
+                              {t("savedAt")}{" "}
+                              {new Date(job.saved_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Description preview */}
+                        {job.description && (
+                          <p className="text-sm text-slate-600 line-clamp-2">
+                            {job.description}
+                          </p>
+                        )}
+
+                        {/* Status badges */}
+                        {(jobDoc || job.applied_at) && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {jobDoc?.cv_pdf_url && (
+                              <a
+                                href="/documents"
+                                className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors"
+                              >
+                                <FileText className="h-3 w-3" />
+                                CV généré
+                                {jobDoc.match_score != null &&
+                                  ` · ${jobDoc.match_score}%`}
+                              </a>
+                            )}
+                            {jobDoc?.lm_pdf_url && (
+                              <span className="inline-flex items-center gap-1 text-xs text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">
+                                <Mail className="h-3 w-3" />
+                                LM générée
+                              </span>
+                            )}
+                            {job.applied_at && (
+                              <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Postulé{" "}
+                                {new Date(job.applied_at).toLocaleDateString(
+                                  "fr-FR",
+                                  { day: "numeric", month: "short" },
+                                )}
+                              </span>
+                            )}
                           </div>
                         )}
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <Clock className="w-4 h-4" />
-                          <span>
-                            {t("savedAt")}{" "}
-                            {new Date(job.saved_at).toLocaleDateString()}
-                          </span>
-                        </div>
                       </div>
 
-                      {/* Description preview */}
-                      {job.description && (
-                        <p className="text-sm text-slate-600 line-clamp-2">
-                          {job.description}
-                        </p>
-                      )}
+                      {/* Actions */}
+                      <div className="flex flex-col gap-2">
+                        {!jobDoc && (
+                          <Button
+                            onClick={() => setSelectedJobForApply(job)}
+                            size="sm"
+                            variant="outline"
+                            className="whitespace-nowrap text-blue-600 border-blue-200 hover:bg-blue-50"
+                          >
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Générer CV + LM
+                          </Button>
+                        )}
+                        <Button
+                          onClick={() => window.open(job.job_url, "_blank")}
+                          size="sm"
+                          className="whitespace-nowrap bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          {t("viewOffer")}
+                        </Button>
+                        <Button
+                          onClick={() => handleRemoveSavedJob(job.id)}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          {t("delete")}
+                        </Button>
+                      </div>
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        onClick={() => window.open(job.job_url, "_blank")}
-                        size="sm"
-                        className="whitespace-nowrap bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        {t("viewOffer")}
-                      </Button>
-                      <Button
-                        onClick={() => handleRemoveSavedJob(job.id)}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        {t("delete")}
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         )}
@@ -382,6 +444,23 @@ export default function SavedJobsPage() {
           </motion.li>
         </ul>
       </motion.div>
+
+      {/* ApplyModal — triggered from "Générer CV + LM" button */}
+      {selectedJobForApply && (
+        <ApplyModal
+          open={!!selectedJobForApply}
+          onOpenChange={(open) => !open && setSelectedJobForApply(null)}
+          job={{
+            id: selectedJobForApply.id,
+            title: selectedJobForApply.job_title,
+            company: selectedJobForApply.company,
+            location: selectedJobForApply.location,
+            description: selectedJobForApply.description ?? "",
+            url: selectedJobForApply.job_url,
+            source: "saved",
+          }}
+        />
+      )}
     </div>
   );
 }
