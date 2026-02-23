@@ -174,7 +174,7 @@ class JSearchProvider(BaseJobProvider):
             "title": title,
             "company": item.get("employer_name") or "Unknown",
             "location": job_location,
-            "description": (item.get("job_description") or "")[:500],
+            "description": (item.get("job_description") or "")[:5000],
             "url": url,
             "salary": salary,
             "contract_type": contract,

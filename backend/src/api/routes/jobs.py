@@ -284,29 +284,63 @@ async def get_market_insights(
 @router.post("/description")
 async def get_job_description(request: Request):
     """
-    Get full job description from a job URL.
+    Get full job description by scraping the job URL.
 
-    Note: Currently returns empty description.
-    Full scraping implementation to be added in future sprint.
+    Fetches the page and extracts the job description section using common
+    CSS selectors, then falls back to the longest paragraph block.
     """
+    import httpx
+    from bs4 import BeautifulSoup
+
     try:
         body = await request.json()
         url = body.get("url", "")
-        source = body.get("source", "")
 
-        # TODO: Implement actual scraping logic in future sprint
-        # For now, return empty to prevent 404 errors
-        return {
-            "success": True,
-            "description": "",
-            "message": "Full description scraping not yet implemented"
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "description": "",
-            "error": str(e)
-        }
+        if not url:
+            return {"success": False, "description": ""}
+
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            headers = {"User-Agent": "Mozilla/5.0 (compatible; HuntZen/1.0)"}
+            response = await client.get(url, headers=headers)
+
+        if response.status_code != 200:
+            return {"success": False, "description": ""}
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Remove noisy elements
+        for tag in soup(["script", "style", "nav", "header", "footer"]):
+            tag.decompose()
+
+        # Try common job description selectors (most specific first)
+        selectors = [
+            '[class*="job-description"]',
+            '[class*="jobDescription"]',
+            '[class*="job_description"]',
+            '[id*="job-description"]',
+            '[class*="description"]',
+            'article',
+            'main',
+        ]
+        text = ""
+        for selector in selectors:
+            el = soup.select_one(selector)
+            if el:
+                text = el.get_text(separator="\n", strip=True)
+                if len(text) > 200:
+                    break
+
+        # Fallback: join longest paragraph blocks
+        if not text or len(text) < 200:
+            paragraphs = soup.find_all("p")
+            text = "\n".join(
+                p.get_text(strip=True) for p in paragraphs if len(p.get_text()) > 50
+            )
+
+        return {"success": True, "description": text[:5000]}
+
+    except Exception:
+        return {"success": False, "description": ""}
 
 
 @router.post("/track-view")
