@@ -16,7 +16,6 @@ docling
 # HTTP Clients
 httpx
 aiohttp
-sse-starlette  # Server-Sent Events streaming responses
 
 # Configuration
 pydantic

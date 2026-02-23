@@ -43,7 +43,6 @@ import {
 import { cn } from "@/lib/utils";
 
 import { huntzenApi, type Job } from "@/lib/api/huntzen-client";
-import { useStreamingJobSearch } from "@/hooks/use-streaming-job-search";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useOptionalAuth } from "@/contexts/auth-context";
@@ -76,15 +75,7 @@ export default function JobsPage() {
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [contractType, setContractType] = useState("");
-  const {
-    jobs,
-    isLoading: searchLoading,
-    isRankingPending,
-    isDone: searchDone,
-    error: searchError,
-    refinedQuery: streamRefinedQuery,
-    search: startSearch,
-  } = useStreamingJobSearch();
+  const [jobs, setJobs] = useState<Job[]>([]);
   const { translatedJobs, isTranslating } = useJobTranslation(jobs);
   const [visibleJobsCount, setVisibleJobsCount] = useState(0);
   const [correctedQuery, setCorrectedQuery] = useState<string | null>(null);
@@ -377,41 +368,142 @@ export default function JobsPage() {
     setCitySearch(city);
   };
 
-  // Quota increment — fires once per completed search (not on cache hits)
+  // Search state for caching with React Query
+  const [jobSearchParams, setJobSearchParams] = useState<SearchParams | null>(
+    null,
+  );
+
+  /**
+   * Tracks whether quota has been incremented for current search params.
+   * Reset when search parameters change to allow quota counting for new searches.
+   *
+   * @internal
+   * @see https://tanstack.com/query/latest/docs/react/guides/caching
+   */
   const hasIncrementedQuotaRef = useRef(false);
+
+  // Search query with intelligent caching
+  const searchQuery = useQuery({
+    queryKey: [
+      "job-search",
+      jobSearchParams?.query,
+      jobSearchParams?.country,
+      jobSearchParams?.location,
+      jobSearchParams?.radiusKm,
+      jobSearchParams?.includeRemote,
+      contractType,
+      advancedFilters,
+    ],
+    queryFn: async () => {
+      if (!jobSearchParams?.query.trim() || !jobSearchParams?.country) {
+        throw new Error("Veuillez remplir le titre du poste et le pays");
+      }
+
+      // Debug: Log search parameters
+      console.log("🔍 [SEARCH] Paramètres de recherche:", {
+        query: jobSearchParams.query,
+        location: jobSearchParams.location,
+        country: jobSearchParams.country,
+        radiusKm: jobSearchParams.radiusKm,
+        includeRemote: jobSearchParams.includeRemote,
+        contractType,
+      });
+
+      const data = await huntzenApi.searchJobs({
+        job_title: jobSearchParams.query,
+        country_code: jobSearchParams.country,
+        city: jobSearchParams.location,
+        contract_type: contractType,
+        radiusKm: jobSearchParams.radiusKm,
+        includeRemote: jobSearchParams.includeRemote,
+        // Advanced filters (Premium feature)
+        industries: advancedFilters.industries?.join(","),
+        keywords: advancedFilters.keywords?.join(","),
+        experienceLevel: advancedFilters.experienceLevel,
+        salaryMin: advancedFilters.salaryMin,
+        salaryMax: advancedFilters.salaryMax,
+        companySize: advancedFilters.companySize,
+      });
+
+      console.log("✅ [SEARCH] Résultats reçus:", {
+        totalJobs: data.jobs.length,
+        correctedQuery: data.corrected_query,
+      });
+
+      return data;
+    },
+    enabled: !!jobSearchParams, // Simplified: no need for shouldSearch flag
+    staleTime: 1000 * 60 * 5, // 5 minutes - results stay fresh
+    gcTime: 1000 * 60 * 15, // 15 minutes - keep in cache for reuse
+    retry: 1,
+  });
+
+  /**
+   * Reset quota increment flag when search parameters change.
+   * This allows a new search with different params to increment quota again.
+   */
   useEffect(() => {
     hasIncrementedQuotaRef.current = false;
-  }, [streamRefinedQuery]);
+  }, [jobSearchParams]);
+
+  /**
+   * Increments user's job_search quota when a NEW fetch completes successfully.
+   *
+   * Rules:
+   * - ✅ Count on first successful fetch
+   * - ❌ Don't count on cache hits (isFetched && !isFetching check)
+   * - ✅ Count on refetch after staleTime expiration
+   * - ❌ Don't count on API errors (isSuccess check)
+   *
+   * @example
+   * // First search: "dev" → Quota++
+   * // Repeat search: "dev" → Quota unchanged (cache hit)
+   * // New search: "designer" → Quota++
+   */
   useEffect(() => {
-    if (searchDone && jobs.length > 0 && !hasIncrementedQuotaRef.current) {
+    if (
+      searchQuery.isSuccess && // Fetch succeeded
+      searchQuery.data && // Data available
+      searchQuery.isFetched && // At least 1 fetch completed
+      !searchQuery.isFetching && // Not currently fetching
+      !hasIncrementedQuotaRef.current // Not already counted
+    ) {
+      console.log("📊 [QUOTA] Incrementing usage for job_search");
       incrementUsage("job_search");
       hasIncrementedQuotaRef.current = true;
     }
-  }, [searchDone, jobs.length, incrementUsage]);
+  }, [
+    searchQuery.isSuccess,
+    searchQuery.data,
+    searchQuery.isFetched,
+    searchQuery.isFetching,
+    incrementUsage,
+  ]);
 
-  // Sync corrected query from SSE stream
+  // Handle search query results
   useEffect(() => {
-    setCorrectedQuery(streamRefinedQuery ?? null);
-  }, [streamRefinedQuery]);
+    if (searchQuery.data) {
+      setJobs(searchQuery.data.jobs);
+      setVisibleJobsCount(0); // Reset counter for progressive reveal
+      setCorrectedQuery(searchQuery.data.corrected_query || null);
+    }
+  }, [searchQuery.data]);
 
   const handleSearch = (params: SearchParams) => {
+    // Check if user can search (quota check)
     if (!canUse("job_search")) {
       openPricingModal("job_searches_per_day");
       return;
     }
+
+    // Update form state for backward compatibility
     setJobTitle(params.query);
     setSelectedCountry(params.country);
     setSelectedCity(params.location);
-    setVisibleJobsCount(0);
-    startSearch({
-      query: params.query,
-      country: params.country,
-      city: params.location,
-      contract: contractType,
-      radius: params.radiusKm,
-      includeRemote: params.includeRemote,
-      limit: 50,
-    });
+
+    // Trigger search with caching
+    // Setting params will enable the query and trigger fetch
+    setJobSearchParams(params);
   };
 
   const handleSearchLegacy = (e: React.FormEvent) => {
@@ -629,7 +721,7 @@ export default function JobsPage() {
         {featureFlags.useJobsV2 ? (
           <SearchFormInline
             onSearch={handleSearch}
-            isLoading={searchLoading}
+            isLoading={searchQuery.isFetching}
             disabled={false}
             initialQuery={popularQuery}
           />
@@ -688,13 +780,13 @@ export default function JobsPage() {
                   size="lg"
                   className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
                   disabled={
-                    searchLoading ||
+                    searchQuery.isFetching ||
                     !jobTitle.trim() ||
                     !selectedCountry ||
                     (!canUse("job_search") && isFreePlan)
                   }
                 >
-                  {searchLoading ? (
+                  {searchQuery.isFetching ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {t("form.searching")}
@@ -993,13 +1085,13 @@ export default function JobsPage() {
                     size="lg"
                     className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
                     disabled={
-                      searchLoading ||
+                      searchQuery.isFetching ||
                       !jobTitle.trim() ||
                       !selectedCountry ||
                       (!canUse("job_search") && isFreePlan)
                     }
                   >
-                    {searchLoading ? (
+                    {searchQuery.isFetching ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         {t("form.searching")}
@@ -1044,19 +1136,24 @@ export default function JobsPage() {
       </ErrorBoundary>
 
       {/* Error */}
-      {searchError && searchError !== "Limite de recherches atteinte" && (
-        <div className="rounded-lg bg-red-50 p-5 border-l-4 border-red-500">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="font-semibold text-red-700 mb-1">
-                {t("error.title")}
-              </h3>
-              <p className="text-sm text-red-600">{searchError}</p>
+      {searchQuery.isError &&
+        searchQuery.error?.message !== "Limite de recherches atteinte" && (
+          <div className="rounded-lg bg-red-50 p-5 border-l-4 border-red-500">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-red-700 mb-1">
+                  {t("error.title")}
+                </h3>
+                <p className="text-sm text-red-600">
+                  {searchQuery.error instanceof Error
+                    ? searchQuery.error.message
+                    : t("error.generic")}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Query correction */}
       <AnimatePresence>
@@ -1086,7 +1183,7 @@ export default function JobsPage() {
       </AnimatePresence>
 
       {/* Skeleton grid — shown while fetching (before results arrive) */}
-      {searchLoading && (
+      {searchQuery.isFetching && (
         <div
           className={`grid gap-6 auto-rows-fr ${
             featureFlags.useJobsV2
@@ -1129,7 +1226,7 @@ export default function JobsPage() {
 
       {/* Results */}
 
-      {!searchLoading && jobs.length > 0 && (
+      {!searchQuery.isFetching && jobs.length > 0 && (
         <ErrorBoundary
           fallback={
             <Card className="p-8 text-center bg-white border-slate-200">
@@ -1166,20 +1263,57 @@ export default function JobsPage() {
                         ? t("results.count_one", { count: jobs.length })
                         : t("results.count_other", { count: jobs.length })}
                     </h2>
-                    {isRankingPending && (
-                      <Badge
-                        variant="outline"
-                        className="text-xs bg-amber-50 text-amber-700 border-amber-200 animate-pulse"
-                      >
-                        ✨ Ranking IA...
-                      </Badge>
-                    )}
+                    {/* Cache badge - Shows when data is from cache */}
+                    {searchQuery.isFetched &&
+                      !searchQuery.isFetching &&
+                      searchQuery.dataUpdatedAt && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                        >
+                          💾 Cache
+                        </Badge>
+                      )}
                   </div>
                   <p className="text-sm text-emerald-600 font-medium">
-                    {searchLoading
-                      ? "Chargement en cours..."
-                      : isRankingPending
-                        ? "Classement IA des résultats..."
+                    {searchQuery.isFetching
+                      ? "Actualisation en cours..."
+                      : searchQuery.dataUpdatedAt
+                        ? (() => {
+                            const now = Date.now();
+                            const updatedAt = searchQuery.dataUpdatedAt;
+                            const diffMs = now - updatedAt;
+                            const diffMinutes = Math.floor(diffMs / 60000);
+
+                            // Determine staleness level
+                            const isStale = diffMinutes >= 5;
+                            const isVeryStale = diffMinutes >= 10;
+
+                            let timeText = "";
+                            if (diffMinutes < 1) {
+                              timeText = "à l'instant";
+                            } else if (diffMinutes === 1) {
+                              timeText = "il y a 1 minute";
+                            } else {
+                              timeText = `il y a ${diffMinutes} minutes`;
+                            }
+
+                            return (
+                              <span
+                                className={
+                                  isVeryStale
+                                    ? "text-orange-600"
+                                    : isStale
+                                      ? "text-yellow-600"
+                                      : ""
+                                }
+                              >
+                                {isVeryStale ? "⚠️ " : isStale ? "⏰ " : "✓ "}
+                                Actualisé {timeText}
+                                {isStale && " - Actualisation recommandée"}
+                              </span>
+                            );
+                          })()
                         : "Résultats récents et pertinents"}
                   </p>
                 </div>
@@ -1188,22 +1322,19 @@ export default function JobsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    if (jobTitle && selectedCountry) {
-                      handleSearch({
-                        query: jobTitle,
-                        country: selectedCountry,
-                        location: selectedCity,
-                      });
-                    }
+                    console.log(
+                      "🔄 [REFRESH] Forcing refetch (bypassing cache)",
+                    );
+                    searchQuery.refetch();
                   }}
-                  disabled={searchLoading || isRankingPending}
+                  disabled={searchQuery.isFetching}
                   className="ml-4 gap-2 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400"
-                  title="Relancer la recherche"
+                  title="Actualiser les résultats depuis le serveur"
                 >
                   <RefreshCw
                     className={cn(
                       "w-4 h-4",
-                      (searchLoading || isRankingPending) && "animate-spin",
+                      searchQuery.isFetching && "animate-spin",
                     )}
                   />
                   <span className="hidden sm:inline">
@@ -1399,39 +1530,6 @@ export default function JobsPage() {
                   </motion.div>
                 ))}
 
-              {/* Skeleton cards while AI ranking is in progress (lock-first-3 pattern) */}
-              {isRankingPending &&
-                Array.from({ length: 6 }).map((_, i) => (
-                  <motion.div
-                    key={`ranking-skeleton-${i}`}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.07 }}
-                  >
-                    <Card className="flex flex-col border border-slate-200 overflow-hidden h-full bg-white">
-                      <CardHeader className="pb-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 space-y-3">
-                            <Skeleton className="h-6 w-3/4" />
-                            <div className="flex items-center gap-2">
-                              <Skeleton className="h-9 w-9 rounded-xl" />
-                              <Skeleton className="h-4 w-1/2" />
-                            </div>
-                          </div>
-                          <Skeleton className="h-6 w-16 rounded-full" />
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col pt-4 space-y-3">
-                        <Skeleton className="h-8 w-full rounded-lg" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                        <Skeleton className="h-4 w-4/6" />
-                        <Skeleton className="h-11 w-full rounded-md mt-auto" />
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-
               {/* Gradient job cards for free users */}
               {showBlurredCards && (
                 <>
@@ -1459,45 +1557,49 @@ export default function JobsPage() {
       )}
 
       {/* Placeholder avant première recherche - NOUVEAU */}
-      {!searchLoading && !searchDone && jobs.length === 0 && (
-        <JobsPlaceholder
-          onSearchClick={(popularJobTitle) => {
-            setPopularQuery(popularJobTitle);
-            setTimeout(() => {
-              const input =
-                document.getElementById("query-inline") ??
-                document.getElementById("query-mobile");
-              input?.scrollIntoView({ behavior: "smooth", block: "center" });
-              input?.focus();
-            }, 50);
-          }}
-        />
-      )}
+      {!searchQuery.isFetching &&
+        !searchQuery.isSuccess &&
+        jobs.length === 0 && (
+          <JobsPlaceholder
+            onSearchClick={(popularJobTitle) => {
+              setPopularQuery(popularJobTitle);
+              setTimeout(() => {
+                const input =
+                  document.getElementById("query-inline") ??
+                  document.getElementById("query-mobile");
+                input?.scrollIntoView({ behavior: "smooth", block: "center" });
+                input?.focus();
+              }, 50);
+            }}
+          />
+        )}
 
-      {!searchLoading && searchDone && jobs.length === 0 && (
-        <Card className="border-2 border-dashed border-slate-300 bg-white">
-          <CardContent className="py-16 text-center">
-            <div className="w-20 h-20 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-6">
-              <Search className="h-10 w-10 text-muted-foreground/50" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-700 mb-2">
-              {t("empty.title")}
-            </h3>
-            <p className="text-base text-muted-foreground mb-6 max-w-md mx-auto">
-              {t("empty.subtitle")}
-            </p>
-            <div className="space-y-2 text-sm text-muted-foreground max-w-lg mx-auto">
-              <p className="font-semibold">{t("empty.tips")}</p>
-              <ul className="text-left space-y-1 inline-block">
-                <li>• {t("empty.tip1")}</li>
-                <li>• {t("empty.tip2")}</li>
-                <li>• {t("empty.tip3")}</li>
-                <li>• {t("empty.tip4")}</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {!searchQuery.isFetching &&
+        searchQuery.isSuccess &&
+        jobs.length === 0 && (
+          <Card className="border-2 border-dashed border-slate-300 bg-white">
+            <CardContent className="py-16 text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-6">
+                <Search className="h-10 w-10 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-700 mb-2">
+                {t("empty.title")}
+              </h3>
+              <p className="text-base text-muted-foreground mb-6 max-w-md mx-auto">
+                {t("empty.subtitle")}
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground max-w-lg mx-auto">
+                <p className="font-semibold">{t("empty.tips")}</p>
+                <ul className="text-left space-y-1 inline-block">
+                  <li>• {t("empty.tip1")}</li>
+                  <li>• {t("empty.tip2")}</li>
+                  <li>• {t("empty.tip3")}</li>
+                  <li>• {t("empty.tip4")}</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Job Details Modal */}
       <JobDetailsModal
