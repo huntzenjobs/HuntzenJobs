@@ -62,20 +62,16 @@ export function JobDetailsModal({
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [recruiterDrawerOpen, setRecruiterDrawerOpen] = React.useState(false);
 
+  // All hooks must be called before any conditional return (Rules of Hooks)
+  const { canUse, openPricingModal } = useSubscription();
+  const { authenticatedFetch } = useAuthenticatedFetch();
+  const { description: fullDescription, loading: loadingDescription } =
+    useFullJobDescription(job?.url, job?.source);
+
   if (!job) return null;
 
   // Format source for display
   const displaySource = formatJobSource(job.source);
-
-  // Get subscription context for quota checks
-  const { canUse, openPricingModal } = useSubscription();
-
-  // Get authenticated fetch function
-  const { authenticatedFetch } = useAuthenticatedFetch();
-
-  // Fetch full description when modal opens
-  const { description: fullDescription, loading: loadingDescription } =
-    useFullJobDescription(job.url, job.source);
 
   // Use full description if available, fallback to job.description
   const displayDescription = fullDescription || job.description;
@@ -369,7 +365,13 @@ export function JobDetailsModal({
                         <Button
                           size="lg"
                           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                          onClick={() => setApplyModalOpen(true)}
+                          onClick={() => {
+                            if (!canUse("cv_analysis")) {
+                              openPricingModal("cv_analysis");
+                              return;
+                            }
+                            setApplyModalOpen(true);
+                          }}
                         >
                           <Sparkles className="mr-2 h-4 w-4" />
                           Générer CV + lettre adaptés
