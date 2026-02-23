@@ -63,7 +63,7 @@ export function JobDetailsModal({
   const [recruiterDrawerOpen, setRecruiterDrawerOpen] = React.useState(false);
 
   // All hooks must be called before any conditional return (Rules of Hooks)
-  const { openPricingModal } = useSubscription();
+  const { canUse, openPricingModal } = useSubscription();
   const { authenticatedFetch } = useAuthenticatedFetch();
   const { description: fullDescription, loading: loadingDescription } =
     useFullJobDescription(job?.url, job?.source);
@@ -365,7 +365,13 @@ export function JobDetailsModal({
                         <Button
                           size="lg"
                           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                          onClick={() => setApplyModalOpen(true)}
+                          onClick={() => {
+                            if (!canUse("cv_analysis")) {
+                              openPricingModal("cv_analysis");
+                              return;
+                            }
+                            setApplyModalOpen(true);
+                          }}
                         >
                           <Sparkles className="mr-2 h-4 w-4" />
                           Générer CV + lettre adaptés
