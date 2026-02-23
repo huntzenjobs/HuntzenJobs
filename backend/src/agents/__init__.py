@@ -11,6 +11,7 @@ from src.agents.coach import CareerCoachAgent
 from src.agents.job_scout import JobScoutAgent
 from src.agents.cv_analyzer import CVAnalyzerAgent
 from src.agents.cv_adapter import CVAdapterAgent
+from src.agents.branding import BrandingAgent
 
 __all__ = [
     "BaseAgent",
@@ -19,4 +20,5 @@ __all__ = [
     "JobScoutAgent",
     "CVAnalyzerAgent",
     "CVAdapterAgent",
+    "BrandingAgent",
 ]

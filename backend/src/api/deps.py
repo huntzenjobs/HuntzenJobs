@@ -20,6 +20,7 @@ from src.agents.cv_analyzer.conversational_agent import CVAnalyzerConversational
 from src.agents.cv_adapter.main_agent import CVAdapterAgent
 from src.agents.cv_adapter.conversational_agent import CVAdapterConversationalAgent
 from src.agents.interview_sim.conversational_agent import InterviewSimAgent
+from src.agents.branding.main_agent import BrandingAgent
 from src.config.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -33,15 +34,41 @@ def get_settings_dep() -> Settings:
 SettingsDep = Annotated[Settings, Depends(get_settings_dep)]
 
 
-# Session storage (in-memory for now) - Thread-safe
+# Session storage — Supabase-backed with in-memory fallback
+# Primary: reads/writes to coach_conversations table
+# Fallback: in-memory dict (for tests or when Supabase unavailable)
 _sessions_lock = threading.Lock()
 _sessions: dict[str, list[dict]] = defaultdict(list)
 
 
 def get_session_history(session_id: str) -> list[dict]:
-    """Get conversation history for a session (thread-safe)."""
+    """
+    Get conversation history for a session.
+    
+    Tries Supabase first (persistent across restarts/workers),
+    falls back to in-memory if unavailable.
+    """
+    # Try Supabase first
+    try:
+        client = get_supabase_client()
+        result = (
+            client.table("coach_conversations")
+            .select("messages")
+            .eq("session_id", session_id)
+            .order("updated_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if result.data and result.data[0].get("messages"):
+            messages = result.data[0]["messages"]
+            # Return last 20 messages (10 exchanges)
+            return messages[-20:] if len(messages) > 20 else messages
+    except Exception as e:
+        logger.warning(f"⚠️ Supabase history read failed, using in-memory: {e}")
+
+    # Fallback to in-memory
     with _sessions_lock:
-        return _sessions[session_id].copy()  # Return copy to avoid external mutation
+        return _sessions[session_id].copy()
 
 
 def update_session_history(
@@ -49,14 +76,43 @@ def update_session_history(
     user_message: str,
     assistant_response: str,
 ) -> None:
-    """Update conversation history (thread-safe)."""
+    """
+    Update conversation history (Supabase + in-memory fallback).
+    
+    Tries to update the Supabase row matching this session_id.
+    Always updates in-memory as hot cache.
+    """
+    # Always update in-memory (hot cache for same-session follow-ups)
     with _sessions_lock:
         _sessions[session_id].append({"role": "user", "content": user_message})
         _sessions[session_id].append({"role": "assistant", "content": assistant_response})
-
-        # Keep only last 10 exchanges (20 messages)
         if len(_sessions[session_id]) > 20:
             _sessions[session_id] = _sessions[session_id][-20:]
+
+    # Try to update Supabase (best-effort, non-blocking for caller)
+    try:
+        client = get_supabase_client()
+        result = (
+            client.table("coach_conversations")
+            .select("id, messages")
+            .eq("session_id", session_id)
+            .order("updated_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if result.data:
+            # Append to existing conversation
+            existing_msgs = result.data[0].get("messages", [])
+            existing_msgs.append({"role": "user", "content": user_message})
+            existing_msgs.append({"role": "assistant", "content": assistant_response})
+            # Cap at 50 messages in DB (more generous than in-memory)
+            if len(existing_msgs) > 50:
+                existing_msgs = existing_msgs[-50:]
+            client.table("coach_conversations").update({
+                "messages": existing_msgs,
+            }).eq("id", result.data[0]["id"]).execute()
+    except Exception as e:
+        logger.warning(f"⚠️ Supabase history write failed (in-memory still updated): {e}")
 
 
 def clear_session(session_id: str) -> None:
@@ -84,6 +140,9 @@ _cv_adapter_agent_lock = threading.Lock()
 
 _interview_sim_agent: InterviewSimAgent | None = None
 _interview_sim_agent_lock = threading.Lock()
+
+_branding_agent: BrandingAgent | None = None
+_branding_agent_lock = threading.Lock()
 
 # Main (non-conversational) agents
 _cv_analyzer_main_agent: CVAnalyzerAgent | None = None
@@ -197,6 +256,19 @@ def get_cv_adapter_main() -> CVAdapterAgent:
     return _cv_adapter_main_agent
 
 
+def get_branding_agent() -> BrandingAgent:
+    """Get BrandingAgent singleton (thread-safe)."""
+    global _branding_agent
+
+    if _branding_agent is None:
+        with _branding_agent_lock:
+            if _branding_agent is None:
+                _branding_agent = BrandingAgent()
+                logger.info("[deps] BrandingAgent singleton created")
+
+    return _branding_agent
+
+
 CoachAgentDep = Annotated[CareerCoachAgent, Depends(get_coach_agent)]
 ScoutAgentDep = Annotated[JobScoutAgent, Depends(get_scout_agent)]
 ScoutConversationalAgentDep = Annotated[JobScoutConversationalAgent, Depends(get_scout_conversational_agent)]
@@ -207,6 +279,7 @@ InterviewSimAgentDep = Annotated[InterviewSimAgent, Depends(get_interview_sim_ag
 # Main (non-conversational) agent dependencies
 CVAnalyzerMainDep = Annotated[CVAnalyzerAgent, Depends(get_cv_analyzer_main)]
 CVAdapterMainDep = Annotated[CVAdapterAgent, Depends(get_cv_adapter_main)]
+BrandingAgentDep = Annotated[BrandingAgent, Depends(get_branding_agent)]
 
 
 # Supabase Client - Thread-safe
