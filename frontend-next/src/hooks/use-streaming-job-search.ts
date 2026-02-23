@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { type Job } from "@/lib/api/huntzen-client";
 
 const LOCK_SIZE = 3; // First N jobs shown immediately, never reordered
@@ -18,9 +18,9 @@ export interface StreamSearchParams {
 }
 
 interface StreamingState {
-  lockedJobs: Job[];         // First LOCK_SIZE — displayed immediately, never reordered
-  rankedJobs: Job[];         // Remaining — replaces skeletons after AI ranking
-  isLoading: boolean;        // Providers still running
+  lockedJobs: Job[]; // First LOCK_SIZE — displayed immediately, never reordered
+  rankedJobs: Job[]; // Remaining — replaces skeletons after AI ranking
+  isLoading: boolean; // Providers still running
   isRankingPending: boolean; // All providers done, ranking in progress → show skeletons
   isDone: boolean;
   error: string | null;
@@ -71,7 +71,10 @@ export function useStreamingJobSearch() {
     // ── event:query — refined search query ──────────────────────────────────
     es.addEventListener("query", (e: MessageEvent) => {
       const data = JSON.parse(e.data);
-      setState((prev) => ({ ...prev, refinedQuery: data.refined_query ?? null }));
+      setState((prev) => ({
+        ...prev,
+        refinedQuery: data.refined_query ?? null,
+      }));
     });
 
     // ── event:jobs — batch from one provider ────────────────────────────────
@@ -175,14 +178,28 @@ export function useStreamingJobSearch() {
   const cancel = useCallback(() => {
     esRef.current?.close();
     esRef.current = null;
-    setState((prev) => ({ ...prev, isLoading: false, isRankingPending: false }));
+    setState((prev) => ({
+      ...prev,
+      isLoading: false,
+      isRankingPending: false,
+    }));
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => () => { esRef.current?.close(); }, []);
+  useEffect(
+    () => () => {
+      esRef.current?.close();
+    },
+    [],
+  );
 
-  // Combined view: locked (stable, shown first) + ranked (fills skeletons)
-  const jobs = [...state.lockedJobs, ...state.rankedJobs];
+  // Combined view: locked (stable) + ranked (fills skeletons).
+  // useMemo keeps a stable array reference so consumers like useJobTranslation
+  // (which has [jobs] as useEffect dep) don't re-fire on every render.
+  const jobs = useMemo(
+    () => [...state.lockedJobs, ...state.rankedJobs],
+    [state.lockedJobs, state.rankedJobs],
+  );
 
   return { ...state, jobs, search, cancel };
 }
