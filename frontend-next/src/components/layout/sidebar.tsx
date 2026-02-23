@@ -8,6 +8,7 @@ import { TextLogo } from "@/components/ui/adaptive-logo";
 import {
   Briefcase,
   FileText,
+  FolderOpen,
   MessageSquare,
   Bookmark,
   HelpCircle,
@@ -95,6 +96,12 @@ export function Sidebar({ className }: SidebarProps) {
       icon: Users,
       premium: false,
       badge: "50€",
+    },
+    {
+      name: t("nav.documents"),
+      href: "/documents",
+      icon: FolderOpen,
+      premium: false,
     },
   ];
 

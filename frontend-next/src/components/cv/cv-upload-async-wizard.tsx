@@ -33,7 +33,11 @@ import {
   ArrowLeft,
   ArrowRight,
   History,
+  Sparkles,
+  Download,
 } from "lucide-react";
+import { useDocuments } from "@/hooks/use-documents";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { useCVAnalysis } from "@/hooks/use-cv-analysis";
@@ -64,7 +68,7 @@ interface CVUploadAsyncWizardProps {
 
 type WizardStep = 1 | 2 | 3;
 type UploadMethod = "file" | "text";
-type AnalysisType = "global" | "match";
+type AnalysisType = "global" | "match" | "adapt";
 
 interface WizardState {
   currentStep: WizardStep;
@@ -73,6 +77,13 @@ interface WizardState {
   cvText: string;
   analysisType: AnalysisType | null;
   jobDescription: string;
+  adaptLanguage: "fr" | "en";
+}
+
+interface AdaptResult {
+  cvPdfBlob: Blob;
+  lmPdfBlob: Blob | null;
+  matchScore: number | null;
 }
 
 // ============================================
@@ -238,7 +249,15 @@ export function CVUploadAsyncWizard({
     cvText: "",
     analysisType: null,
     jobDescription: "",
+    adaptLanguage: "fr",
   });
+
+  // Adapt mode state
+  const [adaptLoading, setAdaptLoading] = useState(false);
+  const [adaptResult, setAdaptResult] = useState<AdaptResult | null>(null);
+  const [adaptError, setAdaptError] = useState<string | null>(null);
+
+  const { saveDocument } = useDocuments();
 
   const [isDragging, setIsDragging] = useState(false);
 
@@ -438,7 +457,90 @@ export function CVUploadAsyncWizard({
   const handleStep2Analyze = async () => {
     if (!canAnalyze) return;
 
-    // Check freemium limit
+    // "adapt" mode: generate CV + LM PDFs (no freemium check for now)
+    if (wizardState.analysisType === "adapt") {
+      if (!wizardState.file) return; // adapt requires a file
+
+      setWizardState((prev) => ({ ...prev, currentStep: 3 }));
+      setAdaptLoading(true);
+      setAdaptError(null);
+
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+        const { language: adaptLang } = { language: wizardState.adaptLanguage };
+
+        // Step 1: adapt CV
+        const formData = new FormData();
+        formData.append("file", wizardState.file);
+        formData.append("job_description", wizardState.jobDescription);
+        formData.append("language", adaptLang);
+        formData.append("output_format", "json");
+
+        const adaptRes = await fetch(
+          `${backendUrl}/api/cv-adapter/adapt/upload`,
+          { method: "POST", body: formData },
+        );
+        if (!adaptRes.ok) throw new Error("Erreur lors de l'adaptation du CV");
+        const adaptData = await adaptRes.json();
+        const cvData = adaptData.cv_data;
+        const matchScore = adaptData.match_score;
+
+        // Step 2: generate CV PDF + LM PDF in parallel
+        const [cvPdfRes, lmPdfRes] = await Promise.all([
+          fetch(`${backendUrl}/api/cv-adapter/pdf`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cv_data: cvData,
+              template: "ats",
+              language: adaptLang,
+            }),
+          }),
+          fetch(`${backendUrl}/api/cv-adapter/generate-cover-letter`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cv_data: cvData,
+              job_description: wizardState.jobDescription,
+              language: adaptLang,
+              company_name: "",
+            }),
+          }),
+        ]);
+
+        if (!cvPdfRes.ok) throw new Error("Erreur génération CV PDF");
+
+        const cvPdfBlob = await cvPdfRes.blob();
+        const lmPdfBlob = lmPdfRes.ok ? await lmPdfRes.blob() : null;
+
+        setAdaptResult({
+          cvPdfBlob,
+          lmPdfBlob,
+          matchScore: matchScore != null ? Math.round(matchScore * 100) : null,
+        });
+
+        // Persist to Storage in background
+        saveDocument({
+          jobTitle: "CV adapté",
+          company: "",
+          matchScore:
+            matchScore != null ? Math.round(matchScore * 100) : undefined,
+          cvData: cvData as Record<string, unknown>,
+          cvPdfBlob,
+          lmPdfBlob: lmPdfBlob ?? undefined,
+          language: adaptLang,
+        }).catch(() => {});
+      } catch (err) {
+        setAdaptError(
+          err instanceof Error ? err.message : "Une erreur est survenue",
+        );
+      } finally {
+        setAdaptLoading(false);
+      }
+      return;
+    }
+
+    // Check freemium limit (ATS / matching only)
     if (!canUse("cv_analysis")) {
       openPricingModal("cv_analyses_per_day");
       return;
@@ -483,9 +585,13 @@ export function CVUploadAsyncWizard({
       cvText: "",
       analysisType: null,
       jobDescription: "",
+      adaptLanguage: "fr",
     });
     resetAnalysis();
     setLoadedHistoryResult(null);
+    setAdaptResult(null);
+    setAdaptError(null);
+    setAdaptLoading(false);
   };
 
   const handleLoadFromHistory = async (analysis: any) => {
@@ -526,6 +632,7 @@ export function CVUploadAsyncWizard({
           cvText: "",
           analysisType: "global",
           jobDescription: "",
+          adaptLanguage: "fr",
         });
         setShowHistory(false);
       } else {
@@ -719,12 +826,41 @@ export function CVUploadAsyncWizard({
             Score de compatibilité avec une offre d'emploi spécifique
           </p>
         </button>
+
+        <button
+          onClick={() => handleAnalysisTypeChange("adapt")}
+          className={`w-full p-6 rounded-lg border-2 text-left transition-all ${
+            wizardState.analysisType === "adapt"
+              ? "border-blue-500 bg-blue-50"
+              : "border-gray-300 hover:border-gray-400"
+          }`}
+          disabled={wizardState.uploadMethod === "text"}
+          title={
+            wizardState.uploadMethod === "text"
+              ? "Disponible uniquement avec un fichier PDF"
+              : undefined
+          }
+        >
+          <p className="font-bold text-lg mb-2 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-blue-500" />
+            Adapter mon CV à un poste
+            {wizardState.uploadMethod === "text" && (
+              <span className="text-xs text-gray-400 font-normal">
+                (PDF requis)
+              </span>
+            )}
+          </p>
+          <p className="text-sm text-gray-600">
+            Génère un CV optimisé + lettre de motivation prêts à envoyer
+          </p>
+        </button>
       </div>
 
-      {/* Job Description (if match selected) */}
-      {wizardState.analysisType === "match" && (
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">
+      {/* Job Description (if match or adapt selected) */}
+      {(wizardState.analysisType === "match" ||
+        wizardState.analysisType === "adapt") && (
+        <div className="mb-6 space-y-3">
+          <label className="block text-sm font-medium">
             Description du poste <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -733,9 +869,36 @@ export function CVUploadAsyncWizard({
             placeholder="Collez la description du poste ici..."
             className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500">
             Minimum 20 caractères ({wizardState.jobDescription.length}/20)
           </p>
+
+          {/* Language selector for adapt mode */}
+          {wizardState.analysisType === "adapt" && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-medium">
+                Langue du document :
+              </span>
+              {(["fr", "en"] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() =>
+                    setWizardState((prev) => ({
+                      ...prev,
+                      adaptLanguage: lang,
+                    }))
+                  }
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    wizardState.adaptLanguage === lang
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {lang === "fr" ? "Français" : "English"}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -769,6 +932,161 @@ export function CVUploadAsyncWizard({
   // ============================================
 
   const renderStep3 = () => {
+    // ── ADAPT MODE ──────────────────────────────────────────────────────────
+    if (wizardState.analysisType === "adapt") {
+      if (adaptLoading) {
+        return (
+          <motion.div
+            key="step3-adapt-loading"
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3 }}
+            className="flex flex-col items-center gap-6 py-12"
+          >
+            <div className="relative">
+              <div className="h-16 w-16 rounded-full border-4 border-gray-100 border-t-blue-500 animate-spin" />
+              <Sparkles className="absolute inset-0 m-auto h-6 w-6 text-blue-500" />
+            </div>
+            <div className="text-center space-y-1">
+              <p className="font-semibold text-gray-900">
+                Adaptation en cours...
+              </p>
+              <p className="text-sm text-gray-500">
+                L&apos;IA adapte votre CV et rédige la lettre de motivation
+              </p>
+            </div>
+          </motion.div>
+        );
+      }
+
+      if (adaptError) {
+        return (
+          <motion.div
+            key="step3-adapt-error"
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3 }}
+            className="text-center py-12"
+          >
+            <XCircle className="w-16 h-16 text-red-600 mx-auto mb-6" />
+            <h3 className="text-xl font-bold text-red-900 mb-2">
+              Erreur d&apos;adaptation
+            </h3>
+            <p className="text-red-700 mb-6">{adaptError}</p>
+            <button
+              onClick={handleReset}
+              className="px-8 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all"
+            >
+              Réessayer
+            </button>
+          </motion.div>
+        );
+      }
+
+      if (adaptResult) {
+        const companySlug = "poste";
+        const downloadBlob = (blob: Blob, filename: string) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        };
+
+        return (
+          <motion.div
+            key="step3-adapt-results"
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3 }}
+            className="space-y-4"
+          >
+            {/* Match score */}
+            {adaptResult.matchScore != null && (
+              <div className="flex items-center gap-3 rounded-lg bg-green-50 border border-green-200 p-4">
+                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-green-800">
+                    Score de matching : {adaptResult.matchScore}%
+                  </p>
+                  <p className="text-xs text-green-600">
+                    Votre CV a été optimisé pour ce poste
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Downloads */}
+            <div className="space-y-2">
+              <button
+                onClick={() =>
+                  downloadBlob(
+                    adaptResult.cvPdfBlob,
+                    `CV_adapté_${companySlug}.pdf`,
+                  )
+                }
+                className="w-full flex items-center justify-between px-5 py-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all font-medium"
+              >
+                <span className="flex items-center gap-2">
+                  <Download className="h-4 w-4 text-blue-600" />
+                  Télécharger mon CV adapté
+                </span>
+                <Badge variant="secondary" className="text-xs">
+                  PDF
+                </Badge>
+              </button>
+
+              {adaptResult.lmPdfBlob && (
+                <button
+                  onClick={() =>
+                    downloadBlob(
+                      adaptResult.lmPdfBlob!,
+                      `Lettre_Motivation_${companySlug}.pdf`,
+                    )
+                  }
+                  className="w-full flex items-center justify-between px-5 py-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all font-medium"
+                >
+                  <span className="flex items-center gap-2">
+                    <Download className="h-4 w-4 text-blue-600" />
+                    Télécharger ma lettre de motivation
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    PDF
+                  </Badge>
+                </button>
+              )}
+            </div>
+
+            <p className="text-xs text-center text-gray-400">
+              Documents sauvegardés dans{" "}
+              <a href="/documents" className="underline hover:text-gray-600">
+                Mes documents
+              </a>
+            </p>
+
+            <button
+              onClick={handleReset}
+              className="w-full mt-2 text-xs text-gray-400 hover:text-gray-600 text-center transition-colors"
+            >
+              Adapter un autre CV
+            </button>
+          </motion.div>
+        );
+      }
+
+      return null;
+    }
+
+    // ── ATS / MATCHING MODE ──────────────────────────────────────────────────
     // Processing - New visual steps with percentage
     if (isUploading || status === "pending" || status === "processing") {
       return (
@@ -930,6 +1248,67 @@ export function CVUploadAsyncWizard({
               <CVInfoPanel cvInfo={displayResult.cv_info} />
             </div>
           )}
+
+          {/* Smart CTAs — "Et maintenant ?" */}
+          <div className="mt-8 border-t border-gray-100 pt-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
+              Et maintenant ?
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* CTA 1 : Améliorer le CV en mode adapt */}
+              <button
+                onClick={() => {
+                  const weaknesses: string[] = displayResult.improvements || [];
+                  setWizardState((prev) => ({
+                    ...prev,
+                    analysisType: "adapt",
+                    jobDescription: weaknesses
+                      .slice(0, 3)
+                      .map((w: string) => `Améliorer : ${w}`)
+                      .join("\n"),
+                    currentStep: 2,
+                  }));
+                  setAdaptResult(null);
+                  setAdaptError(null);
+                }}
+                className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+              >
+                <Sparkles className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">
+                    Améliorer mon CV
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Adapter mon CV avec les recommandations
+                  </p>
+                </div>
+              </button>
+
+              {/* CTA 2 : Offres recommandées */}
+              {(() => {
+                const topSkills: string[] = (
+                  displayResult.keywords_found || []
+                ).slice(0, 3);
+                const query = topSkills.join(" ");
+                return (
+                  <a
+                    href={`/jobs${query ? `?q=${encodeURIComponent(query)}` : ""}`}
+                    className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 hover:border-violet-300 hover:bg-violet-50 transition-colors text-left"
+                  >
+                    <FileText className="h-5 w-5 text-violet-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">
+                        Offres recommandées
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Trouver des offres qui correspondent à ce profil
+                      </p>
+                    </div>
+                  </a>
+                );
+              })()}
+            </div>
+          </div>
 
           {/* Actions */}
           <div className="flex gap-4 mt-8">
