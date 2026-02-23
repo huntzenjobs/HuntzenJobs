@@ -1249,6 +1249,67 @@ export function CVUploadAsyncWizard({
             </div>
           )}
 
+          {/* Smart CTAs — "Et maintenant ?" */}
+          <div className="mt-8 border-t border-gray-100 pt-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
+              Et maintenant ?
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* CTA 1 : Améliorer le CV en mode adapt */}
+              <button
+                onClick={() => {
+                  const weaknesses: string[] = displayResult.improvements || [];
+                  setWizardState((prev) => ({
+                    ...prev,
+                    analysisType: "adapt",
+                    jobDescription: weaknesses
+                      .slice(0, 3)
+                      .map((w: string) => `Améliorer : ${w}`)
+                      .join("\n"),
+                    currentStep: 2,
+                  }));
+                  setAdaptResult(null);
+                  setAdaptError(null);
+                }}
+                className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+              >
+                <Sparkles className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">
+                    Améliorer mon CV
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Adapter mon CV avec les recommandations
+                  </p>
+                </div>
+              </button>
+
+              {/* CTA 2 : Offres recommandées */}
+              {(() => {
+                const topSkills: string[] = (
+                  displayResult.keywords_found || []
+                ).slice(0, 3);
+                const query = topSkills.join(" ");
+                return (
+                  <a
+                    href={`/jobs${query ? `?q=${encodeURIComponent(query)}` : ""}`}
+                    className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 hover:border-violet-300 hover:bg-violet-50 transition-colors text-left"
+                  >
+                    <FileText className="h-5 w-5 text-violet-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">
+                        Offres recommandées
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Trouver des offres qui correspondent à ce profil
+                      </p>
+                    </div>
+                  </a>
+                );
+              })()}
+            </div>
+          </div>
+
           {/* Actions */}
           <div className="flex gap-4 mt-8">
             <button
