@@ -23,6 +23,8 @@ from src.api.routes.subscription import router as subscription_router
 from src.api.routes.health import router as health_router
 from src.api.routes.admin_cleanup import router as admin_cleanup_router
 from src.api.routes.branding import router as branding_router
+from src.api.routes.recruiter_finder import router as recruiter_finder_router
+from src.api.routes.documents import router as documents_router
 
 router = APIRouter()
 
@@ -44,3 +46,5 @@ router.include_router(subscription_router, prefix="/api/subscription", tags=["Su
 router.include_router(admin_cleanup_router, prefix="/api/admin", tags=["Admin Cleanup"])
 router.include_router(branding_router, prefix="/api/branding", tags=["Personal Branding"])
 router.include_router(health_router, prefix="/api/health", tags=["Health & Monitoring"])
+router.include_router(recruiter_finder_router, prefix="/api/recruiter-finder", tags=["Recruiter Finder"])
+router.include_router(documents_router, prefix="/api/documents", tags=["Documents"])
