@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Search, MapPin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +56,7 @@ export function SearchFormInline({
   const [includeRemote, setIncludeRemote] = useState(true); // Include remote jobs by default
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const t = useTranslations("searchForm");
   const { canUse, getRemaining, isFreePlan } = useSubscription();
 
   // Fetch countries for autocomplete
@@ -137,11 +139,11 @@ export function SearchFormInline({
     const newErrors: Record<string, string> = {};
 
     if (!query.trim()) {
-      newErrors.query = "Le métier est requis";
+      newErrors.query = t("jobTitleRequired");
     }
 
     if (!country.trim()) {
-      newErrors.country = "Le pays est requis";
+      newErrors.country = t("countryRequired");
     } else if (!isCountryValid) {
       newErrors.country = "Veuillez sélectionner un pays dans la liste";
     }
@@ -290,7 +292,7 @@ export function SearchFormInline({
               size="lg"
               className="px-6 whitespace-nowrap bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:from-huntzen-blue/90 hover:to-huntzen-turquoise/90"
             >
-              {isLoading ? "Recherche..." : "Rechercher"}
+              {isLoading ? t("searchButton") : t("searchButton")}
             </Button>
           </div>
         </div>
@@ -311,7 +313,7 @@ export function SearchFormInline({
               htmlFor="include-remote-desktop"
               className="text-sm font-medium text-gray-700 cursor-pointer select-none whitespace-nowrap"
             >
-              Inclure jobs remote
+              {t("includeRemote")}
             </label>
           </div>
 
@@ -324,10 +326,10 @@ export function SearchFormInline({
                 <div className="flex-1 min-w-0 max-w-md">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-gray-700">
-                      Rayon de recherche
+                      {t("searchRadius")}
                     </span>
                     <span className="text-xs font-bold text-huntzen-blue">
-                      {radiusKm} km
+                      {t("radiusKm", { radius: radiusKm })}
                     </span>
                   </div>
                   <input
@@ -432,7 +434,7 @@ export function SearchFormInline({
                   Rayon de recherche
                 </span>
                 <span className="text-sm font-bold text-huntzen-blue">
-                  {radiusKm} km
+                  {t("radiusKm", { radius: radiusKm })}
                 </span>
               </div>
               <input
@@ -483,8 +485,7 @@ export function SearchFormInline({
       {isFreePlan && (
         <div className="mt-3 text-center">
           <p className="text-xs text-gray-500">
-            {getRemaining("job_search")} recherche(s) restante(s)
-            aujourd&apos;hui
+            {t("searchesRemaining", { count: getRemaining("job_search") })}
           </p>
         </div>
       )}

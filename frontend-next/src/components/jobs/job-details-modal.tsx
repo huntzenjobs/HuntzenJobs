@@ -6,6 +6,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   X,
@@ -61,6 +62,8 @@ export function JobDetailsModal({
 }: JobDetailsModalProps) {
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [recruiterDrawerOpen, setRecruiterDrawerOpen] = React.useState(false);
+
+  const t = useTranslations("jobDetails");
 
   // All hooks must be called before any conditional return (Rules of Hooks)
   const { canUse, openPricingModal } = useSubscription();
@@ -180,7 +183,7 @@ export function JobDetailsModal({
             <div className="bg-gradient-to-r from-blue-600 to-violet-600 text-white p-6 relative">
               <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-2 bg-white/10 hover:bg-white/20 transition-colors">
                 <X className="h-5 w-5" />
-                <span className="sr-only">Fermer</span>
+                <span className="sr-only">{t("close")}</span>
               </DialogPrimitive.Close>
 
               <div className="pr-12">
@@ -191,7 +194,7 @@ export function JobDetailsModal({
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4" />
                     <span className="font-medium">
-                      {job.company || "Entreprise non spécifiée"}
+                      {job.company || t("companyUnspecified")}
                     </span>
                   </div>
                   {job.location && (
@@ -217,7 +220,7 @@ export function JobDetailsModal({
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                         <Briefcase className="h-6 w-6 text-blue-600" />
-                        Description du poste
+                        {t("jobDescription")}
                       </h3>
                       <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
                         {loadingDescription ? (
@@ -281,7 +284,7 @@ export function JobDetailsModal({
                 {/* Right Column - Quick Info (1/3 width) */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">
-                    Informations clés
+                    {t("keyInfo")}
                   </h3>
 
                   {/* Salary */}
@@ -289,7 +292,7 @@ export function JobDetailsModal({
                     <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                       <div className="flex items-center gap-2 text-sm text-green-700 mb-2">
                         <DollarSign className="h-5 w-5" />
-                        <span className="font-semibold">Rémunération</span>
+                        <span className="font-semibold">{t("salary")}</span>
                       </div>
                       <p className="text-green-900 font-bold text-lg">
                         {job.salary}
@@ -302,7 +305,7 @@ export function JobDetailsModal({
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <Building className="h-5 w-5" />
-                        <span className="font-semibold">Entreprise</span>
+                        <span className="font-semibold">{t("company")}</span>
                       </div>
                       <p className="text-gray-900 font-medium">{job.company}</p>
                     </div>
@@ -313,7 +316,7 @@ export function JobDetailsModal({
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <MapPin className="h-5 w-5" />
-                        <span className="font-semibold">Localisation</span>
+                        <span className="font-semibold">{t("location")}</span>
                       </div>
                       <p className="text-gray-900 font-medium">
                         {job.location}
@@ -326,9 +329,7 @@ export function JobDetailsModal({
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <Clock className="h-5 w-5" />
-                        <span className="font-semibold">
-                          Date de publication
-                        </span>
+                        <span className="font-semibold">{t("postedDate")}</span>
                       </div>
                       <p className="text-gray-900 font-medium">
                         {job.posted_date}
@@ -348,7 +349,7 @@ export function JobDetailsModal({
                   onClick={() => setRecruiterDrawerOpen(true)}
                 >
                   <Users className="mr-2 h-4 w-4" />
-                  Trouver le recruteur
+                  {t("findRecruiter")}
                 </Button>
                 <div className="flex items-center gap-3">
                   <Button
@@ -356,7 +357,7 @@ export function JobDetailsModal({
                     onClick={() => onOpenChange(false)}
                     size="lg"
                   >
-                    Fermer
+                    {t("close")}
                   </Button>
                   {job.url && (
                     <>
@@ -374,7 +375,7 @@ export function JobDetailsModal({
                           }}
                         >
                           <Sparkles className="mr-2 h-4 w-4" />
-                          Générer CV + lettre adaptés
+                          {t("generateDocuments")}
                         </Button>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -429,7 +430,7 @@ export function JobDetailsModal({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          Postuler directement
+                          {t("viewOffer")}
                           <ExternalLink className="ml-2 h-4 w-4" />
                         </a>
                       </Button>
