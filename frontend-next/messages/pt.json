@@ -499,7 +499,14 @@
         "recent": "Resultados recentes e relevantes",
         "visibleOf": "{visible} visível(is) de {total}",
         "unlockAll": "Desbloquear todas as vagas →",
-        "cache": "💾 Cache"
+        "cache": "💾 Cache",
+        "refreshing": "A refrescar...",
+        "timeJustNow": "agora mesmo",
+        "time1Minute": "há 1 minuto",
+        "timeMinutes": "{count} minutos atrás",
+        "refreshRecommended": "Atualização Recomendada",
+        "refreshedAt": "Atualizado às {time}",
+        "visibleCount": "{visible} ofertas visíveis de {total}"
       },
       "card": {
         "details": "Ver detalhes",
@@ -569,7 +576,20 @@
       "loadingText": "A carregar salas...",
       "errorText": "Erro de Leitura",
       "emptyStateTitle": "Não há lounges disponíveis",
-      "emptyStateSubtitle": "Volte em breve para ver os próximos eventos."
+      "emptyStateSubtitle": "Volte em breve para ver os próximos eventos.",
+      "subtitle": "Confira os eventos de emprego perto de você e conheça os recrutadores pessoalmente ou online",
+      "hideFilters": "Ocultar filtros",
+      "showFilters": "Mostrar filtros",
+      "eventsCount": "{count} evento(s)",
+      "filteredResults": "Resultados filtrados",
+      "filterTitle": "Filtrar eventos",
+      "resetFilters": "Reiniciar",
+      "activeFilters": "filtro(s) activo(s)",
+      "searchButton": "Pesquisar",
+      "loadingEvents": "A carregar {current}/{total} eventos...",
+      "clearFilters": "Limpar filtros",
+      "notCommunicated": "Dados não comunicados.",
+      "viewDetails": "Ver os detalhes"
     },
     "savedJobs": {
       "title": "Vagas Salvas",
@@ -589,7 +609,11 @@
       "tipTitle": "DICA",
       "tipText": "Clique numa oferta para gerar um CV adaptado e uma carta de apresentação em segundos.",
       "comingSoonTitle": "Brevemente",
-      "comingSoonText": "Rastreamento de aplicativos, lembretes automáticos e análises."
+      "comingSoonText": "Rastreamento de aplicativos, lembretes automáticos e análises.",
+      "savedCount": "{count} trabalho(s) guardado(s)",
+      "generateCvLm": "Gerar CV + LM",
+      "comingSoonText2": "Alertas automáticos se uma oferta favorita expirar",
+      "comingSoonText3": "Exportar os seus favoritos para PDF"
     },
     "recruiterContact": {
       "title": "Contatar um Recrutador",

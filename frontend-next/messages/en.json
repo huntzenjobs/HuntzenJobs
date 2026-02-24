@@ -499,7 +499,14 @@
         "recent": "Recent and relevant results",
         "visibleOf": "{visible} visible out of {total}",
         "unlockAll": "Unlock all offers →",
-        "cache": "💾 Cache"
+        "cache": "💾 Cache",
+        "refreshing": "Refreshing...",
+        "timeJustNow": "just now",
+        "time1Minute": "1 minute ago",
+        "timeMinutes": "{count} minutes ago",
+        "refreshRecommended": "Recommended Refresh",
+        "refreshedAt": "Refreshed {time}",
+        "visibleCount": "{visible} visible deals out of {total}"
       },
       "card": {
         "details": "View details",
@@ -569,7 +576,20 @@
       "loadingText": "Loading the groups of the community. Please wait.",
       "errorText": "Error while uploading",
       "emptyStateTitle": "No lounges available",
-      "emptyStateSubtitle": "Check back soon for upcoming events."
+      "emptyStateSubtitle": "Check back soon for upcoming events.",
+      "subtitle": "Check out job events near you and meet recruiters in person or online",
+      "hideFilters": "Hide Filters",
+      "showFilters": "Show Filters",
+      "eventsCount": "{count} event(s)",
+      "filteredResults": "Filtered results",
+      "filterTitle": "Filter events",
+      "resetFilters": "Reset",
+      "activeFilters": "active filter(s)",
+      "searchButton": "News Search",
+      "loadingEvents": "Loading {current}/{total} events...",
+      "clearFilters": "Clear Filters",
+      "notCommunicated": "Undisclosed",
+      "viewDetails": "View Detail Logs"
     },
     "savedJobs": {
       "title": "Saved Jobs",
@@ -589,7 +609,11 @@
       "tipTitle": "TIP",
       "tipText": "Click on an offer to generate an adapted CV and cover letter in seconds.",
       "comingSoonTitle": "Coming Soon",
-      "comingSoonText": "Application tracking, automatic reminders and analytics."
+      "comingSoonText": "Application tracking, automatic reminders and analytics.",
+      "savedCount": "{count} job(s) saved",
+      "generateCvLm": "Generate CV + LM",
+      "comingSoonText2": "Automatic alerts if a favorite offer expires",
+      "comingSoonText3": "Exporting your favorites to PDF"
     },
     "recruiterContact": {
       "title": "Contact a Recruiter",
