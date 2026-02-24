@@ -136,7 +136,10 @@
   },
   "pricing": {
     "title": "Escolha seu plano",
-    "subtitle": "Comece gratuitamente, evolua conforme suas necessidades"
+    "subtitle": "Comece gratuitamente, evolua conforme suas necessidades",
+    "saveUpTo20": "Economize até 20%",
+    "currentPlan": "✓ Plano Actual",
+    "choosePlan": "Escolher {name}"
   },
   "cta": {
     "startFree": "Começar gratuitamente",
@@ -547,10 +550,26 @@
       "timeExpiredDesc": "Você usou seus {minutes} minutos gratuitos",
       "unlockUnlimited": "Desbloquear tempo ilimitado",
       "errorMessage": "Desculpe, ocorreu um erro. Pode reformular sua pergunta?",
-      "unlimited": "Ilimitado"
+      "unlimited": "Ilimitado",
+      "welcomeMessage": "Olá! Sou o seu especialista em procura de emprego. Como posso ajudá-lo hoje?"
     },
     "salons": {
-      "title": "Feiras e Fóruns de Emprego"
+      "title": "Feiras e Fóruns de Emprego",
+      "filterAll": "Todos ",
+      "filterUpcoming": "Em breve",
+      "filterOnline": "Online",
+      "filterFree": "Imprensa gratuita",
+      "searchPlaceholder": "Procurar um salão...",
+      "noResults": "Nenhuma sala de estar encontrada",
+      "noResultsSub": "Experimente outros filtros ou volte mais tarde.",
+      "registerButton": "Inscrever-se",
+      "registeredButton": "Inscrito",
+      "onlineLabel": "Online",
+      "freeLabel": "Gratuito",
+      "loadingText": "A carregar salas...",
+      "errorText": "Erro de Leitura",
+      "emptyStateTitle": "Não há lounges disponíveis",
+      "emptyStateSubtitle": "Volte em breve para ver os próximos eventos."
     },
     "savedJobs": {
       "title": "Vagas Salvas",
@@ -563,7 +582,14 @@
       "viewOffer": "Ver vaga",
       "delete": "Excluir",
       "savedAt": "Salvo em",
-      "searchJobs": "Buscar empregos"
+      "searchJobs": "Buscar empregos",
+      "statusCvGenerated": "Currículo gerado",
+      "statusCoverLetterGenerated": "Gerado por LM",
+      "statusApplied": "Aplicado",
+      "tipTitle": "DICA",
+      "tipText": "Clique numa oferta para gerar um CV adaptado e uma carta de apresentação em segundos.",
+      "comingSoonTitle": "Brevemente",
+      "comingSoonText": "Rastreamento de aplicativos, lembretes automáticos e análises."
     },
     "recruiterContact": {
       "title": "Contatar um Recrutador",
@@ -648,6 +674,21 @@
         "spots": "👥 5 consultas reservadas esta semana",
         "button": "Reservar agora (50€)"
       }
+    },
+    "documents": {
+      "title": "Os meus documentos",
+      "subtitle": "Faça a gestão dos seus currículos e cartas de apresentação gerados",
+      "searchPlaceholder": "Pesquisar um documento",
+      "filterAll": "Todos ",
+      "filterCvOnly": "Apenas CV",
+      "filterCvAndCoverLetter": "CV + LM",
+      "emptyStateTitle": "Sem documentos",
+      "emptyStateSubtitle": "Os seus currículos e cartas de apresentação gerados aparecerão aqui.",
+      "downloadButton": "Carregar",
+      "deleteButton": "Eliminar",
+      "cvLabel": "CV",
+      "coverLetterLabel": "Carta de motivação",
+      "generatedOn": "Gerado em"
     }
   },
   "error": {
@@ -703,7 +744,92 @@
       "continueFree": "Continuar com o plano gratuito",
       "questionsTitle": "Dúvidas sobre nossas assinaturas?",
       "contactSupport": "Contate nosso suporte →",
-      "tip": "Experimente o plano gratuito para descobrir o HuntZen antes de assinar"
+      "tip": "Experimente o plano gratuito para descobrir o HuntZen antes de assinar",
+      "tipLabel": "Dica&#x0D;"
     }
+  },
+  "profile": {
+    "multilingualComingSoon": "O suporte multilíngue estará disponível em breve",
+    "thankSubscription": "🎉 Obrigado por se inscrever!",
+    "deleteAccountComingSoon": "A eliminação da conta estará disponível em breve (em conformidade com o RGPD)",
+    "cancelSubscriptionComingSoon": "O cancelamento da assinatura estará disponível em breve"
+  },
+  "cv": {
+    "inProgress": "Em progresso...",
+    "matchingJobOffer": "🎯 Correspondência de trabalho"
+  },
+  "jobDetails": {
+    "close": "Fechar",
+    "companyUnspecified": "Empresa não especificada",
+    "jobDescription": "DESCRIÇÃO DO CARGO",
+    "keyInfo": "Informações importantes",
+    "salary": "Remuneração",
+    "company": "Empresa",
+    "location": "Localização",
+    "postedDate": "Date de publication",
+    "findRecruiter": "Encontrar recrutador",
+    "generateDocuments": "Gerar CVs adaptados + letras",
+    "notAvailable": "Não especificado",
+    "viewOffer": "Ver a oferta"
+  },
+  "searchForm": {
+    "jobTitleRequired": "O trabalho é obrigatório",
+    "countryRequired": "O país é obrigatório",
+    "includeRemote": "Incluir trabalhos remotos",
+    "searchRadius": "Raio de pesquisa",
+    "radiusKm": "{radius} km",
+    "searchesRemaining": "{count} pesquisa(s) restante(s) hoje",
+    "searchButton": "Pesquisar",
+    "advancedFilters": "Filtros Avançados"
+  },
+  "advancedFilters": {
+    "title": "Filtros Avançados",
+    "industriesLabel": "Que sectores de actividade?",
+    "experienceLabel": "Nível de experiência",
+    "salaryLabel": "Faixa Salarial",
+    "companySizeLabel": "dimensão do negócio",
+    "applyButton": "Aplicar Todos os Filtros",
+    "resetButton": "Reiniciar",
+    "industryTechIT": "Tecnologia / TI",
+    "industryFinance": "Finanças",
+    "industryMarketing": "Marketing",
+    "industryHealthcare": "Saúde",
+    "industryRetail": "Comércio / Retalho",
+    "industryManufacturing": "Indústria",
+    "industryEducation": "Educação",
+    "industryConsulting": "Aconselhamento",
+    "experienceJunior": "Júnior (0-2 anos)",
+    "experienceMid": "Confirmado (2-5 anos)",
+    "experienceSenior": "Idoso (5+ anos)",
+    "experienceLead": "Líder / Principal",
+    "companySizeStartup": "Startup",
+    "companySizeScaleup": "Ampliação",
+    "companySizeEnterprise": "Grupo Principal",
+    "salaryMin": "Salário Mínimo",
+    "salaryMax": "Salário Máximo",
+    "premiumFeature": "Recurso Premium"
+  },
+  "gradientJobCard": {
+    "lockedOffer": "Oferta bloqueada",
+    "upgradeToPremium": "Faça upgrade para ver esta oferta",
+    "unlock": "levantar o bloqueio",
+    "moreOffers": "Mais{count} ofertas"
+  },
+  "applyModal": {
+    "title": "Candidate-se a esta vaga",
+    "uploadCv": "Carregue o seu CV",
+    "uploadInstruction": "Arraste e largue o seu currículo ou clique para selecionar",
+    "selectLanguage": "Língua do documento;",
+    "languageFr": "Francês",
+    "languageEn": "Inglês ",
+    "processingStep1": "A analisar currículo...",
+    "processingStep2": "A adaptar-se à posição...",
+    "processingStep3": "A gerar carta de apresentação...",
+    "processingStep4": "A finalizar documentos...",
+    "generateButton": "Gerar CVs + Letras adaptados",
+    "downloadCv": "Baixar Currículo",
+    "downloadCoverLetter": "Baixar carta",
+    "cancelButton": "Cancelar",
+    "retryButton": "Tentar novamente"
   }
 }

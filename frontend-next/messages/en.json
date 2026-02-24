@@ -136,7 +136,10 @@
   },
   "pricing": {
     "title": "Choose your plan",
-    "subtitle": "Start for free, scale as you grow"
+    "subtitle": "Start for free, scale as you grow",
+    "saveUpTo20": "Save up to 20%",
+    "currentPlan": "Current Plan",
+    "choosePlan": "Choose {name}"
   },
   "cta": {
     "startFree": "Start for free",
@@ -547,10 +550,26 @@
       "timeExpiredDesc": "You've used your {minutes} free minutes",
       "unlockUnlimited": "Unlock unlimited time",
       "errorMessage": "Sorry, an error occurred. Could you rephrase your question?",
-      "unlimited": "Unlimited"
+      "unlimited": "Unlimited",
+      "welcomeMessage": "Hi! I'm your job search expert. How can I help you today?"
     },
     "salons": {
-      "title": "Job Fairs & Forums"
+      "title": "Job Fairs & Forums",
+      "filterAll": "All",
+      "filterUpcoming": "Coming soon",
+      "filterOnline": "Inline",
+      "filterFree": "Free",
+      "searchPlaceholder": "Search Property",
+      "noResults": "No Property found.",
+      "noResultsSub": "Try other filters or check back later.",
+      "registerButton": "Register",
+      "registeredButton": "enrolled",
+      "onlineLabel": "Inline",
+      "freeLabel": "Free",
+      "loadingText": "Loading the groups of the community. Please wait.",
+      "errorText": "Error while uploading",
+      "emptyStateTitle": "No lounges available",
+      "emptyStateSubtitle": "Check back soon for upcoming events."
     },
     "savedJobs": {
       "title": "Saved Jobs",
@@ -563,7 +582,14 @@
       "viewOffer": "View offer",
       "delete": "Delete",
       "savedAt": "Saved on",
-      "searchJobs": "Search for jobs"
+      "searchJobs": "Search for jobs",
+      "statusCvGenerated": "Resume generated",
+      "statusCoverLetterGenerated": "LM generated",
+      "statusApplied": "Applied",
+      "tipTitle": "TIP",
+      "tipText": "Click on an offer to generate an adapted CV and cover letter in seconds.",
+      "comingSoonTitle": "Coming Soon",
+      "comingSoonText": "Application tracking, automatic reminders and analytics."
     },
     "recruiterContact": {
       "title": "Contact a Recruiter",
@@ -648,6 +674,21 @@
         "spots": "👥 5 consultations booked this week",
         "button": "Book now (€50)"
       }
+    },
+    "documents": {
+      "title": "My Documents",
+      "subtitle": "Manage your generated CVs and cover letters",
+      "searchPlaceholder": "Search for a document",
+      "filterAll": "All",
+      "filterCvOnly": "Resume Single",
+      "filterCvAndCoverLetter": "CV + LM",
+      "emptyStateTitle": "No papers",
+      "emptyStateSubtitle": "Your generated CVs and cover letters will appear here.",
+      "downloadButton": "Upload",
+      "deleteButton": "Remove",
+      "cvLabel": "CV",
+      "coverLetterLabel": "Covering letter",
+      "generatedOn": "Generated!"
     }
   },
   "error": {
@@ -703,7 +744,92 @@
       "continueFree": "Continue with free plan",
       "questionsTitle": "Questions about our subscriptions?",
       "contactSupport": "Contact our support →",
-      "tip": "Try the free plan to discover HuntZen before subscribing"
+      "tip": "Try the free plan to discover HuntZen before subscribing",
+      "tipLabel": "Hint"
     }
+  },
+  "profile": {
+    "multilingualComingSoon": "Multilingual support will be available soon",
+    "thankSubscription": "Thanks for purchasing a membership!",
+    "deleteAccountComingSoon": "Account deletion will be available soon (GDPR compliance)",
+    "cancelSubscriptionComingSoon": "Subscription cancellation will be available soon"
+  },
+  "cv": {
+    "inProgress": "In progress",
+    "matchingJobOffer": "Job 🎯 Matching"
+  },
+  "jobDetails": {
+    "close": "Close",
+    "companyUnspecified": "Company not specified.",
+    "jobDescription": "Position Description",
+    "keyInfo": "Key Information",
+    "salary": "Remuneration",
+    "company": "Company",
+    "location": "Location",
+    "postedDate": "Data issued",
+    "findRecruiter": "Find Recruiter",
+    "generateDocuments": "Generate adapted CVs + letters",
+    "notAvailable": "Non spécifié",
+    "viewOffer": "View Offering"
+  },
+  "searchForm": {
+    "jobTitleRequired": "Job is required",
+    "countryRequired": "Country is required",
+    "includeRemote": "Include remote jobs",
+    "searchRadius": "Search radius",
+    "radiusKm": "Radius (Km)",
+    "searchesRemaining": "{count} search(s) left today",
+    "searchButton": "News Search",
+    "advancedFilters": "Advanced filters"
+  },
+  "advancedFilters": {
+    "title": "Advanced filters",
+    "industriesLabel": "Business segments",
+    "experienceLabel": "Experience Level",
+    "salaryLabel": "salary band",
+    "companySizeLabel": "Type Sizes",
+    "applyButton": "Apply Filters",
+    "resetButton": "Reset",
+    "industryTechIT": "Tech / IT",
+    "industryFinance": "Finance",
+    "industryMarketing": "Marketing",
+    "industryHealthcare": "Healthcare",
+    "industryRetail": "Commerce / Retail",
+    "industryManufacturing": "Industry",
+    "industryEducation": "Education",
+    "industryConsulting": "Advice",
+    "experienceJunior": "Junior (0-2 years)",
+    "experienceMid": "Confirmed (2-5 years)",
+    "experienceSenior": "Senior (5+ years)",
+    "experienceLead": "Lead / Principal",
+    "companySizeStartup": "Startup",
+    "companySizeScaleup": "Scale-up",
+    "companySizeEnterprise": "Major Group",
+    "salaryMin": "Salary min",
+    "salaryMax": "Max Salary",
+    "premiumFeature": "Premium Feature"
+  },
+  "gradientJobCard": {
+    "lockedOffer": "Offer Locked",
+    "upgradeToPremium": "Upgrade to see this offer",
+    "unlock": "Unhold",
+    "moreOffers": "+{count} more deals"
+  },
+  "applyModal": {
+    "title": "Apply For This Job",
+    "uploadCv": "Upload your resume",
+    "uploadInstruction": "Drag and drop your resume or click to select",
+    "selectLanguage": "Document Language",
+    "languageFr": "French",
+    "languageEn": "English",
+    "processingStep1": "Analyzing resume...",
+    "processingStep2": "Adapting to the position...",
+    "processingStep3": "Generating cover letter...",
+    "processingStep4": "Finalisation of documents",
+    "generateButton": "Generate adapted CVs + Letters",
+    "downloadCv": "Download CV",
+    "downloadCoverLetter": "Download the letter",
+    "cancelButton": "Cancel",
+    "retryButton": "Retry"
   }
 }
