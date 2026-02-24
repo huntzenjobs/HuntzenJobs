@@ -15,19 +15,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDocuments, type UserDocument } from "@/hooks/use-documents";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useTranslations } from "next-intl";
 
 type Filter = "all" | "cv-only" | "cv-lm";
 
-const FILTER_LABELS: Record<Filter, string> = {
-  all: "Tous",
-  "cv-only": "CV seul",
-  "cv-lm": "CV + LM",
-};
-
 export default function DocumentsPage() {
+  const t = useTranslations("dashboard.documents");
   const { documents, loading, fetchDocuments, deleteDocument } = useDocuments();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+
+  const FILTER_LABELS: Record<Filter, string> = {
+    all: t("filterAll"),
+    "cv-only": t("filterCvOnly"),
+    "cv-lm": t("filterCvAndCoverLetter"),
+  };
 
   useEffect(() => {
     fetchDocuments();
@@ -47,9 +49,9 @@ export default function DocumentsPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Mes documents</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
         <p className="text-gray-500 text-sm mt-1">
-          CV adaptés et lettres de motivation générés
+          {t("subtitle")}
           {documents.length > 0 && (
             <span className="ml-1 text-gray-400">({documents.length})</span>
           )}
@@ -61,7 +63,7 @@ export default function DocumentsPage() {
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Rechercher par poste ou entreprise..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -89,7 +91,7 @@ export default function DocumentsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState hasDocuments={documents.length > 0} />
+        <EmptyState hasDocuments={documents.length > 0} t={t} />
       ) : (
         <div className="space-y-3">
           {filtered.map((doc) => (
@@ -97,6 +99,7 @@ export default function DocumentsPage() {
               key={doc.id}
               doc={doc}
               onDelete={() => deleteDocument(doc.id)}
+              t={t}
             />
           ))}
         </div>
@@ -105,17 +108,21 @@ export default function DocumentsPage() {
   );
 }
 
-function EmptyState({ hasDocuments }: { hasDocuments: boolean }) {
+function EmptyState({
+  hasDocuments,
+  t,
+}: {
+  hasDocuments: boolean;
+  t: (key: string) => string;
+}) {
   return (
     <div className="text-center py-16 text-gray-400">
       <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
       <p className="text-sm font-medium text-gray-500 mb-1">
-        {hasDocuments ? "Aucun document trouvé" : "Aucun document généré"}
+        {hasDocuments ? t("emptyStateTitle") : t("emptyStateTitle")}
       </p>
       <p className="text-xs text-gray-400 mb-4">
-        {hasDocuments
-          ? "Essayez d'autres termes de recherche"
-          : "Générez un CV adapté depuis une offre d'emploi"}
+        {hasDocuments ? t("emptyStateSubtitle") : t("emptyStateSubtitle")}
       </p>
       {!hasDocuments && (
         <Button variant="outline" size="sm" asChild>
@@ -129,9 +136,11 @@ function EmptyState({ hasDocuments }: { hasDocuments: boolean }) {
 function DocumentCard({
   doc,
   onDelete,
+  t,
 }: {
   doc: UserDocument;
   onDelete: () => void;
+  t: (key: string) => string;
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 flex items-start justify-between gap-4 hover:border-gray-300 transition-colors">
@@ -147,7 +156,7 @@ function DocumentCard({
           )}
         </div>
         <p className="text-xs text-gray-500 mb-3">
-          {doc.company || "Entreprise non précisée"} ·{" "}
+          {doc.company || "Entreprise non précisée"} · {t("generatedOn")}{" "}
           {format(new Date(doc.created_at), "d MMM yyyy", { locale: fr })}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
@@ -159,7 +168,7 @@ function DocumentCard({
                 rel="noopener noreferrer"
               >
                 <Download className="mr-1.5 h-3.5 w-3.5" />
-                CV adapté
+                {t("cvLabel")}
               </a>
             </Button>
           )}
@@ -171,7 +180,7 @@ function DocumentCard({
                 rel="noopener noreferrer"
               >
                 <Download className="mr-1.5 h-3.5 w-3.5" />
-                Lettre de motivation
+                {t("coverLetterLabel")}
               </a>
             </Button>
           )}
@@ -195,7 +204,7 @@ function DocumentCard({
         size="icon"
         className="text-gray-300 hover:text-red-500 hover:bg-red-50 shrink-0"
         onClick={onDelete}
-        title="Supprimer"
+        title={t("deleteButton")}
       >
         <Trash2 className="h-4 w-4" />
       </Button>
