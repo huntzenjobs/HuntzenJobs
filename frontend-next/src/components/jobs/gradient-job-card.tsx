@@ -7,6 +7,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +98,7 @@ export const GradientJobCard = React.forwardRef<
   HTMLDivElement,
   GradientJobCardProps
 >(({ index, className }, ref) => {
+  const t = useTranslations("gradientJobCard");
   const { openPricingModal } = useSubscription();
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -199,12 +201,8 @@ export const GradientJobCard = React.forwardRef<
 
         {/* Text content */}
         <div className="text-center space-y-1 mb-4">
-          <h4 className="font-semibold text-gray-800">
-            Offre verrouillée
-          </h4>
-          <p className="text-sm text-gray-600">
-            Passez Premium pour voir cette offre
-          </p>
+          <h4 className="font-semibold text-gray-800">{t("lockedOffer")}</h4>
+          <p className="text-sm text-gray-600">{t("upgradeToPremium")}</p>
         </div>
 
         {/* CTA Button - clickable */}
@@ -218,7 +216,7 @@ export const GradientJobCard = React.forwardRef<
             }}
           >
             <Sparkles className="w-4 h-4 mr-1" />
-            Débloquer
+            {t("unlock")}
           </Button>
         </div>
       </div>
@@ -242,6 +240,7 @@ export const JobsLimitReached = React.forwardRef<
   HTMLDivElement,
   JobsLimitReachedProps
 >(({ totalJobs, visibleJobs, className }, ref) => {
+  const t = useTranslations("gradientJobCard");
   const { openPricingModal } = useSubscription();
   const hiddenJobs = totalJobs - visibleJobs;
 
@@ -257,7 +256,7 @@ export const JobsLimitReached = React.forwardRef<
         <Lock className="w-8 h-8 text-white" />
       </div>
       <h3 className="text-xl font-bold mb-2">
-        +{hiddenJobs} offres supplémentaires
+        {t("moreOffers", { count: hiddenJobs })}
       </h3>
       <p className="text-muted-foreground mb-4 max-w-md mx-auto">
         Vous avez atteint la limite de {visibleJobs} offres visibles. Passez

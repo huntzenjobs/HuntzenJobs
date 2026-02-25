@@ -136,7 +136,10 @@
   },
   "pricing": {
     "title": "Choisissez votre plan",
-    "subtitle": "Commencez gratuitement, évoluez selon vos besoins"
+    "subtitle": "Commencez gratuitement, évoluez selon vos besoins",
+    "saveUpTo20": "Économisez jusqu'à 20%",
+    "currentPlan": "✓ Plan actuel",
+    "choosePlan": "Choisir {name}"
   },
   "cta": {
     "startFree": "Commencer gratuitement",
@@ -488,13 +491,20 @@
         "count_other": "{count} offres trouvées",
         "refresh": "Actualiser",
         "updating": "Actualisation en cours...",
+        "refreshing": "Actualisation en cours...",
         "justNow": "à l'instant",
+        "timeJustNow": "à l'instant",
         "oneMinuteAgo": "il y a 1 minute",
+        "time1Minute": "il y a 1 minute",
         "minutesAgo": "il y a {n} minutes",
+        "timeMinutes": "il y a {count} minutes",
         "staleWarning": "- Actualisation recommandée",
+        "refreshRecommended": "Actualisation recommandée",
         "updatedAt": "Actualisé {time}",
+        "refreshedAt": "Actualisé {time}",
         "recent": "Résultats récents et pertinents",
         "visibleOf": "{visible} visible{s} sur {total}",
+        "visibleCount": "{visible} offres visibles sur {total}",
         "unlockAll": "Débloquer toutes les offres →",
         "cache": "💾 Cache"
       },
@@ -547,10 +557,54 @@
       "timeExpiredDesc": "Vous avez utilisé vos {minutes} minutes gratuites",
       "unlockUnlimited": "Débloquer le temps illimité",
       "errorMessage": "Désolé, une erreur est survenue. Pouvez-vous reformuler votre question ?",
-      "unlimited": "Illimité"
+      "unlimited": "Illimité",
+      "welcomeMessage": "Bonjour ! Je suis votre expert en recherche d'emploi. Comment puis-je vous aider aujourd'hui ?"
     },
     "salons": {
-      "title": "Salons & Forums"
+      "title": "Salons & Forums",
+      "subtitle": "Découvrez les événements emploi près de chez vous et rencontrez des recruteurs en personne ou en ligne",
+      "hideFilters": "Masquer les filtres",
+      "showFilters": "Afficher les filtres",
+      "eventsCount": "{count} événement(s)",
+      "filteredResults": "Résultats filtrés",
+      "filterTitle": "Filtrer les événements",
+      "resetFilters": "Réinitialiser",
+      "activeFilters": "filtre(s) actif(s)",
+      "searchButton": "Rechercher",
+      "loadingEvents": "Chargement {current}/{total} événements...",
+      "clearFilters": "Effacer les filtres",
+      "notCommunicated": "Non communiqué",
+      "viewDetails": "Voir les détails",
+      "filterAll": "Tous",
+      "filterUpcoming": "À venir",
+      "filterOnline": "En ligne",
+      "filterFree": "Gratuits",
+      "searchPlaceholder": "Rechercher un salon...",
+      "noResults": "Aucun salon trouvé",
+      "noResultsSub": "Essayez d'autres filtres ou revenez plus tard.",
+      "registerButton": "S'inscrire",
+      "registeredButton": "Inscrit ✓",
+      "onlineLabel": "En ligne",
+      "freeLabel": "Gratuit",
+      "loadingText": "Chargement des salons...",
+      "errorText": "Erreur lors du chargement",
+      "emptyStateTitle": "Aucun salon disponible",
+      "emptyStateSubtitle": "Revenez bientôt pour découvrir les prochains événements."
+    },
+    "documents": {
+      "title": "Mes Documents",
+      "subtitle": "Gérez vos CV et lettres de motivation générés",
+      "searchPlaceholder": "Rechercher un document...",
+      "filterAll": "Tous",
+      "filterCvOnly": "CV seul",
+      "filterCvAndCoverLetter": "CV + LM",
+      "emptyStateTitle": "Aucun document",
+      "emptyStateSubtitle": "Vos CV et lettres de motivation générés apparaîtront ici.",
+      "downloadButton": "Télécharger",
+      "deleteButton": "Supprimer",
+      "cvLabel": "CV",
+      "coverLetterLabel": "Lettre de motivation",
+      "generatedOn": "Généré le"
     },
     "savedJobs": {
       "title": "Offres Sauvegardées",
@@ -563,7 +617,18 @@
       "viewOffer": "Voir l'offre",
       "delete": "Supprimer",
       "savedAt": "Sauvegardée le",
-      "searchJobs": "Rechercher des emplois"
+      "searchJobs": "Rechercher des emplois",
+      "savedCount": "{count} offre(s) sauvegardée(s)",
+      "generateCvLm": "Générer CV + LM",
+      "statusCvGenerated": "CV généré",
+      "statusCoverLetterGenerated": "LM générée",
+      "statusApplied": "Postulé",
+      "tipTitle": "💡 Astuce",
+      "tipText": "Cliquez sur une offre pour générer un CV et une lettre de motivation adaptés en quelques secondes.",
+      "comingSoonTitle": "🚀 Prochainement",
+      "comingSoonText": "Suivi de candidatures, rappels automatiques et analytics.",
+      "comingSoonText2": "Alertes automatiques si une offre favorite expire",
+      "comingSoonText3": "Exportation de vos favoris en PDF"
     },
     "recruiterContact": {
       "title": "Contacter un Recruteur",
@@ -703,7 +768,92 @@
       "continueFree": "Continuer avec le plan gratuit",
       "questionsTitle": "Des questions sur nos abonnements ?",
       "contactSupport": "Contactez notre support →",
-      "tip": "Profitez du plan gratuit pour découvrir HuntZen avant de vous abonner"
+      "tip": "Profitez du plan gratuit pour découvrir HuntZen avant de vous abonner",
+      "tipLabel": "Astuce"
     }
+  },
+  "profile": {
+    "multilingualComingSoon": "Le support multilingue sera disponible prochainement",
+    "thankSubscription": "🎉 Merci de votre abonnement !",
+    "deleteAccountComingSoon": "La suppression de compte sera bientôt disponible (RGPD compliance)",
+    "cancelSubscriptionComingSoon": "L'annulation d'abonnement sera disponible prochainement"
+  },
+  "cv": {
+    "inProgress": "En cours...",
+    "matchingJobOffer": "🎯 Matching avec offre d'emploi"
+  },
+  "jobDetails": {
+    "close": "Fermer",
+    "companyUnspecified": "Entreprise non spécifiée",
+    "jobDescription": "Description du poste",
+    "keyInfo": "Informations clés",
+    "salary": "Rémunération",
+    "company": "Entreprise",
+    "location": "Localisation",
+    "postedDate": "Date de publication",
+    "findRecruiter": "Trouver le recruteur",
+    "generateDocuments": "Générer CV + lettre adaptés",
+    "notAvailable": "Non spécifié",
+    "viewOffer": "Voir l'offre"
+  },
+  "searchForm": {
+    "jobTitleRequired": "Le métier est requis",
+    "countryRequired": "Le pays est requis",
+    "includeRemote": "Inclure jobs remote",
+    "searchRadius": "Rayon de recherche",
+    "radiusKm": "{radius} km",
+    "searchesRemaining": "{count} recherche(s) restante(s) aujourd'hui",
+    "searchButton": "Rechercher",
+    "advancedFilters": "Filtres avancés"
+  },
+  "advancedFilters": {
+    "title": "Filtres avancés",
+    "industriesLabel": "Secteurs d'activité",
+    "experienceLabel": "Niveau d'expérience",
+    "salaryLabel": "Fourchette salariale",
+    "companySizeLabel": "Taille d'entreprise",
+    "applyButton": "Appliquer les filtres",
+    "resetButton": "Réinitialiser",
+    "industryTechIT": "Tech / IT",
+    "industryFinance": "Finance",
+    "industryMarketing": "Marketing",
+    "industryHealthcare": "Santé",
+    "industryRetail": "Commerce / Retail",
+    "industryManufacturing": "Industrie",
+    "industryEducation": "Éducation",
+    "industryConsulting": "Conseil",
+    "experienceJunior": "Junior (0-2 ans)",
+    "experienceMid": "Confirmé (2-5 ans)",
+    "experienceSenior": "Senior (5+ ans)",
+    "experienceLead": "Lead / Principal",
+    "companySizeStartup": "Startup",
+    "companySizeScaleup": "Scale-up",
+    "companySizeEnterprise": "Grand groupe",
+    "salaryMin": "Salaire min",
+    "salaryMax": "Salaire max",
+    "premiumFeature": "Fonctionnalité Premium"
+  },
+  "gradientJobCard": {
+    "lockedOffer": "Offre verrouillée",
+    "upgradeToPremium": "Passez Premium pour voir cette offre",
+    "unlock": "Débloquer",
+    "moreOffers": "+{count} offres supplémentaires"
+  },
+  "applyModal": {
+    "title": "Postuler à cette offre",
+    "uploadCv": "Télécharger votre CV",
+    "uploadInstruction": "Glissez-déposez votre CV ou cliquez pour sélectionner",
+    "selectLanguage": "Langue du document",
+    "languageFr": "Français",
+    "languageEn": "Anglais",
+    "processingStep1": "Analyse du CV en cours...",
+    "processingStep2": "Adaptation au poste...",
+    "processingStep3": "Génération de la lettre de motivation...",
+    "processingStep4": "Finalisation des documents...",
+    "generateButton": "Générer CV + Lettre adaptés",
+    "downloadCv": "Télécharger le CV",
+    "downloadCoverLetter": "Télécharger la lettre",
+    "cancelButton": "Annuler",
+    "retryButton": "Réessayer"
   }
 }

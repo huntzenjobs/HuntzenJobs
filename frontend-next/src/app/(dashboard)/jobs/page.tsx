@@ -1232,11 +1232,9 @@ export default function JobsPage() {
             <Card className="p-8 text-center bg-white border-slate-200">
               <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-slate-900 mb-2">
-                Erreur lors de l'affichage des résultats
+                {t("error.title")}
               </h3>
-              <p className="text-slate-600">
-                Une erreur s'est produite. Veuillez réessayer.
-              </p>
+              <p className="text-slate-600">{t("error.generic")}</p>
             </Card>
           }
         >
@@ -1277,7 +1275,7 @@ export default function JobsPage() {
                   </div>
                   <p className="text-sm text-emerald-600 font-medium">
                     {searchQuery.isFetching
-                      ? "Actualisation en cours..."
+                      ? t("results.refreshing")
                       : searchQuery.dataUpdatedAt
                         ? (() => {
                             const now = Date.now();
@@ -1291,11 +1289,13 @@ export default function JobsPage() {
 
                             let timeText = "";
                             if (diffMinutes < 1) {
-                              timeText = "à l'instant";
+                              timeText = t("results.timeJustNow");
                             } else if (diffMinutes === 1) {
-                              timeText = "il y a 1 minute";
+                              timeText = t("results.time1Minute");
                             } else {
-                              timeText = `il y a ${diffMinutes} minutes`;
+                              timeText = t("results.timeMinutes", {
+                                count: diffMinutes,
+                              });
                             }
 
                             return (
@@ -1309,12 +1309,13 @@ export default function JobsPage() {
                                 }
                               >
                                 {isVeryStale ? "⚠️ " : isStale ? "⏰ " : "✓ "}
-                                Actualisé {timeText}
-                                {isStale && " - Actualisation recommandée"}
+                                {t("results.refreshedAt", { time: timeText })}
+                                {isStale &&
+                                  ` - ${t("results.refreshRecommended")}`}
                               </span>
                             );
                           })()
-                        : "Résultats récents et pertinents"}
+                        : t("results.recent")}
                   </p>
                 </div>
                 {/* Refresh button - Force new fetch even from cache */}
@@ -1350,10 +1351,10 @@ export default function JobsPage() {
                   className="text-right"
                 >
                   <p className="text-sm font-bold text-slate-700">
-                    {Math.min(jobs.length, jobsVisibleLimit)} visible
-                    {Math.min(jobs.length, jobsVisibleLimit) > 1
-                      ? "s"
-                      : ""} sur {jobs.length}
+                    {t("results.visibleCount", {
+                      visible: Math.min(jobs.length, jobsVisibleLimit),
+                      total: jobs.length,
+                    })}
                   </p>
                   <Button
                     variant="link"

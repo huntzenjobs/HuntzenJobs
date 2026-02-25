@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { XCircle, ArrowLeft, HelpCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useTranslations } from 'next-intl'
+import Link from "next/link";
+import { XCircle, ArrowLeft, HelpCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 export default function PaymentCancelPage() {
-  const t = useTranslations("payment.cancel")
+  const t = useTranslations("payment.cancel");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-red-50/30 flex items-center justify-center p-4">
@@ -29,15 +29,11 @@ export default function PaymentCancelPage() {
               {t("title")}
             </h1>
 
-            <p className="text-xl text-gray-600 mb-8">
-              {t("subtitle")}
-            </p>
+            <p className="text-xl text-gray-600 mb-8">{t("subtitle")}</p>
 
             {/* Information message */}
             <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 mb-8">
-              <p className="text-gray-700 leading-relaxed">
-                {t("noCharge")}
-              </p>
+              <p className="text-gray-700 leading-relaxed">{t("noCharge")}</p>
             </div>
 
             {/* Options */}
@@ -45,10 +41,10 @@ export default function PaymentCancelPage() {
               <div className="flex items-start gap-3 text-left bg-white rounded-xl p-4 border-2 border-gray-100">
                 <HelpCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-gray-900 mb-1">{t("helpTitle")}</p>
-                  <p className="text-sm text-gray-600">
-                    {t("helpDesc")}
+                  <p className="font-semibold text-gray-900 mb-1">
+                    {t("helpTitle")}
                   </p>
+                  <p className="text-sm text-gray-600">{t("helpDesc")}</p>
                 </div>
               </div>
             </div>
@@ -62,7 +58,10 @@ export default function PaymentCancelPage() {
                 </Button>
               </Link>
               <Link href="/jobs" className="flex-1">
-                <Button variant="outline" className="w-full h-14 text-lg font-semibold border-2 hover:bg-gray-50">
+                <Button
+                  variant="outline"
+                  className="w-full h-14 text-lg font-semibold border-2 hover:bg-gray-50"
+                >
                   {t("continueFree")}
                 </Button>
               </Link>
@@ -74,7 +73,10 @@ export default function PaymentCancelPage() {
                 {t("questionsTitle")}
               </p>
               <Link href="/help">
-                <Button variant="link" className="text-violet-600 hover:text-violet-700 font-medium">
+                <Button
+                  variant="link"
+                  className="text-violet-600 hover:text-violet-700 font-medium"
+                >
                   {t("contactSupport")}
                 </Button>
               </Link>
@@ -85,10 +87,10 @@ export default function PaymentCancelPage() {
         {/* Additional info */}
         <div className="text-center mt-6 space-y-2">
           <p className="text-sm text-gray-600">
-            💡 <span className="font-medium">Astuce:</span> {t("tip")}
+            💡 <span className="font-medium">{t("tipLabel")}:</span> {t("tip")}
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

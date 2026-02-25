@@ -172,8 +172,7 @@ export default function SavedJobsPage() {
             transition={{ delay: 0.4 }}
             className="text-sm text-[#00D9FF] font-medium mt-2"
           >
-            {savedJobs.length} offre{savedJobs.length > 1 ? "s" : ""}{" "}
-            sauvegardée{savedJobs.length > 1 ? "s" : ""}
+            {t("savedCount", { count: savedJobs.length })}
           </motion.p>
         )}
       </motion.div>
@@ -321,7 +320,7 @@ export default function SavedJobsPage() {
                                 className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors"
                               >
                                 <FileText className="h-3 w-3" />
-                                CV généré
+                                {t("statusCvGenerated")}
                                 {jobDoc.match_score != null &&
                                   ` · ${jobDoc.match_score}%`}
                               </a>
@@ -329,13 +328,13 @@ export default function SavedJobsPage() {
                             {jobDoc?.lm_pdf_url && (
                               <span className="inline-flex items-center gap-1 text-xs text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">
                                 <Mail className="h-3 w-3" />
-                                LM générée
+                                {t("statusCoverLetterGenerated")}
                               </span>
                             )}
                             {job.applied_at && (
                               <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
                                 <CheckCircle2 className="h-3 w-3" />
-                                Postulé{" "}
+                                {t("statusApplied")}{" "}
                                 {new Date(job.applied_at).toLocaleDateString(
                                   "fr-FR",
                                   { day: "numeric", month: "short" },
@@ -356,7 +355,7 @@ export default function SavedJobsPage() {
                             className="whitespace-nowrap text-blue-600 border-blue-200 hover:bg-blue-50"
                           >
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Générer CV + LM
+                            {t("generateCvLm")}
                           </Button>
                         )}
                         <Button
@@ -396,12 +395,8 @@ export default function SavedJobsPage() {
             transition={{ delay: 0.5 }}
             className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/30 rounded-2xl p-6"
           >
-            <h3 className="font-bold text-black mb-2">💡 Astuce</h3>
-            <p className="text-slate-700 text-sm">
-              Utilisez la barre de recherche pour retrouver rapidement une offre
-              spécifique parmi vos favoris. Vos offres sauvegardées sont
-              synchronisées sur tous vos appareils.
-            </p>
+            <h3 className="font-bold text-black mb-2">{t("tipTitle")}</h3>
+            <p className="text-slate-700 text-sm">{t("tipText")}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -413,7 +408,7 @@ export default function SavedJobsPage() {
         transition={{ delay: 0.6 }}
         className="bg-white border-2 border-slate-200 rounded-2xl p-6"
       >
-        <h3 className="font-bold text-black mb-3">🚀 Prochainement</h3>
+        <h3 className="font-bold text-black mb-3">{t("comingSoonTitle")}</h3>
         <ul className="space-y-2 text-sm text-slate-700">
           <motion.li
             initial={{ opacity: 0, x: -10 }}
@@ -422,7 +417,7 @@ export default function SavedJobsPage() {
             className="flex items-start gap-2"
           >
             <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
-            <span>Organisation par dossiers et étiquettes personnalisées</span>
+            <span>{t("comingSoonText")}</span>
           </motion.li>
           <motion.li
             initial={{ opacity: 0, x: -10 }}
@@ -431,7 +426,7 @@ export default function SavedJobsPage() {
             className="flex items-start gap-2"
           >
             <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
-            <span>Alertes automatiques si une offre favorite expire</span>
+            <span>{t("comingSoonText2")}</span>
           </motion.li>
           <motion.li
             initial={{ opacity: 0, x: -10 }}
@@ -440,7 +435,7 @@ export default function SavedJobsPage() {
             className="flex items-start gap-2"
           >
             <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
-            <span>Exportation de vos favoris en PDF</span>
+            <span>{t("comingSoonText3")}</span>
           </motion.li>
         </ul>
       </motion.div>

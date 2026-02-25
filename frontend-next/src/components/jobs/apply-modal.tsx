@@ -11,6 +11,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -95,6 +96,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
   const [markedApplied, setMarkedApplied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const t = useTranslations("applyModal");
   const { saveDocument } = useDocuments();
 
   // Reset state when modal closes
@@ -165,7 +167,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
 
     try {
       // Step 1 — Adapter le CV au poste (retourne cv_data JSON)
-      setGeneratingLabel("Analyse de votre CV en cours...");
+      setGeneratingLabel(t("processingStep1"));
 
       const formData = new FormData();
       formData.append("file", selectedFile);
@@ -192,9 +194,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
       }
 
       // Step 2 — Générer CV PDF + LM PDF en parallèle
-      setGeneratingLabel(
-        "Génération du CV adapté et de la lettre de motivation...",
-      );
+      setGeneratingLabel(t("processingStep2"));
 
       const [cvPdfResponse, lmPdfResponse] = await Promise.all([
         // CV adapté en PDF
@@ -285,7 +285,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-900">
             <Sparkles className="h-5 w-5 text-[#00D9FF]" />
-            Postuler avec l'IA
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="text-slate-500">
             Génération automatique de votre CV adapté + lettre de motivation
@@ -364,8 +364,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                 <div className="space-y-2">
                   <Upload className="h-8 w-8 text-slate-300 mx-auto" />
                   <p className="text-sm font-medium text-slate-700">
-                    Déposez votre CV ici ou{" "}
-                    <span className="text-[#00D9FF]">parcourez</span>
+                    {t("uploadInstruction")}
                   </p>
                   <p className="text-xs text-slate-400">
                     PDF ou DOCX · Max {MAX_SIZE_MB} Mo
@@ -377,7 +376,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
             {/* Language selector */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500 font-medium">
-                Langue du document :
+                {t("selectLanguage")}
               </span>
               <button
                 className={cn(
@@ -388,7 +387,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                 )}
                 onClick={() => setLanguage("fr")}
               >
-                Français
+                {t("languageFr")}
               </button>
               <button
                 className={cn(
@@ -399,7 +398,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                 )}
                 onClick={() => setLanguage("en")}
               >
-                English
+                {t("languageEn")}
               </button>
             </div>
 
@@ -410,7 +409,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
               disabled={!selectedFile}
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              Générer mon CV + Lettre de motivation
+              {t("generateButton")}
             </Button>
 
             <p className="text-center text-xs text-slate-400">
@@ -435,10 +434,10 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
             </div>
             <div className="w-full space-y-2">
               {[
-                "Analyse du poste",
-                "Adaptation du contenu",
-                "Rédaction de la lettre",
-                "Génération des PDFs",
+                t("processingStep1"),
+                t("processingStep2"),
+                t("processingStep3"),
+                t("processingStep4"),
               ].map((label, i) => (
                 <div
                   key={i}
@@ -479,7 +478,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                 onClick={handleDownloadCV}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Télécharger mon CV adapté
+                {t("downloadCv")}
                 <Badge variant="secondary" className="ml-auto text-xs">
                   PDF
                 </Badge>
@@ -492,7 +491,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                 onClick={handleDownloadLM}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Télécharger ma lettre de motivation
+                {t("downloadCoverLetter")}
                 <Badge variant="secondary" className="ml-auto text-xs">
                   PDF
                 </Badge>
@@ -553,7 +552,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                 setResult(null);
               }}
             >
-              Recommencer avec un autre CV
+              {t("retryButton")}
             </button>
           </div>
         )}

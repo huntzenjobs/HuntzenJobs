@@ -51,6 +51,7 @@ import { ProcessingSteps } from "@/components/cv/processing-steps";
 import { exportCVAnalysisToPDF } from "@/utils/export-cv-pdf";
 import type { FeatureType } from "@/hooks/use-freemium-limits";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
+import { useTranslations } from "next-intl";
 
 // ============================================
 // TYPES
@@ -126,6 +127,7 @@ export function CVUploadAsyncWizard({
 }: CVUploadAsyncWizardProps) {
   const { session, user, loading } = useAuth();
   const router = useRouter();
+  const t = useTranslations("cv");
 
   // ============================================
   // ALL HOOKS — must be before any early return (Rules of Hooks)
@@ -812,9 +814,7 @@ export function CVUploadAsyncWizard({
               : "border-gray-300 hover:border-gray-400"
           }`}
         >
-          <p className="font-bold text-lg mb-2">
-            🎯 Matching avec offre d'emploi
-          </p>
+          <p className="font-bold text-lg mb-2">{t("matchingJobOffer")}</p>
           <p className="text-sm text-gray-600">
             Score de compatibilité avec une offre d'emploi spécifique
           </p>

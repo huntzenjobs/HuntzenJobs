@@ -106,7 +106,7 @@ export default function SalonsPage() {
       setEvents(result.events);
       setVisibleEventsCount(0); // Reset counter for progressive reveal
     } catch (err: any) {
-      setError(err.message || "Erreur lors de la recherche");
+      setError(err.message || t("errorText"));
     } finally {
       setLoading(false);
     }
@@ -178,8 +178,7 @@ export default function SalonsPage() {
             <h1 className="text-4xl font-black text-black">{t("title")}</h1>
           </div>
           <p className="text-base text-slate-700 leading-relaxed max-w-3xl">
-            Découvrez les événements emploi près de chez vous et rencontrez des
-            recruteurs en personne ou en ligne
+            {t("subtitle")}
           </p>
         </div>
 
@@ -200,7 +199,7 @@ export default function SalonsPage() {
             )}
           >
             <Filter className="size-4" />
-            {showFilters ? "Masquer filtres" : "Afficher filtres"}
+            {showFilters ? t("hideFilters") : t("showFilters")}
           </Button>
         </motion.div>
       </motion.div>
@@ -216,14 +215,13 @@ export default function SalonsPage() {
           <div className="flex items-center gap-2">
             <Calendar className="size-4 text-[#00D9FF]" />
             <span className="font-medium">
-              {events.length} événement{events.length > 1 ? "s" : ""} disponible
-              {events.length > 1 ? "s" : ""}
+              {t("eventsCount", { count: events.length })}
             </span>
           </div>
           {hasActiveFilters && (
             <div className="flex items-center gap-2 text-amber-600">
               <TrendingUp className="size-4" />
-              <span>Résultats filtrés</span>
+              <span>{t("filteredResults")}</span>
             </div>
           )}
         </motion.div>
@@ -243,10 +241,7 @@ export default function SalonsPage() {
               fallback={
                 <Card className="p-6 bg-red-50 border-red-200">
                   <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
-                  <p className="text-red-700 text-center">
-                    Erreur lors du chargement des filtres. Veuillez rafraîchir
-                    la page.
-                  </p>
+                  <p className="text-red-700 text-center">{t("errorText")}</p>
                 </Card>
               }
             >
@@ -258,7 +253,7 @@ export default function SalonsPage() {
                         <Filter className="size-4 text-white" />
                       </div>
                       <CardTitle className="text-lg font-bold text-black">
-                        Filtres de recherche
+                        {t("filterTitle")}
                       </CardTitle>
                     </div>
                     {hasActiveFilters && (
@@ -269,7 +264,7 @@ export default function SalonsPage() {
                         className="text-xs text-[#00D9FF] hover:text-black hover:bg-gray-100 hover:text-slate-900"
                       >
                         <X className="size-3 mr-1" />
-                        Réinitialiser
+                        {t("resetFilters")}
                       </Button>
                     )}
                   </div>
@@ -406,12 +401,12 @@ export default function SalonsPage() {
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 size-4 animate-spin" />
-                          Recherche en cours...
+                          {t("loadingText")}
                         </>
                       ) : (
                         <>
                           <Sparkles className="mr-2 size-4" />
-                          Rechercher des événements
+                          {t("searchButton")}
                         </>
                       )}
                     </Button>
@@ -426,7 +421,7 @@ export default function SalonsPage() {
                             selectedFormat,
                           }).filter(Boolean).length
                         }{" "}
-                        filtre(s) actif(s)
+                        {t("activeFilters")}
                       </p>
                     )}
                   </div>
@@ -487,11 +482,9 @@ export default function SalonsPage() {
             <Card className="p-8 text-center">
               <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-slate-900 mb-2">
-                Erreur lors de l'affichage des événements
+                {t("errorText")}
               </h3>
-              <p className="text-slate-600">
-                Une erreur s'est produite. Veuillez réessayer.
-              </p>
+              <p className="text-slate-600">{t("noResultsSub")}</p>
             </Card>
           }
         >
@@ -513,13 +506,12 @@ export default function SalonsPage() {
                       <Calendar className="size-8 text-[#00D9FF]" />
                     </motion.div>
                     <h3 className="text-xl font-bold text-black mb-2">
-                      Aucun événement trouvé
+                      {t("emptyStateTitle")}
                     </h3>
                     <p className="text-slate-600 text-center max-w-md">
-                      Aucun événement ne correspond à vos critères de recherche.
+                      {t("noResults")}
                       <br />
-                      Essayez de modifier vos filtres pour voir plus de
-                      résultats.
+                      {t("noResultsSub")}
                     </p>
                     {hasActiveFilters && (
                       <Button
@@ -528,7 +520,7 @@ export default function SalonsPage() {
                         className="mt-6 border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF]/10"
                       >
                         <X className="size-4 mr-2" />
-                        Effacer les filtres
+                        {t("clearFilters")}
                       </Button>
                     )}
                   </CardContent>
@@ -554,8 +546,10 @@ export default function SalonsPage() {
                     <div className="flex items-center gap-3 text-slate-600">
                       <Loader2 className="w-5 h-5 animate-spin text-[#00D9FF]" />
                       <span className="text-sm font-medium">
-                        Chargement des événements... ({visibleEventsCount}/
-                        {events.length})
+                        {t("loadingEvents", {
+                          current: visibleEventsCount,
+                          total: events.length,
+                        })}
                       </span>
                     </div>
                   </motion.div>
@@ -571,6 +565,7 @@ export default function SalonsPage() {
 
 // Event Card Component
 function EventCard({ event, index }: { event: JobFair; index: number }) {
+  const t = useTranslations("dashboard.salons");
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("fr-FR", {
@@ -698,7 +693,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
                   </>
                 ) : (
                   <span className="text-slate-400 text-[10px]">
-                    Non communiqué
+                    {t("notCommunicated")}
                   </span>
                 )}
               </p>
@@ -728,7 +723,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             )}
             {event.is_free && (
               <Badge className="text-[10px] bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-sm font-semibold h-5 px-2">
-                ✓ Gratuit
+                {t("freeLabel")}
               </Badge>
             )}
             {event.companies_count && (
@@ -759,7 +754,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             >
               <a href={event.url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-3 mr-1.5" />
-                Voir les détails
+                {t("viewDetails")}
               </a>
             </Button>
           </div>
