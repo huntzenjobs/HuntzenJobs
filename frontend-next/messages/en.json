@@ -433,7 +433,9 @@
         "checkEmailDesc": "(and spam) to confirm your email address before logging in.",
         "goToLogin": "Go to login",
         "close": "Close",
-        "noEmail": "Didn't receive the email? Wait a few minutes or check your spam."
+        "noEmail": "Didn't receive the email? Wait a few minutes or check your spam.",
+        "resendButton": "Resend Email Confirmation",
+        "resendSuccess": "Email resent! Check your mailbox."
       },
       "timeout": {
         "title": "Slow connection detected",

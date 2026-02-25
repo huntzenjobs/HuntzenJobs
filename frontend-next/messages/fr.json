@@ -433,7 +433,9 @@
         "checkEmailDesc": "(et vos spams) pour confirmer votre adresse email avant de vous connecter.",
         "goToLogin": "Aller à la connexion",
         "close": "Fermer",
-        "noEmail": "Vous n'avez pas reçu l'email ? Attendez quelques minutes ou vérifiez vos spams."
+        "noEmail": "Vous n'avez pas reçu l'email ? Attendez quelques minutes ou vérifiez vos spams.",
+        "resendButton": "Renvoyer l'email de confirmation",
+        "resendSuccess": "Email renvoyé ! Vérifiez votre boîte mail."
       },
       "timeout": {
         "title": "Connexion lente détectée",

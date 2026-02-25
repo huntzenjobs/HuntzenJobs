@@ -433,7 +433,9 @@
         "checkEmailDesc": "(y spam) para confirmar tu correo antes de iniciar sesión.",
         "goToLogin": "Ir al inicio de sesión",
         "close": "Cerrar",
-        "noEmail": "¿No recibiste el correo? Espera unos minutos o revisa tu spam."
+        "noEmail": "¿No recibiste el correo? Espera unos minutos o revisa tu spam.",
+        "resendButton": "Reenviar correo electrónico de confirmación",
+        "resendSuccess": "Correo electrónico reenviado! Compruebe su buzón de correo electrónico."
       },
       "timeout": {
         "title": "Conexión lenta detectada",
