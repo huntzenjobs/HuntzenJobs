@@ -466,7 +466,7 @@
       "passwordPlaceholder": "Mínimo de 6 caracteres",
       "confirmLabel": "Confirmar a palavra-passe",
       "confirmPlaceholder": "Reintroduza a sua nova palavra-passe",
-      "submitButton": "Actualizar como cifrada",
+      "submitButton": "Atualizar senha",
       "loading": "Atualização...",
       "successMessage": "Palavra-passe atualizada com sucesso!",
       "mismatchError": "As palavras-passe não coincidem",

@@ -457,7 +457,7 @@
       "loading": "Sending in progress...",
       "successTitle": "Email sent!",
       "successMessage": "If an account exists with this address, you will receive a reset email in a few minutes. Check your spam.",
-      "backToLogin": "Return Login"
+      "backToLogin": "Return to login"
     },
     "resetPassword": {
       "title": "New password",
@@ -470,7 +470,7 @@
       "loading": "Update...",
       "successMessage": "Password updated successfully.",
       "mismatchError": "The passwords are not matching",
-      "tooShortError": "Password should be getter than 6 character",
+      "tooShortError": "Password must be at least 6 characters",
       "expiredError": "The reset link has expired. Please try again.",
       "showPassword": "Show password",
       "hidePassword": "Hide password"
