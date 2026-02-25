@@ -344,16 +344,13 @@ export function AuthProvider({
   };
 
   const resetPasswordForEmail = async (email: string) => {
-    try {
-      setError(null);
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      devError("Reset password error:", err);
-      setError(err.message || "Failed to send reset email");
-      throw err;
+    setError(null);
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+    });
+    // Log in dev only — never expose to user to prevent email enumeration
+    if (error) {
+      devError("Reset password error (not surfaced):", error);
     }
   };
 
@@ -370,7 +367,7 @@ export function AuthProvider({
       if (error) throw error;
     } catch (err: any) {
       devError("Resend confirmation error:", err);
-      setError(err.message || "Failed to resend confirmation email");
+      setError(err.message || tErr("resendConfirmationFailed"));
       throw err;
     }
   };

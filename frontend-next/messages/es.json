@@ -444,7 +444,9 @@
       "emailNotConfirmed": "Por favor confirme su dirección de correo. Le enviamos un correo de confirmación al registrarse. Revise su bandeja de entrada (y spam).",
       "invalidCredentials": "Correo o contraseña inválidos",
       "timeout": "La solicitud está tardando demasiado. Verifique su conexión a Internet e inténtelo de nuevo.",
-      "signupFailed": "Error al crear la cuenta"
+      "signupFailed": "Error al crear la cuenta",
+      "resetPasswordFailed": "No se ha podido enviar el enlace de restablecimiento",
+      "resendConfirmationFailed": "No se ha podido devolver el correo electrónico de confirmación"
     }
   },
   "dashboard": {

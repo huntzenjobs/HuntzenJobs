@@ -444,7 +444,9 @@
       "emailNotConfirmed": "Veuillez confirmer votre adresse email. Nous vous avons envoyé un email de confirmation lors de votre inscription. Vérifiez votre boîte mail (et vos spams).",
       "invalidCredentials": "Email ou mot de passe invalide",
       "timeout": "La requête prend trop de temps. Vérifiez votre connexion internet et réessayez.",
-      "signupFailed": "Échec de la création du compte"
+      "signupFailed": "Échec de la création du compte",
+      "resetPasswordFailed": "Impossible d'envoyer le lien de réinitialisation",
+      "resendConfirmationFailed": "Impossible de renvoyer l'email de confirmation"
     }
   },
   "dashboard": {

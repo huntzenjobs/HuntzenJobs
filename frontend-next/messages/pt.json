@@ -444,7 +444,9 @@
       "emailNotConfirmed": "Por favor confirme seu endereço de e-mail. Enviamos um e-mail de confirmação quando você se cadastrou. Verifique sua caixa de entrada (e spam).",
       "invalidCredentials": "E-mail ou senha inválidos",
       "timeout": "A solicitação está demorando muito. Verifique sua conexão com a Internet e tente novamente.",
-      "signupFailed": "Falha ao criar a conta"
+      "signupFailed": "Falha ao criar a conta",
+      "resetPasswordFailed": "Não foi possível enviar o link de redefinição",
+      "resendConfirmationFailed": "Não foi possível reenviar o e-mail de confirmação"
     }
   },
   "dashboard": {
