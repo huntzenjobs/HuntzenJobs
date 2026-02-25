@@ -24,6 +24,7 @@ docling_image = (
     .pip_install([
         "docling>=2.0.0",
         "docling-core>=2.0.0",
+        "fastapi[standard]",
     ])
 )
 
@@ -33,9 +34,8 @@ docling_image = (
     cpu=2,
     memory=4096,   # 4GB — docling needs ~2-4GB for ML models
     timeout=120,   # 2 min max per extraction
-    retries=modal.Retries(max_retries=1, backoff_coefficient=1.0, initial_delay=2.0),
 )
-@modal.web_endpoint(method="POST")
+@modal.fastapi_endpoint(method="POST")
 async def extract_pdf_text(body: dict) -> dict:
     """
     Extract text from PDF bytes using Docling.
