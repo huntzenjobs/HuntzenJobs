@@ -263,6 +263,8 @@ export function SearchFormInline({
               icon={<Globe className="h-5 w-5" />}
               error={!!errors.country}
               helperText={errors.country}
+              typingPromptMessage={t("typeYourCountry")}
+              emptyMessage={t("noCountryFound")}
               required
             />
           </div>
@@ -276,10 +278,11 @@ export function SearchFormInline({
               onSearch={fetchCities}
               disabled={disabled || isLoading || !isCountryValid}
               icon={<MapPin className="h-5 w-5" />}
+              typingPromptMessage={
+                !isCountryValid ? undefined : t("typeYourCity")
+              }
               emptyMessage={
-                !isCountryValid
-                  ? "Sélectionnez d'abord un pays"
-                  : "Aucune ville trouvée"
+                !isCountryValid ? t("selectCountryFirst") : t("noCityFound")
               }
             />
           </div>
@@ -406,6 +409,8 @@ export function SearchFormInline({
           icon={<Globe className="h-5 w-5" />}
           error={!!errors.country}
           helperText={errors.country}
+          typingPromptMessage={t("typeYourCountry")}
+          emptyMessage={t("noCountryFound")}
           required
         />
 
@@ -417,10 +422,9 @@ export function SearchFormInline({
           onSearch={fetchCities}
           disabled={disabled || isLoading || !isCountryValid}
           icon={<MapPin className="h-5 w-5" />}
+          typingPromptMessage={!isCountryValid ? undefined : t("typeYourCity")}
           emptyMessage={
-            !isCountryValid
-              ? "Sélectionnez d'abord un pays"
-              : "Aucune ville trouvée"
+            !isCountryValid ? t("selectCountryFirst") : t("noCityFound")
           }
         />
 
