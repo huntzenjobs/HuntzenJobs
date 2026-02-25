@@ -152,11 +152,7 @@ export function Sidebar({ className }: SidebarProps) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-[#0D1F3C]">
       {/* Header with Logo */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="sidebar-header flex items-center justify-between p-6 border-b border-white/10"
-      >
+      <div className="sidebar-header flex items-center justify-between p-6 border-b border-white/10">
         <Link href="/" className="sidebar-logo flex items-center gap-2.5 group">
           <TextLogo
             size="md"
@@ -171,18 +167,14 @@ export function Sidebar({ className }: SidebarProps) {
         >
           <X className="w-5 h-5" />
         </button>
-      </motion.div>
+      </div>
 
       {/* Navigation */}
       <nav className="flex-1 py-6 overflow-y-auto">
         <div className="px-4">
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="nav-section-label block text-white/40 text-[0.65rem] font-bold tracking-widest px-3 mb-4"
-          >
+          <span className="nav-section-label block text-white/40 text-[0.65rem] font-bold tracking-widest px-3 mb-4">
             {t("label")}
-          </motion.span>
+          </span>
 
           {navigation.map((item, index) => {
             const isActive =
@@ -190,12 +182,7 @@ export function Sidebar({ className }: SidebarProps) {
             const isLocked = item.premium && (!user || isFreePlan);
 
             return (
-              <motion.div
-                key={item.name}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
+              <div key={item.name}>
                 <Link
                   href={isLocked ? (user ? "#" : "/login") : item.href}
                   onClick={(e) => {
@@ -242,16 +229,13 @@ export function Sidebar({ className }: SidebarProps) {
                   )}
                   {isLocked && <Lock className="w-4 h-4 text-white/30" />}
                 </Link>
-              </motion.div>
+              </div>
             );
           })}
 
           {/* Mon Utilisation button - only show if logged in */}
           {user && (
-            <motion.button
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: navigation.length * 0.05 }}
+            <button
               onClick={() => {
                 setIsUsageModalOpen(true);
                 setIsMobileMenuOpen(false);
@@ -262,19 +246,15 @@ export function Sidebar({ className }: SidebarProps) {
               <span className="nav-label flex-1 text-left">
                 {t("nav.myUsage")}
               </span>
-            </motion.button>
+            </button>
           )}
         </div>
 
         {/* Usage summary for free users - only show if logged in */}
         {user && isFreePlan && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="px-4 mt-6"
-          >
+          <div className="px-4 mt-6">
             <UsageSummary className="p-4 rounded-xl bg-white/5 border border-white/10" />
-          </motion.div>
+          </div>
         )}
       </nav>
 
@@ -289,10 +269,7 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
           </div>
         ) : user ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div>
             <Link
               href="/profile"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -323,12 +300,9 @@ export function Sidebar({ className }: SidebarProps) {
                 <p className="text-xs text-white/50 truncate">{user.email}</p>
               </div>
             </Link>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div>
             <Link
               href="/login"
               className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-white/70 hover:bg-white/8 hover:text-white w-full group"
@@ -338,7 +312,7 @@ export function Sidebar({ className }: SidebarProps) {
                 {t("footer.login")}
               </span>
             </Link>
-          </motion.div>
+          </div>
         )}
 
         {/* Upgrade button for free users - only show if logged in */}
