@@ -452,7 +452,7 @@
       "title": "Esqueci-me da palavra-passe",
       "subtitle": "Introduza o seu endereço de e-mail e enviar-lhe-emos uma ligação de reposição.",
       "emailLabel": "Endereço de e-mail",
-      "emailPlaceholder": "vous@example.com",
+      "emailPlaceholder": "voce@exemplo.com",
       "submitButton": "Enviar Hiperligação",
       "loading": "Envio em curso...",
       "successTitle": "E-mail enviado",
@@ -472,7 +472,7 @@
       "mismatchError": "As palavras-passe não coincidem",
       "tooShortError": "A palavra-passe deve conter pelo menos 8 carateres.",
       "expiredError": "O link de redefinição expirou. Tente novamente.",
-      "showPassword": "Mostrar a & senha",
+      "showPassword": "Mostrar senha",
       "hidePassword": "Ocultar palavra-passe"
     }
   },

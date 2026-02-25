@@ -452,7 +452,7 @@
       "title": "Contraseña olvidada",
       "subtitle": "Introduzca su dirección de correo electrónico y le enviaremos un enlace de restablecimiento.",
       "emailLabel": "Correo electrónico",
-      "emailPlaceholder": "vous@example.com",
+      "emailPlaceholder": "tu@ejemplo.com",
       "submitButton": "Enviar enlace",
       "loading": "Enviando...",
       "successTitle": "Correo electrónico enviado",
