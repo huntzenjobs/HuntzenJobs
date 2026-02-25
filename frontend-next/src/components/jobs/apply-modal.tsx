@@ -198,7 +198,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
 
       const [cvPdfResponse, lmPdfResponse] = await Promise.all([
         // CV adapté en PDF
-        fetch(`${BACKEND_URL}/api/cv-adapter/pdf`, {
+        fetch(`${BACKEND_URL}/api/cv-adapter/generate-pdf`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
