@@ -831,7 +831,8 @@
     "companySizeEnterprise": "Major Group",
     "salaryMin": "Salary min",
     "salaryMax": "Max Salary",
-    "premiumFeature": "Premium Feature"
+    "premiumFeature": "Premium Feature",
+    "cancelButton": "Cancel"
   },
   "gradientJobCard": {
     "lockedOffer": "Offer Locked",
