@@ -56,7 +56,11 @@ export async function GET(request: NextRequest) {
 
       // Password reset flow: redirect to reset-password page
       if (type === "recovery") {
-        return NextResponse.redirect(`${origin}/reset-password`);
+        const recoveryResponse = NextResponse.redirect(
+          `${origin}/reset-password`,
+        );
+        recoveryResponse.cookies.delete("huntzen_redirect_after_auth");
+        return recoveryResponse;
       }
 
       // OAuth / email confirmation flow: redirect to final destination
