@@ -165,6 +165,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
         return;
       }
 
+      // Signal loading immediately — prevents race condition where
+      // auth.session is set but isLoading is still false from previous state
+      setData((prev) => ({ ...prev, isLoading: true, error: null }));
+
       // Fetch from backend
       if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
         throw new Error("NEXT_PUBLIC_BACKEND_URL is not configured");
