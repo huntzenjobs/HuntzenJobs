@@ -200,14 +200,21 @@ async def adapt_cv_from_file(
     
     # Extract text using CV Analyzer agent
     cv_analyzer = get_cv_agent()
-    
-    if filename.endswith(".pdf"):
-        cv_text = await cv_analyzer.extract_text_from_pdf(content)
-    else:
-        from docx import Document
-        doc = Document(io.BytesIO(content))
-        cv_text = "\n".join([para.text for para in doc.paragraphs])
-    
+
+    try:
+        if filename.endswith(".pdf"):
+            cv_text = await cv_analyzer.extract_text_from_pdf(content)
+        else:
+            from docx import Document
+            doc = Document(io.BytesIO(content))
+            cv_text = "\n".join([para.text for para in doc.paragraphs])
+    except Exception as exc:
+        logger.error(f"File text extraction failed for {filename}: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Could not extract text from file: {str(exc)}",
+        )
+
     if not cv_text or len(cv_text) < 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
