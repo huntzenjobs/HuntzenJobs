@@ -17,7 +17,8 @@ import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.api import router
@@ -76,6 +77,33 @@ app = FastAPI(
 
 # Setup middleware
 setup_middleware(app)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """
+    Global fallback exception handler.
+
+    Ensures CORS headers are present even on unhandled 500 errors so the
+    browser can read the error detail instead of seeing a CORS violation.
+    """
+    origin = request.headers.get("origin", "")
+    cors_headers: dict[str, str] = {}
+    if origin:
+        cors_headers["Access-Control-Allow-Origin"] = origin
+        cors_headers["Access-Control-Allow-Credentials"] = "true"
+        cors_headers["Vary"] = "Origin"
+
+    logger.error(
+        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+        headers=cors_headers,
+    )
+
 
 # Mount static files (if directory exists)
 try:
