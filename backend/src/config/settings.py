@@ -140,6 +140,14 @@ class Settings(BaseSettings):
     # Format: redis://default:PASSWORD@host:6379
     redis_limiter_url: str = Field(default="", description="Redis URL for rate limiting (redis://...)")
 
+    # --------------------------------------------------------------------------
+    # LangSmith Tracing
+    # --------------------------------------------------------------------------
+    langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
+    langchain_endpoint: str = Field(default="https://api.smith.langchain.com", alias="LANGCHAIN_ENDPOINT")
+    langchain_api_key: SecretStr = Field(default=SecretStr(""), alias="LANGCHAIN_API_KEY")
+    langchain_project: str = Field(default="HuntZen", alias="LANGCHAIN_PROJECT")
+
     cache_enabled: bool = Field(default=True, description="Enable distributed caching")
     cache_default_ttl: int = Field(default=300, ge=60, le=3600, description="Default cache TTL (seconds)")
 

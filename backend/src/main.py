@@ -38,6 +38,16 @@ async def lifespan(app: FastAPI):
     logger.info(f"{settings.app_name} v{settings.app_version} starting...")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"LLM Models: {settings.llm_model_fast} / {settings.llm_model_powerful}")
+    
+    # Initialize LangSmith Tracing if enabled
+    if settings.langchain_tracing_v2:
+        import os
+        os.environ["LANGCHAIN_TRACING_V2"] = "true"
+        os.environ["LANGCHAIN_ENDPOINT"] = settings.langchain_endpoint
+        os.environ["LANGCHAIN_API_KEY"] = settings.langchain_api_key.get_secret_value()
+        os.environ["LANGCHAIN_PROJECT"] = settings.langchain_project
+        logger.info(f"🚀 LangSmith Tracing enabled (Project: {settings.langchain_project})")
+    
     logger.info("=" * 60)
     
     yield
