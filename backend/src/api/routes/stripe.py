@@ -9,7 +9,7 @@ from typing import Optional
 from structlog import get_logger
 
 from src.api.deps import get_current_user
-from src.services.stripe import create_checkout_session, handle_stripe_webhook
+from src.services.stripe import create_checkout_session, handle_stripe_webhook, supabase_client
 from src.config.settings import settings
 
 logger = get_logger(__name__)
@@ -112,3 +112,66 @@ async def stripe_webhook(
     except Exception as e:
         logger.error(f"[STRIPE] Webhook processing failed: {e}")
         raise HTTPException(status_code=500, detail=f"Webhook processing failed: {str(e)}")
+
+
+@router.post("/cancel-subscription")
+async def cancel_subscription(
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Cancel the current user's subscription at end of billing period.
+    Uses cancel_at_period_end=True — user keeps access until period ends.
+    The webhook customer.subscription.updated will update DB automatically.
+    """
+    try:
+        user_id = current_user.get("id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid user")
+
+        if not supabase_client:
+            raise HTTPException(status_code=500, detail="Database not configured")
+
+        result = (
+            supabase_client
+            .table("user_subscriptions")
+            .select("stripe_subscription_id, status, plan_name")
+            .eq("user_id", user_id)
+            .eq("status", "active")
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="No active subscription found")
+
+        subscription = result.data[0]
+        stripe_subscription_id = subscription.get("stripe_subscription_id")
+
+        if not stripe_subscription_id or not stripe_subscription_id.startswith("sub_"):
+            raise HTTPException(status_code=400, detail="Invalid subscription ID")
+
+        # GARDE-FOU: cancel_at_period_end=True UNIQUEMENT — jamais stripe.Subscription.delete()
+        import stripe as stripe_lib
+        updated = stripe_lib.Subscription.modify(
+            stripe_subscription_id,
+            cancel_at_period_end=True
+        )
+
+        logger.info(
+            f"[STRIPE] Subscription {stripe_subscription_id} marked for cancellation "
+            f"at period end for user {user_id}"
+        )
+
+        return {
+            "success": True,
+            "cancel_at_period_end": True,
+            "current_period_end": updated.get("current_period_end"),
+            "message": "Subscription will be cancelled at end of billing period"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[STRIPE] Cancel subscription failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}")
