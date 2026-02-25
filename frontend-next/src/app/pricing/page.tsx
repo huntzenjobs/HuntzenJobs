@@ -32,6 +32,7 @@ import { useOptionalAuth } from "@/contexts/auth-context";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 const plans = [
   {
@@ -177,6 +178,7 @@ export default function PricingPage() {
   const user = auth?.user;
   const subscription = useOptionalSubscription();
   const apiData = useSubscriptionApi();
+  const t = useTranslations("pricing");
 
   const currentPlan =
     apiData.subscription?.plan_name || subscription?.plan || "free";
@@ -398,7 +400,7 @@ export default function PricingPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full"
               >
-                🎉 Économisez jusqu&apos;à 20%
+                🎉 {t("saveUpTo20")}
               </motion.span>
             )}
           </div>
@@ -545,8 +547,8 @@ export default function PricingPage() {
                   disabled={plan.id === currentPlan}
                 >
                   {plan.id === currentPlan
-                    ? "✓ Plan actuel"
-                    : `Choisir ${plan.name}`}
+                    ? t("currentPlan")
+                    : t("choosePlan", { name: plan.name })}
                 </Button>
               </motion.div>
             ))}

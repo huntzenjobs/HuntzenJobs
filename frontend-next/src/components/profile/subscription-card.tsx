@@ -9,6 +9,7 @@ import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 import { UsageCounter } from "@/components/freemium/usage-counter";
 import { Check, X, Crown, Sparkles, Zap, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 // Plan configuration - Prices synced with database (subscription_plans table)
 const PLAN_CONFIG = {
@@ -62,6 +63,7 @@ const FEATURE_LABELS: Record<string, string> = {
 export function SubscriptionCard() {
   const { plan, planName, isFreePlan, isPaidPlan, openPricingModal, limits } =
     useSubscription();
+  const t = useTranslations("profile");
 
   const planConfig = PLAN_CONFIG[plan];
   const planLimits = PLAN_LIMITS[plan];
@@ -119,9 +121,7 @@ export function SubscriptionCard() {
                 {planConfig.period}
               </span>
             </p>
-            <p className="text-sm text-gray-600">
-              {planConfig.description}
-            </p>
+            <p className="text-sm text-gray-600">{planConfig.description}</p>
           </div>
         </div>
 
@@ -209,17 +209,13 @@ export function SubscriptionCard() {
 
         {/* CV Analysis */}
         <div className="space-y-1">
-          <p className="text-xs text-gray-500 font-medium">
-            Analyses CV
-          </p>
+          <p className="text-xs text-gray-500 font-medium">Analyses CV</p>
           <UsageCounter feature="cv_analysis" showIcon={false} />
         </div>
 
         {/* Coach Time */}
         <div className="space-y-1">
-          <p className="text-xs text-gray-500 font-medium">
-            Temps Coach IA
-          </p>
+          <p className="text-xs text-gray-500 font-medium">Temps Coach IA</p>
           <UsageCounter feature="coach_time" showIcon={false} />
         </div>
 
@@ -286,7 +282,7 @@ export function SubscriptionCard() {
             </Button>
           </div>
           <p className="text-xs text-gray-500 text-center">
-            💡 L'annulation d'abonnement sera disponible prochainement
+            💡 {t("cancelSubscriptionComingSoon")}
           </p>
         </>
       )}

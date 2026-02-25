@@ -36,10 +36,11 @@ import { HistorySidebar } from "@/components/coach/history-sidebar";
 import { ExportDialog } from "@/components/coach/export-dialog";
 import { useCoachHistory, useDebounce } from "@/hooks/use-coach-history";
 import { toCoachMessage, toChatMessage } from "@/types/coach-history";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 export default function AssistantPage() {
   const t = useTranslations("dashboard.assistant");
+  const locale = useLocale();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -176,6 +177,7 @@ export default function AssistantPage() {
         messageText,
         sessionId,
         selectedAssistant,
+        locale,
       );
 
       const assistantMessage: ChatMessageType = {
