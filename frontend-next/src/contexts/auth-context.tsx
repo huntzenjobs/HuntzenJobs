@@ -318,10 +318,7 @@ export function AuthProvider({
         });
       }
 
-      // Show success message
       setError(null);
-
-      // Reset loading AVANT la redirection
       setLoading(false);
 
       // If session exists, email confirmation is disabled → user is already logged in

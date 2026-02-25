@@ -449,6 +449,33 @@
       "signupFailed": "Error al crear la cuenta",
       "resetPasswordFailed": "No se ha podido enviar el enlace de restablecimiento",
       "resendConfirmationFailed": "No se ha podido devolver el correo electrónico de confirmación"
+    },
+    "forgotPassword": {
+      "title": "Contraseña olvidada",
+      "subtitle": "Introduzca su dirección de correo electrónico y le enviaremos un enlace de restablecimiento.",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "submitButton": "Enviar enlace",
+      "loading": "Enviando...",
+      "successTitle": "Correo electrónico enviado",
+      "successMessage": "Si existe una cuenta con esta dirección, recibirá un correo electrónico de restablecimiento en unos minutos. Comprueba tu spam.",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "resetPassword": {
+      "title": "Nueva contraseña",
+      "subtitle": "Elige una contraseña segura para tu cuenta.",
+      "passwordLabel": "Nueva contraseña",
+      "passwordPlaceholder": "Mínimo 6 caracteres",
+      "confirmLabel": "Confirmar la contraseña",
+      "confirmPlaceholder": "Vuelva a escribir su nueva contraseña:",
+      "submitButton": "Actualizar contraseña",
+      "loading": "Actualización...",
+      "successMessage": "¡Contraseña actualizada con éxito!",
+      "mismatchError": "Las contraseñas no coinciden ",
+      "tooShortError": "La contraseña debe tener 6 caracteres mínimo.",
+      "expiredError": "El enlace de restablecimiento ha caducado. Por favor, vuelva a intentarlo.",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
     }
   },
   "dashboard": {

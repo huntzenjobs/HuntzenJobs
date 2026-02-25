@@ -442,6 +442,33 @@
         "description": "La requête a pris trop de temps. Vérifiez votre connexion internet et réessayez dans quelques instants."
       }
     },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Saisissez votre adresse email et nous vous enverrons un lien de réinitialisation.",
+      "emailLabel": "Adresse email",
+      "emailPlaceholder": "vous@example.com",
+      "submitButton": "Envoyer le lien",
+      "loading": "Envoi en cours...",
+      "successTitle": "Email envoyé !",
+      "successMessage": "Si un compte existe avec cette adresse, vous recevrez un email de réinitialisation dans quelques minutes. Vérifiez vos spams.",
+      "backToLogin": "Retour à la connexion"
+    },
+    "resetPassword": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Choisissez un mot de passe sécurisé pour votre compte.",
+      "passwordLabel": "Nouveau mot de passe",
+      "passwordPlaceholder": "Minimum 6 caractères",
+      "confirmLabel": "Confirmer le mot de passe",
+      "confirmPlaceholder": "Retapez votre mot de passe",
+      "submitButton": "Mettre à jour le mot de passe",
+      "loading": "Mise à jour...",
+      "successMessage": "Mot de passe mis à jour avec succès !",
+      "mismatchError": "Les mots de passe ne correspondent pas",
+      "tooShortError": "Le mot de passe doit contenir au moins 6 caractères",
+      "expiredError": "Le lien de réinitialisation a expiré. Veuillez recommencer.",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe"
+    },
     "errors": {
       "emailNotConfirmed": "Veuillez confirmer votre adresse email. Nous vous avons envoyé un email de confirmation lors de votre inscription. Vérifiez votre boîte mail (et vos spams).",
       "invalidCredentials": "Email ou mot de passe invalide",
