@@ -8,6 +8,7 @@ import {
   useState,
   useMemo,
   useCallback,
+  useRef,
 } from "react";
 import {
   useFreemiumLimits,
@@ -95,6 +96,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [coachTimeRemaining, setCoachTimeRemaining] = useState(0);
   const [hasShownInconsistencyWarning, setHasShownInconsistencyWarning] =
     useState(false);
+
+  // Stable ref for refetch — prevents re-triggering inconsistency check when refetch changes reference
+  const apiRefetchRef = useRef<(() => Promise<void>) | undefined>(undefined);
+  useEffect(() => {
+    apiRefetchRef.current = apiData.refetch;
+  });
 
   // Update coach time remaining every second when session is active
   useEffect(() => {
@@ -237,7 +244,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       if (!isApiError) {
         setTimeout(() => {
           console.log("[SUBSCRIPTION] Auto-refetching subscription data...");
-          apiData.refetch?.();
+          apiRefetchRef.current?.();
         }, 5000);
       }
     }
@@ -256,7 +263,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     apiData.error,
     hasShownInconsistencyWarning,
     freemium.plan,
-    apiData.refetch,
+    // apiData.refetch intentionally omitted — accessed via apiRefetchRef to prevent
+    // this effect from re-running when refetch changes reference
   ]);
 
   // Listen for token-expired event and show reconnect toast
