@@ -831,7 +831,8 @@
     "companySizeEnterprise": "Grupo Principal",
     "salaryMin": "Salário Mínimo",
     "salaryMax": "Salário Máximo",
-    "premiumFeature": "Recurso Premium"
+    "premiumFeature": "Recurso Premium",
+    "cancelButton": "Cancelar"
   },
   "gradientJobCard": {
     "lockedOffer": "Oferta bloqueada",
