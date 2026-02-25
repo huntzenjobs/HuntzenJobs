@@ -433,7 +433,9 @@
         "checkEmailDesc": "(y spam) para confirmar tu correo antes de iniciar sesión.",
         "goToLogin": "Ir al inicio de sesión",
         "close": "Cerrar",
-        "noEmail": "¿No recibiste el correo? Espera unos minutos o revisa tu spam."
+        "noEmail": "¿No recibiste el correo? Espera unos minutos o revisa tu spam.",
+        "resendButton": "Reenviar correo electrónico de confirmación",
+        "resendSuccess": "Correo electrónico reenviado! Compruebe su buzón de correo electrónico."
       },
       "timeout": {
         "title": "Conexión lenta detectada",
@@ -445,6 +447,33 @@
       "invalidCredentials": "Correo o contraseña inválidos",
       "timeout": "La solicitud está tardando demasiado. Verifique su conexión a Internet e inténtelo de nuevo.",
       "signupFailed": "Error al crear la cuenta"
+    },
+    "forgotPassword": {
+      "title": "Contraseña olvidada",
+      "subtitle": "Introduzca su dirección de correo electrónico y le enviaremos un enlace de restablecimiento.",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "vous@example.com",
+      "submitButton": "Enviar enlace",
+      "loading": "Enviando...",
+      "successTitle": "Correo electrónico enviado",
+      "successMessage": "Si existe una cuenta con esta dirección, recibirá un correo electrónico de restablecimiento en unos minutos. Comprueba tu spam.",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "resetPassword": {
+      "title": "Nueva contraseña",
+      "subtitle": "Elige una contraseña segura para tu cuenta.",
+      "passwordLabel": "Nueva contraseña",
+      "passwordPlaceholder": "Mínimo 6 caracteres",
+      "confirmLabel": "Confirmar la contraseña",
+      "confirmPlaceholder": "Vuelva a escribir su nueva contraseña:",
+      "submitButton": "Actualizar cifrada",
+      "loading": "Actualización...",
+      "successMessage": "¡Contraseña actualizada con éxito!",
+      "mismatchError": "Las contraseñas no coinciden ",
+      "tooShortError": "La contraseña debe tener 6 caracteres mínimo.",
+      "expiredError": "El enlace de restablecimiento ha caducado. Por favor, vuelva a intentarlo.",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
     }
   },
   "dashboard": {
