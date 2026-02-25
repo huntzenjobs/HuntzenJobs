@@ -343,17 +343,13 @@ export function Sidebar({ className }: SidebarProps) {
 
         {/* Upgrade button for free users - only show if logged in */}
         {user && isFreePlan && (
-          <motion.button
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={() => openPricingModal()}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] text-white text-sm font-bold hover:shadow-lg hover:shadow-[#00D9FF]/30 transition-all"
           >
             <Sparkles className="w-4 h-4" />
             {t("upgradeCta")}
-          </motion.button>
+          </button>
         )}
       </div>
 
