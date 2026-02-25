@@ -3,79 +3,87 @@
  * Handles OAuth redirect from Google/Email confirmation
  */
 
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { logSecurityEvent } from '@/lib/security/logger'
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { logSecurityEvent } from "@/lib/security/logger";
 
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
-  const error = requestUrl.searchParams.get('error')
-  const errorDescription = requestUrl.searchParams.get('error_description')
-  const origin = requestUrl.origin
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const error = requestUrl.searchParams.get("error");
+  const errorDescription = requestUrl.searchParams.get("error_description");
+  const origin = requestUrl.origin;
 
   // Read redirect cookie set before OAuth flow
-  const redirectCookie = request.cookies.get('huntzen_redirect_after_auth')
-  const redirectTo = redirectCookie?.value ? decodeURIComponent(redirectCookie.value) : null
+  const redirectCookie = request.cookies.get("huntzen_redirect_after_auth");
+  const redirectTo = redirectCookie?.value
+    ? decodeURIComponent(redirectCookie.value)
+    : null;
 
   // Handle OAuth errors from Google
   if (error) {
     await logSecurityEvent({
-      eventType: 'auth.oauth_callback_error',
-      severity: 'warning',
-      metadata: { error, error_description: errorDescription }
-    })
+      eventType: "auth.oauth_callback_error",
+      severity: "warning",
+      metadata: { error, error_description: errorDescription },
+    });
 
     return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(errorDescription || error)}`
-    )
+      `${origin}/login?error=${encodeURIComponent(errorDescription || error)}`,
+    );
   }
 
   if (code) {
-    const supabase = await createClient()
+    const supabase = await createClient();
+    const type = requestUrl.searchParams.get("type");
 
     // Exchange code for session
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.session) {
       // Log successful OAuth callback
       await logSecurityEvent({
-        eventType: 'auth.oauth_callback_success',
-        severity: 'info',
+        eventType: "auth.oauth_callback_success",
+        severity: "info",
         userId: data.user.id,
         metadata: {
           email: data.user.email,
-          provider: data.user.app_metadata?.provider
-        }
-      })
+          provider: data.user.app_metadata?.provider,
+          type: type || "oauth",
+        },
+      });
 
-      // Determine final redirect destination from cookie or default to /jobs
-      const finalRedirect = redirectTo && redirectTo.startsWith('/')
-        ? redirectTo
-        : '/jobs'
+      // Password reset flow: redirect to reset-password page
+      if (type === "recovery") {
+        return NextResponse.redirect(`${origin}/reset-password`);
+      }
 
-      const response = NextResponse.redirect(`${origin}${finalRedirect}`)
+      // OAuth / email confirmation flow: redirect to final destination
+      const finalRedirect =
+        redirectTo && redirectTo.startsWith("/") ? redirectTo : "/jobs";
+
+      const response = NextResponse.redirect(`${origin}${finalRedirect}`);
 
       // Delete cookie after successful use
-      response.cookies.delete('huntzen_redirect_after_auth')
+      response.cookies.delete("huntzen_redirect_after_auth");
 
-      return response
+      return response;
     }
 
     // Log session exchange failure
     await logSecurityEvent({
-      eventType: 'auth.session_exchange_failed',
-      severity: 'critical',
-      metadata: { error: error?.message }
-    })
+      eventType: "auth.session_exchange_failed",
+      severity: "critical",
+      metadata: { error: error?.message },
+    });
 
     // Auth error, redirect to login with generic error
     return NextResponse.redirect(
-      `${origin}/login?error=Authentication failed. Please try again.`
-    )
+      `${origin}/login?error=Authentication failed. Please try again.`,
+    );
   }
 
   // No code provided, redirect to login
-  return NextResponse.redirect(`${origin}/login`)
+  return NextResponse.redirect(`${origin}/login`);
 }
