@@ -165,6 +165,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
         return;
       }
 
+      // Signal loading immediately — prevents race condition where
+      // auth.session is set but isLoading is still false from previous state
+      setData((prev) => ({ ...prev, isLoading: true, error: null }));
+
       // Fetch from backend
       if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
         throw new Error("NEXT_PUBLIC_BACKEND_URL is not configured");
@@ -358,34 +362,32 @@ export function useSubscriptionApi(): SubscriptionApiData {
 export function useSubscriptionSync() {
   const { refetch } = useSubscriptionApi();
 
+  // Keep ref always up-to-date so the listener can call the latest refetch
+  // without needing to re-register itself every time refetch changes
+  const refetchRef = useRef<() => Promise<void>>(refetch);
+  useEffect(() => {
+    refetchRef.current = refetch;
+  });
+
+  // Register listener ONCE — never re-registers even if refetch changes
   useEffect(() => {
     const handleSubscriptionChange = () => {
       console.log("[SubscriptionSync] Subscription changed event detected");
-
-      // Clear localStorage cache immediately
       localStorage.removeItem(CACHE_KEY);
       localStorage.removeItem(CACHE_EXPIRY_KEY);
-
-      // Refetch fresh data from API
-      refetch();
-
+      refetchRef.current();
       console.log("[SubscriptionSync] Cache invalidated and refetch triggered");
     };
 
-    // Listen for custom subscription-changed event
-    // Dispatched from payment/success page after Stripe webhook processes
     window.addEventListener("subscription-changed", handleSubscriptionChange);
-
-    console.log("[SubscriptionSync] Event listener registered");
 
     return () => {
       window.removeEventListener(
         "subscription-changed",
         handleSubscriptionChange,
       );
-      console.log("[SubscriptionSync] Event listener removed");
     };
-  }, [refetch]);
+  }, []); // empty deps — registers exactly once on mount
 
   return {
     invalidateCache: refetch,

@@ -433,7 +433,9 @@
         "checkEmailDesc": "(and spam) to confirm your email address before logging in.",
         "goToLogin": "Go to login",
         "close": "Close",
-        "noEmail": "Didn't receive the email? Wait a few minutes or check your spam."
+        "noEmail": "Didn't receive the email? Wait a few minutes or check your spam.",
+        "resendButton": "Resend Email Confirmation",
+        "resendSuccess": "Email resent! Check your mailbox."
       },
       "timeout": {
         "title": "Slow connection detected",
@@ -444,7 +446,36 @@
       "emailNotConfirmed": "Please confirm your email address. We sent you a confirmation email when you signed up. Check your inbox (and spam folder).",
       "invalidCredentials": "Invalid email or password",
       "timeout": "The request is taking too long. Check your internet connection and try again.",
-      "signupFailed": "Failed to create account"
+      "signupFailed": "Failed to create account",
+      "resetPasswordFailed": "Could not send reset link",
+      "resendConfirmationFailed": "Not possible to resend the confirmation email"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email address and we'll send you a reset link.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "submitButton": "Send the link",
+      "loading": "Sending in progress...",
+      "successTitle": "Email sent!",
+      "successMessage": "If an account exists with this address, you will receive a reset email in a few minutes. Check your spam.",
+      "backToLogin": "Return to login"
+    },
+    "resetPassword": {
+      "title": "New password",
+      "subtitle": "Choose a secure password for your account.",
+      "passwordLabel": "New password",
+      "passwordPlaceholder": "Minimum 6 characters",
+      "confirmLabel": "Confirm Password",
+      "confirmPlaceholder": "Re-enter new password",
+      "submitButton": "Update password",
+      "loading": "Update...",
+      "successMessage": "Password updated successfully.",
+      "mismatchError": "The passwords are not matching",
+      "tooShortError": "Password must be at least 6 characters",
+      "expiredError": "The reset link has expired. Please try again.",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     }
   },
   "dashboard": {

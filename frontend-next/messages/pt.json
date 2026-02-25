@@ -433,7 +433,9 @@
         "checkEmailDesc": "(e spam) para confirmar seu email antes de fazer login.",
         "goToLogin": "Ir para o login",
         "close": "Fechar",
-        "noEmail": "Não recebeu o email? Aguarde alguns minutos ou verifique o spam."
+        "noEmail": "Não recebeu o email? Aguarde alguns minutos ou verifique o spam.",
+        "resendButton": "Reenviar e-mail de confirmação",
+        "resendSuccess": "E-mail reenviado! Verifique a sua caixa de correio."
       },
       "timeout": {
         "title": "Conexão lenta detectada",
@@ -444,7 +446,36 @@
       "emailNotConfirmed": "Por favor confirme seu endereço de e-mail. Enviamos um e-mail de confirmação quando você se cadastrou. Verifique sua caixa de entrada (e spam).",
       "invalidCredentials": "E-mail ou senha inválidos",
       "timeout": "A solicitação está demorando muito. Verifique sua conexão com a Internet e tente novamente.",
-      "signupFailed": "Falha ao criar a conta"
+      "signupFailed": "Falha ao criar a conta",
+      "resetPasswordFailed": "Não foi possível enviar o link de redefinição",
+      "resendConfirmationFailed": "Não foi possível reenviar o e-mail de confirmação"
+    },
+    "forgotPassword": {
+      "title": "Esqueci-me da palavra-passe",
+      "subtitle": "Introduza o seu endereço de e-mail e enviar-lhe-emos uma ligação de reposição.",
+      "emailLabel": "Endereço de e-mail",
+      "emailPlaceholder": "voce@exemplo.com",
+      "submitButton": "Enviar Hiperligação",
+      "loading": "Envio em curso...",
+      "successTitle": "E-mail enviado",
+      "successMessage": "Se existir uma conta com este endereço, receberá um e-mail de redefinição dentro de alguns minutos. Verifique o seu spam.",
+      "backToLogin": "Voltar ao Início de sessão"
+    },
+    "resetPassword": {
+      "title": "Nova palavra-passe",
+      "subtitle": "Escolha uma palavra-passe segura para a sua conta.",
+      "passwordLabel": "Nova palavra-passe",
+      "passwordPlaceholder": "Mínimo de 6 caracteres",
+      "confirmLabel": "Confirmar a palavra-passe",
+      "confirmPlaceholder": "Reintroduza a sua nova palavra-passe",
+      "submitButton": "Atualizar senha",
+      "loading": "Atualização...",
+      "successMessage": "Palavra-passe atualizada com sucesso!",
+      "mismatchError": "As palavras-passe não coincidem",
+      "tooShortError": "A palavra-passe deve conter pelo menos 8 carateres.",
+      "expiredError": "O link de redefinição expirou. Tente novamente.",
+      "showPassword": "Mostrar senha",
+      "hidePassword": "Ocultar palavra-passe"
     }
   },
   "dashboard": {

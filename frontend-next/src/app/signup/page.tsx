@@ -31,8 +31,14 @@ import { useTranslations } from "next-intl";
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, signInWithGoogle, signUpWithEmail, error, clearError } =
-    useAuth();
+  const {
+    user,
+    signInWithGoogle,
+    signUpWithEmail,
+    resendConfirmationEmail,
+    error,
+    clearError,
+  } = useAuth();
   const t = useTranslations("auth.signup");
 
   // Detect CV analysis redirect
@@ -55,6 +61,22 @@ function SignupForm() {
   const [isTimeout, setIsTimeout] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  const handleResendEmail = async () => {
+    const emailToResend = emailFromUrl || email;
+    if (!emailToResend || resendLoading || resendSuccess) return;
+    try {
+      setResendLoading(true);
+      await resendConfirmationEmail(emailToResend);
+      setResendSuccess(true);
+    } catch {
+      // Error is handled by auth-context and shown via the error state
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   // Close modal and clean URL
   const closeSuccessModal = () => {
@@ -104,7 +126,10 @@ function SignupForm() {
     } catch (err: any) {
       console.error("[SIGNUP] Error:", err);
 
-      if (err.message?.includes("prend trop de temps") || err.message?.includes("timeout")) {
+      if (
+        err.message?.includes("prend trop de temps") ||
+        err.message?.includes("timeout")
+      ) {
         setIsTimeout(true);
       }
     } finally {
@@ -186,10 +211,31 @@ function SignupForm() {
                 </Button>
               </div>
 
-              {/* Help text */}
-              <p className="text-xs text-center text-gray-500 mt-4">
-                {t("success.noEmail")}
-              </p>
+              {/* Resend email */}
+              <div className="mt-4 text-center">
+                {resendSuccess ? (
+                  <p className="text-sm text-green-600 font-medium">
+                    {t("success.resendSuccess")}
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-500 mb-2">
+                      {t("success.noEmail")}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleResendEmail}
+                      disabled={resendLoading}
+                      className="text-sm text-[#00D9FF] hover:text-[#00C4EA] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                    >
+                      {resendLoading && (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      )}
+                      {t("success.resendButton")}
+                    </button>
+                  </>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -286,7 +332,10 @@ function SignupForm() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Alert variant="destructive" className="border-orange-200 bg-orange-50">
+            <Alert
+              variant="destructive"
+              className="border-orange-200 bg-orange-50"
+            >
               <AlertCircle className="h-4 w-4 text-orange-600" />
               <AlertDescription className="text-orange-800">
                 <strong>{t("timeout.title")}</strong>
@@ -425,7 +474,9 @@ function SignupForm() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                aria-label={
+                  showPassword ? t("hidePassword") : t("showPassword")
+                }
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -459,7 +510,9 @@ function SignupForm() {
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                aria-label={showConfirmPassword ? t("hidePassword") : t("showPassword")}
+                aria-label={
+                  showConfirmPassword ? t("hidePassword") : t("showPassword")
+                }
               >
                 {showConfirmPassword ? (
                   <EyeOff className="w-5 h-5" />
