@@ -804,7 +804,12 @@
     "radiusKm": "{radius} km",
     "searchesRemaining": "{count} recherche(s) restante(s) aujourd'hui",
     "searchButton": "Rechercher",
-    "advancedFilters": "Filtres avancés"
+    "advancedFilters": "Filtres avancés",
+    "typeYourCountry": "Tapez votre pays",
+    "typeYourCity": "Tapez votre ville",
+    "noCountryFound": "Aucun pays trouvé",
+    "noCityFound": "Aucune ville trouvée",
+    "selectCountryFirst": "Sélectionnez d'abord un pays"
   },
   "advancedFilters": {
     "title": "Filtres avancés",

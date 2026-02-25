@@ -804,7 +804,12 @@
     "radiusKm": "Radius (Km)",
     "searchesRemaining": "{count} search(s) left today",
     "searchButton": "News Search",
-    "advancedFilters": "Advanced filters"
+    "advancedFilters": "Advanced filters",
+    "typeYourCountry": "Your country",
+    "typeYourCity": "Type your city.",
+    "noCountryFound": "No country found",
+    "noCityFound": "No cities found.",
+    "selectCountryFirst": "Select a country first"
   },
   "advancedFilters": {
     "title": "Advanced filters",
