@@ -446,7 +446,9 @@
       "emailNotConfirmed": "Please confirm your email address. We sent you a confirmation email when you signed up. Check your inbox (and spam folder).",
       "invalidCredentials": "Invalid email or password",
       "timeout": "The request is taking too long. Check your internet connection and try again.",
-      "signupFailed": "Failed to create account"
+      "signupFailed": "Failed to create account",
+      "resetPasswordFailed": "Could not send reset link",
+      "resendConfirmationFailed": "Not possible to resend the confirmation email"
     },
     "forgotPassword": {
       "title": "Forgot Password",
