@@ -197,13 +197,28 @@ async def adapt_cv_from_file(
     
     # Read file
     content = await file.read()
-    
-    # Extract text using CV Analyzer agent
-    cv_analyzer = get_cv_agent()
 
+    # Extract text — PDF via Modal (if configured) to avoid Railway OOM from docling
     try:
         if filename.endswith(".pdf"):
-            cv_text = await cv_analyzer.extract_text_from_pdf(content)
+            from src.services.modal_pdf_extractor import (
+                extract_text_via_modal,
+                is_modal_pdf_enabled,
+            )
+
+            if is_modal_pdf_enabled():
+                try:
+                    cv_text = await extract_text_via_modal(content)
+                    logger.info("[cv_adapter] PDF text extracted via Modal")
+                except Exception as modal_exc:
+                    logger.warning(
+                        f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"
+                    )
+                    cv_analyzer = get_cv_agent()
+                    cv_text = await cv_analyzer.extract_text_from_pdf(content)
+            else:
+                cv_analyzer = get_cv_agent()
+                cv_text = await cv_analyzer.extract_text_from_pdf(content)
         else:
             from docx import Document
             doc = Document(io.BytesIO(content))
