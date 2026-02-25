@@ -41,6 +41,8 @@ interface AuthContextType {
     fullName: string,
   ) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPasswordForEmail: (email: string) => Promise<void>;
+  resendConfirmationEmail: (email: string) => Promise<void>;
   error: string | null;
   clearError: () => void;
 }
@@ -316,14 +318,16 @@ export function AuthProvider({
         });
       }
 
-      // Show success message
       setError(null);
-
-      // Reset loading AVANT la redirection
       setLoading(false);
 
-      // Redirect to signup success (will show modal)
-      router.push("/signup?success=true&email=" + encodeURIComponent(email));
+      // If session exists, email confirmation is disabled → user is already logged in
+      // If session is null, email confirmation is required → show success modal
+      if (data?.session) {
+        router.push("/jobs");
+      } else {
+        router.push("/signup?success=true&email=" + encodeURIComponent(email));
+      }
     } catch (err: any) {
       devError("Sign up error:", err);
 
@@ -332,6 +336,38 @@ export function AuthProvider({
 
       setError(errorMessage);
       setLoading(false);
+      throw err;
+    }
+  };
+
+  const resetPasswordForEmail = async (email: string) => {
+    try {
+      setError(null);
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      devError("Reset password error:", err);
+      setError(err.message || "Failed to send reset email");
+      throw err;
+    }
+  };
+
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      setError(null);
+      const { error } = await supabaseClient.auth.resend({
+        type: "signup",
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      devError("Resend confirmation error:", err);
+      setError(err.message || "Failed to resend confirmation email");
       throw err;
     }
   };
@@ -387,6 +423,8 @@ export function AuthProvider({
         signInWithEmail,
         signUpWithEmail,
         signOut,
+        resetPasswordForEmail,
+        resendConfirmationEmail,
         error,
         clearError,
       }}
