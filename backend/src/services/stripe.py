@@ -468,6 +468,36 @@ async def handle_checkout_completed(session: Dict[str, Any]):
                 .execute()
             logger.info(f"Subscription created for user {user_id}: {plan_name}")
 
+
+        # Trigger referral conversion reward (fire-and-forget)
+        try:
+            from src.services.referrals import apply_referral_reward
+            signup_res = supabase_client.table("referral_signups") \
+                .select("id, referral_id, referrals(referrer_id)") \
+                .eq("referred_user_id", user_id) \
+                .is_("converted_to_paid_at", "null") \
+                .maybe_single() \
+                .execute()
+            if signup_res.data:
+                signup = signup_res.data
+                referrer_id = signup["referrals"]["referrer_id"]
+                supabase_client.table("referral_signups").update({
+                    "converted_to_paid_at": datetime.now(timezone.utc).isoformat(),
+                    "converted_plan": plan_name,
+                }).eq("id", signup["id"]).execute()
+                conv_count = supabase_client.table("referrals").select("total_conversions") \
+                    .eq("id", signup["referral_id"]).single().execute().data["total_conversions"]
+                supabase_client.table("referrals").update({"total_conversions": conv_count + 1}) \
+                    .eq("id", signup["referral_id"]).execute()
+                await apply_referral_reward(
+                    supabase_client,
+                    referral_signup_id=signup["id"],
+                    referrer_id=referrer_id,
+                    plan_name=plan_name,
+                )
+        except Exception as ref_err:
+            logger.error(f"[REFERRAL] Conversion reward failed (non-fatal): {ref_err}")
+
         # Invalidate quota cache
         await invalidate_user_quota_cache(user_id)
 

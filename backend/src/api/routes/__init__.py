@@ -26,6 +26,7 @@ from src.api.routes.admin import router as admin_router
 from src.api.routes.branding import router as branding_router
 from src.api.routes.recruiter_finder import router as recruiter_finder_router
 from src.api.routes.documents import router as documents_router
+from src.api.routes.referrals import router as referrals_router
 
 router = APIRouter()
 
@@ -50,3 +51,4 @@ router.include_router(branding_router, prefix="/api/branding", tags=["Personal B
 router.include_router(health_router, prefix="/api/health", tags=["Health & Monitoring"])
 router.include_router(recruiter_finder_router, prefix="/api/recruiter-finder", tags=["Recruiter Finder"])
 router.include_router(documents_router, prefix="/api/documents", tags=["Documents"])
+router.include_router(referrals_router, prefix="/api/referrals", tags=["Referrals"])

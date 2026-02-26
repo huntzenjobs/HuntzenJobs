@@ -1,13 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { User, CreditCard, Settings, UserCircle } from 'lucide-react'
+import { User, CreditCard, Settings, UserCircle, Gift, Copy, Check, MousePointerClick, TrendingUp } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AvatarUpload } from '@/components/profile/avatar-upload'
 import { ProfileForm } from '@/components/profile/profile-form'
 import { SubscriptionCard } from '@/components/profile/subscription-card'
 import { SettingsSection } from '@/components/profile/settings-section'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 interface ProfilePageClientProps {
   user: {
@@ -24,6 +28,86 @@ interface ProfilePageClientProps {
     email_notifications?: boolean
     newsletter_subscribed?: boolean
   }
+}
+
+
+function ReferralWidget({ userId }: { userId: string }) {
+  const [code, setCode] = useState<string | null>(null)
+  const [stats, setStats] = useState({ total_clicks: 0, total_signups: 0, total_conversions: 0 })
+  const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+
+  const fetchCode = useCallback(async () => {
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const res = await fetch(`${backendUrl}/api/referrals/my-code`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setCode(data.code)
+      setStats({ total_clicks: data.total_clicks, total_signups: data.total_signups, total_conversions: data.total_conversions })
+    } catch {}
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { fetchCode() }, [fetchCode])
+
+  const referralLink = code
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/signup?ref=${code}`
+    : ''
+
+  const copyLink = () => {
+    if (!referralLink) return
+    navigator.clipboard.writeText(referralLink)
+    setCopied(true)
+    toast.success('Lien copié !')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (loading) return <div className="h-32 animate-pulse bg-gray-100 rounded-xl" />
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-black mb-2">Parrainez vos proches</h2>
+        <p className="text-gray-600">Partagez votre lien. Quand un ami souscrit, vous gagnez des jours offerts.</p>
+      </div>
+      <Card className="border-2 border-[#00D9FF]/30 bg-[#00D9FF]/5">
+        <CardContent className="pt-6 space-y-3">
+          <p className="text-xs text-gray-500 font-medium">Votre lien de parrainage</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-white border rounded-lg px-3 py-2 text-sm font-mono text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap">{referralLink}</div>
+            <Button size="sm" onClick={copyLink} className="shrink-0 bg-[#00D9FF] hover:bg-[#00C4EA] text-white">
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          <p className="text-xs text-gray-400">Code : <span className="font-mono font-semibold">{code}</span></p>
+        </CardContent>
+      </Card>
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Clics', value: stats.total_clicks, icon: MousePointerClick },
+          { label: 'Inscriptions', value: stats.total_signups, icon: Gift },
+          { label: 'Conversions', value: stats.total_conversions, icon: TrendingUp },
+        ].map(({ label, value, icon: Icon }) => (
+          <Card key={label}>
+            <CardContent className="pt-4 pb-4 text-center">
+              <Icon className="h-5 w-5 mx-auto mb-1 text-[#00D9FF]" />
+              <p className="text-2xl font-bold">{value}</p>
+              <p className="text-xs text-gray-500">{label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+        <strong>Comment ça marche ?</strong> Quand un ami souscrit via votre lien, vous recevez automatiquement des jours offerts.
+      </div>
+    </div>
+  )
 }
 
 export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
@@ -94,6 +178,13 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             >
               <Settings className="w-4 h-4 mr-2" />
               Paramètres
+            </TabsTrigger>
+            <TabsTrigger
+              value="referral"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
+            >
+              <Gift className="w-4 h-4 mr-2" />
+              Parrainage
             </TabsTrigger>
           </TabsList>
 
@@ -176,6 +267,11 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
                   newsletter_subscribed: profile.newsletter_subscribed,
                 }}
               />
+            </motion.div>
+          </TabsContent>
+          <TabsContent value="referral" className="p-8">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="max-w-2xl">
+              <ReferralWidget userId={user.id} />
             </motion.div>
           </TabsContent>
         </Tabs>

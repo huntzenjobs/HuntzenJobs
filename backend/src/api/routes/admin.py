@@ -634,6 +634,69 @@ async def update_stripe_price(
 # ANALYTICS
 # ============================================================
 
+
+
+@router.get("/stats")
+async def get_admin_stats(admin: AdminUserDep) -> Dict[str, Any]:
+    """Lightweight dashboard counters for nav badges."""
+    supabase = get_supabase_client()
+    users_res = supabase.table("profiles").select("id", count="exact").execute()
+    webhooks_res = supabase.table("webhook_failures").select("id", count="exact").eq("resolved", False).execute()
+    return {
+        "total_users": users_res.count or 0,
+        "webhook_failures_pending": webhooks_res.count or 0,
+    }
+
+
+@router.get("/analytics/churn")
+async def get_churn_analytics(
+    admin: AdminUserDep,
+    days: int = Query(default=30, ge=1, le=365),
+) -> Dict[str, Any]:
+    """Users who cancelled in the last N days."""
+    supabase = get_supabase_client()
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    result = supabase.table("subscription_history").select(
+        "id, user_id, created_at, old_values, notes, "
+        "profiles!left(email, full_name), "
+        "subscription_plans!left(name, display_name)"
+    ).eq("action_type", "cancelled").gte("created_at", since).order("created_at", desc=True).limit(100).execute()
+    return {"churned": result.data or [], "total": len(result.data or []), "period_days": days}
+
+
+@router.get("/analytics/usage")
+async def get_usage_analytics(
+    admin: AdminUserDep,
+    days: int = Query(default=30, ge=1, le=90),
+) -> Dict[str, Any]:
+    """Aggregate feature usage over the last N days."""
+    from collections import defaultdict
+    supabase = get_supabase_client()
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    result = supabase.table("usage_quotas").select(
+        "cv_analyses_used, coach_seconds_used, job_searches_used, user_id"
+    ).gte("date", since).execute()
+    rows = result.data or []
+    totals = {
+        "cv_analyses": sum(r.get("cv_analyses_used") or 0 for r in rows),
+        "coach_seconds": sum(r.get("coach_seconds_used") or 0 for r in rows),
+        "job_searches": sum(r.get("job_searches_used") or 0 for r in rows),
+    }
+    per_user: Dict[str, Dict[str, int]] = defaultdict(lambda: {"cv_analyses": 0, "coach_seconds": 0, "job_searches": 0})
+    for r in rows:
+        uid = r["user_id"]
+        per_user[uid]["cv_analyses"] += r.get("cv_analyses_used") or 0
+        per_user[uid]["coach_seconds"] += r.get("coach_seconds_used") or 0
+        per_user[uid]["job_searches"] += r.get("job_searches_used") or 0
+    top = sorted(per_user.items(), key=lambda x: x[1]["cv_analyses"], reverse=True)[:10]
+    return {
+        "totals": totals,
+        "top_users": [{"user_id": uid, **s} for uid, s in top],
+        "period_days": days,
+        "active_users": len(per_user),
+    }
+
+
 @router.get("/analytics/revenue")
 async def get_revenue_analytics(
     admin: AdminUserDep,
@@ -807,3 +870,78 @@ async def get_webhook_logs(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch webhook logs")
+
+
+# ============================================================
+# REFERRALS ADMIN
+# ============================================================
+
+@router.get("/referrals/leaderboard")
+async def get_referral_leaderboard(
+    admin: AdminUserDep,
+    limit: int = Query(default=20, ge=1, le=100),
+) -> Dict[str, Any]:
+    """Top referrers sorted by total_conversions."""
+    supabase = get_supabase_client()
+    result = supabase.table("referrals")         .select("id, referral_code, total_clicks, total_signups, total_conversions, referrer_id, profiles(email, full_name)")         .eq("is_active", True).order("total_conversions", desc=True).limit(limit).execute()
+    return {"leaderboard": result.data or []}
+
+
+@router.get("/referrals/stats")
+async def get_referral_stats(admin: AdminUserDep) -> Dict[str, Any]:
+    """Global referral program statistics."""
+    supabase = get_supabase_client()
+    return {
+        "total_referrers": supabase.table("referrals").select("id", count="exact").execute().count or 0,
+        "total_signups": supabase.table("referral_signups").select("id", count="exact").execute().count or 0,
+        "total_conversions": supabase.table("referral_signups").select("id", count="exact").not_.is_("converted_to_paid_at", "null").execute().count or 0,
+        "total_rewards_applied": supabase.table("referral_rewards").select("id", count="exact").eq("applied", True).execute().count or 0,
+    }
+
+
+@router.get("/referrals/config")
+async def get_referral_config(admin: AdminUserDep) -> Dict[str, Any]:
+    supabase = get_supabase_client()
+    result = supabase.table("referral_config").select("*").eq("id", 1).single().execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Referral config not found")
+    return result.data
+
+
+class ReferralConfigUpdate(BaseModel):
+    signup_reward_type: Optional[str] = None
+    signup_reward_value: Optional[Dict[str, Any]] = None
+    conversion_reward_type: Optional[str] = None
+    conversion_reward_value: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+
+@router.patch("/referrals/config")
+async def update_referral_config(body: ReferralConfigUpdate, admin: AdminUserDep) -> Dict[str, Any]:
+    supabase = get_supabase_client()
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    result = supabase.table("referral_config").update(updates).eq("id", 1).execute()
+    _log_admin_action(supabase, admin["id"], "admin.referral_config_updated", {"changes": list(updates.keys())})
+    return result.data[0] if result.data else {}
+
+
+@router.post("/referrals/grant-reward/{signup_id}")
+async def grant_manual_reward(signup_id: str, admin: AdminUserDep) -> Dict[str, Any]:
+    """Manually apply a referral reward."""
+    supabase = get_supabase_client()
+    from src.services.referrals import apply_referral_reward
+    signup_res = supabase.table("referral_signups")         .select("id, referral_id, referred_user_id, converted_plan, referrals(referrer_id)")         .eq("id", signup_id).single().execute()
+    if not signup_res.data:
+        raise HTTPException(status_code=404, detail="Referral signup not found")
+    signup = signup_res.data
+    referrer_id = signup["referrals"]["referrer_id"]
+    success = await apply_referral_reward(
+        supabase, referral_signup_id=signup_id, referrer_id=referrer_id,
+        plan_name=signup.get("converted_plan") or "manual",
+    )
+    _log_admin_action(supabase, admin["id"], "admin.referral_reward_granted", {"signup_id": signup_id})
+    return {"ok": success}
+
