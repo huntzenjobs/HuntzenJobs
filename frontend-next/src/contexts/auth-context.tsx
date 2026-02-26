@@ -133,6 +133,29 @@ export function AuthProvider({
             }
           }
 
+
+          // Register referral if a code cookie is present (fire-and-forget)
+          if (session?.user) {
+            const refCookie = document.cookie
+              .split("; ")
+              .find((r) => r.startsWith("huntzen_referral_code="));
+            if (refCookie) {
+              const refCode = refCookie.split("=")[1];
+              const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
+              fetch(`${backendUrl}/api/referrals/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: refCode, new_user_id: session.user.id }),
+              })
+                .then((res) => {
+                  if (res.ok) {
+                    document.cookie = "huntzen_referral_code=; path=/; max-age=0";
+                  }
+                })
+                .catch(() => {});
+            }
+          }
+
           // Clear old subscription cache and trigger refresh
           localStorage.removeItem("huntzen_subscription_cache");
           localStorage.removeItem("huntzen_subscription_cache_expiry");
