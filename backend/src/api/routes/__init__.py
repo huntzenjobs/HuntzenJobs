@@ -23,6 +23,7 @@ from src.api.routes.subscription import router as subscription_router
 from src.api.routes.health import router as health_router
 from src.api.routes.admin_cleanup import router as admin_cleanup_router
 from src.api.routes.branding import router as branding_router
+from src.api.routes.insider_finder import router as insider_finder_router
 
 router = APIRouter()
 
@@ -38,6 +39,7 @@ router.include_router(cv_router, prefix="/api/cv", tags=["CV Analysis"])
 router.include_router(cv_analysis_router, prefix="/api/cv-analysis", tags=["CV Analysis Async"])
 router.include_router(cv_adapter_router, prefix="/api/cv-adapter", tags=["CV Adapter"])
 router.include_router(recruiter_router, prefix="/api/recruiter", tags=["Recruiter Contact"])
+router.include_router(insider_finder_router, prefix="/api/insider-finder", tags=["Insider Finder"])
 router.include_router(events_router, prefix="/api/job-fairs", tags=["Job Fairs"])
 router.include_router(stripe_router, prefix="/api/stripe", tags=["Stripe Payments"])
 router.include_router(subscription_router, prefix="/api/subscription", tags=["Subscription Management"])
