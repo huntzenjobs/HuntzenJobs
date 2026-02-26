@@ -389,7 +389,7 @@ export default function JobsPage() {
       jobSearchParams?.query,
       jobSearchParams?.country,
       jobSearchParams?.location,
-      jobSearchParams?.radiusKm,
+      // jobSearchParams?.radiusKm, // Désactivé
       jobSearchParams?.includeRemote,
       contractType,
       advancedFilters,
@@ -404,7 +404,7 @@ export default function JobsPage() {
         query: jobSearchParams.query,
         location: jobSearchParams.location,
         country: jobSearchParams.country,
-        radiusKm: jobSearchParams.radiusKm,
+        // radiusKm: jobSearchParams.radiusKm, // Désactivé
         includeRemote: jobSearchParams.includeRemote,
         contractType,
       });
@@ -414,7 +414,7 @@ export default function JobsPage() {
         country_code: jobSearchParams.country,
         city: jobSearchParams.location,
         contract_type: contractType,
-        radiusKm: jobSearchParams.radiusKm,
+        // radiusKm: jobSearchParams.radiusKm, // Désactivé
         includeRemote: jobSearchParams.includeRemote,
         // Advanced filters (Premium feature)
         industries: advancedFilters.industries?.join(","),
