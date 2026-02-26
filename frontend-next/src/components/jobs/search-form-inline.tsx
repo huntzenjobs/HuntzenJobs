@@ -37,7 +37,7 @@ export interface SearchParams {
   query: string;
   location: string;
   country: string;
-  radiusKm?: number;
+  // radiusKm?: number; // Désactivé — fonctionnalité non exposée pour l'instant
   includeRemote?: boolean;
 }
 
@@ -52,7 +52,7 @@ export function SearchFormInline({
   const [country, setCountry] = useState("");
   const [selectedCountryName, setSelectedCountryName] = useState("");
   const [isCountryValid, setIsCountryValid] = useState(false); // Track if valid country selected
-  const [radiusKm, setRadiusKm] = useState(50); // Default 50km radius
+  // const [radiusKm, setRadiusKm] = useState(50); // Désactivé — rayon km non exposé pour l'instant
   const [includeRemote, setIncludeRemote] = useState(true); // Include remote jobs by default
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -172,7 +172,7 @@ export function SearchFormInline({
       query: query.trim(),
       location: location.trim(),
       country: country.trim(),
-      radiusKm: location.trim() ? radiusKm : undefined, // Only send radius if city is specified
+      // radiusKm: location.trim() ? radiusKm : undefined, // Désactivé
       includeRemote, // Include remote jobs setting
     });
 
@@ -320,34 +320,26 @@ export function SearchFormInline({
             </label>
           </div>
 
-          {/* Radius Slider - hidden visually, logic preserved */}
+          {/* Radius Slider — désactivé pour l'instant
           {location && (
-            <div className="hidden">
+            <div className="flex items-center gap-3 flex-1">
               <div className="w-px h-6 bg-gray-200" />
-              <div className="flex items-center gap-3 flex-1">
-                <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                <div className="flex-1 min-w-0 max-w-md">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-gray-700">
-                      {t("searchRadius")}
-                    </span>
-                    <span className="text-xs font-bold text-huntzen-blue">
-                      {t("radiusKm", { radius: radiusKm })}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="100"
-                    value={radiusKm}
-                    onChange={(e) => setRadiusKm(Number(e.target.value))}
-                    disabled={disabled || isLoading}
-                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-huntzen-blue disabled:opacity-50"
-                  />
+              <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0 max-w-md">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-gray-700">{t("searchRadius")}</span>
+                  <span className="text-xs font-bold text-huntzen-blue">{t("radiusKm", { radius: radiusKm })}</span>
                 </div>
+                <input
+                  type="range" min="1" max="100" value={radiusKm}
+                  onChange={(e) => setRadiusKm(Number(e.target.value))}
+                  disabled={disabled || isLoading}
+                  className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-huntzen-blue disabled:opacity-50"
+                />
               </div>
             </div>
           )}
+          */}
         </div>
       </div>
 
@@ -428,24 +420,17 @@ export function SearchFormInline({
           }
         />
 
-        {/* Radius Slider - hidden visually, logic preserved */}
+        {/* Radius Slider — désactivé pour l'instant
         {location && (
-          <div className="hidden flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
             <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Rayon de recherche
-                </span>
-                <span className="text-sm font-bold text-huntzen-blue">
-                  {t("radiusKm", { radius: radiusKm })}
-                </span>
+                <span className="text-sm font-medium text-gray-700">Rayon de recherche</span>
+                <span className="text-sm font-bold text-huntzen-blue">{t("radiusKm", { radius: radiusKm })}</span>
               </div>
               <input
-                type="range"
-                min="1"
-                max="100"
-                value={radiusKm}
+                type="range" min="1" max="100" value={radiusKm}
                 onChange={(e) => setRadiusKm(Number(e.target.value))}
                 disabled={disabled || isLoading}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-huntzen-blue disabled:opacity-50"
@@ -453,6 +438,7 @@ export function SearchFormInline({
             </div>
           </div>
         )}
+        */}
 
         {/* Include Remote Jobs Checkbox */}
         <div className="flex items-center gap-3 px-4 py-3">
