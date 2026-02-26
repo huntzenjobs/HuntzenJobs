@@ -179,8 +179,8 @@ async def adapt_cv_from_file(
     
     Supports PDF and DOCX formats.
     """
-    from src.api.deps import get_cv_agent
-    
+    from src.api.deps import get_cv_analyzer_main
+
     # Validate file
     if not file.filename:
         raise HTTPException(
@@ -214,10 +214,10 @@ async def adapt_cv_from_file(
                     logger.warning(
                         f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"
                     )
-                    cv_analyzer = get_cv_agent()
+                    cv_analyzer = get_cv_analyzer_main()
                     cv_text = await cv_analyzer.extract_text_from_pdf(content)
             else:
-                cv_analyzer = get_cv_agent()
+                cv_analyzer = get_cv_analyzer_main()
                 cv_text = await cv_analyzer.extract_text_from_pdf(content)
         else:
             from docx import Document
