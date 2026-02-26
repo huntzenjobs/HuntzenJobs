@@ -51,6 +51,8 @@ async def extract_pdf_text(body: dict) -> dict:
     import os
     import tempfile
     from docling.document_converter import DocumentConverter
+    from docling.datamodel.pipeline_options import PdfPipelineOptions
+    from docling.datamodel.base_models import InputFormat
 
     pdf_bytes_b64 = body.get("pdf_bytes")
     if not pdf_bytes_b64:
@@ -68,7 +70,8 @@ async def extract_pdf_text(body: dict) -> dict:
             tmp.write(pdf_bytes)
             tmp_path = tmp.name
 
-        converter = DocumentConverter()
+        pdf_options = PdfPipelineOptions(do_ocr=False)
+        converter = DocumentConverter(format_options={InputFormat.PDF: pdf_options})
         result = converter.convert(tmp_path)
         text = result.document.export_to_markdown()
 
