@@ -320,9 +320,9 @@ export function SearchFormInline({
             </label>
           </div>
 
-          {/* Radius Slider - Only show if city is specified */}
+          {/* Radius Slider - hidden visually, logic preserved */}
           {location && (
-            <>
+            <div className="hidden">
               <div className="w-px h-6 bg-gray-200" />
               <div className="flex items-center gap-3 flex-1">
                 <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -346,7 +346,7 @@ export function SearchFormInline({
                   />
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -428,9 +428,9 @@ export function SearchFormInline({
           }
         />
 
-        {/* Radius Slider - Only show if city is specified */}
+        {/* Radius Slider - hidden visually, logic preserved */}
         {location && (
-          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="hidden flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
             <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-2">
