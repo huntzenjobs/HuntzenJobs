@@ -20,7 +20,7 @@ app = modal.App("huntzen-pdf-extractor")
 # Image with docling installed (loads heavy ML models once per container)
 docling_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .apt_install(["libgomp1"])  # Required by some docling dependencies
+    .apt_install(["libgomp1", "libgl1-mesa-glx", "libglib2.0-0"])  # OpenGL + OpenMP required by docling/torchvision
     .pip_install([
         "docling>=2.0.0",
         "docling-core>=2.0.0",
