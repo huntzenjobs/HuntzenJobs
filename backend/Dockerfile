@@ -57,6 +57,10 @@ RUN pip install --no-cache-dir -e .
 RUN mkdir -p /usr/local/lib/python3.11/site-packages/static && \
     chmod -R 777 /usr/local/lib/python3.11/site-packages/static
 
+# Make all installed package files readable by non-root user (huntzen)
+# Docling uses rapidocr whose .pth model files default to root-only permissions
+RUN chmod -R a+rX /usr/local/lib/python3.11/site-packages/
+
 # Copy NEW application structure
 COPY --chown=huntzen:huntzen src/ ./src/
 COPY --chown=huntzen:huntzen app/ ./app/
