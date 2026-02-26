@@ -807,7 +807,15 @@
     "multilingualComingSoon": "El soporte multilingüe estará disponible próximamente",
     "thankSubscription": "🎉 ¡Gracias por su suscripción!",
     "deleteAccountComingSoon": "La eliminación de la cuenta estará disponible en breve (RGPD compliance)",
-    "cancelSubscriptionComingSoon": "La cancelación de la suscripción estará disponible próximamente"
+    "cancelSubscriptionComingSoon": "La cancelación de la suscripción estará disponible próximamente",
+    "cancelSubscription": "Cancelar suscripción",
+    "cancelling": "Cancelando...",
+    "cancelDialog": {
+      "title": "¿Cancelar tu suscripción?",
+      "description": "Conservarás acceso a todas las funcionalidades hasta el final del período de facturación actual. No se realizará ningún reembolso.",
+      "keep": "Mantener mi suscripción",
+      "confirm": "Confirmar cancelación"
+    }
   },
   "cv": {
     "inProgress": "En curso...",

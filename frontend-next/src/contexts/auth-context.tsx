@@ -343,7 +343,7 @@ export function AuthProvider({
   const resetPasswordForEmail = async (email: string) => {
     setError(null);
     const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      redirectTo: `${window.location.origin}/auth/recovery`,
     });
     // Log in dev only — never expose to user to prevent email enumeration
     if (error) {

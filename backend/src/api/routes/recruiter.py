@@ -17,6 +17,7 @@ import stripe
 from supabase import create_client, Client
 
 from src.config.settings import get_settings
+from src.api.deps import get_user_id_from_token
 from src.services.email import (
     send_recruiter_request_confirmation,
     send_recruiter_request_notification,
@@ -85,14 +86,10 @@ class RecruiterRequestStatus(BaseModel):
 
 def get_user_id_from_header(authorization: Optional[str] = Header(None)) -> Optional[str]:
     """
-    Extract user ID from Authorization header.
-
-    For now, returns None as we need to implement proper auth.
-    TODO: Implement proper JWT token validation with Supabase auth.
+    Extract user ID from Authorization Bearer token via Supabase JWT validation.
+    Returns None for anonymous/unauthenticated requests (allowed for recruiter contact).
     """
-    # Placeholder - In production, decode JWT and extract user_id
-    # For testing, we can accept requests without auth
-    return None
+    return get_user_id_from_token(authorization)
 
 
 # ============================================================================
