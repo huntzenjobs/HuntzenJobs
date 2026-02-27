@@ -218,32 +218,17 @@ export function JobDetailsModal({
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                 {/* Left Column - Main Info (2/3 width) */}
                 <div className="lg:col-span-2 space-y-6">
-                  {/* Truncated description warning banner */}
+                  {/* Truncated description notice */}
                   {job.description_truncated &&
                     !fullDescription &&
-                    !loadingDescription && (
-                      <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm">
-                        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-amber-800 mb-1">
-                            Description probablement incomplète
-                          </p>
-                          <p className="text-amber-700">
-                            Cette source limite la longueur des descriptions
-                            dans son API.
-                          </p>
-                          {job.url && (
-                            <a
-                              href={job.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 mt-2 text-amber-800 font-semibold hover:underline"
-                            >
-                              Voir la description complète
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          )}
-                        </div>
+                    !loadingDescription &&
+                    job.url && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-600">
+                        <AlertTriangle className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span>
+                          Cliquez sur &quot;Voir l&apos;offre&quot; pour accéder
+                          à la description complète.
+                        </span>
                       </div>
                     )}
 
