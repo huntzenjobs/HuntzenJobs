@@ -362,7 +362,7 @@ export function JobDetailsModal({
                   onClick={() => setInsiderDrawerOpen(true)}
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Trouver un contact interne
+                  {t("findInternalContact")}
                 </Button>
                 <Button
                   variant="outline"

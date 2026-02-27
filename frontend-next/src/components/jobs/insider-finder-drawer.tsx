@@ -9,6 +9,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Sheet,
   SheetContent,
@@ -148,6 +149,7 @@ export function InsiderFinderDrawer({
   onOpenChange,
   job,
 }: InsiderFinderDrawerProps) {
+  const t = useTranslations("jobDetails");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<InsiderResult | null>(null);
   const [searched, setSearched] = useState(false);
@@ -214,11 +216,10 @@ export function InsiderFinderDrawer({
         <SheetHeader className="pb-4 border-b border-gray-100">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-violet-600" />
-            Contacts internes chez {job.company || "cette entreprise"}
+            {t("insiderTitle", { company: job.company || "cette entreprise" })}
           </SheetTitle>
           <SheetDescription className="text-sm text-gray-500">
-            Trouvez de vraies personnes à contacter sur LinkedIn pour maximiser
-            vos chances
+            {t("insiderSubtitle")}
           </SheetDescription>
         </SheetHeader>
 
@@ -228,29 +229,20 @@ export function InsiderFinderDrawer({
             <div className="space-y-4">
               <div className="bg-violet-50 border border-violet-100 rounded-lg p-4 space-y-3">
                 <p className="text-sm font-semibold text-violet-900">
-                  Pourquoi contacter un insider ?
+                  {t("insiderWhyTitle")}
                 </p>
                 <ul className="text-sm text-violet-800 space-y-1.5">
                   <li className="flex items-start gap-2">
                     <span className="mt-0.5 shrink-0">👥</span>
-                    <span>
-                      <strong>Futur collègue</strong> — renseignez-vous sur
-                      l'ambiance et le poste réel
-                    </span>
+                    <span>{t("insiderWhyColleague")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="mt-0.5 shrink-0">🎯</span>
-                    <span>
-                      <strong>Recruteur interne</strong> — envoyez votre CV
-                      directement, sans passer par le formulaire
-                    </span>
+                    <span>{t("insiderWhyRecruiter")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="mt-0.5 shrink-0">📈</span>
-                    <span>
-                      Une recommandation interne multiplie par{" "}
-                      <strong>5 vos chances</strong> d'être convoqué
-                    </span>
+                    <span>{t("insiderWhyStats")}</span>
                   </li>
                 </ul>
               </div>
@@ -260,7 +252,7 @@ export function InsiderFinderDrawer({
                 disabled={loading}
               >
                 <Sparkles className="mr-2 h-4 w-4" />
-                Trouver des contacts LinkedIn (5–8s)
+                {t("insiderSearchButton")}
               </Button>
             </div>
           )}

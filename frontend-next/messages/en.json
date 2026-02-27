@@ -834,7 +834,21 @@
     "generateDocuments": "Generate adapted CVs + letters",
     "notAvailable": "Non spécifié",
     "viewOffer": "View Offering",
-    "truncatedDescription": "Click \"View offer\" to access the full job description."
+    "truncatedDescription": "Click \"View offer\" to access the full job description.",
+    "findInternalContact": "Find an internal contact",
+    "insiderTitle": "Internal contacts at {company}",
+    "insiderSubtitle": "Find real people to contact on LinkedIn to maximize your chances",
+    "insiderWhyTitle": "Why contact an insider?",
+    "insiderWhyColleague": "Future colleague — learn about the real work culture and position",
+    "insiderWhyRecruiter": "Internal recruiter — send your CV directly, without going through the form",
+    "insiderWhyStats": "An internal referral multiplies your chances of being interviewed by 5",
+    "insiderSearchButton": "Find LinkedIn contacts (5–8s)",
+    "insiderSearching": "Searching for profiles…",
+    "insiderNoResults": "No profiles found for {company}. Try applying directly on their website.",
+    "insiderRetry": "Try again",
+    "insiderNewSearch": "New search",
+    "insiderProfiles": "{count} profile",
+    "insiderProfilesPlural": "{count} profiles"
   },
   "searchForm": {
     "jobTitleRequired": "Job is required",

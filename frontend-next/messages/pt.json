@@ -834,7 +834,21 @@
     "generateDocuments": "Gerar CVs adaptados + letras",
     "notAvailable": "Não especificado",
     "viewOffer": "Ver a oferta",
-    "truncatedDescription": "Clique em \"Ver a oferta\" para aceder à descrição completa."
+    "truncatedDescription": "Clique em \"Ver a oferta\" para aceder à descrição completa.",
+    "findInternalContact": "Encontrar um contato interno",
+    "insiderTitle": "Contatos internos em {company}",
+    "insiderSubtitle": "Encontre pessoas reais para contatar no LinkedIn e maximizar suas chances",
+    "insiderWhyTitle": "Por que contatar um insider?",
+    "insiderWhyColleague": "Futuro colega — informe-se sobre o ambiente real e a vaga",
+    "insiderWhyRecruiter": "Recrutador interno — envie seu CV diretamente, sem passar pelo formulário",
+    "insiderWhyStats": "Uma indicação interna multiplica por 5 suas chances de ser convocado",
+    "insiderSearchButton": "Encontrar contatos no LinkedIn (5–8s)",
+    "insiderSearching": "Procurando perfis…",
+    "insiderNoResults": "Nenhum perfil encontrado para {company}. Tente se candidatar diretamente no site deles.",
+    "insiderRetry": "Tentar novamente",
+    "insiderNewSearch": "Nova pesquisa",
+    "insiderProfiles": "{count} perfil",
+    "insiderProfilesPlural": "{count} perfis"
   },
   "searchForm": {
     "jobTitleRequired": "O trabalho é obrigatório",
