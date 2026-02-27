@@ -262,7 +262,7 @@ export function InsiderFinderDrawer({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
-                <span>Recherche des profils en cours…</span>
+                <span>{t("insiderSearching")}</span>
               </div>
               <InsiderSkeletons />
             </div>
@@ -284,12 +284,10 @@ export function InsiderFinderDrawer({
                 <div className="flex flex-col items-center justify-center py-10 gap-3 text-gray-400">
                   <SearchX className="h-10 w-10" />
                   <p className="text-sm text-center">
-                    Aucun profil trouvé pour <strong>{job.company}</strong>.
-                    <br />
-                    Essayez de postuler directement sur leur site.
+                    {t("insiderNoResults", { company: job.company || "" })}
                   </p>
                   <Button variant="outline" size="sm" onClick={handleReset}>
-                    Réessayer
+                    {t("insiderRetry")}
                   </Button>
                 </div>
               )}
@@ -347,7 +345,7 @@ export function InsiderFinderDrawer({
                     className="w-full text-gray-400"
                     onClick={handleReset}
                   >
-                    Nouvelle recherche
+                    {t("insiderNewSearch")}
                   </Button>
                 </>
               )}
