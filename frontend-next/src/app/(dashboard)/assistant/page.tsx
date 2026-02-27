@@ -49,7 +49,7 @@ export default function AssistantPage() {
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
 
   // Assistant state
-  const { selectedAssistant } = useAssistant();
+  const { selectedAssistant, setSelectedAssistant } = useAssistant();
   const assistantConfig = getAssistantConfig(selectedAssistant);
 
   // Freemium state
@@ -216,7 +216,7 @@ export default function AssistantPage() {
       openPricingModal("has_interview_sim");
       return;
     }
-    // TODO: Implement interview simulation
+    setSelectedAssistant("interview-sim");
   };
 
   // Load conversation from history
