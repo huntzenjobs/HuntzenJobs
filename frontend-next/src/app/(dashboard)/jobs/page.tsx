@@ -54,6 +54,8 @@ import {
 } from "@/components/jobs/gradient-job-card";
 import { JobDetailsModal } from "@/components/jobs/job-details-modal";
 import { formatJobSource } from "@/lib/utils/job-source-formatter";
+import { stripHtmlForPreview } from "@/lib/utils/sanitize";
+import { Switch } from "@/components/ui/switch";
 import {
   SearchFormInline,
   type SearchParams,
@@ -86,6 +88,7 @@ export default function JobsPage() {
   // Advanced filters state
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({});
+  const [onlyDirectLinks, setOnlyDirectLinks] = useState(false);
 
   // Auth & Query Client
   const auth = useOptionalAuth();
@@ -660,7 +663,13 @@ export default function JobsPage() {
   // Progressive reveal: only show jobs up to visibleJobsCount
   // Use translatedJobs for display (auto-translated when locale ≠ fr)
   const progressiveJobs = translatedJobs.slice(0, visibleJobsCount);
-  const visibleJobs = progressiveJobs.slice(0, jobsVisibleLimit);
+  const filteredProgressiveJobs = onlyDirectLinks
+    ? progressiveJobs.filter((j) => j.url_is_direct !== false)
+    : progressiveJobs;
+  const visibleJobs = filteredProgressiveJobs.slice(0, jobsVisibleLimit);
+  const hiddenByFilter = onlyDirectLinks
+    ? progressiveJobs.length - filteredProgressiveJobs.length
+    : 0;
   const blurredJobsCount = Math.max(0, jobs.length - jobsVisibleLimit);
   const showBlurredCards = isFreePlan && blurredJobsCount > 0;
   const isLoadingMore = visibleJobsCount < jobs.length;
@@ -1343,29 +1352,42 @@ export default function JobsPage() {
                   </span>
                 </Button>
               </div>
-              {isFreePlan && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-right"
-                >
-                  <p className="text-sm font-bold text-slate-700">
-                    {t("results.visibleCount", {
-                      visible: Math.min(jobs.length, jobsVisibleLimit),
-                      total: jobs.length,
-                    })}
-                  </p>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => openPricingModal("jobs_visible")}
-                    className="text-xs text-[#00D9FF] hover:text-[#00C4EA] p-0 h-auto font-semibold"
-                  >
-                    {t("results.unlockAll")}
-                  </Button>
-                </motion.div>
-              )}
+              <div className="flex flex-col items-end gap-3">
+                {/* Direct links filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-600">
+                    Liens directs uniquement
+                  </span>
+                  <Switch
+                    checked={onlyDirectLinks}
+                    onCheckedChange={setOnlyDirectLinks}
+                  />
+                  {hiddenByFilter > 0 && (
+                    <span className="text-xs text-amber-600 font-medium">
+                      ({hiddenByFilter} masquées)
+                    </span>
+                  )}
+                </div>
+
+                {isFreePlan && (
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-slate-700">
+                      {t("results.visibleCount", {
+                        visible: Math.min(jobs.length, jobsVisibleLimit),
+                        total: jobs.length,
+                      })}
+                    </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => openPricingModal("jobs_visible")}
+                      className="text-xs text-[#00D9FF] hover:text-[#00C4EA] p-0 h-auto font-semibold"
+                    >
+                      {t("results.unlockAll")}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </motion.div>
 
             <div
@@ -1476,9 +1498,17 @@ export default function JobsPage() {
                         )}
 
                         <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                          {job.description}
+                          {stripHtmlForPreview(job.description || "")}
                         </p>
                       </div>
+
+                      {/* URL warning */}
+                      {job.url_is_direct === false && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1">
+                          <span>⚠️</span>
+                          <span>Le lien peut ouvrir une page de recherche</span>
+                        </p>
+                      )}
 
                       {/* Button always at bottom */}
                       <div className="flex gap-2 pt-5 mt-auto">

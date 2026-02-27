@@ -12,6 +12,7 @@ import httpx
 
 from src.config.settings import settings
 from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
+from src.utils.url_validator import is_description_truncated, is_direct_job_url
 
 logger = logging.getLogger(__name__)
 
@@ -108,17 +109,21 @@ class AdzunaProvider(BaseJobProvider):
     
     def _normalize_adzuna_job(self, item: dict) -> dict[str, Any]:
         """Normalize Adzuna job response."""
+        description = item.get("description")
+        url = item.get("redirect_url")
         return {
             "id": f"adzuna_{item.get('id')}",
             "title": item.get("title", ""),
             "company": item.get("company", {}).get("display_name", ""),
             "location": item.get("location", {}).get("display_name", ""),
-            "description": item.get("description"),
-            "url": item.get("redirect_url"),
+            "description": description,
+            "url": url,
             "salary": self._format_salary(item),
             "contract_type": item.get("contract_type"),
             "source": self.name,
             "posted_date": item.get("created"),
+            "url_is_direct": is_direct_job_url(url),
+            "description_truncated": is_description_truncated(description, "adzuna"),
         }
     
     def _format_salary(self, item: dict) -> str | None:

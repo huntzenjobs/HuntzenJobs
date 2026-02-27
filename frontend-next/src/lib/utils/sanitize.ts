@@ -3,7 +3,7 @@
  * Uses DOMPurify to strip HTML and prevent XSS attacks
  */
 
-import DOMPurify from 'isomorphic-dompurify'
+import DOMPurify from "isomorphic-dompurify";
 
 /**
  * Sanitize user input by stripping all HTML tags
@@ -11,12 +11,12 @@ import DOMPurify from 'isomorphic-dompurify'
  * @returns Sanitized string safe for display
  */
 export function sanitizeInput(input: string): string {
-  if (!input) return ''
+  if (!input) return "";
 
   return DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: [],  // Strip all HTML tags
-    KEEP_CONTENT: true,  // Keep text content
-  })
+    ALLOWED_TAGS: [], // Strip all HTML tags
+    KEEP_CONTENT: true, // Keep text content
+  });
 }
 
 /**
@@ -25,13 +25,13 @@ export function sanitizeInput(input: string): string {
  * @returns Sanitized HTML safe for rendering
  */
 export function sanitizeHTML(html: string): string {
-  if (!html) return ''
+  if (!html) return "";
 
   return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li'],
-    ALLOWED_ATTR: ['href', 'target', 'rel'],
+    ALLOWED_TAGS: ["b", "i", "em", "strong", "a", "p", "br", "ul", "ol", "li"],
+    ALLOWED_ATTR: ["href", "target", "rel"],
     ALLOW_DATA_ATTR: false,
-  })
+  });
 }
 
 /**
@@ -40,10 +40,21 @@ export function sanitizeHTML(html: string): string {
  * @returns Sanitized email or null if invalid
  */
 export function sanitizeEmail(email: string): string | null {
-  const sanitized = sanitizeInput(email).toLowerCase().trim()
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const sanitized = sanitizeInput(email).toLowerCase().trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  return emailRegex.test(sanitized) ? sanitized : null
+  return emailRegex.test(sanitized) ? sanitized : null;
+}
+
+/**
+ * Strip all HTML tags from a job description for plain-text card preview.
+ * Handles RemoteOK descriptions which include raw HTML markup.
+ * @param html - Raw description (may contain HTML)
+ * @returns Clean plain text
+ */
+export function stripHtmlForPreview(html: string): string {
+  if (!html) return "";
+  return sanitizeInput(html).replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -53,16 +64,16 @@ export function sanitizeEmail(email: string): string | null {
  */
 export function sanitizeURL(url: string): string | null {
   try {
-    const sanitized = sanitizeInput(url).trim()
-    const parsed = new URL(sanitized)
+    const sanitized = sanitizeInput(url).trim();
+    const parsed = new URL(sanitized);
 
     // Only allow safe protocols
-    if (['http:', 'https:'].includes(parsed.protocol)) {
-      return parsed.toString()
+    if (["http:", "https:"].includes(parsed.protocol)) {
+      return parsed.toString();
     }
 
-    return null
+    return null;
   } catch {
-    return null
+    return null;
   }
 }

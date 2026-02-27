@@ -28,6 +28,8 @@ export interface Job {
   salary?: string;
   source: string;
   posted_date?: string;
+  url_is_direct?: boolean;
+  description_truncated?: boolean;
 }
 
 export interface SavedJob {

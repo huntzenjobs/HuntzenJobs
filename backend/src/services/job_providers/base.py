@@ -55,6 +55,9 @@ class JobListing(BaseModel):
     contract_type: str | None = None
     source: str
     posted_date: str | None = None
+    # Quality metadata computed by each provider
+    url_is_direct: bool = True
+    description_truncated: bool = False
 
 
 class BaseJobProvider(ABC):

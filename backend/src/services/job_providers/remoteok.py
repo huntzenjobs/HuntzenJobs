@@ -9,8 +9,10 @@ import logging
 from typing import Any
 
 import httpx
+from bs4 import BeautifulSoup
 
 from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
+from src.utils.url_validator import is_direct_job_url
 
 logger = logging.getLogger(__name__)
 
@@ -84,17 +86,27 @@ class RemoteOKProvider(BaseJobProvider):
     
     def _normalize_remoteok_job(self, item: dict) -> dict[str, Any]:
         """Normalize RemoteOK job response."""
+        raw_desc = item.get("description") or ""
+        if raw_desc:
+            description = BeautifulSoup(raw_desc, "html.parser").get_text(
+                separator="\n", strip=True
+            )
+        else:
+            description = None
+        url = item.get("url")
         return {
             "id": f"remoteok_{item.get('id')}",
             "title": item.get("position", ""),
             "company": item.get("company", ""),
             "location": "Remote",
-            "description": item.get("description"),
-            "url": item.get("url"),
+            "description": description,
+            "url": url,
             "salary": self._format_salary(item),
             "contract_type": "remote",
             "source": self.name,
             "posted_date": item.get("date"),
+            "url_is_direct": is_direct_job_url(url),
+            "description_truncated": False,
         }
     
     def _format_salary(self, item: dict) -> str | None:

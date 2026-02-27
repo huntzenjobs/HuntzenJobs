@@ -17,6 +17,7 @@ import httpx
 from src.config.settings import settings
 from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
 from src.utils.geo import country_code_to_name, format_location_query
+from src.utils.url_validator import is_description_truncated, is_direct_job_url
 
 logger = logging.getLogger(__name__)
 
@@ -169,17 +170,20 @@ class JSearchProvider(BaseJobProvider):
         if is_remote and "remote" not in job_location.lower():
             job_location = f"{job_location} (Remote)"
 
+        description = (item.get("job_description") or "")[:5000]
         return {
             "id": f"jsearch_{item.get('job_id', hash(title + (item.get('employer_name') or '')))}",
             "title": title,
             "company": item.get("employer_name") or "Unknown",
             "location": job_location,
-            "description": (item.get("job_description") or "")[:5000],
+            "description": description,
             "url": url,
             "salary": salary,
             "contract_type": contract,
             "source": source,
             "posted_date": item.get("job_posted_at_datetime_utc"),
+            "url_is_direct": is_direct_job_url(url),
+            "description_truncated": is_description_truncated(description, source),
         }
 
     def _format_salary(self, item: dict) -> str | None:
