@@ -101,9 +101,17 @@ class CVAnalyzerAgent(BaseAgent):
         """Lazy load Docling converter."""
         if self._docling_converter is None:
             from docling.document_converter import DocumentConverter
+            from docling.datamodel.pipeline_options import PdfPipelineOptions
+            from docling.datamodel.base_models import InputFormat
+
             logger.info(f"[{self.name}] Initializing Docling converter...")
-            self._docling_converter = DocumentConverter()
-            logger.info(f"[{self.name}] Docling ready")
+            # CVs are text-based PDFs — OCR is unnecessary and triggers
+            # RapidOCR model downloads that fail in non-root containers
+            pdf_options = PdfPipelineOptions(do_ocr=False)
+            self._docling_converter = DocumentConverter(
+                format_options={InputFormat.PDF: pdf_options}
+            )
+            logger.info(f"[{self.name}] Docling ready (OCR disabled for text-based PDFs)")
         return self._docling_converter
     
     async def run(

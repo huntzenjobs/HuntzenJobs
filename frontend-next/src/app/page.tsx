@@ -1,7 +1,8 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { motion } from 'framer-motion'
+import React from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   TrendingUp,
   FileText,
@@ -13,12 +14,21 @@ import {
   Sparkles,
   Briefcase,
   Calendar,
-  MessageSquare
-} from 'lucide-react'
-import { LandingHeader } from '@/components/landing-header'
-import { InternalLinksFooter } from '@/components/seo/internal-links'
+  MessageSquare,
+  ArrowRight,
+} from "lucide-react";
+import { LandingHeader } from "@/components/landing-header";
+import { useTranslations } from "next-intl";
 
 export default function HomePage() {
+  const tHero = useTranslations("hero");
+  const tTools = useTranslations("tools");
+  const tPain = useTranslations("painPoints");
+  const tFeatures = useTranslations("features");
+  const tStats = useTranslations("stats");
+  const tPricing = useTranslations("pricing");
+  const tPlans = useTranslations("pricingPlans");
+  const tFooter = useTranslations("footer");
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <LandingHeader />
@@ -30,10 +40,11 @@ export default function HomePage() {
           <div
             className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-gray-900/40"
             style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop")',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              filter: 'brightness(0.3) saturate(0.8)'
+              backgroundImage:
+                'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop")',
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "brightness(0.3) saturate(0.8)",
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-gray-900" />
@@ -43,8 +54,9 @@ export default function HomePage() {
         <div
           className="absolute inset-0 opacity-20"
           style={{
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%2300D9FF\' fill-opacity=\'0.15\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-            backgroundSize: '60px 60px'
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300D9FF' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundSize: "60px 60px",
           }}
         />
 
@@ -52,25 +64,25 @@ export default function HomePage() {
         <motion.div
           animate={{
             scale: [1, 1.2, 1],
-            opacity: [0.1, 0.15, 0.1]
+            opacity: [0.1, 0.15, 0.1],
           }}
           transition={{
             duration: 8,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
           className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-[#00D9FF]/10 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
             scale: [1, 1.3, 1],
-            opacity: [0.08, 0.12, 0.08]
+            opacity: [0.08, 0.12, 0.08],
           }}
           transition={{
             duration: 10,
             repeat: Infinity,
             ease: "easeInOut",
-            delay: 1
+            delay: 1,
           }}
           className="absolute bottom-1/4 right-1/4 w-64 sm:w-80 h-64 sm:h-80 bg-purple-500/10 rounded-full blur-3xl"
         />
@@ -89,7 +101,8 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tight mb-4 relative"
               style={{
-                textShadow: '0 0 40px rgba(0, 217, 255, 0.3), 0 0 80px rgba(0, 217, 255, 0.1)'
+                textShadow:
+                  "0 0 40px rgba(0, 217, 255, 0.3), 0 0 80px rgba(0, 217, 255, 0.1)",
               }}
             >
               HUNTZEN
@@ -105,8 +118,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-base sm:text-lg md:text-xl text-white/90 max-w-3xl mx-auto mb-8 px-4 leading-relaxed"
           >
-            Votre allié carrière complet pour décrocher l&apos;emploi qui vous ressemble.
-            Recherche ciblée, CV optimisé, et accompagnement personnalisé à chaque étape.
+            {tHero("subtitle")}
           </motion.p>
 
           <motion.div
@@ -120,13 +132,13 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-2xl hover:shadow-[#00D9FF]/50 hover:-translate-y-1 w-full sm:w-auto justify-center"
             >
               <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-              Commencer ma recherche
+              {tHero("ctaSearch")}
             </Link>
             <a
               href="#features"
               className="text-white/70 hover:text-white text-sm sm:text-base font-medium transition-colors flex items-center gap-2"
             >
-              Découvrir nos outils
+              {tHero("ctaDiscover")}
               <motion.span
                 animate={{ y: [0, 4, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
@@ -139,7 +151,10 @@ export default function HomePage() {
       </section>
 
       {/* Nos Outils - Enhanced Section */}
-      <section className="py-12 sm:py-16 bg-white dark:bg-gray-900" id="features">
+      <section
+        className="py-12 sm:py-16 bg-slate-50 dark:bg-gray-900"
+        id="features"
+      >
         <div className="container mx-auto px-4 sm:px-6">
           {/* Section Header */}
           <div className="text-center mb-10 sm:mb-12">
@@ -150,7 +165,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 text-[#00D9FF] text-xs font-bold tracking-widest uppercase mb-4"
             >
               <Sparkles className="w-3 h-3" />
-              Tous nos outils
+              {tTools("badge")}
             </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -159,7 +174,7 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3"
             >
-              Une plateforme complète pour réussir votre recherche d&apos;emploi
+              {tTools("title")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -168,107 +183,183 @@ export default function HomePage() {
               transition={{ delay: 0.2 }}
               className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-sm sm:text-base px-4"
             >
-              Des outils pensés pour vous accompagner à chaque étape : de la recherche d&apos;offres à la négociation salariale
+              {tTools("subtitle")}
             </motion.p>
           </div>
 
-          {/* Tools Grid - Enhanced with 8 tools */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 max-w-7xl mx-auto">
-            {[
-              {
-                icon: Search,
-                title: "Agrégateur d'offres intelligent",
-                description: "Toutes les offres d'emploi en un seul endroit",
-                href: "/jobs",
-                color: "#00D9FF"
-              },
-              {
-                icon: Target,
-                title: "Score de compatibilité",
-                description: "Trouvez les offres qui vous correspondent vraiment",
-                href: "/jobs",
-                color: "#00D9FF"
-              },
-              {
-                icon: FileText,
-                title: "Analyse CV experte",
-                description: "Optimisez votre candidature pour chaque offre",
-                href: "/cv-analysis",
-                color: "#9333EA"
-              },
-              {
-                icon: Sparkles,
-                title: "Diagnostic compétences",
-                description: "Identifiez vos forces et axes d'amélioration",
-                href: "/cv-analysis",
-                color: "#9333EA"
-              },
-              {
-                icon: Users,
-                title: "Simulation d'entretien",
-                description: "Entraînez-vous en conditions réelles",
-                href: "/assistant",
-                color: "#F97316"
-              },
-              {
-                icon: MessageSquare,
-                title: "Coach carrière personnel",
-                description: "Un accompagnement sur-mesure 24/7",
-                href: "/assistant",
-                color: "#F97316"
-              },
-              {
-                icon: TrendingUp,
-                title: "Projections salariales",
-                description: "Négociez avec les bons arguments",
-                href: "/assistant",
-                color: "#10B981"
-              },
-              {
-                icon: Calendar,
-                title: "Salons & Forums emploi",
-                description: "Rencontrez directement les recruteurs",
-                href: "/salons",
-                color: "#10B981"
-              }
-            ].map((tool, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.08 }}
-                className="group"
-              >
-                <Link href={tool.href} className="block h-full">
-                  <div className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 sm:p-6 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-xl transition-all h-full flex flex-col">
-                    <div
-                      className="w-12 h-12 sm:w-14 sm:h-14 mb-3 sm:mb-4 flex items-center justify-center rounded-2xl transition-all"
-                      style={{
-                        backgroundColor: `${tool.color}15`,
-                      }}
-                    >
-                      <tool.icon
-                        className="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:scale-110"
-                        style={{ color: tool.color }}
-                      />
-                    </div>
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-2 leading-snug">
-                      {tool.title}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed flex-grow">
-                      {tool.description}
-                    </p>
-                    <div
-                      className="text-xs sm:text-sm font-semibold mt-3 sm:mt-4 inline-flex items-center gap-1 transition-transform group-hover:translate-x-1"
-                      style={{ color: tool.color }}
-                    >
-                      Découvrir →
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+          {/* Tools — Bento Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
+            {(
+              [
+                {
+                  type: "featured",
+                  icon: Search,
+                  category: tTools("items.jobSearch.category"),
+                  title: tTools("items.jobSearch.title"),
+                  description: tTools("items.jobSearch.description"),
+                  href: "/jobs",
+                },
+                {
+                  type: "regular",
+                  icon: Target,
+                  category: tTools("items.compatibility.category"),
+                  title: tTools("items.compatibility.title"),
+                  description: tTools("items.compatibility.description"),
+                  href: "/jobs",
+                },
+                {
+                  type: "regular",
+                  icon: FileText,
+                  category: tTools("items.cvAnalysis.category"),
+                  title: tTools("items.cvAnalysis.title"),
+                  description: tTools("items.cvAnalysis.description"),
+                  href: "/cv-analysis",
+                },
+                {
+                  type: "regular",
+                  icon: Sparkles,
+                  category: tTools("items.skills.category"),
+                  title: tTools("items.skills.title"),
+                  description: tTools("items.skills.description"),
+                  href: "/cv-analysis",
+                },
+                {
+                  type: "regular",
+                  icon: Users,
+                  category: tTools("items.interview.category"),
+                  title: tTools("items.interview.title"),
+                  description: tTools("items.interview.description"),
+                  href: "/assistant",
+                },
+                {
+                  type: "featured",
+                  icon: MessageSquare,
+                  category: tTools("items.coach.category"),
+                  title: tTools("items.coach.title"),
+                  description: tTools("items.coach.description"),
+                  href: "/assistant",
+                },
+                {
+                  type: "medium",
+                  icon: TrendingUp,
+                  category: tTools("items.salary.category"),
+                  title: tTools("items.salary.title"),
+                  description: tTools("items.salary.description"),
+                  href: "/assistant",
+                },
+                {
+                  type: "medium",
+                  icon: Calendar,
+                  category: tTools("items.salons.category"),
+                  title: tTools("items.salons.title"),
+                  description: tTools("items.salons.description"),
+                  href: "/salons",
+                },
+              ] as Array<{
+                type: string;
+                icon: React.ElementType;
+                category: string;
+                title: string;
+                description: string;
+                href: string;
+              }>
+            ).map((tool, index) => {
+              const Icon = tool.icon;
+              const isFeatured = tool.type === "featured";
+              const isMedium = tool.type === "medium";
+              const colSpan =
+                isFeatured || isMedium ? "col-span-2" : "col-span-1";
+
+              return (
+                <motion.div
+                  key={index}
+                  className={colSpan}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: index * 0.055 }}
+                >
+                  <Link href={tool.href} className="group block h-full">
+                    {isFeatured ? (
+                      /* FEATURED DARK CARD */
+                      <div
+                        className="relative h-full overflow-hidden rounded-2xl bg-slate-900 dark:bg-[#050A14] border border-slate-800/60 p-6 sm:p-8 flex flex-col"
+                        style={{ minHeight: "210px" }}
+                      >
+                        {/* Ambient cyan glow */}
+                        <div className="absolute -top-12 -left-12 w-56 h-56 bg-[#00D9FF] opacity-[0.10] blur-[70px] rounded-full pointer-events-none" />
+                        {/* Watermark icon */}
+                        <Icon className="absolute -bottom-6 -right-6 w-40 h-40 text-white opacity-[0.04] pointer-events-none" />
+                        {/* Icon */}
+                        <div className="relative z-10 w-11 h-11 rounded-xl bg-[#00D9FF]/10 border border-[#00D9FF]/20 flex items-center justify-center mb-5">
+                          <Icon className="w-5 h-5 text-[#00D9FF]" />
+                        </div>
+                        <span className="relative z-10 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500 mb-2">
+                          {tool.category}
+                        </span>
+                        <h3 className="relative z-10 text-2xl sm:text-3xl font-bold text-white leading-tight mb-3">
+                          {tool.title}
+                        </h3>
+                        <p className="relative z-10 text-base text-slate-400 leading-relaxed flex-1">
+                          {tool.description}
+                        </p>
+                        <div className="relative z-10 mt-5 flex items-center gap-2 text-[#00D9FF] text-base font-semibold">
+                          <span>{tTools("explore")}</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                        </div>
+                      </div>
+                    ) : isMedium ? (
+                      /* MEDIUM HORIZONTAL CARD */
+                      <div className="relative h-full overflow-hidden rounded-2xl bg-white dark:bg-white border border-slate-200/80 dark:border-slate-200/80 p-5 sm:p-6 flex flex-row items-center gap-4 hover:border-[#00D9FF]/40 hover:shadow-[0_6px_24px_rgba(0,217,255,0.08)] transition-all duration-300">
+                        <Icon className="absolute -bottom-4 -right-4 w-24 h-24 text-slate-900 opacity-[0.03] pointer-events-none" />
+                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
+                          <Icon className="w-5 h-5 text-slate-400 group-hover:text-[#00D9FF] transition-colors duration-200" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 block mb-0.5">
+                            {tool.category}
+                          </span>
+                          <h3 className="text-base font-bold text-slate-900 leading-snug">
+                            {tool.title}
+                          </h3>
+                          <p className="text-sm text-slate-500 mt-1 leading-relaxed hidden sm:block">
+                            {tool.description}
+                          </p>
+                        </div>
+                        <div className="flex-shrink-0 flex items-center gap-1.5 text-sm font-semibold text-slate-300 group-hover:text-[#00D9FF] transition-colors duration-200">
+                          <span className="hidden sm:block">Explorer</span>
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
+                        </div>
+                      </div>
+                    ) : (
+                      /* REGULAR CARD */
+                      <div
+                        className="relative h-full overflow-hidden rounded-2xl bg-white dark:bg-white border border-slate-200/80 dark:border-slate-200/80 p-5 flex flex-col hover:border-[#00D9FF]/40 hover:shadow-[0_8px_30px_rgba(0,217,255,0.08)] transition-all duration-300"
+                        style={{ minHeight: "210px" }}
+                      >
+                        <Icon className="absolute -bottom-3 -right-3 w-20 h-20 text-slate-900 opacity-[0.03] pointer-events-none" />
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center mb-4 group-hover:bg-[#00D9FF]/10 transition-colors duration-200">
+                          <Icon className="w-4 h-4 text-slate-400 group-hover:text-[#00D9FF] transition-colors duration-200" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mb-2">
+                          {tool.category}
+                        </span>
+                        <h3 className="text-base font-bold text-slate-900 leading-snug flex-1">
+                          {tool.title}
+                        </h3>
+                        <p className="text-sm text-slate-500 leading-relaxed mt-2 mb-3">
+                          {tool.description}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-300 group-hover:text-[#00D9FF] transition-colors duration-200">
+                          <span>{tTools("explore")}</span>
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
+                        </div>
+                      </div>
+                    )}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -283,7 +374,7 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3"
             >
-              Chercher un emploi ne devrait pas être un parcours du combattant
+              {tPain("title")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -292,32 +383,32 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-[#00D9FF] font-semibold uppercase text-xs sm:text-sm tracking-wide"
             >
-              Pourtant, les candidats perdent des mois à naviguer à l&apos;aveugle
+              {tPain("subtitle")}
             </motion.p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
             {[
               {
-                title: "GHOSTING PERMANENT",
-                description: "73% des candidats n'obtiennent jamais de retour, même après plusieurs relances",
-                icon: AlertCircle
+                title: tPain("items.ghosting.title"),
+                description: tPain("items.ghosting.description"),
+                icon: AlertCircle,
               },
               {
-                title: "RECHERCHE ÉPUISANTE",
-                description: "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier",
-                icon: Search
+                title: tPain("items.exhausting.title"),
+                description: tPain("items.exhausting.description"),
+                icon: Search,
               },
               {
-                title: "NÉGOCIATION À L'AVEUGLE",
-                description: "Impossible de connaître les salaires réels selon votre expérience et localisation",
-                icon: TrendingUp
+                title: tPain("items.negotiation.title"),
+                description: tPain("items.negotiation.description"),
+                icon: TrendingUp,
               },
               {
-                title: "MANQUE DE FEEDBACK",
-                description: "Aucun accompagnement, aucune visibilité sur vos points forts et axes d'amélioration",
-                icon: Target
-              }
+                title: tPain("items.feedback.title"),
+                description: tPain("items.feedback.description"),
+                icon: Target,
+              },
             ].map((item, index) => (
               <motion.div
                 key={index}
@@ -354,7 +445,19 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3"
             >
-              Votre <span className="text-[#00D9FF]">allié carrière</span> au quotidien
+              {(() => {
+                const title = tFeatures("title");
+                const highlight = tFeatures("titleHighlight");
+                const idx = title.indexOf(highlight);
+                if (idx === -1) return title;
+                return (
+                  <>
+                    {title.slice(0, idx)}
+                    <span className="text-[#00D9FF]">{highlight}</span>
+                    {title.slice(idx + highlight.length)}
+                  </>
+                );
+              })()}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -363,7 +466,7 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-gray-600 dark:text-gray-300 text-base sm:text-lg max-w-2xl mx-auto"
             >
-              Des outils puissants et un accompagnement personnalisé pour transformer votre recherche d&apos;emploi
+              {tFeatures("subtitle")}
             </motion.p>
           </div>
 
@@ -378,22 +481,29 @@ export default function HomePage() {
                 transition={{ duration: 0.6 }}
               >
                 <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                  <span className="text-[#00D9FF]">Analyse experte</span> et optimisation de votre CV
+                  {(() => {
+                    const title = tFeatures("cv.title");
+                    const highlight = tFeatures("cv.titleHighlight");
+                    const i = title.indexOf(highlight);
+                    if (i === -1) return title;
+                    return (
+                      <>
+                        <span className="text-[#00D9FF]">{highlight}</span>
+                        {title.slice(i + highlight.length)}
+                      </>
+                    );
+                  })()}
                 </h3>
                 <p className="text-gray-700 dark:text-gray-300 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
-                  Bénéficiez d&apos;une analyse approfondie de votre profil pour identifier précisément vos atouts
-                  et les compétences recherchées par le marché. Recevez des recommandations concrètes
-                  pour maximiser vos chances.
+                  {tFeatures("cv.description")}
                 </p>
                 <ul className="space-y-3">
-                  {[
-                    "Évaluation détaillée de vos compétences techniques et humaines",
-                    "Recommandations de formations certifiantes ciblées",
-                    "Score d'employabilité actualisé en temps réel"
-                  ].map((item, idx) => (
+                  {(tFeatures.raw("cv.items") as string[]).map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{item}</span>
+                      <span className="text-gray-700 dark:text-gray-300 text-sm sm:text-base">
+                        {item}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -408,7 +518,8 @@ export default function HomePage() {
                 <div
                   className="absolute inset-0 bg-cover bg-center"
                   style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2340&auto=format&fit=crop")'
+                    backgroundImage:
+                      'url("https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2340&auto=format&fit=crop")',
                   }}
                 />
               </motion.div>
@@ -426,7 +537,8 @@ export default function HomePage() {
                 <div
                   className="absolute inset-0 bg-cover bg-center"
                   style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2340&auto=format&fit=crop")'
+                    backgroundImage:
+                      'url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2340&auto=format&fit=crop")',
                   }}
                 />
               </motion.div>
@@ -437,25 +549,25 @@ export default function HomePage() {
                 transition={{ duration: 0.6 }}
                 className="md:order-2"
               >
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
-                  <span className="text-[#00D9FF]">Matching intelligent</span> et recherche ciblée
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
+                  <span className="text-[#00D9FF]">
+                    {tFeatures("matching.title")}
+                  </span>
                 </h3>
-                <p className="text-gray-700 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
-                  Fini les heures perdues à scroller des offres non pertinentes. Notre agrégateur centralise
-                  toutes les opportunités de +20 plateformes et vous présente uniquement celles qui correspondent
-                  réellement à votre profil.
+                <p className="text-gray-700 dark:text-white/80 text-base sm:text-lg mb-4 sm:mb-6 leading-relaxed">
+                  {tFeatures("matching.description")}
                 </p>
                 <ul className="space-y-3">
-                  {[
-                    "Score de compatibilité précis (0-100%) pour chaque offre",
-                    "Alertes instantanées sur les opportunités à fort potentiel",
-                    "Système de favoris pour suivre vos candidatures"
-                  ].map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm sm:text-base">{item}</span>
-                    </li>
-                  ))}
+                  {(tFeatures.raw("matching.items") as string[]).map(
+                    (item, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-700 dark:text-white/85 text-sm sm:text-base">
+                          {item}
+                        </span>
+                      </li>
+                    ),
+                  )}
                 </ul>
               </motion.div>
             </div>
@@ -473,16 +585,33 @@ export default function HomePage() {
             className="text-center mb-10 sm:mb-12"
           >
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-              Ils nous font confiance
+              {tStats("title")}
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Des milliers de candidats ont déjà trouvé leur voie avec HuntZen</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
+              {tStats("subtitle")}
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {[
-              { value: "+ 100 000", label: "Candidats accompagnés", icon: Users, color: "#00D9FF" },
-              { value: "87%", label: "Taux de réponse positif", icon: CheckCircle2, color: "#00D9FF" },
-              { value: "+ 35%", label: "De salaire négocié en moyenne", icon: TrendingUp, color: "#00D9FF" }
+              {
+                value: tStats("candidates.value"),
+                label: tStats("candidates.label"),
+                icon: Users,
+                color: "#00D9FF",
+              },
+              {
+                value: tStats("responseRate.value"),
+                label: tStats("responseRate.label"),
+                icon: CheckCircle2,
+                color: "#00D9FF",
+              },
+              {
+                value: tStats("salary.value"),
+                label: tStats("salary.label"),
+                icon: TrendingUp,
+                color: "#00D9FF",
+              },
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -503,7 +632,9 @@ export default function HomePage() {
                 >
                   {stat.value}
                 </div>
-                <div className="text-gray-600 dark:text-gray-300 font-medium text-sm sm:text-base">{stat.label}</div>
+                <div className="text-gray-600 dark:text-gray-300 font-medium text-sm sm:text-base">
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </div>
@@ -520,7 +651,7 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3"
             >
-              Choisissez le plan qui vous correspond
+              {tPricing("title")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -529,83 +660,53 @@ export default function HomePage() {
               transition={{ delay: 0.1 }}
               className="text-gray-600 dark:text-gray-300 text-sm sm:text-base max-w-2xl mx-auto"
             >
-              Commencez gratuitement et évoluez vers le plan adapté à vos besoins
+              {tPricing("subtitle")}
             </motion.p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
             {[
               {
-                name: "GRATUIT",
+                name: tPlans("plans.free.name"),
                 price: "0€",
-                period: "/7 jours",
+                period: tPlans("plans.free.period"),
                 color: "#9CA3AF",
-                features: [
-                  "3 recherches d'offres par jour",
-                  "10 offres d'emploi visibles maximum",
-                  "1 analyse de CV par jour",
-                  "5 minutes de coaching personnel",
-                  "Support standard"
-                ],
-                unavailable: [
-                  "Filtres avancés",
-                  "Gestion favoris",
-                  "Export PDF rapports"
-                ],
-                cta: "Commencer gratuitement"
+                features: tPlans.raw("plans.free.features") as string[],
+                unavailable: tPlans.raw("plans.free.unavailable") as string[],
+                cta: tPlans("plans.free.cta"),
               },
               {
-                name: "ESSENTIEL",
+                name: tPlans("plans.essential.name"),
                 price: "8.90€",
-                period: "/mois",
+                period: tPlans("plans.essential.period"),
                 color: "#00D9FF",
                 popular: true,
-                features: [
-                  "Recherches d'offres illimitées",
-                  "Accès à toutes les offres d'emploi",
-                  "Filtres avancés (salaire, télétravail, date)",
-                  "Gestion de vos favoris",
-                  "Analyses de CV illimitées",
-                  "Score de compatibilité détaillé",
-                  "Coaching personnalisé (30 min/jour)"
-                ],
-                unavailable: ["Export PDF rapports"],
-                cta: "Commencer avec Essentiel"
+                features: tPlans.raw("plans.essential.features") as string[],
+                unavailable: tPlans.raw(
+                  "plans.essential.unavailable",
+                ) as string[],
+                cta: tPlans("plans.essential.cta"),
               },
               {
-                name: "PRO",
+                name: tPlans("plans.pro.name"),
                 price: "13.90€",
-                period: "/mois",
+                period: tPlans("plans.pro.period"),
                 color: "#9333EA",
-                features: [
-                  "Toutes les fonctionnalités Essentiel",
-                  "Coaching disponible 24/7 sans limite",
-                  "Export PDF professionnel",
-                  "Simulations d'entretien réalistes",
-                  "Feedback détaillé sur vos performances",
-                  "Support prioritaire par email"
-                ],
-                unavailable: [],
-                cta: "Commencer avec Pro"
+                features: tPlans.raw("plans.pro.features") as string[],
+                unavailable: tPlans.raw("plans.pro.unavailable") as string[],
+                cta: tPlans("plans.pro.cta"),
               },
               {
-                name: "PREMIUM",
+                name: tPlans("plans.premium.name"),
                 price: "19.90€",
-                period: "/mois",
+                period: tPlans("plans.premium.period"),
                 color: "#F97316",
-                features: [
-                  "Toutes les fonctionnalités Pro",
-                  "Historique illimité de vos analyses",
-                  "Conseils personnalisés ultra-ciblés",
-                  "Alertes email instantanées",
-                  "Historique complet coaching",
-                  "Accès anticipé nouvelles fonctionnalités",
-                  "Support VIP prioritaire",
-                  "Rapports mensuels de progression"
-                ],
-                unavailable: [],
-                cta: "Commencer avec Premium"
-              }
+                features: tPlans.raw("plans.premium.features") as string[],
+                unavailable: tPlans.raw(
+                  "plans.premium.unavailable",
+                ) as string[],
+                cta: tPlans("plans.premium.cta"),
+              },
             ].map((plan, index) => (
               <motion.div
                 key={index}
@@ -614,17 +715,21 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-6 border-2 ${
-                  plan.popular ? 'border-[#00D9FF] shadow-xl lg:scale-105' : 'border-gray-200 dark:border-gray-700'
+                  plan.popular
+                    ? "border-[#00D9FF] shadow-xl lg:scale-105"
+                    : "border-gray-200 dark:border-gray-700"
                 } hover:shadow-lg transition-all relative flex flex-col h-full`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#00D9FF] text-white text-xs font-bold rounded-full">
-                    POPULAIRE
+                    {tPlans("popular")}
                   </div>
                 )}
 
                 <div className="text-center mb-6">
-                  <div className="text-gray-600 dark:text-gray-400 font-bold text-xs sm:text-sm mb-2">{plan.name}</div>
+                  <div className="text-gray-600 dark:text-gray-400 font-bold text-xs sm:text-sm mb-2">
+                    {plan.name}
+                  </div>
                   <div className="flex items-baseline justify-center gap-1">
                     <span
                       className="text-4xl sm:text-5xl font-black"
@@ -632,19 +737,32 @@ export default function HomePage() {
                     >
                       {plan.price}
                     </span>
-                    <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{plan.period}</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
+                      {plan.period}
+                    </span>
                   </div>
                 </div>
 
                 <ul className="space-y-2.5 sm:space-y-3 mb-6 flex-grow">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm">
-                      <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: plan.color }} />
-                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-xs sm:text-sm"
+                    >
+                      <CheckCircle2
+                        className="w-4 h-4 flex-shrink-0 mt-0.5"
+                        style={{ color: plan.color }}
+                      />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {feature}
+                      </span>
                     </li>
                   ))}
                   {plan.unavailable.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-xs sm:text-sm text-gray-400 dark:text-gray-500"
+                    >
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </li>
@@ -665,7 +783,6 @@ export default function HomePage() {
       </section>
 
       {/* Internal Links Footer for SEO */}
-      <InternalLinksFooter />
 
       {/* Footer */}
       <footer className="bg-black text-white py-10 sm:py-12">
@@ -676,21 +793,32 @@ export default function HomePage() {
               <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
             </div>
             <p className="text-white/60 text-xs sm:text-sm text-center md:text-right max-w-md">
-              Votre allié carrière pour transformer votre recherche d&apos;emploi en succès.
+              {tFooter("tagline")}
             </p>
           </div>
           <hr className="border-white/10 mb-8" />
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
-            <p>&copy; {new Date().getFullYear()} HuntZen. Tous droits réservés.</p>
+            <p>
+              &copy; {new Date().getFullYear()} HuntZen. {tFooter("copyright")}
+            </p>
             <div className="flex items-center gap-4 sm:gap-6">
-              <Link href="/privacy" className="hover:text-[#00D9FF] transition-colors">
-                Politique de confidentialité
+              <Link
+                href="/privacy"
+                className="hover:text-[#00D9FF] transition-colors"
+              >
+                {tFooter("privacy")}
               </Link>
-              <Link href="/terms" className="hover:text-[#00D9FF] transition-colors">
-                Conditions générales
+              <Link
+                href="/terms"
+                className="hover:text-[#00D9FF] transition-colors"
+              >
+                {tFooter("terms")}
               </Link>
-              <Link href="mailto:contact@huntzenjobs.co" className="hover:text-[#00D9FF] transition-colors">
-                Contact
+              <Link
+                href="mailto:contact@huntzenjobs.co"
+                className="hover:text-[#00D9FF] transition-colors"
+              >
+                {tFooter("contact")}
               </Link>
             </div>
           </div>
@@ -698,12 +826,15 @@ export default function HomePage() {
       </footer>
 
       <style jsx global>{`
-        
-
         body {
-          font-family: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-family:
+            var(--font-dm-sans),
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
         }
       `}</style>
     </div>
-  )
+  );
 }

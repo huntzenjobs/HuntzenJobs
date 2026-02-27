@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ThemeProvider } from 'next-themes'
-import { useState, useEffect } from 'react'
-import { Toaster } from '@/components/ui/sonner'
-import { AuthProvider } from '@/contexts/auth-context'
-import { AssistantProvider } from '@/contexts/assistant-context'
-import { I18nProvider } from '@/contexts/i18n-context'
-import { ErrorBoundary } from '@/components/error-boundary'
-import { initWebVitalsMonitoring } from '@/lib/performance/web-vitals'
-import type { User } from '@supabase/supabase-js'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
+import { useState, useEffect } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/contexts/auth-context";
+import { AssistantProvider } from "@/contexts/assistant-context";
+import { I18nProvider } from "@/contexts/i18n-context";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { initWebVitalsMonitoring } from "@/lib/performance/web-vitals";
+import type { User } from "@supabase/supabase-js";
 
 export function Providers({
   children,
-  initialUser = null
+  initialUser = null,
 }: {
-  children: React.ReactNode
-  initialUser?: User | null
+  children: React.ReactNode;
+  initialUser?: User | null;
 }) {
   const [queryClient] = useState(
     () =>
@@ -27,13 +27,13 @@ export function Providers({
             refetchOnWindowFocus: false,
           },
         },
-      })
-  )
+      }),
+  );
 
   // Initialiser le monitoring des Core Web Vitals
   useEffect(() => {
-    initWebVitalsMonitoring()
-  }, [])
+    initWebVitalsMonitoring();
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -43,8 +43,8 @@ export function Providers({
             <AssistantProvider>
               <ThemeProvider
                 attribute="class"
-                defaultTheme="system"
-                enableSystem
+                defaultTheme="light"
+                enableSystem={false}
                 disableTransitionOnChange
               >
                 {children}
@@ -55,5 +55,5 @@ export function Providers({
         </I18nProvider>
       </QueryClientProvider>
     </ErrorBoundary>
-  )
+  );
 }

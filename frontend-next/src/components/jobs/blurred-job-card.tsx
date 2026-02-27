@@ -1,46 +1,48 @@
-'use client'
+"use client";
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Lock, Sparkles, MapPin, Building } from 'lucide-react'
-import { useSubscription } from '@/contexts/subscription-context'
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Lock, Sparkles, MapPin, Building } from "lucide-react";
+import { useSubscription } from "@/contexts/subscription-context";
 
 interface BlurredJobCardProps {
-  index: number
-  className?: string
+  index: number;
+  className?: string;
 }
 
-export function BlurredJobCard({ index, className = '' }: BlurredJobCardProps) {
-  const { openPricingModal } = useSubscription()
+export function BlurredJobCard({ index, className = "" }: BlurredJobCardProps) {
+  const { openPricingModal } = useSubscription();
 
   // Generate fake content for visual appeal
   const fakeTitle = [
-    'Developpeur Full Stack',
-    'Product Manager',
-    'Data Scientist',
-    'DevOps Engineer',
-    'UX Designer',
-  ][index % 5]
+    "Developpeur Full Stack",
+    "Product Manager",
+    "Data Scientist",
+    "DevOps Engineer",
+    "UX Designer",
+  ][index % 5];
 
   const fakeCompany = [
-    'Tech Startup',
-    'Grande Entreprise',
-    'Scale-up',
-    'Cabinet Conseil',
-    'Agence Digital',
-  ][index % 5]
+    "Tech Startup",
+    "Grande Entreprise",
+    "Scale-up",
+    "Cabinet Conseil",
+    "Agence Digital",
+  ][index % 5];
 
   return (
     <Card
       className={`relative overflow-hidden group cursor-pointer hover:shadow-lg transition-all ${className}`}
-      onClick={() => openPricingModal('jobs_visible')}
+      onClick={() => openPricingModal("jobs_visible")}
     >
       {/* Blurred content */}
       <div className="blur-md select-none pointer-events-none opacity-60">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <div className="text-lg font-semibold line-clamp-2">{fakeTitle}</div>
+              <div className="text-lg font-semibold line-clamp-2">
+                {fakeTitle}
+              </div>
               <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
                 <Building className="h-4 w-4" />
                 {fakeCompany}
@@ -66,15 +68,13 @@ export function BlurredJobCard({ index, className = '' }: BlurredJobCardProps) {
       </div>
 
       {/* Lock overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-white/90 via-white/70 to-white/50 dark:from-gray-900/90 dark:via-gray-900/70 dark:to-gray-900/50 pointer-events-none">
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-white/90 via-white/70 to-white/50 pointer-events-none">
         <div className="text-center p-4 transform transition-transform group-hover:scale-105 pointer-events-auto">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-3 shadow-lg shadow-violet-200 dark:shadow-violet-900/30 animate-pulse">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-3 shadow-lg shadow-violet-200 animate-pulse">
             <Lock className="w-6 h-6 text-white" />
           </div>
-          <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
-            Offre verrouillee
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          <p className="font-semibold text-gray-800 mb-1">Offre verrouillee</p>
+          <p className="text-sm text-gray-600 mb-3">
             Passez Premium pour voir cette offre
           </p>
           <Button
@@ -92,31 +92,31 @@ export function BlurredJobCard({ index, className = '' }: BlurredJobCardProps) {
         <div className="absolute inset-0 bg-gradient-to-r from-violet-500/5 to-purple-500/5" />
       </div>
     </Card>
-  )
+  );
 }
 
 interface JobsLimitReachedProps {
-  totalJobs: number
-  visibleJobs: number
-  className?: string
+  totalJobs: number;
+  visibleJobs: number;
+  className?: string;
 }
 
 export function JobsLimitReached({
   totalJobs,
   visibleJobs,
-  className = '',
+  className = "",
 }: JobsLimitReachedProps) {
-  const { openPricingModal } = useSubscription()
-  const hiddenJobs = totalJobs - visibleJobs
+  const { openPricingModal } = useSubscription();
+  const hiddenJobs = totalJobs - visibleJobs;
 
   return (
     <div
-      className={`col-span-full p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border-2 border-dashed border-violet-200 dark:border-violet-800 text-center ${className}`}
+      className={`col-span-full p-4 md:p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-dashed border-violet-200 text-center ${className}`}
     >
       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-4 shadow-lg">
         <Lock className="w-8 h-8 text-white" />
       </div>
-      <h3 className="text-xl font-bold mb-2">
+      <h3 className="text-base md:text-xl font-bold mb-2">
         +{hiddenJobs} offres supplementaires
       </h3>
       <p className="text-muted-foreground mb-4 max-w-md mx-auto">
@@ -126,12 +126,12 @@ export function JobsLimitReached({
       </p>
       <Button
         size="lg"
-        onClick={() => openPricingModal('jobs_visible')}
+        onClick={() => openPricingModal("jobs_visible")}
         className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg"
       >
         <Sparkles className="w-5 h-5 mr-2" />
         Voir toutes les offres
       </Button>
     </div>
-  )
+  );
 }

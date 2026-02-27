@@ -149,7 +149,7 @@ const CVAnalysisPDFDocument = ({ result }: { result: CVAnalysisResult }) => (
       {/* Strengths */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Points Forts</Text>
-        {result.strengths.map((strength, index) => (
+        {(result.strengths || []).map((strength, index) => (
           <Text key={index} style={styles.listItem}>
             • {strength}
           </Text>
@@ -159,7 +159,7 @@ const CVAnalysisPDFDocument = ({ result }: { result: CVAnalysisResult }) => (
       {/* Improvements */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Points à Améliorer</Text>
-        {result.improvements.map((improvement, index) => (
+        {(result.improvements || []).map((improvement, index) => (
           <Text key={index} style={styles.listItem}>
             • {improvement}
           </Text>

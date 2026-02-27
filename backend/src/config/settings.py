@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     """
     
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     rapidapi_key: SecretStr = Field(default=SecretStr(""), description="RapidAPI Key")
     france_travail_client_id: str = Field(default="", alias="CLIENT_ID", description="France Travail OAuth2 Client ID")
     france_travail_client_secret: str = Field(default="", alias="CLIENT_SECRET", description="France Travail OAuth2 Client Secret")
+
+    # --------------------------------------------------------------------------
+    # API Keys - Recruiter Finder (Hunter.io + Apollo)
+    # --------------------------------------------------------------------------
+    hunter_api_key: SecretStr = Field(default=SecretStr(""), description="Hunter.io API Key")
+    apollo_api_key: SecretStr = Field(default=SecretStr(""), description="Apollo.io API Key")
 
     # --------------------------------------------------------------------------
     # Database (Optional - Supabase)
@@ -134,6 +140,14 @@ class Settings(BaseSettings):
     # Format: redis://default:PASSWORD@host:6379
     redis_limiter_url: str = Field(default="", description="Redis URL for rate limiting (redis://...)")
 
+    # --------------------------------------------------------------------------
+    # LangSmith Tracing
+    # --------------------------------------------------------------------------
+    langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
+    langchain_endpoint: str = Field(default="https://api.smith.langchain.com", alias="LANGCHAIN_ENDPOINT")
+    langchain_api_key: SecretStr = Field(default=SecretStr(""), alias="LANGCHAIN_API_KEY")
+    langchain_project: str = Field(default="HuntZen", alias="LANGCHAIN_PROJECT")
+
     cache_enabled: bool = Field(default=True, description="Enable distributed caching")
     cache_default_ttl: int = Field(default=300, ge=60, le=3600, description="Default cache TTL (seconds)")
 
@@ -157,6 +171,14 @@ class Settings(BaseSettings):
     def get_rapidapi_key(self) -> str:
         """Get RapidAPI key as string (used for JSearch salary estimates)."""
         return self.rapidapi_key.get_secret_value()
+
+    def get_hunter_key(self) -> str:
+        """Get Hunter.io API key as string."""
+        return self.hunter_api_key.get_secret_value()
+
+    def get_apollo_key(self) -> str:
+        """Get Apollo.io API key as string."""
+        return self.apollo_api_key.get_secret_value()
 
     def get_supabase_key(self) -> str:
         """Get Supabase Anon key as string."""

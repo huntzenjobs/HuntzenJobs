@@ -179,8 +179,8 @@ async def adapt_cv_from_file(
     
     Supports PDF and DOCX formats.
     """
-    from src.api.deps import get_cv_agent
-    
+    from src.api.deps import get_cv_analyzer_main
+
     # Validate file
     if not file.filename:
         raise HTTPException(
@@ -197,17 +197,39 @@ async def adapt_cv_from_file(
     
     # Read file
     content = await file.read()
-    
-    # Extract text using CV Analyzer agent
-    cv_analyzer = get_cv_agent()
-    
-    if filename.endswith(".pdf"):
-        cv_text = await cv_analyzer.extract_text_from_pdf(content)
-    else:
-        from docx import Document
-        doc = Document(io.BytesIO(content))
-        cv_text = "\n".join([para.text for para in doc.paragraphs])
-    
+
+    # Extract text — PDF via Modal (if configured) to avoid Railway OOM from docling
+    try:
+        if filename.endswith(".pdf"):
+            from src.services.modal_pdf_extractor import (
+                extract_text_via_modal,
+                is_modal_pdf_enabled,
+            )
+
+            if is_modal_pdf_enabled():
+                try:
+                    cv_text = await extract_text_via_modal(content)
+                    logger.info("[cv_adapter] PDF text extracted via Modal")
+                except Exception as modal_exc:
+                    logger.warning(
+                        f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"
+                    )
+                    cv_analyzer = get_cv_analyzer_main()
+                    cv_text = await cv_analyzer.extract_text_from_pdf(content)
+            else:
+                cv_analyzer = get_cv_analyzer_main()
+                cv_text = await cv_analyzer.extract_text_from_pdf(content)
+        else:
+            from docx import Document
+            doc = Document(io.BytesIO(content))
+            cv_text = "\n".join([para.text for para in doc.paragraphs])
+    except Exception as exc:
+        logger.error(f"File text extraction failed for {filename}: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Could not extract text from file: {str(exc)}",
+        )
+
     if not cv_text or len(cv_text) < 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

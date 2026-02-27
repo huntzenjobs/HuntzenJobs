@@ -130,14 +130,14 @@ export function UsageCounter({
   return (
     <div className={`space-y-1.5 ${className}`}>
       <div className="flex items-center justify-between text-sm">
-        <span className="flex items-center gap-1.5 text-white/90 dark:text-gray-100">
+        <span className="flex items-center gap-1.5 text-white/90">
           {showIcon && config.icon}
           <span>
             {feature === 'coach_time'
               ? config.formatValue(remaining, max)
               : `${remaining} ${config.label}`}
             {feature !== 'coach_time' && (
-              <span className="text-xs ml-1 text-white/60 dark:text-gray-300">
+              <span className="text-xs ml-1 text-white/60">
                 {config.maxLabel(max)}
               </span>
             )}

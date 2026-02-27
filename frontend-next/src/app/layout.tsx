@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 import { homeMetadata } from "@/lib/seo/metadata";
 import { HomePageSchemas } from "@/components/seo/structured-data";
 import { inter, dmSans } from "@/lib/fonts";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 // Metadata optimisées pour SEO 100/100
 export const metadata: Metadata = homeMetadata;
@@ -24,8 +26,11 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         {/* PWA Meta Tags */}
         <meta name="application-name" content="HuntZen Jobs" />
@@ -79,7 +84,9 @@ export default async function RootLayout({
         className={`${inter.variable} ${dmSans.variable} font-sans antialiased`}
       >
         <SkipLink />
-        <Providers initialUser={user}>{children}</Providers>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <Providers initialUser={user}>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

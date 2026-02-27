@@ -11,7 +11,7 @@
     "silent": false,
     "autoJobCancelation": true
   },
-  "buildCommand": "next build",
+  "buildCommand": "node ../scripts/sync-translations.mjs && next build",
   "devCommand": "next dev",
   "installCommand": "npm install",
   "framework": "nextjs",

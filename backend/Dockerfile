@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y \
 # Copy pyproject.toml for dependencies
 COPY pyproject.toml .
 
-# Install PyTorch CPU and dependencies from pyproject.toml
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+# Install PyTorch CPU and torchvision from the same index (ensures operator compatibility)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir -e .
 
 # Stage 2: Production
@@ -45,8 +45,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Install PyTorch CPU first
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+# Install PyTorch CPU + torchvision from the same index (ensures operator compatibility)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # Copy pyproject.toml and install dependencies
 COPY pyproject.toml .
@@ -56,6 +56,10 @@ RUN pip install --no-cache-dir -e .
 # Marker tries to write to /usr/local/lib/python3.11/site-packages/static by default
 RUN mkdir -p /usr/local/lib/python3.11/site-packages/static && \
     chmod -R 777 /usr/local/lib/python3.11/site-packages/static
+
+# Make all installed package files readable by non-root user (huntzen)
+# Docling uses rapidocr whose .pth model files default to root-only permissions
+RUN chmod -R a+rX /usr/local/lib/python3.11/site-packages/
 
 # Copy NEW application structure
 COPY --chown=huntzen:huntzen src/ ./src/

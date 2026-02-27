@@ -12,6 +12,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User, Session, AuthError } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   logLoginSuccess,
   logLoginFailed,
@@ -40,6 +41,8 @@ interface AuthContextType {
     fullName: string,
   ) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPasswordForEmail: (email: string) => Promise<void>;
+  resendConfirmationEmail: (email: string) => Promise<void>;
   error: string | null;
   clearError: () => void;
 }
@@ -56,6 +59,7 @@ export function AuthProvider({
   children: React.ReactNode;
   initialUser?: User | null;
 }) {
+  const tErr = useTranslations("auth.errors");
   const [user, setUser] = useState<User | null>(initialUser);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(!initialUser);
@@ -126,6 +130,29 @@ export function AuthProvider({
               }).catch((err) => {
                 devError("Failed to log OAuth login (non-critical):", err);
               });
+            }
+          }
+
+
+          // Register referral if a code cookie is present (fire-and-forget)
+          if (session?.user) {
+            const refCookie = document.cookie
+              .split("; ")
+              .find((r) => r.startsWith("huntzen_referral_code="));
+            if (refCookie) {
+              const refCode = refCookie.split("=")[1];
+              const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
+              fetch(`${backendUrl}/api/referrals/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: refCode, new_user_id: session.user.id }),
+              })
+                .then((res) => {
+                  if (res.ok) {
+                    document.cookie = "huntzen_referral_code=; path=/; max-age=0";
+                  }
+                })
+                .catch(() => {});
             }
           }
 
@@ -246,9 +273,9 @@ export function AuthProvider({
         err.message?.toLowerCase().includes("confirm your email");
 
       if (isEmailNotConfirmed) {
-        setError("Veuillez confirmer votre adresse email. Nous vous avons envoyé un email de confirmation lors de votre inscription. Vérifiez votre boîte mail (et vos spams).");
+        setError(tErr("emailNotConfirmed"));
       } else {
-        setError(err.message || "Email ou mot de passe invalide");
+        setError(err.message || tErr("invalidCredentials"));
       }
 
       setLoading(false);
@@ -281,11 +308,7 @@ export function AuthProvider({
       // Créer une promesse de timeout
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(
-            new Error(
-              "La requête prend trop de temps. Vérifiez votre connexion internet et réessayez."
-            )
-          );
+          reject(new Error(tErr("timeout")));
         }, SIGNUP_TIMEOUT_MS);
       });
 
@@ -318,24 +341,53 @@ export function AuthProvider({
         });
       }
 
-      // Show success message
       setError(null);
-
-      // Reset loading AVANT la redirection
       setLoading(false);
 
-      // Redirect to signup success (will show modal)
-      router.push("/signup?success=true&email=" + encodeURIComponent(email));
+      // If session exists, email confirmation is disabled → user is already logged in
+      // If session is null, email confirmation is required → show success modal
+      if (data?.session) {
+        router.push("/jobs");
+      } else {
+        router.push("/signup?success=true&email=" + encodeURIComponent(email));
+      }
     } catch (err: any) {
       devError("Sign up error:", err);
 
       // Message d'erreur plus clair pour timeout
-      const errorMessage = err.message?.includes("prend trop de temps")
-        ? err.message
-        : err.message || "Échec de la création du compte";
+      const errorMessage = err.message || tErr("signupFailed");
 
       setError(errorMessage);
       setLoading(false);
+      throw err;
+    }
+  };
+
+  const resetPasswordForEmail = async (email: string) => {
+    setError(null);
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/recovery`,
+    });
+    // Log in dev only — never expose to user to prevent email enumeration
+    if (error) {
+      devError("Reset password error (not surfaced):", error);
+    }
+  };
+
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      setError(null);
+      const { error } = await supabaseClient.auth.resend({
+        type: "signup",
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      devError("Resend confirmation error:", err);
+      setError(err.message || tErr("resendConfirmationFailed"));
       throw err;
     }
   };
@@ -391,6 +443,8 @@ export function AuthProvider({
         signInWithEmail,
         signUpWithEmail,
         signOut,
+        resetPasswordForEmail,
+        resendConfirmationEmail,
         error,
         clearError,
       }}

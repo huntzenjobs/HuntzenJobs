@@ -1,0 +1,1 @@
+-- Migration applied directly on remote (2026-02-12), stub for local sync

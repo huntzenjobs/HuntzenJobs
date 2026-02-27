@@ -1,11 +1,10 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ExpandableTextarea } from '@/components/ui/expandable-textarea'
-import { InternalLinksFooter } from '@/components/seo/internal-links'
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExpandableTextarea } from "@/components/ui/expandable-textarea";
 import {
   Send,
   Loader2,
@@ -18,33 +17,40 @@ import {
   Mic,
   AlertTriangle,
   Plus,
-} from 'lucide-react'
-import { huntzenApi } from '@/lib/api/huntzen-client'
-import { v4 as uuidv4 } from 'uuid'
-import { useSubscription } from '@/contexts/subscription-context'
-import { useAssistant } from '@/contexts/assistant-context'
-import { getAssistantConfig } from '@/config/assistants'
-import { BotSelector } from '@/components/assistant/bot-selector'
-import { CoachTimer as CoachTimerBadge } from '@/components/coach/coach-timer'
-import { ChatMessage, TypingIndicator, type Message as ChatMessageType } from '@/components/coach/chat-message'
-import { WelcomeScreen } from '@/components/coach/welcome-screen'
-import { QuickQuestionsDrawer } from '@/components/coach/quick-questions-drawer'
-import { HistorySidebar } from '@/components/coach/history-sidebar'
-import { ExportDialog } from '@/components/coach/export-dialog'
-import { useCoachHistory, useDebounce } from '@/hooks/use-coach-history'
-import { toCoachMessage, toChatMessage } from '@/types/coach-history'
+} from "lucide-react";
+import { huntzenApi } from "@/lib/api/huntzen-client";
+import { v4 as uuidv4 } from "uuid";
+import { useSubscription } from "@/contexts/subscription-context";
+import { useAssistant } from "@/contexts/assistant-context";
+import { getAssistantConfig } from "@/config/assistants";
+import { BotSelector } from "@/components/assistant/bot-selector";
+import { CoachTimer as CoachTimerBadge } from "@/components/coach/coach-timer";
+import {
+  ChatMessage,
+  TypingIndicator,
+  type Message as ChatMessageType,
+} from "@/components/coach/chat-message";
+import { WelcomeScreen } from "@/components/coach/welcome-screen";
+import { QuickQuestionsDrawer } from "@/components/coach/quick-questions-drawer";
+import { HistorySidebar } from "@/components/coach/history-sidebar";
+import { ExportDialog } from "@/components/coach/export-dialog";
+import { useCoachHistory, useDebounce } from "@/hooks/use-coach-history";
+import { toCoachMessage, toChatMessage } from "@/types/coach-history";
+import { useTranslations, useLocale } from "next-intl";
 
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<ChatMessageType[]>([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [sessionId] = useState(() => uuidv4())
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const lastUserMessageRef = useRef<HTMLDivElement>(null)
+  const t = useTranslations("dashboard.assistant");
+  const locale = useLocale();
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sessionId] = useState(() => uuidv4());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastUserMessageRef = useRef<HTMLDivElement>(null);
 
   // Assistant state
-  const { selectedAssistant } = useAssistant()
-  const assistantConfig = getAssistantConfig(selectedAssistant)
+  const { selectedAssistant } = useAssistant();
+  const assistantConfig = getAssistantConfig(selectedAssistant);
 
   // Freemium state
   const {
@@ -56,7 +62,7 @@ export default function AssistantPage() {
     openPricingModal,
     isFreePlan,
     limits,
-  } = useSubscription()
+  } = useSubscription();
 
   // History state
   const {
@@ -65,31 +71,36 @@ export default function AssistantPage() {
     saveConversation,
     loadConversation,
     setCurrentConversationId,
-  } = useCoachHistory()
+  } = useCoachHistory();
 
   // Debounce messages for auto-save (2s delay)
-  const debouncedMessages = useDebounce(messages, 2000)
+  const debouncedMessages = useDebounce(messages, 2000);
 
-  const canChat = coachTimeRemaining > 0 || limits.coach_minutes_per_day === Infinity
+  const canChat =
+    coachTimeRemaining > 0 || limits.coach_minutes_per_day === Infinity;
 
   // Smart scroll: scroll to user message when sent (best UX)
   useEffect(() => {
     // Only scroll when user sends a new message (not during loading)
-    if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
-      lastUserMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (messages.length > 0 && messages[messages.length - 1].role === "user") {
+      lastUserMessageRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
     }
-  }, [messages])
+  }, [messages]);
 
   // Format time as mm:ss
   const formatTime = (seconds: number) => {
-    if (seconds === Infinity || seconds > 3600 * 24) return 'Illimite'
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
+    if (seconds === Infinity || seconds > 3600 * 24) return t("unlimited");
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   // Warning threshold (3 minutes)
-  const isTimeWarning = isFreePlan && coachTimeRemaining <= 180 && coachTimeRemaining > 0
+  const isTimeWarning =
+    isFreePlan && coachTimeRemaining <= 180 && coachTimeRemaining > 0;
 
   // Removed auto-scroll for better UX - user controls scrolling manually
 
@@ -97,144 +108,148 @@ export default function AssistantPage() {
   useEffect(() => {
     return () => {
       if (isCoachSessionActive) {
-        stopCoachSession()
+        stopCoachSession();
       }
-    }
-  }, [isCoachSessionActive, stopCoachSession])
+    };
+  }, [isCoachSessionActive, stopCoachSession]);
+
+  // Keep a stable ref to saveConversation to avoid re-triggering the auto-save
+  // effect every time saveMutation state changes (which would cause an infinite loop)
+  const saveConversationRef = useRef(saveConversation);
+  useEffect(() => {
+    saveConversationRef.current = saveConversation;
+  }, [saveConversation]);
 
   // Auto-save conversation (debounced)
   useEffect(() => {
     if (
       debouncedMessages.length > 0 &&
       !loading &&
-      hasFeature('has_coach_history')
+      hasFeature("has_coach_history")
     ) {
-      const coachMessages = debouncedMessages.map(toCoachMessage)
+      const coachMessages = debouncedMessages.map(toCoachMessage);
 
-      saveConversation(
-        coachMessages,
-        sessionId,
-        currentConversationId || undefined
-      ).then((id) => {
-        if (id && !currentConversationId) {
-          setCurrentConversationId(id)
-        }
-      })
+      saveConversationRef
+        .current(coachMessages, sessionId, currentConversationId || undefined)
+        .then((id) => {
+          if (id && !currentConversationId) {
+            setCurrentConversationId(id);
+          }
+        });
     }
   }, [
     debouncedMessages,
     loading,
-    saveConversation,
     sessionId,
     currentConversationId,
     hasFeature,
     setCurrentConversationId,
-  ])
+  ]);
 
   const sendMessage = async (messageText: string) => {
-    if (!messageText.trim() || loading) return
+    if (!messageText.trim() || loading) return;
 
     // Check if user can still chat
     if (!canChat) {
-      openPricingModal('coach_minutes_per_day')
-      return
+      openPricingModal("coach_minutes_per_day");
+      return;
     }
 
     // Start timer on first message
     if (!isCoachSessionActive && isFreePlan) {
-      startCoachSession()
+      startCoachSession();
     }
 
     const userMessage: ChatMessageType = {
       id: uuidv4(),
-      role: 'user',
+      role: "user",
       content: messageText,
       timestamp: new Date(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setInput('')
-    setLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoading(true);
 
     try {
       // Use the appropriate API method based on selected assistant
       const response = await huntzenApi.sendAssistantMessage(
         messageText,
         sessionId,
-        selectedAssistant
-      )
+        selectedAssistant,
+        locale,
+      );
 
       const assistantMessage: ChatMessageType = {
         id: uuidv4(),
-        role: 'assistant',
+        role: "assistant",
         content: response.response,
         timestamp: new Date(),
-      }
+      };
 
-      setMessages((prev) => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       const errorMessage: ChatMessageType = {
         id: uuidv4(),
-        role: 'assistant',
-        content:
-          'Desole, une erreur est survenue. Pouvez-vous reformuler votre question ?',
+        role: "assistant",
+        content: t("errorMessage"),
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Handle time up
   const handleTimeUp = () => {
-    openPricingModal('coach_minutes_per_day')
-  }
+    openPricingModal("coach_minutes_per_day");
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    sendMessage(input)
-  }
+    e.preventDefault();
+    sendMessage(input);
+  };
 
   const handleSimulation = () => {
-    if (!hasFeature('has_interview_sim')) {
-      openPricingModal('has_interview_sim')
-      return
+    if (!hasFeature("has_interview_sim")) {
+      openPricingModal("has_interview_sim");
+      return;
     }
     // TODO: Implement interview simulation
-  }
+  };
 
   // Load conversation from history
   const handleLoadConversation = async (conversationId: string) => {
-    const conversation = await loadConversation(conversationId)
+    const conversation = await loadConversation(conversationId);
 
     if (conversation) {
       // Convert CoachMessages back to ChatMessages
-      const chatMessages = conversation.messages.map(toChatMessage)
+      const chatMessages = conversation.messages.map(toChatMessage);
 
-      setMessages(chatMessages)
-      setCurrentConversationId(conversation.id)
+      setMessages(chatMessages);
+      setCurrentConversationId(conversation.id);
     }
-  }
+  };
 
   // Start new conversation
   const handleNewConversation = () => {
-    setMessages([])
-    setCurrentConversationId(null)
-    setInput('')
-  }
+    setMessages([]);
+    setCurrentConversationId(null);
+    setInput("");
+  };
 
   // Check if we should show welcome screen (no messages)
-  const showWelcome = messages.length === 0
+  const showWelcome = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)]">
+    <div className="flex flex-col min-h-screen">
       {/* Hero Header - HuntZen Style (Adapté dark mode) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-center justify-between gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700"
+        className="flex items-center justify-between gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-sm border border-slate-200"
       >
         {/* BotSelector compact à gauche */}
         <motion.div
@@ -264,7 +279,7 @@ export default function AssistantPage() {
             </motion.div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-black dark:text-white truncate">
+                <h1 className="text-2xl font-black text-slate-900 truncate">
                   {assistantConfig.name}
                 </h1>
                 {assistantConfig.certificationBadge && (
@@ -273,7 +288,7 @@ export default function AssistantPage() {
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+              <p className="text-sm text-slate-700 truncate">
                 {assistantConfig.description}
               </p>
             </div>
@@ -296,12 +311,13 @@ export default function AssistantPage() {
           )}
 
           {/* Export button (if has messages and feature access) */}
-          {hasFeature('has_coach_history') && messages.length > 0 && (
+          {hasFeature("has_coach_history") && messages.length > 0 && (
             <ExportDialog
               messages={messages.map(toCoachMessage)}
               title={
                 currentConversationId
-                  ? conversations.find((c) => c.id === currentConversationId)?.title
+                  ? conversations.find((c) => c.id === currentConversationId)
+                      ?.title
                   : undefined
               }
               conversationDate={
@@ -313,7 +329,7 @@ export default function AssistantPage() {
           )}
 
           {/* History sidebar */}
-          {hasFeature('has_coach_history') ? (
+          {hasFeature("has_coach_history") ? (
             <HistorySidebar
               onLoadConversation={handleLoadConversation}
               currentConversationId={currentConversationId}
@@ -322,25 +338,25 @@ export default function AssistantPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => openPricingModal('has_coach_history')}
-              className="gap-2 bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200 hover:border-[#00D9FF] hover:text-black"
+              onClick={() => openPricingModal("has_coach_history")}
+              className="gap-2 bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#00D9FF] hover:text-slate-900"
             >
               <History className="w-4 h-4" />
-              Historique
+              {t("history")}
               <Lock className="w-3 h-3" />
             </Button>
           )}
 
           {/* New conversation button */}
-          {messages.length > 0 && hasFeature('has_coach_history') && (
+          {messages.length > 0 && hasFeature("has_coach_history") && (
             <Button
               variant="outline"
               size="sm"
               onClick={handleNewConversation}
-              className="gap-2 bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200 hover:border-[#00D9FF] hover:text-black"
+              className="gap-2 bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#00D9FF] hover:text-slate-900"
             >
               <Plus className="w-4 h-4" />
-              Nouvelle
+              {t("newConversation")}
             </Button>
           )}
 
@@ -352,41 +368,39 @@ export default function AssistantPage() {
             className="hidden gap-2"
           >
             <Mic className="w-4 h-4" />
-            Simulation
-            {!hasFeature('has_interview_sim') && <Lock className="w-3 h-3" />}
+            {t("simulation")}
+            {!hasFeature("has_interview_sim") && <Lock className="w-3 h-3" />}
           </Button>
         </motion.div>
       </motion.div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         {/* Chat Section - Full width */}
-        <Card className="w-full flex flex-col overflow-hidden shadow-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <Card className="w-full flex flex-col shadow-sm border-2 border-slate-200 bg-white">
           {/* Time warning banner */}
           <AnimatePresence>
             {isTimeWarning && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="px-4 py-2 bg-amber-50 border-b border-amber-200 flex items-center gap-2 text-amber-700"
               >
                 <AlertTriangle className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  Il vous reste moins de 3 minutes ! Passez Premium pour un temps illimité.
-                </span>
+                <span className="text-sm font-medium">{t("timeWarning")}</span>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="ml-auto text-amber-700 hover:text-amber-800 hover:bg-amber-100"
-                  onClick={() => openPricingModal('coach_minutes_per_day')}
+                  onClick={() => openPricingModal("coach_minutes_per_day")}
                 >
-                  Passer Premium
+                  {t("upgradePremium")}
                 </Button>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <CardContent className="flex-1 overflow-y-auto p-6 space-y-4">
+          <CardContent className="p-6 space-y-4">
             {/* Welcome screen - Always visible but compact when there are messages */}
             {showWelcome ? (
               <motion.div
@@ -408,10 +422,13 @@ export default function AssistantPage() {
                     className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-[#00D9FF]/20"
                     style={{ backgroundColor: assistantConfig.bgColor }}
                   >
-                    <assistantConfig.icon className="w-6 h-6" style={{ color: assistantConfig.color }} />
+                    <assistantConfig.icon
+                      className="w-6 h-6"
+                      style={{ color: assistantConfig.color }}
+                    />
                   </div>
                   <div>
-                    <h3 className="font-bold text-black flex items-center gap-2">
+                    <h3 className="font-bold text-slate-900 flex items-center gap-2">
                       {assistantConfig.shortName}
                       {assistantConfig.certificationBadge && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
@@ -419,7 +436,9 @@ export default function AssistantPage() {
                         </span>
                       )}
                     </h3>
-                    <p className="text-sm text-gray-700">{assistantConfig.description}</p>
+                    <p className="text-sm text-slate-700">
+                      {assistantConfig.description}
+                    </p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -447,8 +466,7 @@ export default function AssistantPage() {
               {messages.map((message, index) => {
                 // Attach ref to the last user message for smart scrolling
                 const isLastUserMessage =
-                  message.role === 'user' &&
-                  index === messages.length - 1
+                  message.role === "user" && index === messages.length - 1;
 
                 return (
                   <motion.div
@@ -466,7 +484,7 @@ export default function AssistantPage() {
                       enableCopy
                     />
                   </motion.div>
-                )
+                );
               })}
             </AnimatePresence>
 
@@ -485,7 +503,7 @@ export default function AssistantPage() {
           </CardContent>
 
           {/* Input section */}
-          <div className="border-t-2 border-gray-200 p-4">
+          <div className="border-t-2 border-slate-200 p-4">
             {canChat ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -496,15 +514,23 @@ export default function AssistantPage() {
                   <ExpandableTextarea
                     value={input}
                     onChange={setInput}
-                    placeholder="Posez votre question..."
+                    placeholder={t("placeholder")}
                     disabled={loading}
                     minHeight={44}
                     maxHeight={120}
                     onKeyDown={(e) => {
-                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                        e.preventDefault()
+                      // Send with Enter (without Shift), new line with Shift+Enter
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
                         if (input.trim() && !loading) {
-                          sendMessage(input)
+                          sendMessage(input);
+                        }
+                      }
+                      // Also support Ctrl/Cmd+Enter for users who prefer it
+                      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                        e.preventDefault();
+                        if (input.trim() && !loading) {
+                          sendMessage(input);
                         }
                       }
                     }}
@@ -537,27 +563,26 @@ export default function AssistantPage() {
                 >
                   <Clock className="w-6 h-6 text-gray-400" />
                 </motion.div>
-                <p className="font-bold text-black dark:text-white mb-1">
-                  Temps écoulé
+                <p className="font-bold text-slate-900 mb-1">
+                  {t("timeExpiredTitle")}
                 </p>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                  Vous avez utilisé vos {limits.coach_minutes_per_day} minutes gratuites
+                <p className="text-sm text-slate-700 mb-3">
+                  {t("timeExpiredDesc", {
+                    minutes: limits.coach_minutes_per_day,
+                  })}
                 </p>
                 <Button
-                  onClick={() => openPricingModal('coach_minutes_per_day')}
+                  onClick={() => openPricingModal("coach_minutes_per_day")}
                   className="h-12 text-base font-bold bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
-                  Débloquer le temps illimité
+                  {t("unlockUnlimited")}
                 </Button>
               </motion.div>
             )}
           </div>
         </Card>
       </div>
-
-      {/* Internal Links Footer for SEO */}
-      <InternalLinksFooter />
     </div>
-  )
+  );
 }

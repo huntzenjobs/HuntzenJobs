@@ -184,7 +184,10 @@ class BaseAgent(ABC):
             Agent response
         """
         messages = self.build_messages(message, history)
-        response = await self.llm.ainvoke(messages)
+        response = await self.llm.ainvoke(
+            messages,
+            config={"metadata": {"agent_name": self.name}, "run_name": f"Agent:{self.name}"}
+        )
         return response.content
     
     def _parse_json(self, text: str) -> dict | None:
@@ -300,7 +303,10 @@ class SubAgent:
             HumanMessage(content=prompt),
         ]
         
-        response = await self.llm.ainvoke(messages)
+        response = await self.llm.ainvoke(
+            messages,
+            config={"metadata": {"sub_agent_name": self.name}, "run_name": f"SubAgent:{self.name}"}
+        )
         return response.content
 
 

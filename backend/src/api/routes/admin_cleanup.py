@@ -14,7 +14,7 @@ router = APIRouter()
 
 # Import dependencies
 try:
-    from src.api.deps import get_current_user
+    from src.api.deps import get_current_admin
     from src.services.stripe import supabase_client, stripe
 except ImportError as e:
     logger.error(f"Failed to import dependencies: {e}")
@@ -24,7 +24,7 @@ except ImportError as e:
 @router.post("/sync-subscriptions/{user_id}")
 async def sync_user_subscriptions(
     user_id: str,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_admin)
 ) -> Dict[str, Any]:
     """
     Cleanup orphaned subscriptions by synchronizing with Stripe.

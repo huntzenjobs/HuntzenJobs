@@ -3,35 +3,35 @@
  * Features: list of past analyses, quick stats, click to reload
  */
 
-'use client'
+"use client";
 
-import { FileText, Trash2 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { FileText, Trash2 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { ScoreRing } from '@/components/cv/score-ring'
-import type { CVAnalysisResult } from '@/hooks/use-cv-history'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScoreRing } from "@/components/cv/score-ring";
+import type { CVAnalysisResult } from "@/hooks/use-cv-history";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface CVHistoryDrawerProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  history: CVAnalysisResult[]
-  onSelectAnalysis: (analysis: CVAnalysisResult) => void
-  onDeleteAnalysis?: (id: string) => void
-  className?: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  history: CVAnalysisResult[];
+  onSelectAnalysis: (analysis: CVAnalysisResult) => void;
+  onDeleteAnalysis?: (id: string) => void;
+  className?: string;
 }
 
 // ============================================================================
@@ -44,25 +44,25 @@ export function CVHistoryDrawer({
   history,
   onSelectAnalysis,
   onDeleteAnalysis,
-  className
+  className,
 }: CVHistoryDrawerProps) {
   const handleSelect = (analysis: CVAnalysisResult) => {
-    onSelectAnalysis(analysis)
-    onOpenChange(false) // Close drawer after selection
-  }
+    onSelectAnalysis(analysis);
+    onOpenChange(false); // Close drawer after selection
+  };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation() // Prevent triggering onSelectAnalysis
+    e.stopPropagation(); // Prevent triggering onSelectAnalysis
     if (onDeleteAnalysis) {
-      onDeleteAnalysis(id)
+      onDeleteAnalysis(id);
     }
-  }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className={cn('w-full sm:w-[450px] overflow-y-auto', className)}
+        className={cn("w-full sm:w-[450px] overflow-y-auto", className)}
       >
         <SheetHeader className="text-left mb-6">
           <SheetTitle className="text-2xl font-bold">
@@ -70,11 +70,12 @@ export function CVHistoryDrawer({
           </SheetTitle>
           <SheetDescription>
             {history.length === 0 ? (
-              'Aucune analyse enregistrée'
+              "Aucune analyse enregistrée"
             ) : (
               <>
-                {history.length} analyse{history.length > 1 ? 's' : ''} enregistrée
-                {history.length > 1 ? 's' : ''}
+                {history.length} analyse{history.length > 1 ? "s" : ""}{" "}
+                enregistrée
+                {history.length > 1 ? "s" : ""}
               </>
             )}
           </SheetDescription>
@@ -87,10 +88,10 @@ export function CVHistoryDrawer({
               <div
                 key={item.id}
                 className={cn(
-                  'group relative p-4 border-2 rounded-xl',
-                  'hover:border-blue-300 hover:shadow-md',
-                  'transition-all duration-200 cursor-pointer',
-                  'bg-white'
+                  "group relative p-4 border-2 rounded-xl",
+                  "hover:border-blue-300 hover:shadow-md",
+                  "transition-all duration-200 cursor-pointer",
+                  "bg-white",
                 )}
                 onClick={() => handleSelect(item)}
               >
@@ -101,10 +102,13 @@ export function CVHistoryDrawer({
                       {item.fileName}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {formatDistanceToNow(item.analyzedAt, {
-                        addSuffix: true,
-                        locale: fr,
-                      })}
+                      {item.analyzedAt &&
+                      !isNaN(new Date(item.analyzedAt).getTime())
+                        ? formatDistanceToNow(new Date(item.analyzedAt), {
+                            addSuffix: true,
+                            locale: fr,
+                          })
+                        : "Date inconnue"}
                     </p>
                   </div>
 
@@ -122,29 +126,32 @@ export function CVHistoryDrawer({
 
                 {/* Quick stats */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  {item.strengths.length > 0 && (
+                  {(item.strengths?.length ?? 0) > 0 && (
                     <Badge
                       variant="outline"
                       className="text-xs bg-green-50 text-green-700 border-green-200"
                     >
-                      {item.strengths.length} point{item.strengths.length > 1 ? 's' : ''} fort
-                      {item.strengths.length > 1 ? 's' : ''}
+                      {item.strengths.length} point
+                      {item.strengths.length > 1 ? "s" : ""} fort
+                      {item.strengths.length > 1 ? "s" : ""}
                     </Badge>
                   )}
-                  {item.weaknesses.length > 0 && (
+                  {(item.weaknesses?.length ?? 0) > 0 && (
                     <Badge
                       variant="outline"
                       className="text-xs bg-orange-50 text-orange-700 border-orange-200"
                     >
-                      {item.weaknesses.length} faiblesse{item.weaknesses.length > 1 ? 's' : ''}
+                      {item.weaknesses.length} faiblesse
+                      {item.weaknesses.length > 1 ? "s" : ""}
                     </Badge>
                   )}
-                  {item.suggestions.length > 0 && (
+                  {(item.suggestions?.length ?? 0) > 0 && (
                     <Badge
                       variant="outline"
                       className="text-xs bg-blue-50 text-blue-700 border-blue-200"
                     >
-                      {item.suggestions.length} suggestion{item.suggestions.length > 1 ? 's' : ''}
+                      {item.suggestions.length} suggestion
+                      {item.suggestions.length > 1 ? "s" : ""}
                     </Badge>
                   )}
                 </div>
@@ -155,11 +162,11 @@ export function CVHistoryDrawer({
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      'absolute top-2 right-2',
-                      'opacity-0 group-hover:opacity-100',
-                      'transition-opacity duration-200',
-                      'h-8 w-8 p-0',
-                      'hover:bg-red-50 hover:text-red-600'
+                      "absolute top-2 right-2",
+                      "opacity-0 group-hover:opacity-100",
+                      "transition-opacity duration-200",
+                      "h-8 w-8 p-0",
+                      "hover:bg-red-50 hover:text-red-600",
                     )}
                     onClick={(e) => handleDelete(e, item.id)}
                     aria-label="Supprimer cette analyse"
@@ -195,5 +202,5 @@ export function CVHistoryDrawer({
         )}
       </SheetContent>
     </Sheet>
-  )
+  );
 }

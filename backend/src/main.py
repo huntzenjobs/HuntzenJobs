@@ -17,7 +17,8 @@ import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.api import router
@@ -37,6 +38,16 @@ async def lifespan(app: FastAPI):
     logger.info(f"{settings.app_name} v{settings.app_version} starting...")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"LLM Models: {settings.llm_model_fast} / {settings.llm_model_powerful}")
+    
+    # Initialize LangSmith Tracing if enabled
+    if settings.langchain_tracing_v2:
+        import os
+        os.environ["LANGCHAIN_TRACING_V2"] = "true"
+        os.environ["LANGCHAIN_ENDPOINT"] = settings.langchain_endpoint
+        os.environ["LANGCHAIN_API_KEY"] = settings.langchain_api_key.get_secret_value()
+        os.environ["LANGCHAIN_PROJECT"] = settings.langchain_project
+        logger.info(f"🚀 LangSmith Tracing enabled (Project: {settings.langchain_project})")
+    
     logger.info("=" * 60)
     
     yield
@@ -76,6 +87,33 @@ app = FastAPI(
 
 # Setup middleware
 setup_middleware(app)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """
+    Global fallback exception handler.
+
+    Ensures CORS headers are present even on unhandled 500 errors so the
+    browser can read the error detail instead of seeing a CORS violation.
+    """
+    origin = request.headers.get("origin", "")
+    cors_headers: dict[str, str] = {}
+    if origin:
+        cors_headers["Access-Control-Allow-Origin"] = origin
+        cors_headers["Access-Control-Allow-Credentials"] = "true"
+        cors_headers["Vary"] = "Origin"
+
+    logger.error(
+        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+        headers=cors_headers,
+    )
+
 
 # Mount static files (if directory exists)
 try:

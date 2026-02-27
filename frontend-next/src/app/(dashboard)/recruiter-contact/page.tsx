@@ -1,19 +1,25 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   CheckCircle2,
   Star,
@@ -25,115 +31,134 @@ import {
   Calendar,
   ArrowRight,
   Loader2,
-} from 'lucide-react'
-import { huntzenApi } from '@/lib/api/huntzen-client'
-import { useRouter } from 'next/navigation'
-import { useOptionalAuth } from '@/contexts/auth-context'
-import { HeroSection } from '@/components/recruiter/hero-section'
-import { ProcessSteps } from '@/components/recruiter/process-steps'
-import { TestimonialsSection } from '@/components/recruiter/testimonials-section'
-import { FAQSection } from '@/components/recruiter/faq-section'
+} from "lucide-react";
+import { huntzenApi } from "@/lib/api/huntzen-client";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { HeroSection } from "@/components/recruiter/hero-section";
+import { ProcessSteps } from "@/components/recruiter/process-steps";
+import { TestimonialsSection } from "@/components/recruiter/testimonials-section";
+import { FAQSection } from "@/components/recruiter/faq-section";
 
 export default function RecruiterContactPage() {
-  const router = useRouter()
-  const auth = useOptionalAuth()
-  const user = auth?.user
+  const t = useTranslations("dashboard.recruiterContact");
+  const router = useRouter();
+  const auth = useOptionalAuth();
+  const user = auth?.user;
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: user?.user_metadata?.full_name || '',
-    email: user?.email || '',
-    phone: '',
-    sector: '',
-    experienceLevel: '',
-    message: '',
-    preferredDate: '',
-  })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
+    fullName: user?.user_metadata?.full_name || "",
+    email: user?.email || "",
+    phone: "",
+    sector: "",
+    experienceLevel: "",
+    message: "",
+    preferredDate: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   // Validation functions
   const validateField = (field: string, value: string): string => {
     switch (field) {
-      case 'fullName':
-        if (!value.trim()) return 'Le nom complet est requis'
-        if (value.trim().length < 2) return 'Le nom doit contenir au moins 2 caractères'
-        return ''
-      case 'email':
-        if (!value.trim()) return 'L\'email est requis'
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(value)) return 'Format d\'email invalide'
-        return ''
-      case 'phone':
-        if (value && !/^[\d\s+()-]+$/.test(value)) return 'Format de téléphone invalide'
-        return ''
-      case 'sector':
-        if (!value) return 'Le secteur d\'activité est requis'
-        return ''
-      case 'experienceLevel':
-        if (!value) return 'Le niveau d\'expérience est requis'
-        return ''
-      case 'message':
-        if (!value.trim()) return 'Le message est requis'
-        if (value.trim().length < 10) return 'Le message doit contenir au moins 10 caractères'
-        return ''
+      case "fullName":
+        if (!value.trim()) return t("validation.fullNameRequired");
+        if (value.trim().length < 2) return t("validation.fullNameTooShort");
+        return "";
+      case "email":
+        if (!value.trim()) return t("validation.emailRequired");
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) return t("validation.emailInvalid");
+        return "";
+      case "phone":
+        if (value && !/^[\d\s+()-]+$/.test(value))
+          return t("validation.phoneInvalid");
+        return "";
+      case "sector":
+        if (!value) return t("validation.sectorRequired");
+        return "";
+      case "experienceLevel":
+        if (!value) return t("validation.experienceRequired");
+        return "";
+      case "message":
+        if (!value.trim()) return t("validation.messageRequired");
+        if (value.trim().length < 10) return t("validation.messageTooShort");
+        return "";
       default:
-        return ''
+        return "";
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!user) {
-      router.push('/login?redirectTo=' + encodeURIComponent('/recruiter-contact'))
-      return
+      router.push(
+        "/login?redirectTo=" + encodeURIComponent("/recruiter-contact"),
+      );
+      return;
     }
 
     // Validate all fields before submit
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
     Object.keys(formData).forEach((field) => {
-      const error = validateField(field, formData[field as keyof typeof formData])
-      if (error) newErrors[field] = error
-    })
+      const error = validateField(
+        field,
+        formData[field as keyof typeof formData],
+      );
+      if (error) newErrors[field] = error;
+    });
 
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      setTouched(Object.keys(formData).reduce((acc, key) => ({ ...acc, [key]: true }), {}))
-      return
+      setErrors(newErrors);
+      setTouched(
+        Object.keys(formData).reduce(
+          (acc, key) => ({ ...acc, [key]: true }),
+          {},
+        ),
+      );
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      // TODO: Implement API call to create recruiter request
-      // const response = await huntzenApi.createRecruiterRequest(formData)
-      // const checkoutUrl = response.checkoutUrl
+      // Create recruiter request
+      const response = await huntzenApi.createRecruiterRequest(formData);
 
-      // For now, just show success
-      alert('Demande envoyée ! Redirection vers le paiement...')
+      // Create Stripe payment session
+      const paymentResponse = await huntzenApi.createRecruiterPayment(
+        response.request_id,
+      );
 
-      // router.push(checkoutUrl)
-    } catch (error) {
-      console.error('Error submitting request:', error)
-      alert('Une erreur est survenue. Veuillez réessayer.')
+      // Redirect to Stripe checkout
+      if (paymentResponse.checkout_url) {
+        window.location.href = paymentResponse.checkout_url;
+      }
+    } catch (error: any) {
+      alert(t("form.error"));
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }))
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
-  }
+  };
 
   const handleBlur = (field: string) => {
-    setTouched((prev) => ({ ...prev, [field]: true }))
-    const error = validateField(field, formData[field as keyof typeof formData])
-    setErrors((prev) => ({ ...prev, [field]: error }))
-  }
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const error = validateField(
+      field,
+      formData[field as keyof typeof formData],
+    );
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
@@ -154,7 +179,7 @@ export default function RecruiterContactPage() {
           className="text-center p-6 bg-white rounded-xl border-2 border-[#00D9FF]/20 hover:border-[#00D9FF] hover:shadow-lg transition-all"
         >
           <div className="text-4xl font-black text-[#00D9FF] mb-2">127</div>
-          <p className="text-sm text-gray-600">Consultations réussies</p>
+          <p className="text-sm text-gray-600">{t("stats.consultations")}</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -163,7 +188,7 @@ export default function RecruiterContactPage() {
           className="text-center p-6 bg-white rounded-xl border-2 border-[#00C4EA]/20 hover:border-[#00C4EA] hover:shadow-lg transition-all"
         >
           <div className="text-4xl font-black text-[#00C4EA] mb-2">4.9/5</div>
-          <p className="text-sm text-gray-600">Satisfaction moyenne</p>
+          <p className="text-sm text-gray-600">{t("stats.satisfaction")}</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -172,7 +197,7 @@ export default function RecruiterContactPage() {
           className="text-center p-6 bg-white rounded-xl border-2 border-[#00D9FF]/20 hover:border-[#00D9FF] hover:shadow-lg transition-all"
         >
           <div className="text-4xl font-black text-[#00D9FF] mb-2">48h</div>
-          <p className="text-sm text-gray-600">Délai moyen</p>
+          <p className="text-sm text-gray-600">{t("stats.delay")}</p>
         </motion.div>
       </motion.div>
 
@@ -181,22 +206,22 @@ export default function RecruiterContactPage() {
         {[
           {
             icon: CheckCircle2,
-            title: "Conseils personnalisés",
-            description: "Un recruteur expert analyse votre profil et vous donne des recommandations sur-mesure",
-            delay: 0.7
+            title: t("benefits.personalizedTitle"),
+            description: t("benefits.personalizedDesc"),
+            delay: 0.7,
           },
           {
             icon: Star,
-            title: "Expertise professionnelle",
-            description: "Nos recruteurs ont 10+ ans d'expérience dans le recrutement de cadres et talents",
-            delay: 0.8
+            title: t("benefits.expertiseTitle"),
+            description: t("benefits.expertiseDesc"),
+            delay: 0.8,
           },
           {
             icon: Clock,
-            title: "Réponse rapide",
-            description: "Vous serez contacté sous 48h pour planifier votre consultation de 30 minutes",
-            delay: 0.9
-          }
+            title: t("benefits.fastResponseTitle"),
+            description: t("benefits.fastResponseDesc"),
+            delay: 0.9,
+          },
         ].map((benefit, index) => (
           <motion.div
             key={index}
@@ -209,10 +234,10 @@ export default function RecruiterContactPage() {
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center mb-4 shadow-lg shadow-[#00D9FF]/30">
                   <benefit.icon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="font-bold text-lg text-black mb-2">{benefit.title}</h3>
-                <p className="text-gray-600 text-sm">
-                  {benefit.description}
-                </p>
+                <h3 className="font-bold text-lg text-black mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-gray-600 text-sm">{benefit.description}</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -237,39 +262,43 @@ export default function RecruiterContactPage() {
           <CardHeader className="bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] text-white">
             <CardTitle className="text-2xl flex items-center gap-2">
               <Sparkles className="w-6 h-6" />
-              Consultation Recruteur
+              {t("pricing.title")}
             </CardTitle>
             <CardDescription className="text-white/90 text-lg">
-              Session individuelle de 30 minutes
+              {t("pricing.sessionDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="mb-6">
               <div className="flex items-baseline gap-2 mb-2">
                 <span className="text-5xl font-bold text-black">50€</span>
-                <span className="text-gray-600">/ consultation</span>
+                <span className="text-gray-600">
+                  {t("pricing.perConsultation")}
+                </span>
               </div>
-              <p className="text-sm text-gray-600">Paiement unique, aucun abonnement</p>
+              <p className="text-sm text-gray-600">
+                {t("pricing.noSubscription")}
+              </p>
             </div>
 
             <div className="space-y-4">
               {[
                 {
-                  title: "Session vidéo de 30 minutes",
-                  description: "Échange en direct avec un expert"
+                  title: t("pricing.item1Title"),
+                  description: t("pricing.item1Desc"),
                 },
                 {
-                  title: "Analyse personnalisée",
-                  description: "CV, profil LinkedIn, stratégie de recherche"
+                  title: t("pricing.item2Title"),
+                  description: t("pricing.item2Desc"),
                 },
                 {
-                  title: "Plan d'action concret",
-                  description: "Recommandations actionnables immédiatement"
+                  title: t("pricing.item3Title"),
+                  description: t("pricing.item3Desc"),
                 },
                 {
-                  title: "Compte-rendu écrit",
-                  description: "Résumé détaillé après la consultation"
-                }
+                  title: t("pricing.item4Title"),
+                  description: t("pricing.item4Desc"),
+                },
               ].map((item, index) => (
                 <motion.div
                   key={index}
@@ -290,7 +319,7 @@ export default function RecruiterContactPage() {
             <div className="mt-6 pt-6 border-t">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Shield className="w-4 h-4" />
-                <span>Paiement sécurisé par Stripe</span>
+                <span>{t("pricing.securePay")}</span>
               </div>
             </div>
           </CardContent>
@@ -299,139 +328,177 @@ export default function RecruiterContactPage() {
         {/* Request Form */}
         <Card className="border-2 border-gray-200 h-fit">
           <CardHeader>
-            <CardTitle className="text-black">Réserver ma consultation</CardTitle>
-            <CardDescription>
-              Remplissez le formulaire pour être contacté par un recruteur expert
-            </CardDescription>
+            <CardTitle className="text-black">{t("form.title")}</CardTitle>
+            <CardDescription>{t("form.desc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-4">
                 <div>
-                  <Label htmlFor="fullName">Nom complet *</Label>
+                  <Label htmlFor="fullName">{t("form.fullName")}</Label>
                   <Input
                     id="fullName"
                     placeholder="Jean Dupont"
                     value={formData.fullName}
-                    onChange={(e) => handleChange('fullName', e.target.value)}
-                    onBlur={() => handleBlur('fullName')}
+                    onChange={(e) => handleChange("fullName", e.target.value)}
+                    onBlur={() => handleBlur("fullName")}
                     required
-                    className={`border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.fullName && errors.fullName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    className={`border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.fullName && errors.fullName ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                     aria-invalid={touched.fullName && !!errors.fullName}
                   />
                   {touched.fullName && errors.fullName && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.fullName}</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.fullName}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">{t("form.email")}</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                     <Input
                       id="email"
                       type="email"
                       placeholder="jean.dupont@example.com"
-                      className={`pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.email && errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                      className={`pl-10 border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.email && errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                       value={formData.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
-                      onBlur={() => handleBlur('email')}
+                      onChange={(e) => handleChange("email", e.target.value)}
+                      onBlur={() => handleBlur("email")}
                       required
                       aria-invalid={touched.email && !!errors.email}
                     />
                   </div>
                   {touched.email && errors.email && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.email}</p>
+                    <p className="text-sm text-red-600 mt-1">{errors.email}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Téléphone</Label>
+                  <Label htmlFor="phone">{t("form.phone")}</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <Phone className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                     <Input
                       id="phone"
                       type="tel"
                       placeholder="+33 6 12 34 56 78"
-                      className={`pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.phone && errors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                      className={`pl-10 border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.phone && errors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                       value={formData.phone}
-                      onChange={(e) => handleChange('phone', e.target.value)}
-                      onBlur={() => handleBlur('phone')}
+                      onChange={(e) => handleChange("phone", e.target.value)}
+                      onBlur={() => handleBlur("phone")}
                       aria-invalid={touched.phone && !!errors.phone}
                     />
                   </div>
                   {touched.phone && errors.phone && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.phone}</p>
+                    <p className="text-sm text-red-600 mt-1">{errors.phone}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="sector">Secteur d'activité *</Label>
+                  <Label htmlFor="sector">{t("form.sector")}</Label>
                   <Select
                     value={formData.sector}
                     onValueChange={(value) => {
-                      handleChange('sector', value)
-                      handleBlur('sector')
+                      handleChange("sector", value);
+                      handleBlur("sector");
                     }}
                     required
                   >
                     <SelectTrigger
                       id="sector"
-                      className={`${touched.sector && errors.sector ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                      className={`${touched.sector && errors.sector ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                       aria-invalid={touched.sector && !!errors.sector}
                     >
-                      <SelectValue placeholder="Sélectionnez votre secteur" />
+                      <SelectValue placeholder={t("form.sectorPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tech">Tech / IT</SelectItem>
-                      <SelectItem value="finance">Finance / Banque</SelectItem>
-                      <SelectItem value="marketing">Marketing / Communication</SelectItem>
-                      <SelectItem value="sales">Vente / Commercial</SelectItem>
-                      <SelectItem value="hr">RH / Recrutement</SelectItem>
-                      <SelectItem value="engineering">Ingénierie</SelectItem>
-                      <SelectItem value="healthcare">Santé</SelectItem>
-                      <SelectItem value="education">Éducation</SelectItem>
-                      <SelectItem value="other">Autre</SelectItem>
+                      <SelectItem value="tech">
+                        {t("form.sectors.tech")}
+                      </SelectItem>
+                      <SelectItem value="finance">
+                        {t("form.sectors.finance")}
+                      </SelectItem>
+                      <SelectItem value="marketing">
+                        {t("form.sectors.marketing")}
+                      </SelectItem>
+                      <SelectItem value="sales">
+                        {t("form.sectors.sales")}
+                      </SelectItem>
+                      <SelectItem value="hr">{t("form.sectors.hr")}</SelectItem>
+                      <SelectItem value="engineering">
+                        {t("form.sectors.engineering")}
+                      </SelectItem>
+                      <SelectItem value="healthcare">
+                        {t("form.sectors.healthcare")}
+                      </SelectItem>
+                      <SelectItem value="education">
+                        {t("form.sectors.education")}
+                      </SelectItem>
+                      <SelectItem value="other">
+                        {t("form.sectors.other")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   {touched.sector && errors.sector && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.sector}</p>
+                    <p className="text-sm text-red-600 mt-1">{errors.sector}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="experienceLevel">Niveau d'expérience *</Label>
+                  <Label htmlFor="experienceLevel">
+                    {t("form.experienceLevel")}
+                  </Label>
                   <Select
                     value={formData.experienceLevel}
                     onValueChange={(value) => {
-                      handleChange('experienceLevel', value)
-                      handleBlur('experienceLevel')
+                      handleChange("experienceLevel", value);
+                      handleBlur("experienceLevel");
                     }}
                     required
                   >
                     <SelectTrigger
                       id="experienceLevel"
-                      className={`${touched.experienceLevel && errors.experienceLevel ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                      aria-invalid={touched.experienceLevel && !!errors.experienceLevel}
+                      className={`${touched.experienceLevel && errors.experienceLevel ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                      aria-invalid={
+                        touched.experienceLevel && !!errors.experienceLevel
+                      }
                     >
-                      <SelectValue placeholder="Sélectionnez votre niveau" />
+                      <SelectValue
+                        placeholder={t("form.experiencePlaceholder")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="junior">Junior (0-3 ans)</SelectItem>
-                      <SelectItem value="confirmed">Confirmé (3-7 ans)</SelectItem>
-                      <SelectItem value="senior">Senior (7-12 ans)</SelectItem>
-                      <SelectItem value="expert">Expert (12+ ans)</SelectItem>
-                      <SelectItem value="manager">Manager / Lead</SelectItem>
-                      <SelectItem value="executive">Executive / C-level</SelectItem>
+                      <SelectItem value="junior">
+                        {t("form.levels.junior")}
+                      </SelectItem>
+                      <SelectItem value="confirmed">
+                        {t("form.levels.confirmed")}
+                      </SelectItem>
+                      <SelectItem value="senior">
+                        {t("form.levels.senior")}
+                      </SelectItem>
+                      <SelectItem value="expert">
+                        {t("form.levels.expert")}
+                      </SelectItem>
+                      <SelectItem value="manager">
+                        {t("form.levels.manager")}
+                      </SelectItem>
+                      <SelectItem value="executive">
+                        {t("form.levels.executive")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   {touched.experienceLevel && errors.experienceLevel && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.experienceLevel}</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.experienceLevel}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="preferredDate">Date préférée (optionnel)</Label>
+                  <Label htmlFor="preferredDate">
+                    {t("form.preferredDate")}
+                  </Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                     <Input
@@ -439,27 +506,31 @@ export default function RecruiterContactPage() {
                       type="date"
                       className="pl-10 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
                       value={formData.preferredDate}
-                      onChange={(e) => handleChange('preferredDate', e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) =>
+                        handleChange("preferredDate", e.target.value)
+                      }
+                      min={new Date().toISOString().split("T")[0]}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="message">Message / Questions *</Label>
+                  <Label htmlFor="message">{t("form.message")}</Label>
                   <Textarea
                     id="message"
-                    placeholder="Décrivez brièvement votre situation et vos objectifs professionnels..."
+                    placeholder={t("form.messagePlaceholder")}
                     rows={4}
                     value={formData.message}
-                    onChange={(e) => handleChange('message', e.target.value)}
-                    onBlur={() => handleBlur('message')}
+                    onChange={(e) => handleChange("message", e.target.value)}
+                    onBlur={() => handleBlur("message")}
                     required
-                    className={`border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.message && errors.message ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    className={`border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.message && errors.message ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                     aria-invalid={touched.message && !!errors.message}
                   />
                   {touched.message && errors.message && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.message}</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -472,18 +543,18 @@ export default function RecruiterContactPage() {
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Traitement en cours...</span>
+                    <span>{t("form.submitting")}</span>
                   </div>
                 ) : (
                   <>
-                    Réserver ma consultation (50€)
+                    {t("form.submit")}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
               </Button>
 
               <p className="text-xs text-gray-500 text-center">
-                Après validation, vous serez redirigé vers le paiement sécurisé Stripe
+                {t("form.submitNote")}
               </p>
             </form>
           </CardContent>
@@ -500,23 +571,19 @@ export default function RecruiterContactPage() {
         transition={{ delay: 1.2 }}
         className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] text-white p-12 rounded-3xl text-center mt-12 shadow-xl"
       >
-        <h3 className="text-3xl font-bold mb-4">
-          Prêt à booster votre carrière ?
-        </h3>
-        <p className="text-xl text-white/90 mb-6">
-          👥 <strong>5 consultations</strong> réservées cette semaine
-        </p>
+        <h3 className="text-3xl font-bold mb-4">{t("cta.title")}</h3>
+        <p className="text-xl text-white/90 mb-6">{t("cta.spots")}</p>
         <Button
           size="lg"
           className="h-14 px-12 bg-white text-[#00D9FF] hover:bg-gray-100 font-bold transition-all duration-300 hover:scale-105"
           onClick={() => {
-            const formSection = document.getElementById('contact-form')
-            formSection?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            const formSection = document.getElementById("contact-form");
+            formSection?.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
         >
-          Réserver maintenant (50€)
+          {t("cta.button")}
         </Button>
       </motion.div>
     </div>
-  )
+  );
 }

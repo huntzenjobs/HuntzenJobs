@@ -11,6 +11,7 @@ import { Star, Search, Filter, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { Testimonial } from "./testimonials-data";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
+import { LandingHeader } from "@/components/landing-header";
 
 interface TestimonialsClientProps {
   testimonials: Testimonial[];
@@ -71,6 +72,7 @@ export function TestimonialsClient({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <LandingHeader />
       {/* Header */}
       <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

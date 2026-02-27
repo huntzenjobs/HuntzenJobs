@@ -1,0 +1,904 @@
+{
+  "nav": {
+    "jobs": "Búsqueda de empleo",
+    "salons": "Ferias & Foros",
+    "tools": "Herramientas",
+    "resources": "Recursos",
+    "toolsItems": {
+      "assistant": "Asistente de Carrera",
+      "cvAnalysis": "Análisis de CV"
+    },
+    "resourcesItems": {
+      "blog": "Blog",
+      "faq": "FAQ",
+      "reviews": "Opiniones"
+    },
+    "pricing": "Precios",
+    "login": "INICIAR SESIÓN",
+    "signup": "REGISTRARSE",
+    "language": "Idioma"
+  },
+  "hero": {
+    "subtitle": "Tu aliado completo para conseguir el empleo que te mereces. Búsqueda dirigida, CV optimizado y acompañamiento personalizado en cada etapa.",
+    "ctaSearch": "Comenzar mi búsqueda",
+    "ctaDiscover": "Descubrir nuestras herramientas"
+  },
+  "tools": {
+    "badge": "Todas nuestras herramientas",
+    "title": "Una plataforma completa para triunfar en tu búsqueda de empleo",
+    "subtitle": "Herramientas diseñadas para acompañarte en cada etapa: desde la búsqueda de ofertas hasta la negociación salarial",
+    "explore": "Explorar",
+    "items": {
+      "jobSearch": {
+        "category": "Búsqueda",
+        "title": "Agregador de ofertas inteligente",
+        "description": "Todas las oportunidades del mercado centralizadas y filtradas para ti"
+      },
+      "compatibility": {
+        "category": "Búsqueda",
+        "title": "Puntuación de compatibilidad",
+        "description": "Descubre las ofertas que realmente se ajustan a tu perfil"
+      },
+      "cvAnalysis": {
+        "category": "CV",
+        "title": "Análisis experto de CV",
+        "description": "Optimiza tu CV para cada candidatura"
+      },
+      "skills": {
+        "category": "CV",
+        "title": "Diagnóstico de competencias",
+        "description": "Identifica tus fortalezas y áreas de mejora"
+      },
+      "interview": {
+        "category": "Coaching",
+        "title": "Simulación de entrevista",
+        "description": "Practica en condiciones reales con IA"
+      },
+      "coach": {
+        "category": "Coaching",
+        "title": "Coach de carrera 24/7",
+        "description": "Acompañamiento personalizado en cada etapa"
+      },
+      "salary": {
+        "category": "Coaching",
+        "title": "Proyecciones salariales",
+        "description": "Negocia con los argumentos y cifras correctas"
+      },
+      "salons": {
+        "category": "Networking",
+        "title": "Ferias & Foros de empleo",
+        "description": "Conoce directamente a los reclutadores en persona"
+      }
+    }
+  },
+  "painPoints": {
+    "title": "Buscar empleo no debería ser un camino de obstáculos",
+    "subtitle": "Sin embargo, los candidatos pierden meses navegando a ciegas",
+    "items": {
+      "ghosting": {
+        "title": "GHOSTING PERMANENTE",
+        "description": "El 73% de los candidatos nunca recibe respuesta, incluso después de varios seguimientos"
+      },
+      "exhausting": {
+        "title": "BÚSQUEDA AGOTADORA",
+        "description": "Decenas de sitios que consultar, cientos de ofertas irrelevantes que ordenar"
+      },
+      "negotiation": {
+        "title": "NEGOCIACIÓN A CIEGAS",
+        "description": "Imposible conocer los salarios reales según tu experiencia y ubicación"
+      },
+      "feedback": {
+        "title": "FALTA DE FEEDBACK",
+        "description": "Sin orientación, sin visibilidad sobre tus puntos fuertes y áreas de mejora"
+      }
+    }
+  },
+  "features": {
+    "title": "Tu aliado de carrera del día a día",
+    "titleHighlight": "aliado de carrera",
+    "subtitle": "Herramientas potentes y apoyo personalizado para transformar tu búsqueda de empleo",
+    "cv": {
+      "title": "Análisis experto y optimización de tu CV",
+      "titleHighlight": "Análisis experto",
+      "description": "Obtén un análisis en profundidad de tu perfil para identificar con precisión tus fortalezas y las competencias que busca el mercado. Recibe recomendaciones concretas para maximizar tus oportunidades.",
+      "items": [
+        "Evaluación detallada de tus competencias técnicas y personales",
+        "Recomendaciones de formaciones certificadas dirigidas",
+        "Puntuación de empleabilidad actualizada en tiempo real"
+      ]
+    },
+    "matching": {
+      "title": "Matching inteligente y búsqueda dirigida",
+      "titleHighlight": "Matching inteligente y búsqueda dirigida",
+      "description": "Se acabaron las horas perdidas navegando por ofertas irrelevantes. Nuestro agregador centraliza todas las oportunidades de más de 20 plataformas y te muestra solo las que realmente se ajustan a tu perfil.",
+      "items": [
+        "Puntuación de compatibilidad precisa (0-100%) para cada oferta",
+        "Alertas instantáneas sobre oportunidades de alto potencial",
+        "Sistema de favoritos para seguir tus candidaturas"
+      ]
+    }
+  },
+  "stats": {
+    "title": "Confían en nosotros",
+    "subtitle": "Miles de candidatos ya han encontrado su camino con HuntZen",
+    "candidates": {
+      "value": "+ 100 000",
+      "label": "Candidatos acompañados"
+    },
+    "responseRate": {
+      "value": "87%",
+      "label": "Tasa de respuesta positiva"
+    },
+    "salary": {
+      "value": "+ 35%",
+      "label": "De aumento salarial negociado en promedio"
+    }
+  },
+  "pricing": {
+    "title": "Elige tu plan",
+    "subtitle": "Empieza gratis, evoluciona según tus necesidades",
+    "saveUpTo20": "Ahorra hasta un 20%",
+    "currentPlan": "Actual Plan.",
+    "choosePlan": "Elegir {name}"
+  },
+  "cta": {
+    "startFree": "Comenzar gratis",
+    "learnMore": "Saber más"
+  },
+  "footer": {
+    "tagline": "Tu aliado de carrera para transformar tu búsqueda de empleo en éxito.",
+    "copyright": "Todos los derechos reservados.",
+    "privacy": "Política de privacidad",
+    "terms": "Términos de servicio",
+    "contact": "Contacto"
+  },
+  "pricingPlans": {
+    "popular": "POPULAR",
+    "plans": {
+      "free": {
+        "name": "GRATUITO",
+        "period": "/7 días",
+        "cta": "Comenzar gratis",
+        "features": [
+          "3 búsquedas de empleo por día",
+          "10 ofertas de trabajo visibles máximo",
+          "1 análisis de CV por día",
+          "5 minutos de coaching personal",
+          "Soporte estándar"
+        ],
+        "unavailable": [
+          "Filtros avanzados",
+          "Gestión de favoritos",
+          "Exportación PDF de informes"
+        ]
+      },
+      "essential": {
+        "name": "ESENCIAL",
+        "period": "/mes",
+        "cta": "Comenzar con Esencial",
+        "features": [
+          "Búsquedas ilimitadas",
+          "Acceso a todas las ofertas",
+          "Filtros avanzados (salario, remoto, fecha)",
+          "Gestión de favoritos",
+          "Análisis de CV ilimitados",
+          "Puntuación de compatibilidad detallada",
+          "Coaching personalizado (30 min/día)"
+        ],
+        "unavailable": [
+          "Exportación PDF de informes"
+        ]
+      },
+      "pro": {
+        "name": "PRO",
+        "period": "/mes",
+        "cta": "Comenzar con Pro",
+        "features": [
+          "Todas las funciones Esencial",
+          "Coaching 24/7 sin límite",
+          "Exportación PDF profesional",
+          "Simulaciones de entrevistas realistas",
+          "Feedback detallado sobre tu desempeño",
+          "Soporte prioritario por email"
+        ],
+        "unavailable": []
+      },
+      "premium": {
+        "name": "PREMIUM",
+        "period": "/mes",
+        "cta": "Comenzar con Premium",
+        "features": [
+          "Todas las funciones Pro",
+          "Historial ilimitado de análisis",
+          "Consejos personalizados ultra-dirigidos",
+          "Alertas instantáneas por email",
+          "Historial completo de coaching",
+          "Acceso anticipado a nuevas funciones",
+          "Soporte VIP prioritario",
+          "Informes mensuales de progreso"
+        ],
+        "unavailable": []
+      }
+    }
+  },
+  "sidebar": {
+    "label": "NAVEGACIÓN",
+    "nav": {
+      "jobs": "Búsqueda de empleo",
+      "cvAnalysis": "Análisis CV",
+      "assistant": "Asistente de Carrera",
+      "salons": "Ferias & Foros",
+      "savedJobs": "Empleos guardados",
+      "recruiterContact": "Contacto Reclutador",
+      "documents": "Mis documentos",
+      "myUsage": "Mi Uso"
+    },
+    "plans": {
+      "free": "Gratuito",
+      "starter": "Starter",
+      "pro": "Pro",
+      "premium": "Premium"
+    },
+    "user": {
+      "default": "Usuario"
+    },
+    "upgradeCta": "Pasar a Premium",
+    "footer": {
+      "pricing": "Precios",
+      "help": "Ayuda",
+      "back": "Volver a huntzen.co",
+      "logout": "Cerrar sesión",
+      "login": "Iniciar sesión"
+    },
+    "mobile": {
+      "login": "Conexión",
+      "signup": "Registrarse"
+    },
+    "logout": {
+      "title": "Confirmar cierre de sesión",
+      "description": "¿Está seguro de que desea cerrar sesión? Sus datos guardados se conservarán.",
+      "cancel": "Cancelar",
+      "confirm": "Cerrar sesión"
+    },
+    "aria": {
+      "close": "Cerrar el menú de navegación",
+      "open": "Abrir el menú de navegación",
+      "logout": "Cerrar sesión"
+    }
+  },
+  "pricingModal": {
+    "title": "Desbloquea todas las funcionalidades",
+    "featureRequired": "Esta funcionalidad requiere una suscripción",
+    "popular": "El más popular",
+    "free": "Gratis",
+    "currentPlan": "Plan actual",
+    "choosePlan": "Elegir {name}",
+    "startWith": "Comenzar con {name}",
+    "moreFeatures": "+ {count} más funcionalidades",
+    "guarantee": "✓ Satisfecho o reembolsado durante 14 días",
+    "seeComparison": "Ver la comparación completa de funcionalidades",
+    "toasts": {
+      "alreadyOnPlan": "Ya estás en este plan",
+      "mustBeLoggedIn": "Debes estar conectado para suscribirte",
+      "preparingPayment": "Preparando el pago...",
+      "upgraded": "✨ ¡Suscripción actualizada! Verificando...",
+      "scheduled": "📅 ¡Cambio programado! Tu nuevo plan estará activo al final del período actual.",
+      "sessionExpired": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
+      "paymentError": "Error al crear la sesión de pago"
+    },
+    "plans": {
+      "free": {
+        "name": "Gratis",
+        "description": "Perfecto para descubrir HuntZen",
+        "period": "",
+        "featureNames": [
+          "3 búsquedas por día",
+          "10 ofertas visibles máx",
+          "1 análisis CV por día",
+          "5 min coaching IA",
+          "Filtros avanzados",
+          "Favoritos",
+          "Puntuación visual CV",
+          "Exportar PDF",
+          "Simulación entrevista"
+        ]
+      },
+      "starter": {
+        "name": "Starter",
+        "description": "Ideal para comenzar tu búsqueda",
+        "period": "/mes",
+        "featureNames": [
+          "Búsquedas ilimitadas",
+          "Todas las ofertas visibles",
+          "Filtros avanzados",
+          "Favoritos",
+          "CV ilimitado + Puntuación visual",
+          "Coach IA 30 min/día",
+          "Exportar PDF",
+          "Simulación entrevista",
+          "Alertas email"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "El más popular para impulsar tu carrera",
+        "period": "/mes",
+        "featureNames": [
+          "Todo Starter incluido",
+          "Coach IA ilimitado",
+          "Exportar PDF informes CV",
+          "Simulación entrevista IA",
+          "Soporte prioritario",
+          "Historial CV",
+          "Consejos personalizados",
+          "Alertas email",
+          "Historial sesiones coach"
+        ]
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Acceso completo a todas las funcionalidades",
+        "period": "/mes",
+        "featureNames": [
+          "Todo Pro incluido",
+          "Historial CV ilimitado",
+          "Consejos personalizados CV",
+          "Alertas email nuevas ofertas",
+          "Historial sesiones coach",
+          "Acceso beta nuevas funciones",
+          "Soporte VIP",
+          "",
+          ""
+        ]
+      }
+    }
+  },
+  "upgradeBanner": {
+    "minimal": {
+      "text": "Pasa a Premium para desbloquear todas las funcionalidades",
+      "cta": "Ver planes"
+    },
+    "gradient": {
+      "title": "Pasa a HuntZen Pro",
+      "subtitle": "Desbloquea todas las funcionalidades y potencia tu carrera",
+      "cta": "Ver planes"
+    },
+    "default": {
+      "title": "Desbloquea todo el potencial de HuntZen",
+      "subtitle": "Búsquedas ilimitadas, exportar PDF, simulación entrevista y más",
+      "cta": "Ver planes"
+    },
+    "featurePrompt": {
+      "unlock": "Desbloquear esta funcionalidad"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "¡Bienvenido de vuelta!",
+      "subtitle": "Inicia sesión para acceder a tu espacio",
+      "googleCta": "Continuar con Google",
+      "divider": "O con correo",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "passwordLabel": "Contraseña",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "loading": "Iniciando sesión...",
+      "cta": "Iniciar sesión",
+      "noAccount": "¿No tienes cuenta?",
+      "signupLink": "Crear una cuenta gratis",
+      "termsPrefix": "Al continuar, aceptas nuestros",
+      "terms": "Términos de servicio",
+      "and": "y nuestra",
+      "privacy": "Política de privacidad"
+    },
+    "signup": {
+      "title": "Crear tu cuenta",
+      "subtitle": "Únete a HuntZen y potencia tu carrera",
+      "subtitleCV": "Comienza tu análisis de CV gratis",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+      "googleCta": "Registrarse con Google",
+      "divider": "O con correo",
+      "fullNameLabel": "Nombre completo",
+      "fullNamePlaceholder": "Juan García",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Mínimo 6 caracteres",
+      "confirmPasswordLabel": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Reescribe tu contraseña",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "loading": "Creando...",
+      "cta": "Crear mi cuenta gratis",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "loginLink": "Iniciar sesión",
+      "termsPrefix": "Al crear una cuenta, aceptas nuestros",
+      "terms": "Términos de servicio",
+      "and": "y nuestra",
+      "privacy": "Política de privacidad",
+      "cvBanner": {
+        "title": "Oferta de bienvenida:",
+        "feature1": "1 análisis de CV gratuito al día",
+        "feature2": "Puntuación ATS detallada",
+        "feature3": "Coincidencia de empleos",
+        "feature4": "Historial completo"
+      },
+      "success": {
+        "title": "¡Registro exitoso! 🎉",
+        "sentEmail": "Hemos enviado un correo de confirmación a:",
+        "checkEmail": "Revisa tu bandeja de entrada",
+        "checkEmailDesc": "(y spam) para confirmar tu correo antes de iniciar sesión.",
+        "goToLogin": "Ir al inicio de sesión",
+        "close": "Cerrar",
+        "noEmail": "¿No recibiste el correo? Espera unos minutos o revisa tu spam.",
+        "resendButton": "Reenviar correo electrónico de confirmación",
+        "resendSuccess": "Correo electrónico reenviado! Compruebe su buzón de correo electrónico."
+      },
+      "timeout": {
+        "title": "Conexión lenta detectada",
+        "description": "La solicitud tardó demasiado. Verifica tu conexión a internet e inténtalo de nuevo."
+      }
+    },
+    "errors": {
+      "emailNotConfirmed": "Por favor confirme su dirección de correo. Le enviamos un correo de confirmación al registrarse. Revise su bandeja de entrada (y spam).",
+      "invalidCredentials": "Correo o contraseña inválidos",
+      "timeout": "La solicitud está tardando demasiado. Verifique su conexión a Internet e inténtelo de nuevo.",
+      "signupFailed": "Error al crear la cuenta",
+      "resetPasswordFailed": "No se ha podido enviar el enlace de restablecimiento",
+      "resendConfirmationFailed": "No se ha podido devolver el correo electrónico de confirmación"
+    },
+    "forgotPassword": {
+      "title": "Contraseña olvidada",
+      "subtitle": "Introduzca su dirección de correo electrónico y le enviaremos un enlace de restablecimiento.",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "submitButton": "Enviar enlace",
+      "loading": "Enviando...",
+      "successTitle": "Correo electrónico enviado",
+      "successMessage": "Si existe una cuenta con esta dirección, recibirá un correo electrónico de restablecimiento en unos minutos. Comprueba tu spam.",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "resetPassword": {
+      "title": "Nueva contraseña",
+      "subtitle": "Elige una contraseña segura para tu cuenta.",
+      "passwordLabel": "Nueva contraseña",
+      "passwordPlaceholder": "Mínimo 6 caracteres",
+      "confirmLabel": "Confirmar la contraseña",
+      "confirmPlaceholder": "Vuelva a escribir su nueva contraseña:",
+      "submitButton": "Actualizar contraseña",
+      "loading": "Actualización...",
+      "successMessage": "¡Contraseña actualizada con éxito!",
+      "mismatchError": "Las contraseñas no coinciden ",
+      "tooShortError": "La contraseña debe tener 6 caracteres mínimo.",
+      "expiredError": "El enlace de restablecimiento ha caducado. Por favor, vuelva a intentarlo.",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
+    }
+  },
+  "dashboard": {
+    "jobs": {
+      "title": "Búsqueda de Empleo",
+      "subtitle": "Accede a miles de ofertas de trabajo de las mejores plataformas de reclutamiento, agregadas y actualizadas diariamente.",
+      "form": {
+        "title": "Define tus criterios de búsqueda",
+        "subtitle": "Rellena los campos para encontrar ofertas que coincidan con tu perfil",
+        "contractType": "Tipo de contrato",
+        "optional": "(opcional)",
+        "allContracts": "Todos los tipos de contrato",
+        "allTypes": "✓ Todos los tipos",
+        "jobTitle": "Título del puesto",
+        "country": "País",
+        "city": "Ciudad",
+        "cityHint": "Todo el país si está vacío",
+        "selectCountryFirst": "Selecciona primero un país",
+        "loadingPlaceholder": "Cargando...",
+        "jobTitlePlaceholder": "Ej: Desarrollador Full Stack, Jefe de Proyecto...",
+        "cityPlaceholder": "Madrid, Barcelona, Buenos Aires...",
+        "countryPlaceholder": "España, México, Argentina...",
+        "searching": "Buscando...",
+        "search": "Iniciar búsqueda",
+        "unlock": "Desbloquear búsquedas ilimitadas",
+        "advancedFilters": "Filtros avanzados",
+        "remaining_one": "{count} restante",
+        "remaining_other": "{count} restantes",
+        "noCountryFound": "País no encontrado",
+        "noCityFound": "Ciudad no encontrada"
+      },
+      "error": {
+        "title": "Error en la búsqueda",
+        "generic": "Ocurrió un error durante la búsqueda. Por favor inténtalo de nuevo.",
+        "formLoad": "Error al cargar el formulario. Por favor recarga la página.",
+        "fillRequired": "Por favor completa el título del puesto y el país"
+      },
+      "corrected": {
+        "title": "Búsqueda mejorada",
+        "subtitle": "Optimizamos tu búsqueda:"
+      },
+      "results": {
+        "count_one": "{count} oferta encontrada",
+        "count_other": "{count} ofertas encontradas",
+        "refresh": "Actualizar",
+        "updating": "Actualizando...",
+        "justNow": "ahora mismo",
+        "oneMinuteAgo": "hace 1 minuto",
+        "minutesAgo": "hace {n} minutos",
+        "staleWarning": "- Actualización recomendada",
+        "updatedAt": "Actualizado {time}",
+        "recent": "Resultados recientes y relevantes",
+        "visibleOf": "{visible} visible(s) de {total}",
+        "unlockAll": "Desbloquear todas las ofertas →",
+        "cache": "💾 Caché",
+        "refreshing": "Actualización en curso...",
+        "timeJustNow": "al instante",
+        "time1Minute": "hace 1 minuto",
+        "timeMinutes": "hace {count}min",
+        "refreshRecommended": "Actualización recomendada",
+        "refreshedAt": "Actualizado {time}",
+        "visibleCount": "{visible} ofertas visibles en {total}"
+      },
+      "card": {
+        "details": "Ver detalles",
+        "save": "Guardar esta oferta",
+        "alreadySaved": "Ya en favoritos",
+        "premiumFeature": "Función Premium",
+        "locationUnknown": "Ubicación no especificada",
+        "alreadySavedShort": "Ya guardado",
+        "saveShort": "Guardar"
+      },
+      "empty": {
+        "title": "No se encontraron ofertas",
+        "subtitle": "No encontramos ofertas que coincidan con tus criterios en este momento.",
+        "tips": "💡 Sugerencias:",
+        "tip1": "Intenta con palabras clave más generales",
+        "tip2": "Verifica la ortografía del título del puesto",
+        "tip3": "Amplía tu zona geográfica (ciudad → todo el país)",
+        "tip4": "Selecciona \"Todos los tipos\" para el contrato"
+      },
+      "toast": {
+        "saved": "Oferta añadida a favoritos ✨",
+        "saveError": "Error al guardar",
+        "mustLogin": "Inicia sesión para guardar ofertas",
+        "mustLoginSave": "Debes iniciar sesión para guardar ofertas",
+        "alreadySaved": "Esta oferta ya está en tus favoritos",
+        "filtersApplied": "{count} filtro(s) avanzado(s) aplicado(s)",
+        "filtersAppliedDesc": "Búsqueda actualizada con los nuevos filtros",
+        "filtersAppliedNext": "Los filtros se aplicarán a la próxima búsqueda",
+        "filtersReset": "Filtros avanzados restablecidos"
+      }
+    },
+    "cvAnalysis": {
+      "title": "Análisis de CV",
+      "loading": "Cargando tu espacio...",
+      "errorTitle": "Error al cargar el análisis de CV",
+      "errorDesc": "Ocurrió un error. Por favor recarga la página.",
+      "subtitle": "Optimiza tu CV para maximizar tus posibilidades de conseguir una entrevista. Obtén un análisis detallado y recomendaciones personalizadas."
+    },
+    "assistant": {
+      "title": "Asistente de Carrera",
+      "history": "Historial",
+      "newConversation": "Nueva",
+      "simulation": "Simulación",
+      "timeWarning": "¡Le quedan menos de 3 minutos! Pase a Premium para tiempo ilimitado.",
+      "upgradePremium": "Ir a Premium",
+      "placeholder": "Haga su pregunta... (Enter para enviar, Shift+Enter para nueva línea)",
+      "timeExpiredTitle": "Tiempo agotado",
+      "timeExpiredDesc": "Ha usado sus {minutes} minutos gratuitos",
+      "unlockUnlimited": "Desbloquear tiempo ilimitado",
+      "errorMessage": "Lo siento, ocurrió un error. ¿Puede reformular su pregunta?",
+      "unlimited": "Ilimitado",
+      "welcomeMessage": "Hola, soy su experto en búsqueda de empleo. ¿Cómo puedo ayudarle hoy?"
+    },
+    "salons": {
+      "title": "Ferias y Foros de Empleo",
+      "filterAll": "Todos",
+      "filterUpcoming": "Próximamente",
+      "filterOnline": "En linea",
+      "filterFree": "Gratis",
+      "searchPlaceholder": "Buscar un salón...",
+      "noResults": "No se han encontrado salones",
+      "noResultsSub": "Prueba con otros filtros o vuelve más tarde.",
+      "registerButton": "Suscribirse",
+      "registeredButton": "Matriculada",
+      "onlineLabel": "En linea",
+      "freeLabel": "Gratis",
+      "loadingText": "Cargando salones...",
+      "errorText": "Error de carga",
+      "emptyStateTitle": "No hay salones disponibles",
+      "emptyStateSubtitle": "Vuelve pronto para conocer los próximos eventos.",
+      "subtitle": "Descubra los eventos de empleo cerca de usted y conozca a los reclutadores en persona o en línea",
+      "hideFilters": "Ocultar filtros",
+      "showFilters": "Mostrar filtros",
+      "eventsCount": "{count} evento(s)",
+      "filteredResults": "Resultados filtrados",
+      "filterTitle": "Filtrar los eventos",
+      "resetFilters": "Restablecer",
+      "activeFilters": "filtro(s) activo(s)",
+      "searchButton": "Buscar",
+      "loadingEvents": "Cargando {current}/{total} eventos...",
+      "clearFilters": "Limpiar filtros",
+      "notCommunicated": "No comunicado",
+      "viewDetails": "Ver detalle"
+    },
+    "savedJobs": {
+      "title": "Ofertas Guardadas",
+      "searchPlaceholder": "Buscar en tus ofertas...",
+      "noJobs": "Aún no has guardado ninguna oferta",
+      "noJobsDesc": "Explora las ofertas disponibles y guarda las que te interesen",
+      "loginRequired": "Inicia sesión para ver tus ofertas guardadas",
+      "deleteError": "Error al eliminar",
+      "deleted": "Oferta eliminada",
+      "viewOffer": "Ver oferta",
+      "delete": "Eliminar",
+      "savedAt": "Guardada el",
+      "searchJobs": "Buscar empleos",
+      "statusCvGenerated": "CV generado",
+      "statusCoverLetterGenerated": "LM generada",
+      "statusApplied": "Solicitado",
+      "tipTitle": "Truco",
+      "tipText": "Haga clic en una oferta para generar un CV y una carta de presentación adaptados en cuestión de segundos.",
+      "comingSoonTitle": "<g id=\"1\">Próximamente</g>",
+      "comingSoonText": "Seguimiento de solicitudes, recordatorios automáticos y análisis.",
+      "savedCount": "{count} oferta(s) guardada(s)",
+      "generateCvLm": "Generar CV + LM",
+      "comingSoonText2": "Alertas automáticas si caduca una oferta favorita",
+      "comingSoonText3": "Exportar tus favoritos a PDF"
+    },
+    "recruiterContact": {
+      "title": "Contactar un Reclutador",
+      "stats": {
+        "consultations": "Consultas exitosas",
+        "satisfaction": "Satisfacción promedio",
+        "delay": "Plazo promedio"
+      },
+      "benefits": {
+        "personalizedTitle": "Consejos personalizados",
+        "personalizedDesc": "Un reclutador experto analiza su perfil y le da recomendaciones a medida",
+        "expertiseTitle": "Experiencia profesional",
+        "expertiseDesc": "Nuestros reclutadores tienen 10+ años de experiencia en contratación de ejecutivos",
+        "fastResponseTitle": "Respuesta rápida",
+        "fastResponseDesc": "Será contactado en 48h para programar su consulta de 30 minutos"
+      },
+      "pricing": {
+        "title": "Consulta con Reclutador",
+        "sessionDesc": "Sesión individual de 30 minutos",
+        "perConsultation": "/ consulta",
+        "noSubscription": "Pago único, sin suscripción",
+        "item1Title": "Sesión de vídeo de 30 minutos",
+        "item1Desc": "Intercambio en vivo con un experto",
+        "item2Title": "Análisis personalizado",
+        "item2Desc": "CV, perfil de LinkedIn, estrategia de búsqueda",
+        "item3Title": "Plan de acción concreto",
+        "item3Desc": "Recomendaciones accionables de inmediato",
+        "item4Title": "Resumen escrito",
+        "item4Desc": "Resumen detallado después de la consulta",
+        "securePay": "Pago seguro por Stripe"
+      },
+      "form": {
+        "title": "Reservar mi consulta",
+        "desc": "Complete el formulario para ser contactado por un reclutador experto",
+        "fullName": "Nombre completo *",
+        "email": "Email *",
+        "phone": "Teléfono",
+        "sector": "Sector *",
+        "sectorPlaceholder": "Seleccione su sector",
+        "experienceLevel": "Nivel de experiencia *",
+        "experiencePlaceholder": "Seleccione su nivel",
+        "preferredDate": "Fecha preferida (opcional)",
+        "message": "Mensaje / Preguntas *",
+        "messagePlaceholder": "Describa brevemente su situación y objetivos profesionales...",
+        "submitting": "Procesando...",
+        "submit": "Reservar mi consulta (50€)",
+        "submitNote": "Tras la validación, será redirigido al pago seguro de Stripe",
+        "error": "Ocurrió un error. Por favor inténtelo de nuevo.",
+        "sectors": {
+          "tech": "Tecnología / IT",
+          "finance": "Finanzas / Banca",
+          "marketing": "Marketing / Comunicación",
+          "sales": "Ventas / Comercial",
+          "hr": "RRHH / Selección",
+          "engineering": "Ingeniería",
+          "healthcare": "Salud",
+          "education": "Educación",
+          "other": "Otro"
+        },
+        "levels": {
+          "junior": "Junior (0-3 años)",
+          "confirmed": "Intermedio (3-7 años)",
+          "senior": "Senior (7-12 años)",
+          "expert": "Experto (12+ años)",
+          "manager": "Manager / Lead",
+          "executive": "Ejecutivo / C-level"
+        }
+      },
+      "validation": {
+        "fullNameRequired": "El nombre completo es obligatorio",
+        "fullNameTooShort": "El nombre debe tener al menos 2 caracteres",
+        "emailRequired": "El email es obligatorio",
+        "emailInvalid": "Formato de email no válido",
+        "phoneInvalid": "Formato de teléfono no válido",
+        "sectorRequired": "El sector es obligatorio",
+        "experienceRequired": "El nivel de experiencia es obligatorio",
+        "messageRequired": "El mensaje es obligatorio",
+        "messageTooShort": "El mensaje debe tener al menos 10 caracteres"
+      },
+      "cta": {
+        "title": "¿Listo para impulsar su carrera?",
+        "spots": "👥 5 consultas reservadas esta semana",
+        "button": "Reservar ahora (50€)"
+      }
+    },
+    "documents": {
+      "title": "Mis documentos",
+      "subtitle": "Gestiona tus CV y cartas de presentación generados",
+      "searchPlaceholder": "Buscar un documento",
+      "filterAll": "Todos",
+      "filterCvOnly": "CV solo",
+      "filterCvAndCoverLetter": "CV + LM",
+      "emptyStateTitle": "Sin documento",
+      "emptyStateSubtitle": "Sus currículums y cartas de presentación generados aparecerán aquí.",
+      "downloadButton": "Subir",
+      "deleteButton": "Eliminar",
+      "cvLabel": "CV",
+      "coverLetterLabel": "Carta de presentación",
+      "generatedOn": "Generat el"
+    }
+  },
+  "error": {
+    "title": "Ocurrió un error",
+    "description": "Encontramos un problema inesperado. Nuestro equipo ha sido notificado y está trabajando en una solución.",
+    "retry": "Reintentar",
+    "home": "Inicio"
+  },
+  "offline": {
+    "title": "Modo sin conexión",
+    "description": "Parece que está desconectado de Internet. Algunas funciones pueden estar limitadas.",
+    "retry": "Reintentar",
+    "backHome": "Volver al inicio",
+    "featuresTitle": "💡 Funciones sin conexión",
+    "feature1": "Ver empleos en caché",
+    "feature2": "Visualizar su CV",
+    "feature3": "Acceder a sus candidaturas recientes",
+    "note": "Verifique su conexión a Internet e inténtelo de nuevo"
+  },
+  "payment": {
+    "success": {
+      "verifying": "Verificando su pago...",
+      "invalidSession": "Sesión de pago inválida",
+      "waitingAuth": "Esperando autenticación...",
+      "verifyingAttempt": "Verificando (intento {attempt}/{max})...",
+      "timeoutMessage": "Tiempo agotado. Su suscripción será visible en unos instantes.",
+      "errorMessage": "Error de verificación. Su suscripción será visible en su perfil.",
+      "processingTitle": "Procesando",
+      "processingSubtitle": "El webhook de Stripe está tardando más de lo esperado. Su suscripción será visible en su perfil en breve.",
+      "goToProfile": "Ir al perfil",
+      "errorTitle": "Error de verificación",
+      "viewProfile": "Ver mi perfil",
+      "backToPricing": "Volver a precios",
+      "successTitle": "¡Pago exitoso!",
+      "successSubtitle": "Bienvenido a su nueva suscripción HuntZen 🚀",
+      "subscriptionActive": "¡Su suscripción ya está activa! Tiene acceso a todas las funciones premium de su plan.",
+      "benefit1": "Búsquedas de empleo ilimitadas",
+      "benefit2": "Análisis de CV ilimitados con IA",
+      "benefit3": "Coach IA disponible 24/7",
+      "startSearch": "Comenzar búsqueda",
+      "viewMyProfile": "Ver mi perfil",
+      "emailSent": "Se ha enviado un correo de confirmación con los detalles de su suscripción.",
+      "question": "¿Alguna pregunta?",
+      "contactSupport": "Contactar soporte"
+    },
+    "cancel": {
+      "title": "Pago cancelado",
+      "subtitle": "Ha cancelado el proceso de pago",
+      "noCharge": "No se ha cobrado ningún importe a su cuenta. Puede intentarlo de nuevo cuando quiera o continuar con el plan gratuito.",
+      "helpTitle": "¿Necesita ayuda?",
+      "helpDesc": "Nuestro equipo de soporte está disponible para responder todas sus preguntas sobre nuestras suscripciones.",
+      "backToPricing": "Volver a precios",
+      "continueFree": "Continuar con el plan gratuito",
+      "questionsTitle": "¿Preguntas sobre nuestras suscripciones?",
+      "contactSupport": "Contactar soporte →",
+      "tip": "Pruebe el plan gratuito para descubrir HuntZen antes de suscribirse",
+      "tipLabel": "Propina"
+    }
+  },
+  "profile": {
+    "multilingualComingSoon": "El soporte multilingüe estará disponible próximamente",
+    "thankSubscription": "🎉 ¡Gracias por su suscripción!",
+    "deleteAccountComingSoon": "La eliminación de la cuenta estará disponible en breve (RGPD compliance)",
+    "cancelSubscriptionComingSoon": "La cancelación de la suscripción estará disponible próximamente",
+    "cancelSubscription": "Cancelar suscripción",
+    "cancelling": "Cancelando...",
+    "cancelDialog": {
+      "title": "¿Cancelar tu suscripción?",
+      "description": "Conservarás acceso a todas las funcionalidades hasta el final del período de facturación actual. No se realizará ningún reembolso.",
+      "keep": "Mantener mi suscripción",
+      "confirm": "Confirmar cancelación"
+    }
+  },
+  "cv": {
+    "inProgress": "En curso...",
+    "matchingJobOffer": "🎯 Coincidencia con oferta de trabajo"
+  },
+  "jobDetails": {
+    "close": "Cerrar",
+    "companyUnspecified": "Empresa no especificada",
+    "jobDescription": "Descripción del puesto",
+    "keyInfo": "Información clave",
+    "salary": "Remuneración",
+    "company": "Empresas",
+    "location": "Localización",
+    "postedDate": "Fecha de publicación",
+    "findRecruiter": "Encontrar al reclutador",
+    "generateDocuments": "Generar CV + carta adaptados",
+    "notAvailable": "No especificado",
+    "viewOffer": "Ver la oferta .."
+  },
+  "searchForm": {
+    "jobTitleRequired": "Se requiere la profesión",
+    "countryRequired": "Se requiere el país",
+    "includeRemote": "Incluir jobs remote",
+    "searchRadius": " Radio de búsqueda",
+    "radiusKm": "{RADIUS} km",
+    "searchesRemaining": "{count} búsqueda(es) restante(s) hoy",
+    "searchButton": "Buscar",
+    "advancedFilters": "Filtros avanzados",
+    "typeYourCountry": "Escriba su país",
+    "typeYourCity": "Escribe tu ciudad",
+    "noCountryFound": "No se ha encontrado ningún país",
+    "noCityFound": "No se ha encontrado ninguna ciudad",
+    "selectCountryFirst": "Primero selecciona un país"
+  },
+  "advancedFilters": {
+    "title": "Filtros avanzados",
+    "industriesLabel": "Sectores de actividad",
+    "experienceLabel": "Nivel de experiencia",
+    "salaryLabel": "Rango salarial",
+    "companySizeLabel": "dimensión de la empresa",
+    "applyButton": "Aplicar filtros",
+    "resetButton": "Restablecer",
+    "industryTechIT": "Tech / IT",
+    "industryFinance": "Finanzas",
+    "industryMarketing": "Marketing",
+    "industryHealthcare": "Salud",
+    "industryRetail": "Comercio / Retail",
+    "industryManufacturing": "Industria",
+    "industryEducation": "Educación",
+    "industryConsulting": "Asesoramiento",
+    "experienceJunior": "Junior (0-2 años)",
+    "experienceMid": "Confirmado (2-5 años)",
+    "experienceSenior": "Senior (5+ años)",
+    "experienceLead": "Lead / Principal",
+    "companySizeStartup": "Startup",
+    "companySizeScaleup": "Scale-up",
+    "companySizeEnterprise": "Sector económico/grupo principal",
+    "salaryMin": "Salario mínimo",
+    "salaryMax": "Salario máximo",
+    "premiumFeature": "Funcionalidad Premium",
+    "cancelButton": "Cancelar"
+  },
+  "gradientJobCard": {
+    "lockedOffer": "Oferta bloqueada",
+    "upgradeToPremium": "Pase Premium para ver esta oferta",
+    "unlock": "Desbloquear",
+    "moreOffers": "+{count} ofertas adicionales"
+  },
+  "applyModal": {
+    "title": "Aplicar a esta oferta",
+    "uploadCv": "Sube tu CV",
+    "uploadInstruction": "Arrastra y suelta tu CV o haz clic para seleccionar",
+    "selectLanguage": "lengua de redacción del documento;",
+    "languageFr": "Francés",
+    "languageEn": "Inglés",
+    "processingStep1": "Análisis del CV en curso...",
+    "processingStep2": "Adaptación al puesto...",
+    "processingStep3": "Generación de la carta de motivación...",
+    "processingStep4": "Finalización de los documentos...",
+    "generateButton": "Generar CV + Carta adaptados",
+    "downloadCv": "Descargar CV",
+    "downloadCoverLetter": "Descargar la carta",
+    "cancelButton": "Cancelar",
+    "retryButton": "Volver a intentarlo"
+  }
+}

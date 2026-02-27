@@ -1,10 +1,11 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { Sparkles, MessageSquare, Target, Zap } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useAssistant } from '@/contexts/assistant-context'
-import { getAssistantConfig } from '@/config/assistants'
+import * as React from "react";
+import { Sparkles, MessageSquare, Target, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAssistant } from "@/contexts/assistant-context";
+import { getAssistantConfig } from "@/config/assistants";
+import { useTranslations } from "next-intl";
 
 /**
  * WelcomeScreen - Engaging empty state for Coach chat
@@ -24,63 +25,66 @@ import { getAssistantConfig } from '@/config/assistants'
 export interface WelcomeScreenProps {
   /** Quick start questions */
   quickQuestions?: Array<{
-    id: string
-    text: string
-    category: 'cv' | 'interview' | 'career' | 'salary'
-  }>
+    id: string;
+    text: string;
+    category: "cv" | "interview" | "career" | "salary";
+  }>;
   /** Handler for question click */
-  onQuestionClick?: (question: string) => void
+  onQuestionClick?: (question: string) => void;
   /** Custom className */
-  className?: string
+  className?: string;
 }
 
 const DEFAULT_QUESTIONS = [
   {
-    id: '1',
-    text: 'Comment améliorer mon CV pour un poste de développeur ?',
-    category: 'cv' as const,
+    id: "1",
+    text: "Comment améliorer mon CV pour un poste de développeur ?",
+    category: "cv" as const,
   },
   {
-    id: '2',
-    text: 'Quelles questions poser lors d\'un entretien ?',
-    category: 'interview' as const,
+    id: "2",
+    text: "Quelles questions poser lors d'un entretien ?",
+    category: "interview" as const,
   },
   {
-    id: '3',
-    text: 'Comment négocier mon salaire efficacement ?',
-    category: 'salary' as const,
+    id: "3",
+    text: "Comment négocier mon salaire efficacement ?",
+    category: "salary" as const,
   },
   {
-    id: '4',
-    text: 'Quelles sont les tendances du marché dans mon secteur ?',
-    category: 'career' as const,
+    id: "4",
+    text: "Quelles sont les tendances du marché dans mon secteur ?",
+    category: "career" as const,
   },
-]
+];
 
 export function WelcomeScreen({
   quickQuestions,
   onQuestionClick,
   className,
 }: WelcomeScreenProps) {
+  const t = useTranslations("dashboard.assistant");
   // Get current assistant config
-  const { selectedAssistant } = useAssistant()
-  const assistantConfig = getAssistantConfig(selectedAssistant)
+  const { selectedAssistant } = useAssistant();
+  const assistantConfig = getAssistantConfig(selectedAssistant);
 
   // Use assistant-specific questions if not provided
-  const questions = quickQuestions || assistantConfig.exampleQuestions.map((text, i) => ({
-    id: `q${i}`,
-    text,
-    category: 'career' as const, // Default category
-  }))
+  const questions =
+    quickQuestions ||
+    assistantConfig.exampleQuestions.map((text, i) => ({
+      id: `q${i}`,
+      text,
+      category: "career" as const, // Default category
+    }));
 
   return (
     <div
       key={selectedAssistant} // Force re-render avec animation quand l'assistant change
       className={cn(
-        'flex flex-col items-center justify-center',
-        'h-full min-h-[500px] px-4 py-12',
-        'animate-fade-in',
-        className
+        "flex flex-col items-center justify-center",
+        "h-full min-h-[500px] px-4 py-12",
+        "animate-fade-in",
+        className,
       )}
     >
       {/* Animated Avatar - Dynamique selon l'assistant */}
@@ -95,27 +99,40 @@ export function WelcomeScreen({
           {/* Glow rings */}
           <div
             className="absolute inset-0 rounded-full opacity-30 animate-ping"
-            style={{ backgroundColor: assistantConfig.color, animationDuration: '2s' }}
+            style={{
+              backgroundColor: assistantConfig.color,
+              animationDuration: "2s",
+            }}
           />
           <div
             className="absolute inset-0 rounded-full opacity-20 animate-ping"
-            style={{ backgroundColor: assistantConfig.color, animationDuration: '3s', animationDelay: '0.5s' }}
+            style={{
+              backgroundColor: assistantConfig.color,
+              animationDuration: "3s",
+              animationDelay: "0.5s",
+            }}
           />
         </div>
 
         {/* Floating particles */}
-        <div className="absolute -top-2 -right-2 size-3 rounded-full bg-yellow-400 animate-bounce"
-             style={{ animationDelay: '0ms', animationDuration: '2s' }} />
-        <div className="absolute -bottom-2 -left-2 size-2 rounded-full bg-blue-400 animate-bounce"
-             style={{ animationDelay: '400ms', animationDuration: '2s' }} />
-        <div className="absolute top-0 -left-4 size-2 rounded-full bg-pink-400 animate-bounce"
-             style={{ animationDelay: '800ms', animationDuration: '2s' }} />
+        <div
+          className="absolute -top-2 -right-2 size-3 rounded-full bg-yellow-400 animate-bounce"
+          style={{ animationDelay: "0ms", animationDuration: "2s" }}
+        />
+        <div
+          className="absolute -bottom-2 -left-2 size-2 rounded-full bg-blue-400 animate-bounce"
+          style={{ animationDelay: "400ms", animationDuration: "2s" }}
+        />
+        <div
+          className="absolute top-0 -left-4 size-2 rounded-full bg-pink-400 animate-bounce"
+          style={{ animationDelay: "800ms", animationDuration: "2s" }}
+        />
       </div>
 
       {/* Welcome message - Adapté à l'expert */}
       <div className="text-center mb-10 max-w-2xl">
         <h1 className="text-3xl font-bold text-gray-900 mb-3">
-          Bonjour ! Je suis {assistantConfig.shortName}
+          {t("welcomeMessage")}
         </h1>
         {assistantConfig.certificationBadge && (
           <div className="inline-block mb-3 px-3 py-1 rounded-full bg-green-500/10 text-green-700 text-sm font-medium">
@@ -124,14 +141,19 @@ export function WelcomeScreen({
         )}
         <p className="text-lg text-gray-600 leading-relaxed">
           {assistantConfig.description}
-          {assistantConfig.specialties && assistantConfig.specialties.length > 0 && (
-            <>
-              {' '}Je me spécialise dans :{' '}
-              <span className="font-semibold" style={{ color: assistantConfig.color }}>
-                {assistantConfig.specialties.join(', ')}
-              </span>
-            </>
-          )}
+          {assistantConfig.specialties &&
+            assistantConfig.specialties.length > 0 && (
+              <>
+                {" "}
+                Je me spécialise dans :{" "}
+                <span
+                  className="font-semibold"
+                  style={{ color: assistantConfig.color }}
+                >
+                  {assistantConfig.specialties.join(", ")}
+                </span>
+              </>
+            )}
         </p>
       </div>
 
@@ -165,24 +187,26 @@ export function WelcomeScreen({
               key={question.id}
               onClick={() => onQuestionClick?.(question.text)}
               className={cn(
-                'group',
-                'flex items-start gap-3 p-4',
-                'bg-white hover:bg-gradient-to-br hover:from-violet-50 hover:to-purple-50',
-                'border-2 border-gray-200 hover:border-violet-300',
-                'rounded-xl',
-                'text-left',
-                'transition-all duration-200',
-                'shadow-sm hover:shadow-md',
-                'transform hover:-translate-y-0.5'
+                "group",
+                "flex items-start gap-3 p-4",
+                "bg-white hover:bg-gradient-to-br hover:from-violet-50 hover:to-purple-50",
+                "border-2 border-gray-200 hover:border-violet-300",
+                "rounded-xl",
+                "text-left",
+                "transition-all duration-200",
+                "shadow-sm hover:shadow-md",
+                "transform hover:-translate-y-0.5",
               )}
             >
               {/* Category icon */}
-              <div className={cn(
-                'flex-shrink-0 size-8 rounded-lg',
-                'flex items-center justify-center',
-                'transition-colors duration-200',
-                getCategoryStyles(question.category)
-              )}>
+              <div
+                className={cn(
+                  "flex-shrink-0 size-8 rounded-lg",
+                  "flex items-center justify-center",
+                  "transition-colors duration-200",
+                  getCategoryStyles(question.category),
+                )}
+              >
                 {getCategoryIcon(question.category)}
               </div>
 
@@ -194,13 +218,18 @@ export function WelcomeScreen({
               </div>
 
               {/* Arrow icon */}
-              <svg 
-                className="flex-shrink-0 size-5 text-gray-400 group-hover:text-violet-600 transform group-hover:translate-x-1 transition-all" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                className="flex-shrink-0 size-5 text-gray-400 group-hover:text-violet-600 transform group-hover:translate-x-1 transition-all"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           ))}
@@ -211,11 +240,12 @@ export function WelcomeScreen({
       <div className="mt-8 flex items-center gap-2 text-sm text-gray-500">
         <Sparkles className="size-4" />
         <span>
-          Astuce : Soyez précis dans vos questions pour obtenir les meilleurs conseils
+          Astuce : Soyez précis dans vos questions pour obtenir les meilleurs
+          conseils
         </span>
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -226,9 +256,9 @@ function ValuePropCard({
   title,
   description,
 }: {
-  icon: React.ReactNode
-  title: string
-  description: string
+  icon: React.ReactNode;
+  title: string;
+  description: string;
 }) {
   return (
     <div className="flex flex-col items-center text-center p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200">
@@ -238,7 +268,7 @@ function ValuePropCard({
       <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
       <p className="text-sm text-gray-600">{description}</p>
     </div>
-  )
+  );
 }
 
 /**
@@ -246,16 +276,16 @@ function ValuePropCard({
  */
 function getCategoryStyles(category: string): string {
   switch (category) {
-    case 'cv':
-      return 'bg-blue-100 group-hover:bg-blue-200 text-blue-600'
-    case 'interview':
-      return 'bg-green-100 group-hover:bg-green-200 text-green-600'
-    case 'career':
-      return 'bg-purple-100 group-hover:bg-purple-200 text-purple-600'
-    case 'salary':
-      return 'bg-amber-100 group-hover:bg-amber-200 text-amber-600'
+    case "cv":
+      return "bg-blue-100 group-hover:bg-blue-200 text-blue-600";
+    case "interview":
+      return "bg-green-100 group-hover:bg-green-200 text-green-600";
+    case "career":
+      return "bg-purple-100 group-hover:bg-purple-200 text-purple-600";
+    case "salary":
+      return "bg-amber-100 group-hover:bg-amber-200 text-amber-600";
     default:
-      return 'bg-gray-100 group-hover:bg-gray-200 text-gray-600'
+      return "bg-gray-100 group-hover:bg-gray-200 text-gray-600";
   }
 }
 
@@ -264,31 +294,71 @@ function getCategoryStyles(category: string): string {
  */
 function getCategoryIcon(category: string): React.ReactNode {
   switch (category) {
-    case 'cv':
+    case "cv":
       return (
-        <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <svg
+          className="size-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
         </svg>
-      )
-    case 'interview':
+      );
+    case "interview":
       return (
-        <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <svg
+          className="size-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          />
         </svg>
-      )
-    case 'career':
+      );
+    case "career":
       return (
-        <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        <svg
+          className="size-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+          />
         </svg>
-      )
-    case 'salary':
+      );
+    case "salary":
       return (
-        <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          className="size-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
-      )
+      );
     default:
-      return <Sparkles className="size-4" />
+      return <Sparkles className="size-4" />;
   }
 }

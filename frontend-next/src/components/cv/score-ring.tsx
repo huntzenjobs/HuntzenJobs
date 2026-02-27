@@ -119,7 +119,7 @@ export function ScoreRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={config.stroke}
-            className="text-gray-200 dark:text-gray-700"
+            className="text-gray-200"
           />
           {/* Progress */}
           <circle
@@ -185,7 +185,7 @@ export function ScoreBreakdown({ details, className = '' }: ScoreBreakdownProps)
               {cat.value}/{cat.max}
             </span>
           </div>
-          <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
               className={`h-full ${cat.color} rounded-full transition-all duration-500`}
               style={{ width: `${(cat.value / cat.max) * 100}%` }}

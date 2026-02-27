@@ -1,12 +1,17 @@
-'use client'
+"use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
-import { useSubscription } from '@/contexts/subscription-context'
-import { PLAN_LIMITS } from '@/hooks/use-freemium-limits'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { useSubscription } from "@/contexts/subscription-context";
+import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 import {
   Crown,
   Sparkles,
@@ -17,92 +22,103 @@ import {
   MessageSquare,
   Briefcase,
   Clock,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface UsageModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const PLAN_CONFIG = {
   free: {
-    name: 'Gratuit',
+    name: "Gratuit",
     icon: <Gift className="w-5 h-5" />,
-    color: 'bg-gray-500',
-    bgGradient: 'from-gray-400 to-gray-500',
+    color: "bg-gray-500",
+    bgGradient: "from-gray-400 to-gray-500",
   },
   starter: {
-    name: 'Starter',
+    name: "Starter",
     icon: <Sparkles className="w-5 h-5" />,
-    color: 'bg-blue-500',
-    bgGradient: 'from-blue-500 to-blue-600',
+    color: "bg-blue-500",
+    bgGradient: "from-blue-500 to-blue-600",
   },
   pro: {
-    name: 'Pro',
+    name: "Pro",
     icon: <Zap className="w-5 h-5" />,
-    color: 'bg-violet-500',
-    bgGradient: 'from-violet-500 to-purple-600',
+    color: "bg-violet-500",
+    bgGradient: "from-violet-500 to-purple-600",
   },
   premium: {
-    name: 'Premium',
+    name: "Premium",
     icon: <Crown className="w-5 h-5" />,
-    color: 'bg-amber-500',
-    bgGradient: 'from-amber-500 to-orange-500',
+    color: "bg-amber-500",
+    bgGradient: "from-amber-500 to-orange-500",
   },
-}
+};
 
 interface QuotaCardProps {
-  title: string
-  icon: React.ReactNode
-  used: number
-  limit: number
-  unit?: string
-  color: string
+  title: string;
+  icon: React.ReactNode;
+  used: number;
+  limit: number;
+  unit?: string;
+  color: string;
 }
 
-function QuotaCard({ title, icon, used, limit, unit = '', color }: QuotaCardProps) {
-  const isUnlimited = limit === Infinity
-  const percentage = isUnlimited ? 0 : Math.min((used / limit) * 100, 100)
-  const remaining = isUnlimited ? Infinity : Math.max(limit - used, 0)
+function QuotaCard({
+  title,
+  icon,
+  used,
+  limit,
+  unit = "",
+  color,
+}: QuotaCardProps) {
+  const isUnlimited = limit === Infinity;
+  const percentage = isUnlimited ? 0 : Math.min((used / limit) * 100, 100);
+  const remaining = isUnlimited ? Infinity : Math.max(limit - used, 0);
 
   const getStatusColor = () => {
-    if (isUnlimited) return 'text-green-600'
-    if (percentage < 50) return 'text-green-600'
-    if (percentage < 80) return 'text-orange-600'
-    return 'text-red-600'
-  }
+    if (isUnlimited) return "text-green-600";
+    if (percentage < 50) return "text-green-600";
+    if (percentage < 80) return "text-orange-600";
+    return "text-red-600";
+  };
 
   const getProgressColor = () => {
-    if (isUnlimited) return 'bg-green-500'
-    if (percentage < 50) return 'bg-green-500'
-    if (percentage < 80) return 'bg-orange-500'
-    return 'bg-red-500'
-  }
+    if (isUnlimited) return "bg-green-500";
+    if (percentage < 50) return "bg-green-500";
+    if (percentage < 80) return "bg-orange-500";
+    return "bg-red-500";
+  };
 
   return (
     <div className="bg-white border-2 border-gray-100 rounded-xl p-4 space-y-3 hover:border-gray-200 transition-colors">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={cn('p-2 rounded-lg', color)}>
-            {icon}
-          </div>
+          <div className={cn("p-2 rounded-lg", color)}>{icon}</div>
           <h3 className="font-semibold text-gray-900">{title}</h3>
         </div>
-        <div className={cn('text-sm font-bold', getStatusColor())}>
-          {isUnlimited ? '∞' : `${remaining}${unit}`}
+        <div className={cn("text-sm font-bold", getStatusColor())}>
+          {isUnlimited ? "∞" : `${remaining}${unit}`}
         </div>
       </div>
 
       {!isUnlimited && (
         <>
-          <Progress value={percentage} className="h-2" indicatorClassName={getProgressColor()} />
+          <Progress
+            value={percentage}
+            className="h-2"
+            indicatorClassName={getProgressColor()}
+          />
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span>
-              {used}{unit} utilisé{used > 1 ? 's' : ''}
+              {used}
+              {unit} utilisé{used > 1 ? "s" : ""}
             </span>
             <span>
-              sur {limit}{unit}
+              sur {limit}
+              {unit}
             </span>
           </div>
         </>
@@ -120,49 +136,55 @@ function QuotaCard({ title, icon, used, limit, unit = '', color }: QuotaCardProp
         </p>
       )}
     </div>
-  )
+  );
 }
 
 export function UsageModal({ isOpen, onClose }: UsageModalProps) {
-  const {
-    plan,
-    planName,
-    limits,
-    usage,
-    openPricingModal,
-    isFreePlan,
-  } = useSubscription()
+  const { plan, planName, limits, usage, openPricingModal, isFreePlan } =
+    useSubscription();
 
-  const planConfig = PLAN_CONFIG[plan]
-  const planLimits = PLAN_LIMITS[plan]
+  const planConfig = PLAN_CONFIG[plan];
+  const planLimits = PLAN_LIMITS[plan];
 
   const handleUpgrade = () => {
-    onClose()
-    openPricingModal()
-  }
+    onClose();
+    openPricingModal();
+  };
 
   // Convert coach time from seconds to minutes
-  const coachUsedMinutes = Math.floor((usage?.coachSecondsUsedToday || 0) / 60)
-  const coachLimitMinutes = planLimits.coach_minutes_per_day === Infinity
-    ? Infinity
-    : planLimits.coach_minutes_per_day
+  const coachUsedMinutes = Math.floor((usage?.coachSecondsUsedToday || 0) / 60);
+  const coachLimitMinutes =
+    planLimits.coach_minutes_per_day === Infinity
+      ? Infinity
+      : planLimits.coach_minutes_per_day;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Mon Utilisation</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
+            Mon Utilisation
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Current Plan */}
-          <div className={cn(
-            'p-5 rounded-xl border-2',
-            isFreePlan ? 'bg-gray-50 border-gray-200' : 'bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200'
-          )}>
+          <div
+            className={cn(
+              "p-5 rounded-xl border-2",
+              isFreePlan
+                ? "bg-gray-50 border-gray-200"
+                : "bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200",
+            )}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className={cn('p-2.5 rounded-lg bg-gradient-to-br text-white', planConfig.bgGradient)}>
+                <div
+                  className={cn(
+                    "p-2.5 rounded-lg bg-gradient-to-br text-white",
+                    planConfig.bgGradient,
+                  )}
+                >
                   {planConfig.icon}
                 </div>
                 <div>
@@ -170,15 +192,13 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                     Plan {planConfig.name}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {isFreePlan ? 'Découvrez HuntZen gratuitement' : 'Abonnement actif'}
+                    {isFreePlan
+                      ? "Découvrez HuntZen gratuitement"
+                      : "Abonnement actif"}
                   </p>
                 </div>
               </div>
-              {!isFreePlan && (
-                <Badge className="bg-green-500">
-                  Actif
-                </Badge>
-              )}
+              {!isFreePlan && <Badge className="bg-green-500">Actif</Badge>}
             </div>
 
             {isFreePlan && (
@@ -249,8 +269,8 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                       Débloquez tout le potentiel de HuntZen
                     </h4>
                     <p className="text-sm text-violet-700">
-                      Passez à un plan payant pour des analyses illimitées, plus de temps de coaching,
-                      et des fonctionnalités exclusives.
+                      Passez à un plan payant pour des analyses illimitées, plus
+                      de temps de coaching, et des fonctionnalités exclusives.
                     </p>
                   </div>
                 </div>
@@ -267,12 +287,13 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
           {/* Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-900">
-              <span className="font-semibold">💡 Bon à savoir :</span> Vos quotas se réinitialisent
-              automatiquement chaque jour à minuit. Passez à un plan supérieur pour augmenter vos limites.
+              <span className="font-semibold">💡 Bon à savoir :</span> Vos
+              quotas se réinitialisent automatiquement chaque jour à minuit.
+              Passez à un plan supérieur pour augmenter vos limites.
             </p>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

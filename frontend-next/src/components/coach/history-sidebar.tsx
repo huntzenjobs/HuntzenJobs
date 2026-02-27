@@ -4,12 +4,19 @@
  * Features: Search, filters, keyboard shortcuts, virtual scrolling for large lists
  */
 
-'use client'
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react'
-import { History, Search, Star, X, Loader2, MessageSquarePlus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import React, { useState, useEffect, useRef } from "react";
+import {
+  History,
+  Search,
+  Star,
+  X,
+  Loader2,
+  MessageSquarePlus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -17,28 +24,28 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useCoachHistory, useDebounce } from '@/hooks/use-coach-history'
-import { ConversationListItem } from './conversation-list-item'
-import type { ConversationListFilters } from '@/types/coach-history'
+} from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCoachHistory, useDebounce } from "@/hooks/use-coach-history";
+import { ConversationListItem } from "./conversation-list-item";
+import type { ConversationListFilters } from "@/types/coach-history";
 
 interface HistorySidebarProps {
-  onLoadConversation: (conversationId: string) => void
-  currentConversationId: string | null
+  onLoadConversation: (conversationId: string) => void;
+  currentConversationId: string | null;
 }
 
 export function HistorySidebar({
   onLoadConversation,
   currentConversationId,
 }: HistorySidebarProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search query
-  const debouncedSearch = useDebounce(searchQuery, 300)
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   const {
     conversations: allConversations,
@@ -46,56 +53,56 @@ export function HistorySidebar({
     deleteConversation,
     toggleFavorite,
     filterConversations,
-  } = useCoachHistory()
+  } = useCoachHistory();
 
   // Apply filters
   const filters: ConversationListFilters = {
     searchQuery: debouncedSearch,
     showFavoritesOnly,
-    sortBy: 'date',
-    sortOrder: 'desc',
-  }
+    sortBy: "date",
+    sortOrder: "desc",
+  };
 
-  const conversations = filterConversations(filters)
+  const conversations = filterConversations(filters);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Esc - Close sidebar
-      if (e.key === 'Escape' && isOpen) {
-        setIsOpen(false)
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
       }
 
       // Cmd/Ctrl + K - Focus search (when sidebar open)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k' && isOpen) {
-        e.preventDefault()
-        searchInputRef.current?.focus()
+      if ((e.metaKey || e.ctrlKey) && e.key === "k" && isOpen) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
       }
-    }
+    };
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   // Focus search input when sidebar opens
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
-      setTimeout(() => searchInputRef.current?.focus(), 100)
+      setTimeout(() => searchInputRef.current?.focus(), 100);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const handleLoadConversation = (conversationId: string) => {
-    onLoadConversation(conversationId)
-    setIsOpen(false)
-  }
+    onLoadConversation(conversationId);
+    setIsOpen(false);
+  };
 
   const handleToggleFavorite = async (conversationId: string) => {
-    await toggleFavorite(conversationId)
-  }
+    await toggleFavorite(conversationId);
+  };
 
   const handleDeleteConversation = async (conversationId: string) => {
-    await deleteConversation(conversationId)
-  }
+    await deleteConversation(conversationId);
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -110,7 +117,10 @@ export function HistorySidebar({
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-full sm:w-[480px] sm:max-w-[480px] p-0">
+      <SheetContent
+        side="right"
+        className="w-full sm:w-[480px] sm:max-w-[480px] p-0"
+      >
         <div className="flex flex-col h-full">
           {/* Header */}
           <SheetHeader className="p-6 pb-4 border-b">
@@ -138,7 +148,7 @@ export function HistorySidebar({
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-4 h-4" />
@@ -149,18 +159,20 @@ export function HistorySidebar({
             {/* Filters */}
             <div className="flex items-center gap-2">
               <Button
-                variant={showFavoritesOnly ? 'default' : 'outline'}
+                variant={showFavoritesOnly ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
                 className={`gap-2 ${
                   showFavoritesOnly
-                    ? 'bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:from-huntzen-blue-dark'
-                    : 'border-2'
+                    ? "bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:from-huntzen-blue-dark"
+                    : "border-2"
                 }`}
               >
                 <Star
                   className={`w-4 h-4 ${
-                    showFavoritesOnly ? 'fill-white' : 'fill-yellow-400 text-yellow-400'
+                    showFavoritesOnly
+                      ? "fill-white"
+                      : "fill-yellow-400 text-yellow-400"
                   }`}
                 />
                 Favoris
@@ -173,8 +185,8 @@ export function HistorySidebar({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setSearchQuery('')
-                    setShowFavoritesOnly(false)
+                    setSearchQuery("");
+                    setShowFavoritesOnly(false);
                   }}
                   className="text-gray-600"
                 >
@@ -205,21 +217,21 @@ export function HistorySidebar({
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">
                   {searchQuery || showFavoritesOnly
-                    ? 'Aucune conversation trouvée'
-                    : 'Pas encore de conversations'}
+                    ? "Aucune conversation trouvée"
+                    : "Pas encore de conversations"}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
                   {searchQuery || showFavoritesOnly
-                    ? 'Essayez de modifier vos filtres de recherche'
-                    : 'Vos conversations avec le Coach IA apparaîtront ici'}
+                    ? "Essayez de modifier vos filtres de recherche"
+                    : "Vos conversations avec le Coach IA apparaîtront ici"}
                 </p>
                 {(searchQuery || showFavoritesOnly) && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setSearchQuery('')
-                      setShowFavoritesOnly(false)
+                      setSearchQuery("");
+                      setShowFavoritesOnly(false);
                     }}
                     className="border-2"
                   >
@@ -247,7 +259,9 @@ export function HistorySidebar({
             <div className="text-xs text-gray-600 space-y-1">
               <div className="flex items-center justify-between">
                 <span>Total:</span>
-                <span className="font-medium">{allConversations.length} conversations</span>
+                <span className="font-medium">
+                  {allConversations.length} conversations
+                </span>
               </div>
               {showFavoritesOnly && (
                 <div className="flex items-center justify-between">
@@ -262,5 +276,5 @@ export function HistorySidebar({
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

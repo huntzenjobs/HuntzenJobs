@@ -265,3 +265,69 @@ temp/
 *.pdf
 !frontend/public/images/*.pdf
 .vercel
+
+# ============================================
+# Claude Analysis Files (keep local, don't push)
+# ============================================
+# Analysis & Planning docs
+AUDIT_*.md
+BUG*_*.md
+PHASE*.md
+PLAN_*.md
+REVIEW_*.md
+CHANGELOG*.md
+MANUAL_TEST_*.md
+PROFILING_*.md
+
+# Implementation & Completion docs
+*_COMPLETE*.md
+*_IMPLEMENTATION*.md
+*_GUIDE*.md
+*_STATUS*.md
+*_CHECKLIST*.md
+RESUME_*.md
+DEMO_*.md
+
+# Deployment & Production docs (temporary)
+RAILWAY_*.md
+PRODUCTION_*.md
+FIX_*.md
+FINAL_*.md
+
+# SEO & Marketing docs (temporary)
+SEO_*.md
+LOGO_*.md
+
+# Testing docs (temporary)
+TESTING_*.md
+TEST_PLAN_*.md
+TEST_EXECUTION_*.md
+TESTS_RESULTS_*.md
+*_SETUP.md
+ACTIONS_*.md
+DEPLOYMENT_ENV_VARS.md
+SUPABASE_JWT_SECRET_SETUP.md
+
+# SQL debug/cleanup scripts (keep migrations!)
+/*cleanup*.sql
+/*debug*.sql
+/*fix*.sql
+/*sync*.sql
+/*test*.sql
+/schema_dump.sql
+apply_migrations_guide.md
+
+# Playwright test results
+test-results/
+test-results-production/
+playwright-report/
+playwright-report-production/
+.env.test
+
+# Exceptions: Keep important docs
+!README.md
+!CONTRIBUTING.md
+!DEPLOYMENT.md
+!DOCKER_USAGE.md
+!supabase/migrations/*.sql
+!backend/USEFUL_SQL_QUERIES.sql

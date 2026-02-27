@@ -32,6 +32,35 @@ from src.utils.cache import redis_cache
 
 logger = logging.getLogger(__name__)
 
+# Known school/training-org company names (case-insensitive partial match)
+_SCHOOL_COMPANY_KEYWORDS = [
+    "iscod", "pigier", "studi", "jedha", "wild code school", "le reacteur",
+    "openclassrooms", "efap", "idrac", "epsi", "esgi", "mybtssio", "mybts",
+    "formapro", "infa", "groupe igs", "sup de vente", "iseg", "ifag",
+    "isefac", "isfa", "cfa cnam", "coding temple", "ynov campus",
+    "webacademie", "digital campus", "ion school", "iris school",
+]
+
+# Phrases in title/description that reveal a school recruiting students
+_SCHOOL_CONTENT_PATTERNS = [
+    "notre école",
+    "notre formation",
+    "notre centre de formation",
+    "notre organisme de formation",
+    "rejoignez notre cursus",
+    "rejoignez notre formation",
+    "frais de scolarité",
+    "titre rncp niveau",
+    "certification rncp niveau",
+    "notre bts",
+    "notre bachelor",
+    "notre mastère",
+    "intégrez notre école",
+    "vous serez formé au sein de notre",
+    "organisme de formation enregistré",
+    "programme de formation en alternance",
+]
+
 
 class JobScoutAgent(BaseAgent):
     """
@@ -98,7 +127,7 @@ class JobScoutAgent(BaseAgent):
         
         logger.info(f"[{self.name}] Initialized 3 sub-agents + {len(self.providers)} providers")
 
-    @redis_cache(ttl=300, prefix="jobs")  # Cache job searches for 5 minutes
+    @redis_cache(ttl=900, prefix="jobs")  # Cache job searches for 15 minutes
     async def run(
         self,
         job_title: str,
@@ -170,7 +199,10 @@ class JobScoutAgent(BaseAgent):
             # Step 3.5: Pre-filter by relevance (safety net)
             filtered_jobs = self._pre_filter_by_relevance(unique_jobs, search_query)
             logger.info(f"[{self.name}] Pre-filter: {len(unique_jobs)} → {len(filtered_jobs)} jobs")
-            
+
+            # Step 3.6: Filter school/training-org offers disguised as employers
+            filtered_jobs = self._filter_school_offers(filtered_jobs)
+
             # Step 4: Rank with AI (sample for performance)
             ranked_jobs = await self._rank_jobs(filtered_jobs[:max_results * 2], job_title)
             
@@ -350,9 +382,50 @@ class JobScoutAgent(BaseAgent):
         if not filtered:
             logger.warning(f"[JobScout] Pre-filter removed ALL jobs, falling back to original list")
             return jobs
-        
+
         return filtered
-    
+
+    @staticmethod
+    def _filter_school_offers(jobs: list[dict]) -> list[dict]:
+        """
+        Filter out school/training-organization offers disguised as employer job postings.
+
+        Detects two patterns:
+        1. Company name matches a known school operator keyword
+        2. Title or description contains school-recruitment language (e.g. "notre formation")
+        """
+        filtered = []
+        removed_count = 0
+
+        for job in jobs:
+            company = (job.get("company") or "").lower()
+            title = (job.get("title") or "").lower()
+            description = (job.get("description") or "").lower()
+            content = f"{title} {description}"
+
+            # Check 1: known school company name
+            is_school = any(kw in company for kw in _SCHOOL_COMPANY_KEYWORDS)
+
+            # Check 2: content patterns (one strong signal is enough)
+            if not is_school:
+                is_school = any(pattern in content for pattern in _SCHOOL_CONTENT_PATTERNS)
+
+            if is_school:
+                removed_count += 1
+                logger.debug(
+                    f"[SchoolFilter] Removed: '{job.get('title')}' @ '{job.get('company')}'"
+                )
+            else:
+                filtered.append(job)
+
+        if removed_count > 0:
+            logger.info(
+                f"[SchoolFilter] Filtered {removed_count} school offers "
+                f"out of {len(jobs) + removed_count}"
+            )
+
+        return filtered
+
     async def refine_query(self, query: str) -> dict:
         """
         Public method to refine search query.

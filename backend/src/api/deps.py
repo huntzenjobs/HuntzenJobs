@@ -393,3 +393,48 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Authentication failed: {str(e)}"
         )
+
+
+CurrentUserDep = Annotated[dict, Depends(get_current_user)]
+
+
+async def get_current_admin(current_user: dict = Depends(get_current_user)) -> dict:
+    """
+    Verify the current user has admin privileges (is_admin = TRUE in profiles).
+
+    Raises:
+        HTTPException 403: If user is not an admin
+    """
+    supabase = get_supabase_client()
+    user_id = current_user["id"]
+
+    try:
+        result = supabase.table("profiles").select("is_admin").eq("id", user_id).single().execute()
+        if not result.data or not result.data.get("is_admin"):
+            # Log unauthorized admin access attempt
+            try:
+                supabase.rpc("log_security_event", {
+                    "p_event_type": "api.unauthorized_access",
+                    "p_severity": "warning",
+                    "p_user_id": user_id,
+                    "p_event_data": {"resource": "admin_panel", "user_id": user_id}
+                }).execute()
+            except Exception:
+                pass  # Don't fail the request if logging fails
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin check failed for user {user_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access verification failed"
+        )
+
+    return {**current_user, "is_admin": True}
+
+
+AdminUserDep = Annotated[dict, Depends(get_current_admin)]

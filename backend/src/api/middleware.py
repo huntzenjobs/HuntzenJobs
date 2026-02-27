@@ -138,10 +138,14 @@ def setup_middleware(app: FastAPI) -> None:
     app.add_middleware(SlowAPIMiddleware)
 
     # CORS
+    # Note: allow_credentials=True + allow_origins=["*"] is invalid per the
+    # CORS spec. When origins are unrestricted use allow_credentials=False;
+    # when explicit origins are configured credentials can be enabled.
+    allow_all = settings.cors_origins == ["*"]
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_credentials=True,
+        allow_credentials=not allow_all,
         allow_methods=["*"],
         allow_headers=["*"],
     )
