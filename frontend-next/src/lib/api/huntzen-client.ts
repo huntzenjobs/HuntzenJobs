@@ -374,7 +374,8 @@ class HuntzenApiClient {
       | "job-scout"
       | "cv-analyzer"
       | "cv-adapter"
-      | "interview-sim",
+      | "interview-sim"
+      | "branding",
     language: string = "fr",
   ): Promise<{ success: boolean; response: string; agent: string }> {
     // Route to appropriate endpoint based on assistant type
@@ -384,6 +385,7 @@ class HuntzenApiClient {
       "cv-analyzer": "/api/assistant/cv-analyzer",
       "cv-adapter": "/api/assistant/cv-adapter",
       "interview-sim": "/api/assistant/interview-sim",
+      branding: "/api/branding/chat",
     };
 
     const endpoint = endpointMap[assistantType] || "/api/coach/chat";
@@ -400,6 +402,28 @@ class HuntzenApiClient {
         }),
       },
     );
+  }
+
+  async sendBrandingMessage(
+    message: string,
+    sessionId: string,
+    language: string = "fr",
+    brandingState?: Record<string, unknown> | null,
+  ): Promise<{
+    success: boolean;
+    response: string;
+    language: string;
+    branding_state: Record<string, unknown> | null;
+  }> {
+    return this.fetch("/api/branding/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+        language,
+        branding_state: brandingState ?? null,
+      }),
+    });
   }
 
   // Legacy method - kept for backwards compatibility

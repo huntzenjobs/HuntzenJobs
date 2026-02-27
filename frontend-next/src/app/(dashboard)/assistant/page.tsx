@@ -45,6 +45,10 @@ export default function AssistantPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(() => uuidv4());
+  const [brandingState, setBrandingState] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
 
@@ -173,12 +177,31 @@ export default function AssistantPage() {
 
     try {
       // Use the appropriate API method based on selected assistant
-      const response = await huntzenApi.sendAssistantMessage(
-        messageText,
-        sessionId,
-        selectedAssistant,
-        locale,
-      );
+      let response: {
+        success: boolean;
+        response: string;
+        agent?: string;
+        language?: string;
+        branding_state?: Record<string, unknown> | null;
+      };
+
+      if (selectedAssistant === "branding") {
+        const brandingResponse = await huntzenApi.sendBrandingMessage(
+          messageText,
+          sessionId,
+          locale,
+          brandingState,
+        );
+        setBrandingState(brandingResponse.branding_state ?? null);
+        response = { ...brandingResponse, agent: "branding" };
+      } else {
+        response = await huntzenApi.sendAssistantMessage(
+          messageText,
+          sessionId,
+          selectedAssistant,
+          locale,
+        );
+      }
 
       const assistantMessage: ChatMessageType = {
         id: uuidv4(),
@@ -237,6 +260,7 @@ export default function AssistantPage() {
     setMessages([]);
     setCurrentConversationId(null);
     setInput("");
+    setBrandingState(null);
   };
 
   // Check if we should show welcome screen (no messages)
