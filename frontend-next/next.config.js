@@ -127,6 +127,11 @@ const nextConfig = {
   // Output standalone for Docker deployment
   output: 'standalone',
 
+  // Prevent webpack from bundling packages that use __dirname/fs.readFileSync
+  // isomorphic-dompurify uses jsdom which reads CSS files via readFileSync
+  // This keeps them as runtime require() so __dirname stays correct
+  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
+
   // React Strict Mode pour détecter les problèmes
   reactStrictMode: true,
 
