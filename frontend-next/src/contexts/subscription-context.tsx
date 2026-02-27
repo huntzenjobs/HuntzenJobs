@@ -148,13 +148,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   // Manual reconciliation function (for debugging or user-triggered sync)
   const reconcileSubscription = useCallback(async () => {
-    console.log("[SUBSCRIPTION] Manual reconciliation triggered");
-
     // Clear local cache
     try {
       localStorage.removeItem("huntzen_subscription_cache");
       localStorage.removeItem("huntzen_subscription_cache_expiry");
-      console.log("[SUBSCRIPTION] Local cache cleared");
     } catch (error) {
       console.error("[SUBSCRIPTION] Failed to clear cache:", error);
     }
@@ -243,7 +240,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // Auto-refetch after 5 seconds if not an error
       if (!isApiError) {
         setTimeout(() => {
-          console.log("[SUBSCRIPTION] Auto-refetching subscription data...");
           apiRefetchRef.current?.();
         }, 5000);
       }
@@ -251,9 +247,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     // Reset warning flag when subscription data is successfully loaded
     if (hasSubscriptionData && hasShownInconsistencyWarning) {
-      console.log(
-        "[SUBSCRIPTION] Subscription data loaded successfully, resetting warning flag",
-      );
       setHasShownInconsistencyWarning(false);
     }
   }, [
@@ -390,13 +383,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   );
 
   // hasFeature: Check feature availability based on API plan (source of truth)
-  const hasFeature = useCallback((feature: keyof PlanLimits): boolean => {
-    // Use API plan as source of truth (not localStorage fallback)
-    // This ensures Premium users get Premium features even after cache expiry
-    const currentPlan = apiData.subscription?.plan_name || freemium.plan
-    const limits = PLAN_LIMITS[currentPlan]
-    return !!limits[feature]
-  }, [apiData.subscription?.plan_name, freemium.plan])
+  const hasFeature = useCallback(
+    (feature: keyof PlanLimits): boolean => {
+      // Use API plan as source of truth (not localStorage fallback)
+      // This ensures Premium users get Premium features even after cache expiry
+      const currentPlan = apiData.subscription?.plan_name || freemium.plan;
+      const limits = PLAN_LIMITS[currentPlan];
+      return !!limits[feature];
+    },
+    [apiData.subscription?.plan_name, freemium.plan],
+  );
 
   // useMemo with ONLY primitive dependencies that actually change
   const value: SubscriptionContextType = useMemo(

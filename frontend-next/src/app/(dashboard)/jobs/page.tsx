@@ -281,7 +281,6 @@ export default function JobsPage() {
 
     if (Object.keys(filters).length > 0) {
       setAdvancedFilters(filters);
-      console.log("[ADVANCED_FILTERS] Loaded from URL:", filters);
     }
   }, [searchParams]);
 
@@ -399,16 +398,6 @@ export default function JobsPage() {
         throw new Error("Veuillez remplir le titre du poste et le pays");
       }
 
-      // Debug: Log search parameters
-      console.log("🔍 [SEARCH] Paramètres de recherche:", {
-        query: jobSearchParams.query,
-        location: jobSearchParams.location,
-        country: jobSearchParams.country,
-        // radiusKm: jobSearchParams.radiusKm, // Désactivé
-        includeRemote: jobSearchParams.includeRemote,
-        contractType,
-      });
-
       const data = await huntzenApi.searchJobs({
         job_title: jobSearchParams.query,
         country_code: jobSearchParams.country,
@@ -423,11 +412,6 @@ export default function JobsPage() {
         salaryMin: advancedFilters.salaryMin,
         salaryMax: advancedFilters.salaryMax,
         companySize: advancedFilters.companySize,
-      });
-
-      console.log("✅ [SEARCH] Résultats reçus:", {
-        totalJobs: data.jobs.length,
-        correctedQuery: data.corrected_query,
       });
 
       return data;
@@ -468,7 +452,6 @@ export default function JobsPage() {
       !searchQuery.isFetching && // Not currently fetching
       !hasIncrementedQuotaRef.current // Not already counted
     ) {
-      console.log("📊 [QUOTA] Incrementing usage for job_search");
       incrementUsage("job_search");
       hasIncrementedQuotaRef.current = true;
     }
@@ -582,9 +565,6 @@ export default function JobsPage() {
     setAdvancedFilters(filters);
     setAdvancedFiltersOpen(false);
 
-    // Log for debugging
-    console.log("[ADVANCED_FILTERS] Applied filters:", filters);
-
     // Persist in URL search params
     const params = new URLSearchParams(searchParams.toString());
 
@@ -621,7 +601,6 @@ export default function JobsPage() {
 
     // Re-run search with new filters if a search has already been performed
     if (jobTitle && selectedCountry && jobs.length > 0) {
-      console.log("[ADVANCED_FILTERS] Re-running search with filters...");
       handleSearch({
         query: jobTitle,
         country: selectedCountry,
@@ -1323,9 +1302,6 @@ export default function JobsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    console.log(
-                      "🔄 [REFRESH] Forcing refetch (bypassing cache)",
-                    );
                     searchQuery.refetch();
                   }}
                   disabled={searchQuery.isFetching}
