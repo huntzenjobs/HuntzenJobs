@@ -225,10 +225,7 @@ export function JobDetailsModal({
                     job.url && (
                       <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-600">
                         <AlertTriangle className="h-4 w-4 text-slate-400 shrink-0" />
-                        <span>
-                          Cliquez sur &quot;Voir l&apos;offre&quot; pour accéder
-                          à la description complète.
-                        </span>
+                        <span>{t("truncatedDescription")}</span>
                       </div>
                     )}
 

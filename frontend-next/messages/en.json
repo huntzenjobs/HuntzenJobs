@@ -833,7 +833,8 @@
     "findRecruiter": "Find Recruiter",
     "generateDocuments": "Generate adapted CVs + letters",
     "notAvailable": "Non spécifié",
-    "viewOffer": "View Offering"
+    "viewOffer": "View Offering",
+    "truncatedDescription": "Click \"View offer\" to access the full job description."
   },
   "searchForm": {
     "jobTitleRequired": "Job is required",

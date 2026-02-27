@@ -833,7 +833,8 @@
     "findRecruiter": "Encontrar al reclutador",
     "generateDocuments": "Generar CV + carta adaptados",
     "notAvailable": "No especificado",
-    "viewOffer": "Ver la oferta .."
+    "viewOffer": "Ver la oferta ..",
+    "truncatedDescription": "Haz clic en \"Ver la oferta\" para acceder a la descripción completa."
   },
   "searchForm": {
     "jobTitleRequired": "Se requiere la profesión",

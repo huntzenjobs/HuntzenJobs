@@ -833,7 +833,8 @@
     "findRecruiter": "Encontrar recrutador",
     "generateDocuments": "Gerar CVs adaptados + letras",
     "notAvailable": "Não especificado",
-    "viewOffer": "Ver a oferta"
+    "viewOffer": "Ver a oferta",
+    "truncatedDescription": "Clique em \"Ver a oferta\" para aceder à descrição completa."
   },
   "searchForm": {
     "jobTitleRequired": "O trabalho é obrigatório",
