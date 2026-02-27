@@ -248,14 +248,14 @@ export const JobsLimitReached = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "col-span-full p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-dashed border-violet-200 text-center",
+        "col-span-full p-4 md:p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-dashed border-violet-200 text-center",
         className,
       )}
     >
       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-4 shadow-lg">
         <Lock className="w-8 h-8 text-white" />
       </div>
-      <h3 className="text-xl font-bold mb-2">
+      <h3 className="text-base md:text-xl font-bold mb-2">
         {t("moreOffers", { count: hiddenJobs })}
       </h3>
       <p className="text-muted-foreground mb-4 max-w-md mx-auto">

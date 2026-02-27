@@ -115,11 +115,11 @@ function ContactCard({ contact }: { contact: Contact }) {
       </div>
 
       {contact.email && (
-        <div className="flex items-center gap-1.5 text-sm">
+        <div className="flex items-center gap-1.5 text-sm min-w-0">
           <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
           <a
             href={`mailto:${contact.email}`}
-            className="text-blue-600 hover:underline truncate"
+            className="text-blue-600 hover:underline truncate min-w-0"
           >
             {contact.email}
           </a>

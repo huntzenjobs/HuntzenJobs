@@ -44,7 +44,7 @@ export function UpgradeBanner({
   if (variant === "minimal") {
     return (
       <div
-        className={`flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b border-violet-200 ${className}`}
+        className={`flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b border-violet-200 ${className}`}
       >
         <p className="text-sm text-violet-700">
           <Sparkles className="w-4 h-4 inline mr-1" />
@@ -81,7 +81,7 @@ export function UpgradeBanner({
           <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-white blur-3xl" />
         </div>
 
-        <div className="relative flex items-center justify-between gap-4">
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-white/20">
               <Sparkles className="w-5 h-5" />
@@ -115,7 +115,7 @@ export function UpgradeBanner({
   // Default variant
   return (
     <div
-      className={`flex items-center justify-between gap-4 px-4 py-3 bg-gradient-to-r from-blue-50 via-violet-50 to-purple-50 border border-violet-200 rounded-lg ${className}`}
+      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-blue-50 via-violet-50 to-purple-50 border border-violet-200 rounded-lg ${className}`}
     >
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-full bg-gradient-to-br from-violet-500 to-purple-600">

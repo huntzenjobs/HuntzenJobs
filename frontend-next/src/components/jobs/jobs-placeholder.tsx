@@ -34,11 +34,11 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-12 py-8"
+      className="space-y-8 md:space-y-12 py-6 md:py-8"
     >
       {/* Recherches populaires */}
       <div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+        <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2">
           <TrendingUp className="w-6 h-6 text-huntzen-blue" />
           Recherches populaires en ce moment
         </h3>
@@ -57,19 +57,21 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
       </div>
 
       {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="text-center p-8 border-2 border-huntzen-blue/30 hover:border-huntzen-blue transition-all hover:shadow-xl">
-          <BarChart3 className="w-12 h-12 text-huntzen-blue mx-auto mb-4" />
-          <div className="text-5xl font-black text-huntzen-blue mb-2">10K+</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+        <Card className="text-center p-4 md:p-8 border-2 border-huntzen-blue/30 hover:border-huntzen-blue transition-all hover:shadow-xl">
+          <BarChart3 className="w-8 h-8 md:w-12 md:h-12 text-huntzen-blue mx-auto mb-3 md:mb-4" />
+          <div className="text-3xl md:text-5xl font-black text-huntzen-blue mb-2">
+            10K+
+          </div>
           <p className="text-gray-600 font-medium">Offres d'emploi agrégées</p>
           <Badge className="mt-3 bg-blue-50 text-huntzen-blue border-0">
             Mise à jour 24h/24
           </Badge>
         </Card>
 
-        <Card className="text-center p-8 border-2 border-huntzen-turquoise/30 hover:border-huntzen-turquoise transition-all hover:shadow-xl">
-          <Globe className="w-12 h-12 text-huntzen-turquoise mx-auto mb-4" />
-          <div className="text-5xl font-black text-huntzen-turquoise mb-2">
+        <Card className="text-center p-4 md:p-8 border-2 border-huntzen-turquoise/30 hover:border-huntzen-turquoise transition-all hover:shadow-xl">
+          <Globe className="w-8 h-8 md:w-12 md:h-12 text-huntzen-turquoise mx-auto mb-3 md:mb-4" />
+          <div className="text-3xl md:text-5xl font-black text-huntzen-turquoise mb-2">
             15+
           </div>
           <p className="text-gray-600 font-medium">
@@ -80,9 +82,11 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
           </Badge>
         </Card>
 
-        <Card className="text-center p-8 border-2 border-blue-500/30 hover:border-blue-500 transition-all hover:shadow-xl">
-          <Zap className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-          <div className="text-5xl font-black text-blue-500 mb-2">24h</div>
+        <Card className="text-center p-4 md:p-8 border-2 border-blue-500/30 hover:border-blue-500 transition-all hover:shadow-xl">
+          <Zap className="w-8 h-8 md:w-12 md:h-12 text-blue-500 mx-auto mb-3 md:mb-4" />
+          <div className="text-3xl md:text-5xl font-black text-blue-500 mb-2">
+            24h
+          </div>
           <p className="text-gray-600 font-medium">Délai de mise à jour max</p>
           <Badge className="mt-3 bg-blue-50 text-blue-500 border-0">
             Nouvelles offres quotidiennes
@@ -91,8 +95,8 @@ export function JobsPlaceholder({ onSearchClick }: JobsPlaceholderProps) {
       </div>
 
       {/* Tips visuels */}
-      <Card className="p-8 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50 border-2 border-huntzen-blue/30">
-        <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
+      <Card className="p-4 md:p-8 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50 border-2 border-huntzen-blue/30">
+        <h3 className="font-bold text-base md:text-xl mb-4 md:mb-6 flex items-center gap-2">
           <Sparkles className="w-6 h-6 text-huntzen-blue" />
           Conseils pour une recherche efficace
         </h3>

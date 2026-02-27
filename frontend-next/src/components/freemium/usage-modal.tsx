@@ -160,7 +160,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
+      <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
             Mon Utilisation
