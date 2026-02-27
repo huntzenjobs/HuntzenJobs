@@ -17,6 +17,7 @@ export type AssistantType =
   | 'cv-adapter'        // Spécialiste Adaptation CV
   | 'interview-sim'     // Recruteur pour simulation entretien
   | 'branding'          // Expert Personal Branding
+  | 'branding'          // Expert Personal Branding
 
 /**
  * Configuration d'un assistant (agent humain expert)
