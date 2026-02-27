@@ -54,7 +54,11 @@ export function sanitizeEmail(email: string): string | null {
  */
 export function stripHtmlForPreview(html: string): string {
   if (!html) return "";
-  return sanitizeInput(html).replace(/\s+/g, " ").trim();
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
