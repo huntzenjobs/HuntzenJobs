@@ -672,11 +672,11 @@ export default function JobsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl border border-slate-200 shadow-sm"
+        className="flex flex-col md:flex-row items-start justify-between gap-4 bg-gradient-to-br from-white to-slate-50 p-4 md:p-8 rounded-2xl border border-slate-200 shadow-sm"
       >
         <div className="flex-1">
           <motion.div
-            className="flex items-center gap-4 mb-3"
+            className="flex items-center gap-3 md:gap-4 mb-3"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
@@ -685,7 +685,7 @@ export default function JobsPage() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
+              className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30 flex-shrink-0"
             >
               <Search className="w-7 h-7 text-white" />
             </motion.div>
@@ -702,7 +702,7 @@ export default function JobsPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="shrink-0"
+            className="shrink-0 self-start md:self-auto"
           >
             <UsageCounter feature="job_search" compact />
           </motion.div>
@@ -1188,7 +1188,7 @@ export default function JobsPage() {
           className={`grid gap-6 auto-rows-fr ${
             featureFlags.useJobsV2
               ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-              : "md:grid-cols-2"
+              : "grid-cols-1 md:grid-cols-2"
           }`}
         >
           {Array.from({ length: 6 }).map((_, i) => (
@@ -1243,7 +1243,7 @@ export default function JobsPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="flex items-center justify-between bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-2xl border border-emerald-200/50 shadow-sm"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-emerald-50 to-green-50 p-4 md:p-6 rounded-2xl border border-emerald-200/50 shadow-sm"
             >
               <div className="flex items-center gap-4">
                 <motion.div
@@ -1372,7 +1372,7 @@ export default function JobsPage() {
               className={`grid gap-6 auto-rows-fr ${
                 featureFlags.useJobsV2
                   ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                  : "md:grid-cols-2"
+                  : "grid-cols-1 md:grid-cols-2"
               }`}
             >
               {/* Visible jobs */}

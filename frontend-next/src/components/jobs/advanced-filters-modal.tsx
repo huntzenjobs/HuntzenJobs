@@ -203,7 +203,7 @@ export function AdvancedFiltersModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -302,6 +302,7 @@ export function AdvancedFiltersModal({
             </div>
             <div className="flex gap-2">
               <Input
+                className="flex-1 min-w-0"
                 placeholder="Ex: React, Python, AWS..."
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
@@ -312,7 +313,11 @@ export function AdvancedFiltersModal({
                   }
                 }}
               />
-              <Button onClick={handleAddKeyword} variant="secondary">
+              <Button
+                onClick={handleAddKeyword}
+                variant="secondary"
+                className="shrink-0"
+              >
                 Ajouter
               </Button>
             </div>
@@ -371,7 +376,7 @@ export function AdvancedFiltersModal({
                 {t("salaryLabel")}
               </Label>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-2">
                 <Label htmlFor="salary-min" className="text-xs text-gray-600">
                   {t("salaryMin")}

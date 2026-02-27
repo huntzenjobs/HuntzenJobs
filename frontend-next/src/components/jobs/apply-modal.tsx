@@ -129,28 +129,30 @@ function cvDataToText(cv: CvData): string {
     lines.push("\nFormation :");
     for (const edu of cv.education) {
       lines.push(
-        `${edu.degree}${edu.field ? ` en ${edu.field}` : ""} — ${edu.institution}${edu.year ? ` (${edu.year})` : ""}`
+        `${edu.degree}${edu.field ? ` en ${edu.field}` : ""} — ${edu.institution}${edu.year ? ` (${edu.year})` : ""}`,
       );
     }
   }
 
   if (cv.skills) {
     if (cv.skills.technical?.length) {
-      lines.push(`\nCompétences techniques : ${cv.skills.technical.join(", ")}`);
+      lines.push(
+        `\nCompétences techniques : ${cv.skills.technical.join(", ")}`,
+      );
     }
     if (cv.skills.soft?.length) {
       lines.push(`Soft skills : ${cv.skills.soft.join(", ")}`);
     }
     if (cv.skills.languages?.length) {
       lines.push(
-        `Langues : ${cv.skills.languages.map((l) => `${l.language} (${l.level})`).join(", ")}`
+        `Langues : ${cv.skills.languages.map((l) => `${l.language} (${l.level})`).join(", ")}`,
       );
     }
   }
 
   if (cv.certifications?.length) {
     lines.push(
-      `\nCertifications : ${cv.certifications.map((c) => c.name).join(", ")}`
+      `\nCertifications : ${cv.certifications.map((c) => c.name).join(", ")}`,
     );
   }
 
@@ -165,7 +167,9 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
   const [step, setStep] = useState<Step>("upload");
   const [cvSource, setCvSource] = useState<CvSource>("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedProfile, setSelectedProfile] = useState<CvProfile | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<CvProfile | null>(
+    null,
+  );
   const [wizardOpen, setWizardOpen] = useState(false);
   const [language, setLanguage] = useState<"fr" | "en">("fr");
   const [isDragging, setIsDragging] = useState(false);
@@ -339,7 +343,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
 
   const generatePdfsAndSave = async (
     cvData: Record<string, unknown>,
-    matchScore?: number
+    matchScore?: number,
   ) => {
     setGeneratingLabel(t("processingStep2"));
 
@@ -427,7 +431,10 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
   // ── CV Builder wizard save ─────────────────────────────────────────────────
 
   const handleWizardSave = async (name: string, data: CvData) => {
-    const saved = await saveProfile(name, data as unknown as Record<string, unknown>);
+    const saved = await saveProfile(
+      name,
+      data as unknown as Record<string, unknown>,
+    );
     if (saved) {
       setSelectedProfile(saved);
       toast.success("Profil sauvegardé !");
@@ -444,7 +451,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-lg bg-white">
+        <DialogContent className="max-w-lg bg-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-900">
               <Sparkles className="h-5 w-5 text-[#00D9FF]" />
@@ -484,7 +491,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                 <button
                   onClick={() => setCvSource("upload")}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "flex-1 flex items-center justify-center gap-1.5 md:gap-2 rounded-md px-2 md:px-3 py-2.5 text-xs md:text-sm font-medium transition-colors min-h-[44px]",
                     cvSource === "upload"
                       ? "bg-slate-900 text-white"
                       : "text-slate-600 hover:bg-slate-100",
@@ -496,7 +503,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                 <button
                   onClick={() => setCvSource("profile")}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "flex-1 flex items-center justify-center gap-1.5 md:gap-2 rounded-md px-2 md:px-3 py-2.5 text-xs md:text-sm font-medium transition-colors min-h-[44px]",
                     cvSource === "profile"
                       ? "bg-slate-900 text-white"
                       : "text-slate-600 hover:bg-slate-100",
@@ -511,7 +518,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
               {cvSource === "upload" && (
                 <div
                   className={cn(
-                    "relative rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors",
+                    "relative rounded-xl border-2 border-dashed p-4 md:p-6 text-center cursor-pointer transition-colors",
                     isDragging
                       ? "border-[#00D9FF] bg-[#00D9FF]/5"
                       : selectedFile
@@ -574,13 +581,14 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                       <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
                     </div>
                   ) : profiles.length === 0 ? (
-                    <div className="rounded-xl border-2 border-dashed border-slate-200 p-6 text-center">
+                    <div className="rounded-xl border-2 border-dashed border-slate-200 p-4 md:p-6 text-center">
                       <User className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                       <p className="text-sm text-slate-600 font-medium mb-1">
                         Aucun profil sauvegardé
                       </p>
                       <p className="text-xs text-slate-400 mb-4">
-                        Créez votre profil CV une fois, utilisez-le pour toutes vos candidatures
+                        Créez votre profil CV une fois, utilisez-le pour toutes
+                        vos candidatures
                       </p>
                       <Button
                         size="sm"
@@ -617,7 +625,12 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                                   {profile.name}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                  {(profile.cv_data as Record<string, {name?: string}>)?.personal_info?.name || ""}
+                                  {(
+                                    profile.cv_data as Record<
+                                      string,
+                                      { name?: string }
+                                    >
+                                  )?.personal_info?.name || ""}
                                 </p>
                               </div>
                               {selectedProfile?.id === profile.id && (

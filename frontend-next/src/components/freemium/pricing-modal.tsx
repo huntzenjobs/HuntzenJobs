@@ -249,7 +249,7 @@ export function PricingModal() {
   return (
     <Dialog open={showPricingModal} onOpenChange={closePricingModal}>
       <DialogContent className="max-w-[95vw] w-full lg:max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-white text-gray-900">
-        <DialogHeader className="px-6 pt-6 pb-3 flex-shrink-0">
+        <DialogHeader className="px-4 md:px-6 pt-4 md:pt-6 pb-3 flex-shrink-0">
           <DialogTitle className="text-2xl font-bold text-center">
             {tModal("title")}
           </DialogTitle>
@@ -260,9 +260,9 @@ export function PricingModal() {
           )}
         </DialogHeader>
 
-        <div className="px-6 pb-6 overflow-y-auto flex-1">
+        <div className="px-4 md:px-6 pb-4 md:pb-6 overflow-y-auto flex-1">
           {/* Plans Grid */}
-          <div className="grid md:grid-cols-4 gap-4 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4">
             {plans.map((plan) => (
               <div
                 key={plan.id}

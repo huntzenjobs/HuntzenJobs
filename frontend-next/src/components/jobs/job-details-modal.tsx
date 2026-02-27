@@ -169,8 +169,8 @@ export function JobDetailsModal({
           <DialogPrimitive.Content
             className={cn(
               "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%]",
-              "w-full max-w-6xl max-h-[95vh]",
-              "bg-white rounded-lg shadow-xl",
+              "w-full max-w-[95vw] md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[95vh]",
+              "bg-white rounded-lg shadow-xl flex flex-col",
               "overflow-hidden",
               "data-[state=open]:animate-in data-[state=closed]:animate-out",
               "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -180,17 +180,17 @@ export function JobDetailsModal({
             )}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-violet-600 text-white p-6 relative">
+            <div className="bg-gradient-to-r from-blue-600 to-violet-600 text-white p-4 md:p-6 relative flex-shrink-0">
               <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-2 bg-white/10 hover:bg-white/20 transition-colors">
                 <X className="h-5 w-5" />
                 <span className="sr-only">{t("close")}</span>
               </DialogPrimitive.Close>
 
               <div className="pr-12">
-                <DialogPrimitive.Title className="text-2xl font-bold mb-2">
+                <DialogPrimitive.Title className="text-lg md:text-2xl font-bold mb-2">
                   {job.title}
                 </DialogPrimitive.Title>
-                <div className="flex items-center gap-3 text-white/90">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 text-white/90">
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4" />
                     <span className="font-medium">
@@ -211,8 +211,8 @@ export function JobDetailsModal({
             </div>
 
             {/* Body - Scrollable with 2-column layout */}
-            <div className="overflow-y-auto max-h-[calc(95vh-220px)] p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="overflow-y-auto flex-1 p-4 md:p-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                 {/* Left Column - Main Info (2/3 width) */}
                 <div className="lg:col-span-2 space-y-6">
                   {/* Description */}
@@ -341,103 +341,105 @@ export function JobDetailsModal({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-gray-200 p-6 bg-gray-50">
-              <div className="flex items-center justify-between gap-3 w-full">
+            <div className="border-t border-gray-200 p-4 md:p-6 bg-gray-50 flex-shrink-0">
+              {/* Ligne 1 : actions secondaires — s'empilent sur mobile */}
+              <div className="flex flex-wrap gap-2 mb-3">
                 <Button
                   variant="outline"
-                  size="lg"
+                  size="sm"
+                  className="flex-1 sm:flex-none"
                   onClick={() => setRecruiterDrawerOpen(true)}
                 >
                   <Users className="mr-2 h-4 w-4" />
                   {t("findRecruiter")}
                 </Button>
-                <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                  onClick={() => onOpenChange(false)}
+                >
+                  {t("close")}
+                </Button>
+                {job.url && (
                   <Button
+                    asChild
                     variant="outline"
-                    onClick={() => onOpenChange(false)}
-                    size="lg"
+                    size="sm"
+                    className="flex-1 sm:flex-none"
                   >
-                    {t("close")}
+                    <a href={job.url} target="_blank" rel="noopener noreferrer">
+                      {t("viewOffer")}
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </a>
                   </Button>
-                  {job.url && (
-                    <>
-                      {/* Bouton principal + info adjacente */}
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="lg"
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                          onClick={() => {
-                            if (!canUse("cv_analysis")) {
-                              openPricingModal("cv_analysis");
-                              return;
-                            }
-                            setApplyModalOpen(true);
-                          }}
-                        >
-                          <Sparkles className="mr-2 h-4 w-4" />
-                          {t("generateDocuments")}
-                        </Button>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button
-                              className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                              aria-label="Comment ça fonctionne ?"
-                            >
-                              <Info className="h-4 w-4" />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            side="top"
-                            align="end"
-                            className="w-72 p-4"
-                          >
-                            <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-blue-600 shrink-0" />
-                              CV &amp; lettre adaptés à ce poste
-                            </p>
-                            <ol className="space-y-2 text-sm text-gray-600">
-                              <li className="flex items-start gap-2">
-                                <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center mt-0.5">
-                                  1
-                                </span>
-                                Uploadez votre CV (PDF ou Word)
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center mt-0.5">
-                                  2
-                                </span>
-                                Votre CV est réécrit pour correspondre à cette
-                                offre précise
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center mt-0.5">
-                                  3
-                                </span>
-                                Une lettre de motivation personnalisée est
-                                générée automatiquement
-                              </li>
-                            </ol>
-                            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-400">
-                              <Download className="h-3.5 w-3.5 shrink-0" />
-                              Vous téléchargez les deux documents en PDF
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      <Button asChild variant="outline" size="lg">
-                        <a
-                          href={job.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {t("viewOffer")}
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </a>
-                      </Button>
-                    </>
-                  )}
-                </div>
+                )}
               </div>
+              {/* Ligne 2 : CTA principal pleine largeur */}
+              {job.url && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="lg"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    onClick={() => {
+                      if (!canUse("cv_analysis")) {
+                        openPricingModal("cv_analysis");
+                        return;
+                      }
+                      setApplyModalOpen(true);
+                    }}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    {t("generateDocuments")}
+                  </Button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        aria-label="Comment ça fonctionne ?"
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="top"
+                      align="end"
+                      className="w-[min(18rem,calc(100vw-2rem))] p-4"
+                    >
+                      <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                        CV &amp; lettre adaptés à ce poste
+                      </p>
+                      <ol className="space-y-2 text-sm text-gray-600">
+                        <li className="flex items-start gap-2">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center mt-0.5">
+                            1
+                          </span>
+                          Uploadez votre CV (PDF ou Word)
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center mt-0.5">
+                            2
+                          </span>
+                          Votre CV est réécrit pour correspondre à cette offre
+                          précise
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center mt-0.5">
+                            3
+                          </span>
+                          Une lettre de motivation personnalisée est générée
+                          automatiquement
+                        </li>
+                      </ol>
+                      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-400">
+                        <Download className="h-3.5 w-3.5 shrink-0" />
+                        Vous téléchargez les deux documents en PDF
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             </div>
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>
