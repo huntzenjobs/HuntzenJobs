@@ -22,6 +22,7 @@ import {
   FileText,
   Mail,
   Download,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
 import { ApplyModal } from "./apply-modal";
 import { RecruiterFinderDrawer } from "./recruiter-finder-drawer";
+import { InsiderFinderDrawer } from "./insider-finder-drawer";
 
 // ============================================================================
 // TYPES
@@ -62,6 +64,7 @@ export function JobDetailsModal({
 }: JobDetailsModalProps) {
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [recruiterDrawerOpen, setRecruiterDrawerOpen] = React.useState(false);
+  const [insiderDrawerOpen, setInsiderDrawerOpen] = React.useState(false);
 
   const t = useTranslations("jobDetails");
 
@@ -215,6 +218,35 @@ export function JobDetailsModal({
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                 {/* Left Column - Main Info (2/3 width) */}
                 <div className="lg:col-span-2 space-y-6">
+                  {/* Truncated description warning banner */}
+                  {job.description_truncated &&
+                    !fullDescription &&
+                    !loadingDescription && (
+                      <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-amber-800 mb-1">
+                            Description probablement incomplète
+                          </p>
+                          <p className="text-amber-700">
+                            Cette source limite la longueur des descriptions
+                            dans son API.
+                          </p>
+                          {job.url && (
+                            <a
+                              href={job.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 mt-2 text-amber-800 font-semibold hover:underline"
+                            >
+                              Voir la description complète
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                   {/* Description */}
                   {(job.description || displayDescription) && (
                     <div>
@@ -357,6 +389,15 @@ export function JobDetailsModal({
                   variant="outline"
                   size="sm"
                   className="flex-1 sm:flex-none"
+                  onClick={() => setInsiderDrawerOpen(true)}
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Trouver un insider
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 sm:flex-none"
                   onClick={() => onOpenChange(false)}
                 >
                   {t("close")}
@@ -459,6 +500,15 @@ export function JobDetailsModal({
         <RecruiterFinderDrawer
           open={recruiterDrawerOpen}
           onOpenChange={setRecruiterDrawerOpen}
+          job={job}
+        />
+      )}
+
+      {/* Insider Finder Drawer — AI + SerpAPI LinkedIn contact discovery */}
+      {job && (
+        <InsiderFinderDrawer
+          open={insiderDrawerOpen}
+          onOpenChange={setInsiderDrawerOpen}
           job={job}
         />
       )}
