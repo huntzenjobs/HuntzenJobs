@@ -465,7 +465,7 @@ export function JobDetailsModal({
         />
       )}
 
-      {/* Insider Finder — trouve des contacts internes LinkedIn via IA */}
+      {/* Insider Finder — trouve des contacts internes LinkedIn */}
       {job && (
         <InsiderFinderDrawer
           open={insiderDrawerOpen}

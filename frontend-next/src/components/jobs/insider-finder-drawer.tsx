@@ -270,7 +270,7 @@ export function InsiderFinderDrawer({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
-                <span>L'IA analyse la stratégie et cherche les profils…</span>
+                <span>Recherche des profils en cours…</span>
               </div>
               <InsiderSkeletons />
             </div>
