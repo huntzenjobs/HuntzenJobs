@@ -374,8 +374,7 @@ class HuntzenApiClient {
       | "job-scout"
       | "cv-analyzer"
       | "cv-adapter"
-      | "interview-sim"
-      | "branding",
+      | "interview-sim",
     language: string = "fr",
   ): Promise<{ success: boolean; response: string; agent: string }> {
     // Route to appropriate endpoint based on assistant type
@@ -385,7 +384,6 @@ class HuntzenApiClient {
       "cv-analyzer": "/api/assistant/cv-analyzer",
       "cv-adapter": "/api/assistant/cv-adapter",
       "interview-sim": "/api/assistant/interview-sim",
-      branding: "/api/branding/chat",
     };
 
     const endpoint = endpointMap[assistantType] || "/api/coach/chat";

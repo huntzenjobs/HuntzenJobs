@@ -56,6 +56,12 @@ export default function AssistantPage() {
   const { selectedAssistant, setSelectedAssistant } = useAssistant();
   const assistantConfig = getAssistantConfig(selectedAssistant);
 
+  // Reset branding state when switching assistants so stale branding session
+  // data does not leak into a different assistant's conversation
+  useEffect(() => {
+    setBrandingState(null);
+  }, [selectedAssistant]);
+
   // Freemium state
   const {
     coachTimeRemaining,

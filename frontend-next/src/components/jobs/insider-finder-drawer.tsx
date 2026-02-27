@@ -19,13 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Linkedin,
-  Loader2,
-  SearchX,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { Linkedin, Loader2, SearchX, Sparkles, Users } from "lucide-react";
 import type { Job } from "@/lib/api/huntzen-client";
 
 // ============================================================================
@@ -66,13 +60,19 @@ function detectAlternance(title: string): boolean {
   return /alternance|apprentissage|stage/i.test(title ?? "");
 }
 
-const CATEGORY_STYLES: Record<
-  string,
-  { label: string; className: string }
-> = {
-  pair: { label: "Futur Collègue", className: "bg-teal-100 text-teal-700 hover:bg-teal-100" },
-  recruiter: { label: "Recrutement", className: "bg-blue-100 text-blue-700 hover:bg-blue-100" },
-  campus: { label: "Campus", className: "bg-orange-100 text-orange-700 hover:bg-orange-100" },
+const CATEGORY_STYLES: Record<string, { label: string; className: string }> = {
+  pair: {
+    label: "Futur Collègue",
+    className: "bg-teal-100 text-teal-700 hover:bg-teal-100",
+  },
+  recruiter: {
+    label: "Recrutement",
+    className: "bg-blue-100 text-blue-700 hover:bg-blue-100",
+  },
+  campus: {
+    label: "Campus",
+    className: "bg-orange-100 text-orange-700 hover:bg-orange-100",
+  },
 };
 
 function getCategoryStyle(category: string) {
@@ -203,7 +203,7 @@ export function InsiderFinderDrawer({
       acc[key].push(contact);
       return acc;
     },
-    {}
+    {},
   );
 
   const hasResults = (result?.total_found ?? 0) > 0;
@@ -214,13 +214,11 @@ export function InsiderFinderDrawer({
         <SheetHeader className="pb-4 border-b border-gray-100">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-violet-600" />
-            Trouver un insider
+            Contacts internes chez {job.company || "cette entreprise"}
           </SheetTitle>
           <SheetDescription className="text-sm text-gray-500">
-            Personnes réelles à contacter chez{" "}
-            <span className="font-medium text-gray-700">
-              {job.company || "cette entreprise"}
-            </span>
+            Trouvez de vraies personnes à contacter sur LinkedIn pour maximiser
+            vos chances
           </SheetDescription>
         </SheetHeader>
 
@@ -228,18 +226,41 @@ export function InsiderFinderDrawer({
           {/* ── Idle state ── */}
           {!searched && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500 text-center">
-                L'IA génère une stratégie de recherche et trouve des profils
-                LinkedIn réels à contacter pour ce poste. La recherche prend
-                environ 5 à 8 secondes.
-              </p>
+              <div className="bg-violet-50 border border-violet-100 rounded-lg p-4 space-y-3">
+                <p className="text-sm font-semibold text-violet-900">
+                  Pourquoi contacter un insider ?
+                </p>
+                <ul className="text-sm text-violet-800 space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0">👥</span>
+                    <span>
+                      <strong>Futur collègue</strong> — renseignez-vous sur
+                      l'ambiance et le poste réel
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0">🎯</span>
+                    <span>
+                      <strong>Recruteur interne</strong> — envoyez votre CV
+                      directement, sans passer par le formulaire
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0">📈</span>
+                    <span>
+                      Une recommandation interne multiplie par{" "}
+                      <strong>5 vos chances</strong> d'être convoqué
+                    </span>
+                  </li>
+                </ul>
+              </div>
               <Button
                 onClick={handleSearch}
                 className="w-full bg-gradient-to-r from-violet-600 to-blue-600 text-white"
                 disabled={loading}
               >
                 <Sparkles className="mr-2 h-4 w-4" />
-                Lancer la recherche
+                Trouver des contacts LinkedIn (5–8s)
               </Button>
             </div>
           )}
@@ -271,8 +292,7 @@ export function InsiderFinderDrawer({
                 <div className="flex flex-col items-center justify-center py-10 gap-3 text-gray-400">
                   <SearchX className="h-10 w-10" />
                   <p className="text-sm text-center">
-                    Aucun profil trouvé pour{" "}
-                    <strong>{job.company}</strong>.
+                    Aucun profil trouvé pour <strong>{job.company}</strong>.
                     <br />
                     Essayez de postuler directement sur leur site.
                   </p>
@@ -309,7 +329,9 @@ export function InsiderFinderDrawer({
 
                   {/* Other categories not in the predefined list */}
                   {Object.entries(grouped)
-                    .filter(([key]) => !["pair", "recruiter", "campus"].includes(key))
+                    .filter(
+                      ([key]) => !["pair", "recruiter", "campus"].includes(key),
+                    )
                     .map(([cat, contacts]) => {
                       if (!contacts?.length) return null;
                       const style = getCategoryStyle(cat);

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * Contexte global pour gérer l'assistant sélectionné
@@ -7,27 +7,35 @@
  * l'application et dans le localStorage
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { AssistantType } from '@/types/assistant'
-import { DEFAULT_ASSISTANT } from '@/config/assistants'
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { AssistantType } from "@/types/assistant";
+import { DEFAULT_ASSISTANT } from "@/config/assistants";
 
 interface AssistantContextType {
   /** Assistant actuellement sélectionné */
-  selectedAssistant: AssistantType
+  selectedAssistant: AssistantType;
 
   /** Fonction pour changer l'assistant */
-  setSelectedAssistant: (type: AssistantType) => void
+  setSelectedAssistant: (type: AssistantType) => void;
 
   /** Est-ce que le contexte est en train de charger ? */
-  isLoading: boolean
+  isLoading: boolean;
 }
 
-const AssistantContext = createContext<AssistantContextType | undefined>(undefined)
+const AssistantContext = createContext<AssistantContextType | undefined>(
+  undefined,
+);
 
-const STORAGE_KEY = 'huntzen_selected_assistant'
+const STORAGE_KEY = "huntzen_selected_assistant";
 
 interface AssistantProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 /**
@@ -35,44 +43,45 @@ interface AssistantProviderProps {
  * À wrapper autour de l'app pour accès global
  */
 export function AssistantProvider({ children }: AssistantProviderProps) {
-  const [selectedAssistant, setSelectedAssistantState] = useState<AssistantType>(DEFAULT_ASSISTANT)
-  const [isLoading, setIsLoading] = useState(true)
+  const [selectedAssistant, setSelectedAssistantState] =
+    useState<AssistantType>(DEFAULT_ASSISTANT);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Charger la sélection depuis localStorage au montage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && isValidAssistantType(stored)) {
-        setSelectedAssistantState(stored as AssistantType)
+        setSelectedAssistantState(stored as AssistantType);
       }
     } catch (error) {
-      console.error('Failed to load assistant from localStorage:', error)
+      console.error("Failed to load assistant from localStorage:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
   // Fonction pour changer l'assistant avec persistence
   const setSelectedAssistant = (type: AssistantType) => {
     try {
-      setSelectedAssistantState(type)
-      localStorage.setItem(STORAGE_KEY, type)
+      setSelectedAssistantState(type);
+      localStorage.setItem(STORAGE_KEY, type);
     } catch (error) {
-      console.error('Failed to save assistant to localStorage:', error)
+      console.error("Failed to save assistant to localStorage:", error);
     }
-  }
+  };
 
   const value: AssistantContextType = {
     selectedAssistant,
     setSelectedAssistant,
     isLoading,
-  }
+  };
 
   return (
     <AssistantContext.Provider value={value}>
       {children}
     </AssistantContext.Provider>
-  )
+  );
 }
 
 /**
@@ -80,11 +89,11 @@ export function AssistantProvider({ children }: AssistantProviderProps) {
  * Lève une erreur si utilisé en dehors du Provider
  */
 export function useAssistant(): AssistantContextType {
-  const context = useContext(AssistantContext)
+  const context = useContext(AssistantContext);
   if (context === undefined) {
-    throw new Error('useAssistant must be used within an AssistantProvider')
+    throw new Error("useAssistant must be used within an AssistantProvider");
   }
-  return context
+  return context;
 }
 
 /**
@@ -92,7 +101,7 @@ export function useAssistant(): AssistantContextType {
  * Utile pour les composants qui peuvent fonctionner sans contexte
  */
 export function useOptionalAssistant(): AssistantContextType | undefined {
-  return useContext(AssistantContext)
+  return useContext(AssistantContext);
 }
 
 /**
@@ -100,11 +109,12 @@ export function useOptionalAssistant(): AssistantContextType | undefined {
  */
 function isValidAssistantType(value: string): boolean {
   const validTypes: AssistantType[] = [
-    'career-coach',
-    'job-scout',
-    'cv-analyzer',
-    'cv-adapter',
-    'interview-sim',
-  ]
-  return validTypes.includes(value as AssistantType)
+    "career-coach",
+    "job-scout",
+    "cv-analyzer",
+    "cv-adapter",
+    "interview-sim",
+    "branding",
+  ];
+  return validTypes.includes(value as AssistantType);
 }

@@ -40,9 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
 import { ApplyModal } from "./apply-modal";
-import { RecruiterFinderDrawer } from "./recruiter-finder-drawer";
 import { InsiderFinderDrawer } from "./insider-finder-drawer";
-
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -63,7 +61,6 @@ export function JobDetailsModal({
   onOpenChange,
 }: JobDetailsModalProps) {
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
-  const [recruiterDrawerOpen, setRecruiterDrawerOpen] = React.useState(false);
   const [insiderDrawerOpen, setInsiderDrawerOpen] = React.useState(false);
 
   const t = useTranslations("jobDetails");
@@ -361,20 +358,11 @@ export function JobDetailsModal({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 sm:flex-none"
-                  onClick={() => setRecruiterDrawerOpen(true)}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  {t("findRecruiter")}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 sm:flex-none"
+                  className="flex-1 sm:flex-none border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-300"
                   onClick={() => setInsiderDrawerOpen(true)}
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Trouver un insider
+                  Trouver un contact interne
                 </Button>
                 <Button
                   variant="outline"
@@ -477,16 +465,7 @@ export function JobDetailsModal({
         />
       )}
 
-      {/* Recruiter Finder Drawer — Hunter.io contact discovery */}
-      {job && (
-        <RecruiterFinderDrawer
-          open={recruiterDrawerOpen}
-          onOpenChange={setRecruiterDrawerOpen}
-          job={job}
-        />
-      )}
-
-      {/* Insider Finder Drawer — AI + SerpAPI LinkedIn contact discovery */}
+      {/* Insider Finder — trouve des contacts internes LinkedIn via IA */}
       {job && (
         <InsiderFinderDrawer
           open={insiderDrawerOpen}
