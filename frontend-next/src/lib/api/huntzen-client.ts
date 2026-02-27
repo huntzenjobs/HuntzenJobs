@@ -400,6 +400,28 @@ class HuntzenApiClient {
     );
   }
 
+  async sendBrandingMessage(
+    message: string,
+    sessionId: string,
+    language: string = "fr",
+    brandingState?: Record<string, unknown> | null,
+  ): Promise<{
+    success: boolean;
+    response: string;
+    language: string;
+    branding_state: Record<string, unknown> | null;
+  }> {
+    return this.fetch("/api/branding/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+        language,
+        branding_state: brandingState ?? null,
+      }),
+    });
+  }
+
   // Legacy method - kept for backwards compatibility
   async sendCoachMessage(
     message: string,

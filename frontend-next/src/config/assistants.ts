@@ -11,6 +11,7 @@ import {
   UserCheck,
   FileEdit,
   Mic,
+  Linkedin,
 } from 'lucide-react'
 import { AssistantConfig, AssistantType } from '@/types/assistant'
 
@@ -142,6 +143,31 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     apiEndpoint: '/api/interview/start', // À créer (Sprint 2)
     responseTime: 'Session live 30 min',
   },
+
+  'branding': {
+    id: 'branding',
+    name: 'Assistant Branding',
+    shortName: 'Assistant Branding',
+    description: "Créez votre présence LinkedIn et X avec l'IA",
+    icon: Linkedin,
+    color: '#0077b5',
+    bgColor: '#dbeafe',
+    isPremium: false,
+    certificationBadge: 'Expert Personal Branding',
+    specialties: [
+      'Posts LinkedIn viraux',
+      'Storytelling professionnel',
+      'Personal branding X/Twitter',
+      'Stratégie de contenu',
+    ],
+    exampleQuestions: [
+      'Aide-moi à rédiger un post LinkedIn sur ma reconversion',
+      'Comment développer ma marque personnelle ?',
+      'Crée un post engageant sur mon expertise',
+    ],
+    apiEndpoint: '/api/branding/chat',
+    responseTime: '< 2 min',
+  },
 }
 
 /**
@@ -153,6 +179,7 @@ export const ASSISTANTS_ORDER: AssistantType[] = [
   'cv-analyzer',
   'cv-adapter',
   'interview-sim',
+  'branding',
 ]
 
 /**

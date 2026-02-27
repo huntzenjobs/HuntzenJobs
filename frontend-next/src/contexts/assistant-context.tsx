@@ -105,6 +105,7 @@ function isValidAssistantType(value: string): boolean {
     'cv-analyzer',
     'cv-adapter',
     'interview-sim',
+    'branding',
   ]
   return validTypes.includes(value as AssistantType)
 }
