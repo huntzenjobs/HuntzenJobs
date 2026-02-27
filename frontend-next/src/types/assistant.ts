@@ -5,62 +5,64 @@
  * agents humains spécialisés (pas des IA autonomes)
  */
 
-import { LucideIcon } from 'lucide-react'
+import { LucideIcon } from "lucide-react";
 
 /**
  * Types d'assistants disponibles (interfaces pour experts humains)
  */
 export type AssistantType =
-  | 'career-coach'      // Coach Carrière humain
-  | 'job-scout'         // Expert Recherche d'Emploi
-  | 'cv-analyzer'       // Expert CV
-  | 'cv-adapter'        // Spécialiste Adaptation CV
-  | 'interview-sim'     // Recruteur pour simulation entretien
-  | 'branding'          // Expert Personal Branding
-  | 'branding'          // Expert Personal Branding
+  | "career-coach" // Coach Carrière humain
+  | "job-scout" // Expert Recherche d'Emploi
+  | "cv-analyzer" // Expert CV
+  | "cv-adapter" // Spécialiste Adaptation CV
+  | "interview-sim" // Recruteur pour simulation entretien
+  | "branding"; // Expert Personal Branding
 
 /**
  * Configuration d'un assistant (agent humain expert)
  */
 export interface AssistantConfig {
   /** Identifiant unique de l'assistant */
-  id: AssistantType
+  id: AssistantType;
 
   /** Nom de l'expert (ex: "Marie Dupont - Coach Carrière") */
-  name: string
+  name: string;
 
   /** Titre court (ex: "Coach Carrière") */
-  shortName: string
+  shortName: string;
 
   /** Description du service humain */
-  description: string
+  description: string;
 
   /** Icône pour l'UI */
-  icon: LucideIcon
+  icon: LucideIcon;
 
   /** Couleur de branding (hex ou tailwind class) */
-  color: string
+  color: string;
 
   /** Couleur de fond (plus claire) */
-  bgColor: string
+  bgColor: string;
 
   /** Est-ce un service premium ? */
-  isPremium: boolean
+  isPremium: boolean;
 
   /** Badge de certification (ex: "Certifié RNCP", "10 ans d'expérience") */
-  certificationBadge?: string
+  certificationBadge?: string;
 
   /** Spécialités de l'expert */
-  specialties: string[]
+  specialties: string[];
 
   /** Questions types posées par les utilisateurs */
-  exampleQuestions: string[]
+  exampleQuestions: string[];
 
   /** Endpoint API pour cet assistant */
-  apiEndpoint: string
+  apiEndpoint: string;
 
   /** Temps de réponse moyen (ex: "< 2 minutes") */
-  responseTime?: string
+  responseTime?: string;
+
+  /** Feature disponible prochainement — affiche un teaser au clic */
+  isComingSoon?: boolean;
 }
 
 /**
@@ -68,28 +70,28 @@ export interface AssistantConfig {
  */
 export interface AssistantMessage {
   /** ID unique du message */
-  id: string
+  id: string;
 
   /** Type d'assistant qui a géré ce message */
-  assistantType: AssistantType
+  assistantType: AssistantType;
 
   /** Rôle (user ou assistant) */
-  role: 'user' | 'assistant'
+  role: "user" | "assistant";
 
   /** Contenu du message */
-  content: string
+  content: string;
 
   /** Timestamp */
-  timestamp: Date
+  timestamp: Date;
 
   /** Le message a-t-il été traité par un humain expert ? */
-  handledByHuman?: boolean
+  handledByHuman?: boolean;
 
   /** Nom de l'expert qui a répondu (si applicable) */
-  expertName?: string
+  expertName?: string;
 
   /** Métadonnées additionnelles */
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>;
 }
 
 /**
@@ -97,28 +99,28 @@ export interface AssistantMessage {
  */
 export interface AssistantSession {
   /** ID de la session */
-  id: string
+  id: string;
 
   /** Type d'assistant */
-  assistantType: AssistantType
+  assistantType: AssistantType;
 
   /** ID de l'utilisateur */
-  userId: string
+  userId: string;
 
   /** Titre de la conversation (généré par LLM ou manuel) */
-  title: string
+  title: string;
 
   /** Messages de la conversation */
-  messages: AssistantMessage[]
+  messages: AssistantMessage[];
 
   /** Date de création */
-  createdAt: Date
+  createdAt: Date;
 
   /** Dernière mise à jour */
-  updatedAt: Date
+  updatedAt: Date;
 
   /** Statut de la session */
-  status: 'active' | 'completed' | 'archived'
+  status: "active" | "completed" | "archived";
 }
 
 /**
@@ -126,17 +128,17 @@ export interface AssistantSession {
  */
 export interface AssistantLimits {
   /** Type d'assistant */
-  assistantType: AssistantType
+  assistantType: AssistantType;
 
   /** Nombre de sessions/mois (plan gratuit) */
-  freeSessions: number
+  freeSessions: number;
 
   /** Durée max par session (en minutes, plan gratuit) */
-  freeSessionDuration?: number
+  freeSessionDuration?: number;
 
   /** Fonctionnalités disponibles en gratuit */
-  freeFeatures: string[]
+  freeFeatures: string[];
 
   /** Fonctionnalités réservées aux plans premium */
-  premiumFeatures: string[]
+  premiumFeatures: string[];
 }

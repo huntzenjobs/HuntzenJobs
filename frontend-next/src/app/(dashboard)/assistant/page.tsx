@@ -241,11 +241,7 @@ export default function AssistantPage() {
   };
 
   const handleSimulation = () => {
-    if (!hasFeature("has_interview_sim")) {
-      openPricingModal("has_interview_sim");
-      return;
-    }
-    setSelectedAssistant("interview-sim");
+    // Interview Simulator is coming soon — button is hidden but kept for future use
   };
 
   // Load conversation from history
