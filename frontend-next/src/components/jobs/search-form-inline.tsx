@@ -77,16 +77,12 @@ export function SearchFormInline({
 
   // Fetch cities for autocomplete - DYNAMIC SEARCH with OpenStreetMap
   const fetchCities = async (query: string): Promise<AutocompleteOption[]> => {
-    console.log("🏙️ fetchCities called:", { query, country, isCountryValid });
     if (!query || query.length < 1 || !country) {
-      console.log("❌ Missing query or country code");
       return [];
     }
     try {
-      console.log("🌐 Searching cities dynamically via Nominatim:", query);
       // Use dynamic search with OpenStreetMap Nominatim
       const cities = await huntzenApi.searchCities(query, country);
-      console.log("✅ Cities found:", cities.length);
       return cities.map((c) => ({ label: c, value: c }));
     } catch (error) {
       console.error("❌ Error searching cities:", error);
@@ -96,40 +92,30 @@ export function SearchFormInline({
 
   // Handle country selection
   const handleCountryChange = (value: string) => {
-    console.log("🔍 handleCountryChange received:", {
-      value,
-      length: value.length,
-      isUppercase: value === value.toUpperCase(),
-    });
     setCountry(value);
 
     // Clear country name when empty
     if (!value) {
       setSelectedCountryName("");
       setIsCountryValid(false);
-      console.log("❌ Country cleared");
       return;
     }
 
     // If it's a valid country code (2-3 chars), find the country name
     if (value.length >= 2 && value.length <= 3) {
-      console.log("✅ Valid code format, fetching country name...");
       huntzenApi.getCountries().then((countries) => {
         const found = countries.find(
           (c) => c.code.toLowerCase() === value.toLowerCase(),
         );
         if (found) {
-          console.log("✅ Country found:", found.name);
           setSelectedCountryName(found.name);
           setIsCountryValid(true);
         } else {
-          console.log("❌ Country code not found in list");
           setIsCountryValid(false);
         }
       });
     } else {
       // User is typing text, not a valid code yet
-      console.log("⏳ User typing, not a valid code yet");
       setIsCountryValid(false);
     }
   };

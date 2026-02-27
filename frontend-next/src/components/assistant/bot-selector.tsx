@@ -8,7 +8,17 @@
  */
 
 import { useState, useEffect } from "react";
-import { Check, ChevronDown, Lock, Crown } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Lock,
+  Crown,
+  Sparkles,
+  Mic,
+  Zap,
+  Brain,
+  Star,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssistant } from "@/contexts/assistant-context";
 import { getAllAssistants, getAssistantConfig } from "@/config/assistants";
@@ -32,6 +42,7 @@ export function BotSelector({
   variant = "default",
 }: BotSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
   const { selectedAssistant, setSelectedAssistant } = useAssistant();
   const subscription = useOptionalSubscription();
   const auth = useOptionalAuth();
@@ -61,6 +72,13 @@ export function BotSelector({
 
   const handleSelect = (type: AssistantType) => {
     const config = getAssistantConfig(type);
+
+    // Feature coming soon — show teaser instead of selecting
+    if (config.isComingSoon) {
+      setIsOpen(false);
+      setShowComingSoon(true);
+      return;
+    }
 
     // Vérifier si l'assistant est premium et si l'utilisateur a accès
     if (config.isPremium && (!user || isFreePlan)) {
@@ -172,6 +190,111 @@ export function BotSelector({
           user={user}
         />
       )}
+
+      {/* Coming Soon modal — Interview Simulator */}
+      {showComingSoon && (
+        <InterviewSimComingSoon onClose={() => setShowComingSoon(false)} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Modale "Coming Soon" pour l'Interview Simulator
+ */
+function InterviewSimComingSoon({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        {/* Gradient header */}
+        <div className="relative bg-gradient-to-br from-orange-500 via-orange-600 to-amber-500 px-6 pt-8 pb-10 text-white overflow-hidden">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-2 right-8 w-32 h-32 rounded-full bg-white blur-2xl" />
+            <div className="absolute -bottom-4 left-4 w-24 h-24 rounded-full bg-white blur-2xl" />
+          </div>
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm uppercase tracking-wider">
+                Bientôt disponible
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Mic className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold">Interview Simulator</h2>
+            </div>
+            <p className="text-white/80 text-sm leading-relaxed">
+              Préparez vos entretiens comme jamais auparavant — avec une IA qui
+              joue le recruteur en temps réel.
+            </p>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="px-6 py-5 space-y-3">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+            Ce qui arrive
+          </p>
+          {[
+            {
+              icon: Zap,
+              label: "Entretiens en temps réel",
+              desc: "Simulation live face à un recruteur IA",
+            },
+            {
+              icon: Brain,
+              label: "Feedback instantané",
+              desc: "Analyse de vos réponses, posture, mots-clés",
+            },
+            {
+              icon: Star,
+              label: "Tous types d'entretiens",
+              desc: "Tech, RH, comportemental, cas pratiques",
+            },
+            {
+              icon: Sparkles,
+              label: "Coaching post-entretien",
+              desc: "Plan d'amélioration personnalisé",
+            },
+          ].map(({ icon: Icon, label, desc }) => (
+            <div key={label} className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon className="w-4 h-4 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-900">{label}</p>
+                <p className="text-xs text-slate-500">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div className="px-6 pb-6">
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-sm hover:from-orange-600 hover:to-amber-600 transition-all shadow-lg shadow-orange-200"
+          >
+            J&apos;ai hâte ! Fermer
+          </button>
+          <p className="text-center text-xs text-slate-400 mt-3">
+            Vous serez notifié dès le lancement 🚀
+          </p>
+        </div>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
+          aria-label="Fermer"
+        >
+          ✕
+        </button>
+      </div>
     </div>
   );
 }
