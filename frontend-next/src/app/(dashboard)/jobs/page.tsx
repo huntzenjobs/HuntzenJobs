@@ -54,7 +54,6 @@ import {
 } from "@/components/jobs/gradient-job-card";
 import { JobDetailsModal } from "@/components/jobs/job-details-modal";
 import { formatJobSource } from "@/lib/utils/job-source-formatter";
-import { stripHtmlForPreview } from "@/lib/utils/sanitize";
 import { Switch } from "@/components/ui/switch";
 import {
   SearchFormInline,
@@ -67,6 +66,14 @@ import {
   AdvancedFiltersModal,
   type AdvancedFilters,
 } from "@/components/jobs/advanced-filters-modal";
+
+// Inline — évite d'importer sanitize.ts qui tire isomorphic-dompurify dans le bundle SSR
+const stripHtmlForPreview = (html: string) =>
+  html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 export default function JobsPage() {
   const t = useTranslations("dashboard.jobs");
