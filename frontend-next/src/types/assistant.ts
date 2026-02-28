@@ -60,6 +60,9 @@ export interface AssistantConfig {
 
   /** Temps de réponse moyen (ex: "< 2 minutes") */
   responseTime?: string;
+
+  /** Feature disponible prochainement — affiche un teaser au clic */
+  isComingSoon?: boolean;
 }
 
 /**
