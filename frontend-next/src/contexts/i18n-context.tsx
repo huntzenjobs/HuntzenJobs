@@ -29,7 +29,7 @@ export const LOCALE_FLAGS: Record<Locale, string> = {
   fr: "🇫🇷",
   en: "🇬🇧",
   es: "🇪🇸",
-  pt: "🇧🇷",
+  pt: "🇵🇹",
 };
 
 interface I18nContextType {
