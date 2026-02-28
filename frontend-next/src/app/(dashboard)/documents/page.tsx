@@ -67,18 +67,10 @@ export default function DocumentsPage() {
 
   const handleWizardSave = async (name: string, data: CvData) => {
     if (editingProfile) {
-      const ok = await updateProfile(
-        editingProfile.id,
-        name,
-        data as unknown as Record<string, unknown>
-      );
-      if (ok) {
-        toast.success("Profil mis à jour !");
-      } else {
-        toast.error("Erreur lors de la mise à jour du profil.");
-      }
+      await updateProfile(editingProfile.id, name, data);
+      toast.success("Profil mis à jour !");
     } else {
-      const saved = await saveProfile(name, data as unknown as Record<string, unknown>);
+      const saved = await saveProfile(name, data);
       if (saved) {
         toast.success("Profil sauvegardé !");
       } else {
@@ -106,7 +98,6 @@ export default function DocumentsPage() {
   return (
     <>
       <div className="p-6 max-w-3xl mx-auto space-y-8">
-
         {/* ── Section Profils CV ── */}
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -116,7 +107,8 @@ export default function DocumentsPage() {
                 Mes profils CV
               </h2>
               <p className="text-gray-500 text-xs mt-0.5">
-                Réutilisez votre profil pour générer des documents adaptés à chaque offre
+                Réutilisez votre profil pour générer des documents adaptés à
+                chaque offre
               </p>
             </div>
             <Button
@@ -142,13 +134,10 @@ export default function DocumentsPage() {
                 Aucun profil CV créé
               </p>
               <p className="text-xs text-gray-400 mb-4">
-                Créez votre profil une fois et utilisez-le pour toutes vos candidatures sans re-uploader votre CV
+                Créez votre profil une fois et utilisez-le pour toutes vos
+                candidatures sans re-uploader votre CV
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openNewWizard}
-              >
+              <Button variant="outline" size="sm" onClick={openNewWizard}>
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Créer mon premier profil
               </Button>
@@ -173,9 +162,7 @@ export default function DocumentsPage() {
         {/* ── Section Documents générés ── */}
         <section>
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-gray-900">
-              {t("title")}
-            </h2>
+            <h2 className="text-lg font-bold text-gray-900">{t("title")}</h2>
             <p className="text-gray-500 text-sm mt-1">
               {t("subtitle")}
               {documents.length > 0 && (
@@ -263,9 +250,8 @@ function ProfileCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const cvData = profile.cv_data as Record<string, Record<string, string>>;
-  const name = cvData?.personal_info?.name;
-  const title = cvData?.personal_info?.title;
+  const name = profile.cv_data?.personal_info?.name;
+  const title = profile.cv_data?.personal_info?.title;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between gap-4 hover:border-gray-300 transition-colors">
@@ -278,7 +264,9 @@ function ProfileCard({
             {profile.name}
           </p>
           <p className="text-xs text-gray-500 truncate">
-            {name && title ? `${name} · ${title}` : name || title || "Profil CV"}
+            {name && title
+              ? `${name} · ${title}`
+              : name || title || "Profil CV"}
             {" · "}
             Modifié le{" "}
             {format(new Date(profile.updated_at), "d MMM yyyy", { locale: fr })}
