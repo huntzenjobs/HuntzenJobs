@@ -40,7 +40,7 @@ const steps: Step[] = [
   },
   {
     id: "analysis",
-    label: "Analyse IA",
+    label: "Analyse",
     icon: Sparkles,
     estimatedTime: "8-12s",
   },
@@ -55,17 +55,14 @@ const steps: Step[] = [
 export function ProcessingSteps({ status, elapsedTime }: ProcessingStepsProps) {
   const t = useTranslations("cv");
 
-  // Determine current step based on elapsed time and status
+  // Determine current step based on elapsed time
   const getCurrentStep = (): number => {
     if (status === "completed") return 4;
     if (status === "failed") return -1;
-
-    // Smart step progression based on elapsed time
-    if (status === "pending") return 0; // Upload completed, waiting for processing
-    if (elapsedTime < 2) return 1; // Extraction starting
-    if (elapsedTime < 6) return 2; // Extraction in progress
-    if (elapsedTime < 15) return 3; // Analysis in progress
-    return 3; // Still analyzing (can take longer)
+    if (elapsedTime < 3) return 1; // Upload actif
+    if (elapsedTime < 10) return 2; // Extraction active
+    if (elapsedTime < 25) return 3; // Analyse active
+    return 3; // Toujours en analyse
   };
 
   const currentStep = getCurrentStep();
@@ -175,7 +172,7 @@ export function ProcessingSteps({ status, elapsedTime }: ProcessingStepsProps) {
         </p>
         <p className="text-xs text-gray-500">
           {status === "processing"
-            ? "Traitement en cours sur Modal Labs..."
+            ? "Traitement en cours..."
             : status === "pending"
               ? "Préparation du traitement..."
               : "Finalisation..."}

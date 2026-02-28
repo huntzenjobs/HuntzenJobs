@@ -371,9 +371,7 @@ export function CVUploadAsync({
                 {selectedFile?.name || "CV en cours d'analyse"}
               </h3>
               <p className="text-sm text-gray-500">
-                {isUploading
-                  ? "Téléchargement..."
-                  : "Traitement en cours avec Modal Labs"}
+                {isUploading ? "Téléchargement..." : "Traitement en cours..."}
               </p>
             </div>
           </div>
@@ -411,7 +409,7 @@ export function CVUploadAsync({
               ) : (
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
               )}
-              <span>Extraction du texte avec Docling (IBM)</span>
+              <span>Extraction du texte</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
@@ -420,7 +418,7 @@ export function CVUploadAsync({
               ) : (
                 <Clock className="w-4 h-4 text-gray-400" />
               )}
-              <span>Analyse avec Groq (llama-3.3-70b)</span>
+              <span>Analyse du contenu</span>
             </div>
           </div>
 
@@ -441,8 +439,7 @@ export function CVUploadAsync({
 
           {/* Info */}
           <p className="text-xs text-gray-500 mt-4 text-center">
-            Le traitement se fait en arrière-plan sur Modal Labs. Vous pouvez
-            fermer cette page, les résultats seront sauvegardés.
+            Vous pouvez fermer cette page, les résultats seront sauvegardés.
           </p>
         </div>
       </div>
@@ -716,10 +713,6 @@ export function CVUploadAsync({
               Analyse terminée !
             </h3>
           </div>
-          <p className="text-green-700">
-            Traitement effectué en{" "}
-            {result.processing_time_seconds || elapsedTime} secondes
-          </p>
         </div>
 
         {/* ATS Score */}
