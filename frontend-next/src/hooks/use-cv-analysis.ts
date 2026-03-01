@@ -326,6 +326,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
       setElapsedTime(0);
       setEstimatedTimeRemaining(ESTIMATED_PROCESSING_TIME);
       setIsUploading(true);
+      setStartTime(Date.now()); // Démarrer le timer immédiatement
 
       try {
         // Validate file type
@@ -393,12 +394,11 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
 
         console.log("✅ Upload successful, starting polling:", data.cv_id);
 
-        // Store cv_id, anonymous_id (if provided), and start tracking
+        // Store cv_id and start polling
         setCvId(data.cv_id);
         if (data.anonymous_id) {
           setAnonymousId(data.anonymous_id);
         }
-        setStartTime(Date.now());
         setStatus("pending");
 
         // Start polling (pass anonymous_id if available)
@@ -434,6 +434,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
       setElapsedTime(0);
       setEstimatedTimeRemaining(ESTIMATED_PROCESSING_TIME);
       setIsUploading(true);
+      setStartTime(Date.now()); // Démarrer le timer immédiatement
 
       try {
         // Validate text length
@@ -500,12 +501,11 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
 
         console.log("✅ Text upload successful, starting polling:", data.cv_id);
 
-        // Store cv_id, anonymous_id (if provided), and start tracking
+        // Store cv_id and start polling
         setCvId(data.cv_id);
         if (data.anonymous_id) {
           setAnonymousId(data.anonymous_id);
         }
-        setStartTime(Date.now());
         setStatus("pending");
 
         // Start polling (pass anonymous_id if available)

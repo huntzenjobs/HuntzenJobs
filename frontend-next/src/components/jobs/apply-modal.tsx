@@ -431,10 +431,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
   // ── CV Builder wizard save ─────────────────────────────────────────────────
 
   const handleWizardSave = async (name: string, data: CvData) => {
-    const saved = await saveProfile(
-      name,
-      data as unknown as Record<string, unknown>,
-    );
+    const saved = await saveProfile(name, data);
     if (saved) {
       setSelectedProfile(saved);
       toast.success("Profil sauvegardé !");
@@ -625,12 +622,7 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
                                   {profile.name}
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                  {(
-                                    profile.cv_data as Record<
-                                      string,
-                                      { name?: string }
-                                    >
-                                  )?.personal_info?.name || ""}
+                                  {profile.cv_data?.personal_info?.name || ""}
                                 </p>
                               </div>
                               {selectedProfile?.id === profile.id && (
