@@ -562,8 +562,8 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
     try:
         result = supabase_client.table("user_subscriptions")\
             .update({
-                "status": "cancelled",
-                "cancelled_at": datetime.now(timezone.utc).isoformat(),
+                "status": "canceled",
+                "canceled_at": datetime.now(timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             })\
             .eq("stripe_subscription_id", stripe_subscription_id)\
@@ -578,6 +578,7 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
 
     except Exception as e:
         logger.error(f"Failed to cancel subscription: {e}")
+        raise
 
 
 async def handle_payment_failed(invoice: Dict[str, Any]):
@@ -605,6 +606,7 @@ async def handle_payment_failed(invoice: Dict[str, Any]):
 
     except Exception as e:
         logger.error(f"Failed to update subscription status: {e}")
+        raise
 
 
 async def handle_recruiter_checkout(session: Dict[str, Any]):

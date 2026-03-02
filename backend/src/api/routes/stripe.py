@@ -134,7 +134,7 @@ async def cancel_subscription(
         result = (
             supabase_client
             .table("user_subscriptions")
-            .select("stripe_subscription_id, status, plan_name")
+            .select("stripe_subscription_id, status")
             .eq("user_id", user_id)
             .eq("status", "active")
             .order("created_at", desc=True)
