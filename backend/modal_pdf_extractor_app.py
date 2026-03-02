@@ -17,15 +17,17 @@ import modal
 
 app = modal.App("huntzen-pdf-extractor")
 
-# Image with docling installed (loads heavy ML models once per container)
+# Image identique au huntzen-cv-processor (même version docling = même comportement)
 docling_image = (
     modal.Image.debian_slim(python_version="3.11")
-    .apt_install(["libgomp1", "libgl1-mesa-glx", "libglib2.0-0"])  # OpenGL + OpenMP required by docling/torchvision
-    .pip_install([
-        "docling>=2.0.0",
-        "docling-core>=2.0.0",
-        "fastapi[standard]",
-    ])
+    .apt_install(
+        "libgl1-mesa-glx",  # OpenCV dependency
+        "libglib2.0-0",     # GTK dependency
+    )
+    .pip_install(
+        "docling==2.70.0",  # Même version que huntzen-cv-processor
+        "fastapi[standard]>=0.115.0",
+    )
 )
 
 
@@ -68,6 +70,7 @@ async def extract_pdf_text(body: dict) -> dict:
             tmp.write(pdf_bytes)
             tmp_path = tmp.name
 
+        # Même code que huntzen-cv-processor/extract_text_from_pdf
         converter = DocumentConverter()
         result = converter.convert(tmp_path)
         text = result.document.export_to_markdown()
