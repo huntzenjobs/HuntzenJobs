@@ -1,11 +1,15 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  (() => {
+// Resolved lazily inside fetch() to avoid crashing at module load time during
+// Next.js static generation (prerendering), where NEXT_PUBLIC_* vars may be absent.
+function getApiBaseUrl(): string {
+  const url =
+    process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+  if (!url) {
     throw new Error(
       "NEXT_PUBLIC_BACKEND_URL or NEXT_PUBLIC_API_URL is not configured",
     );
-  })();
+  }
+  return url;
+}
 
 export interface Country {
   name: string;
@@ -107,10 +111,14 @@ export interface JobFairSearchResult {
 }
 
 class HuntzenApiClient {
-  private baseUrl: string;
+  private _baseUrl?: string;
 
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    this._baseUrl = baseUrl;
+  }
+
+  private get baseUrl(): string {
+    return this._baseUrl ?? getApiBaseUrl();
   }
 
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
