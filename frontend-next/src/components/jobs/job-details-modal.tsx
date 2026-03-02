@@ -41,6 +41,9 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
 import { ApplyModal } from "./apply-modal";
 import { InsiderFinderDrawer } from "./insider-finder-drawer";
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -78,30 +81,32 @@ export function JobDetailsModal({
     const trackView = async () => {
       try {
         // Use authenticatedFetch to automatically include auth token if user is logged in
-        const response = await authenticatedFetch("/api/jobs/track-view", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await authenticatedFetch(
+          `${BACKEND_URL}/api/jobs/track-view`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ job_id: job.id || job.url }),
           },
-          body: JSON.stringify({ job_id: job.id || job.url }),
-        });
+        );
+
+        // Parse body once — a Response body can only be consumed once
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-
           // Handle quota exceeded (429) - show upgrade modal
           if (
             response.status === 429 &&
-            errorData.detail?.error === "quota_exceeded"
+            data.detail?.error === "quota_exceeded"
           ) {
             console.warn("Job view quota exceeded");
             openPricingModal("job_view");
             onOpenChange(false); // Close the modal
-            return;
           }
+          return;
         }
-
-        const data = await response.json();
 
         if (
           data.success &&

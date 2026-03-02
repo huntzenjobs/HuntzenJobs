@@ -12,6 +12,7 @@ langchain-core
 
 # PDF Processing
 docling
+pypdf  # Lightweight fallback for PDF text extraction
 
 # HTTP Clients
 httpx

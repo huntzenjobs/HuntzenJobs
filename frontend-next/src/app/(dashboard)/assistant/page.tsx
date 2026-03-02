@@ -337,7 +337,7 @@ export default function AssistantPage() {
           )}
 
           {/* Export button (if has messages and feature access) */}
-          {hasFeature("has_coach_history") && messages.length > 0 && (
+          {false && hasFeature("has_coach_history") && messages.length > 0 && (
             <ExportDialog
               messages={messages.map(toCoachMessage)}
               title={

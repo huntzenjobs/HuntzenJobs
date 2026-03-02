@@ -5,6 +5,7 @@
 
 import { pdf } from '@react-pdf/renderer';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import type { CVAnalysisResult } from '@/hooks/use-cv-history';
 
 // PDF Styles
 const styles = StyleSheet.create({
@@ -90,102 +91,90 @@ const styles = StyleSheet.create({
   },
 });
 
-interface CVAnalysisResult {
-  ats_score: {
-    overall_score: number;
-    formatting_score: number;
-    keywords_score: number;
-    structure_score: number;
-    readability_score: number;
-  };
-  strengths: string[];
-  improvements: string[];
-  missing_sections?: string[];
-  keywords_found?: string[];
-  keywords_missing?: string[];
-  analysis_language: 'fr' | 'en';
-  processed_at: string;
-}
-
 // PDF Document Component
-const CVAnalysisPDFDocument = ({ result }: { result: CVAnalysisResult }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Analyse de CV - Résultats</Text>
-        <Text style={styles.subtitle}>
-          Généré le {new Date(result.processed_at).toLocaleDateString('fr-FR')}
-        </Text>
-      </View>
+const CVAnalysisPDFDocument = ({ result }: { result: CVAnalysisResult }) => {
+  const analyzedDate =
+    result.analyzedAt instanceof Date
+      ? result.analyzedAt.toLocaleDateString('fr-FR')
+      : new Date(result.analyzedAt).toLocaleDateString('fr-FR');
 
-      {/* Overall Score */}
-      <View style={styles.scoreContainer}>
-        <Text style={styles.scoreText}>{result.ats_score.overall_score}/100</Text>
-        <Text style={styles.scoreLabel}>Score ATS Global</Text>
-      </View>
-
-      {/* Score Breakdown */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Détails du Score</Text>
-        <View style={styles.breakdown}>
-          <Text style={styles.breakdownLabel}>Format</Text>
-          <Text style={styles.breakdownValue}>{result.ats_score.formatting_score}/100</Text>
-        </View>
-        <View style={styles.breakdown}>
-          <Text style={styles.breakdownLabel}>Mots-clés</Text>
-          <Text style={styles.breakdownValue}>{result.ats_score.keywords_score}/100</Text>
-        </View>
-        <View style={styles.breakdown}>
-          <Text style={styles.breakdownLabel}>Structure</Text>
-          <Text style={styles.breakdownValue}>{result.ats_score.structure_score}/100</Text>
-        </View>
-        <View style={styles.breakdown}>
-          <Text style={styles.breakdownLabel}>Lisibilité</Text>
-          <Text style={styles.breakdownValue}>{result.ats_score.readability_score}/100</Text>
-        </View>
-      </View>
-
-      {/* Strengths */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Points Forts</Text>
-        {(result.strengths || []).map((strength, index) => (
-          <Text key={index} style={styles.listItem}>
-            • {strength}
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Analyse de CV - Résultats</Text>
+          <Text style={styles.subtitle}>
+            {result.fileName} — Généré le {analyzedDate}
           </Text>
-        ))}
-      </View>
-
-      {/* Improvements */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Points à Améliorer</Text>
-        {(result.improvements || []).map((improvement, index) => (
-          <Text key={index} style={styles.listItem}>
-            • {improvement}
-          </Text>
-        ))}
-      </View>
-
-      {/* Missing Sections */}
-      {result.missing_sections && result.missing_sections.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sections Manquantes</Text>
-          {result.missing_sections.map((section, index) => (
-            <Text key={index} style={styles.listItem}>
-              • {section}
-            </Text>
-          ))}
         </View>
-      )}
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text>Généré par HuntZen - Plateforme d'assistance à la recherche d'emploi</Text>
-        <Text>huntzen.fr</Text>
-      </View>
-    </Page>
-  </Document>
-);
+        {/* Overall Score */}
+        <View style={styles.scoreContainer}>
+          <Text style={styles.scoreText}>{result.score}/100</Text>
+          <Text style={styles.scoreLabel}>Score Global</Text>
+        </View>
+
+        {/* Score Breakdown */}
+        {result.breakdown && result.breakdown.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Détails du Score</Text>
+            {result.breakdown.map((item, index) => (
+              <View key={index} style={styles.breakdown}>
+                <Text style={styles.breakdownLabel}>{item.label}</Text>
+                <Text style={styles.breakdownValue}>
+                  {item.value}/{item.max}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Strengths */}
+        {result.strengths && result.strengths.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Points Forts</Text>
+            {result.strengths.map((strength, index) => (
+              <Text key={index} style={styles.listItem}>
+                • {strength}
+              </Text>
+            ))}
+          </View>
+        )}
+
+        {/* Weaknesses */}
+        {result.weaknesses && result.weaknesses.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Points à Améliorer</Text>
+            {result.weaknesses.map((weakness, index) => (
+              <Text key={index} style={styles.listItem}>
+                • {weakness}
+              </Text>
+            ))}
+          </View>
+        )}
+
+        {/* Suggestions */}
+        {result.suggestions && result.suggestions.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recommandations</Text>
+            {result.suggestions.map((suggestion, index) => (
+              <Text key={index} style={styles.listItem}>
+                • {suggestion.text}
+              </Text>
+            ))}
+          </View>
+        )}
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text>Généré par HuntZen - Plateforme d'assistance à la recherche d'emploi</Text>
+          <Text>huntzen.fr</Text>
+        </View>
+      </Page>
+    </Document>
+  );
+};
 
 /**
  * Export CV analysis results to PDF file
@@ -197,26 +186,19 @@ export async function exportCVAnalysisToPDF(
   fileName?: string
 ): Promise<void> {
   try {
-    // Generate PDF
     const blob = await pdf(<CVAnalysisPDFDocument result={result} />).toBlob();
 
-    // Create download link
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName || `cv-analysis-${new Date().toISOString().split('T')[0]}.pdf`;
 
-    // Trigger download
     document.body.appendChild(link);
     link.click();
-
-    // Cleanup
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
-    console.log('✅ PDF exported successfully');
   } catch (error) {
     console.error('Failed to export PDF:', error);
-    throw new Error('Échec de l\'export PDF');
+    throw new Error("Échec de l'export PDF");
   }
 }
