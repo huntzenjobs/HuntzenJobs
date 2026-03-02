@@ -482,7 +482,7 @@ export function CVUploadAsyncWizard({
 
         // Step 2: generate CV PDF + LM PDF in parallel
         const [cvPdfRes, lmPdfRes] = await Promise.all([
-          fetch(`${backendUrl}/api/cv-adapter/pdf`, {
+          fetch(`${backendUrl}/api/cv-adapter/generate-pdf`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

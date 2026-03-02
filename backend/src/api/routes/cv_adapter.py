@@ -6,6 +6,7 @@ Endpoints for smart CV adaptation to job offers.
 
 import io
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response
@@ -17,6 +18,59 @@ from src.services.pdf_generator import get_pdf_generator
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+async def _extract_cv_text_from_file(file: UploadFile) -> str:
+    """Extract CV text from an uploaded PDF or DOCX via Modal (Docling fallback)."""
+    from src.api.deps import get_cv_analyzer_main
+    from src.services.modal_pdf_extractor import (
+        extract_text_via_modal,
+        is_modal_pdf_enabled,
+    )
+
+    filename = (file.filename or "").lower()
+    if not (filename.endswith(".pdf") or filename.endswith(".docx")):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only PDF and DOCX files are supported",
+        )
+
+    content = await file.read()
+
+    try:
+        if filename.endswith(".pdf"):
+            if is_modal_pdf_enabled():
+                try:
+                    cv_text = await extract_text_via_modal(content)
+                    logger.info("[cv_adapter] PDF text extracted via Modal")
+                except Exception as modal_exc:
+                    logger.warning(
+                        f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"
+                    )
+                    cv_analyzer = get_cv_analyzer_main()
+                    cv_text = await cv_analyzer.extract_text_from_pdf(content)
+            else:
+                cv_analyzer = get_cv_analyzer_main()
+                cv_text = await cv_analyzer.extract_text_from_pdf(content)
+        else:
+            from docx import Document
+            doc = Document(io.BytesIO(content))
+            cv_text = "\n".join([para.text for para in doc.paragraphs])
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"[cv_adapter] File text extraction failed: {exc}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Could not extract text from file: {str(exc)}",
+        )
+
+    if not cv_text or len(cv_text) < 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not extract sufficient text from file",
+        )
+    return cv_text
 
 
 def get_adapter_agent() -> "CVAdapterAgent":
@@ -43,31 +97,36 @@ def generate_pdf_sync(cv_data: dict, template: str, language: str, photo_base64:
 
 @router.post("/adapt")
 async def adapt_cv(
-    cv_text: str = Form(..., description="Original CV content as text"),
     job_description: str = Form(..., description="Target job description"),
     language: str = Form(default="en", description="Output language (en/fr)"),
     template: str = Form(default="ats", description="Template (ats/modern)"),
+    cv_text: Optional[str] = Form(default=None, description="Original CV content as text"),
+    file: Optional[UploadFile] = File(default=None, description="CV file (PDF or DOCX)"),
 ):
     """
     Adapt a CV to match a specific job offer.
-    
+
+    Accepts either a CV file (PDF/DOCX) or raw cv_text.
+
     This endpoint uses AI to:
     1. Analyze job requirements and keywords
     2. Map CV experiences to job needs
     3. Rewrite content using job's vocabulary
     4. Fact-check to ensure no hallucinations
-    
+
     Returns structured CV data with match analysis.
     """
-    agent = get_adapter_agent()
-    
-    # Validate inputs
-    if len(cv_text) < 100:
+    # Resolve CV text — from file or raw text
+    if file and file.filename:
+        cv_text = await _extract_cv_text_from_file(file)
+    elif not cv_text or len(cv_text) < 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="CV text too short. Please provide a complete CV.",
+            detail="Provide either a CV file (PDF/DOCX) or cv_text (min 100 chars).",
         )
-    
+
+    agent = get_adapter_agent()
+
     if len(job_description) < 50:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -99,29 +158,34 @@ async def adapt_cv(
 
 @router.post("/adapt/pdf")
 async def adapt_cv_to_pdf(
-    cv_text: str = Form(..., description="Original CV content as text"),
     job_description: str = Form(..., description="Target job description"),
     language: str = Form(default="en", description="Output language (en/fr)"),
     template: str = Form(default="ats", description="Template (ats/modern)"),
+    cv_text: Optional[str] = Form(default=None, description="Original CV content as text"),
+    file: Optional[UploadFile] = File(default=None, description="CV file (PDF or DOCX)"),
 ):
     """
     Adapt CV and generate PDF directly.
-    
+
+    Accepts either a CV file (PDF/DOCX) or raw cv_text.
+
     Templates:
     - ats: Simple 1-column, ATS-optimized (90%+ score)
     - modern: Beautiful 2-column design (for direct contact)
-    
+
     Returns a downloadable PDF file with the adapted CV.
     """
-    agent = get_adapter_agent()
-    
-    # Validate inputs
-    if len(cv_text) < 100:
+    # Resolve CV text — from file or raw text
+    if file and file.filename:
+        cv_text = await _extract_cv_text_from_file(file)
+    elif not cv_text or len(cv_text) < 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="CV text too short",
+            detail="Provide either a CV file (PDF/DOCX) or cv_text (min 100 chars).",
         )
-    
+
+    agent = get_adapter_agent()
+
     if len(job_description) < 50:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -25,7 +25,11 @@ import httpx
 logger = logging.getLogger(__name__)
 
 # Modal webhook URL — set in Railway environment variables
-MODAL_PDF_EXTRACT_URL = os.getenv("MODAL_PDF_EXTRACT_URL", "")
+# Default points to the deployed Modal endpoint (same app as CV processor)
+MODAL_PDF_EXTRACT_URL = os.getenv(
+    "MODAL_PDF_EXTRACT_URL",
+    "https://huntzenproject--huntzen-pdf-extractor-extract-pdf-text.modal.run",
+)
 
 # Max PDF size to send to Modal (10MB)
 MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024
