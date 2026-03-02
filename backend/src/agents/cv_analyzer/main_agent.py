@@ -238,7 +238,7 @@ class CVAnalyzerAgent(BaseAgent):
     
     async def extract_text_from_pdf(self, pdf_bytes: bytes) -> str:
         """
-        Extract text from PDF using Docling.
+        Extract text from PDF using Docling, with pypdf fallback.
 
         Args:
             pdf_bytes: PDF file content
@@ -257,6 +257,28 @@ class CVAnalyzerAgent(BaseAgent):
                 lambda: self.docling_converter.convert(tmp_path).document
             )
             return doc.export_to_markdown()
+        except Exception as docling_exc:
+            logger.warning(
+                f"[{self.name}] Docling extraction failed ({docling_exc}), "
+                "falling back to pypdf"
+            )
+            # pypdf is a Docling transitive dependency — always available.
+            # It works for text-based PDFs without requiring system libraries.
+            try:
+                import io as _io
+                from pypdf import PdfReader
+                reader = PdfReader(_io.BytesIO(pdf_bytes))
+                text = "\n".join(
+                    page.extract_text() or "" for page in reader.pages
+                ).strip()
+                if text:
+                    return text
+                raise RuntimeError("pypdf returned empty text")
+            except Exception as pypdf_exc:
+                raise RuntimeError(
+                    f"All PDF extraction methods failed. "
+                    f"Docling: {docling_exc}. pypdf: {pypdf_exc}."
+                )
         finally:
             os.unlink(tmp_path)
     
