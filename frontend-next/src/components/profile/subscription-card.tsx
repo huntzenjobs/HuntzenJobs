@@ -81,6 +81,9 @@ export function SubscriptionCard() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelledPlanName, setCancelledPlanName] = useState<string | null>(
+    null,
+  );
 
   const planConfig = PLAN_CONFIG[plan];
   const planLimits = PLAN_LIMITS[plan];
@@ -123,8 +126,12 @@ export function SubscriptionCard() {
         const err = await response.json();
         throw new Error(err.detail || "Erreur lors de l'annulation");
       }
-      setShowCancelDialog(false);
-      window.location.reload();
+      const data = await response.json();
+      setCancelledPlanName(data.plan_name || null);
+      setTimeout(() => {
+        setShowCancelDialog(false);
+        window.location.reload();
+      }, 2000);
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -341,26 +348,36 @@ export function SubscriptionCard() {
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("cancelDialog.title")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {cancelledPlanName
+                ? t("cancelDialog.successTitle")
+                : t("cancelDialog.title")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("cancelDialog.description")}
+              {cancelledPlanName
+                ? t("cancelDialog.successDescription", {
+                    plan: cancelledPlanName,
+                  })
+                : t("cancelDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {cancelError && (
             <p className="text-sm text-red-600 px-1">{cancelError}</p>
           )}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isCancelling}>
-              {t("cancelDialog.keep")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleCancelSubscription}
-              disabled={isCancelling}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {isCancelling ? t("cancelling") : t("cancelDialog.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {!cancelledPlanName && (
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isCancelling}>
+                {t("cancelDialog.keep")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleCancelSubscription}
+                disabled={isCancelling}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isCancelling ? t("cancelling") : t("cancelDialog.confirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     </>

@@ -814,7 +814,9 @@
       "title": "Cancelar sua assinatura?",
       "description": "Você manterá acesso a todas as funcionalidades até o final do período de cobrança atual. Nenhum reembolso será realizado.",
       "keep": "Manter minha assinatura",
-      "confirm": "Confirmar cancelamento"
+      "confirm": "Confirmar cancelamento",
+      "successTitle": "Cancelamento confirmado",
+      "successDescription": "Seu plano {plan} será cancelado no final do período atual. Você mantém o acesso até essa data."
     }
   },
   "cv": {

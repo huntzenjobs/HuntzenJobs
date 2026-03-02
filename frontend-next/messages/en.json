@@ -814,7 +814,9 @@
       "title": "Cancel your subscription?",
       "description": "You will keep access to all features until the end of your current billing period. No refund will be issued.",
       "keep": "Keep my subscription",
-      "confirm": "Confirm cancellation"
+      "confirm": "Confirm cancellation",
+      "successTitle": "Cancellation confirmed",
+      "successDescription": "Your {plan} plan will be cancelled at the end of the current period. You keep access until that date."
     }
   },
   "cv": {

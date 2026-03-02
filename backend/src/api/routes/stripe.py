@@ -134,7 +134,7 @@ async def cancel_subscription(
         result = (
             supabase_client
             .table("user_subscriptions")
-            .select("stripe_subscription_id, status")
+            .select("stripe_subscription_id, status, subscription_plans(name)")
             .eq("user_id", user_id)
             .eq("status", "active")
             .order("created_at", desc=True)
@@ -147,6 +147,7 @@ async def cancel_subscription(
 
         subscription = result.data[0]
         stripe_subscription_id = subscription.get("stripe_subscription_id")
+        plan_name = (subscription.get("subscription_plans") or {}).get("name", "unknown")
 
         if not stripe_subscription_id or not stripe_subscription_id.startswith("sub_"):
             raise HTTPException(status_code=400, detail="Invalid subscription ID")
@@ -166,8 +167,9 @@ async def cancel_subscription(
         return {
             "success": True,
             "cancel_at_period_end": True,
+            "plan_name": plan_name,
             "current_period_end": updated.get("current_period_end"),
-            "message": "Subscription will be cancelled at end of billing period"
+            "message": f"{plan_name} plan will be cancelled at end of billing period"
         }
 
     except HTTPException:

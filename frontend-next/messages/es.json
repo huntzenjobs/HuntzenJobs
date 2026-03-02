@@ -814,7 +814,9 @@
       "title": "¿Cancelar tu suscripción?",
       "description": "Conservarás acceso a todas las funcionalidades hasta el final del período de facturación actual. No se realizará ningún reembolso.",
       "keep": "Mantener mi suscripción",
-      "confirm": "Confirmar cancelación"
+      "confirm": "Confirmar cancelación",
+      "successTitle": "Cancelación confirmada",
+      "successDescription": "Tu plan {plan} será cancelado al final del período actual. Conservas el acceso hasta esa fecha."
     }
   },
   "cv": {
