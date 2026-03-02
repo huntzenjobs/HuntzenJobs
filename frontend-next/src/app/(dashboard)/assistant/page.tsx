@@ -348,8 +348,8 @@ export default function AssistantPage() {
               }
               conversationDate={
                 messages[0]?.timestamp instanceof Date
-                  ? messages[0].timestamp.toISOString()
-                  : messages[0]?.timestamp
+                  ? (messages[0].timestamp as Date).toISOString()
+                  : (messages[0]?.timestamp as string | undefined)
               }
             />
           )}
