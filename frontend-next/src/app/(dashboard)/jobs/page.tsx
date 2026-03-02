@@ -39,6 +39,8 @@ import {
   AlertCircle,
   CheckCircle,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +56,6 @@ import {
 } from "@/components/jobs/gradient-job-card";
 import { JobDetailsModal } from "@/components/jobs/job-details-modal";
 import { formatJobSource } from "@/lib/utils/job-source-formatter";
-import { Switch } from "@/components/ui/switch";
 import {
   SearchFormInline,
   type SearchParams,
@@ -95,7 +96,8 @@ export default function JobsPage() {
   // Advanced filters state
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({});
-  const [onlyDirectLinks, setOnlyDirectLinks] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Auth & Query Client
   const auth = useOptionalAuth();
@@ -391,6 +393,11 @@ export default function JobsPage() {
    */
   const hasIncrementedQuotaRef = useRef(false);
 
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [jobSearchParams]);
+
   // Search query with intelligent caching
   const searchQuery = useQuery({
     queryKey: [
@@ -649,16 +656,20 @@ export default function JobsPage() {
   // Progressive reveal: only show jobs up to visibleJobsCount
   // Use translatedJobs for display (auto-translated when locale ≠ fr)
   const progressiveJobs = translatedJobs.slice(0, visibleJobsCount);
-  const filteredProgressiveJobs = onlyDirectLinks
-    ? progressiveJobs.filter((j) => j.url_is_direct !== false)
-    : progressiveJobs;
+  const filteredProgressiveJobs = progressiveJobs.filter(
+    (j) => j.url_is_direct !== false,
+  );
   const visibleJobs = filteredProgressiveJobs.slice(0, jobsVisibleLimit);
-  const hiddenByFilter = onlyDirectLinks
-    ? progressiveJobs.length - filteredProgressiveJobs.length
-    : 0;
+  const totalPages = Math.max(1, Math.ceil(visibleJobs.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedJobs = visibleJobs.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize,
+  );
   const blurredJobsCount = Math.max(0, jobs.length - jobsVisibleLimit);
   const showBlurredCards = isFreePlan && blurredJobsCount > 0;
   const isLoadingMore = visibleJobsCount < jobs.length;
+  const isLastPage = safePage >= totalPages;
 
   return (
     <div className="space-y-6">
@@ -1256,17 +1267,6 @@ export default function JobsPage() {
                         ? t("results.count_one", { count: jobs.length })
                         : t("results.count_other", { count: jobs.length })}
                     </h2>
-                    {/* Cache badge - Shows when data is from cache */}
-                    {searchQuery.isFetched &&
-                      !searchQuery.isFetching &&
-                      searchQuery.dataUpdatedAt && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs bg-blue-50 text-blue-700 border-blue-200"
-                        >
-                          💾 Cache
-                        </Badge>
-                      )}
                   </div>
                   <p className="text-sm text-emerald-600 font-medium">
                     {searchQuery.isFetching
@@ -1336,20 +1336,27 @@ export default function JobsPage() {
                 </Button>
               </div>
               <div className="flex flex-col items-end gap-3">
-                {/* Direct links filter */}
+                {/* Page size selector */}
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-slate-600">
-                    Liens directs uniquement
+                    Offres par page
                   </span>
-                  <Switch
-                    checked={onlyDirectLinks}
-                    onCheckedChange={setOnlyDirectLinks}
-                  />
-                  {hiddenByFilter > 0 && (
-                    <span className="text-xs text-amber-600 font-medium">
-                      ({hiddenByFilter} masquées)
-                    </span>
-                  )}
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={(val) => {
+                      setPageSize(Number(val));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-20 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {isFreePlan && (
@@ -1380,8 +1387,8 @@ export default function JobsPage() {
                   : "grid-cols-1 md:grid-cols-2"
               }`}
             >
-              {/* Visible jobs */}
-              {visibleJobs.map((job, index) => (
+              {/* Visible jobs (current page) */}
+              {paginatedJobs.map((job, index) => (
                 <motion.div
                   key={job.id || index}
                   initial={{ opacity: 0, y: 20 }}
@@ -1544,8 +1551,8 @@ export default function JobsPage() {
                   </motion.div>
                 ))}
 
-              {/* Gradient job cards for free users */}
-              {showBlurredCards && (
+              {/* Gradient job cards for free users (last page only) */}
+              {showBlurredCards && isLastPage && (
                 <>
                   {Array.from({ length: Math.min(4, blurredJobsCount) }).map(
                     (_, index) => (
@@ -1566,6 +1573,76 @@ export default function JobsPage() {
                 </>
               )}
             </div>
+
+            {/* Pagination controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(
+                    (page) =>
+                      page === 1 ||
+                      page === totalPages ||
+                      Math.abs(page - safePage) <= 1,
+                  )
+                  .reduce<(number | "...")[]>((acc, page, idx, arr) => {
+                    if (
+                      idx > 0 &&
+                      typeof arr[idx - 1] === "number" &&
+                      page - (arr[idx - 1] as number) > 1
+                    ) {
+                      acc.push("...");
+                    }
+                    acc.push(page);
+                    return acc;
+                  }, [])
+                  .map((item, idx) =>
+                    item === "..." ? (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="px-1 text-slate-400 text-sm"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <Button
+                        key={item}
+                        variant={item === safePage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(item as number)}
+                        className={
+                          item === safePage
+                            ? "h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "h-8 w-8 p-0"
+                        }
+                      >
+                        {item}
+                      </Button>
+                    ),
+                  )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={safePage === totalPages}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </ErrorBoundary>
       )}
