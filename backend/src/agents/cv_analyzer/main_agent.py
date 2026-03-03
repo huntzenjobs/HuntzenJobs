@@ -250,35 +250,57 @@ class CVAnalyzerAgent(BaseAgent):
             tmp.write(pdf_bytes)
             tmp_path = tmp.name
 
+        docling_text = None
+        docling_exc = None
         try:
             loop = asyncio.get_event_loop()
             doc = await loop.run_in_executor(
                 None,
                 lambda: self.docling_converter.convert(tmp_path).document
             )
-            return doc.export_to_markdown()
-        except Exception as docling_exc:
+            docling_text = doc.export_to_markdown()
+        except Exception as exc:
+            docling_exc = exc
             logger.warning(
-                f"[{self.name}] Docling extraction failed ({docling_exc}), "
-                "falling back to pypdf"
+                f"[{self.name}] Docling extraction failed ({exc}), falling back to pypdf"
             )
-            # pypdf is a Docling transitive dependency — always available.
-            # It works for text-based PDFs without requiring system libraries.
-            try:
-                import io as _io
-                from pypdf import PdfReader
-                reader = PdfReader(_io.BytesIO(pdf_bytes))
-                text = "\n".join(
-                    page.extract_text() or "" for page in reader.pages
-                ).strip()
-                if text:
-                    return text
-                raise RuntimeError("pypdf returned empty text")
-            except Exception as pypdf_exc:
+
+        # If Docling succeeded but returned insufficient text (< 100 chars),
+        # try pypdf before giving up — Docling with do_ocr=False can silently
+        # return empty/minimal text for design-heavy PDFs.
+        MIN_TEXT_CHARS = 100
+        if docling_text and len(docling_text.strip()) >= MIN_TEXT_CHARS:
+            return docling_text
+
+        if docling_text is not None and len(docling_text.strip()) < MIN_TEXT_CHARS:
+            logger.warning(
+                f"[{self.name}] Docling returned only {len(docling_text.strip())} chars "
+                "(< 100), trying pypdf fallback"
+            )
+
+        # pypdf is a Docling transitive dependency — always available.
+        # It works for text-based PDFs without requiring system libraries.
+        try:
+            import io as _io
+            from pypdf import PdfReader
+            reader = PdfReader(_io.BytesIO(pdf_bytes))
+            text = "\n".join(
+                page.extract_text() or "" for page in reader.pages
+            ).strip()
+            if text:
+                return text
+            raise RuntimeError("pypdf returned empty text")
+        except Exception as pypdf_exc:
+            if docling_exc:
                 raise RuntimeError(
                     f"All PDF extraction methods failed. "
                     f"Docling: {docling_exc}. pypdf: {pypdf_exc}."
                 )
+            raise RuntimeError(
+                f"Docling returned insufficient text ({len((docling_text or '').strip())} chars). "
+                f"pypdf fallback also failed: {pypdf_exc}. "
+                "The PDF may be image-based (scanned) or use unsupported encoding."
+            )
         finally:
             os.unlink(tmp_path)
     

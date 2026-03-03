@@ -273,20 +273,23 @@ async def adapt_cv_from_file(
             if is_modal_pdf_enabled():
                 try:
                     cv_text = await extract_text_via_modal(content)
-                    logger.info("[cv_adapter] PDF text extracted via Modal")
+                    logger.info(f"[cv_adapter] PDF text extracted via Modal: {len(cv_text)} chars")
                 except Exception as modal_exc:
                     logger.warning(
                         f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"
                     )
                     cv_analyzer = get_cv_analyzer_main()
                     cv_text = await cv_analyzer.extract_text_from_pdf(content)
+                    logger.info(f"[cv_adapter] PDF text extracted via local fallback: {len(cv_text)} chars")
             else:
                 cv_analyzer = get_cv_analyzer_main()
                 cv_text = await cv_analyzer.extract_text_from_pdf(content)
+                logger.info(f"[cv_adapter] PDF text extracted via local: {len(cv_text)} chars")
         else:
             from docx import Document
             doc = Document(io.BytesIO(content))
             cv_text = "\n".join([para.text for para in doc.paragraphs])
+            logger.info(f"[cv_adapter] DOCX text extracted: {len(cv_text)} chars")
     except Exception as exc:
         logger.error(f"File text extraction failed for {filename}: {exc}", exc_info=True)
         raise HTTPException(
@@ -295,9 +298,16 @@ async def adapt_cv_from_file(
         )
 
     if not cv_text or len(cv_text) < 100:
+        logger.warning(
+            f"[cv_adapter] Insufficient text from {filename}: {len(cv_text or '')} chars (min 100). "
+            "PDF may be image-based (scanned) or have unsupported encoding."
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not extract sufficient text from file",
+            detail=(
+                f"Impossible d'extraire suffisamment de texte du fichier ({len(cv_text or '')} caractères extraits, "
+                "minimum 100 requis). Assurez-vous que votre PDF n'est pas un scan ou une image."
+            ),
         )
     
     # Now adapt

@@ -25,7 +25,7 @@ docling_image = (
         "libglib2.0-0",     # GTK dependency
     )
     .pip_install(
-        "docling==2.70.0",  # Même version que huntzen-cv-processor
+        "docling>=2.0.0",  # Aligné avec Railway (pyproject.toml: docling>=2.0.0)
         "fastapi[standard]>=0.115.0",
     )
 )
@@ -70,13 +70,14 @@ async def extract_pdf_text(body: dict) -> dict:
             tmp.write(pdf_bytes)
             tmp_path = tmp.name
 
-        # Même code que huntzen-cv-processor/extract_text_from_pdf
+        # Même configuration que huntzen-cv-processor
         converter = DocumentConverter()
         result = converter.convert(tmp_path)
         text = result.document.export_to_markdown()
 
-        if not text or len(text.strip()) < 20:
-            return {"success": False, "error": "Docling extracted empty or near-empty text"}
+        # Threshold aligned with backend Railway validation (cv_adapter.py: len < 100)
+        if not text or len(text.strip()) < 100:
+            return {"success": False, "error": f"Docling extracted insufficient text ({len(text.strip())} chars, min 100 required)"}
 
         return {"success": True, "text": text}
 

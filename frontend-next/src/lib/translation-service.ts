@@ -170,7 +170,10 @@ export async function translateBatch(
       );
       provider = "azure"; // label générique
     } catch (err) {
-      console.error("[TranslationService] Batch translation failed:", err);
+      console.warn(
+        "[TranslationService] Batch translation failed, using originals:",
+        err,
+      );
       // Fill remaining with originals
       for (const { index, text } of toTranslate) {
         results[index] = text;
@@ -283,6 +286,10 @@ async function translateWithMyMemory(
 
   const response = await fetch(url);
   if (!response.ok) {
+    if (response.status === 429) {
+      // Rate limit hit — return original text silently (expected, not an error)
+      return text;
+    }
     throw new Error(`MyMemory API error: ${response.status}`);
   }
 

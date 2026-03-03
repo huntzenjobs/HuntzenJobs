@@ -55,6 +55,7 @@ import {
   JobsLimitReached,
 } from "@/components/jobs/gradient-job-card";
 import { JobDetailsModal } from "@/components/jobs/job-details-modal";
+import { SearchLoadingModal } from "@/components/jobs/search-loading-modal";
 import { formatJobSource } from "@/lib/utils/job-source-formatter";
 import {
   SearchFormInline,
@@ -673,6 +674,12 @@ export default function JobsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Search Loading Modal */}
+      <SearchLoadingModal
+        isOpen={searchQuery.isFetching}
+        searchQuery={jobSearchParams?.query}
+      />
+
       {/* Hero Header - HuntZen Style */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

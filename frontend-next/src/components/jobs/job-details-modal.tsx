@@ -467,6 +467,7 @@ export function JobDetailsModal({
           open={applyModalOpen}
           onOpenChange={setApplyModalOpen}
           job={job}
+          jobDescription={fullDescription || job.description}
         />
       )}
 

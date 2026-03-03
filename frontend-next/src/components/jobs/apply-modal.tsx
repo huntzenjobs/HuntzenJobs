@@ -58,6 +58,8 @@ interface ApplyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   job: Job;
+  /** Full job description fetched from external source (may differ from job.description snippet) */
+  jobDescription?: string;
 }
 
 type Step = "upload" | "generating" | "results";
@@ -163,7 +165,12 @@ function cvDataToText(cv: CvData): string {
 // COMPONENT
 // ============================================================================
 
-export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
+export function ApplyModal({
+  open,
+  onOpenChange,
+  job,
+  jobDescription,
+}: ApplyModalProps) {
   const [step, setStep] = useState<Step>("upload");
   const [cvSource, setCvSource] = useState<CvSource>("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -264,7 +271,10 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
 
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("job_description", job.description || job.title);
+      formData.append(
+        "job_description",
+        jobDescription || job.description || job.title,
+      );
       formData.append("language", language);
       formData.append("output_format", "json");
 
@@ -309,7 +319,10 @@ export function ApplyModal({ open, onOpenChange, job }: ApplyModalProps) {
 
       const adaptFormData = new FormData();
       adaptFormData.append("cv_text", cvText);
-      adaptFormData.append("job_description", job.description || job.title);
+      adaptFormData.append(
+        "job_description",
+        jobDescription || job.description || job.title,
+      );
       adaptFormData.append("language", language);
       adaptFormData.append("template", "ats");
 
