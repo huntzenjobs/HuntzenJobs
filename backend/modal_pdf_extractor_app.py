@@ -52,7 +52,10 @@ async def extract_pdf_text(body: dict) -> dict:
     import base64
     import os
     import tempfile
-    from docling.document_converter import DocumentConverter
+    from docling.document_converter import DocumentConverter, PdfFormatOption
+    from docling.datamodel.pipeline_options import PdfPipelineOptions
+    from docling.datamodel.base_models import InputFormat
+    from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 
     pdf_bytes_b64 = body.get("pdf_bytes")
     if not pdf_bytes_b64:
@@ -70,8 +73,24 @@ async def extract_pdf_text(body: dict) -> dict:
             tmp.write(pdf_bytes)
             tmp_path = tmp.name
 
-        # Même configuration que huntzen-cv-processor
-        converter = DocumentConverter()
+        # PyPdfiumDocumentBackend: évite enforce_same_font=True du backend V4
+        # qui casse les mots dans les CVs design-heavy (ex: "Data2inn ov")
+        # do_ocr=False: évite le téléchargement de 40MB de modèles RapidOCR au cold start
+        pdf_options = PdfPipelineOptions(
+            do_ocr=False,
+            do_table_structure=False,
+            generate_page_images=False,
+            generate_picture_images=False,
+            generate_table_images=False,
+        )
+        converter = DocumentConverter(
+            format_options={
+                InputFormat.PDF: PdfFormatOption(
+                    pipeline_options=pdf_options,
+                    backend=PyPdfiumDocumentBackend,
+                )
+            }
+        )
         result = converter.convert(tmp_path)
         text = result.document.export_to_markdown()
 
