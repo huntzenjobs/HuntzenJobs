@@ -101,8 +101,8 @@ async def extract_text_via_modal(pdf_bytes: bytes) -> str:
             raise RuntimeError(f"Modal PDF extraction error: {error_msg}")
 
         text = data.get("text", "")
-        if not text or len(text.strip()) < 20:
-            raise RuntimeError("Modal returned empty or near-empty text")
+        if not text or len(text.strip()) < 100:
+            raise RuntimeError(f"Modal returned insufficient text ({len(text.strip())} chars, min 100 required)")
 
         logger.info(
             f"[ModalPDF] Extraction successful — {len(text)} chars extracted"

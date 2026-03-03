@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page {
+    size: A4;
+    margin: 2cm 2.5cm;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    line-height: 1.65;
+    color: #1a1a1a;
+  }
+
+  /* ── Header expéditeur ───────────────────────── */
+  .sender {
+    border-bottom: 2px solid #1a5276;
+    padding-bottom: 0.5cm;
+    margin-bottom: 0.8cm;
+  }
+
+  .sender-name {
+    font-size: 15pt;
+    font-weight: bold;
+    color: #1a1a1a;
+  }
+
+  .sender-contact {
+    font-size: 9.5pt;
+    color: #555;
+    margin-top: 0.2cm;
+  }
+
+  .sender-contact span { margin-right: 0.6cm; }
+
+  /* ── Destinataire + date ─────────────────────── */
+  .meta-row::after { content: ''; display: table; clear: both; }
+
+  .company-block {
+    float: left;
+    font-size: 10.5pt;
+    color: #333;
+    margin-bottom: 0.7cm;
+  }
+
+  .date-block {
+    float: right;
+    font-size: 10pt;
+    color: #555;
+  }
+
+  /* ── Objet ───────────────────────────────────── */
+  .subject-line {
+    clear: both;
+    font-weight: bold;
+    font-size: 11pt;
+    color: #1a1a1a;
+    margin-bottom: 0.8cm;
+  }
+
+  /* ── Corps ───────────────────────────────────── */
+  .salutation { margin-bottom: 0.6cm; }
+
+  .paragraph {
+    margin-bottom: 0.55cm;
+    text-align: justify;
+  }
+
+  .closing { margin-top: 0.9cm; margin-bottom: 0.3cm; }
+
+  .signature {
+    font-weight: bold;
+    margin-top: 1.5cm;
+    font-size: 11pt;
+  }
+</style>
+</head>
+<body>
+
+<!-- EXPÉDITEUR -->
+<div class="sender">
+  <div class="sender-name">{{ letter.header.name }}</div>
+  <div class="sender-contact">
+    {% if letter.header.address %}<span>{{ letter.header.address }}</span>{% endif %}
+    {% if letter.header.city %}<span>{{ letter.header.city }}</span>{% endif %}
+    {% if letter.header.phone %}<span>{{ letter.header.phone }}</span>{% endif %}
+    {% if letter.header.email %}<span>{{ letter.header.email }}</span>{% endif %}
+  </div>
+</div>
+
+<!-- DESTINATAIRE + DATE -->
+<div class="meta-row">
+  {% if letter.company %}
+  <div class="company-block"><strong>{{ letter.company }}</strong></div>
+  {% endif %}
+  {% if letter.date %}
+  <div class="date-block">{{ letter.date }}</div>
+  {% endif %}
+</div>
+
+<!-- OBJET -->
+{% if letter.subject %}
+<div class="subject-line">
+  {% if language == 'fr' %}Objet{% else %}Subject{% endif %} : {{ letter.subject }}
+</div>
+{% endif %}
+
+<!-- CORPS -->
+<div class="salutation">{{ letter.salutation }}</div>
+
+{% if letter.paragraph_1 %}
+<div class="paragraph">{{ letter.paragraph_1 }}</div>
+{% endif %}
+
+{% if letter.paragraph_2 %}
+<div class="paragraph">{{ letter.paragraph_2 }}</div>
+{% endif %}
+
+{% if letter.paragraph_3 %}
+<div class="paragraph">{{ letter.paragraph_3 }}</div>
+{% endif %}
+
+{% if letter.closing %}
+<div class="closing">{{ letter.closing }}</div>
+{% endif %}
+
+<div class="signature">{{ letter.signature }}</div>
+
+</body>
+</html>

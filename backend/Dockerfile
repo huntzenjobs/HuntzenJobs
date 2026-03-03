@@ -65,11 +65,17 @@ RUN chmod -R a+rX /usr/local/lib/python3.11/site-packages/
 COPY --chown=huntzen:huntzen src/ ./src/
 COPY --chown=huntzen:huntzen app/ ./app/
 COPY --chown=huntzen:huntzen prompts/ ./prompts/
+COPY --chown=huntzen:huntzen templates/ ./templates/
 # Note: pyproject.toml already copied above
 
 # Create cache directory for Marker models with proper permissions
 RUN mkdir -p /home/huntzen/.cache && \
     chown -R huntzen:huntzen /home/huntzen/.cache
+
+# Create templates directory with correct ownership before switching user
+# (huntzen can't create dirs in /app which is root-owned)
+RUN mkdir -p /app/templates/cv_pdf && \
+    chown -R huntzen:huntzen /app/templates
 
 # Switch to non-root user
 USER huntzen

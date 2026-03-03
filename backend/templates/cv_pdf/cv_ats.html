@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page {
+    size: A4;
+    margin: 1.4cm 1.8cm;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: {{ '9.5pt' if compact else '10.5pt' }};
+    line-height: 1.4;
+    color: #1a1a1a;
+  }
+
+  /* ── Header ─────────────────────────────────── */
+  .header {
+    text-align: center;
+    padding-bottom: 0.5cm;
+    border-bottom: 2px solid #1a5276;
+    margin-bottom: 0.45cm;
+  }
+
+  .header h1 {
+    font-size: {{ '17pt' if compact else '19pt' }};
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #1a1a1a;
+  }
+
+  .header .job-title {
+    font-size: {{ '11pt' if compact else '12pt' }};
+    color: #1a5276;
+    margin-top: 0.12cm;
+    font-weight: 500;
+  }
+
+  .contacts {
+    margin-top: 0.25cm;
+    font-size: 8.5pt;
+    color: #444;
+  }
+
+  .contacts span { margin: 0 0.25cm; }
+
+  /* ── Section ─────────────────────────────────── */
+  .section { margin-bottom: {{ '0.35cm' if compact else '0.5cm' }}; }
+
+  .section-title {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #1a5276;
+    border-bottom: 1px solid #1a5276;
+    padding-bottom: 0.08cm;
+    margin-bottom: 0.2cm;
+  }
+
+  /* ── Summary ─────────────────────────────────── */
+  .summary {
+    font-size: {{ '9.5pt' if compact else '10pt' }};
+    color: #333;
+    line-height: 1.5;
+  }
+
+  /* ── Experience ──────────────────────────────── */
+  .exp-item { margin-bottom: {{ '0.25cm' if compact else '0.35cm' }}; }
+
+  .exp-row::after { content: ''; display: table; clear: both; }
+
+  .exp-title {
+    font-weight: bold;
+    font-size: {{ '9.5pt' if compact else '10pt' }};
+    float: left;
+  }
+
+  .exp-dates {
+    font-size: 8.5pt;
+    color: #666;
+    float: right;
+    white-space: nowrap;
+  }
+
+  .exp-company {
+    font-size: 9pt;
+    color: #444;
+    margin-top: 0.05cm;
+    clear: both;
+  }
+
+  .exp-bullets {
+    margin-top: 0.08cm;
+    padding-left: 0.4cm;
+    list-style: disc;
+  }
+
+  .exp-bullets li {
+    font-size: {{ '9pt' if compact else '9.5pt' }};
+    margin-bottom: 0.05cm;
+    color: #222;
+  }
+
+  /* ── Education ───────────────────────────────── */
+  .edu-item { margin-bottom: {{ '0.2cm' if compact else '0.3cm' }}; }
+
+  .edu-row::after { content: ''; display: table; clear: both; }
+
+  .edu-degree {
+    font-weight: bold;
+    font-size: {{ '9.5pt' if compact else '10pt' }};
+    float: left;
+  }
+
+  .edu-year {
+    font-size: 8.5pt;
+    color: #666;
+    float: right;
+  }
+
+  .edu-school {
+    font-size: 9pt;
+    color: #444;
+    clear: both;
+  }
+
+  .edu-details {
+    font-size: 8.5pt;
+    color: #555;
+    margin-top: 0.03cm;
+  }
+
+  /* ── Skills ──────────────────────────────────── */
+  .skill-row {
+    margin-bottom: 0.12cm;
+    font-size: {{ '9pt' if compact else '9.5pt' }};
+  }
+
+  .skill-cat {
+    font-weight: bold;
+    color: #333;
+  }
+
+  /* ── Projects ────────────────────────────────── */
+  .proj-item { margin-bottom: {{ '0.2cm' if compact else '0.3cm' }}; }
+
+  .proj-name { font-weight: bold; font-size: {{ '9.5pt' if compact else '10pt' }}; }
+
+  .proj-tech {
+    font-size: 8.5pt;
+    color: #1a5276;
+    font-style: italic;
+  }
+
+  .proj-desc { font-size: 9pt; color: #333; margin-top: 0.04cm; }
+
+  /* ── Certifications ──────────────────────────── */
+  .cert-item {
+    font-size: {{ '9pt' if compact else '9.5pt' }};
+    margin-bottom: 0.12cm;
+  }
+
+  /* ── Interests ───────────────────────────────── */
+  .interests { font-size: {{ '9pt' if compact else '9.5pt' }}; color: #333; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>{{ cv.personal_info.name }}</h1>
+  {% if cv.personal_info.title %}
+  <div class="job-title">{{ cv.personal_info.title }}</div>
+  {% endif %}
+  <div class="contacts">
+    {% if cv.personal_info.email %}<span>✉ {{ cv.personal_info.email }}</span>{% endif %}
+    {% if cv.personal_info.phone %}<span>✆ {{ cv.personal_info.phone }}</span>{% endif %}
+    {% if cv.personal_info.location %}<span>📍 {{ cv.personal_info.location }}</span>{% endif %}
+    {% if cv.personal_info.linkedin %}<span>in {{ cv.personal_info.linkedin }}</span>{% endif %}
+    {% if cv.personal_info.github %}<span>⌥ {{ cv.personal_info.github }}</span>{% endif %}
+    {% if cv.personal_info.portfolio %}<span>🔗 {{ cv.personal_info.portfolio }}</span>{% endif %}
+  </div>
+</div>
+
+<!-- PROFIL -->
+{% if cv.summary %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Profil{% else %}Summary{% endif %}</div>
+  <div class="summary">{{ cv.summary }}</div>
+</div>
+{% endif %}
+
+<!-- EXPÉRIENCES -->
+{% if cv.experiences %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Expériences professionnelles{% else %}Work Experience{% endif %}</div>
+  {% for exp in cv.experiences %}
+  <div class="exp-item">
+    <div class="exp-row">
+      <span class="exp-title">{{ exp.title }}{% if exp.type %} &ndash; {{ exp.type }}{% endif %}</span>
+      <span class="exp-dates">{{ exp.start_date }} &ndash; {{ exp.end_date }}</span>
+    </div>
+    <div class="exp-company">{{ exp.company }}{% if exp.location %}, {{ exp.location }}{% endif %}</div>
+    {% if exp.bullets %}
+    <ul class="exp-bullets">
+      {% for bullet in exp.bullets %}
+      <li>{{ bullet }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- FORMATION -->
+{% if cv.education %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Formation{% else %}Education{% endif %}</div>
+  {% for edu in cv.education %}
+  <div class="edu-item">
+    <div class="edu-row">
+      <span class="edu-degree">{{ edu.degree }}</span>
+      <span class="edu-year">{{ edu.year }}</span>
+    </div>
+    <div class="edu-school">{{ edu.school }}{% if edu.location %}, {{ edu.location }}{% endif %}</div>
+    {% if edu.details %}<div class="edu-details">{{ edu.details }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- COMPÉTENCES -->
+{% if cv.skills %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Compétences{% else %}Skills{% endif %}</div>
+  {% for category, items in cv.skills.items() %}
+  {% if items %}
+  <div class="skill-row">
+    <span class="skill-cat">{{ category | capitalize }} :</span>
+    {{ items | join(' &bull; ') }}
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- PROJETS -->
+{% if cv.projects %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Projets{% else %}Projects{% endif %}</div>
+  {% for proj in cv.projects %}
+  <div class="proj-item">
+    <span class="proj-name">{{ proj.name }}</span>
+    {% if proj.technologies %}<span class="proj-tech"> &mdash; {{ proj.technologies }}</span>{% endif %}
+    {% if proj.url %}<span style="font-size:8.5pt; color:#666;"> | {{ proj.url }}</span>{% endif %}
+    {% if proj.description %}<div class="proj-desc">{{ proj.description }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- CERTIFICATIONS -->
+{% if cv.certifications %}
+<div class="section">
+  <div class="section-title">Certifications</div>
+  {% for cert in cv.certifications %}
+  <div class="cert-item">
+    <strong>{{ cert.name }}</strong>
+    {% if cert.issuer %} &ndash; {{ cert.issuer }}{% endif %}
+    {% if cert.year %} ({{ cert.year }}){% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- CENTRES D'INTÉRÊT -->
+{% if cv.interests %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Centres d'intérêt{% else %}Interests{% endif %}</div>
+  <div class="interests">{{ cv.interests | join(' &bull; ') }}</div>
+</div>
+{% endif %}
+
+</body>
+</html>
