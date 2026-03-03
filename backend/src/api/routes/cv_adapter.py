@@ -6,6 +6,7 @@ Endpoints for smart CV adaptation to job offers.
 
 import io
 import logging
+import re
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
@@ -18,6 +19,25 @@ from src.services.pdf_generator import get_pdf_generator
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _normalize_pdf_text(text: str) -> str:
+    """Fix common PDF extraction artifacts from both Docling backends.
+
+    DoclingParseV4 (enforce_same_font): "Data2inn ov", "Mod elin g"
+    PyPdfiumDocumentBackend:            "gmail . com", "Node . js", "FULL -STACK"
+    """
+    # Ligatures Unicode → ASCII (Docling < 2.76.0 artifact: ﬁ ﬂ ﬀ)
+    for lig, rep in [('\ufb00','ff'),('\ufb01','fi'),('\ufb02','fl'),
+                     ('\ufb03','ffi'),('\ufb04','ffl'),('\ufb05','st'),('\ufb06','st')]:
+        text = text.replace(lig, rep)
+    # "word . word" → "word.word"  (emails, URLs, version numbers, library names)
+    text = re.sub(r'(\w) \. (\w)', r'\1.\2', text)
+    # "word -word" → "word-word"   (compound words, hyphenated names)
+    text = re.sub(r'(\w) -(\w)', r'\1-\2', text)
+    # "word ," → "word,"           (space before comma in lists)
+    text = re.sub(r'(\w) ,', r'\1,', text)
+    return text
 
 
 async def _extract_cv_text_from_file(file: UploadFile) -> str:
@@ -64,6 +84,9 @@ async def _extract_cv_text_from_file(file: UploadFile) -> str:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Could not extract text from file: {str(exc)}",
         )
+
+    # Normalize PDF extraction artifacts (both Docling backends)
+    cv_text = _normalize_pdf_text(cv_text)
 
     if not cv_text or len(cv_text) < 100:
         raise HTTPException(
@@ -296,6 +319,9 @@ async def adapt_cv_from_file(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Could not extract text from file: {str(exc)}",
         )
+
+    # Normalize PDF extraction artifacts (pypdfium2 spaces, ligatures)
+    cv_text = _normalize_pdf_text(cv_text)
 
     if not cv_text or len(cv_text) < 100:
         logger.warning(
