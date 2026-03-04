@@ -317,9 +317,7 @@ export function ApplyModal({
 
       setPendingCvData(cvData);
       setPendingMatchScore(matchScore);
-      setGeneratingLabel("Chargement de la prévisualisation...");
-      await fetchPreviewHtml(cvData);
-      setStep("preview");
+      await generatePdfsAndSave(cvData, matchScore);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Une erreur est survenue";
@@ -369,9 +367,7 @@ export function ApplyModal({
 
       setPendingCvData(cvData);
       setPendingMatchScore(matchScore);
-      setGeneratingLabel("Chargement de la prévisualisation...");
-      await fetchPreviewHtml(cvData);
-      setStep("preview");
+      await generatePdfsAndSave(cvData, matchScore);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Une erreur est survenue";
@@ -1202,7 +1198,7 @@ export function ApplyModal({
                     variant="outline"
                     size="lg"
                     className="shrink-0 border-[#0D1F3C] text-[#0D1F3C] hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-colors px-3"
-                    title="Éditer le CV avant de télécharger"
+                    title="Modifier le contenu du CV adapté avant de télécharger"
                     onClick={() => {
                       if (pendingCvData) {
                         fetchPreviewHtml(pendingCvData);
@@ -1232,7 +1228,7 @@ export function ApplyModal({
                     variant="outline"
                     size="lg"
                     className="shrink-0 border-[#0D1F3C] text-[#0D1F3C] hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-colors px-3"
-                    title="Revenir à l'édition"
+                    title="Modifier le CV adapté — la lettre de motivation sera regénérée automatiquement"
                     onClick={() => {
                       if (pendingCvData) {
                         fetchPreviewHtml(pendingCvData);
@@ -1243,6 +1239,12 @@ export function ApplyModal({
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {/* Info édition */}
+                <p className="text-xs text-slate-400 text-center pt-1">
+                  ✏️ Modifier le CV adapté regénère automatiquement la lettre de
+                  motivation
+                </p>
               </div>
 
               <div className="relative">
