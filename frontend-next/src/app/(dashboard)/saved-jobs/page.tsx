@@ -454,6 +454,8 @@ export default function SavedJobsPage() {
             url: selectedJobForApply.job_url,
             source: "saved",
           }}
+          jobDescription={selectedJobForApply.description ?? undefined}
+          savedJobId={selectedJobForApply.id}
         />
       )}
     </div>

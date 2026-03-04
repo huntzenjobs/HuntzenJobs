@@ -68,6 +68,8 @@ interface ApplyModalProps {
   job: Job;
   /** Full job description fetched from external source (may differ from job.description snippet) */
   jobDescription?: string;
+  /** Supabase saved_jobs.id — links generated document to the saved job row */
+  savedJobId?: string;
 }
 
 type Step = "upload" | "generating" | "preview" | "results";
@@ -178,6 +180,7 @@ export function ApplyModal({
   onOpenChange,
   job,
   jobDescription,
+  savedJobId,
 }: ApplyModalProps) {
   const [step, setStep] = useState<Step>("upload");
   const [cvSource, setCvSource] = useState<CvSource>("upload");
@@ -431,6 +434,7 @@ export function ApplyModal({
       lmPdfBlob,
       language,
       jobUrl: job.url ?? undefined,
+      savedJobId: savedJobId ?? undefined,
     }).catch(() => {});
   };
 
