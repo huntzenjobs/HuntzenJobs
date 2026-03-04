@@ -151,20 +151,21 @@ class PDFGenerator:
         cv_data: dict[str, Any],
         template: str = "ats",
         compact: bool = False,
+        language: str = "fr",
     ) -> str:
         """
         Generate HTML preview (for web display).
-        
+
         Returns rendered HTML string for preview without PDF conversion.
         """
         cv_data = self._sanitize_data(cv_data)
-        
+
         try:
             jinja_template = self.env.get_template(f"cv_{template}.html")
         except Exception:
             jinja_template = self.env.get_template("cv_ats.html")
-        
-        return jinja_template.render(cv=cv_data, compact=compact)
+
+        return jinja_template.render(cv=cv_data, compact=compact, language=language)
     
     def get_available_templates(self) -> list[dict]:
         """List available CV templates."""

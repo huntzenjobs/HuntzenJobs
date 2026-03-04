@@ -279,7 +279,7 @@ export function SearchFormInline({
               onClick={() => handleSearch()}
               disabled={disabled || isLoading}
               size="lg"
-              className="px-6 whitespace-nowrap bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:from-huntzen-blue/90 hover:to-huntzen-turquoise/90"
+              className="px-6 whitespace-nowrap bg-huntzen-blue hover:bg-huntzen-blue-dark text-white"
             >
               {isLoading ? t("searchButton") : t("searchButton")}
             </Button>
@@ -450,7 +450,7 @@ export function SearchFormInline({
             onClick={() => handleSearch()}
             disabled={disabled || isLoading}
             size="lg"
-            className="w-full bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:from-huntzen-blue/90 hover:to-huntzen-turquoise/90"
+            className="w-full bg-huntzen-blue hover:bg-huntzen-blue-dark text-white"
           >
             {isLoading ? "Recherche..." : "Rechercher"}
           </Button>

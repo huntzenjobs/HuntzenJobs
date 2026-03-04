@@ -221,20 +221,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         },
       );
 
-      // Show user-visible warning
-      if (isApiError) {
-        toast.error("Erreur de chargement de votre abonnement", {
-          description:
-            "Impossible de récupérer vos informations d'abonnement. Veuillez vous reconnecter.",
-          duration: 6000,
-        });
-      } else {
-        toast.warning("Chargement de votre abonnement en cours...", {
-          description: "Si le problème persiste, veuillez vous reconnecter.",
-          duration: 5000,
-        });
-      }
-
       setHasShownInconsistencyWarning(true);
 
       // Auto-refetch after 5 seconds if not an error

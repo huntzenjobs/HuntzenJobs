@@ -539,20 +539,22 @@ async def preview_cv(
     cv_data: dict,
     template: str = "ats",
     compact: bool = False,
+    language: str = "fr",
 ):
     """
     Generate HTML preview of CV.
-    
+
     Returns HTML string for web display.
     """
     pdf_gen = get_pdf_generator()
-    
+
     html_content = pdf_gen.generate_preview_html(
         cv_data=cv_data,
         template=template,
         compact=compact,
+        language=language,
     )
-    
+
     return Response(
         content=html_content,
         media_type="text/html",

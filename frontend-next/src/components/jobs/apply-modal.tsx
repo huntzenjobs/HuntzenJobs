@@ -41,7 +41,14 @@ import {
   User,
   Plus,
   Check,
+  RefreshCw,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Job } from "@/lib/api/huntzen-client";
@@ -62,7 +69,7 @@ interface ApplyModalProps {
   jobDescription?: string;
 }
 
-type Step = "upload" | "generating" | "results";
+type Step = "upload" | "generating" | "preview" | "results";
 type CvSource = "upload" | "profile";
 
 interface GenerationResult {
@@ -183,6 +190,15 @@ export function ApplyModal({
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [generatingLabel, setGeneratingLabel] = useState("");
   const [markedApplied, setMarkedApplied] = useState(false);
+  const [pendingCvData, setPendingCvData] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  const [pendingMatchScore, setPendingMatchScore] = useState<
+    number | undefined
+  >(undefined);
+  const [previewHtml, setPreviewHtml] = useState<string>("");
+  const [previewLoading, setPreviewLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const t = useTranslations("applyModal");
@@ -211,6 +227,10 @@ export function ApplyModal({
       setResult(null);
       setGeneratingLabel("");
       setMarkedApplied(false);
+      setPendingCvData(null);
+      setPendingMatchScore(undefined);
+      setPreviewHtml("");
+      setPreviewLoading(false);
     }
     onOpenChange(open);
   };
@@ -294,7 +314,11 @@ export function ApplyModal({
 
       if (!cvData) throw new Error("Impossible d'extraire les données du CV");
 
-      await generatePdfsAndSave(cvData, matchScore);
+      setPendingCvData(cvData);
+      setPendingMatchScore(matchScore);
+      setGeneratingLabel("Chargement de la prévisualisation...");
+      await fetchPreviewHtml(cvData);
+      setStep("preview");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Une erreur est survenue";
@@ -342,7 +366,11 @@ export function ApplyModal({
 
       if (!cvData) throw new Error("Impossible d'adapter le profil");
 
-      await generatePdfsAndSave(cvData, matchScore);
+      setPendingCvData(cvData);
+      setPendingMatchScore(matchScore);
+      setGeneratingLabel("Chargement de la prévisualisation...");
+      await fetchPreviewHtml(cvData);
+      setStep("preview");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Une erreur est survenue";
@@ -441,6 +469,25 @@ export function ApplyModal({
     downloadBlob(result.lmPdfBlob, `Lettre_Motivation_${companySlug}.pdf`);
   };
 
+  // ── Preview HTML fetch ─────────────────────────────────────────────────────
+
+  const fetchPreviewHtml = async (data: Record<string, unknown>) => {
+    setPreviewLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/cv-adapter/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cv_data: data, template: "ats", language }),
+      });
+      if (res.ok) setPreviewHtml(await res.text());
+      else toast.error("Impossible de charger la prévisualisation");
+    } catch {
+      toast.error("Erreur lors de la prévisualisation");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
   // ── CV Builder wizard save ─────────────────────────────────────────────────
 
   const handleWizardSave = async (name: string, data: CvData) => {
@@ -461,7 +508,14 @@ export function ApplyModal({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-lg bg-white max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className={cn(
+            "bg-white",
+            step === "preview"
+              ? "w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto"
+              : "max-w-lg max-h-[90vh] overflow-y-auto",
+          )}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-900">
               <Sparkles className="h-5 w-5 text-[#00D9FF]" />
@@ -739,11 +793,367 @@ export function ApplyModal({
             </div>
           )}
 
-          {/* ── STEP 3 : Results ── */}
+          {/* ── STEP 3 : Preview & Edit ── */}
+          {step === "preview" && pendingCvData && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left: editable form */}
+                <div className="space-y-2 max-h-[60vh] md:max-h-[65vh] overflow-y-auto pr-1">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Modifier le contenu
+                  </p>
+                  <Accordion
+                    type="multiple"
+                    defaultValue={["personal", "summary", "experiences"]}
+                  >
+                    {/* Personal info */}
+                    <AccordionItem value="personal">
+                      <AccordionTrigger className="text-sm font-medium py-2">
+                        Informations personnelles
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-2">
+                          {(
+                            [
+                              { key: "name", label: "Nom complet" },
+                              { key: "title", label: "Titre / Poste visé" },
+                              { key: "phone", label: "Téléphone" },
+                              { key: "email", label: "Email" },
+                              { key: "location", label: "Ville / Pays" },
+                              { key: "linkedin", label: "LinkedIn" },
+                              { key: "github", label: "GitHub" },
+                            ] as { key: string; label: string }[]
+                          ).map(({ key, label }) => (
+                            <div key={key}>
+                              <label className="text-xs text-slate-500">
+                                {label}
+                              </label>
+                              <input
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-sm mt-0.5"
+                                value={
+                                  ((pendingCvData as any)?.personal_info?.[
+                                    key
+                                  ] as string) ?? ""
+                                }
+                                onChange={(e) =>
+                                  setPendingCvData((prev) =>
+                                    prev
+                                      ? {
+                                          ...prev,
+                                          personal_info: {
+                                            ...(prev.personal_info as any),
+                                            [key]: e.target.value,
+                                          },
+                                        }
+                                      : prev,
+                                  )
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    {/* Summary */}
+                    <AccordionItem value="summary">
+                      <AccordionTrigger className="text-sm font-medium py-2">
+                        Résumé / Profil
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <textarea
+                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm min-h-[80px] resize-y"
+                          value={
+                            ((pendingCvData as any)?.summary as string) ?? ""
+                          }
+                          onChange={(e) =>
+                            setPendingCvData((prev) =>
+                              prev
+                                ? { ...prev, summary: e.target.value }
+                                : prev,
+                            )
+                          }
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    {/* Experiences */}
+                    {Array.isArray((pendingCvData as any)?.experiences) && (
+                      <AccordionItem value="experiences">
+                        <AccordionTrigger className="text-sm font-medium py-2">
+                          Expériences (
+                          {(pendingCvData as any).experiences.length})
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-3">
+                            {((pendingCvData as any).experiences as any[]).map(
+                              (exp, i) => (
+                                <div
+                                  key={i}
+                                  className="rounded border border-slate-100 p-2 space-y-2"
+                                >
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {(
+                                      [
+                                        { key: "title", label: "Poste" },
+                                        { key: "company", label: "Entreprise" },
+                                        { key: "start_date", label: "Début" },
+                                        { key: "end_date", label: "Fin" },
+                                      ] as { key: string; label: string }[]
+                                    ).map(({ key, label }) => (
+                                      <div key={key}>
+                                        <label className="text-xs text-slate-500">
+                                          {label}
+                                        </label>
+                                        <input
+                                          className="w-full border border-slate-200 rounded px-2 py-1 text-xs mt-0.5"
+                                          value={(exp[key] as string) ?? ""}
+                                          onChange={(e) =>
+                                            setPendingCvData((prev) => {
+                                              if (!prev) return prev;
+                                              const exps = [
+                                                ...(prev.experiences as any[]),
+                                              ];
+                                              exps[i] = {
+                                                ...exps[i],
+                                                [key]: e.target.value,
+                                              };
+                                              return {
+                                                ...prev,
+                                                experiences: exps,
+                                              };
+                                            })
+                                          }
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-slate-500">
+                                      Points clés (une ligne par bullet)
+                                    </label>
+                                    <textarea
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-xs min-h-[60px] resize-y mt-0.5"
+                                      value={
+                                        Array.isArray(exp.bullets)
+                                          ? (exp.bullets as string[]).join("\n")
+                                          : ""
+                                      }
+                                      onChange={(e) =>
+                                        setPendingCvData((prev) => {
+                                          if (!prev) return prev;
+                                          const exps = [
+                                            ...(prev.experiences as any[]),
+                                          ];
+                                          exps[i] = {
+                                            ...exps[i],
+                                            bullets: e.target.value
+                                              .split("\n")
+                                              .filter(Boolean),
+                                          };
+                                          return { ...prev, experiences: exps };
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    )}
+
+                    {/* Skills */}
+                    {(pendingCvData as any)?.skills &&
+                      typeof (pendingCvData as any).skills === "object" && (
+                        <AccordionItem value="skills">
+                          <AccordionTrigger className="text-sm font-medium py-2">
+                            Compétences
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="space-y-2">
+                              {Object.entries(
+                                (pendingCvData as any).skills as Record<
+                                  string,
+                                  unknown
+                                >,
+                              ).map(([cat, vals]) => (
+                                <div key={cat}>
+                                  <label className="text-xs text-slate-500 capitalize">
+                                    {cat}
+                                  </label>
+                                  <textarea
+                                    className="w-full border border-slate-200 rounded px-2 py-1 text-xs min-h-[40px] resize-y mt-0.5"
+                                    value={
+                                      Array.isArray(vals)
+                                        ? (vals as string[]).join("\n")
+                                        : String(vals ?? "")
+                                    }
+                                    onChange={(e) =>
+                                      setPendingCvData((prev) => {
+                                        if (!prev) return prev;
+                                        return {
+                                          ...prev,
+                                          skills: {
+                                            ...(prev.skills as any),
+                                            [cat]: e.target.value
+                                              .split("\n")
+                                              .filter(Boolean),
+                                          },
+                                        };
+                                      })
+                                    }
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      )}
+
+                    {/* Education */}
+                    {Array.isArray((pendingCvData as any)?.education) && (
+                      <AccordionItem value="education">
+                        <AccordionTrigger className="text-sm font-medium py-2">
+                          Formation
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-3">
+                            {((pendingCvData as any).education as any[]).map(
+                              (edu, i) => (
+                                <div
+                                  key={i}
+                                  className="rounded border border-slate-100 p-2 space-y-2"
+                                >
+                                  {(
+                                    [
+                                      { key: "degree", label: "Diplôme" },
+                                      { key: "school", label: "École" },
+                                      { key: "year", label: "Année" },
+                                      { key: "details", label: "Détails" },
+                                    ] as { key: string; label: string }[]
+                                  ).map(({ key, label }) => (
+                                    <div key={key}>
+                                      <label className="text-xs text-slate-500">
+                                        {label}
+                                      </label>
+                                      <input
+                                        className="w-full border border-slate-200 rounded px-2 py-1 text-xs mt-0.5"
+                                        value={(edu[key] as string) ?? ""}
+                                        onChange={(e) =>
+                                          setPendingCvData((prev) => {
+                                            if (!prev) return prev;
+                                            const edus = [
+                                              ...(prev.education as any[]),
+                                            ];
+                                            edus[i] = {
+                                              ...edus[i],
+                                              [key]: e.target.value,
+                                            };
+                                            return { ...prev, education: edus };
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    )}
+                  </Accordion>
+                </div>
+
+                {/* Right: iframe preview */}
+                <div className="relative rounded-lg border border-slate-200 overflow-hidden bg-white h-[280px] md:h-[65vh]">
+                  {previewLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+                      <Loader2 className="h-6 w-6 animate-spin text-[#00D9FF]" />
+                    </div>
+                  )}
+                  {previewHtml ? (
+                    <iframe
+                      srcDoc={previewHtml}
+                      className="w-full h-full border-none"
+                      title="Prévisualisation CV"
+                      sandbox="allow-same-origin"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+                      <FileText className="h-8 w-8" />
+                      <p className="text-sm">
+                        Actualisez pour voir la prévisualisation
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-500"
+                  onClick={() => setStep("upload")}
+                >
+                  ← Recommencer
+                </Button>
+                <div className="flex-1" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    pendingCvData && fetchPreviewHtml(pendingCvData)
+                  }
+                  disabled={previewLoading}
+                >
+                  <RefreshCw
+                    className={cn(
+                      "h-3.5 w-3.5 mr-1.5",
+                      previewLoading && "animate-spin",
+                    )}
+                  />
+                  Actualiser la prévisualisation
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-[#00D9FF] to-blue-600 text-white font-semibold"
+                  onClick={async () => {
+                    if (!pendingCvData) return;
+                    setStep("generating");
+                    setGeneratingLabel("Génération des PDFs...");
+                    try {
+                      await generatePdfsAndSave(
+                        pendingCvData,
+                        pendingMatchScore,
+                      );
+                    } catch (err) {
+                      const message =
+                        err instanceof Error
+                          ? err.message
+                          : "Une erreur est survenue";
+                      toast.error(message);
+                      setStep("preview");
+                      setGeneratingLabel("");
+                    }
+                  }}
+                >
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Générer les PDFs
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── STEP 4 : Results ── */}
           {step === "results" && result && (
             <div className="space-y-4">
               {/* Match score */}
-              {result.matchScore !== undefined && (
+              {result.matchScore != null && !isNaN(result.matchScore) && (
                 <div className="flex items-center gap-3 rounded-lg bg-green-50 border border-green-200 p-3">
                   <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
                   <div>
