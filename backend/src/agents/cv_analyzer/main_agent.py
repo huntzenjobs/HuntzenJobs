@@ -100,32 +100,18 @@ class CVAnalyzerAgent(BaseAgent):
     def docling_converter(self):
         """Lazy load Docling converter."""
         if self._docling_converter is None:
-            from docling.document_converter import DocumentConverter, PdfFormatOption
+            from docling.document_converter import DocumentConverter
             from docling.datamodel.pipeline_options import PdfPipelineOptions
             from docling.datamodel.base_models import InputFormat
-            from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 
             logger.info(f"[{self.name}] Initializing Docling converter...")
-            # CVs are text-based PDFs:
-            # - do_ocr=False: skip OCR + avoids RapidOCR 40MB model downloads
-            # - PyPdfiumDocumentBackend: avoids enforce_same_font=True (V4 default)
-            #   which splits words when PDF uses mixed font variants (design-heavy CVs)
-            pdf_options = PdfPipelineOptions(
-                do_ocr=False,
-                do_table_structure=False,
-                generate_page_images=False,
-                generate_picture_images=False,
-                generate_table_images=False,
-            )
+            # CVs are text-based PDFs — OCR is unnecessary and triggers
+            # RapidOCR model downloads that fail in non-root containers
+            pdf_options = PdfPipelineOptions(do_ocr=False)
             self._docling_converter = DocumentConverter(
-                format_options={
-                    InputFormat.PDF: PdfFormatOption(
-                        pipeline_options=pdf_options,
-                        backend=PyPdfiumDocumentBackend,
-                    )
-                }
+                format_options={InputFormat.PDF: pdf_options}
             )
-            logger.info(f"[{self.name}] Docling ready (pypdfium2 backend, OCR disabled)")
+            logger.info(f"[{self.name}] Docling ready (OCR disabled for text-based PDFs)")
         return self._docling_converter
     
     async def run(
