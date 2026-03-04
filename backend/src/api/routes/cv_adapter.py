@@ -534,13 +534,16 @@ async def generate_cover_letter_json(request: CoverLetterRequest):
     }
 
 
+class PreviewRequest(BaseModel):
+    """Request model for CV HTML preview."""
+    cv_data: dict
+    template: str = "ats"
+    compact: bool = False
+    language: str = "fr"
+
+
 @router.post("/preview")
-async def preview_cv(
-    cv_data: dict,
-    template: str = "ats",
-    compact: bool = False,
-    language: str = "fr",
-):
+async def preview_cv(request: PreviewRequest):
     """
     Generate HTML preview of CV.
 
@@ -549,10 +552,10 @@ async def preview_cv(
     pdf_gen = get_pdf_generator()
 
     html_content = pdf_gen.generate_preview_html(
-        cv_data=cv_data,
-        template=template,
-        compact=compact,
-        language=language,
+        cv_data=request.cv_data,
+        template=request.template,
+        compact=request.compact,
+        language=request.language,
     )
 
     return Response(
