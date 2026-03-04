@@ -1109,9 +1109,9 @@ export function ApplyModal({
                   variant="ghost"
                   size="sm"
                   className="text-slate-500"
-                  onClick={() => setStep("upload")}
+                  onClick={() => setStep("results")}
                 >
-                  ← Recommencer
+                  ← Retour aux résultats
                 </Button>
                 <div className="flex-1" />
                 <Button
