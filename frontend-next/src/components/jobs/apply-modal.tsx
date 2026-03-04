@@ -371,7 +371,7 @@ export function ApplyModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cv_data: cvData,
-          job_description: job.description || job.title,
+          job_description: jobDescription || job.description || job.title,
           language,
           company_name: job.company || "",
         }),

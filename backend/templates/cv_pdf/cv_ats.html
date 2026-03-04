@@ -24,13 +24,9 @@
     margin-bottom: 0.5cm;
   }
 
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
+  .header-top { display: block; }
 
-  .header-left { flex: 1; }
+  .header-left { display: block; }
 
   h1 {
     font-size: {{ '18pt' if compact else '21pt' }};
@@ -85,26 +81,29 @@
   /* ─── Expériences ─────────────────────────────────── */
   .exp-item {
     margin-bottom: {{ '0.28cm' if compact else '0.38cm' }};
+    page-break-inside: avoid;
   }
 
-  .exp-row { overflow: hidden; }
+  .exp-row { display: table; width: 100%; }
 
   .exp-title {
+    display: table-cell;
     font-weight: 700;
     font-size: {{ '9.5pt' if compact else '10pt' }};
-    float: left;
     color: #1c1c1c;
   }
 
   .exp-dates {
+    display: table-cell;
     font-size: {{ '8pt' if compact else '8.5pt' }};
     color: #666;
-    float: right;
+    text-align: right;
+    white-space: nowrap;
+    padding-left: 0.3cm;
     font-style: italic;
   }
 
   .exp-company {
-    clear: both;
     font-size: {{ '8.5pt' if compact else '9pt' }};
     color: #4a6fa5;
     font-weight: 500;
@@ -127,26 +126,29 @@
   /* ─── Formation ───────────────────────────────────── */
   .edu-item {
     margin-bottom: {{ '0.2cm' if compact else '0.28cm' }};
+    page-break-inside: avoid;
   }
 
-  .edu-row { overflow: hidden; }
+  .edu-row { display: table; width: 100%; }
 
   .edu-degree {
+    display: table-cell;
     font-weight: 700;
     font-size: {{ '9.5pt' if compact else '10pt' }};
-    float: left;
     color: #1c1c1c;
   }
 
   .edu-year {
+    display: table-cell;
     font-size: {{ '8pt' if compact else '8.5pt' }};
     color: #666;
-    float: right;
+    text-align: right;
+    white-space: nowrap;
+    padding-left: 0.3cm;
     font-style: italic;
   }
 
   .edu-school {
-    clear: both;
     font-size: {{ '8.5pt' if compact else '9pt' }};
     color: #4a6fa5;
     font-weight: 500;
@@ -176,6 +178,7 @@
   /* ─── Projets ─────────────────────────────────────── */
   .proj-item {
     margin-bottom: {{ '0.2cm' if compact else '0.28cm' }};
+    page-break-inside: avoid;
   }
 
   .proj-name {
@@ -201,6 +204,7 @@
   .cert-item {
     font-size: {{ '9pt' if compact else '9.5pt' }};
     margin-bottom: 0.1cm;
+    page-break-inside: avoid;
   }
 
   /* ─── Centres d'intérêt ───────────────────────────── */
@@ -230,16 +234,16 @@
     {# email peut être une liste ou une string #}
     {% if cv.personal_info.email %}
       {% if cv.personal_info.email is string %}
-        <span>✉ {{ cv.personal_info.email }}</span>
+        <span>{{ cv.personal_info.email }}</span>
       {% else %}
-        <span>✉ {{ cv.personal_info.email | first }}</span>
+        <span>{{ cv.personal_info.email | first }}</span>
       {% endif %}
     {% endif %}
-    {% if cv.personal_info.phone %}<span>✆ {{ cv.personal_info.phone }}</span>{% endif %}
-    {% if cv.personal_info.location %}<span>📍 {{ cv.personal_info.location }}</span>{% endif %}
-    {% if cv.personal_info.linkedin %}<span>LinkedIn {{ cv.personal_info.linkedin }}</span>{% endif %}
-    {% if cv.personal_info.github %}<span>GitHub {{ cv.personal_info.github }}</span>{% endif %}
-    {% if cv.personal_info.portfolio %}<span>🔗 {{ cv.personal_info.portfolio }}</span>{% endif %}
+    {% if cv.personal_info.phone %}<span>{{ cv.personal_info.phone }}</span>{% endif %}
+    {% if cv.personal_info.location %}<span>{{ cv.personal_info.location }}</span>{% endif %}
+    {% if cv.personal_info.linkedin %}<span>LinkedIn: {{ cv.personal_info.linkedin }}</span>{% endif %}
+    {% if cv.personal_info.github %}<span>GitHub: {{ cv.personal_info.github }}</span>{% endif %}
+    {% if cv.personal_info.portfolio %}<span>{{ cv.personal_info.portfolio }}</span>{% endif %}
   </div>
 </div>
 
