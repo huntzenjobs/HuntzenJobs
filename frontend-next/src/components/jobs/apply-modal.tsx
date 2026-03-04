@@ -42,6 +42,7 @@ import {
   Plus,
   Check,
   RefreshCw,
+  Pencil,
 } from "lucide-react";
 import {
   Accordion,
@@ -509,12 +510,26 @@ export function ApplyModal({
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent
-          className={cn(
-            "bg-white",
+          style={
             step === "preview"
-              ? "w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto"
-              : "max-w-lg max-h-[90vh] overflow-y-auto",
-          )}
+              ? {
+                  width: "min(92vw, 1400px)",
+                  height: "min(88vh, 1000px)",
+                  maxWidth: "unset",
+                  maxHeight: "unset",
+                  resize: "both",
+                  overflow: "auto",
+                  minWidth: "min(92vw, 520px)",
+                  minHeight: "400px",
+                }
+              : {
+                  width: "min(95vw, 640px)",
+                  maxWidth: "unset",
+                  maxHeight: "90vh",
+                  overflowY: "auto",
+                }
+          }
+          className="bg-white"
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-900">
@@ -798,7 +813,7 @@ export function ApplyModal({
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Left: editable form */}
-                <div className="space-y-2 max-h-[60vh] md:max-h-[65vh] overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-[320px] md:max-h-[calc(88vh-220px)] overflow-y-auto pr-1">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Modifier le contenu
                   </p>
@@ -1068,7 +1083,7 @@ export function ApplyModal({
                 </div>
 
                 {/* Right: iframe preview */}
-                <div className="relative rounded-lg border border-slate-200 overflow-hidden bg-white h-[280px] md:h-[65vh]">
+                <div className="relative rounded-lg border border-slate-200 overflow-hidden bg-white h-[320px] md:h-[calc(88vh-220px)] min-h-[320px]">
                   {previewLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
                       <Loader2 className="h-6 w-6 animate-spin text-[#00D9FF]" />
@@ -1169,31 +1184,65 @@ export function ApplyModal({
 
               {/* Download buttons */}
               <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full border-[#0D1F3C] text-[#0D1F3C] hover:bg-[#0D1F3C] hover:text-white transition-colors"
-                  size="lg"
-                  onClick={handleDownloadCV}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  {t("downloadCv")}
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    PDF
-                  </Badge>
-                </Button>
+                {/* CV */}
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-[#0D1F3C] text-[#0D1F3C] hover:bg-[#0D1F3C] hover:text-white transition-colors"
+                    size="lg"
+                    onClick={handleDownloadCV}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    {t("downloadCv")}
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      PDF
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="shrink-0 border-[#0D1F3C] text-[#0D1F3C] hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-colors px-3"
+                    title="Éditer le CV avant de télécharger"
+                    onClick={() => {
+                      if (pendingCvData) {
+                        fetchPreviewHtml(pendingCvData);
+                        setStep("preview");
+                      }
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full border-[#0D1F3C] text-[#0D1F3C] hover:bg-[#0D1F3C] hover:text-white transition-colors"
-                  size="lg"
-                  onClick={handleDownloadLM}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  {t("downloadCoverLetter")}
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    PDF
-                  </Badge>
-                </Button>
+                {/* Lettre de motivation */}
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-[#0D1F3C] text-[#0D1F3C] hover:bg-[#0D1F3C] hover:text-white transition-colors"
+                    size="lg"
+                    onClick={handleDownloadLM}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    {t("downloadCoverLetter")}
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      PDF
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="shrink-0 border-[#0D1F3C] text-[#0D1F3C] hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-colors px-3"
+                    title="Revenir à l'édition"
+                    onClick={() => {
+                      if (pendingCvData) {
+                        fetchPreviewHtml(pendingCvData);
+                        setStep("preview");
+                      }
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <div className="relative">
