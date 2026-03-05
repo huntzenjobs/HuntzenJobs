@@ -770,54 +770,65 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
             logger.error(f"[{self.name}] CV rewriting failed: {e}")
             return {"success": False, "error": str(e)}
     
+    @staticmethod
+    def _skill_to_str(skill: Any) -> str:
+        """Normalize a skill to a plain string regardless of LLM output format.
+
+        The LLM sometimes returns dicts like {"name": "Python", "level": "expert"}
+        instead of plain strings, causing 'dict' object has no attribute 'lower'.
+        """
+        if isinstance(skill, dict):
+            return skill.get("name", "") or skill.get("skill", "") or ""
+        return str(skill)
+
     def _inject_missing_skills(
         self, cv_data: dict, cv_mapping: dict, job_analysis: dict
     ) -> dict:
         """
         DYNAMICALLY categorize and inject ALL missing and required skills.
-        
+
         The categories are created based on the JOB TYPE, not hardcoded!
         """
         skills_coverage = cv_mapping.get("skills_coverage", {})
-        missing_skills = skills_coverage.get("missing", [])
-        transferable_skills = skills_coverage.get("transferable", [])
-        required_skills = job_analysis.get("required_skills", [])
-        nice_to_have = job_analysis.get("nice_to_have_skills", [])
+        missing_skills = [self._skill_to_str(s) for s in skills_coverage.get("missing", [])]
+        transferable_skills = [self._skill_to_str(s) for s in skills_coverage.get("transferable", [])]
+        required_skills = [self._skill_to_str(s) for s in job_analysis.get("required_skills", [])]
+        nice_to_have = [self._skill_to_str(s) for s in job_analysis.get("nice_to_have_skills", [])]
         job_title = job_analysis.get("job_title", "")
         industry = job_analysis.get("industry", "")
-        
+
         # Get current skills (flat list from all categories)
         current_skills = cv_data.get("skills", {})
         if not isinstance(current_skills, dict):
             current_skills = {}
-        
+
         all_current_skills = []
         for category, skills_list in current_skills.items():
             if isinstance(skills_list, list):
-                all_current_skills.extend(skills_list)
-        
-        all_current_lower = set(s.lower() for s in all_current_skills)
-        
+                all_current_skills.extend(self._skill_to_str(s) for s in skills_list)
+
+        all_current_lower = set(s.lower() for s in all_current_skills if s)
+
         # Collect ALL skills to add
         skills_to_add = []
-        
+
         # 1. Add transferable skills
         for skill in transferable_skills:
             skill_name = skill.split("(")[0].strip() if "(" in skill else skill
             if skill_name.lower() not in all_current_lower:
                 skills_to_add.append(skill_name)
-        
+
         # 2. Add ALL missing skills
         for skill in missing_skills:
             skill_name = skill.split("(")[0].strip() if "(" in skill else skill
             if skill_name.lower() not in all_current_lower and skill_name not in skills_to_add:
                 skills_to_add.append(skill_name)
-        
+
         # 3. Add ALL required skills from job posting
         for skill in required_skills:
             if skill.lower() not in all_current_lower and skill not in skills_to_add:
                 skills_to_add.append(skill)
-        
+
         # 4. Add nice-to-have skills
         for skill in nice_to_have:
             if skill.lower() not in all_current_lower and skill not in skills_to_add:
