@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,9 @@ interface PricingPlan {
   id: PlanType;
   name: string;
   price: string;
+  priceYearly: string;
   priceValue: number;
+  priceYearlyValue: number;
   period: string;
   description: string;
   icon: React.ReactNode;
@@ -35,6 +38,8 @@ interface PricingPlan {
     highlight?: boolean;
   }[];
 }
+
+type BillingPeriod = "monthly" | "yearly";
 
 // Static config: booleans only (no translatable text)
 const FEATURE_CONFIGS: Record<
@@ -97,6 +102,7 @@ export function PricingModal() {
   } = useSubscription();
   const auth = useOptionalAuth();
   const user = auth?.user;
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
 
   const buildFeatures = (id: string) =>
     (tModal.raw(`plans.${id}.featureNames`) as string[]).map((name, i) => ({
@@ -109,7 +115,9 @@ export function PricingModal() {
       id: "free",
       name: tModal("plans.free.name"),
       price: "0",
+      priceYearly: "0",
       priceValue: 0,
+      priceYearlyValue: 0,
       period: tModal("plans.free.period"),
       description: tModal("plans.free.description"),
       icon: <Gift className="w-6 h-6" />,
@@ -121,7 +129,9 @@ export function PricingModal() {
       id: "starter",
       name: tModal("plans.starter.name"),
       price: "8,90",
+      priceYearly: "85",
       priceValue: 8.9,
+      priceYearlyValue: 85,
       period: tModal("plans.starter.period"),
       description: tModal("plans.starter.description"),
       icon: <Zap className="w-6 h-6" />,
@@ -133,7 +143,9 @@ export function PricingModal() {
       id: "pro",
       name: tModal("plans.pro.name"),
       price: "13,90",
+      priceYearly: "133",
       priceValue: 13.9,
+      priceYearlyValue: 133,
       period: tModal("plans.pro.period"),
       description: tModal("plans.pro.description"),
       icon: <Sparkles className="w-6 h-6" />,
@@ -146,7 +158,9 @@ export function PricingModal() {
       id: "premium",
       name: tModal("plans.premium.name"),
       price: "19,90",
+      priceYearly: "191",
       priceValue: 19.9,
+      priceYearlyValue: 191,
       period: tModal("plans.premium.period"),
       description: tModal("plans.premium.description"),
       icon: <Crown className="w-6 h-6" />,
@@ -209,7 +223,7 @@ export function PricingModal() {
           },
           body: new URLSearchParams({
             plan_name: planId,
-            billing_period: "monthly", // Default to monthly in modal
+            billing_period: billingPeriod,
           }),
         },
       );
@@ -261,6 +275,42 @@ export function PricingModal() {
         </DialogHeader>
 
         <div className="px-4 md:px-6 pb-4 md:pb-6 overflow-y-auto flex-1">
+          {/* Billing Period Toggle */}
+          <div className="flex items-center justify-center gap-3 pt-2 pb-2">
+            <span
+              className={`text-sm font-medium ${billingPeriod === "monthly" ? "text-gray-900" : "text-gray-400"}`}
+            >
+              Mensuel
+            </span>
+            <button
+              onClick={() =>
+                setBillingPeriod(
+                  billingPeriod === "monthly" ? "yearly" : "monthly",
+                )
+              }
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                billingPeriod === "yearly" ? "bg-violet-600" : "bg-gray-300"
+              }`}
+              aria-label="Toggle billing period"
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  billingPeriod === "yearly" ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+            <span
+              className={`text-sm font-medium ${billingPeriod === "yearly" ? "text-gray-900" : "text-gray-400"}`}
+            >
+              Annuel
+            </span>
+            {billingPeriod === "yearly" && (
+              <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
+                Économisez ~2 mois
+              </Badge>
+            )}
+          </div>
+
           {/* Plans Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4">
             {plans.map((plan) => (
@@ -302,14 +352,26 @@ export function PricingModal() {
                     ) : (
                       <>
                         <span className="text-3xl font-bold text-gray-900">
-                          {plan.price}€
+                          {billingPeriod === "yearly"
+                            ? plan.priceYearly
+                            : plan.price}
+                          €
                         </span>
                         <span className="text-base text-gray-600">
-                          {plan.period}
+                          {billingPeriod === "yearly" ? "/an" : plan.period}
                         </span>
                       </>
                     )}
                   </div>
+                  {billingPeriod === "yearly" && plan.id !== "free" && (
+                    <p className="text-xs text-green-600 mt-1">
+                      soit{" "}
+                      {(plan.priceYearlyValue / 12)
+                        .toFixed(2)
+                        .replace(".", ",")}
+                      €/mois
+                    </p>
+                  )}
                 </div>
 
                 {/* Features */}
@@ -412,7 +474,9 @@ export function PricingCards({
       id: "free",
       name: tModal("plans.free.name"),
       price: "0",
+      priceYearly: "0",
       priceValue: 0,
+      priceYearlyValue: 0,
       period: tModal("plans.free.period"),
       description: tModal("plans.free.description"),
       icon: <Gift className="w-6 h-6" />,
@@ -424,7 +488,9 @@ export function PricingCards({
       id: "starter",
       name: tModal("plans.starter.name"),
       price: "8,90",
+      priceYearly: "85",
       priceValue: 8.9,
+      priceYearlyValue: 85,
       period: tModal("plans.starter.period"),
       description: tModal("plans.starter.description"),
       icon: <Zap className="w-6 h-6" />,
@@ -436,7 +502,9 @@ export function PricingCards({
       id: "pro",
       name: tModal("plans.pro.name"),
       price: "13,90",
+      priceYearly: "133",
       priceValue: 13.9,
+      priceYearlyValue: 133,
       period: tModal("plans.pro.period"),
       description: tModal("plans.pro.description"),
       icon: <Sparkles className="w-6 h-6" />,
@@ -449,7 +517,9 @@ export function PricingCards({
       id: "premium",
       name: tModal("plans.premium.name"),
       price: "19,90",
+      priceYearly: "191",
       priceValue: 19.9,
+      priceYearlyValue: 191,
       period: tModal("plans.premium.period"),
       description: tModal("plans.premium.description"),
       icon: <Crown className="w-6 h-6" />,

@@ -233,9 +233,8 @@ async def handle_stripe_webhook(
 
     # Verify webhook signature
     if not STRIPE_WEBHOOK_SECRET:
-        logger.warning("Stripe webhook secret not configured - skipping verification")
-        import json
-        event = json.loads(payload)
+        logger.error("STRIPE_WEBHOOK_SECRET not configured - rejecting webhook to prevent security bypass")
+        raise HTTPException(status_code=500, detail="Stripe webhook secret not configured")
     else:
         try:
             event = stripe.Webhook.construct_event(

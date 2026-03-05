@@ -1,7 +1,8 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import {
   Search,
   Download,
@@ -13,171 +14,192 @@ import {
   Mail,
   Phone,
   Briefcase,
-  Euro
-} from 'lucide-react'
+  Euro,
+} from "lucide-react";
 
-type PaymentStatus = 'pending' | 'paid' | 'refunded' | 'failed'
-type RequestStatus = 'new' | 'assigned' | 'scheduled' | 'completed' | 'cancelled'
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
+async function adminFetch(path: string, options?: RequestInit) {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      ...(options?.headers || {}),
+    },
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+type PaymentStatus = "pending" | "paid" | "refunded" | "failed";
+type RequestStatus =
+  | "new"
+  | "assigned"
+  | "scheduled"
+  | "completed"
+  | "cancelled";
 
 interface RecruiterRequest {
-  id: string
-  user_id: string
-  full_name: string
-  email: string
-  phone: string | null
-  sector: string
-  experience_level: string
-  message: string
-  preferred_date: string | null
-  payment_status: PaymentStatus
-  payment_intent_id: string | null
-  stripe_checkout_session_id: string | null
-  amount_cents: number
-  status: RequestStatus
-  assigned_recruiter_id: string | null
-  scheduled_at: string | null
-  notes: string | null
-  created_at: string
-  updated_at: string
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  sector: string;
+  experience_level: string;
+  message: string;
+  preferred_date: string | null;
+  payment_status: PaymentStatus;
+  payment_intent_id: string | null;
+  stripe_checkout_session_id: string | null;
+  amount_cents: number;
+  status: RequestStatus;
+  assigned_recruiter_id: string | null;
+  scheduled_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 const STATUS_COLORS = {
-  new: 'bg-blue-100 text-blue-700',
-  assigned: 'bg-purple-100 text-purple-700',
-  scheduled: 'bg-amber-100 text-amber-700',
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-}
+  new: "bg-blue-100 text-blue-700",
+  assigned: "bg-purple-100 text-purple-700",
+  scheduled: "bg-amber-100 text-amber-700",
+  completed: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-700",
+};
 
 const PAYMENT_STATUS_COLORS = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  paid: 'bg-green-100 text-green-700',
-  refunded: 'bg-gray-100 text-gray-600',
-  failed: 'bg-red-100 text-red-700',
-}
+  pending: "bg-yellow-100 text-yellow-700",
+  paid: "bg-green-100 text-green-700",
+  refunded: "bg-gray-100 text-gray-600",
+  failed: "bg-red-100 text-red-700",
+};
 
 export default function RecruiterRequestsAdminPage() {
-  const [requests, setRequests] = useState<RecruiterRequest[]>([])
-  const [filteredRequests, setFilteredRequests] = useState<RecruiterRequest[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<RequestStatus | 'all'>('all')
-  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all')
-  const [selectedRequest, setSelectedRequest] = useState<RecruiterRequest | null>(null)
+  const [requests, setRequests] = useState<RecruiterRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<RecruiterRequest[]>(
+    [],
+  );
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<RequestStatus | "all">(
+    "all",
+  );
+  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | "all">(
+    "all",
+  );
+  const [selectedRequest, setSelectedRequest] =
+    useState<RecruiterRequest | null>(null);
 
-  const supabase = createClient()
-
-  useEffect(() => {
-    fetchRequests()
-  }, [])
-
-  useEffect(() => {
-    filterRequests()
-  }, [requests, searchQuery, statusFilter, paymentFilter])
-
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('recruiter_requests')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setRequests(data || [])
+      setLoading(true);
+      const qs = new URLSearchParams({ page: "1", per_page: "100" });
+      if (searchQuery) qs.set("search", searchQuery);
+      if (statusFilter !== "all") qs.set("status", statusFilter);
+      if (paymentFilter !== "all") qs.set("payment_status", paymentFilter);
+      const data = await adminFetch(`/api/admin/recruiter-requests?${qs}`);
+      setRequests(data.requests || []);
+      setFilteredRequests(data.requests || []);
+      setTotal(data.total || 0);
     } catch (error) {
-      console.error('Error fetching requests:', error)
+      toast.error("Impossible de charger les demandes");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [searchQuery, statusFilter, paymentFilter]);
 
-  const filterRequests = () => {
-    let filtered = [...requests]
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(req =>
-        req.full_name.toLowerCase().includes(query) ||
-        req.email.toLowerCase().includes(query) ||
-        req.sector.toLowerCase().includes(query) ||
-        req.message.toLowerCase().includes(query)
-      )
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(req => req.status === statusFilter)
-    }
-
-    if (paymentFilter !== 'all') {
-      filtered = filtered.filter(req => req.payment_status === paymentFilter)
-    }
-
-    setFilteredRequests(filtered)
-  }
-
-  const updateRequestStatus = async (requestId: string, newStatus: RequestStatus) => {
+  const updateRequestStatus = async (
+    requestId: string,
+    newStatus: RequestStatus,
+  ) => {
     try {
-      const { error } = await supabase
-        .from('recruiter_requests')
-        .update({ status: newStatus })
-        .eq('id', requestId)
-
-      if (error) throw error
-      await fetchRequests()
+      await adminFetch(`/api/admin/recruiter-requests/${requestId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
+      toast.success("Statut mis à jour");
+      await fetchRequests();
+      if (selectedRequest?.id === requestId) {
+        setSelectedRequest((prev) =>
+          prev ? { ...prev, status: newStatus } : prev,
+        );
+      }
     } catch (error) {
-      console.error('Error updating status:', error)
-      alert('Erreur lors de la mise à jour du statut')
+      toast.error("Erreur lors de la mise à jour du statut");
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   const formatAmount = (amountCents: number) => {
-    return `${(amountCents / 100).toFixed(2)}€`
-  }
+    return `${(amountCents / 100).toFixed(2)}€`;
+  };
 
   const exportToCSV = () => {
-    const headers = ['Date', 'Nom', 'Email', 'Téléphone', 'Secteur', 'Expérience', 'Statut Paiement', 'Statut Demande', 'Montant']
-    const rows = filteredRequests.map(req => [
+    const headers = [
+      "Date",
+      "Nom",
+      "Email",
+      "Téléphone",
+      "Secteur",
+      "Expérience",
+      "Statut Paiement",
+      "Statut Demande",
+      "Montant",
+    ];
+    const rows = filteredRequests.map((req) => [
       formatDate(req.created_at),
       req.full_name,
       req.email,
-      req.phone || 'N/A',
+      req.phone || "N/A",
       req.sector,
       req.experience_level,
       req.payment_status,
       req.status,
       formatAmount(req.amount_cents),
-    ])
+    ]);
 
     const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n')
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `recruiter-requests-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-  }
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `recruiter-requests-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00D9FF] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-gray-500">Chargement des demandes...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -199,9 +221,11 @@ export default function RecruiterRequestsAdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{requests.length}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {requests.length}
+                </p>
               </div>
-              <User className="w-8 h-8 text-[#00D9FF]" />
+              <User className="w-8 h-8 text-primary" />
             </div>
           </div>
 
@@ -210,7 +234,7 @@ export default function RecruiterRequestsAdminPage() {
               <div>
                 <p className="text-gray-500 text-sm">Payées</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {requests.filter(r => r.payment_status === 'paid').length}
+                  {requests.filter((r) => r.payment_status === "paid").length}
                 </p>
               </div>
               <Euro className="w-8 h-8 text-green-500" />
@@ -222,7 +246,11 @@ export default function RecruiterRequestsAdminPage() {
               <div>
                 <p className="text-gray-500 text-sm">En attente</p>
                 <p className="text-2xl font-bold text-amber-600">
-                  {requests.filter(r => r.status === 'new' || r.status === 'assigned').length}
+                  {
+                    requests.filter(
+                      (r) => r.status === "new" || r.status === "assigned",
+                    ).length
+                  }
                 </p>
               </div>
               <Clock className="w-8 h-8 text-amber-500" />
@@ -234,7 +262,7 @@ export default function RecruiterRequestsAdminPage() {
               <div>
                 <p className="text-gray-500 text-sm">Complétées</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {requests.filter(r => r.status === 'completed').length}
+                  {requests.filter((r) => r.status === "completed").length}
                 </p>
               </div>
               <CheckCircle2 className="w-8 h-8 text-purple-500" />
@@ -254,7 +282,7 @@ export default function RecruiterRequestsAdminPage() {
                   placeholder="Rechercher par nom, email, secteur..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#00D9FF] focus:ring-1 focus:ring-[#00D9FF]"
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
@@ -263,8 +291,10 @@ export default function RecruiterRequestsAdminPage() {
             <div>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as RequestStatus | 'all')}
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-[#00D9FF]"
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as RequestStatus | "all")
+                }
+                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-primary"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="new">Nouveau</option>
@@ -279,8 +309,10 @@ export default function RecruiterRequestsAdminPage() {
             <div>
               <select
                 value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value as PaymentStatus | 'all')}
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-[#00D9FF]"
+                onChange={(e) =>
+                  setPaymentFilter(e.target.value as PaymentStatus | "all")
+                }
+                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-primary"
               >
                 <option value="all">Tous les paiements</option>
                 <option value="paid">Payé</option>
@@ -295,7 +327,7 @@ export default function RecruiterRequestsAdminPage() {
           <div className="mt-4 flex justify-end">
             <button
               onClick={exportToCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-[#00D9FF] text-white rounded-lg hover:bg-[#00C4EA] transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               <Download className="w-4 h-4" />
               Exporter CSV
@@ -309,19 +341,36 @@ export default function RecruiterRequestsAdminPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Candidat</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Contact</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Secteur</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Paiement</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Statut</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    Candidat
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    Contact
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    Secteur
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    Paiement
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    Statut
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredRequests.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                    <td
+                      colSpan={7}
+                      className="px-4 py-8 text-center text-gray-400"
+                    >
                       Aucune demande trouvée
                     </td>
                   </tr>
@@ -337,8 +386,12 @@ export default function RecruiterRequestsAdminPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div>
-                          <p className="text-gray-900 font-medium">{request.full_name}</p>
-                          <p className="text-gray-400 text-xs">{request.experience_level}</p>
+                          <p className="text-gray-900 font-medium">
+                            {request.full_name}
+                          </p>
+                          <p className="text-gray-400 text-xs">
+                            {request.experience_level}
+                          </p>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -355,14 +408,20 @@ export default function RecruiterRequestsAdminPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{request.sector}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {request.sector}
+                      </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${PAYMENT_STATUS_COLORS[request.payment_status]}`}>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${PAYMENT_STATUS_COLORS[request.payment_status]}`}
+                        >
                           {request.payment_status}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${STATUS_COLORS[request.status]}`}>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${STATUS_COLORS[request.status]}`}
+                        >
                           {request.status}
                         </span>
                       </td>
@@ -370,10 +429,13 @@ export default function RecruiterRequestsAdminPage() {
                         <select
                           value={request.status}
                           onChange={(e) => {
-                            e.stopPropagation()
-                            updateRequestStatus(request.id, e.target.value as RequestStatus)
+                            e.stopPropagation();
+                            updateRequestStatus(
+                              request.id,
+                              e.target.value as RequestStatus,
+                            );
                           }}
-                          className="px-2 py-1 text-xs bg-white border border-gray-200 rounded text-gray-900 focus:outline-none focus:border-[#00D9FF]"
+                          className="px-2 py-1 text-xs bg-white border border-gray-200 rounded text-gray-900 focus:outline-none focus:border-primary"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <option value="new">Nouveau</option>
@@ -397,7 +459,9 @@ export default function RecruiterRequestsAdminPage() {
             <div className="bg-white border border-gray-200 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Détails de la demande</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Détails de la demande
+                  </h2>
                   <button
                     onClick={() => setSelectedRequest(null)}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -409,44 +473,61 @@ export default function RecruiterRequestsAdminPage() {
                 <div className="space-y-6">
                   {/* Candidate Info */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Informations candidat</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Informations candidat
+                    </h3>
                     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                       <div className="flex items-center gap-3">
-                        <User className="w-5 h-5 text-[#00D9FF]" />
+                        <User className="w-5 h-5 text-primary" />
                         <div>
                           <p className="text-gray-500 text-sm">Nom complet</p>
-                          <p className="text-gray-900 font-medium">{selectedRequest.full_name}</p>
+                          <p className="text-gray-900 font-medium">
+                            {selectedRequest.full_name}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-[#00D9FF]" />
+                        <Mail className="w-5 h-5 text-primary" />
                         <div>
                           <p className="text-gray-500 text-sm">Email</p>
-                          <p className="text-gray-900 font-medium">{selectedRequest.email}</p>
+                          <p className="text-gray-900 font-medium">
+                            {selectedRequest.email}
+                          </p>
                         </div>
                       </div>
                       {selectedRequest.phone && (
                         <div className="flex items-center gap-3">
-                          <Phone className="w-5 h-5 text-[#00D9FF]" />
+                          <Phone className="w-5 h-5 text-primary" />
                           <div>
                             <p className="text-gray-500 text-sm">Téléphone</p>
-                            <p className="text-gray-900 font-medium">{selectedRequest.phone}</p>
+                            <p className="text-gray-900 font-medium">
+                              {selectedRequest.phone}
+                            </p>
                           </div>
                         </div>
                       )}
                       <div className="flex items-center gap-3">
-                        <Briefcase className="w-5 h-5 text-[#00D9FF]" />
+                        <Briefcase className="w-5 h-5 text-primary" />
                         <div>
-                          <p className="text-gray-500 text-sm">Secteur / Expérience</p>
-                          <p className="text-gray-900 font-medium">{selectedRequest.sector} - {selectedRequest.experience_level}</p>
+                          <p className="text-gray-500 text-sm">
+                            Secteur / Expérience
+                          </p>
+                          <p className="text-gray-900 font-medium">
+                            {selectedRequest.sector} -{" "}
+                            {selectedRequest.experience_level}
+                          </p>
                         </div>
                       </div>
                       {selectedRequest.preferred_date && (
                         <div className="flex items-center gap-3">
-                          <Calendar className="w-5 h-5 text-[#00D9FF]" />
+                          <Calendar className="w-5 h-5 text-primary" />
                           <div>
-                            <p className="text-gray-500 text-sm">Date préférée</p>
-                            <p className="text-gray-900 font-medium">{formatDate(selectedRequest.preferred_date)}</p>
+                            <p className="text-gray-500 text-sm">
+                              Date préférée
+                            </p>
+                            <p className="text-gray-900 font-medium">
+                              {formatDate(selectedRequest.preferred_date)}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -455,30 +536,44 @@ export default function RecruiterRequestsAdminPage() {
 
                   {/* Message */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Message du candidat</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Message du candidat
+                    </h3>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-700 leading-relaxed">{selectedRequest.message}</p>
+                      <p className="text-gray-700 leading-relaxed">
+                        {selectedRequest.message}
+                      </p>
                     </div>
                   </div>
 
                   {/* Payment Info */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Informations paiement</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Informations paiement
+                    </h3>
                     <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-500">Montant</span>
-                        <span className="text-gray-900 font-bold">{formatAmount(selectedRequest.amount_cents)}</span>
+                        <span className="text-gray-900 font-bold">
+                          {formatAmount(selectedRequest.amount_cents)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Statut paiement</span>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${PAYMENT_STATUS_COLORS[selectedRequest.payment_status]}`}>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${PAYMENT_STATUS_COLORS[selectedRequest.payment_status]}`}
+                        >
                           {selectedRequest.payment_status}
                         </span>
                       </div>
                       {selectedRequest.payment_intent_id && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Payment Intent ID</span>
-                          <span className="text-gray-400 font-mono text-xs">{selectedRequest.payment_intent_id}</span>
+                          <span className="text-gray-500">
+                            Payment Intent ID
+                          </span>
+                          <span className="text-gray-400 font-mono text-xs">
+                            {selectedRequest.payment_intent_id}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -486,12 +581,19 @@ export default function RecruiterRequestsAdminPage() {
 
                   {/* Status */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Statut de la demande</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Statut de la demande
+                    </h3>
                     <div className="bg-gray-50 rounded-lg p-4">
                       <select
                         value={selectedRequest.status}
-                        onChange={(e) => updateRequestStatus(selectedRequest.id, e.target.value as RequestStatus)}
-                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-[#00D9FF]"
+                        onChange={(e) =>
+                          updateRequestStatus(
+                            selectedRequest.id,
+                            e.target.value as RequestStatus,
+                          )
+                        }
+                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-primary"
                       >
                         <option value="new">🆕 Nouveau</option>
                         <option value="assigned">👤 Assigné</option>
@@ -508,5 +610,5 @@ export default function RecruiterRequestsAdminPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
