@@ -244,6 +244,18 @@ async def get_current_user_info(
                     "reset_at": quota["reset_at"]
                 }
 
+        # Fetch individual feature overrides set by admin
+        feature_overrides = {}
+        try:
+            overrides_res = supabase.table("user_feature_overrides") \
+                .select("feature_name, enabled") \
+                .eq("user_id", user_id) \
+                .execute()
+            if overrides_res.data:
+                feature_overrides = {r["feature_name"]: r["enabled"] for r in overrides_res.data}
+        except Exception as e:
+            logger.warning(f"Could not fetch feature overrides for {user_id}: {e}")
+
         # Build response
         response_data = {
             "success": True,
@@ -255,7 +267,8 @@ async def get_current_user_info(
                 "created_at": profile.get("created_at")
             },
             "subscription": subscription_data,
-            "quotas": quotas
+            "quotas": quotas,
+            "feature_overrides": feature_overrides
         }
 
         # 🔍 DEBUG: Log final response

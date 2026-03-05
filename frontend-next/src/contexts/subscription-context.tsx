@@ -368,16 +368,18 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     [freemium],
   );
 
-  // hasFeature: Check feature availability based on API plan (source of truth)
+  // hasFeature: Check feature availability — admin overrides take priority over plan
   const hasFeature = useCallback(
     (feature: keyof PlanLimits): boolean => {
-      // Use API plan as source of truth (not localStorage fallback)
-      // This ensures Premium users get Premium features even after cache expiry
+      // Admin feature override takes absolute priority
+      const overrides = apiData.feature_overrides ?? {};
+      if (feature in overrides) return overrides[feature as string];
+
       const currentPlan = apiData.subscription?.plan_name || freemium.plan;
       const limits = PLAN_LIMITS[currentPlan];
       return !!limits[feature];
     },
-    [apiData.subscription?.plan_name, freemium.plan],
+    [apiData.subscription?.plan_name, apiData.feature_overrides, freemium.plan],
   );
 
   // useMemo with ONLY primitive dependencies that actually change

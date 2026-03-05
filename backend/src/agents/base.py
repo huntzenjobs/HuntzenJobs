@@ -29,14 +29,19 @@ logger = logging.getLogger(__name__)
 
 def load_prompt(filename: str) -> str:
     """
-    Load a prompt from the prompts directory.
-    
-    Args:
-        filename: Name of the prompt file (e.g., 'coach_main.txt')
-        
-    Returns:
-        Prompt content as string
+    Load a prompt — DB first (ai_prompts table), fallback to .txt file.
+    The name used for DB lookup is the filename without the .txt extension.
     """
+    name = filename.removesuffix(".txt")
+    try:
+        from src.api.dependencies import get_supabase_client
+        supabase = get_supabase_client()
+        res = supabase.table("ai_prompts").select("content").eq("name", name).maybe_single().execute()
+        if res.data and res.data.get("content"):
+            return res.data["content"]
+    except Exception as e:
+        logger.warning(f"Could not load prompt '{name}' from DB, falling back to file: {e}")
+
     prompt_path = Path(__file__).parent.parent.parent / "prompts" / filename
     if prompt_path.exists():
         return prompt_path.read_text(encoding="utf-8")
@@ -91,16 +96,13 @@ class BaseAgent(ABC):
         logger.info(f"[{self.name}] Agent initialized with {config.model}")
     
     def _load_system_prompt(self, config: AgentConfig) -> str:
-        """Load system prompt from file or config."""
+        """Load system prompt — DB first, then file, then default."""
         if config.system_prompt:
             return config.system_prompt
-        
+
         if config.system_prompt_file:
-            prompt_path = Path(__file__).parent.parent.parent / "prompts" / config.system_prompt_file
-            if prompt_path.exists():
-                return prompt_path.read_text(encoding="utf-8")
-            logger.warning(f"[{self.name}] Prompt file not found: {prompt_path}")
-        
+            return load_prompt(config.system_prompt_file)
+
         return f"You are {self.name}, an AI assistant."
     
     def register_sub_agent(self, sub_agent: "SubAgent") -> None:
