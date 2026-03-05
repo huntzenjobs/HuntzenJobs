@@ -27,6 +27,7 @@ docling_image = (
     .pip_install(
         "docling>=2.0.0",  # Aligné avec Railway (pyproject.toml: docling>=2.0.0)
         "fastapi[standard]>=0.115.0",
+        "pypdf>=3.0.0",    # Fallback when Docling returns insufficient text
     )
 )
 
@@ -75,9 +76,26 @@ async def extract_pdf_text(body: dict) -> dict:
         result = converter.convert(tmp_path)
         text = result.document.export_to_markdown()
 
-        # Threshold aligned with backend Railway validation (cv_adapter.py: len < 100)
+        # pypdf fallback — same pattern as main_agent.py:extract_text_from_pdf()
+        # Docling with do_ocr=False can silently return minimal text for design-heavy PDFs
         if not text or len(text.strip()) < 100:
-            return {"success": False, "error": f"Docling extracted insufficient text ({len(text.strip())} chars, min 100 required)"}
+            print(f"⚠️ Docling returned only {len((text or '').strip())} chars, trying pypdf fallback")
+            try:
+                import io as _io
+                from pypdf import PdfReader
+                reader = PdfReader(_io.BytesIO(pdf_bytes))
+                fallback_text = "\n".join(
+                    page.extract_text() or "" for page in reader.pages
+                ).strip()
+                if fallback_text and len(fallback_text) >= 50:
+                    print(f"✅ pypdf fallback succeeded: {len(fallback_text)} chars")
+                    return {"success": True, "text": fallback_text}
+            except Exception as pypdf_exc:
+                print(f"⚠️ pypdf fallback also failed: {pypdf_exc}")
+            return {
+                "success": False,
+                "error": f"All extraction failed ({len((text or '').strip())} chars from Docling, pypdf also failed)",
+            }
 
         return {"success": True, "text": text}
 

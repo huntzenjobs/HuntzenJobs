@@ -267,6 +267,26 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         # Get markdown content
         markdown_text = result.document.export_to_markdown()
 
+        # pypdf fallback — same pattern as main_agent.py:extract_text_from_pdf()
+        # Docling with do_ocr=False can silently return minimal text for design-heavy PDFs
+        if not markdown_text or len(markdown_text.strip()) < 100:
+            print(f"⚠️ Docling returned only {len((markdown_text or '').strip())} chars, trying pypdf fallback")
+            try:
+                from pypdf import PdfReader  # transitive dep of docling — always available
+                reader = PdfReader(pdf_path)
+                fallback_text = "\n".join(
+                    page.extract_text() or "" for page in reader.pages
+                ).strip()
+                if fallback_text and len(fallback_text) >= 50:
+                    elapsed = time.time() - start_time
+                    print(f"✅ pypdf fallback succeeded: {len(fallback_text)} chars in {elapsed:.2f}s")
+                    return fallback_text
+                raise RuntimeError(f"pypdf also returned insufficient text ({len(fallback_text)} chars)")
+            except Exception as pypdf_exc:
+                raise RuntimeError(
+                    f"All extraction failed. Docling: {len((markdown_text or '').strip())} chars. pypdf: {pypdf_exc}."
+                )
+
         elapsed = time.time() - start_time
         word_count = len(markdown_text.split())
 
