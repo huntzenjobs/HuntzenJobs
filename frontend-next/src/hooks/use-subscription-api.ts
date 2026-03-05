@@ -41,6 +41,7 @@ interface ApiResponse {
   user: UserData;
   subscription: SubscriptionData;
   quotas: QuotasData;
+  feature_overrides: Record<string, boolean>;
   error?: string;
 }
 
@@ -48,6 +49,7 @@ interface SubscriptionApiData {
   user: UserData | null;
   subscription: SubscriptionData | null;
   quotas: QuotasData | null;
+  feature_overrides: Record<string, boolean>;
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -74,6 +76,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
     user: null,
     subscription: null,
     quotas: null,
+    feature_overrides: {},
     isLoading: true,
     error: null,
     isFromCache: false,
@@ -148,6 +151,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
             user: cachedData.user,
             subscription: cachedData.subscription,
             quotas: cachedData.quotas,
+            feature_overrides: cachedData.feature_overrides ?? {},
             isLoading: false,
             error: null,
             isFromCache: true,
@@ -244,6 +248,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
                 user: retryData.user,
                 subscription: retryData.subscription,
                 quotas: retryData.quotas,
+                feature_overrides: retryData.feature_overrides ?? {},
                 isLoading: false,
                 error: null,
                 isFromCache: false,
@@ -272,6 +277,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
         user: apiData.user,
         subscription: apiData.subscription,
         quotas: apiData.quotas,
+        feature_overrides: apiData.feature_overrides ?? {},
         isLoading: false,
         error: null,
         isFromCache: false,
