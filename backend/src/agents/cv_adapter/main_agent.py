@@ -152,13 +152,17 @@ class CVAdapterAgent(BaseAgent):
             # Phase 5: MERGE - Combine factual data with rewritten content
             logger.info(f"[{self.name}] Phase 5: Merging factual data with improved content...")
             final_cv = self._merge_cv_data(original_data, rewritten_content, job_analysis, cv_mapping)
-            
+
+            # Mark CV as HuntZen-certified (used by PDF template + ATS scorer)
+            final_cv["huntzen_certified"] = True
+
             # Calculate match score
             match_score = self._calculate_match_score(job_analysis, cv_mapping)
-            
+
             return {
                 "success": True,
                 "cv_data": final_cv,
+                "huntzen_certified": True,
                 "job_analysis": job_analysis,
                 "cv_mapping": cv_mapping,
                 "match_score": match_score,

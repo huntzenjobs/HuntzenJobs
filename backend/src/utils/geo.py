@@ -142,6 +142,80 @@ def format_location_query(
     return f"{query} in {location}"
 
 
+@lru_cache(maxsize=4)
+def _get_fr_subdivisions() -> tuple:
+    """
+    Build French regions and departments from pycountry ISO 3166-2 data.
+    Cached — parsed once at startup.
+
+    Returns:
+        (regions, departments) — each item is a dict with "name" and "type" keys.
+        Departments also include "code" (e.g., "75" for Paris).
+    """
+    regions = []
+    departments = []
+    region_types = {"Metropolitan region", "Overseas region"}
+    dept_types = {
+        "Metropolitan department", "Overseas department",
+        "Overseas territorial collectivity", "Territorial collectivity",
+        "Metropolitan collectivity with special status",
+    }
+
+    for sub in pycountry.subdivisions.get(country_code="FR"):
+        # "FR-75" → "75"
+        code = sub.code.split("-", 1)[-1]
+
+        if sub.type in region_types:
+            regions.append({"name": sub.name, "type": "region"})
+        elif sub.type in dept_types:
+            departments.append({"name": sub.name, "code": code, "type": "department"})
+
+    return tuple(regions), tuple(departments)
+
+
+def search_french_locations(query: str, limit: int = 5) -> list[dict]:
+    """
+    Search French regions and departments using pycountry ISO 3166-2 data.
+
+    Matches on name (contains, case-insensitive) and department code (startswith).
+    Regions are returned before departments.
+
+    Args:
+        query: Search query (e.g., "bre", "31", "île")
+        limit: Maximum number of results (default: 5)
+
+    Returns:
+        List of matching locations with "name", "type", and optionally "code"
+
+    Examples:
+        >>> search_french_locations("bre")
+        [{"name": "Bretagne", "type": "region"}, ...]
+        >>> search_french_locations("31")
+        [{"name": "Haute-Garonne", "code": "31", "type": "department"}]
+    """
+    query_lower = query.lower().strip()
+    if not query_lower:
+        return []
+
+    regions, departments = _get_fr_subdivisions()
+    results: list[dict] = []
+    seen: set[str] = set()
+
+    for region in regions:
+        if query_lower in region["name"].lower() and region["name"].lower() not in seen:
+            results.append(region)
+            seen.add(region["name"].lower())
+
+    for dept in departments:
+        name_match = query_lower in dept["name"].lower()
+        code_match = dept["code"].lower().startswith(query_lower)
+        if (name_match or code_match) and dept["name"].lower() not in seen:
+            results.append(dept)
+            seen.add(dept["name"].lower())
+
+    return results[:limit]
+
+
 async def search_cities_nominatim(
     query: str,
     country_code: str,

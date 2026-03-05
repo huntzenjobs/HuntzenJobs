@@ -169,11 +169,13 @@ class FranceTravailProvider(BaseJobProvider):
         # URL (always available via France Travail candidate portal)
         job_id = item.get("id", "")
         url = f"https://candidat.francetravail.fr/offres/recherche/detail/{job_id}"
+        url_is_direct = False
 
-        # Use origineOffre URL if available (more direct)
+        # Use origineOffre URL if available (direct employer posting)
         origine = item.get("origineOffre", {})
         if origine.get("urlOrigine"):
             url = origine["urlOrigine"]
+            url_is_direct = True
 
         return {
             "id": f"ft_{job_id}",
@@ -186,6 +188,7 @@ class FranceTravailProvider(BaseJobProvider):
             "contract_type": contract,
             "source": self.name,
             "posted_date": item.get("dateCreation"),
+            "url_is_direct": url_is_direct,
         }
 
     @staticmethod

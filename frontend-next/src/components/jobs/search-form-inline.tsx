@@ -75,17 +75,24 @@ export function SearchFormInline({
     }
   };
 
-  // Fetch cities for autocomplete - DYNAMIC SEARCH with OpenStreetMap
+  // Fetch cities/regions/departments for autocomplete
   const fetchCities = async (query: string): Promise<AutocompleteOption[]> => {
     if (!query || query.length < 1 || !country) {
       return [];
     }
     try {
-      // Use dynamic search with OpenStreetMap Nominatim
-      const cities = await huntzenApi.searchCities(query, country);
-      return cities.map((c) => ({ label: c, value: c }));
+      const locations = await huntzenApi.searchCities(query, country);
+      return locations.map((loc) => {
+        const suffix =
+          loc.type === "region"
+            ? " · Région"
+            : loc.type === "department"
+              ? ` · Dép. ${loc.code ?? ""}`
+              : "";
+        return { label: loc.name + suffix, value: loc.name };
+      });
     } catch (error) {
-      console.error("❌ Error searching cities:", error);
+      console.error("❌ Error searching locations:", error);
       return [];
     }
   };
@@ -258,7 +265,7 @@ export function SearchFormInline({
           {/* Location Autocomplete - APRÈS LE PAYS */}
           <div className="flex-1 min-w-0">
             <AutocompleteInput
-              placeholder="Ville (optionnel)"
+              placeholder="Ville, département ou région (optionnel)"
               value={location}
               onChange={setLocation}
               onSearch={fetchCities}
@@ -394,7 +401,7 @@ export function SearchFormInline({
 
         {/* Location Autocomplete - APRÈS LE PAYS */}
         <AutocompleteInput
-          placeholder="Ville (optionnel)"
+          placeholder="Ville, département ou région (optionnel)"
           value={location}
           onChange={setLocation}
           onSearch={fetchCities}

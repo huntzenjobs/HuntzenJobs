@@ -96,6 +96,8 @@ class Job(BaseModel):
     source: str
     posted_date: Optional[str] = None
     score: float = Field(default=0.0, ge=0.0, le=1.0, description="Relevance score")
+    url_is_direct: bool = False  # True = URL goes directly to employer, not an aggregator
+    description_truncated: bool = False
 
 
 class SearchMetadata(BaseModel):

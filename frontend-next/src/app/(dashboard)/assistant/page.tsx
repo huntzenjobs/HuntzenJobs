@@ -22,7 +22,16 @@ import { huntzenApi } from "@/lib/api/huntzen-client";
 import { v4 as uuidv4 } from "uuid";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAssistant } from "@/contexts/assistant-context";
-import { getAssistantConfig } from "@/config/assistants";
+import { getAssistantConfig, ASSISTANTS_CONFIG } from "@/config/assistants";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { AssistantType } from "@/types/assistant";
 import { BotSelector } from "@/components/assistant/bot-selector";
 import { CoachTimer as CoachTimerBadge } from "@/components/coach/coach-timer";
 import {
@@ -44,11 +53,13 @@ export default function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sessionId] = useState(() => uuidv4());
+  const [sessionId, setSessionId] = useState(() => uuidv4());
   const [brandingState, setBrandingState] = useState<Record<
     string,
     unknown
   > | null>(null);
+  const [pendingAssistant, setPendingAssistant] =
+    useState<AssistantType | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
 
@@ -263,6 +274,43 @@ export default function AssistantPage() {
     setCurrentConversationId(null);
     setInput("");
     setBrandingState(null);
+    setSessionId(uuidv4());
+  };
+
+  // Handle assistant switch from BotSelector — show confirmation if chat is not empty
+  const handleAssistantChange = (newType: AssistantType) => {
+    if (newType === selectedAssistant) return;
+    if (messages.length === 0) {
+      setSelectedAssistant(newType);
+      return;
+    }
+    setPendingAssistant(newType);
+  };
+
+  // Confirm assistant switch: force-save current conversation then open new chat
+  const handleConfirmSwitch = async () => {
+    if (!pendingAssistant) return;
+
+    if (hasFeature("has_coach_history") && messages.length > 0) {
+      const coachMessages = messages.map(toCoachMessage);
+      await saveConversationRef.current(
+        coachMessages,
+        sessionId,
+        currentConversationId || undefined,
+      );
+    }
+
+    setMessages([]);
+    setCurrentConversationId(null);
+    setInput("");
+    setBrandingState(null);
+    setSessionId(uuidv4());
+    setSelectedAssistant(pendingAssistant);
+    setPendingAssistant(null);
+  };
+
+  const handleCancelSwitch = () => {
+    setPendingAssistant(null);
   };
 
   // Check if we should show welcome screen (no messages)
@@ -284,7 +332,10 @@ export default function AssistantPage() {
           transition={{ delay: 0.1 }}
           className="flex-shrink-0"
         >
-          <BotSelector variant="compact" />
+          <BotSelector
+            variant="compact"
+            onAssistantChange={handleAssistantChange}
+          />
         </motion.div>
 
         {/* Info assistant au centre */}
@@ -399,6 +450,31 @@ export default function AssistantPage() {
           </Button>
         </motion.div>
       </motion.div>
+
+      {/* Dialog de confirmation lors du switch d'assistant */}
+      <Dialog
+        open={pendingAssistant !== null}
+        onOpenChange={(open) => !open && handleCancelSwitch()}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Changer d&apos;assistant ?</DialogTitle>
+            <DialogDescription>
+              {hasFeature("has_coach_history")
+                ? `Votre conversation avec ${ASSISTANTS_CONFIG[selectedAssistant]?.name} sera sauvegardée dans votre historique avant d'ouvrir un nouveau chat.`
+                : `Votre conversation sera perdue — l'historique n'est pas disponible avec votre plan actuel.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelSwitch}>
+              Annuler
+            </Button>
+            <Button onClick={handleConfirmSwitch}>
+              Changer d&apos;assistant
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex flex-1">
         {/* Chat Section - Full width */}

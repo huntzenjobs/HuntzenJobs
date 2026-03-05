@@ -9,7 +9,6 @@ Sub-agents:
 3. MarketAnalyzer - Provides job market insights
 """
 
-import asyncio
 import json
 import logging
 import time
@@ -204,7 +203,7 @@ class JobScoutAgent(BaseAgent):
             filtered_jobs = self._filter_school_offers(filtered_jobs)
 
             # Step 4: Rank with AI (sample for performance)
-            ranked_jobs = await self._rank_jobs(filtered_jobs[:max_results * 2], job_title)
+            ranked_jobs = await self._rank_jobs(filtered_jobs, job_title)
             
             # Step 5: Limit results
             final_jobs = ranked_jobs[:max_results]
@@ -247,44 +246,71 @@ class JobScoutAgent(BaseAgent):
             logger.warning(f"[{self.name}] Query refinement failed: {e}")
             return {"corrected_query": query}
     
+    def _quick_score(self, job: dict, query: str) -> float:
+        """
+        Instant keyword-based scoring (no LLM, < 1ms per job).
+
+        Scores by matching query words against the job title.
+        Used to rank ALL jobs before AI refinement.
+        """
+        title = job.get("title", "").lower()
+        query_words = [w for w in query.lower().split() if len(w) > 2]
+        if not query_words:
+            return 0.5
+
+        matches = sum(1 for word in query_words if word in title)
+        ratio = matches / len(query_words)
+
+        if ratio == 1.0:
+            return 0.85  # All words match → very likely relevant
+        elif ratio >= 0.5:
+            return 0.55 + ratio * 0.2
+        elif ratio > 0:
+            return 0.3 + ratio * 0.2
+        else:
+            return 0.2  # No match — could still be relevant via synonyms
+
     async def _rank_jobs(self, jobs: list[dict], query: str) -> list[dict]:
-        """Rank jobs using AI scoring."""
+        """
+        Rank all jobs with hybrid approach: instant Python scoring + AI refinement on top.
+
+        Step 1 (< 1ms): Keyword-based scoring on ALL jobs → full ranking, no LLM
+        Step 2 (~0.5s): AI scores top 20 in parallel → higher quality on best results
+        Final sort combines both steps.
+        """
         if not jobs:
             return []
-        
-        # Score a sample for performance (AI ranking is expensive)
-        sample_size = min(len(jobs), 15)
-        
-        async def score_job(job: dict) -> dict:
+
+        # Step 1: Instant keyword scoring for ALL jobs
+        for job in jobs:
+            job["score"] = self._quick_score(job, query)
+            job["is_spam"] = False
+
+        # Sort by quick score to identify the most promising jobs
+        jobs.sort(key=lambda x: x.get("score", 0), reverse=True)
+
+        # Step 2: AI re-scores top 20 in parallel (same speed as before)
+        AI_SAMPLE = 20
+        top_jobs = jobs[:AI_SAMPLE]
+
+        async def ai_score(job: dict) -> dict:
             try:
                 task = f"Query: {query}\nJob: {job.get('title')} at {job.get('company')}"
                 result = await self.job_ranker.run(task=task)
                 data = self._parse_json(result)
-                if data:
-                    job["score"] = data.get("score", 0.5)
+                if data and isinstance(data, dict):
+                    job["score"] = data.get("score", job["score"])
                     job["is_spam"] = data.get("is_spam", False)
-                else:
-                    # Parse failed → push to bottom instead of middle
-                    job["score"] = 0.1
             except Exception:
-                job["score"] = 0.1
+                pass  # Keep quick score if AI fails
             return job
-        
-        # Score sample jobs in parallel
-        scored_sample = await asyncio.gather(
-            *[score_job(job) for job in jobs[:sample_size]]
-        )
-        
-        # Add remaining jobs with default score
-        for job in jobs[sample_size:]:
-            job["score"] = 0.5
-        
-        all_jobs = list(scored_sample) + jobs[sample_size:]
-        
-        # Sort by score descending
-        all_jobs.sort(key=lambda x: x.get("score", 0), reverse=True)
-        
-        return all_jobs
+
+        import asyncio
+        await asyncio.gather(*[ai_score(job) for job in top_jobs])
+
+        # Re-sort all jobs (AI scores updated top 20, rest keep keyword scores)
+        jobs.sort(key=lambda x: x.get("score", 0), reverse=True)
+        return jobs
     
     async def _get_market_insights(self, job_title: str, country: str, location: str = "") -> dict:
         """Get market insights from sub-agent."""

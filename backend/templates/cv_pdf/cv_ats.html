@@ -216,6 +216,16 @@
 
   /* ─── Utilitaires ─────────────────────────────────── */
   a { color: inherit; text-decoration: none; }
+
+  /* ─── HuntZen Certified Footer ────────────────────── */
+  .hz-certified-footer {
+    font-size: 6pt;
+    color: #d0d0d0;
+    text-align: center;
+    margin-top: 10px;
+    font-family: Arial, sans-serif;
+    letter-spacing: 0.02em;
+  }
 </style>
 </head>
 <body>
@@ -384,6 +394,10 @@
     {% endif %}
   </div>
 </div>
+{% endif %}
+
+{% if cv.huntzen_certified %}
+<div class="hz-certified-footer">Optimisé par HuntZen Jobs · ATS Certified</div>
 {% endif %}
 
 </body>

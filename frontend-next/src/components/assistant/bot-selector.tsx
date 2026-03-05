@@ -31,6 +31,8 @@ interface BotSelectorProps {
   className?: string;
   /** Variante d'affichage */
   variant?: "default" | "compact";
+  /** Callback appelé à la sélection d'un assistant — remplace setSelectedAssistant direct */
+  onAssistantChange?: (type: AssistantType) => void;
 }
 
 /**
@@ -40,6 +42,7 @@ interface BotSelectorProps {
 export function BotSelector({
   className,
   variant = "default",
+  onAssistantChange,
 }: BotSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
@@ -93,8 +96,12 @@ export function BotSelector({
       return;
     }
 
-    // Sélectionner l'assistant
-    setSelectedAssistant(type);
+    // Sélectionner l'assistant (via callback ou directement)
+    if (onAssistantChange) {
+      onAssistantChange(type);
+    } else {
+      setSelectedAssistant(type);
+    }
     setIsOpen(false);
   };
 

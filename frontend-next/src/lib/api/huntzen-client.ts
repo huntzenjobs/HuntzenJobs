@@ -22,6 +22,12 @@ export interface ContractType {
   label_en: string;
 }
 
+export interface LocationResult {
+  name: string;
+  type: "city" | "region" | "department";
+  code?: string; // department number (e.g., "75" for Paris)
+}
+
 export interface Job {
   id: string;
   title: string;
@@ -158,10 +164,16 @@ class HuntzenApiClient {
    * @param countryCode - ISO country code (e.g., "fr", "by")
    * @returns List of matching city names
    */
-  async searchCities(query: string, countryCode: string): Promise<string[]> {
+  async searchCities(
+    query: string,
+    countryCode: string,
+  ): Promise<LocationResult[]> {
     if (!query || query.length < 1) return [];
 
-    const response = await this.fetch<{ success: boolean; data: string[] }>(
+    const response = await this.fetch<{
+      success: boolean;
+      data: LocationResult[];
+    }>(
       `/api/cities/search?q=${encodeURIComponent(query)}&country_code=${countryCode}`,
     );
     return response.data || [];

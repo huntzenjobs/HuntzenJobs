@@ -380,12 +380,18 @@ export function JobDetailsModal({
                 {job.url && (
                   <Button
                     asChild
-                    variant="outline"
+                    variant={job.url_is_direct ? "default" : "outline"}
                     size="sm"
-                    className="flex-1 sm:flex-none"
+                    className={
+                      job.url_is_direct
+                        ? "flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
+                        : "flex-1 sm:flex-none"
+                    }
                   >
                     <a href={job.url} target="_blank" rel="noopener noreferrer">
-                      {t("viewOffer")}
+                      {job.url_is_direct
+                        ? "Postuler directement"
+                        : t("viewOffer")}
                       <ExternalLink className="ml-2 h-4 w-4" />
                     </a>
                   </Button>

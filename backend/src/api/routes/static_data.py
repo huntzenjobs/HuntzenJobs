@@ -10,7 +10,7 @@ from functools import lru_cache
 import pycountry
 from fastapi import APIRouter, Query
 
-from src.utils.geo import country_code_to_name, get_cities_for_country, search_cities_nominatim
+from src.utils.geo import country_code_to_name, get_cities_for_country, search_cities_nominatim, search_french_locations
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -76,14 +76,32 @@ async def search_cities(
         GET /api/cities/search?q=Par&country_code=fr
         → ["Paris", "Paray-le-Monial", ...]
     """
-    cities = await search_cities_nominatim(q, country_code, limit)
+    if country_code.lower() == "fr":
+        # France: régions + départements (pycountry ISO 3166-2) + villes (Nominatim)
+        admin = search_french_locations(q, limit=5)
+        cities_raw = await search_cities_nominatim(q, country_code, limit)
+        cities = [{"name": c, "type": "city"} for c in cities_raw]
+
+        # Admin results first, then cities — deduplicate by lowercase name
+        seen: set[str] = set()
+        merged: list[dict] = []
+        for item in admin + cities:
+            key = item["name"].lower()
+            if key not in seen:
+                seen.add(key)
+                merged.append(item)
+
+        data = merged[:limit]
+    else:
+        cities_raw = await search_cities_nominatim(q, country_code, limit)
+        data = [{"name": c, "type": "city"} for c in cities_raw]
 
     return {
         "success": True,
-        "data": cities,
+        "data": data,
         "query": q,
         "country_code": country_code,
-        "count": len(cities)
+        "count": len(data)
     }
 
 
