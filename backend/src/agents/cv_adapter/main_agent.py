@@ -1066,15 +1066,23 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
             summary = cv_data.get("summary", "")
             
             # Build context from CV
+            education = cv_data.get("education", [])
+
             experience_summary = ""
             for exp in experiences[:3]:  # Top 3 most relevant
-                exp_bullets = exp.get("bullets", [])[:2]
-                experience_summary += f"- {exp.get('title')} at {exp.get('company')}: {'; '.join(exp_bullets)}\n"
-            
+                exp_bullets = exp.get("bullets", [])[:3]  # 3 bullets for richer context
+                period = f"{exp.get('start_date', '')}–{exp.get('end_date', '')}"
+                experience_summary += f"- {exp.get('title')} at {exp.get('company')} ({period}): {'; '.join(exp_bullets)}\n"
+
             project_summary = ""
             for proj in projects[:3]:
                 proj_url = f" ({proj.get('url')})" if proj.get('url') else ""
-                project_summary += f"- {proj.get('name')}{proj_url}: {proj.get('description', '')}\n"
+                proj_techs = f" [{', '.join(proj.get('technologies', [])[:4])}]" if proj.get('technologies') else ""
+                project_summary += f"- {proj.get('name')}{proj_url}{proj_techs}: {proj.get('description', '')}\n"
+
+            education_summary = ""
+            for edu in education[:2]:
+                education_summary += f"- {edu.get('degree', '')} — {edu.get('institution', '')} ({edu.get('end_date', '')})\n"
             
             # Get today's date in proper format
             from datetime import datetime
@@ -1091,7 +1099,7 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
                 today = datetime.now()
                 date_str = today.strftime("%B %d, %Y")  # "February 5, 2025"
             
-            task = f"""Generate a personalized cover letter.
+            task = f"""Generate a personalized cover letter using ALL the candidate data below.
 
 ═══ CANDIDATE INFO ═══
 Name: {personal_info.get('name', 'Candidate')}
@@ -1101,14 +1109,17 @@ Phone: {personal_info.get('phone', '')}
 Address: {personal_info.get('address', '')}
 City: {personal_info.get('city', personal_info.get('location', ''))}
 
+═══ EDUCATION ═══
+{education_summary if education_summary else 'N/A'}
+
 ═══ SUMMARY ═══
 {summary}
 
-═══ KEY EXPERIENCES ═══
-{experience_summary}
+═══ KEY EXPERIENCES (use real titles, companies, achievements) ═══
+{experience_summary if experience_summary else 'N/A'}
 
-═══ KEY PROJECTS ═══
-{project_summary}
+═══ KEY PROJECTS (mention by name, include URLs and tech stack) ═══
+{project_summary if project_summary else 'N/A'}
 
 ═══ SKILLS ═══
 {json.dumps(skills, ensure_ascii=False)}
@@ -1117,12 +1128,12 @@ City: {personal_info.get('city', personal_info.get('location', ''))}
 {job_description}
 
 ═══ REQUIREMENTS ═══
-- Language: {language.upper()}
+- Language: {language.upper()} (match the job posting language exactly)
 - Company: {company_name if company_name else 'Extract from job description'}
 - Date: {date_str}
-- Keep it under 400 words
-- Be specific, mention actual projects and skills
-- Match the job requirements precisely
+- STRICT: max 280 words for the 3 paragraphs combined — ONE PAGE ONLY
+- Use real project names, real numbers, real technologies from the data above
+- Every sentence must be specific to THIS candidate and THIS job — no generic phrases
 
 Return a JSON object with the cover letter content."""
 
