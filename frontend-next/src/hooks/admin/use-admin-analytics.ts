@@ -48,6 +48,7 @@ export interface UsageData {
   totals: { cv_analyses: number; coach_seconds: number; job_searches: number };
   top_users: {
     user_id: string;
+    email?: string;
     cv_analyses: number;
     coach_seconds: number;
     job_searches: number;
