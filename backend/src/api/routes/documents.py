@@ -42,6 +42,11 @@ class DocumentMarkApplied(BaseModel):
     saved_job_id: str
 
 
+class DocumentUpdate(BaseModel):
+    cv_pdf_url: Optional[str] = None
+    cv_data: Optional[dict] = None
+
+
 def _get_user_id(authorization: Optional[str]) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -118,6 +123,35 @@ async def delete_document(
     except Exception as e:
         logger.error(f"[Documents] Delete error: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete document")
+
+
+@router.patch("/{document_id}", status_code=200)
+async def update_document(
+    document_id: str,
+    body: DocumentUpdate,
+    authorization: Optional[str] = Header(None),
+):
+    user_id = _get_user_id(authorization)
+    try:
+        update_data = {k: v for k, v in body.model_dump().items() if v is not None}
+        if not update_data:
+            raise HTTPException(status_code=400, detail="Nothing to update")
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        response = (
+            supabase.table("user_documents")
+            .update(update_data)
+            .eq("id", document_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Document not found")
+        return {"document": response.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Documents] Update error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update document")
 
 
 @router.post("/mark-applied")
