@@ -35,9 +35,13 @@ interface CVAnalysisResult {
   ats_score: {
     overall_score: number;
     formatting_score: number;
+    formatting_explanation?: string;
     keywords_score: number;
+    keywords_explanation?: string;
     structure_score: number;
+    structure_explanation?: string;
     readability_score: number;
+    readability_explanation?: string;
   };
   strengths: string[];
   improvements: string[];
@@ -45,6 +49,7 @@ interface CVAnalysisResult {
   keywords_found: string[];
   keywords_missing: string[];
   job_match_score?: number;
+  job_match_explanation?: string;
   analysis_language: "fr" | "en";
   processed_at: string;
   processing_time_seconds?: number;
