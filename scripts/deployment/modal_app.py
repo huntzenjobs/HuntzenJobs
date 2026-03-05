@@ -480,6 +480,7 @@ Réponds UNIQUEMENT avec le JSON suivant. Aucun texte avant ou après. Aucun blo
     {job_match_json_fields}
 }}"""
 
+    result_text = ""
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -495,7 +496,7 @@ Réponds UNIQUEMENT avec le JSON suivant. Aucun texte avant ou après. Aucun blo
                 {"role": "user", "content": prompt}
             ],
             temperature=0.2,
-            max_tokens=2500
+            max_tokens=3000
         )
 
         result_text = response.choices[0].message.content.strip()
