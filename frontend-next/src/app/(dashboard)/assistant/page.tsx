@@ -17,6 +17,9 @@ import {
   Mic,
   AlertTriangle,
   Plus,
+  Paperclip,
+  CheckCircle2,
+  X,
 } from "lucide-react";
 import { huntzenApi } from "@/lib/api/huntzen-client";
 import { v4 as uuidv4 } from "uuid";
@@ -60,17 +63,23 @@ export default function AssistantPage() {
   > | null>(null);
   const [pendingAssistant, setPendingAssistant] =
     useState<AssistantType | null>(null);
+  const [attachedCV, setAttachedCV] = useState<{
+    name: string;
+    structured: { name: string; current_role: string } | null;
+  } | null>(null);
+  const [isExtractingCV, setIsExtractingCV] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
+  const cvFileInputRef = useRef<HTMLInputElement>(null);
 
   // Assistant state
   const { selectedAssistant, setSelectedAssistant } = useAssistant();
   const assistantConfig = getAssistantConfig(selectedAssistant);
 
-  // Reset branding state when switching assistants so stale branding session
-  // data does not leak into a different assistant's conversation
+  // Reset branding state and attached CV when switching assistants
   useEffect(() => {
     setBrandingState(null);
+    setAttachedCV(null);
   }, [selectedAssistant]);
 
   // Freemium state
@@ -255,6 +264,72 @@ export default function AssistantPage() {
     // Interview Simulator is coming soon — button is hidden but kept for future use
   };
 
+  const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset so the same file can be re-uploaded if needed
+    e.target.value = "";
+
+    if (!canChat) {
+      openPricingModal("coach_minutes_per_day");
+      return;
+    }
+
+    if (!isCoachSessionActive && isFreePlan) {
+      startCoachSession();
+    }
+
+    const userMessage: ChatMessageType = {
+      id: uuidv4(),
+      role: "user",
+      content: `📎 ${file.name}`,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsExtractingCV(true);
+    setLoading(true);
+
+    try {
+      const result = await huntzenApi.attachCVToAssistant(
+        file,
+        selectedAssistant,
+        sessionId,
+        locale,
+      );
+
+      setAttachedCV({
+        name: file.name,
+        structured: result.cv_structured
+          ? {
+              name: result.cv_structured.name,
+              current_role: result.cv_structured.current_role,
+            }
+          : null,
+      });
+
+      const assistantMessage: ChatMessageType = {
+        id: uuidv4(),
+        role: "assistant",
+        content: result.initial_response,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: any) {
+      const errorMessage: ChatMessageType = {
+        id: uuidv4(),
+        role: "assistant",
+        content:
+          error?.message ||
+          "Erreur lors de l'analyse du CV. Vérifiez que le fichier est un PDF valide.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsExtractingCV(false);
+      setLoading(false);
+    }
+  };
+
   // Load conversation from history
   const handleLoadConversation = async (conversationId: string) => {
     const conversation = await loadConversation(conversationId);
@@ -274,6 +349,7 @@ export default function AssistantPage() {
     setCurrentConversationId(null);
     setInput("");
     setBrandingState(null);
+    setAttachedCV(null);
     setSessionId(uuidv4());
   };
 
@@ -304,6 +380,7 @@ export default function AssistantPage() {
     setCurrentConversationId(null);
     setInput("");
     setBrandingState(null);
+    setAttachedCV(null);
     setSessionId(uuidv4());
     setSelectedAssistant(pendingAssistant);
     setPendingAssistant(null);
@@ -610,46 +687,93 @@ export default function AssistantPage() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex gap-2 items-end"
+                className="flex flex-col gap-2"
               >
-                <div className="flex-1">
-                  <ExpandableTextarea
-                    value={input}
-                    onChange={setInput}
-                    placeholder={t("placeholder")}
-                    disabled={loading}
-                    minHeight={44}
-                    maxHeight={120}
-                    onKeyDown={(e) => {
-                      // Send with Enter (without Shift), new line with Shift+Enter
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        if (input.trim() && !loading) {
-                          sendMessage(input);
-                        }
-                      }
-                      // Also support Ctrl/Cmd+Enter for users who prefer it
-                      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-                        e.preventDefault();
-                        if (input.trim() && !loading) {
-                          sendMessage(input);
-                        }
-                      }
-                    }}
+                {/* CV badge */}
+                {attachedCV && (
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-full font-medium max-w-xs truncate">
+                      <CheckCircle2 className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{attachedCV.name}</span>
+                      {attachedCV.structured?.name && (
+                        <span className="text-green-500 font-normal truncate">
+                          · {attachedCV.structured.name}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => setAttachedCV(null)}
+                        className="ml-0.5 hover:text-green-900 shrink-0"
+                        title="Retirer le CV"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex gap-2 items-end">
+                  {/* Hidden file input */}
+                  <input
+                    ref={cvFileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={handleCVUpload}
                   />
+                  {/* Paperclip button */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => cvFileInputRef.current?.click()}
+                    disabled={loading || isExtractingCV}
+                    className="h-11 w-11 shrink-0 border-slate-300 text-slate-500 hover:text-[#00D9FF] hover:border-[#00D9FF]"
+                    title="Joindre votre CV (PDF)"
+                  >
+                    {isExtractingCV ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Paperclip className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <div className="flex-1">
+                    <ExpandableTextarea
+                      value={input}
+                      onChange={setInput}
+                      placeholder={t("placeholder")}
+                      disabled={loading}
+                      minHeight={44}
+                      maxHeight={120}
+                      onKeyDown={(e) => {
+                        // Send with Enter (without Shift), new line with Shift+Enter
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          if (input.trim() && !loading) {
+                            sendMessage(input);
+                          }
+                        }
+                        // Also support Ctrl/Cmd+Enter for users who prefer it
+                        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                          e.preventDefault();
+                          if (input.trim() && !loading) {
+                            sendMessage(input);
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                  <Button
+                    onClick={() => sendMessage(input)}
+                    disabled={!input.trim() || loading}
+                    size="lg"
+                    className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white h-12 px-6 transition-all duration-300"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => sendMessage(input)}
-                  disabled={!input.trim() || loading}
-                  size="lg"
-                  className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white h-12 px-6 transition-all duration-300"
-                >
-                  {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Send className="h-5 w-5" />
-                  )}
-                </Button>
               </motion.div>
             ) : (
               <motion.div

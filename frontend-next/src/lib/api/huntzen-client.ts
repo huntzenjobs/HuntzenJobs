@@ -520,6 +520,49 @@ class HuntzenApiClient {
     );
   }
 
+  // CV Attachment for Chat
+  async attachCVToAssistant(
+    file: File,
+    assistantType: string,
+    sessionId: string,
+    language: string = "fr",
+  ): Promise<{
+    success: boolean;
+    filename: string;
+    char_count: number;
+    cv_structured: {
+      name: string;
+      current_role: string;
+      years_experience: number;
+      key_skills: string[];
+      education: string[];
+      experiences: Array<{ company: string; role: string; period: string }>;
+      languages: string[];
+      summary: string;
+    };
+    initial_response: string;
+  }> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("assistant_type", assistantType);
+    formData.append("session_id", sessionId);
+    formData.append("language", language);
+
+    const response = await fetch(`${this.baseUrl}/api/assistant/attach-cv`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(
+        error.detail || `Erreur ${response.status} lors de l'upload du CV`,
+      );
+    }
+
+    return response.json();
+  }
+
   // Job Description
   async getJobDescription(url: string, source?: string): Promise<string> {
     const response = await this.fetch<{

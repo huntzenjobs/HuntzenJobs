@@ -5,21 +5,66 @@ Unified endpoints for all assistant types (career-coach, job-scout, cv-analyzer,
 Handles routing to the appropriate agent based on assistant_type parameter.
 """
 
+import logging
 import uuid
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from src.api.deps import (
+    BrandingAgentDep,
     CoachAgentDep,
-    ScoutConversationalAgentDep,
-    CVAgentDep,
     CVAdapterAgentDep,
+    CVAgentDep,
     InterviewSimAgentDep,
+    ScoutConversationalAgentDep,
     get_session_history,
     update_session_history,
 )
+from src.services.cv_chat_extractor import extract_cv_structured
+from src.services.modal_pdf_extractor import extract_text_via_modal, is_modal_pdf_enabled
+
+logger = logging.getLogger(__name__)
+
+# ── Prompts de réception du CV par assistant ─────────────────────────────────
+# Chaque assistant répond différemment à l'upload d'un CV.
+CV_RECEPTION_PROMPTS: dict[str, str] = {
+    "cv-analyzer": (
+        "L'utilisateur vient de partager son CV. "
+        "Fais une analyse ATS approfondie : identifie le score estimé, les points forts, "
+        "les axes d'amélioration prioritaires, et les mots-clés manquants. "
+        "Sois précis, actionnable et bienveillant. Structure ta réponse avec des sections claires."
+    ),
+    "cv-adapter": (
+        "L'utilisateur vient de partager son CV. "
+        "Résume brièvement son profil (poste, expérience, compétences clés), "
+        "puis demande-lui l'offre d'emploi ou le type de poste visé pour adapter le CV. "
+        "Sois enthousiaste et professionnel."
+    ),
+    "career-coach": (
+        "L'utilisateur vient de partager son CV. "
+        "Analyse son parcours professionnel, identifie ses forces et les opportunités d'évolution, "
+        "puis engage une conversation de coaching personnalisée. "
+        "Pose une question clé sur ses objectifs professionnels."
+    ),
+    "job-scout": (
+        "L'utilisateur vient de partager son CV. "
+        "Analyse son profil et suggère 3-5 types de postes qui correspondent à son expérience. "
+        "Identifie les secteurs porteurs et les mots-clés à utiliser dans sa recherche d'emploi."
+    ),
+    "branding": (
+        "L'utilisateur vient de partager son CV. "
+        "Identifie les éléments les plus forts pour construire son personal branding LinkedIn. "
+        "Propose un titre LinkedIn percutant et une accroche de profil basés sur son parcours réel."
+    ),
+    "interview-sim": (
+        "L'utilisateur vient de partager son CV. "
+        "Présente-toi comme recruteur, confirme avoir pris connaissance de son profil, "
+        "et propose de commencer la simulation d'entretien. "
+        "Commence par une question d'entretien typique basée sur son expérience réelle."
+    ),
+}
 
 router = APIRouter()
 
@@ -230,6 +275,166 @@ async def interview_sim_chat(
         language=result.get("language", request.language),
         metadata=result.get("metadata"),
     )
+
+
+async def _extract_pdf_text(pdf_bytes: bytes, filename: str) -> str:
+    """
+    Extrait le texte d'un PDF.
+    Essaie Modal/Docling en premier (meilleure qualité), fallback pypdf.
+    """
+    if is_modal_pdf_enabled():
+        try:
+            logger.info(f"[attach-cv] Trying Modal extraction for {filename}")
+            text = await extract_text_via_modal(pdf_bytes)
+            if text and len(text.strip()) >= 100:
+                logger.info(f"[attach-cv] Modal OK: {len(text)} chars")
+                return text
+        except Exception as e:
+            logger.warning(f"[attach-cv] Modal failed, fallback to pypdf: {e}")
+
+    try:
+        import io
+        import pypdf
+
+        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages).strip()
+        if text and len(text) >= 50:
+            logger.info(f"[attach-cv] pypdf OK: {len(text)} chars")
+            return text
+    except Exception as e:
+        logger.error(f"[attach-cv] pypdf also failed: {e}")
+
+    raise RuntimeError(
+        "Impossible d'extraire le texte du PDF. "
+        "Vérifiez que le fichier n'est pas scanné ou protégé par mot de passe."
+    )
+
+
+@router.post("/attach-cv")
+async def attach_cv_to_chat(
+    file: UploadFile = File(..., description="Fichier PDF du CV"),
+    assistant_type: str = Form(default="career-coach"),
+    session_id: str = Form(..., description="Session ID du chat"),
+    language: str = Form(default="fr"),
+    coach_agent: CoachAgentDep = Depends(),
+    cv_agent: CVAgentDep = Depends(),
+    cv_adapter_agent: CVAdapterAgentDep = Depends(),
+    scout_agent: ScoutConversationalAgentDep = Depends(),
+    branding_agent: BrandingAgentDep = Depends(),
+    interview_agent: InterviewSimAgentDep = Depends(),
+):
+    """
+    Upload et attache un CV à une session de chat assistant.
+
+    Pipeline:
+    1. Validation + extraction texte (Modal/Docling → fallback pypdf)
+    2. Extraction structurée rapide via Groq JSON mode (~1s)
+    3. Injection du CV dans l'historique de session (Supabase)
+    4. Génération d'une première réponse IA contextualisée selon l'assistant actif
+    5. Retour: cv_structured + initial_response
+
+    Le CV persiste dans l'historique pour toute la durée de la session —
+    les agents le voient naturellement à chaque tour via get_session_history().
+    """
+    # ── Validation ────────────────────────────────────────────────────────────
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Seuls les fichiers PDF sont acceptés",
+        )
+
+    pdf_bytes = await file.read()
+
+    if len(pdf_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Fichier trop volumineux ({len(pdf_bytes) / 1024 / 1024:.1f}MB, max 10MB)",
+        )
+
+    try:
+        # ── Étape 1 : Extraction texte ────────────────────────────────────────
+        logger.info(f"[attach-cv] {file.filename} ({len(pdf_bytes)} bytes), assistant={assistant_type}")
+        cv_text = await _extract_pdf_text(pdf_bytes, file.filename or "cv.pdf")
+
+        # ── Étape 2 : Extraction structurée (Groq JSON mode, ~1s) ────────────
+        cv_structured = await extract_cv_structured(cv_text)
+
+        # ── Étape 3 : Préparer le message CV pour l'historique ────────────────
+        # Formaté pour être lisible par tous les agents dans l'historique.
+        cv_message_content = (
+            f"[CV PARTAGÉ — {file.filename}]\n\n"
+            f"{cv_text}\n\n"
+            f"[FIN DU CV]"
+        )
+
+        # ── Étape 4 : Générer la première réponse contextuelle ────────────────
+        lang_names = {"fr": "French", "en": "English", "es": "Spanish"}
+        lang_name = lang_names.get(language, "French")
+
+        reception_context = CV_RECEPTION_PROMPTS.get(
+            assistant_type, CV_RECEPTION_PROMPTS["career-coach"]
+        )
+
+        # Message synthétique qui déclenche l'analyse du CV par l'agent
+        first_message = (
+            f"[IMPORTANT: Respond in {lang_name}. {reception_context}]\n\n"
+            f"{cv_message_content}"
+        )
+
+        # Sélection de l'agent selon l'assistant actif
+        agent_map = {
+            "cv-analyzer": cv_agent,
+            "cv-adapter": cv_adapter_agent,
+            "job-scout": scout_agent,
+            "branding": branding_agent,
+            "interview-sim": interview_agent,
+            "career-coach": coach_agent,
+        }
+        agent = agent_map.get(assistant_type, coach_agent)
+
+        current_history = get_session_history(session_id)
+        result = await agent.run(
+            message=first_message,
+            history=current_history,
+            language=language,
+        )
+
+        if not result.get("success"):
+            raise RuntimeError(result.get("error", "Erreur lors de l'analyse du CV"))
+
+        initial_response = result["response"]
+
+        # ── Étape 5 : Persister dans l'historique de session ─────────────────
+        # CV (user) + réponse IA (assistant) → stockés ensemble.
+        # Tous les tours suivants verront le CV via get_session_history().
+        update_session_history(session_id, cv_message_content, initial_response)
+
+        logger.info(
+            f"[attach-cv] Done — session={session_id[:8]}... "
+            f"cv={len(cv_text)}chars structured={bool(cv_structured)}"
+        )
+
+        return {
+            "success": True,
+            "filename": file.filename,
+            "char_count": len(cv_text),
+            "cv_structured": cv_structured,
+            "initial_response": initial_response,
+        }
+
+    except HTTPException:
+        raise
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
+    except Exception as e:
+        logger.error(f"[attach-cv] Unexpected error: {type(e).__name__}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors du traitement du CV",
+        )
 
 
 @router.post("/new-session")
