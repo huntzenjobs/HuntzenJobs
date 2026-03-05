@@ -70,12 +70,22 @@ interface ApplyModalProps {
   jobDescription?: string;
   /** Supabase saved_jobs.id — links generated document to the saved job row */
   savedJobId?: string;
+  /** Pre-filled result to start in "results" step (e.g. from CV analysis wizard) */
+  initialResult?: GenerationResult;
+  /** Pre-filled cvData to enable editing without re-generating (e.g. from CV analysis wizard) */
+  initialCvData?: Record<string, unknown>;
+  /** Initial step to start at (default: "upload") */
+  initialStep?: Step;
+  /** Pre-filled match score */
+  initialMatchScore?: number;
+  /** Initial language (default: "fr") */
+  initialLanguage?: "fr" | "en";
 }
 
 type Step = "upload" | "generating" | "preview" | "results";
 type CvSource = "upload" | "profile";
 
-interface GenerationResult {
+export interface GenerationResult {
   cvPdfBlob: Blob;
   lmPdfBlob: Blob;
   matchScore?: number;
@@ -181,26 +191,35 @@ export function ApplyModal({
   job,
   jobDescription,
   savedJobId,
+  initialResult,
+  initialCvData,
+  initialStep,
+  initialMatchScore,
+  initialLanguage,
 }: ApplyModalProps) {
-  const [step, setStep] = useState<Step>("upload");
+  const [step, setStep] = useState<Step>(initialStep ?? "upload");
   const [cvSource, setCvSource] = useState<CvSource>("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<CvProfile | null>(
     null,
   );
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [language, setLanguage] = useState<"fr" | "en">("fr");
+  const [language, setLanguage] = useState<"fr" | "en">(
+    initialLanguage ?? "fr",
+  );
   const [isDragging, setIsDragging] = useState(false);
-  const [result, setResult] = useState<GenerationResult | null>(null);
+  const [result, setResult] = useState<GenerationResult | null>(
+    initialResult ?? null,
+  );
   const [generatingLabel, setGeneratingLabel] = useState("");
   const [markedApplied, setMarkedApplied] = useState(false);
   const [pendingCvData, setPendingCvData] = useState<Record<
     string,
     unknown
-  > | null>(null);
+  > | null>(initialCvData ?? null);
   const [pendingMatchScore, setPendingMatchScore] = useState<
     number | undefined
-  >(undefined);
+  >(initialMatchScore);
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -35,7 +35,10 @@ import {
   History,
   Sparkles,
   Download,
+  Pencil,
 } from "lucide-react";
+import { ApplyModal } from "@/components/jobs/apply-modal";
+import type { Job } from "@/lib/api/huntzen-client";
 import { useDocuments } from "@/hooks/use-documents";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
@@ -85,6 +88,7 @@ interface AdaptResult {
   cvPdfBlob: Blob;
   lmPdfBlob: Blob | null;
   matchScore: number | null;
+  cvData: Record<string, unknown>;
 }
 
 // ============================================
@@ -153,6 +157,7 @@ export function CVUploadAsyncWizard({
   const [adaptLoading, setAdaptLoading] = useState(false);
   const [adaptResult, setAdaptResult] = useState<AdaptResult | null>(null);
   const [adaptError, setAdaptError] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const { saveDocument } = useDocuments();
 
@@ -512,6 +517,7 @@ export function CVUploadAsyncWizard({
           cvPdfBlob,
           lmPdfBlob,
           matchScore: matchScore != null ? Math.round(matchScore * 100) : null,
+          cvData: cvData as Record<string, unknown>,
         });
 
         // Persist to Storage in background
@@ -587,6 +593,7 @@ export function CVUploadAsyncWizard({
     setAdaptResult(null);
     setAdaptError(null);
     setAdaptLoading(false);
+    setShowEditModal(false);
   };
 
   const handleLoadFromHistory = async (analysis: any) => {
@@ -1020,44 +1027,101 @@ export function CVUploadAsyncWizard({
 
             {/* Downloads */}
             <div className="space-y-2">
-              <button
-                onClick={() =>
-                  downloadBlob(
-                    adaptResult.cvPdfBlob,
-                    `CV_adapté_${companySlug}.pdf`,
-                  )
-                }
-                className="w-full flex items-center justify-between px-5 py-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all font-medium"
-              >
-                <span className="flex items-center gap-2">
-                  <Download className="h-4 w-4 text-blue-600" />
-                  Télécharger mon CV adapté
-                </span>
-                <Badge variant="secondary" className="text-xs">
-                  PDF
-                </Badge>
-              </button>
-
-              {adaptResult.lmPdfBlob && (
+              <div className="flex gap-1.5">
                 <button
                   onClick={() =>
                     downloadBlob(
-                      adaptResult.lmPdfBlob!,
-                      `Lettre_Motivation_${companySlug}.pdf`,
+                      adaptResult.cvPdfBlob,
+                      `CV_adapté_${companySlug}.pdf`,
                     )
                   }
-                  className="w-full flex items-center justify-between px-5 py-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all font-medium"
+                  className="flex-1 flex items-center justify-between px-5 py-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all font-medium"
                 >
                   <span className="flex items-center gap-2">
                     <Download className="h-4 w-4 text-blue-600" />
-                    Télécharger ma lettre de motivation
+                    Télécharger mon CV adapté
                   </span>
                   <Badge variant="secondary" className="text-xs">
                     PDF
                   </Badge>
                 </button>
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="px-3 py-4 border-2 border-gray-300 rounded-lg hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
+                  title="Modifier le CV avant de télécharger"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              </div>
+
+              {adaptResult.lmPdfBlob && (
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() =>
+                      downloadBlob(
+                        adaptResult.lmPdfBlob!,
+                        `Lettre_Motivation_${companySlug}.pdf`,
+                      )
+                    }
+                    className="flex-1 flex items-center justify-between px-5 py-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all font-medium"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Download className="h-4 w-4 text-blue-600" />
+                      Télécharger ma lettre de motivation
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      PDF
+                    </Badge>
+                  </button>
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="px-3 py-4 border-2 border-gray-300 rounded-lg hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
+                    title="Modifier le CV — la lettre sera regénérée"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                </div>
               )}
+
+              <p className="text-xs text-slate-400 text-center pt-1">
+                ✏️ Modifier le CV adapté regénère automatiquement la lettre de
+                motivation
+              </p>
             </div>
+
+            {/* ApplyModal — rendu conditionnel pour forcer remount à chaque ouverture */}
+            {showEditModal && (
+              <ApplyModal
+                open={true}
+                onOpenChange={(open) => {
+                  if (!open) setShowEditModal(false);
+                }}
+                job={
+                  {
+                    id: "",
+                    title: "Poste adapté",
+                    company: "",
+                    location: "",
+                    description: wizardState.jobDescription,
+                    url: "",
+                    source: "cv-analysis",
+                  } as Job
+                }
+                jobDescription={wizardState.jobDescription}
+                initialResult={{
+                  cvPdfBlob: adaptResult.cvPdfBlob,
+                  lmPdfBlob: adaptResult.lmPdfBlob ?? new Blob(),
+                  matchScore:
+                    adaptResult.matchScore != null
+                      ? adaptResult.matchScore / 100
+                      : undefined,
+                }}
+                initialCvData={adaptResult.cvData}
+                initialStep="results"
+                initialMatchScore={adaptResult.matchScore ?? undefined}
+                initialLanguage={wizardState.adaptLanguage}
+              />
+            )}
 
             <p className="text-xs text-center text-gray-400">
               Documents sauvegardés dans{" "}
