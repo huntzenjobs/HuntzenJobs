@@ -121,16 +121,10 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
   // Get current locale for API calls
   const { locale } = useLocale();
 
-  // ⚠️ VALIDATION: This hook requires authentication
-  // If you're seeing this error, ensure the component using this hook is protected
-  // with an authentication check (e.g., redirecting to /login or /signup)
-  if (!session) {
-    throw new Error(
-      "useCVAnalysis requires authentication. User must be logged in to analyze CV.",
-    );
-  }
-
-  // State
+  // State — ALL hooks called unconditionally before any auth check (Rules of Hooks).
+  // Auth validation happens inside async callbacks, not during render.
+  // Throwing here caused React error #310 (state update during render) when session
+  // expired: 3 hooks ran before the throw, 14 hooks ran on the previous render.
   const [cvId, setCvId] = useState<string | null>(null);
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
   const [status, setStatus] = useState<CVAnalysisStatus["status"]>("pending");
@@ -316,6 +310,10 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
       jobDescription?: string,
       language?: "fr" | "en" | "es" | "pt",
     ) => {
+      if (!session) {
+        setError("Session expirée - veuillez vous reconnecter");
+        return;
+      }
       // Use provided language or default to user's detected locale
       const finalLanguage = language || locale;
       // Reset state
@@ -424,6 +422,10 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
       jobDescription?: string,
       language?: "fr" | "en" | "es" | "pt",
     ) => {
+      if (!session) {
+        setError("Session expirée - veuillez vous reconnecter");
+        return;
+      }
       // Use provided language or default to user's detected locale
       const finalLanguage = language || locale;
       // Reset state

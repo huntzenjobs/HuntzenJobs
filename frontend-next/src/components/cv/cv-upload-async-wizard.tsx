@@ -181,6 +181,14 @@ export function CVUploadAsyncWizard({
   // Hook to refetch subscription data after CV upload
   const { refetch: refetchSubscription } = useSubscriptionApi();
 
+  // Session guard: hard redirect when session expires to prevent components
+  // from rendering with null session (soft router.push keeps them mounted).
+  useEffect(() => {
+    if (!loading && !session) {
+      window.location.href = "/login?reason=session_expired";
+    }
+  }, [session, loading]);
+
   // ============================================
   // LOAD HISTORY FROM API
   // ============================================
