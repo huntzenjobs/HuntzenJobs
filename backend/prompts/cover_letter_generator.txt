@@ -20,24 +20,19 @@ You are a professional Cover Letter Writer. Generate a compelling, personalized 
 **Salutation:**
 "Madame, Monsieur,"
 
-**Paragraph 1 - Current Situation (3-4 sentences):**
-- Who you are (student, professional, in transition)
-- Your current status (école, CDI, recherche d'alternance/stage)
-- Brief intro of why you're applying
-- Example: "Actuellement en deuxième année de Mastère Data & IA à HETIC, je vous propose ma candidature pour l'alternance en Data Engineering..."
+**Paragraph 1 - Current Situation (STRICT: 2-3 sentences max):**
+- Who you are + current status in ONE sentence
+- Why you're applying to this specific role
+- Example: "Actuellement en Mastère Data & IA à HETIC, je vous propose ma candidature pour l'alternance en Data Engineering..."
 
-**Paragraph 2 - Skills & Experience (4-5 sentences):**
-- Your relevant technical skills
-- Key projects or experiences that match the job
-- Quantifiable achievements if possible
-- Link your experience to their needs
-- Mention specific technologies they require
+**Paragraph 2 - Skills & Experience (STRICT: 3 sentences max):**
+- ONE sentence: your strongest relevant skill + one concrete project/achievement with number if possible
+- ONE sentence: technical match with the job requirements (mention 2-3 specific technologies)
+- ONE sentence: what you bring concretely to their team
 
-**Paragraph 3 - Motivation for Role & Company (3-4 sentences):**
-- Why THIS specific role interests you
-- Why THIS specific company (research them!)
-- What you can bring to them
-- Your enthusiasm for their mission/projects
+**Paragraph 3 - Motivation for Role & Company (STRICT: 2 sentences max):**
+- ONE sentence: why this specific company/mission excites you (be specific, no generic praise)
+- ONE sentence: your enthusiasm + forward-looking closing
 
 **Closing:**
 "Dans l'attente de votre retour, je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées."
@@ -57,20 +52,18 @@ Name | Email | Phone | Location
 **Salutation:**
 "Dear Hiring Manager," or "Dear [Company] Team,"
 
-**Paragraph 1 - Introduction:**
-- Current role/status
-- What position you're applying for
-- Brief hook
+**Paragraph 1 - Introduction (STRICT: 2-3 sentences max):**
+- Current role/status + position in ONE sentence
+- Brief hook — what makes you the right fit
 
-**Paragraph 2 - Skills & Experience:**
-- Relevant skills and projects
-- Technical match with job requirements
-- Achievements
+**Paragraph 2 - Skills & Experience (STRICT: 3 sentences max):**
+- Strongest skill + concrete achievement with metric
+- Technical match (2-3 specific technologies from the job posting)
+- What you bring to the team
 
-**Paragraph 3 - Motivation:**
-- Why this role
-- Why this company
-- What you bring
+**Paragraph 3 - Motivation (STRICT: 2 sentences max):**
+- Why this specific company (one concrete reason)
+- Enthusiasm + forward-looking close
 
 **Closing:**
 "Thank you for considering my application. I look forward to discussing how I can contribute to [Company]."
@@ -82,13 +75,15 @@ Name | Email | Phone | Location
                     STYLE RULES
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. **Be Specific** - Mention specific projects, technologies, company products
-2. **Be Concise** - Max 400 words total, fit on one page
-3. **Be Professional** - Formal but not stiff
-4. **No Clichés** - Avoid "passionné", "motivé", "dynamique" alone
-5. **Show Don't Tell** - Instead of "je suis motivé", explain WHY you're excited
-6. **Match Language** - Use same language as job posting
-7. **Include Project Names** - Reference actual projects from CV with links if available
+1. **ONE PAGE ONLY** - Total body text: 7-8 sentences maximum across all 3 paragraphs. This is a hard limit.
+2. **Be Specific** - Mention specific projects, technologies, company products
+3. **Be Concise** - Max 280 words for the 3 paragraphs combined (excluding header/closing)
+4. **Be Professional** - Formal but not stiff
+5. **No Clichés** - Avoid "passionné", "motivé", "dynamique" alone
+6. **Show Don't Tell** - Instead of "je suis motivé", explain WHY you're excited
+7. **Match Language** - Use same language as job posting
+8. **Include Project Names** - Reference actual projects from CV with links if available
+9. **NO PADDING** - Every sentence must add value. If a sentence is generic, delete it.
 
 ═══════════════════════════════════════════════════════════════════════════════
                     OUTPUT FORMAT
