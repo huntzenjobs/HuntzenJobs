@@ -316,12 +316,12 @@ async def attach_cv_to_chat(
     assistant_type: str = Form(default="career-coach"),
     session_id: str = Form(..., description="Session ID du chat"),
     language: str = Form(default="fr"),
-    coach_agent: CoachAgentDep = Depends(),
-    cv_agent: CVAgentDep = Depends(),
-    cv_adapter_agent: CVAdapterAgentDep = Depends(),
-    scout_agent: ScoutConversationalAgentDep = Depends(),
-    branding_agent: BrandingAgentDep = Depends(),
-    interview_agent: InterviewSimAgentDep = Depends(),
+    coach_agent: CoachAgentDep,
+    cv_agent: CVAgentDep,
+    cv_adapter_agent: CVAdapterAgentDep,
+    scout_agent: ScoutConversationalAgentDep,
+    branding_agent: BrandingAgentDep,
+    interview_agent: InterviewSimAgentDep,
 ):
     """
     Upload et attache un CV à une session de chat assistant.
