@@ -312,16 +312,16 @@ async def _extract_pdf_text(pdf_bytes: bytes, filename: str) -> str:
 
 @router.post("/attach-cv")
 async def attach_cv_to_chat(
-    file: UploadFile = File(..., description="Fichier PDF du CV"),
-    assistant_type: str = Form(default="career-coach"),
-    session_id: str = Form(..., description="Session ID du chat"),
-    language: str = Form(default="fr"),
     coach_agent: CoachAgentDep,
     cv_agent: CVAgentDep,
     cv_adapter_agent: CVAdapterAgentDep,
     scout_agent: ScoutConversationalAgentDep,
     branding_agent: BrandingAgentDep,
     interview_agent: InterviewSimAgentDep,
+    file: UploadFile = File(..., description="Fichier PDF du CV"),
+    assistant_type: str = Form(default="career-coach"),
+    session_id: str = Form(..., description="Session ID du chat"),
+    language: str = Form(default="fr"),
 ):
     """
     Upload et attache un CV à une session de chat assistant.
