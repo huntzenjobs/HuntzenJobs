@@ -15,6 +15,7 @@ export interface UserDocument {
   saved_job_id: string | null;
   job_url: string | null;
   created_at: string;
+  cv_data?: Record<string, unknown>;
 }
 
 interface SaveDocumentInput {
@@ -119,7 +120,7 @@ export function useDocuments() {
       const data = await res.json();
       return data.document as UserDocument;
     },
-    [authenticatedFetch]
+    [authenticatedFetch],
   );
 
   const markApplied = useCallback(
@@ -130,7 +131,7 @@ export function useDocuments() {
         body: JSON.stringify({ saved_job_id: savedJobId }),
       });
     },
-    [authenticatedFetch]
+    [authenticatedFetch],
   );
 
   const deleteDocument = useCallback(
@@ -140,7 +141,31 @@ export function useDocuments() {
       });
       setDocuments((prev) => prev.filter((d) => d.id !== documentId));
     },
-    [authenticatedFetch]
+    [authenticatedFetch],
+  );
+
+  const updateDocument = useCallback(
+    async (
+      documentId: string,
+      updates: { cv_pdf_url?: string; cv_data?: Record<string, unknown> },
+    ): Promise<UserDocument | null> => {
+      const res = await authenticatedFetch(
+        `${BACKEND_URL}/api/documents/${documentId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        },
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      const updated = data.document as UserDocument;
+      setDocuments((prev) =>
+        prev.map((d) => (d.id === documentId ? { ...d, ...updated } : d)),
+      );
+      return updated;
+    },
+    [authenticatedFetch],
   );
 
   return {
@@ -150,5 +175,6 @@ export function useDocuments() {
     saveDocument,
     markApplied,
     deleteDocument,
+    updateDocument,
   };
 }

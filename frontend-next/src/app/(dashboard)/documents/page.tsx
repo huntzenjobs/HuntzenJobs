@@ -10,6 +10,7 @@ import {
   User,
   Plus,
   Pencil,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,12 +24,15 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
+import { DocumentEditDialog } from "@/components/documents/document-edit-dialog";
 
 type Filter = "all" | "cv-only" | "cv-lm";
 
 export default function DocumentsPage() {
   const t = useTranslations("dashboard.documents");
-  const { documents, loading, fetchDocuments, deleteDocument } = useDocuments();
+  const { documents, loading, fetchDocuments, deleteDocument, updateDocument } =
+    useDocuments();
   const {
     profiles,
     loading: profilesLoading,
@@ -42,6 +46,8 @@ export default function DocumentsPage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [wizardOpen, setWizardOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<CvProfile | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<UserDocument | null>(null);
+  const [editDoc, setEditDoc] = useState<UserDocument | null>(null);
 
   const FILTER_LABELS: Record<Filter, string> = {
     all: t("filterAll"),
@@ -212,6 +218,8 @@ export default function DocumentsPage() {
                   key={doc.id}
                   doc={doc}
                   onDelete={() => deleteDocument(doc.id)}
+                  onPreview={() => setPreviewDoc(doc)}
+                  onEdit={doc.cv_data ? () => setEditDoc(doc) : undefined}
                   t={t}
                 />
               ))}
@@ -219,6 +227,29 @@ export default function DocumentsPage() {
           )}
         </section>
       </div>
+
+      {/* Document Preview */}
+      <DocumentPreviewDialog
+        document={previewDoc}
+        open={!!previewDoc}
+        onOpenChange={(v) => !v && setPreviewDoc(null)}
+        onEdit={
+          previewDoc?.cv_data
+            ? () => {
+                setEditDoc(previewDoc);
+                setPreviewDoc(null);
+              }
+            : undefined
+        }
+      />
+
+      {/* Document Edit */}
+      <DocumentEditDialog
+        document={editDoc}
+        open={!!editDoc}
+        onOpenChange={(v) => !v && setEditDoc(null)}
+        updateDocument={updateDocument}
+      />
 
       {/* CV Builder Wizard */}
       <CvBuilderWizard
@@ -326,10 +357,14 @@ function EmptyState({
 function DocumentCard({
   doc,
   onDelete,
+  onPreview,
+  onEdit,
   t,
 }: {
   doc: UserDocument;
   onDelete: () => void;
+  onPreview: () => void;
+  onEdit?: () => void;
   t: (key: string) => string;
 }) {
   return (
@@ -389,15 +424,39 @@ function DocumentCard({
           )}
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-gray-300 hover:text-red-500 hover:bg-red-50 shrink-0"
-        onClick={onDelete}
-        title={t("deleteButton")}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <div className="flex items-center gap-1 shrink-0">
+        {doc.cv_data && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-[#00D9FF]"
+            onClick={onPreview}
+            title="Prévisualiser"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        )}
+        {onEdit && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-gray-900"
+            onClick={onEdit}
+            title="Modifier"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-gray-300 hover:text-red-500 hover:bg-red-50"
+          onClick={onDelete}
+          title={t("deleteButton")}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
