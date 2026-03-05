@@ -1277,6 +1277,28 @@ export function CVUploadAsyncWizard({
             />
           </div>
 
+          {displayResult.job_match_score != null && (
+            <div className="mx-auto max-w-lg mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <span className="text-sm font-black text-blue-700">
+                    {displayResult.job_match_score}%
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">
+                    Matching avec l'offre
+                  </p>
+                  {displayResult.job_match_explanation && (
+                    <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+                      {displayResult.job_match_explanation}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Results Accordion */}
           <ResultsAccordion
             breakdown={[
@@ -1284,21 +1306,25 @@ export function CVUploadAsyncWizard({
                 label: "Format",
                 value: displayResult.ats_score.formatting_score,
                 max: 100,
+                explanation: displayResult.ats_score.formatting_explanation,
               },
               {
                 label: "Mots-clés",
                 value: displayResult.ats_score.keywords_score,
                 max: 100,
+                explanation: displayResult.ats_score.keywords_explanation,
               },
               {
                 label: "Structure",
                 value: displayResult.ats_score.structure_score,
                 max: 100,
+                explanation: displayResult.ats_score.structure_explanation,
               },
               {
                 label: "Lisibilité",
                 value: displayResult.ats_score.readability_score,
                 max: 100,
+                explanation: displayResult.ats_score.readability_explanation,
               },
             ]}
             strengths={displayResult.strengths || []}
