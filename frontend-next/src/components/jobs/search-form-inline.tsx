@@ -11,6 +11,45 @@ import {
 import { useSubscription } from "@/contexts/subscription-context";
 import { toast } from "sonner";
 import { huntzenApi } from "@/lib/api/huntzen-client";
+import * as Flags from "country-flag-icons/react/3x2";
+
+// ─── Fuzzy helpers ────────────────────────────────────────────────────────────
+
+function levenshtein(a: string, b: string): number {
+  const dp = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let j = 1; j <= a.length; j++) {
+    let prev = j;
+    for (let i = 1; i <= b.length; i++) {
+      const tmp = dp[i];
+      dp[i] =
+        a[j - 1] === b[i - 1]
+          ? dp[i - 1]
+          : 1 + Math.min(dp[i - 1], dp[i], prev);
+      prev = tmp;
+    }
+  }
+  return dp[b.length];
+}
+
+function fuzzyFindCountry(
+  query: string,
+  countries: { name: string; code: string }[],
+): { name: string; code: string } | null {
+  const q = query.toLowerCase().trim();
+  if (!q) return null;
+  const exact = countries.find((c) => c.name.toLowerCase() === q);
+  if (exact) return exact;
+  const startsWith = countries.filter((c) =>
+    c.name.toLowerCase().startsWith(q),
+  );
+  if (startsWith.length === 1) return startsWith[0];
+  const contains = countries.filter((c) => c.name.toLowerCase().includes(q));
+  if (contains.length === 1) return contains[0];
+  const sorted = countries
+    .map((c) => ({ c, d: levenshtein(q, c.name.toLowerCase()) }))
+    .sort((a, b) => a.d - b.d);
+  return sorted[0]?.d <= 2 ? sorted[0].c : null;
+}
 
 /**
  * SearchFormInline - Horizontal search form for Jobs page
@@ -69,7 +108,17 @@ export function SearchFormInline({
       return countries
         .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 8)
-        .map((c) => ({ label: c.name, value: c.code }));
+        .map((c) => {
+          const code = c.code.toUpperCase() as keyof typeof Flags;
+          const FlagComponent = Flags[code];
+          return {
+            label: c.name,
+            value: c.code,
+            icon: FlagComponent ? (
+              <FlagComponent className="w-5 h-4 rounded-sm object-cover" />
+            ) : undefined,
+          };
+        });
     } catch (error) {
       return [];
     }
@@ -95,6 +144,18 @@ export function SearchFormInline({
       console.error("❌ Error searching locations:", error);
       return [];
     }
+  };
+
+  // Fuzzy-resolve a typed country name on blur (called by AutocompleteInput)
+  const handleCountryBlurResolve = async (
+    text: string,
+  ): Promise<AutocompleteOption | null> => {
+    try {
+      const countries = await huntzenApi.getCountries();
+      const match = fuzzyFindCountry(text, countries);
+      if (match) return { label: match.name, value: match.code };
+    } catch {}
+    return null;
   };
 
   // Handle country selection
@@ -252,6 +313,7 @@ export function SearchFormInline({
               value={country}
               onChange={handleCountryChange}
               onSearch={fetchCountries}
+              onBlurResolve={handleCountryBlurResolve}
               disabled={disabled || isLoading}
               icon={<Globe className="h-5 w-5" />}
               error={!!errors.country}
@@ -390,6 +452,7 @@ export function SearchFormInline({
           value={country}
           onChange={handleCountryChange}
           onSearch={fetchCountries}
+          onBlurResolve={handleCountryBlurResolve}
           disabled={disabled || isLoading}
           icon={<Globe className="h-5 w-5" />}
           error={!!errors.country}

@@ -69,6 +69,57 @@ import {
   type AdvancedFilters,
 } from "@/components/jobs/advanced-filters-modal";
 
+// ─── Fuzzy location helpers ───────────────────────────────────────────────────
+
+function levenshtein(a: string, b: string): number {
+  const dp = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let j = 1; j <= a.length; j++) {
+    let prev = j;
+    for (let i = 1; i <= b.length; i++) {
+      const tmp = dp[i];
+      dp[i] =
+        a[j - 1] === b[i - 1]
+          ? dp[i - 1]
+          : 1 + Math.min(dp[i - 1], dp[i], prev);
+      prev = tmp;
+    }
+  }
+  return dp[b.length];
+}
+
+function fuzzyFindCountry(
+  query: string,
+  countries: { name: string; code: string }[],
+): { name: string; code: string } | null {
+  const q = query.toLowerCase().trim();
+  if (!q) return null;
+  const exact = countries.find((c) => c.name.toLowerCase() === q);
+  if (exact) return exact;
+  const startsWith = countries.filter((c) =>
+    c.name.toLowerCase().startsWith(q),
+  );
+  if (startsWith.length === 1) return startsWith[0];
+  const contains = countries.filter((c) => c.name.toLowerCase().includes(q));
+  if (contains.length === 1) return contains[0];
+  const sorted = countries
+    .map((c) => ({ c, d: levenshtein(q, c.name.toLowerCase()) }))
+    .sort((a, b) => a.d - b.d);
+  return sorted[0]?.d <= 2 ? sorted[0].c : null;
+}
+
+function fuzzyFindCity(query: string, cities: string[]): string | null {
+  const q = query.toLowerCase().trim();
+  if (!q) return null;
+  const exact = cities.find((c) => c.toLowerCase() === q);
+  if (exact) return exact;
+  const startsWith = cities.filter((c) => c.toLowerCase().startsWith(q));
+  if (startsWith.length === 1) return startsWith[0];
+  const sorted = cities
+    .map((c) => ({ c, d: levenshtein(q, c.toLowerCase()) }))
+    .sort((a, b) => a.d - b.d);
+  return sorted[0]?.d <= 2 ? sorted[0].c : null;
+}
+
 // Inline — évite d'importer sanitize.ts qui tire isomorphic-dompurify dans le bundle SSR
 const stripHtmlForPreview = (html: string) =>
   html
@@ -112,6 +163,7 @@ export default function JobsPage() {
   const [countrySearch, setCountrySearch] = useState("");
   const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
   const [selectedCountryIndex, setSelectedCountryIndex] = useState(-1);
+  const [countryError, setCountryError] = useState("");
   const countryInputRef = useRef<HTMLInputElement>(null);
   const countrySuggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -378,6 +430,52 @@ export default function JobsPage() {
     setShowCitySuggestions(false);
     setSelectedCity(city);
     setCitySearch(city);
+  };
+
+  // Auto-resolve country on blur (handles "frnace" → "France", "franc" → "France", etc.)
+  const handleCountryBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // If focus moved to a suggestion button, skip — the click will handle it
+    if (
+      e.relatedTarget instanceof Node &&
+      countrySuggestionsRef.current?.contains(e.relatedTarget)
+    ) {
+      return;
+    }
+    setShowCountrySuggestions(false);
+    if (!countrySearch.trim()) {
+      setCountryError("");
+      setSelectedCountry("");
+      return;
+    }
+    if (selectedCountry) {
+      setCountryError("");
+      return; // Already selected via click/keyboard
+    }
+    const match = fuzzyFindCountry(countrySearch, countries);
+    if (match) {
+      setSelectedCountry(match.code);
+      setCountrySearch(match.name);
+      setCountryError("");
+    } else {
+      setCountryError("Pays introuvable — essayez depuis la liste");
+    }
+  };
+
+  // Auto-resolve city on blur (city is optional — no error shown if no match)
+  const handleCityBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (
+      e.relatedTarget instanceof Node &&
+      citySuggestionsRef.current?.contains(e.relatedTarget)
+    ) {
+      return;
+    }
+    setShowCitySuggestions(false);
+    if (!citySearch.trim() || selectedCity || allCities.length === 0) return;
+    const match = fuzzyFindCity(citySearch, allCities);
+    if (match) {
+      setSelectedCity(match);
+      setCitySearch(match);
+    }
   };
 
   // Search state for caching with React Query
@@ -879,15 +977,23 @@ export default function JobsPage() {
                           : t("form.countryPlaceholder")
                       }
                       value={countrySearch}
-                      className="h-11 border-2 focus:border-primary"
+                      className={cn(
+                        "h-11 border-2 focus:border-primary",
+                        countryError && "border-red-400 focus:border-red-500",
+                      )}
                       onChange={(e) => {
                         setCountrySearch(e.target.value);
                         setShowCountrySuggestions(true);
+                        setCountryError("");
                         if (!e.target.value) {
                           setSelectedCountry("");
                         }
                       }}
-                      onFocus={() => setShowCountrySuggestions(true)}
+                      onFocus={() => {
+                        setShowCountrySuggestions(true);
+                        setCountryError("");
+                      }}
+                      onBlur={handleCountryBlur}
                       onKeyDown={handleCountryKeyDown}
                       autoComplete="off"
                       role="combobox"
@@ -951,6 +1057,11 @@ export default function JobsPage() {
                           {t("form.noCountryFound")}
                         </div>
                       )}
+                    {countryError && (
+                      <p className="mt-1 text-xs text-red-500" role="alert">
+                        {countryError}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2 relative">
@@ -988,6 +1099,7 @@ export default function JobsPage() {
                         }
                       }}
                       onFocus={() => setShowCitySuggestions(true)}
+                      onBlur={handleCityBlur}
                       onKeyDown={handleCityKeyDown}
                       disabled={!selectedCountry}
                       autoComplete="off"
