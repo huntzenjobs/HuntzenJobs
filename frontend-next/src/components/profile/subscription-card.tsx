@@ -16,9 +16,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAuth } from "@/contexts/auth-context";
+import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 import { UsageCounter } from "@/components/freemium/usage-counter";
-import { Check, X, Crown, Sparkles, Zap, TrendingUp } from "lucide-react";
+import {
+  Check,
+  X,
+  Crown,
+  Sparkles,
+  Zap,
+  TrendingUp,
+  AlertTriangle,
+  Clock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
@@ -75,12 +85,48 @@ export function SubscriptionCard() {
   const { plan, planName, isFreePlan, isPaidPlan, openPricingModal, limits } =
     useSubscription();
   const { session } = useAuth();
+  const apiData = useSubscriptionApi();
   const t = useTranslations("profile");
 
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccess, setCancelSuccess] = useState<string | null>(null);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+
+  // Enriched data from API (cancel_at_period_end, past_due status)
+  const subStatus = apiData.subscription?.status ?? "active";
+  const cancelAtPeriodEnd = apiData.subscription?.cancel_at_period_end ?? false;
+  const periodEnd = apiData.subscription?.current_period_end ?? null;
+  const isPastDue = subStatus === "past_due";
+
+  const formattedPeriodEnd = periodEnd
+    ? new Date(periodEnd).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+
+  const handleOpenPortal = async () => {
+    setIsOpeningPortal(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/stripe/create-portal-session`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        },
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Erreur");
+      window.location.href = data.portal_url;
+    } catch (err) {
+      console.error("Portal error:", err);
+    } finally {
+      setIsOpeningPortal(false);
+    }
+  };
 
   const planConfig = PLAN_CONFIG[plan];
   const planLimits = PLAN_LIMITS[plan];
@@ -160,6 +206,50 @@ export function SubscriptionCard() {
             "border-2 border-gradient-to-r from-violet-500 to-purple-500",
         )}
       >
+        {/* Banner: paiement en échec */}
+        {isPastDue && (
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3">
+            <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-2">
+              <p className="text-sm font-semibold text-red-800">
+                Paiement en échec
+              </p>
+              <p className="text-xs text-red-700">
+                Votre dernier paiement a échoué. Mettez à jour votre moyen de
+                paiement pour conserver votre accès
+                {formattedPeriodEnd ? ` jusqu'au ${formattedPeriodEnd}` : ""}.
+              </p>
+              <Button
+                size="sm"
+                onClick={handleOpenPortal}
+                disabled={isOpeningPortal}
+                className="bg-red-600 hover:bg-red-700 text-white h-8 text-xs"
+              >
+                {isOpeningPortal ? "Ouverture..." : "Mettre à jour ma carte"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Banner: annulation programmée */}
+        {cancelAtPeriodEnd && !isPastDue && (
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold text-amber-800">
+                Annulation programmée
+              </p>
+              <p className="text-xs text-amber-700">
+                Votre abonnement {planConfig.name} restera actif
+                {formattedPeriodEnd
+                  ? ` jusqu'au ${formattedPeriodEnd}`
+                  : " jusqu'à la fin de la période"}
+                , puis passera au plan Gratuit.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Plan Header */}
         <div className="flex items-start justify-between">
           <div className="space-y-2">
@@ -168,13 +258,33 @@ export function SubscriptionCard() {
                 {planConfig.icon}
                 {planConfig.name}
               </Badge>
-              {isPaidPlan && (
+              {isPaidPlan && !cancelAtPeriodEnd && !isPastDue && (
                 <Badge
                   variant="outline"
                   className="gap-1 text-green-600 border-green-600"
                 >
                   <Check className="w-3 h-3" />
                   Actif
+                </Badge>
+              )}
+              {isPaidPlan && cancelAtPeriodEnd && (
+                <Badge
+                  variant="outline"
+                  className="gap-1 text-amber-600 border-amber-400"
+                >
+                  <Clock className="w-3 h-3" />
+                  {formattedPeriodEnd
+                    ? `Fin le ${formattedPeriodEnd}`
+                    : "Annulation prévue"}
+                </Badge>
+              )}
+              {isPastDue && (
+                <Badge
+                  variant="outline"
+                  className="gap-1 text-red-600 border-red-400"
+                >
+                  <AlertTriangle className="w-3 h-3" />
+                  Paiement en échec
                 </Badge>
               )}
             </div>

@@ -152,7 +152,8 @@ async def get_current_user_info(
             "plan_display_name": "Free",
             "price_monthly": 0,
             "status": "active",
-            "current_period_end": None
+            "current_period_end": None,
+            "cancel_at_period_end": False,
         }
 
         if subscription_response.data and len(subscription_response.data) > 0:
@@ -187,7 +188,8 @@ async def get_current_user_info(
                 "plan_display_name": sub.get("plan_display_name", "Free"),
                 "price_monthly": plan_prices.get(sub.get("plan_name", "free"), 0),
                 "status": sub.get("subscription_status", "active"),
-                "current_period_end": sub.get("current_period_end")
+                "current_period_end": sub.get("current_period_end"),
+                "cancel_at_period_end": sub.get("cancel_at_period_end", False),
             }
         else:
             # 🔍 DEBUG: No subscription found

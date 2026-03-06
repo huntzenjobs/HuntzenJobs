@@ -177,3 +177,55 @@ async def cancel_subscription(
     except Exception as e:
         logger.error(f"[STRIPE] Cancel subscription failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}")
+
+
+@router.post("/create-portal-session")
+async def create_portal_session(
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Create a Stripe Billing Portal session.
+    Used when the user needs to update their payment method (past_due)
+    or manage their subscription outside the app.
+    """
+    try:
+        user_id = current_user.get("id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid user")
+
+        if not supabase_client:
+            raise HTTPException(status_code=500, detail="Database not configured")
+
+        # Get the Stripe customer ID from active (or past_due) subscription
+        result = (
+            supabase_client
+            .table("user_subscriptions")
+            .select("stripe_customer_id")
+            .eq("user_id", user_id)
+            .in_("status", ["active", "past_due", "trialing"])
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+
+        if not result.data or not result.data[0].get("stripe_customer_id"):
+            raise HTTPException(status_code=404, detail="No Stripe customer found")
+
+        stripe_customer_id = result.data[0]["stripe_customer_id"]
+
+        import stripe as stripe_lib
+        frontend_url = settings.frontend_url if hasattr(settings, "frontend_url") else "https://huntzenjobs.com"
+
+        portal_session = stripe_lib.billing_portal.Session.create(
+            customer=stripe_customer_id,
+            return_url=f"{frontend_url}/profile",
+        )
+
+        logger.info(f"[STRIPE] Portal session created for user {user_id}")
+        return {"success": True, "portal_url": portal_session.url}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[STRIPE] Create portal session failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create portal session: {str(e)}")

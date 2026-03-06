@@ -17,8 +17,9 @@ interface SubscriptionData {
   plan_name: "free" | "starter" | "pro" | "premium";
   plan_display_name: string;
   price_monthly: number;
-  status: string;
+  status: "active" | "trialing" | "past_due" | "canceled" | string;
   current_period_end: string | null;
+  cancel_at_period_end: boolean;
 }
 
 interface QuotaData {

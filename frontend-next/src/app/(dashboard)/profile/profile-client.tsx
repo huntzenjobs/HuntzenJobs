@@ -1,98 +1,150 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { User, CreditCard, Settings, UserCircle, Gift, Copy, Check, MousePointerClick, TrendingUp } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AvatarUpload } from '@/components/profile/avatar-upload'
-import { ProfileForm } from '@/components/profile/profile-form'
-import { SubscriptionCard } from '@/components/profile/subscription-card'
-import { SettingsSection } from '@/components/profile/settings-section'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import {
+  User,
+  CreditCard,
+  Settings,
+  UserCircle,
+  Gift,
+  Copy,
+  Check,
+  MousePointerClick,
+  TrendingUp,
+} from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AvatarUpload } from "@/components/profile/avatar-upload";
+import { ProfileForm } from "@/components/profile/profile-form";
+import { SubscriptionCard } from "@/components/profile/subscription-card";
+import { SettingsSection } from "@/components/profile/settings-section";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 
 interface ProfilePageClientProps {
   user: {
-    id: string
-    email: string
-    emailVerified: boolean
-  }
+    id: string;
+    email: string;
+    emailVerified: boolean;
+  };
   profile: {
-    id: string
-    email: string | null
-    full_name: string | null
-    avatar_url: string | null
-    preferred_language?: string
-    email_notifications?: boolean
-    newsletter_subscribed?: boolean
-  }
+    id: string;
+    email: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+    preferred_language?: string;
+    email_notifications?: boolean;
+    newsletter_subscribed?: boolean;
+  };
 }
 
-
 function ReferralWidget({ userId }: { userId: string }) {
-  const [code, setCode] = useState<string | null>(null)
-  const [stats, setStats] = useState({ total_clicks: 0, total_signups: 0, total_conversions: 0 })
-  const [loading, setLoading] = useState(true)
-  const [copied, setCopied] = useState(false)
+  const [code, setCode] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    total_clicks: 0,
+    total_signups: 0,
+    total_conversions: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   const fetchCode = useCallback(async () => {
     try {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) return
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
       const res = await fetch(`${backendUrl}/api/referrals/my-code`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
-      })
-      if (!res.ok) return
-      const data = await res.json()
-      setCode(data.code)
-      setStats({ total_clicks: data.total_clicks, total_signups: data.total_signups, total_conversions: data.total_conversions })
-    } catch {}
-    finally { setLoading(false) }
-  }, [])
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setCode(data.code);
+      setStats({
+        total_clicks: data.total_clicks,
+        total_signups: data.total_signups,
+        total_conversions: data.total_conversions,
+      });
+    } catch {
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  useEffect(() => { fetchCode() }, [fetchCode])
+  useEffect(() => {
+    fetchCode();
+  }, [fetchCode]);
 
   const referralLink = code
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/signup?ref=${code}`
-    : ''
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/signup?ref=${code}`
+    : "";
 
   const copyLink = () => {
-    if (!referralLink) return
-    navigator.clipboard.writeText(referralLink)
-    setCopied(true)
-    toast.success('Lien copié !')
-    setTimeout(() => setCopied(false), 2000)
-  }
+    if (!referralLink) return;
+    navigator.clipboard.writeText(referralLink);
+    setCopied(true);
+    toast.success("Lien copié !");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-  if (loading) return <div className="h-32 animate-pulse bg-gray-100 rounded-xl" />
+  if (loading)
+    return <div className="h-32 animate-pulse bg-gray-100 rounded-xl" />;
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-black mb-2">Parrainez vos proches</h2>
-        <p className="text-gray-600">Partagez votre lien. Quand un ami souscrit, vous gagnez des jours offerts.</p>
+        <h2 className="text-2xl font-bold text-black mb-2">
+          Parrainez vos proches
+        </h2>
+        <p className="text-gray-600">
+          Partagez votre lien. Quand un ami souscrit, vous gagnez des jours
+          offerts.
+        </p>
       </div>
       <Card className="border-2 border-[#00D9FF]/30 bg-[#00D9FF]/5">
         <CardContent className="pt-6 space-y-3">
-          <p className="text-xs text-gray-500 font-medium">Votre lien de parrainage</p>
+          <p className="text-xs text-gray-500 font-medium">
+            Votre lien de parrainage
+          </p>
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-white border rounded-lg px-3 py-2 text-sm font-mono text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap">{referralLink}</div>
-            <Button size="sm" onClick={copyLink} className="shrink-0 bg-[#00D9FF] hover:bg-[#00C4EA] text-white">
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            <div className="flex-1 bg-white border rounded-lg px-3 py-2 text-sm font-mono text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap">
+              {referralLink}
+            </div>
+            <Button
+              size="sm"
+              onClick={copyLink}
+              className="shrink-0 bg-[#00D9FF] hover:bg-[#00C4EA] text-white"
+            >
+              {copied ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
             </Button>
           </div>
-          <p className="text-xs text-gray-400">Code : <span className="font-mono font-semibold">{code}</span></p>
+          <p className="text-xs text-gray-400">
+            Code : <span className="font-mono font-semibold">{code}</span>
+          </p>
         </CardContent>
       </Card>
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Clics', value: stats.total_clicks, icon: MousePointerClick },
-          { label: 'Inscriptions', value: stats.total_signups, icon: Gift },
-          { label: 'Conversions', value: stats.total_conversions, icon: TrendingUp },
+          {
+            label: "Clics",
+            value: stats.total_clicks,
+            icon: MousePointerClick,
+          },
+          { label: "Inscriptions", value: stats.total_signups, icon: Gift },
+          {
+            label: "Conversions",
+            value: stats.total_conversions,
+            icon: TrendingUp,
+          },
         ].map(({ label, value, icon: Icon }) => (
           <Card key={label}>
             <CardContent className="pt-4 pb-4 text-center">
@@ -104,25 +156,30 @@ function ReferralWidget({ userId }: { userId: string }) {
         ))}
       </div>
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-        <strong>Comment ça marche ?</strong> Quand un ami souscrit via votre lien, vous recevez automatiquement des jours offerts.
+        <strong>Comment ça marche ?</strong> Quand un ami souscrit via votre
+        lien, vous recevez automatiquement des jours offerts.
       </div>
     </div>
-  )
+  );
 }
 
 export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
-  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url)
-  const [fullName, setFullName] = useState(profile.full_name || '')
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
+  const [fullName, setFullName] = useState(profile.full_name || "");
+  const { subscription } = useSubscriptionApi();
+  const isPastDue = subscription?.status === "past_due";
+  const cancelAtPeriodEnd = subscription?.cancel_at_period_end ?? false;
+  const hasSubscriptionAlert = isPastDue || cancelAtPeriodEnd;
 
   // Handle avatar upload success
   const handleAvatarUpload = (newUrl: string) => {
-    setAvatarUrl(newUrl)
-  }
+    setAvatarUrl(newUrl);
+  };
 
   // Handle profile save success
   const handleProfileSave = (newFullName: string) => {
-    setFullName(newFullName)
-  }
+    setFullName(newFullName);
+  };
 
   return (
     <div className="space-y-6">
@@ -145,7 +202,8 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
           <h1 className="text-4xl font-black text-black">Mon Profil</h1>
         </div>
         <p className="text-base text-gray-700 leading-relaxed">
-          Gérez vos informations personnelles, votre abonnement et vos préférences
+          Gérez vos informations personnelles, votre abonnement et vos
+          préférences
         </p>
       </motion.div>
 
@@ -171,6 +229,14 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             >
               <CreditCard className="w-4 h-4 mr-2" />
               Abonnement
+              {hasSubscriptionAlert && (
+                <span
+                  className={`ml-2 inline-flex h-2 w-2 rounded-full ${isPastDue ? "bg-red-500" : "bg-amber-400"}`}
+                  aria-label={
+                    isPastDue ? "Paiement en échec" : "Annulation programmée"
+                  }
+                />
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="settings"
@@ -234,8 +300,8 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
                   Votre abonnement
                 </h2>
                 <p className="text-gray-600">
-                  Consultez votre plan actuel, votre utilisation quotidienne et gérez votre
-                  abonnement
+                  Consultez votre plan actuel, votre utilisation quotidienne et
+                  gérez votre abonnement
                 </p>
               </div>
 
@@ -253,7 +319,9 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               className="max-w-3xl"
             >
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-black mb-2">Paramètres</h2>
+                <h2 className="text-2xl font-bold text-black mb-2">
+                  Paramètres
+                </h2>
                 <p className="text-gray-600">
                   Personnalisez votre expérience HuntZen avec vos préférences
                 </p>
@@ -270,7 +338,12 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             </motion.div>
           </TabsContent>
           <TabsContent value="referral" className="p-8">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="max-w-2xl"
+            >
               <ReferralWidget userId={user.id} />
             </motion.div>
           </TabsContent>
@@ -286,8 +359,9 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
       >
         <h3 className="font-bold text-black mb-2">Besoin d'aide ?</h3>
         <p className="text-gray-700 text-sm mb-4">
-          Notre équipe support est là pour vous aider. N'hésitez pas à nous contacter si
-          vous avez des questions sur votre compte ou votre abonnement.
+          Notre équipe support est là pour vous aider. N'hésitez pas à nous
+          contacter si vous avez des questions sur votre compte ou votre
+          abonnement.
         </p>
         <div className="flex gap-3">
           <a
@@ -306,5 +380,5 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
         </div>
       </motion.div>
     </div>
-  )
+  );
 }
