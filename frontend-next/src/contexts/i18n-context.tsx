@@ -24,14 +24,6 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   pt: "Português",
 };
 
-// Locale flags for UI
-export const LOCALE_FLAGS: Record<Locale, string> = {
-  fr: "🇫🇷",
-  en: "🇬🇧",
-  es: "🇪🇸",
-  pt: "🇵🇹",
-};
-
 interface I18nContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;

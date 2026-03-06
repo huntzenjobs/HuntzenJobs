@@ -11,7 +11,6 @@ import {
 import { useSubscription } from "@/contexts/subscription-context";
 import { toast } from "sonner";
 import { huntzenApi } from "@/lib/api/huntzen-client";
-import * as Flags from "country-flag-icons/react/3x2";
 
 // ─── Fuzzy helpers ────────────────────────────────────────────────────────────
 
@@ -108,17 +107,7 @@ export function SearchFormInline({
       return countries
         .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 8)
-        .map((c) => {
-          const code = c.code.toUpperCase() as keyof typeof Flags;
-          const FlagComponent = Flags[code];
-          return {
-            label: c.name,
-            value: c.code,
-            icon: FlagComponent ? (
-              <FlagComponent className="w-5 h-4 rounded-sm object-cover" />
-            ) : undefined,
-          };
-        });
+        .map((c) => ({ label: c.name, value: c.code }));
     } catch (error) {
       return [];
     }
