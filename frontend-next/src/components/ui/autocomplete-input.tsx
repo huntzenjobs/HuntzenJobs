@@ -19,6 +19,7 @@ export interface AutocompleteOption {
   value: string;
   label: string;
   description?: string;
+  icon?: React.ReactNode;
 }
 
 export interface AutocompleteInputProps {
@@ -52,6 +53,12 @@ export interface AutocompleteInputProps {
   onSearch?: (query: string) => Promise<AutocompleteOption[]>;
   /** Debounce delay for search (ms) */
   debounceMs?: number;
+  /**
+   * Called on blur when no option could be auto-selected from current results.
+   * Receives the raw typed text; return a resolved option to auto-select it,
+   * or null to leave the field as-is. Useful for fuzzy/typo correction.
+   */
+  onBlurResolve?: (text: string) => Promise<AutocompleteOption | null>;
 }
 
 // ============================================================================
@@ -79,6 +86,7 @@ export const AutocompleteInput = React.forwardRef<
       typingPromptMessage,
       onSearch,
       debounceMs = 300,
+      onBlurResolve,
     },
     ref,
   ) => {
@@ -91,6 +99,11 @@ export const AutocompleteInput = React.forwardRef<
     const inputRef = React.useRef<HTMLInputElement>(null);
     const debounceRef = React.useRef<NodeJS.Timeout>();
     const isSelectionRef = React.useRef(false);
+    // Tracks whether a click-selection already handled this blur event
+    const blurHandledRef = React.useRef(false);
+    // Always-fresh reference to current search value (for stale closures)
+    const searchRef = React.useRef(search);
+    searchRef.current = search;
 
     // Combine refs
     React.useImperativeHandle(ref, () => inputRef.current!);
@@ -154,6 +167,7 @@ export const AutocompleteInput = React.forwardRef<
     const handleSelect = (selectedValue: string) => {
       const selectedOption = options.find((opt) => opt.value === selectedValue);
       if (selectedOption) {
+        blurHandledRef.current = true; // Prevent blur handler from re-running fuzzy
         isSelectionRef.current = true;
         setSearch(selectedOption.label);
         onChange(selectedOption.value);
@@ -209,6 +223,52 @@ export const AutocompleteInput = React.forwardRef<
                   ) {
                     setOpen(true);
                   }
+                }}
+                onBlur={() => {
+                  // Wait 150ms so a suggestion click (mouseup) fires before this runs
+                  setTimeout(async () => {
+                    // If a click-selection already handled this blur, skip
+                    if (blurHandledRef.current) {
+                      blurHandledRef.current = false;
+                      return;
+                    }
+                    const currentSearch = searchRef.current;
+                    if (!currentSearch.trim()) return;
+
+                    // 1. Single option available → auto-select it
+                    if (options.length === 1) {
+                      const opt = options[0];
+                      isSelectionRef.current = true;
+                      setSearch(opt.label);
+                      onChange(opt.value);
+                      setOpen(false);
+                      return;
+                    }
+
+                    // 2. Exact match in current options → auto-select
+                    const exact = options.find(
+                      (o) =>
+                        o.label.toLowerCase() === currentSearch.toLowerCase(),
+                    );
+                    if (exact) {
+                      isSelectionRef.current = true;
+                      setSearch(exact.label);
+                      onChange(exact.value);
+                      setOpen(false);
+                      return;
+                    }
+
+                    // 3. Delegate to parent for fuzzy / external resolution
+                    if (onBlurResolve) {
+                      const resolved = await onBlurResolve(currentSearch);
+                      if (resolved) {
+                        isSelectionRef.current = true;
+                        setSearch(resolved.label);
+                        onChange(resolved.value);
+                        setOpen(false);
+                      }
+                    }
+                  }, 150);
                 }}
                 disabled={disabled}
                 placeholder={placeholder}
@@ -342,6 +402,11 @@ export const AutocompleteInput = React.forwardRef<
                             "outline-none",
                           )}
                         >
+                          {option.icon && (
+                            <span className="shrink-0 w-5 h-4 overflow-hidden flex items-center">
+                              {option.icon}
+                            </span>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">
                               {option.label}
