@@ -396,6 +396,7 @@ class HuntzenApiClient {
       | "cv-adapter"
       | "interview-sim",
     language: string = "fr",
+    token?: string,
   ): Promise<{ success: boolean; response: string; agent: string }> {
     // Route to appropriate endpoint based on assistant type
     const endpointMap = {
@@ -418,6 +419,7 @@ class HuntzenApiClient {
           assistant_type: assistantType,
           language,
         }),
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       },
     );
   }
@@ -427,6 +429,7 @@ class HuntzenApiClient {
     sessionId: string,
     language: string = "fr",
     brandingState?: Record<string, unknown> | null,
+    token?: string,
   ): Promise<{
     success: boolean;
     response: string;
@@ -441,6 +444,7 @@ class HuntzenApiClient {
         language,
         branding_state: brandingState ?? null,
       }),
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   }
 
@@ -526,6 +530,7 @@ class HuntzenApiClient {
     assistantType: string,
     sessionId: string,
     language: string = "fr",
+    token?: string,
   ): Promise<{
     success: boolean;
     filename: string;
@@ -551,6 +556,7 @@ class HuntzenApiClient {
     const response = await fetch(`${this.baseUrl}/api/assistant/attach-cv`, {
       method: "POST",
       body: formData,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
 
     if (!response.ok) {
