@@ -456,7 +456,7 @@ async def update_plan_limits(
     """Update numeric limits for a plan (cv_analyses, coach_seconds, job_searches)."""
     supabase = get_supabase_client()
 
-    allowed_keys = {"cv_analyses", "coach_seconds", "job_searches"}
+    allowed_keys = {"cv_analyses", "coach_seconds", "job_searches", "assistant_messages"}
     limits = {k: v for k, v in body.items() if k in allowed_keys}
 
     if not limits:
