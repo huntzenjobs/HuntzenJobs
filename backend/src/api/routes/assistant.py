@@ -365,7 +365,6 @@ async def attach_cv_to_chat(
     les agents le voient naturellement à chaque tour via get_session_history().
     """
     user_id = current_user["id"]
-    check_assistant_quota(user_id)
 
     # ── Validation ────────────────────────────────────────────────────────────
     if not file.filename or not file.filename.lower().endswith(".pdf"):
@@ -381,6 +380,8 @@ async def attach_cv_to_chat(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Fichier trop volumineux ({len(pdf_bytes) / 1024 / 1024:.1f}MB, max 10MB)",
         )
+
+    check_assistant_quota(user_id)
 
     try:
         # ── Étape 1 : Extraction texte ────────────────────────────────────────
@@ -438,14 +439,13 @@ async def attach_cv_to_chat(
         # ── Étape 5 : Persister dans l'historique de session ─────────────────
         # CV (user) + réponse IA (assistant) → stockés ensemble.
         # Tous les tours suivants verront le CV via get_session_history().
+        increment_assistant_messages(user_id)
         update_session_history(session_id, cv_message_content, initial_response)
 
         logger.info(
             f"[attach-cv] Done — session={session_id[:8]}... "
             f"cv={len(cv_text)}chars structured={bool(cv_structured)}"
         )
-
-        increment_assistant_messages(user_id)
 
         return {
             "success": True,
