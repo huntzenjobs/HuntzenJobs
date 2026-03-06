@@ -398,6 +398,53 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
 CurrentUserDep = Annotated[dict, Depends(get_current_user)]
 
 
+def check_assistant_quota(user_id: str) -> None:
+    """
+    Check if user has remaining assistant messages quota.
+    Raises HTTP 429 if quota exceeded.
+    """
+    try:
+        supabase = get_supabase_client()
+        result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if not result.data:
+            return  # No quota data = allow through
+        for row in result.data:
+            if row.get("feature") == "assistant_messages":
+                if not row.get("has_access", True):
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "code": "QUOTA_EXCEEDED",
+                            "feature": "assistant_messages",
+                            "limit": row.get("quota_limit"),
+                            "used": row.get("quota_used"),
+                            "reset_at": str(row.get("reset_at", "")),
+                            "message": "Quota de messages journalier atteint. Passez à un plan supérieur pour continuer."
+                        }
+                    )
+                return
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"[quota] check failed for {user_id}, allowing through: {e}")
+
+
+def increment_assistant_messages(user_id: str) -> None:
+    """
+    Increment assistant_messages usage counter for today.
+    Best-effort: logs warning on failure, does NOT raise.
+    """
+    try:
+        supabase = get_supabase_client()
+        supabase.rpc("increment_usage", {
+            "p_user_id": user_id,
+            "p_feature": "assistant_messages",
+            "p_amount": 1,
+        }).execute()
+    except Exception as e:
+        logger.warning(f"[quota] increment failed for {user_id}: {e}")
+
+
 async def get_current_admin(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Verify the current user has admin privileges (is_admin = TRUE in profiles).

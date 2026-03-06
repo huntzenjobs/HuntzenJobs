@@ -21,6 +21,9 @@ from src.api.deps import (
     ScoutConversationalAgentDep,
     get_session_history,
     update_session_history,
+    CurrentUserDep,
+    check_assistant_quota,
+    increment_assistant_messages,
 )
 from src.services.cv_chat_extractor import extract_cv_structured
 from src.services.modal_pdf_extractor import extract_text_via_modal, is_modal_pdf_enabled
@@ -108,6 +111,7 @@ class AssistantResponse(BaseModel):
 async def job_scout_chat(
     request: AssistantRequest,
     agent: ScoutConversationalAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the Job Search expert.
@@ -115,6 +119,9 @@ async def job_scout_chat(
     Provides conversational guidance on job search strategies,
     market insights, and personalized recommendations.
     """
+    user_id = current_user["id"]
+    check_assistant_quota(user_id)
+
     # Get conversation history
     history = get_session_history(request.session_id)
 
@@ -138,6 +145,8 @@ async def job_scout_chat(
         result["response"],
     )
 
+    increment_assistant_messages(user_id)
+
     return AssistantResponse(
         success=True,
         response=result["response"],
@@ -151,6 +160,7 @@ async def job_scout_chat(
 async def cv_analyzer_chat(
     request: AssistantRequest,
     agent: CVAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the CV Analysis expert.
@@ -158,6 +168,9 @@ async def cv_analyzer_chat(
     Provides conversational CV analysis, scoring, and improvement recommendations.
     Can guide users through the CV optimization process step by step.
     """
+    user_id = current_user["id"]
+    check_assistant_quota(user_id)
+
     # Get conversation history
     history = get_session_history(request.session_id)
 
@@ -181,6 +194,8 @@ async def cv_analyzer_chat(
         result["response"],
     )
 
+    increment_assistant_messages(user_id)
+
     return AssistantResponse(
         success=True,
         response=result["response"],
@@ -194,6 +209,7 @@ async def cv_analyzer_chat(
 async def cv_adapter_chat(
     request: AssistantRequest,
     agent: CVAdapterAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the CV Adaptation specialist.
@@ -201,6 +217,9 @@ async def cv_adapter_chat(
     Provides conversational guidance for adapting CVs to specific job offers.
     Guides users through the adaptation process with strategic recommendations.
     """
+    user_id = current_user["id"]
+    check_assistant_quota(user_id)
+
     # Get conversation history
     history = get_session_history(request.session_id)
 
@@ -224,6 +243,8 @@ async def cv_adapter_chat(
         result["response"],
     )
 
+    increment_assistant_messages(user_id)
+
     return AssistantResponse(
         success=True,
         response=result["response"],
@@ -237,6 +258,7 @@ async def cv_adapter_chat(
 async def interview_sim_chat(
     request: AssistantRequest,
     agent: InterviewSimAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the Interview Simulation recruiter.
@@ -245,6 +267,9 @@ async def interview_sim_chat(
     Provides realistic interview practice with a professional recruiter simulation.
     Includes behavioral questions, technical questions, and constructive feedback.
     """
+    user_id = current_user["id"]
+    check_assistant_quota(user_id)
+
     # Get conversation history
     history = get_session_history(request.session_id)
 
@@ -267,6 +292,8 @@ async def interview_sim_chat(
         request.message,
         result["response"],
     )
+
+    increment_assistant_messages(user_id)
 
     return AssistantResponse(
         success=True,
@@ -318,6 +345,7 @@ async def attach_cv_to_chat(
     scout_agent: ScoutConversationalAgentDep,
     branding_agent: BrandingAgentDep,
     interview_agent: InterviewSimAgentDep,
+    current_user: CurrentUserDep,
     file: UploadFile = File(..., description="Fichier PDF du CV"),
     assistant_type: str = Form(default="career-coach"),
     session_id: str = Form(..., description="Session ID du chat"),
@@ -336,6 +364,9 @@ async def attach_cv_to_chat(
     Le CV persiste dans l'historique pour toute la durée de la session —
     les agents le voient naturellement à chaque tour via get_session_history().
     """
+    user_id = current_user["id"]
+    check_assistant_quota(user_id)
+
     # ── Validation ────────────────────────────────────────────────────────────
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
@@ -413,6 +444,8 @@ async def attach_cv_to_chat(
             f"[attach-cv] Done — session={session_id[:8]}... "
             f"cv={len(cv_text)}chars structured={bool(cv_structured)}"
         )
+
+        increment_assistant_messages(user_id)
 
         return {
             "success": True,
