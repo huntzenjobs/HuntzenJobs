@@ -231,10 +231,37 @@ export function PricingModal() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Failed to create checkout session");
+        const detail: string =
+          data.detail || "Failed to create checkout session";
+        // Parse annual-to-monthly block: "ANNUAL_TO_MONTHLY_BLOCKED|2026-12-15"
+        if (
+          typeof detail === "string" &&
+          detail.startsWith("ANNUAL_TO_MONTHLY_BLOCKED")
+        ) {
+          const periodEnd = detail.split("|")[1];
+          const formattedDate = periodEnd
+            ? new Date(periodEnd).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })
+            : null;
+          throw new Error(
+            formattedDate
+              ? `Changement annuel → mensuel impossible. Votre abonnement annuel court jusqu'au ${formattedDate}. Vous pourrez passer en mensuel à cette date.`
+              : "Vous avez un abonnement annuel en cours. Le changement vers mensuel sera possible à la fin de la période.",
+          );
+        }
+        throw new Error(detail);
       }
 
       toast.dismiss("stripe-redirect");
+
+      // Already on this plan
+      if (data.already_subscribed) {
+        toast.info(tModal("toasts.alreadyOnPlan"));
+        return;
+      }
 
       // Check if it's a subscription modification (upgrade/downgrade) or new subscription
       if (data.modified) {
@@ -246,7 +273,6 @@ export function PricingModal() {
         }
 
         // Redirect to success page with polling to verify update
-        // Use a fake session_id to trigger the polling mechanism
         const sessionId = `mod_${Date.now()}`;
         window.location.href = `/payment/success?session_id=${sessionId}&type=modification`;
       } else {

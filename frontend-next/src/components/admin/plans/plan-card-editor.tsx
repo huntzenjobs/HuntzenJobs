@@ -1,106 +1,128 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Save, Zap, ExternalLink } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import StripePriceDialog from './stripe-price-dialog'
-import type { Plan } from '@/hooks/admin/use-admin-plans'
+import { useState } from "react";
+import { Save, Zap, ExternalLink } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import StripePriceDialog from "./stripe-price-dialog";
+import type { Plan } from "@/hooks/admin/use-admin-plans";
 
 // All known feature flags — add new ones here as the app grows
 const FEATURE_FLAGS = [
-  { key: 'advanced_filters', label: 'Filtres avancés' },
-  { key: 'favorites', label: 'Favoris' },
-  { key: 'visual_score', label: 'Score visuel ATS' },
-  { key: 'pdf_export', label: 'Export PDF' },
-  { key: 'cv_history', label: 'Historique CV' },
-  { key: 'interview_sim', label: 'Simulateur entretien' },
-  { key: 'email_alerts', label: 'Alertes email' },
-  { key: 'personalized_advice', label: 'Conseils personnalisés' },
-  { key: 'coach_history', label: 'Historique coach' },
-  { key: 'cover_letter', label: 'Lettre de motivation IA' },
-  { key: 'branding', label: 'Branding personnel' },
-]
+  { key: "advanced_filters", label: "Filtres avancés" },
+  { key: "favorites", label: "Favoris" },
+  { key: "visual_score", label: "Score visuel ATS" },
+  { key: "pdf_export", label: "Export PDF" },
+  { key: "cv_history", label: "Historique CV" },
+  { key: "interview_sim", label: "Simulateur entretien" },
+  { key: "email_alerts", label: "Alertes email" },
+  { key: "personalized_advice", label: "Conseils personnalisés" },
+  { key: "coach_history", label: "Historique coach" },
+  { key: "cover_letter", label: "Lettre de motivation IA" },
+  { key: "branding", label: "Branding personnel" },
+];
 
 const PLAN_ACCENT: Record<string, string> = {
-  free: 'border-t-slate-400',
-  starter: 'border-t-blue-500',
-  pro: 'border-t-purple-500',
-  premium: 'border-t-amber-400',
-}
+  free: "border-t-slate-400",
+  starter: "border-t-blue-500",
+  pro: "border-t-purple-500",
+  premium: "border-t-amber-400",
+};
 
 interface Props {
-  plan: Plan
-  onUpdateLimits: (planId: string, limits: Record<string, number>) => Promise<boolean>
-  onUpdateFeatures: (planId: string, features: string[]) => Promise<boolean>
-  onUpdatePrice: (planId: string, prices: Record<string, number>) => Promise<boolean>
-  onUpdateStripePrice: (planId: string, period: 'monthly' | 'yearly', amount: number, currency: string) => Promise<any>
+  plan: Plan;
+  onUpdateLimits: (
+    planId: string,
+    limits: Record<string, number>,
+  ) => Promise<boolean>;
+  onUpdateFeatures: (planId: string, features: string[]) => Promise<boolean>;
+  onUpdatePrice: (
+    planId: string,
+    prices: Record<string, number>,
+  ) => Promise<boolean>;
+  onUpdateStripePrice: (
+    planId: string,
+    period: "monthly" | "yearly",
+    amount: number,
+    currency: string,
+  ) => Promise<any>;
 }
 
 export default function PlanCardEditor({
-  plan, onUpdateLimits, onUpdateFeatures, onUpdatePrice, onUpdateStripePrice
+  plan,
+  onUpdateLimits,
+  onUpdateFeatures,
+  onUpdatePrice,
+  onUpdateStripePrice,
 }: Props) {
   const [limits, setLimits] = useState({
     cv_analyses: plan.limits?.cv_analyses ?? 0,
-    coach_seconds: plan.limits?.coach_seconds ?? 0,
+    assistant_messages: plan.limits?.assistant_messages ?? 0,
     job_searches: plan.limits?.job_searches ?? 0,
-  })
-  const [priceMonthly, setPriceMonthly] = useState(String(plan.price_monthly))
-  const [priceYearly, setPriceYearly] = useState(String(plan.price_yearly ?? ''))
-  const [features, setFeatures] = useState<string[]>(plan.features || [])
-  const [stripePriceOpen, setStripePriceOpen] = useState<'monthly' | 'yearly' | null>(null)
-  const [saving, setSaving] = useState<string | null>(null)
+  });
+  const [priceMonthly, setPriceMonthly] = useState(String(plan.price_monthly));
+  const [priceYearly, setPriceYearly] = useState(
+    String(plan.price_yearly ?? ""),
+  );
+  const [features, setFeatures] = useState<string[]>(plan.features || []);
+  const [stripePriceOpen, setStripePriceOpen] = useState<
+    "monthly" | "yearly" | null
+  >(null);
+  const [saving, setSaving] = useState<string | null>(null);
 
   const toggleFeature = (key: string) => {
-    setFeatures(prev =>
-      prev.includes(key) ? prev.filter(f => f !== key) : [...prev, key]
-    )
-  }
+    setFeatures((prev) =>
+      prev.includes(key) ? prev.filter((f) => f !== key) : [...prev, key],
+    );
+  };
 
   const handleSaveLimits = async () => {
-    setSaving('limits')
-    await onUpdateLimits(plan.id, limits)
-    setSaving(null)
-  }
+    setSaving("limits");
+    await onUpdateLimits(plan.id, limits);
+    setSaving(null);
+  };
 
   const handleSaveFeatures = async () => {
-    setSaving('features')
-    await onUpdateFeatures(plan.id, features)
-    setSaving(null)
-  }
+    setSaving("features");
+    await onUpdateFeatures(plan.id, features);
+    setSaving(null);
+  };
 
   const handleSavePrice = async () => {
-    setSaving('price')
+    setSaving("price");
     const prices: Record<string, number> = {
       price_monthly: parseFloat(priceMonthly),
-    }
-    if (priceYearly) prices.price_yearly = parseFloat(priceYearly)
-    await onUpdatePrice(plan.id, prices)
-    setSaving(null)
-  }
+    };
+    if (priceYearly) prices.price_yearly = parseFloat(priceYearly);
+    await onUpdatePrice(plan.id, prices);
+    setSaving(null);
+  };
 
   const activeMonthlyStripePrice = plan.stripe_prices?.find(
-    p => p.billing_period === 'monthly' && p.is_active
-  )
+    (p) => p.billing_period === "monthly" && p.is_active,
+  );
   const activeYearlyStripePrice = plan.stripe_prices?.find(
-    p => p.billing_period === 'yearly' && p.is_active
-  )
+    (p) => p.billing_period === "yearly" && p.is_active,
+  );
 
-  const formatLimit = (val: number) => val === -1 ? '∞ illimité' : String(val)
+  const formatLimit = (val: number) =>
+    val === -1 ? "∞ illimité" : String(val);
 
   return (
     <>
-      <Card className={`border-t-4 ${PLAN_ACCENT[plan.name] || 'border-t-gray-300'}`}>
+      <Card
+        className={`border-t-4 ${PLAN_ACCENT[plan.name] || "border-t-gray-300"}`}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">{plan.display_name}</CardTitle>
-            <Badge variant={plan.is_active ? 'default' : 'outline'}>
-              {plan.is_active ? 'Actif' : 'Inactif'}
+            <Badge variant={plan.is_active ? "default" : "outline"}>
+              {plan.is_active ? "Actif" : "Inactif"}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">{plan.description}</p>
@@ -115,10 +137,10 @@ export default function PlanCardEditor({
                 size="sm"
                 variant="outline"
                 onClick={handleSaveLimits}
-                disabled={saving === 'limits'}
+                disabled={saving === "limits"}
               >
                 <Save className="h-3.5 w-3.5 mr-1.5" />
-                {saving === 'limits' ? 'Sauvegarde...' : 'Sauvegarder'}
+                {saving === "limits" ? "Sauvegarde..." : "Sauvegarder"}
               </Button>
             </div>
 
@@ -129,22 +151,34 @@ export default function PlanCardEditor({
                   type="number"
                   min="-1"
                   value={limits.cv_analyses}
-                  onChange={e => setLimits(l => ({ ...l, cv_analyses: parseInt(e.target.value) || 0 }))}
-                  className="h-8 text-sm"
-                />
-                <p className="text-xs text-muted-foreground">{formatLimit(limits.cv_analyses)}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Secondes coach/jour</Label>
-                <Input
-                  type="number"
-                  min="-1"
-                  value={limits.coach_seconds}
-                  onChange={e => setLimits(l => ({ ...l, coach_seconds: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) =>
+                    setLimits((l) => ({
+                      ...l,
+                      cv_analyses: parseInt(e.target.value) || 0,
+                    }))
+                  }
                   className="h-8 text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  {limits.coach_seconds === -1 ? '∞' : `${Math.round(limits.coach_seconds / 60)} min`}
+                  {formatLimit(limits.cv_analyses)}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Messages assistant/jour</Label>
+                <Input
+                  type="number"
+                  min="-1"
+                  value={limits.assistant_messages}
+                  onChange={(e) =>
+                    setLimits((l) => ({
+                      ...l,
+                      assistant_messages: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  className="h-8 text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formatLimit(limits.assistant_messages)}
                 </p>
               </div>
               <div className="space-y-1">
@@ -153,13 +187,22 @@ export default function PlanCardEditor({
                   type="number"
                   min="-1"
                   value={limits.job_searches}
-                  onChange={e => setLimits(l => ({ ...l, job_searches: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) =>
+                    setLimits((l) => ({
+                      ...l,
+                      job_searches: parseInt(e.target.value) || 0,
+                    }))
+                  }
                   className="h-8 text-sm"
                 />
-                <p className="text-xs text-muted-foreground">{formatLimit(limits.job_searches)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatLimit(limits.job_searches)}
+                </p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">Entrer -1 pour illimité</p>
+            <p className="text-xs text-muted-foreground">
+              Entrer -1 pour illimité
+            </p>
           </div>
 
           <Separator />
@@ -172,16 +215,22 @@ export default function PlanCardEditor({
                 size="sm"
                 variant="outline"
                 onClick={handleSaveFeatures}
-                disabled={saving === 'features'}
+                disabled={saving === "features"}
               >
                 <Save className="h-3.5 w-3.5 mr-1.5" />
-                {saving === 'features' ? 'Sauvegarde...' : 'Sauvegarder'}
+                {saving === "features" ? "Sauvegarde..." : "Sauvegarder"}
               </Button>
             </div>
             <div className="space-y-2">
               {FEATURE_FLAGS.map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between py-0.5">
-                  <Label className="text-sm font-normal cursor-pointer" htmlFor={`${plan.id}-${key}`}>
+                <div
+                  key={key}
+                  className="flex items-center justify-between py-0.5"
+                >
+                  <Label
+                    className="text-sm font-normal cursor-pointer"
+                    htmlFor={`${plan.id}-${key}`}
+                  >
                     {label}
                   </Label>
                   <Switch
@@ -204,38 +253,42 @@ export default function PlanCardEditor({
                 size="sm"
                 variant="outline"
                 onClick={handleSavePrice}
-                disabled={saving === 'price'}
+                disabled={saving === "price"}
               >
                 <Save className="h-3.5 w-3.5 mr-1.5" />
-                {saving === 'price' ? 'Sauvegarde...' : 'Sauvegarder'}
+                {saving === "price" ? "Sauvegarde..." : "Sauvegarder"}
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Mensuel (€)</Label>
                 <div className="relative">
-                  <span className="absolute left-2.5 top-2 text-muted-foreground text-xs">€</span>
+                  <span className="absolute left-2.5 top-2 text-muted-foreground text-xs">
+                    €
+                  </span>
                   <Input
                     className="h-8 text-sm pl-6"
                     type="number"
                     min="0"
                     step="0.01"
                     value={priceMonthly}
-                    onChange={e => setPriceMonthly(e.target.value)}
+                    onChange={(e) => setPriceMonthly(e.target.value)}
                   />
                 </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Annuel (€)</Label>
                 <div className="relative">
-                  <span className="absolute left-2.5 top-2 text-muted-foreground text-xs">€</span>
+                  <span className="absolute left-2.5 top-2 text-muted-foreground text-xs">
+                    €
+                  </span>
                   <Input
                     className="h-8 text-sm pl-6"
                     type="number"
                     min="0"
                     step="0.01"
                     value={priceYearly}
-                    onChange={e => setPriceYearly(e.target.value)}
+                    onChange={(e) => setPriceYearly(e.target.value)}
                     placeholder="—"
                   />
                 </div>
@@ -246,21 +299,29 @@ export default function PlanCardEditor({
             </p>
           </div>
 
-          {plan.name !== 'free' && (
+          {plan.name !== "free" && (
             <>
               <Separator />
               {/* — Stripe Price IDs — */}
               <div className="space-y-3">
                 <span className="text-sm font-medium">Stripe Price IDs</span>
                 <div className="space-y-2">
-                  {(['monthly', 'yearly'] as const).map((period) => {
-                    const sp = period === 'monthly' ? activeMonthlyStripePrice : activeYearlyStripePrice
+                  {(["monthly", "yearly"] as const).map((period) => {
+                    const sp =
+                      period === "monthly"
+                        ? activeMonthlyStripePrice
+                        : activeYearlyStripePrice;
                     return (
-                      <div key={period} className="flex items-center justify-between gap-2">
+                      <div
+                        key={period}
+                        className="flex items-center justify-between gap-2"
+                      >
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium capitalize">{period === 'monthly' ? 'Mensuel' : 'Annuel'}</p>
+                          <p className="text-xs font-medium capitalize">
+                            {period === "monthly" ? "Mensuel" : "Annuel"}
+                          </p>
                           <p className="text-xs text-muted-foreground font-mono truncate">
-                            {sp?.stripe_price_id || 'Non configuré'}
+                            {sp?.stripe_price_id || "Non configuré"}
                           </p>
                         </div>
                         <Button
@@ -273,11 +334,12 @@ export default function PlanCardEditor({
                           Changer
                         </Button>
                       </div>
-                    )
+                    );
                   })}
                 </div>
                 <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
-                  Changer un prix Stripe crée un nouveau price et archive l'ancien. Les abonnements existants ne sont pas affectés.
+                  Changer un prix Stripe crée un nouveau price et archive
+                  l'ancien. Les abonnements existants ne sont pas affectés.
                 </p>
               </div>
             </>
@@ -292,13 +354,20 @@ export default function PlanCardEditor({
           plan={plan}
           billingPeriod={stripePriceOpen}
           currentPrice={
-            stripePriceOpen === 'monthly' ? activeMonthlyStripePrice : activeYearlyStripePrice
+            stripePriceOpen === "monthly"
+              ? activeMonthlyStripePrice
+              : activeYearlyStripePrice
           }
           onConfirm={async (amount, currency) => {
-            await onUpdateStripePrice(plan.id, stripePriceOpen, amount, currency)
+            await onUpdateStripePrice(
+              plan.id,
+              stripePriceOpen,
+              amount,
+              currency,
+            );
           }}
         />
       )}
     </>
-  )
+  );
 }

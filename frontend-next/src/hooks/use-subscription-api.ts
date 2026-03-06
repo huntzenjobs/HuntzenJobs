@@ -34,6 +34,7 @@ interface QuotasData {
   cv_analysis: QuotaData;
   coach: QuotaData;
   job_search: QuotaData;
+  assistant_messages: QuotaData;
 }
 
 interface ApiResponse {

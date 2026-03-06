@@ -37,7 +37,7 @@ interface SubscriptionContextType {
     searchesToday: number;
     jobsViewedToday: number;
     cvAnalysesToday: number;
-    coachSecondsUsedToday: number;
+    assistantMessagesUsedToday: number;
     lastResetDate: string;
   };
 
@@ -45,11 +45,9 @@ interface SubscriptionContextType {
   hasFeature: (feature: keyof PlanLimits) => boolean;
   getRequiredPlan: (feature: keyof PlanLimits) => PlanType;
 
-  // Coach timer
-  coachTimeRemaining: number;
-  startCoachSession: () => void;
-  stopCoachSession: () => void;
-  isCoachSessionActive: boolean;
+  // Assistant message quota
+  assistantMessagesRemaining: number;
+  assistantMessagesLimit: number;
 
   // Limits
   limits: PlanLimits;
@@ -93,7 +91,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [pricingModalFeature, setPricingModalFeature] = useState<string | null>(
     null,
   );
-  const [coachTimeRemaining, setCoachTimeRemaining] = useState(0);
   const [hasShownInconsistencyWarning, setHasShownInconsistencyWarning] =
     useState(false);
 
@@ -102,35 +99,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     apiRefetchRef.current = apiData.refetch;
   });
-
-  // Update coach time remaining every second when session is active
-  useEffect(() => {
-    if (!freemium.isLoaded) return;
-
-    // Only run timer logic if coach session is active
-    if (freemium.isCoachSessionActive) {
-      const updateTime = () => {
-        setCoachTimeRemaining(freemium.getCoachTimeRemaining());
-      };
-
-      updateTime(); // Initial update only when active
-      const interval = setInterval(updateTime, 1000);
-      return () => clearInterval(interval);
-    } else {
-      // Calculate once when not active (no recurring updates)
-      const totalAllowed = freemium.limits.coach_minutes_per_day * 60;
-      const remaining = Math.max(
-        0,
-        totalAllowed - freemium.usage.coachSecondsUsedToday,
-      );
-      setCoachTimeRemaining(remaining);
-    }
-  }, [
-    freemium.isLoaded,
-    freemium.isCoachSessionActive,
-    freemium.limits.coach_minutes_per_day,
-    freemium.usage.coachSecondsUsedToday,
-  ]);
 
   const openPricingModal = useCallback((feature?: string) => {
     setPricingModalFeature(feature || null);
@@ -282,10 +250,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         apiData.quotas.cv_analysis.limit === -1
           ? Infinity
           : apiData.quotas.cv_analysis.limit,
-      coach_minutes_per_day:
-        apiData.quotas.coach.limit === -1
+      assistant_messages_per_day: apiData.quotas.assistant_messages
+        ? apiData.quotas.assistant_messages.limit === -1
           ? Infinity
-          : Math.round(apiData.quotas.coach.limit / 60),
+          : apiData.quotas.assistant_messages.limit
+        : PLAN_LIMITS[plan].assistant_messages_per_day,
       job_searches_per_day:
         apiData.quotas.job_search.limit === -1
           ? Infinity
@@ -299,7 +268,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // From API backend (using ?? to avoid treating 0 as falsy)
       searchesToday: apiData.quotas?.job_search.used ?? 0,
       cvAnalysesToday: apiData.quotas?.cv_analysis.used ?? 0,
-      coachSecondsUsedToday: apiData.quotas?.coach.used ?? 0,
+      assistantMessagesUsedToday: apiData.quotas?.assistant_messages?.used ?? 0,
 
       // From localStorage (not tracked in backend)
       jobsViewedToday: freemium.usage.jobsViewedToday,
@@ -321,8 +290,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       switch (feature) {
         case "cv_analysis":
           return apiData.quotas.cv_analysis.has_access;
-        case "coach_time":
-          return apiData.quotas.coach.has_access;
+        case "assistant_messages":
+          return (
+            apiData.quotas?.assistant_messages?.has_access ??
+            freemium.canUse(feature)
+          );
         case "job_search":
           return apiData.quotas.job_search.has_access;
         default:
@@ -342,11 +314,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           return apiData.quotas.cv_analysis.remaining === -1
             ? Infinity
             : apiData.quotas.cv_analysis.remaining;
-        case "coach_time":
-          // Convert seconds to minutes
-          return apiData.quotas.coach.remaining === -1
-            ? Infinity
-            : Math.round(apiData.quotas.coach.remaining / 60);
+        case "assistant_messages":
+          return apiData.quotas?.assistant_messages
+            ? apiData.quotas.assistant_messages.remaining === -1
+              ? Infinity
+              : apiData.quotas.assistant_messages.remaining
+            : freemium.getRemaining(feature);
         case "job_search":
           return apiData.quotas.job_search.remaining === -1
             ? Infinity
@@ -382,6 +355,25 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     [apiData.subscription?.plan_name, apiData.feature_overrides, freemium.plan],
   );
 
+  // Computed assistant message quota values
+  const assistantMessagesRemaining = useMemo((): number => {
+    if (!apiData.quotas?.assistant_messages) {
+      const limit = PLAN_LIMITS[plan].assistant_messages_per_day;
+      return limit === Infinity ? Infinity : (limit as number);
+    }
+    const q = apiData.quotas.assistant_messages;
+    return q.remaining === -1 ? Infinity : q.remaining;
+  }, [apiData.quotas, plan]);
+
+  const assistantMessagesLimit = useMemo((): number => {
+    if (!apiData.quotas?.assistant_messages) {
+      const limit = PLAN_LIMITS[plan].assistant_messages_per_day;
+      return limit === Infinity ? Infinity : (limit as number);
+    }
+    const q = apiData.quotas.assistant_messages;
+    return q.limit === -1 ? Infinity : q.limit;
+  }, [apiData.quotas, plan]);
+
   // useMemo with ONLY primitive dependencies that actually change
   const value: SubscriptionContextType = useMemo(
     () => ({
@@ -398,10 +390,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       hasFeature,
       getRequiredPlan: freemium.getRequiredPlan,
 
-      coachTimeRemaining,
-      startCoachSession: freemium.startCoachSession,
-      stopCoachSession: freemium.stopCoachSession,
-      isCoachSessionActive: freemium.isCoachSessionActive,
+      assistantMessagesRemaining,
+      assistantMessagesLimit,
 
       limits: limitsFromApi,
 
@@ -433,9 +423,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // Limits from API
       limitsFromApi,
 
-      // Coach timer
-      coachTimeRemaining,
-      freemium.isCoachSessionActive,
+      // Assistant message quota
+      assistantMessagesRemaining,
+      assistantMessagesLimit,
 
       // Loading states
       apiData.isLoading,

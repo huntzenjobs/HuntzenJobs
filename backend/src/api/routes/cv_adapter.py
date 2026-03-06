@@ -534,6 +534,34 @@ async def generate_cover_letter_json(request: CoverLetterRequest):
     }
 
 
+class CoverLetterFromDataRequest(BaseModel):
+    """Request model for generating cover letter PDF from pre-structured data."""
+    cover_letter_data: dict
+    language: str = "fr"
+
+
+@router.post("/generate-cover-letter/pdf-from-data")
+async def generate_cover_letter_pdf_from_data(request: CoverLetterFromDataRequest):
+    """
+    Generate cover letter PDF directly from structured data (no LLM call).
+    Used to regenerate PDF after user edits cover letter fields.
+    """
+    try:
+        pdf_gen = get_pdf_generator()
+        pdf_bytes = pdf_gen.generate_cover_letter(
+            letter_data=request.cover_letter_data,
+            language=request.language,
+        )
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=cover_letter.pdf"},
+        )
+    except Exception as e:
+        logger.error(f"Cover letter PDF from data failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class PreviewRequest(BaseModel):
     """Request model for CV HTML preview."""
     cv_data: dict

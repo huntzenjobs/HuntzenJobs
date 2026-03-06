@@ -3,13 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ExpandableTextarea } from "@/components/ui/expandable-textarea";
 import {
   Send,
   Loader2,
   MessageSquare,
-  User,
   Sparkles,
   Clock,
   Lock,
@@ -36,7 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { AssistantType } from "@/types/assistant";
 import { BotSelector } from "@/components/assistant/bot-selector";
-import { CoachTimer as CoachTimerBadge } from "@/components/coach/coach-timer";
+import { useAuth } from "@/contexts/auth-context";
 import {
   ChatMessage,
   TypingIndicator,
@@ -82,16 +81,16 @@ export default function AssistantPage() {
     setAttachedCV(null);
   }, [selectedAssistant]);
 
+  // Auth token for API calls
+  const { session } = useAuth();
+
   // Freemium state
   const {
-    coachTimeRemaining,
-    startCoachSession,
-    stopCoachSession,
-    isCoachSessionActive,
+    assistantMessagesRemaining,
+    assistantMessagesLimit,
     hasFeature,
     openPricingModal,
     isFreePlan,
-    limits,
   } = useSubscription();
 
   // History state
@@ -107,7 +106,7 @@ export default function AssistantPage() {
   const debouncedMessages = useDebounce(messages, 2000);
 
   const canChat =
-    coachTimeRemaining > 0 || limits.coach_minutes_per_day === Infinity;
+    assistantMessagesRemaining > 0 || assistantMessagesLimit === Infinity;
 
   // Smart scroll: scroll to user message when sent (best UX)
   useEffect(() => {
@@ -120,28 +119,13 @@ export default function AssistantPage() {
     }
   }, [messages]);
 
-  // Format time as mm:ss
-  const formatTime = (seconds: number) => {
-    if (seconds === Infinity || seconds > 3600 * 24) return t("unlimited");
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  // Warning threshold (3 minutes)
+  // Warning threshold (3 messages remaining)
   const isTimeWarning =
-    isFreePlan && coachTimeRemaining <= 180 && coachTimeRemaining > 0;
+    isFreePlan &&
+    assistantMessagesRemaining <= 3 &&
+    assistantMessagesRemaining > 0;
 
   // Removed auto-scroll for better UX - user controls scrolling manually
-
-  // Stop session when leaving page
-  useEffect(() => {
-    return () => {
-      if (isCoachSessionActive) {
-        stopCoachSession();
-      }
-    };
-  }, [isCoachSessionActive, stopCoachSession]);
 
   // Keep a stable ref to saveConversation to avoid re-triggering the auto-save
   // effect every time saveMutation state changes (which would cause an infinite loop)
@@ -181,13 +165,8 @@ export default function AssistantPage() {
 
     // Check if user can still chat
     if (!canChat) {
-      openPricingModal("coach_minutes_per_day");
+      openPricingModal("assistant_messages_per_day");
       return;
-    }
-
-    // Start timer on first message
-    if (!isCoachSessionActive && isFreePlan) {
-      startCoachSession();
     }
 
     const userMessage: ChatMessageType = {
@@ -211,12 +190,14 @@ export default function AssistantPage() {
         branding_state?: Record<string, unknown> | null;
       };
 
+      const accessToken = session?.access_token;
       if (selectedAssistant === "branding") {
         const brandingResponse = await huntzenApi.sendBrandingMessage(
           messageText,
           sessionId,
           locale,
           brandingState,
+          accessToken,
         );
         setBrandingState(brandingResponse.branding_state ?? null);
         response = { ...brandingResponse, agent: "branding" };
@@ -226,6 +207,7 @@ export default function AssistantPage() {
           sessionId,
           selectedAssistant,
           locale,
+          accessToken,
         );
       }
 
@@ -250,11 +232,6 @@ export default function AssistantPage() {
     }
   };
 
-  // Handle time up
-  const handleTimeUp = () => {
-    openPricingModal("coach_minutes_per_day");
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(input);
@@ -271,12 +248,8 @@ export default function AssistantPage() {
     e.target.value = "";
 
     if (!canChat) {
-      openPricingModal("coach_minutes_per_day");
+      openPricingModal("assistant_messages_per_day");
       return;
-    }
-
-    if (!isCoachSessionActive && isFreePlan) {
-      startCoachSession();
     }
 
     const userMessage: ChatMessageType = {
@@ -295,6 +268,7 @@ export default function AssistantPage() {
         selectedAssistant,
         sessionId,
         locale,
+        session?.access_token,
       );
 
       setAttachedCV({
@@ -456,12 +430,25 @@ export default function AssistantPage() {
           transition={{ delay: 0.4 }}
           className="flex items-center gap-2 flex-shrink-0"
         >
-          {/* Timer for free users */}
-          {isFreePlan && (
-            <CoachTimerBadge
-              totalSeconds={coachTimeRemaining}
-              onTimeUp={handleTimeUp}
-            />
+          {/* Message counter for free users */}
+          {isFreePlan && assistantMessagesLimit !== Infinity && (
+            <button
+              onClick={() => openPricingModal("assistant_messages_per_day")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                assistantMessagesRemaining <= 3
+                  ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+                  : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              <MessageSquare className="w-3 h-3" />
+              {assistantMessagesRemaining === Infinity
+                ? "∞"
+                : assistantMessagesRemaining}{" "}
+              /{" "}
+              {assistantMessagesLimit === Infinity
+                ? "∞"
+                : assistantMessagesLimit}
+            </button>
           )}
 
           {/* Export button (if has messages and feature access) */}
@@ -571,7 +558,7 @@ export default function AssistantPage() {
                   size="sm"
                   variant="ghost"
                   className="ml-auto text-amber-700 hover:text-amber-800 hover:bg-amber-100"
-                  onClick={() => openPricingModal("coach_minutes_per_day")}
+                  onClick={() => openPricingModal("assistant_messages_per_day")}
                 >
                   {t("upgradePremium")}
                 </Button>
@@ -794,11 +781,11 @@ export default function AssistantPage() {
                 </p>
                 <p className="text-sm text-slate-700 mb-3">
                   {t("timeExpiredDesc", {
-                    minutes: limits.coach_minutes_per_day,
+                    minutes: assistantMessagesLimit,
                   })}
                 </p>
                 <Button
-                  onClick={() => openPricingModal("coach_minutes_per_day")}
+                  onClick={() => openPricingModal("assistant_messages_per_day")}
                   className="h-12 text-base font-bold bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                 >
                   <Sparkles className="w-5 h-5 mr-2" />

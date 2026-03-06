@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -81,9 +80,7 @@ export function SubscriptionCard() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
-  const [cancelledPlanName, setCancelledPlanName] = useState<string | null>(
-    null,
-  );
+  const [cancelSuccess, setCancelSuccess] = useState<string | null>(null);
 
   const planConfig = PLAN_CONFIG[plan];
   const planLimits = PLAN_LIMITS[plan];
@@ -108,6 +105,20 @@ export function SubscriptionCard() {
   const nextPlan = getNextPlan();
   const canUpgrade = nextPlan !== null;
 
+  const handleOpenCancelDialog = () => {
+    // Reset state fresh each time dialog opens
+    setCancelError(null);
+    setCancelSuccess(null);
+    setShowCancelDialog(true);
+  };
+
+  const handleCloseCancelDialog = () => {
+    if (isCancelling) return; // Prevent closing while request in flight
+    setShowCancelDialog(false);
+    setCancelError(null);
+    setCancelSuccess(null);
+  };
+
   const handleCancelSubscription = async () => {
     setIsCancelling(true);
     setCancelError(null);
@@ -127,11 +138,12 @@ export function SubscriptionCard() {
         throw new Error(err.detail || "Erreur lors de l'annulation");
       }
       const data = await response.json();
-      setCancelledPlanName(data.plan_name || null);
+      setCancelSuccess(data.plan_name || plan);
+      // Close dialog and reload after showing success message
       setTimeout(() => {
         setShowCancelDialog(false);
         window.location.reload();
-      }, 2000);
+      }, 2500);
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -235,9 +247,9 @@ export function SubscriptionCard() {
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
               <span>
-                {planLimits.coach_minutes_per_day === Infinity
-                  ? "Coach IA illimité"
-                  : `${planLimits.coach_minutes_per_day} min de Coach IA par jour`}
+                {planLimits.assistant_messages_per_day === Infinity
+                  ? "Messages Assistant illimités"
+                  : `${planLimits.assistant_messages_per_day} messages Assistant par jour`}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -265,10 +277,12 @@ export function SubscriptionCard() {
             <UsageCounter feature="cv_analysis" showIcon={false} />
           </div>
 
-          {/* Coach Time */}
+          {/* Assistant Messages */}
           <div className="space-y-1">
-            <p className="text-xs text-gray-500 font-medium">Temps Coach IA</p>
-            <UsageCounter feature="coach_time" showIcon={false} />
+            <p className="text-xs text-gray-500 font-medium">
+              Messages Assistant
+            </p>
+            <UsageCounter feature="assistant_messages" showIcon={false} />
           </div>
 
           {/* Job Searches */}
@@ -327,7 +341,7 @@ export function SubscriptionCard() {
               <Button
                 variant="ghost"
                 className="sm:flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={() => setShowCancelDialog(true)}
+                onClick={handleOpenCancelDialog}
                 disabled={isCancelling}
                 aria-label={t("cancelSubscription")}
               >
@@ -345,18 +359,21 @@ export function SubscriptionCard() {
         )}
       </Card>
 
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+      <AlertDialog
+        open={showCancelDialog}
+        onOpenChange={handleCloseCancelDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {cancelledPlanName
+              {cancelSuccess
                 ? t("cancelDialog.successTitle")
                 : t("cancelDialog.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {cancelledPlanName
+              {cancelSuccess
                 ? t("cancelDialog.successDescription", {
-                    plan: cancelledPlanName,
+                    plan: cancelSuccess,
                   })
                 : t("cancelDialog.description")}
             </AlertDialogDescription>
@@ -364,18 +381,26 @@ export function SubscriptionCard() {
           {cancelError && (
             <p className="text-sm text-red-600 px-1">{cancelError}</p>
           )}
-          {!cancelledPlanName && (
+          {!cancelSuccess && (
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isCancelling}>
                 {t("cancelDialog.keep")}
               </AlertDialogCancel>
-              <AlertDialogAction
+              {/* Use regular Button (not AlertDialogAction) to prevent auto-close before async resolves */}
+              <Button
                 onClick={handleCancelSubscription}
                 disabled={isCancelling}
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
-                {isCancelling ? t("cancelling") : t("cancelDialog.confirm")}
-              </AlertDialogAction>
+                {isCancelling ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block" />
+                    {t("cancelling")}
+                  </span>
+                ) : (
+                  t("cancelDialog.confirm")
+                )}
+              </Button>
             </AlertDialogFooter>
           )}
         </AlertDialogContent>

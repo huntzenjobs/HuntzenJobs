@@ -151,12 +151,12 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
     openPricingModal();
   };
 
-  // Convert coach time from seconds to minutes
-  const coachUsedMinutes = Math.floor((usage?.coachSecondsUsedToday || 0) / 60);
-  const coachLimitMinutes =
-    planLimits.coach_minutes_per_day === Infinity
+  // Assistant messages usage
+  const assistantMessagesUsed = usage?.assistantMessagesUsedToday ?? 0;
+  const assistantMessagesLimit =
+    planLimits.assistant_messages_per_day === Infinity
       ? Infinity
-      : planLimits.coach_minutes_per_day;
+      : planLimits.assistant_messages_per_day;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -236,13 +236,13 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 color="bg-blue-500"
               />
 
-              {/* Coach Time */}
+              {/* Assistant Messages */}
               <QuotaCard
-                title="Temps Coach IA"
+                title="Messages Assistant"
                 icon={<MessageSquare className="w-4 h-4 text-white" />}
-                used={coachUsedMinutes}
-                limit={coachLimitMinutes}
-                unit=" min"
+                used={assistantMessagesUsed}
+                limit={assistantMessagesLimit}
+                unit=" msg"
                 color="bg-violet-500"
               />
 

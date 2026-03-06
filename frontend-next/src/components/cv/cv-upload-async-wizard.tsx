@@ -89,6 +89,7 @@ interface AdaptResult {
   lmPdfBlob: Blob | null;
   matchScore: number | null;
   cvData: Record<string, unknown>;
+  lmData: Record<string, unknown> | null;
 }
 
 // ============================================
@@ -158,6 +159,11 @@ export function CVUploadAsyncWizard({
   const [adaptResult, setAdaptResult] = useState<AdaptResult | null>(null);
   const [adaptError, setAdaptError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showLmEditor, setShowLmEditor] = useState(false);
+  const [editingLmData, setEditingLmData] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   const { saveDocument } = useDocuments();
 
@@ -493,8 +499,8 @@ export function CVUploadAsyncWizard({
         const cvData = adaptData.cv_data;
         const matchScore = adaptData.match_score;
 
-        // Step 2: generate CV PDF + LM PDF in parallel
-        const [cvPdfRes, lmPdfRes] = await Promise.all([
+        // Step 2: generate CV PDF + LM JSON in parallel
+        const [cvPdfRes, lmJsonRes] = await Promise.all([
           fetch(`${backendUrl}/api/cv-adapter/generate-pdf`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -504,7 +510,7 @@ export function CVUploadAsyncWizard({
               language: adaptLang,
             }),
           }),
-          fetch(`${backendUrl}/api/cv-adapter/generate-cover-letter`, {
+          fetch(`${backendUrl}/api/cv-adapter/generate-cover-letter/json`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -519,13 +525,35 @@ export function CVUploadAsyncWizard({
         if (!cvPdfRes.ok) throw new Error("Erreur génération CV PDF");
 
         const cvPdfBlob = await cvPdfRes.blob();
-        const lmPdfBlob = lmPdfRes.ok ? await lmPdfRes.blob() : null;
+
+        // Step 3: get LM data then generate LM PDF from structured data
+        let lmData: Record<string, unknown> | null = null;
+        let lmPdfBlob: Blob | null = null;
+        if (lmJsonRes.ok) {
+          const lmJson = await lmJsonRes.json();
+          lmData = lmJson.cover_letter ?? null;
+          if (lmData) {
+            const lmPdfRes = await fetch(
+              `${backendUrl}/api/cv-adapter/generate-cover-letter/pdf-from-data`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  cover_letter_data: lmData,
+                  language: adaptLang,
+                }),
+              },
+            );
+            lmPdfBlob = lmPdfRes.ok ? await lmPdfRes.blob() : null;
+          }
+        }
 
         setAdaptResult({
           cvPdfBlob,
           lmPdfBlob,
           matchScore: matchScore != null ? Math.round(matchScore * 100) : null,
           cvData: cvData as Record<string, unknown>,
+          lmData,
         });
 
         // Persist to Storage in background
@@ -1054,9 +1082,12 @@ export function CVUploadAsyncWizard({
                   </Badge>
                 </button>
                 <button
-                  onClick={() => setShowEditModal(true)}
+                  onClick={() => {
+                    setShowLmEditor(false);
+                    setShowEditModal(true);
+                  }}
                   className="px-3 py-4 border-2 border-gray-300 rounded-lg hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
-                  title="Modifier le CV avant de télécharger"
+                  title="Modifier le CV adapté"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -1082,9 +1113,15 @@ export function CVUploadAsyncWizard({
                     </Badge>
                   </button>
                   <button
-                    onClick={() => setShowEditModal(true)}
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingLmData(
+                        adaptResult.lmData ? { ...adaptResult.lmData } : null,
+                      );
+                      setShowLmEditor(true);
+                    }}
                     className="px-3 py-4 border-2 border-gray-300 rounded-lg hover:border-amber-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
-                    title="Modifier le CV — la lettre sera regénérée"
+                    title="Modifier la lettre de motivation"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -1092,10 +1129,116 @@ export function CVUploadAsyncWizard({
               )}
 
               <p className="text-xs text-slate-400 text-center pt-1">
-                ✏️ Modifier le CV adapté regénère automatiquement la lettre de
+                ✏️ Cliquez sur le crayon pour modifier CV ou lettre de
                 motivation
               </p>
             </div>
+
+            {/* LM inline editor */}
+            {showLmEditor && (
+              <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-amber-900">
+                    ✏️ Modifier la lettre de motivation
+                  </p>
+                  <button
+                    onClick={() => setShowLmEditor(false)}
+                    className="text-xs text-amber-600 hover:text-amber-800 underline"
+                  >
+                    Annuler
+                  </button>
+                </div>
+                {!editingLmData ? (
+                  <p className="text-xs text-amber-700">
+                    Données de la lettre non disponibles.
+                  </p>
+                ) : (
+                  <>
+                    {(
+                      [
+                        { key: "subject", label: "Objet", rows: 1 },
+                        { key: "salutation", label: "Salutation", rows: 1 },
+                        {
+                          key: "paragraph_1",
+                          label: "Paragraphe 1 — Introduction",
+                          rows: 4,
+                        },
+                        {
+                          key: "paragraph_2",
+                          label: "Paragraphe 2 — Motivation / Compétences",
+                          rows: 4,
+                        },
+                        {
+                          key: "paragraph_3",
+                          label: "Paragraphe 3 — Conclusion",
+                          rows: 3,
+                        },
+                        {
+                          key: "closing",
+                          label: "Formule de politesse",
+                          rows: 1,
+                        },
+                      ] as { key: string; label: string; rows: number }[]
+                    ).map(({ key, label, rows }) => (
+                      <div key={key}>
+                        <label className="block text-xs font-medium text-amber-800 mb-1">
+                          {label}
+                        </label>
+                        <textarea
+                          rows={rows}
+                          className="w-full border border-amber-300 bg-white rounded px-2 py-1.5 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-amber-400"
+                          value={(editingLmData[key] as string) ?? ""}
+                          onChange={(e) =>
+                            setEditingLmData((prev) =>
+                              prev ? { ...prev, [key]: e.target.value } : prev,
+                            )
+                          }
+                        />
+                      </div>
+                    ))}
+                    <button
+                      className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                      onClick={async () => {
+                        if (!editingLmData) return;
+                        try {
+                          const backendUrl =
+                            process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+                          const res = await fetch(
+                            `${backendUrl}/api/cv-adapter/generate-cover-letter/pdf-from-data`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                cover_letter_data: editingLmData,
+                                language: wizardState.adaptLanguage,
+                              }),
+                            },
+                          );
+                          if (!res.ok)
+                            throw new Error("Erreur génération LM PDF");
+                          const blob = await res.blob();
+                          setAdaptResult((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  lmPdfBlob: blob,
+                                  lmData: editingLmData,
+                                }
+                              : prev,
+                          );
+                          setShowLmEditor(false);
+                        } catch {
+                          // silent — user can retry
+                        }
+                      }}
+                    >
+                      <Download className="h-4 w-4" />
+                      Régénérer le PDF de la lettre
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* ApplyModal — rendu conditionnel pour forcer remount à chaque ouverture */}
             {showEditModal && (
@@ -1125,7 +1268,7 @@ export function CVUploadAsyncWizard({
                       : undefined,
                 }}
                 initialCvData={adaptResult.cvData}
-                initialStep="results"
+                initialStep="preview"
                 initialMatchScore={adaptResult.matchScore ?? undefined}
                 initialLanguage={wizardState.adaptLanguage}
               />
