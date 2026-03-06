@@ -630,6 +630,8 @@ export function CVUploadAsyncWizard({
     setAdaptError(null);
     setAdaptLoading(false);
     setShowEditModal(false);
+    setShowLmEditor(false);
+    setEditingLmData(null);
   };
 
   const handleLoadFromHistory = async (analysis: any) => {

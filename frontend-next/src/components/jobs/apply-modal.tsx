@@ -240,6 +240,14 @@ export function ApplyModal({
     }
   }, [cvSource, profiles.length, fetchProfiles]);
 
+  // Auto-fetch preview HTML when modal opens directly in preview mode
+  useEffect(() => {
+    if (initialStep === "preview" && pendingCvData && !previewHtml) {
+      fetchPreviewHtml(pendingCvData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Reset state when modal closes
   const handleOpenChange = (open: boolean) => {
     if (!open) {
