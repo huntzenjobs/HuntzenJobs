@@ -6,7 +6,8 @@ Manage user's saved/bookmarked jobs.
 
 import logging
 from typing import Optional, List
-from fastapi import APIRouter, Header, HTTPException, status
+from datetime import datetime, timezone
+from fastapi import APIRouter, Header, HTTPException, Query, status
 from pydantic import BaseModel
 from supabase import create_client, Client
 
@@ -150,6 +151,36 @@ async def save_job(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to save job"
         )
+
+
+@router.post("/api/saved-jobs/apply-click/{external_job_id}")
+async def track_apply_click(
+    external_job_id: str,
+    job_url: str = Query(...),
+    job_source: str = Query(default="unknown"),
+    authorization: Optional[str] = Header(None),
+):
+    """
+    Track when a user clicks 'Postuler directement'.
+    - Updates applied_at on saved_jobs if the job is saved.
+    - Returns redirect URL for the client to open in a new tab.
+    """
+    user_id = get_user_id_from_header(authorization)
+
+    if user_id:
+        try:
+            supabase = get_supabase_client()
+            now = datetime.now(timezone.utc).isoformat()
+            # Update applied_at if the job exists in saved_jobs
+            supabase.table("saved_jobs") \
+                .update({"applied_at": now}) \
+                .eq("user_id", user_id) \
+                .eq("external_job_id", external_job_id) \
+                .execute()
+        except Exception as e:
+            logger.warning(f"Could not update applied_at for job {external_job_id}: {e}")
+
+    return {"tracked": True, "redirect_url": job_url}
 
 
 @router.delete("/api/saved-jobs/{job_id}")

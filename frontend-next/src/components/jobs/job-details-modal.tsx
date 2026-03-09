@@ -91,6 +91,10 @@ export function JobDetailsModal({
 }: JobDetailsModalProps) {
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [insiderDrawerOpen, setInsiderDrawerOpen] = React.useState(false);
+  const [showAppliedConfirm, setShowAppliedConfirm] = React.useState(false);
+  const confirmTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const t = useTranslations("jobDetails");
 
@@ -160,10 +164,57 @@ export function JobDetailsModal({
     trackView();
   }, [open, job, openPricingModal, onOpenChange, authenticatedFetch]);
 
+  // Cleanup confirmation popup when modal closes
+  React.useEffect(() => {
+    if (!open) {
+      setShowAppliedConfirm(false);
+      if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+    }
+  }, [open]);
+
   if (!job) return null;
 
   const resolvedUrl = finalUrl || job.url;
   const isNowDirect = !!finalUrl;
+
+  const handleApplyClick = () => {
+    // Open external job in new tab
+    window.open(resolvedUrl, "_blank", "noopener,noreferrer");
+    // Notify parent (localStorage tracking)
+    onApplied?.(job.id);
+    // Fire-and-forget backend tracking
+    authenticatedFetch(
+      `${BACKEND_URL}/api/saved-jobs/apply-click/${encodeURIComponent(job.id)}?job_url=${encodeURIComponent(resolvedUrl)}&job_source=${encodeURIComponent(job.source || "unknown")}`,
+      { method: "POST" },
+    ).catch(() => {});
+    // Show confirmation popup after 3s
+    confirmTimeoutRef.current = setTimeout(
+      () => setShowAppliedConfirm(true),
+      3000,
+    );
+  };
+
+  const handleConfirmApplied = async () => {
+    setShowAppliedConfirm(false);
+    try {
+      await authenticatedFetch(`${BACKEND_URL}/api/applications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          external_job_id: job.id,
+          job_title: job.title,
+          company: job.company,
+          location: job.location,
+          salary: job.salary,
+          job_url: resolvedUrl,
+          job_source: job.source,
+          confirmed_by_user: true,
+        }),
+      });
+    } catch {
+      // Fail silently
+    }
+  };
 
   // Format source for display
   const displaySource = formatJobSource(job.source);
@@ -448,21 +499,24 @@ export function JobDetailsModal({
                         : "flex-1 sm:flex-none"
                     }
                   >
-                    <a
-                      href={resolvedUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => {
-                        if ((job.url_is_direct || isNowDirect) && job.id) {
-                          onApplied?.(job.id);
-                        }
-                      }}
+                    <span
+                      className="cursor-pointer"
+                      onClick={
+                        job.url_is_direct || isNowDirect
+                          ? handleApplyClick
+                          : () =>
+                              window.open(
+                                resolvedUrl,
+                                "_blank",
+                                "noopener,noreferrer",
+                              )
+                      }
                     >
                       {job.url_is_direct || isNowDirect
                         ? "Postuler directement"
                         : t("viewOffer")}
                       <ExternalLink className="ml-2 h-4 w-4" />
-                    </a>
+                    </span>
                   </Button>
                 )}
               </div>
@@ -532,6 +586,29 @@ export function JobDetailsModal({
                 </div>
               )}
             </div>
+
+            {/* Confirmation popup — "As-tu vraiment postulé ?" */}
+            {showAppliedConfirm && (
+              <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 flex items-center justify-between gap-3 shadow-lg z-10">
+                <p className="text-sm font-semibold text-slate-800">
+                  As-tu envoyé ta candidature ?
+                </p>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={handleConfirmApplied}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                  >
+                    ✓ Oui, postulé !
+                  </button>
+                  <button
+                    onClick={() => setShowAppliedConfirm(false)}
+                    className="inline-flex items-center px-3 py-2 border border-slate-200 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    Non
+                  </button>
+                </div>
+              </div>
+            )}
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>
       </DialogPrimitive.Root>

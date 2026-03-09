@@ -24,6 +24,7 @@ import {
   Calendar,
   Activity,
   Users,
+  Send,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
@@ -89,6 +90,13 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/saved-jobs",
       icon: Bookmark,
       premium: true,
+    },
+    {
+      name: t("nav.candidatures"),
+      href: "/candidatures",
+      icon: Send,
+      premium: false,
+      badge: "Nouveau",
     },
     {
       name: t("nav.recruiterContact"),

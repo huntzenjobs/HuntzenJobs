@@ -110,6 +110,222 @@ def send_recruiter_request_confirmation(
         return False
 
 
+def send_application_confirmation(
+    to_email: str,
+    job_title: str,
+    company: str,
+    job_url: str,
+) -> bool:
+    """
+    Send confirmation email after user confirms they applied to a job.
+    """
+    try:
+        frontend_url = settings.get_primary_frontend_url()
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #00D9FF 0%, #0EA5E9 100%); color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }}
+                .content {{ background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0; border-top: none; }}
+                .job-card {{ background: white; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #00D9FF; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }}
+                .job-title {{ font-size: 18px; font-weight: bold; color: #1e293b; margin: 0 0 6px; }}
+                .company {{ color: #64748b; font-size: 14px; margin: 0; }}
+                .tips {{ background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px 20px; border-radius: 8px; margin: 20px 0; }}
+                .tips ul {{ margin: 8px 0; padding-left: 20px; }}
+                .tips li {{ margin: 6px 0; color: #166534; font-size: 14px; }}
+                .button {{ display: inline-block; background: linear-gradient(135deg, #00D9FF, #0EA5E9); color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 8px 4px; font-size: 14px; }}
+                .button-outline {{ display: inline-block; border: 2px solid #00D9FF; color: #0EA5E9; padding: 10px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 8px 4px; font-size: 14px; }}
+                .footer {{ text-align: center; margin-top: 24px; color: #94a3b8; font-size: 13px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1 style="margin:0;font-size:24px;">🎉 Candidature enregistrée !</h1>
+                    <p style="margin:8px 0 0;opacity:0.9;">Bonne chance pour cette opportunité</p>
+                </div>
+                <div class="content">
+                    <p>Ta candidature a bien été enregistrée dans HuntZen :</p>
+
+                    <div class="job-card">
+                        <p class="job-title">{job_title}</p>
+                        <p class="company">🏢 {company}</p>
+                    </div>
+
+                    <div class="tips">
+                        <strong>💡 Conseils pour maximiser tes chances :</strong>
+                        <ul>
+                            <li>Envoie un message LinkedIn au recruteur dans les 24h</li>
+                            <li>Si pas de réponse sous 2 semaines, relance poliment</li>
+                            <li>Prépare 3 questions pertinentes sur le poste</li>
+                            <li>Mets à jour ton statut dans "Mes Candidatures"</li>
+                        </ul>
+                    </div>
+
+                    <div style="text-align:center;margin-top:24px;">
+                        <a href="{frontend_url}/candidatures" class="button">
+                            Voir mes candidatures
+                        </a>
+                        <a href="{frontend_url}/jobs" class="button-outline">
+                            Chercher d'autres offres
+                        </a>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>Besoin d'aide ? <a href="mailto:contact@huntzen.app" style="color:#00D9FF;">contact@huntzen.app</a></p>
+                    <p>© 2026 HuntZen · <a href="{frontend_url}/unsubscribe" style="color:#94a3b8;">Se désabonner</a></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        params = {
+            "from": settings.from_email,
+            "to": [to_email],
+            "subject": f"✅ Candidature confirmée — {job_title} chez {company}",
+            "html": html_content,
+        }
+
+        email = resend.Emails.send(params)
+        logger.info(f"Application confirmation sent to {to_email}: {email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send application confirmation to {to_email}: {e}")
+        return False
+
+
+def send_job_alerts(
+    to_email: str,
+    jobs: list,
+    user_name: str = "là",
+) -> bool:
+    """
+    Send a job alert digest email with new matching offers.
+    """
+    try:
+        frontend_url = settings.get_primary_frontend_url()
+        job_cards_html = ""
+        for job in jobs[:5]:
+            salary_html = f"<span style='color:#16a34a;font-size:13px;'>💰 {job.get('salary', '')}</span>" if job.get("salary") else ""
+            job_cards_html += f"""
+            <div style="background:white;padding:16px;border-radius:8px;margin:10px 0;border:1px solid #e2e8f0;">
+                <p style="margin:0 0 4px;font-weight:bold;color:#1e293b;font-size:15px;">{job.get('title','')}</p>
+                <p style="margin:0 0 4px;color:#64748b;font-size:13px;">🏢 {job.get('company','')} · 📍 {job.get('location','')}</p>
+                {salary_html}
+                <a href="{frontend_url}/jobs?jobId={job.get('id','')}" style="display:inline-block;margin-top:10px;background:#00D9FF;color:white;padding:7px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:bold;">Voir l'offre</a>
+            </div>
+            """
+
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#0D1F3C,#1a3a6b);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">🔔 {len(jobs)} nouvelle{'s' if len(jobs) > 1 else ''} offre{'s' if len(jobs) > 1 else ''} pour toi</h1>
+                    <p style="color:#00D9FF;margin:8px 0 0;font-size:14px;">Des opportunités sélectionnées selon ton profil</p>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>Bonjour{' ' + user_name if user_name != 'là' else ''} 👋</p>
+                    <p>Voici les meilleures offres du jour qui correspondent à ton profil :</p>
+                    {job_cards_html}
+                    <div style="text-align:center;margin-top:24px;">
+                        <a href="{frontend_url}/jobs" style="display:inline-block;background:linear-gradient(135deg,#00D9FF,#0EA5E9);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            Voir toutes les offres
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">Gérer mes alertes</a>
+                </p>
+            </div>
+        </body></html>
+        """
+
+        params = {
+            "from": settings.from_email,
+            "to": [to_email],
+            "subject": f"🔔 {len(jobs)} nouvelle{'s' if len(jobs) > 1 else ''} offre{'s' if len(jobs) > 1 else ''} correspondent à ton profil",
+            "html": html_content,
+        }
+
+        resend.Emails.send(params)
+        logger.info(f"Job alerts sent to {to_email} ({len(jobs)} jobs)")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send job alerts to {to_email}: {e}")
+        return False
+
+
+def send_weekly_summary(
+    to_email: str,
+    stats: dict,
+) -> bool:
+    """
+    Send weekly activity summary email.
+    stats = { applications: int, saved: int, documents: int, views: int }
+    """
+    try:
+        frontend_url = settings.get_primary_frontend_url()
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">📊 Ton bilan de la semaine</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;">
+                        <div style="background:white;padding:16px;border-radius:8px;text-align:center;border:1px solid #e2e8f0;">
+                            <p style="font-size:28px;font-weight:bold;color:#00D9FF;margin:0;">{stats.get('applications', 0)}</p>
+                            <p style="margin:4px 0 0;color:#64748b;font-size:13px;">Candidatures</p>
+                        </div>
+                        <div style="background:white;padding:16px;border-radius:8px;text-align:center;border:1px solid #e2e8f0;">
+                            <p style="font-size:28px;font-weight:bold;color:#8b5cf6;margin:0;">{stats.get('saved', 0)}</p>
+                            <p style="margin:4px 0 0;color:#64748b;font-size:13px;">Offres sauvegardées</p>
+                        </div>
+                        <div style="background:white;padding:16px;border-radius:8px;text-align:center;border:1px solid #e2e8f0;">
+                            <p style="font-size:28px;font-weight:bold;color:#16a34a;margin:0;">{stats.get('documents', 0)}</p>
+                            <p style="margin:4px 0 0;color:#64748b;font-size:13px;">Documents générés</p>
+                        </div>
+                        <div style="background:white;padding:16px;border-radius:8px;text-align:center;border:1px solid #e2e8f0;">
+                            <p style="font-size:28px;font-weight:bold;color:#ea580c;margin:0;">{stats.get('views', 0)}</p>
+                            <p style="margin:4px 0 0;color:#64748b;font-size:13px;">Offres consultées</p>
+                        </div>
+                    </div>
+                    <div style="text-align:center;margin-top:20px;">
+                        <a href="{frontend_url}/candidatures" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            Voir mes candidatures
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">© 2026 HuntZen</p>
+            </div>
+        </body></html>
+        """
+
+        params = {
+            "from": settings.from_email,
+            "to": [to_email],
+            "subject": "📊 Ton bilan de recherche d'emploi — semaine du " + datetime.now().strftime("%d/%m"),
+            "html": html_content,
+        }
+
+        resend.Emails.send(params)
+        logger.info(f"Weekly summary sent to {to_email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send weekly summary to {to_email}: {e}")
+        return False
+
+
 def send_recruiter_request_notification(
     request_id: str,
     full_name: str,
