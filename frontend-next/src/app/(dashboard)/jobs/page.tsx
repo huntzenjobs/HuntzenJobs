@@ -540,6 +540,39 @@ export default function JobsPage() {
     setCurrentPage(1);
   }, [jobSearchParams]);
 
+  // Restore search state from URL params + sessionStorage on mount
+  useEffect(() => {
+    const q = searchParams.get("q");
+    const country = searchParams.get("country");
+    const city = searchParams.get("city");
+    if (!q) return;
+
+    // Restore form fields
+    setJobTitle(q);
+    if (country) setSelectedCountry(country);
+    if (city) {
+      setSelectedCity(city);
+      setCitySearch(city);
+    }
+
+    // Restore jobs from sessionStorage if query matches and cache < 15 min
+    try {
+      const raw = sessionStorage.getItem("huntzen_jobs_cache");
+      if (!raw) return;
+      const { jobs: cachedJobs, query, timestamp } = JSON.parse(raw);
+      const isRecent = Date.now() - timestamp < 15 * 60 * 1000;
+      if (isRecent && query.jobTitle === q) {
+        setJobs(cachedJobs);
+        setJobSearchParams({
+          query: q,
+          country: country || "",
+          location: city || "",
+        });
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Search query with intelligent caching
   const searchQuery = useQuery({
     queryKey: [
@@ -622,14 +655,28 @@ export default function JobsPage() {
     incrementUsage,
   ]);
 
-  // Handle search query results
+  // Handle search query results + persist to sessionStorage
   useEffect(() => {
     if (searchQuery.data) {
       setJobs(searchQuery.data.jobs);
       setVisibleJobsCount(0); // Reset counter for progressive reveal
       setCorrectedQuery(searchQuery.data.corrected_query || null);
+      try {
+        sessionStorage.setItem(
+          "huntzen_jobs_cache",
+          JSON.stringify({
+            jobs: searchQuery.data.jobs,
+            query: {
+              jobTitle: jobSearchParams?.query || "",
+              selectedCountry: jobSearchParams?.country || "",
+              selectedCity: jobSearchParams?.location || "",
+            },
+            timestamp: Date.now(),
+          }),
+        );
+      } catch {}
     }
-  }, [searchQuery.data]);
+  }, [searchQuery.data, jobSearchParams]);
 
   const handleSearch = (params: SearchParams) => {
     // Check if user can search (quota check)
@@ -642,6 +689,13 @@ export default function JobsPage() {
     setJobTitle(params.query);
     setSelectedCountry(params.country);
     setSelectedCity(params.location);
+
+    // Sync search params to URL so state persists on navigation
+    const urlParams = new URLSearchParams();
+    if (params.query) urlParams.set("q", params.query);
+    if (params.country) urlParams.set("country", params.country);
+    if (params.location) urlParams.set("city", params.location);
+    router.replace(`/jobs?${urlParams.toString()}`, { scroll: false });
 
     // Trigger search with caching
     // Setting params will enable the query and trigger fetch

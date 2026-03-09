@@ -11,9 +11,10 @@ export function useFullJobDescription(
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!url) return;
-
     setFinalUrl(null);
+    setDescription(null);
+
+    if (!url) return;
 
     const fetchFullDescription = async () => {
       setLoading(true);
