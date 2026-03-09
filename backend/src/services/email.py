@@ -326,6 +326,190 @@ def send_weekly_summary(
         return False
 
 
+def send_welcome(to_email: str, full_name: str = "") -> bool:
+    """Send welcome email after signup."""
+    try:
+        frontend_url = settings.get_primary_frontend_url()
+        name = full_name or "là"
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#0D1F3C,#1a3a6b);padding:32px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:26px;">🎯 Bienvenue sur HuntZen !</h1>
+                    <p style="color:#00D9FF;margin:10px 0 0;font-size:15px;">Ta recherche d'emploi commence maintenant</p>
+                </div>
+                <div style="background:#f8fafc;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>Bonjour {name} 👋</p>
+                    <p>Ton compte HuntZen est prêt. Voici ce que tu peux faire dès maintenant :</p>
+                    <div style="background:white;padding:20px;border-radius:10px;margin:16px 0;border:1px solid #e2e8f0;">
+                        <p style="margin:8px 0;">🔍 <strong>Chercher des offres</strong> adaptées à ton profil</p>
+                        <p style="margin:8px 0;">📄 <strong>Analyser ton CV</strong> et obtenir un score de matching</p>
+                        <p style="margin:8px 0;">✉️ <strong>Générer ta lettre de motivation</strong> en 1 clic</p>
+                        <p style="margin:8px 0;">📊 <strong>Suivre tes candidatures</strong> au même endroit</p>
+                    </div>
+                    <div style="text-align:center;margin-top:24px;">
+                        <a href="{frontend_url}/jobs" style="display:inline-block;background:linear-gradient(135deg,#00D9FF,#0EA5E9);color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">
+                            Commencer ma recherche
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">Gérer mes notifications</a>
+                </p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [to_email],
+            "subject": "🎯 Bienvenue sur HuntZen — ta recherche d'emploi commence !",
+            "html": html_content,
+        })
+        logger.info(f"Welcome email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send welcome email to {to_email}: {e}")
+        return False
+
+
+def send_cv_analysis_complete(to_email: str) -> bool:
+    """Notify user their CV analysis is ready."""
+    try:
+        frontend_url = settings.get_primary_frontend_url()
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#00D9FF,#0EA5E9);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">✅ Ton analyse CV est prête !</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>Ton CV a été analysé avec succès par notre IA.</p>
+                    <p>Tu peux maintenant consulter :</p>
+                    <div style="background:white;padding:16px;border-radius:8px;margin:16px 0;border:1px solid #e2e8f0;">
+                        <p style="margin:6px 0;">📊 Ton <strong>score de matching</strong> par rapport aux offres</p>
+                        <p style="margin:6px 0;">💡 Les <strong>points forts</strong> et axes d'amélioration</p>
+                        <p style="margin:6px 0;">🎯 Les offres qui <strong>correspondent le mieux</strong> à ton profil</p>
+                    </div>
+                    <div style="text-align:center;margin-top:20px;">
+                        <a href="{frontend_url}/cv-analysis" style="display:inline-block;background:linear-gradient(135deg,#00D9FF,#0EA5E9);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            Voir mon analyse
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">Gérer mes notifications</a>
+                </p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [to_email],
+            "subject": "✅ Ton analyse CV est prête — HuntZen",
+            "html": html_content,
+        })
+        logger.info(f"CV analysis complete email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send cv analysis email to {to_email}: {e}")
+        return False
+
+
+def send_document_generated(
+    to_email: str,
+    doc_type: str,  # "cv" | "cover_letter"
+    job_title: str,
+    company: str,
+) -> bool:
+    """Notify user their generated document (CV adapté or LM) is ready."""
+    try:
+        frontend_url = settings.get_primary_frontend_url()
+        label = "CV adapté" if doc_type == "cv" else "Lettre de motivation"
+        emoji = "📄" if doc_type == "cv" else "✉️"
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#16a34a,#15803d);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">{emoji} {label} généré{'' if doc_type == 'cover_letter' else 'e'} !</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>Ton {label.lower()} pour <strong>{job_title}</strong> chez <strong>{company}</strong> est prêt.</p>
+                    <div style="text-align:center;margin-top:20px;">
+                        <a href="{frontend_url}/documents" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            Voir mes documents
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">Gérer mes notifications</a>
+                </p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [to_email],
+            "subject": f"{emoji} Ton {label.lower()} est prêt — {job_title} chez {company}",
+            "html": html_content,
+        })
+        logger.info(f"Document generated email sent to {to_email} ({doc_type})")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send document email to {to_email}: {e}")
+        return False
+
+
+def send_application_status_change(
+    to_email: str,
+    job_title: str,
+    company: str,
+    new_status: str,  # "interview" | "offer"
+) -> bool:
+    """Notify user their application status changed to interview or offer."""
+    try:
+        frontend_url = settings.get_primary_frontend_url()
+        if new_status == "interview":
+            emoji, title, color, msg = "🎉", "Entretien décroché !", "#0EA5E9", f"Tu as un entretien pour <strong>{job_title}</strong> chez <strong>{company}</strong>. Prépare-toi bien !"
+        else:  # offer
+            emoji, title, color, msg = "🏆", "Offre reçue !", "#16a34a", f"Tu as reçu une offre pour <strong>{job_title}</strong> chez <strong>{company}</strong>. Félicitations !"
+
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:{color};padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:24px;">{emoji} {title}</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>{msg}</p>
+                    <div style="text-align:center;margin-top:20px;">
+                        <a href="{frontend_url}/candidatures" style="display:inline-block;background:{color};color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            Voir mes candidatures
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">Gérer mes notifications</a>
+                </p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [to_email],
+            "subject": f"{emoji} {title} — {job_title} chez {company}",
+            "html": html_content,
+        })
+        logger.info(f"Status change email sent to {to_email} ({new_status})")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send status change email to {to_email}: {e}")
+        return False
+
+
 def send_recruiter_request_notification(
     request_id: str,
     full_name: str,
