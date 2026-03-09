@@ -76,6 +76,7 @@ interface JobDetailsModalProps {
   job: Job | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onApplied?: (jobId: string) => void;
 }
 
 // ============================================================================
@@ -86,6 +87,7 @@ export function JobDetailsModal({
   job,
   open,
   onOpenChange,
+  onApplied,
 }: JobDetailsModalProps) {
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [insiderDrawerOpen, setInsiderDrawerOpen] = React.useState(false);
@@ -450,6 +452,11 @@ export function JobDetailsModal({
                       href={resolvedUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        if ((job.url_is_direct || isNowDirect) && job.id) {
+                          onApplied?.(job.id);
+                        }
+                      }}
                     >
                       {job.url_is_direct || isNowDirect
                         ? "Postuler directement"

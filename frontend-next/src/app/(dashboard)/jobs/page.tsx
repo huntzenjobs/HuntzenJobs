@@ -38,11 +38,13 @@ import {
   Filter,
   AlertCircle,
   CheckCircle,
+  CheckCircle2,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
   Clock,
   SlidersHorizontal,
+  ArrowUpDown,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -177,6 +179,34 @@ export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
+
+  type SortKey =
+    | "relevance"
+    | "date_desc"
+    | "date_asc"
+    | "salary_desc"
+    | "salary_asc"
+    | "company_asc";
+  const [sortKey, setSortKey] = useState<SortKey>("relevance");
+
+  const [viewedJobIds, setViewedJobIds] = useState<Set<string>>(() => {
+    try {
+      return new Set(
+        JSON.parse(localStorage.getItem("huntzen_viewed_jobs") || "[]"),
+      );
+    } catch {
+      return new Set();
+    }
+  });
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(() => {
+    try {
+      return new Set(
+        JSON.parse(localStorage.getItem("huntzen_applied_jobs") || "[]"),
+      );
+    } catch {
+      return new Set();
+    }
+  });
 
   // Advanced filters state
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
@@ -846,6 +876,13 @@ export default function JobsPage() {
   const handleViewDetails = (job: Job) => {
     setSelectedJob(job);
     setModalOpen(true);
+    setViewedJobIds((prev) => {
+      const next = new Set(prev).add(job.id);
+      try {
+        localStorage.setItem("huntzen_viewed_jobs", JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
   };
 
   // Derive available filter options from loaded results
@@ -918,7 +955,43 @@ export default function JobsPage() {
     }
     return result;
   }, [filteredProgressiveJobs, quickFilters]);
-  const visibleJobs = quickFilteredJobs.slice(0, jobsVisibleLimit);
+
+  const sortedJobs = useMemo(() => {
+    if (sortKey === "relevance") return quickFilteredJobs;
+    return [...quickFilteredJobs].sort((a, b) => {
+      switch (sortKey) {
+        case "date_desc": {
+          const da = a.posted_date ? new Date(a.posted_date).getTime() : 0;
+          const db = b.posted_date ? new Date(b.posted_date).getTime() : 0;
+          return db - da;
+        }
+        case "date_asc": {
+          const da = a.posted_date
+            ? new Date(a.posted_date).getTime()
+            : Infinity;
+          const db = b.posted_date
+            ? new Date(b.posted_date).getTime()
+            : Infinity;
+          return da - db;
+        }
+        case "salary_desc":
+        case "salary_asc": {
+          const extract = (s?: string) => {
+            const m = (s || "").replace(/\s/g, "").match(/\d+/);
+            return m ? parseInt(m[0]) : -1;
+          };
+          const diff = extract(b.salary) - extract(a.salary);
+          return sortKey === "salary_desc" ? diff : -diff;
+        }
+        case "company_asc":
+          return (a.company || "").localeCompare(b.company || "");
+        default:
+          return 0;
+      }
+    });
+  }, [quickFilteredJobs, sortKey]);
+
+  const visibleJobs = sortedJobs.slice(0, jobsVisibleLimit);
   const totalPages = Math.max(1, Math.ceil(visibleJobs.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
   const paginatedJobs = visibleJobs.slice(
@@ -1632,6 +1705,30 @@ export default function JobsPage() {
                     </span>
                   )}
                 </Button>
+                {/* Sort selector */}
+                <Select
+                  value={sortKey}
+                  onValueChange={(v) => setSortKey(v as SortKey)}
+                >
+                  <SelectTrigger
+                    className={cn(
+                      "h-9 gap-2 bg-white text-sm border",
+                      sortKey !== "relevance" &&
+                        "border-[#00D9FF] text-[#00D9FF]",
+                    )}
+                  >
+                    <ArrowUpDown className="w-4 h-4" />
+                    <SelectValue placeholder="Trier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="relevance">Pertinence</SelectItem>
+                    <SelectItem value="date_desc">Plus récent</SelectItem>
+                    <SelectItem value="date_asc">Plus ancien</SelectItem>
+                    <SelectItem value="salary_desc">Salaire (↓)</SelectItem>
+                    <SelectItem value="salary_asc">Salaire (↑)</SelectItem>
+                    <SelectItem value="company_asc">Entreprise A→Z</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex flex-col items-end gap-3">
                 {/* Page size selector */}
@@ -1873,13 +1970,32 @@ export default function JobsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card className="hover:shadow-2xl hover:border-[#00D9FF]/30 transition-all duration-300 group flex flex-col border border-slate-200 overflow-hidden h-full bg-white">
+                  <Card
+                    className={cn(
+                      "hover:shadow-2xl hover:border-[#00D9FF]/30 transition-all duration-300 group flex flex-col border border-slate-200 overflow-hidden h-full",
+                      viewedJobIds.has(job.id) ? "bg-slate-50/80" : "bg-white",
+                    )}
+                  >
                     <CardHeader className="pb-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-xl line-clamp-2 font-black group-hover:text-[#00D9FF] transition-colors text-slate-900">
-                            {job.title}
-                          </CardTitle>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <CardTitle className="text-xl line-clamp-2 font-black group-hover:text-[#00D9FF] transition-colors text-slate-900">
+                              {job.title}
+                            </CardTitle>
+                            {appliedJobIds.has(job.id) && (
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Postulé
+                              </span>
+                            )}
+                            {viewedJobIds.has(job.id) &&
+                              !appliedJobIds.has(job.id) && (
+                                <span className="text-xs text-slate-400 font-medium">
+                                  Déjà ouvert
+                                </span>
+                              )}
+                          </div>
                           <CardDescription className="flex items-center gap-2 mt-3 text-base">
                             <div
                               className={cn(
@@ -2202,6 +2318,18 @@ export default function JobsPage() {
         job={selectedJob}
         open={modalOpen}
         onOpenChange={setModalOpen}
+        onApplied={(id) => {
+          setAppliedJobIds((prev) => {
+            const next = new Set(prev).add(id);
+            try {
+              localStorage.setItem(
+                "huntzen_applied_jobs",
+                JSON.stringify([...next]),
+              );
+            } catch {}
+            return next;
+          });
+        }}
       />
 
       {/* Advanced Filters Modal */}
