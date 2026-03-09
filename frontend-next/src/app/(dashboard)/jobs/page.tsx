@@ -41,6 +41,7 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +57,10 @@ import {
 } from "@/components/jobs/gradient-job-card";
 import { JobDetailsModal } from "@/components/jobs/job-details-modal";
 import { SearchLoadingModal } from "@/components/jobs/search-loading-modal";
-import { formatJobSource } from "@/lib/utils/job-source-formatter";
+import {
+  formatJobSource,
+  getSourceColor,
+} from "@/lib/utils/job-source-formatter";
 import {
   SearchFormInline,
   type SearchParams,
@@ -127,6 +131,25 @@ const stripHtmlForPreview = (html: string) =>
     .replace(/&[a-z]+;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+function formatRelativeDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Aujourd'hui";
+    if (diffDays === 1) return "Hier";
+    if (diffDays < 7) return `Il y a ${diffDays} jours`;
+    if (diffDays < 30)
+      return `Il y a ${Math.floor(diffDays / 7)} semaine${Math.floor(diffDays / 7) > 1 ? "s" : ""}`;
+    if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`;
+    return date.toLocaleDateString("fr-FR");
+  } catch {
+    return dateStr;
+  }
+}
 
 export default function JobsPage() {
   const t = useTranslations("dashboard.jobs");
@@ -1522,8 +1545,17 @@ export default function JobsPage() {
                             {job.title}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2 mt-3 text-base">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center flex-shrink-0 shadow-md">
-                              <Building className="h-5 w-5 text-white" />
+                            <div
+                              className={cn(
+                                "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md text-white font-bold text-sm",
+                                getSourceColor(job.source),
+                              )}
+                            >
+                              {job.company ? (
+                                job.company.charAt(0).toUpperCase()
+                              ) : (
+                                <Building className="h-4 w-4" />
+                              )}
                             </div>
                             <span className="font-semibold text-slate-800">
                               {job.company}
@@ -1532,11 +1564,21 @@ export default function JobsPage() {
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <Badge
-                            variant="secondary"
-                            className="shrink-0 font-bold px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200"
+                            className={cn(
+                              "shrink-0 font-bold px-3 py-1 text-white border-0",
+                              getSourceColor(job.source),
+                            )}
                           >
                             {formatJobSource(job.source)}
                           </Badge>
+                          {job.contract_type && (
+                            <Badge
+                              variant="outline"
+                              className="shrink-0 text-xs px-2 py-0.5 text-slate-600 border-slate-300"
+                            >
+                              {job.contract_type}
+                            </Badge>
+                          )}
                           <button
                             onClick={() => handleSaveJob(job)}
                             className={cn(
@@ -1611,11 +1653,19 @@ export default function JobsPage() {
                         </p>
                       </div>
 
-                      {/* URL warning */}
+                      {/* URL indicator */}
                       {job.url_is_direct === false && (
-                        <p className="text-xs text-amber-600 flex items-center gap-1">
-                          <span>⚠️</span>
-                          <span>Le lien peut ouvrir une page de recherche</span>
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          Via agrégateur
+                        </span>
+                      )}
+
+                      {/* Posted date */}
+                      {job.posted_date && (
+                        <p className="text-xs text-slate-400 flex items-center justify-end gap-1 mt-1">
+                          <Clock className="h-3 w-3" />
+                          {formatRelativeDate(job.posted_date)}
                         </p>
                       )}
 
