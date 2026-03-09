@@ -77,6 +77,8 @@ interface JobDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onApplied?: (jobId: string) => void;
+  /** Appelé quand l'user a cliqué postuler mais fermé la modal avant la popup */
+  onApplyPending?: (job: Job) => void;
 }
 
 // ============================================================================
@@ -88,6 +90,7 @@ export function JobDetailsModal({
   open,
   onOpenChange,
   onApplied,
+  onApplyPending,
 }: JobDetailsModalProps) {
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [insiderDrawerOpen, setInsiderDrawerOpen] = React.useState(false);
@@ -95,6 +98,8 @@ export function JobDetailsModal({
   const confirmTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  // Ref pour capturer le job au moment du clic (job peut être null dans cleanup)
+  const pendingJobRef = React.useRef<Job | null>(null);
 
   const t = useTranslations("jobDetails");
 
@@ -168,9 +173,17 @@ export function JobDetailsModal({
   React.useEffect(() => {
     if (!open) {
       setShowAppliedConfirm(false);
-      if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+      if (confirmTimeoutRef.current) {
+        clearTimeout(confirmTimeoutRef.current);
+        confirmTimeoutRef.current = null;
+        // Timer était en cours → notifier le parent pour toast externe
+        if (pendingJobRef.current) {
+          onApplyPending?.(pendingJobRef.current);
+          pendingJobRef.current = null;
+        }
+      }
     }
-  }, [open]);
+  }, [open, onApplyPending]);
 
   if (!job) return null;
 
@@ -178,16 +191,16 @@ export function JobDetailsModal({
   const isNowDirect = !!finalUrl;
 
   const handleApplyClick = () => {
+    // Capturer le job pour le cas où la modal se ferme avant la popup
+    pendingJobRef.current = job;
     // Open external job in new tab
     window.open(resolvedUrl, "_blank", "noopener,noreferrer");
-    // Notify parent (localStorage tracking)
-    onApplied?.(job.id);
-    // Fire-and-forget backend tracking
+    // Fire-and-forget backend tracking (apply-click uniquement)
     authenticatedFetch(
       `${BACKEND_URL}/api/saved-jobs/apply-click/${encodeURIComponent(job.id)}?job_url=${encodeURIComponent(resolvedUrl)}&job_source=${encodeURIComponent(job.source || "unknown")}`,
       { method: "POST" },
     ).catch(() => {});
-    // Show confirmation popup after 3s
+    // Show confirmation popup after 3s — onApplied sera appelé SEULEMENT si l'user confirme
     confirmTimeoutRef.current = setTimeout(
       () => setShowAppliedConfirm(true),
       3000,
@@ -196,6 +209,9 @@ export function JobDetailsModal({
 
   const handleConfirmApplied = async () => {
     setShowAppliedConfirm(false);
+    pendingJobRef.current = null;
+    // ✅ Seulement ici on marque "Postulé" dans le parent (localStorage + badge vert)
+    onApplied?.(job.id);
     try {
       await authenticatedFetch(`${BACKEND_URL}/api/applications`, {
         method: "POST",
@@ -214,6 +230,12 @@ export function JobDetailsModal({
     } catch {
       // Fail silently
     }
+  };
+
+  const handleDenyApplied = () => {
+    setShowAppliedConfirm(false);
+    pendingJobRef.current = null;
+    // "Non" → pas de badge "Postulé", la card garde juste "Déjà ouvert"
   };
 
   // Format source for display
@@ -601,7 +623,7 @@ export function JobDetailsModal({
                     ✓ Oui, postulé !
                   </button>
                   <button
-                    onClick={() => setShowAppliedConfirm(false)}
+                    onClick={handleDenyApplied}
                     className="inline-flex items-center px-3 py-2 border border-slate-200 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
                   >
                     Non

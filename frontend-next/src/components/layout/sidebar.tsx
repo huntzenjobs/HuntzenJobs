@@ -57,6 +57,13 @@ export function Sidebar({ className }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isCandidaturesNew, setIsCandidaturesNew] = useState(() => {
+    try {
+      return !localStorage.getItem("huntzen_candidatures_visited");
+    } catch {
+      return false;
+    }
+  });
   const t = useTranslations("sidebar");
 
   // Use auth context as single source of truth
@@ -96,7 +103,7 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/candidatures",
       icon: Send,
       premium: false,
-      badge: "Nouveau",
+      badge: isCandidaturesNew ? "Nouveau" : undefined,
     },
     {
       name: t("nav.recruiterContact"),
@@ -197,6 +204,15 @@ export function Sidebar({ className }: SidebarProps) {
                     if (isLocked && user) {
                       e.preventDefault();
                       openPricingModal();
+                    }
+                    if (item.href === "/candidatures" && isCandidaturesNew) {
+                      try {
+                        localStorage.setItem(
+                          "huntzen_candidatures_visited",
+                          "1",
+                        );
+                      } catch {}
+                      setIsCandidaturesNew(false);
                     }
                     setIsMobileMenuOpen(false);
                   }}

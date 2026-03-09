@@ -2330,6 +2330,29 @@ export default function JobsPage() {
             return next;
           });
         }}
+        onApplyPending={(pendingJob) => {
+          // Modal fermée avant la popup → toast Sonner avec confirmation
+          toast(`As-tu postulé chez ${pendingJob.company} ?`, {
+            description: pendingJob.title,
+            duration: 12000,
+            action: {
+              label: "✓ Oui, postulé !",
+              onClick: () => {
+                setAppliedJobIds((prev) => {
+                  const next = new Set(prev).add(pendingJob.id);
+                  try {
+                    localStorage.setItem(
+                      "huntzen_applied_jobs",
+                      JSON.stringify([...next]),
+                    );
+                  } catch {}
+                  return next;
+                });
+              },
+            },
+            cancel: { label: "Non", onClick: () => {} },
+          });
+        }}
       />
 
       {/* Advanced Filters Modal */}
