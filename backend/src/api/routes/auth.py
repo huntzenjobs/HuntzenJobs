@@ -7,6 +7,7 @@ User authentication and profile management.
 import logging
 from typing import Optional
 from fastapi import APIRouter, Header, HTTPException, status, Request
+from pydantic import BaseModel
 from supabase import create_client, Client
 
 from src.api.middleware import limiter
@@ -291,3 +292,19 @@ async def get_current_user_info(
             status_code=500,
             detail=f"Failed to get user info: {str(e)}"
         )
+
+
+class WelcomeRequest(BaseModel):
+    email: str
+    full_name: str = ""
+
+
+@router.post("/api/auth/welcome")
+async def send_welcome_email(payload: WelcomeRequest):
+    """Send welcome email after signup. No auth required — called from frontend post-signup."""
+    from src.services.email import send_welcome
+    try:
+        send_welcome(to_email=payload.email, full_name=payload.full_name)
+    except Exception as e:
+        logger.warning(f"Welcome email failed (non-blocking): {e}")
+    return {"success": True}

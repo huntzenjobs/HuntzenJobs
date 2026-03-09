@@ -307,6 +307,20 @@ async def cv_analysis_callback(
                 f"[CALLBACK] ✅ Incremented cv_analysis quota for user {user_id} "
                 f"after successful CV processing: {cv_id}"
             )
+            try:
+                import httpx
+                r = httpx.get(
+                    f"{SUPABASE_URL}/auth/v1/admin/users/{user_id}",
+                    headers={"Authorization": f"Bearer {SUPABASE_KEY}", "apikey": SUPABASE_KEY},
+                    timeout=5,
+                )
+                if r.status_code == 200:
+                    email = r.json().get("email")
+                    if email:
+                        from src.services.email import send_cv_analysis_complete
+                        send_cv_analysis_complete(email)
+            except Exception as email_err:
+                logger.warning(f"[CALLBACK] Email notification failed (non-blocking): {email_err}")
             return {
                 "success": True,
                 "quota_incremented": success,

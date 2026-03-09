@@ -9,11 +9,12 @@ import logging
 import re
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile, status
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from src.api.deps import get_cv_adapter_main
+from src.api.deps import get_cv_adapter_main, get_user_info_from_token
+from src.services.email import send_document_generated
 from src.services.pdf_generator import get_pdf_generator
 
 logger = logging.getLogger(__name__)
@@ -125,6 +126,7 @@ async def adapt_cv(
     template: str = Form(default="ats", description="Template (ats/modern)"),
     cv_text: Optional[str] = Form(default=None, description="Original CV content as text"),
     file: Optional[UploadFile] = File(default=None, description="CV file (PDF or DOCX)"),
+    authorization: Optional[str] = Header(default=None),
 ):
     """
     Adapt a CV to match a specific job offer.
@@ -169,7 +171,15 @@ async def adapt_cv(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "CV adaptation failed"),
         )
-    
+
+    user_info = get_user_info_from_token(authorization)
+    if user_info and user_info.get("email"):
+        try:
+            job_title = job_description.split("\n")[0][:60] or "Poste"
+            send_document_generated(user_info["email"], "cv", job_title, "")
+        except Exception:
+            pass
+
     return {
         "success": True,
         "cv_data": result.get("cv_data"),
@@ -186,6 +196,7 @@ async def adapt_cv_to_pdf(
     template: str = Form(default="ats", description="Template (ats/modern)"),
     cv_text: Optional[str] = Form(default=None, description="Original CV content as text"),
     file: Optional[UploadFile] = File(default=None, description="CV file (PDF or DOCX)"),
+    authorization: Optional[str] = Header(default=None),
 ):
     """
     Adapt CV and generate PDF directly.
@@ -245,7 +256,15 @@ async def adapt_cv_to_pdf(
     name = cv_data.get("personal_info", {}).get("name", "cv")
     safe_name = "".join(c for c in name if c.isalnum() or c in " -_").strip()
     filename = f"{safe_name}_adapted.pdf" if safe_name else "cv_adapted.pdf"
-    
+
+    user_info = get_user_info_from_token(authorization)
+    if user_info and user_info.get("email"):
+        try:
+            job_title = job_description.split("\n")[0][:60] or "Poste"
+            send_document_generated(user_info["email"], "cv", job_title, "")
+        except Exception:
+            pass
+
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -460,7 +479,7 @@ class CoverLetterRequest(BaseModel):
 
 
 @router.post("/generate-cover-letter")
-async def generate_cover_letter(request: CoverLetterRequest):
+async def generate_cover_letter(request: CoverLetterRequest, authorization: Optional[str] = Header(default=None)):
     """
     Generate a personalized cover letter from CV data and job description.
     
@@ -500,7 +519,15 @@ async def generate_cover_letter(request: CoverLetterRequest):
     name = request.cv_data.get("personal_info", {}).get("name", "candidate")
     safe_name = "".join(c for c in name if c.isalnum() or c in " -_").strip()
     filename = f"Lettre_Motivation_{safe_name}.pdf" if safe_name else "cover_letter.pdf"
-    
+
+    user_info = get_user_info_from_token(authorization)
+    if user_info and user_info.get("email"):
+        try:
+            job_title = result.get("job_title") or request.job_description.split("\n")[0][:60] or "Poste"
+            send_document_generated(user_info["email"], "cover_letter", job_title, request.company_name or "")
+        except Exception:
+            pass
+
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

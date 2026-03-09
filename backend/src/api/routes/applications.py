@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 
 from src.config.settings import get_settings
-from src.services.email import send_application_confirmation
+from src.services.email import send_application_confirmation, send_application_status_change
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +156,7 @@ async def update_application_status(
             detail=f"Status must be one of: {', '.join(valid_statuses)}",
         )
 
-    user_id, _ = get_user_from_header(authorization)
+    user_id, user_email = get_user_from_header(authorization)
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -173,6 +173,13 @@ async def update_application_status(
 
         if not resp.data:
             raise HTTPException(status_code=404, detail="Application not found")
+
+        if payload.status in {"interview", "offer"} and user_email:
+            app = resp.data[0]
+            try:
+                send_application_status_change(user_email, app["job_title"], app["company"], payload.status)
+            except Exception:
+                pass
 
         return {"success": True, "data": resp.data[0]}
 

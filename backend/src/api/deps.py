@@ -311,6 +311,22 @@ def get_supabase_client() -> Client:
     return _supabase_client
 
 
+def get_user_info_from_token(authorization: Optional[str]) -> Optional[dict]:
+    """Return {"id": ..., "email": ...} or None if not authenticated."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization.replace("Bearer ", "")
+    try:
+        settings = get_settings()
+        supabase_anon = create_client(settings.supabase_url, settings.get_supabase_key())
+        response = supabase_anon.auth.get_user(token)
+        if response and response.user:
+            return {"id": response.user.id, "email": response.user.email}
+    except Exception as e:
+        logger.warning(f"⚠️ Error extracting user info from token: {e}")
+    return None
+
+
 def get_user_id_from_token(authorization: Optional[str]) -> Optional[str]:
     """
     Extract user ID from Authorization Bearer token.
