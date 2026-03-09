@@ -8,6 +8,7 @@ import {
   Settings,
   UserCircle,
   Gift,
+  Bell,
   Copy,
   Check,
   MousePointerClick,
@@ -18,6 +19,7 @@ import { AvatarUpload } from "@/components/profile/avatar-upload";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { SubscriptionCard } from "@/components/profile/subscription-card";
 import { SettingsSection } from "@/components/profile/settings-section";
+import { NotificationsSection } from "@/components/profile/notifications-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
@@ -246,6 +248,13 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               Paramètres
             </TabsTrigger>
             <TabsTrigger
+              value="notifications"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger
               value="referral"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
@@ -337,6 +346,18 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               />
             </motion.div>
           </TabsContent>
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="p-8">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="max-w-2xl"
+            >
+              <NotificationsSection />
+            </motion.div>
+          </TabsContent>
+
           <TabsContent value="referral" className="p-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}

@@ -29,6 +29,7 @@ from src.api.routes.recruiter_finder import router as recruiter_finder_router
 from src.api.routes.documents import router as documents_router
 from src.api.routes.referrals import router as referrals_router
 from src.api.routes.applications import router as applications_router
+from src.api.routes.notifications import router as notifications_router
 
 router = APIRouter()
 
@@ -56,3 +57,4 @@ router.include_router(recruiter_finder_router, prefix="/api/recruiter-finder", t
 router.include_router(documents_router, prefix="/api/documents", tags=["Documents"])
 router.include_router(referrals_router, prefix="/api/referrals", tags=["Referrals"])
 router.include_router(applications_router, tags=["Applications"])
+router.include_router(notifications_router, tags=["Notifications"])
