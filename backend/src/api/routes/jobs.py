@@ -4,12 +4,18 @@ Job Search API Routes
 Endpoints for AI-powered job searching.
 """
 
+import logging
 from typing import List
+
+import httpx
+from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException, status, Query, Request
 
 from src.api.deps import ScoutAgentDep
 from src.api.middleware import limiter
 from src.models.schemas import JobSearchRequest, JobSearchResponse, SearchMetadata, Job
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -281,6 +287,18 @@ async def get_market_insights(
     }
 
 
+def _clean_element_html(el) -> str:
+    """
+    Strip unsafe/noisy attributes from all child tags and return inner HTML.
+    """
+    for tag in el.find_all(True):
+        tag.attrs = {
+            k: v for k, v in tag.attrs.items()
+            if k not in ("style", "class", "id") and not k.startswith("on")
+        }
+    return el.decode_contents()
+
+
 @router.post("/description")
 async def get_job_description(request: Request):
     """
@@ -288,23 +306,23 @@ async def get_job_description(request: Request):
 
     Fetches the page and extracts the job description section using common
     CSS selectors, then falls back to the longest paragraph block.
+    Returns HTML content and the final resolved URL after redirects.
     """
-    import httpx
-    from bs4 import BeautifulSoup
-
     try:
         body = await request.json()
         url = body.get("url", "")
 
         if not url:
-            return {"success": False, "description": ""}
+            return {"success": False, "description": "", "final_url": None}
 
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
             headers = {"User-Agent": "Mozilla/5.0 (compatible; HuntZen/1.0)"}
             response = await client.get(url, headers=headers)
 
+        final_url = str(response.url)
+
         if response.status_code != 200:
-            return {"success": False, "description": ""}
+            return {"success": False, "description": "", "final_url": final_url}
 
         soup = BeautifulSoup(response.text, "html.parser")
 
@@ -322,25 +340,30 @@ async def get_job_description(request: Request):
             'article',
             'main',
         ]
-        text = ""
+        found_el = None
         for selector in selectors:
             el = soup.select_one(selector)
-            if el:
-                text = el.get_text(separator="\n", strip=True)
-                if len(text) > 200:
-                    break
+            if el and len(el.get_text(strip=True)) > 200:
+                found_el = el
+                break
 
-        # Fallback: join longest paragraph blocks
-        if not text or len(text) < 200:
+        if found_el:
+            html_content = _clean_element_html(found_el)
+        else:
+            # Fallback: wrap long paragraphs in <p> tags
             paragraphs = soup.find_all("p")
-            text = "\n".join(
-                p.get_text(strip=True) for p in paragraphs if len(p.get_text()) > 50
+            html_content = "".join(
+                f"<p>{p.get_text(strip=True)}</p>"
+                for p in paragraphs if len(p.get_text()) > 50
             )
 
-        return {"success": True, "description": text[:5000]}
+        if not html_content or len(html_content.strip()) < 50:
+            return {"success": False, "description": "", "final_url": final_url}
+        return {"success": True, "description": html_content[:8000], "final_url": final_url}
 
     except Exception:
-        return {"success": False, "description": ""}
+        logger.exception("description scrape failed for url=%s", url)
+        return {"success": False, "description": "", "final_url": None}
 
 
 @router.post("/track-view")

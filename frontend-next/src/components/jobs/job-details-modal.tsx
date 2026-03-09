@@ -44,6 +44,30 @@ import { InsiderFinderDrawer } from "./insider-finder-drawer";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+function formatRelativeDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Aujourd'hui";
+    if (diffDays === 1) return "Hier";
+    if (diffDays < 7) return `Il y a ${diffDays} jours`;
+    if (diffDays < 30)
+      return `Il y a ${Math.floor(diffDays / 7)} semaine${Math.floor(diffDays / 7) > 1 ? "s" : ""}`;
+    if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`;
+    return date.toLocaleDateString("fr-FR");
+  } catch {
+    return dateStr;
+  }
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -71,8 +95,11 @@ export function JobDetailsModal({
   // All hooks must be called before any conditional return (Rules of Hooks)
   const { canUse, openPricingModal } = useSubscription();
   const { authenticatedFetch } = useAuthenticatedFetch();
-  const { description: fullDescription, loading: loadingDescription } =
-    useFullJobDescription(job?.url, job?.source);
+  const {
+    description: fullDescription,
+    finalUrl,
+    loading: loadingDescription,
+  } = useFullJobDescription(job?.url, job?.source);
 
   // Track job view when modal opens — must be before early return (Rules of Hooks)
   React.useEffect(() => {
@@ -133,6 +160,9 @@ export function JobDetailsModal({
 
   if (!job) return null;
 
+  const resolvedUrl = finalUrl || job.url;
+  const isNowDirect = !!finalUrl;
+
   // Format source for display
   const displaySource = formatJobSource(job.source);
 
@@ -156,6 +186,12 @@ export function JobDetailsModal({
       "ul",
       "ol",
       "li",
+      "table",
+      "thead",
+      "tbody",
+      "tr",
+      "td",
+      "th",
       "a",
       "span",
       "div",
@@ -240,12 +276,19 @@ export function JobDetailsModal({
                       </h3>
                       <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
                         {loadingDescription ? (
-                          <div className="space-y-3">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-5/6" />
-                            <Skeleton className="h-4 w-4/6" />
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-3/4" />
+                          <div className="space-y-4">
+                            <Skeleton className="h-5 w-1/3" />
+                            <div className="space-y-2 pl-4">
+                              <Skeleton className="h-3.5 w-full" />
+                              <Skeleton className="h-3.5 w-5/6" />
+                              <Skeleton className="h-3.5 w-4/5" />
+                            </div>
+                            <Skeleton className="h-5 w-2/5 mt-2" />
+                            <div className="space-y-2 pl-4">
+                              <Skeleton className="h-3.5 w-full" />
+                              <Skeleton className="h-3.5 w-3/4" />
+                              <Skeleton className="h-3.5 w-5/6" />
+                            </div>
                           </div>
                         ) : (
                           <div
@@ -348,7 +391,20 @@ export function JobDetailsModal({
                         <span className="font-semibold">{t("postedDate")}</span>
                       </div>
                       <p className="text-gray-900 font-medium">
-                        {job.posted_date}
+                        {formatRelativeDate(job.posted_date)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Contract Type */}
+                  {job.contract_type && (
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                        <Briefcase className="h-5 w-5" />
+                        <span className="font-semibold">Contrat</span>
+                      </div>
+                      <p className="text-gray-900 font-medium">
+                        {job.contract_type}
                       </p>
                     </div>
                   )}
@@ -380,16 +436,22 @@ export function JobDetailsModal({
                 {job.url && (
                   <Button
                     asChild
-                    variant={job.url_is_direct ? "default" : "outline"}
+                    variant={
+                      job.url_is_direct || isNowDirect ? "default" : "outline"
+                    }
                     size="sm"
                     className={
-                      job.url_is_direct
+                      job.url_is_direct || isNowDirect
                         ? "flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
                         : "flex-1 sm:flex-none"
                     }
                   >
-                    <a href={job.url} target="_blank" rel="noopener noreferrer">
-                      {job.url_is_direct
+                    <a
+                      href={resolvedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {job.url_is_direct || isNowDirect
                         ? "Postuler directement"
                         : t("viewOffer")}
                       <ExternalLink className="ml-2 h-4 w-4" />
