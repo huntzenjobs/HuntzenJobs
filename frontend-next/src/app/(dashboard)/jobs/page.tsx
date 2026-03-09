@@ -42,6 +42,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -151,6 +153,14 @@ function formatRelativeDate(dateStr: string): string {
   }
 }
 
+interface QuickFilters {
+  sources: string[];
+  contractTypes: string[];
+  maxDays: number | null; // null = all dates
+  salaryMin: number | null;
+  directOnly: boolean;
+}
+
 export default function JobsPage() {
   const t = useTranslations("dashboard.jobs");
   const [jobTitle, setJobTitle] = useState("");
@@ -173,6 +183,16 @@ export default function JobsPage() {
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Quick filters state (client-side filtering on loaded results)
+  const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
+  const [quickFilters, setQuickFilters] = useState<QuickFilters>({
+    sources: [],
+    contractTypes: [],
+    maxDays: null,
+    salaryMin: null,
+    directOnly: false,
+  });
 
   // Auth & Query Client
   const auth = useOptionalAuth();
@@ -774,6 +794,32 @@ export default function JobsPage() {
     setModalOpen(true);
   };
 
+  // Derive available filter options from loaded results
+  const availableSources = useMemo(
+    () =>
+      [...new Set(translatedJobs.map((j) => j.source).filter(Boolean))].sort(),
+    [translatedJobs],
+  );
+  const availableContractTypes = useMemo(
+    () =>
+      [
+        ...new Set(
+          translatedJobs
+            .map((j) => j.contract_type)
+            .filter(Boolean) as string[],
+        ),
+      ].sort(),
+    [translatedJobs],
+  );
+
+  // Count active quick filters
+  const activeQuickFiltersCount =
+    quickFilters.sources.length +
+    quickFilters.contractTypes.length +
+    (quickFilters.maxDays !== null ? 1 : 0) +
+    (quickFilters.salaryMin !== null ? 1 : 0) +
+    (quickFilters.directOnly ? 1 : 0);
+
   // Split jobs into visible and blurred
   // Progressive reveal: only show jobs up to visibleJobsCount
   // Use translatedJobs for display (auto-translated when locale ≠ fr)
@@ -781,7 +827,44 @@ export default function JobsPage() {
   const filteredProgressiveJobs = progressiveJobs.filter(
     (j) => j.url_is_direct !== false,
   );
-  const visibleJobs = filteredProgressiveJobs.slice(0, jobsVisibleLimit);
+  // Apply quick filters client-side
+  const quickFilteredJobs = useMemo(() => {
+    let result = filteredProgressiveJobs;
+    if (quickFilters.sources.length > 0) {
+      result = result.filter((j) => quickFilters.sources.includes(j.source));
+    }
+    if (quickFilters.contractTypes.length > 0) {
+      result = result.filter(
+        (j) =>
+          j.contract_type &&
+          quickFilters.contractTypes.includes(j.contract_type),
+      );
+    }
+    if (quickFilters.maxDays !== null) {
+      const cutoff = Date.now() - quickFilters.maxDays * 24 * 60 * 60 * 1000;
+      result = result.filter((j) => {
+        if (!j.posted_date) return true; // keep if no date
+        try {
+          return new Date(j.posted_date).getTime() >= cutoff;
+        } catch {
+          return true;
+        }
+      });
+    }
+    if (quickFilters.salaryMin !== null) {
+      result = result.filter((j) => {
+        if (!j.salary) return false;
+        const match = j.salary.replace(/\s/g, "").match(/\d+/);
+        if (!match) return false;
+        return parseInt(match[0]) >= (quickFilters.salaryMin ?? 0);
+      });
+    }
+    if (quickFilters.directOnly) {
+      result = result.filter((j) => j.url_is_direct === true);
+    }
+    return result;
+  }, [filteredProgressiveJobs, quickFilters]);
+  const visibleJobs = quickFilteredJobs.slice(0, jobsVisibleLimit);
   const totalPages = Math.max(1, Math.ceil(visibleJobs.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
   const paginatedJobs = visibleJobs.slice(
@@ -1476,6 +1559,25 @@ export default function JobsPage() {
                     {t("results.refresh")}
                   </span>
                 </Button>
+                {/* Quick filter toggle button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuickFiltersOpen(!quickFiltersOpen)}
+                  className={cn(
+                    "gap-2 bg-white",
+                    quickFiltersOpen && "border-[#00D9FF] text-[#00D9FF]",
+                    activeQuickFiltersCount > 0 && "border-[#00D9FF]",
+                  )}
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span className="hidden sm:inline">Filtrer</span>
+                  {activeQuickFiltersCount > 0 && (
+                    <span className="ml-1 bg-[#00D9FF] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {activeQuickFiltersCount}
+                    </span>
+                  )}
+                </Button>
               </div>
               <div className="flex flex-col items-end gap-3">
                 {/* Page size selector */}
@@ -1521,6 +1623,186 @@ export default function JobsPage() {
                 )}
               </div>
             </motion.div>
+
+            {/* Quick filter panel */}
+            {quickFiltersOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-white border border-slate-200 rounded-xl p-4 space-y-4 overflow-hidden"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    Filtrer les résultats
+                  </h3>
+                  {activeQuickFiltersCount > 0 && (
+                    <button
+                      onClick={() =>
+                        setQuickFilters({
+                          sources: [],
+                          contractTypes: [],
+                          maxDays: null,
+                          salaryMin: null,
+                          directOnly: false,
+                        })
+                      }
+                      className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+                    >
+                      <X className="h-3 w-3" />
+                      Réinitialiser ({activeQuickFiltersCount})
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Source filter */}
+                  {availableSources.length > 1 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 mb-2">
+                        Source
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {availableSources.map((source) => (
+                          <button
+                            key={source}
+                            onClick={() =>
+                              setQuickFilters((prev) => ({
+                                ...prev,
+                                sources: prev.sources.includes(source)
+                                  ? prev.sources.filter((s) => s !== source)
+                                  : [...prev.sources, source],
+                              }))
+                            }
+                            className={cn(
+                              "text-xs px-2 py-1 rounded-full border transition-colors",
+                              quickFilters.sources.includes(source)
+                                ? "bg-[#00D9FF] text-white border-[#00D9FF]"
+                                : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
+                            )}
+                          >
+                            {formatJobSource(source)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Contract type filter */}
+                  {availableContractTypes.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 mb-2">
+                        Type de contrat
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {availableContractTypes.map((ct) => (
+                          <button
+                            key={ct}
+                            onClick={() =>
+                              setQuickFilters((prev) => ({
+                                ...prev,
+                                contractTypes: prev.contractTypes.includes(ct)
+                                  ? prev.contractTypes.filter((c) => c !== ct)
+                                  : [...prev.contractTypes, ct],
+                              }))
+                            }
+                            className={cn(
+                              "text-xs px-2 py-1 rounded-full border transition-colors",
+                              quickFilters.contractTypes.includes(ct)
+                                ? "bg-[#00D9FF] text-white border-[#00D9FF]"
+                                : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
+                            )}
+                          >
+                            {ct}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Date filter */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600 mb-2">
+                      Date de publication
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: "Aujourd'hui", days: 1 },
+                        { label: "3 jours", days: 3 },
+                        { label: "7 jours", days: 7 },
+                        { label: "30 jours", days: 30 },
+                      ].map(({ label, days }) => (
+                        <button
+                          key={days}
+                          onClick={() =>
+                            setQuickFilters((prev) => ({
+                              ...prev,
+                              maxDays: prev.maxDays === days ? null : days,
+                            }))
+                          }
+                          className={cn(
+                            "text-xs px-2 py-1 rounded-full border transition-colors",
+                            quickFilters.maxDays === days
+                              ? "bg-[#00D9FF] text-white border-[#00D9FF]"
+                              : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Salary + direct-only */}
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600 mb-2">
+                        Salaire min (€/an)
+                      </p>
+                      <input
+                        type="number"
+                        placeholder="ex: 35000"
+                        value={quickFilters.salaryMin ?? ""}
+                        onChange={(e) =>
+                          setQuickFilters((prev) => ({
+                            ...prev,
+                            salaryMin: e.target.value
+                              ? parseInt(e.target.value)
+                              : null,
+                          }))
+                        }
+                        className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#00D9FF]"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={quickFilters.directOnly}
+                        onChange={(e) =>
+                          setQuickFilters((prev) => ({
+                            ...prev,
+                            directOnly: e.target.checked,
+                          }))
+                        }
+                        className="rounded border-slate-300 text-[#00D9FF] focus:ring-[#00D9FF]"
+                      />
+                      <span className="text-xs text-slate-600">
+                        Liens directs uniquement
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Results count */}
+                <p className="text-xs text-slate-500 border-t border-slate-100 pt-2">
+                  {quickFilteredJobs.length} offre
+                  {quickFilteredJobs.length !== 1 ? "s" : ""} affichée
+                  {quickFilteredJobs.length !== 1 ? "s" : ""}
+                  {activeQuickFiltersCount > 0 &&
+                    ` sur ${filteredProgressiveJobs.length} total`}
+                </p>
+              </motion.div>
+            )}
 
             <div
               className={`grid gap-6 auto-rows-fr ${
