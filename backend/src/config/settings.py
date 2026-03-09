@@ -91,8 +91,8 @@ class Settings(BaseSettings):
     # Email Service (Resend - Sprint 3)
     # --------------------------------------------------------------------------
     resend_api_key: SecretStr = Field(default=SecretStr(""), description="Resend API Key")
-    from_email: str = Field(default="contact@huntzen.app", description="Email sender address")
-    admin_email: str = Field(default="admin@huntzen.app", description="Admin notification email")
+    from_email: str = Field(default="no-reply@huntzenjobs.com", description="Email sender address (no-reply)")
+    admin_email: str = Field(default="admin@huntzenjobs.com", description="Admin notification email")
 
     # --------------------------------------------------------------------------
     # Agent Configuration

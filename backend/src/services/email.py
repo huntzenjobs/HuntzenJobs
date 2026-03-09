@@ -86,7 +86,7 @@ def send_recruiter_request_confirmation(
                     <a href="{settings.get_primary_frontend_url()}/recruiter-contact" class="button">Voir mes demandes</a>
                 </div>
                 <div class="footer">
-                    <p>Besoin d'aide ? Contactez-nous à <a href="mailto:contact@huntzen.app">contact@huntzen.app</a></p>
+                    <p>Besoin d'aide ? Contactez-nous à <a href="mailto:contact@huntzenjobs.com">contact@huntzenjobs.com</a></p>
                     <p>© 2026 HuntZen - Votre partenaire de recherche d'emploi</p>
                 </div>
             </div>
@@ -176,7 +176,7 @@ def send_application_confirmation(
                     </div>
                 </div>
                 <div class="footer">
-                    <p>Besoin d'aide ? <a href="mailto:contact@huntzen.app" style="color:#00D9FF;">contact@huntzen.app</a></p>
+                    <p>Besoin d'aide ? <a href="mailto:contact@huntzenjobs.com" style="color:#00D9FF;">contact@huntzenjobs.com</a></p>
                     <p>© 2026 HuntZen · <a href="{frontend_url}/unsubscribe" style="color:#94a3b8;">Se désabonner</a></p>
                 </div>
             </div>
