@@ -40,6 +40,7 @@ export interface Job {
   posted_date?: string;
   url_is_direct?: boolean;
   description_truncated?: boolean;
+  contract_type?: string;
 }
 
 export interface SavedJob {
@@ -570,15 +571,22 @@ class HuntzenApiClient {
   }
 
   // Job Description
-  async getJobDescription(url: string, source?: string): Promise<string> {
+  async getJobDescription(
+    url: string,
+    source?: string,
+  ): Promise<{ description: string; final_url: string | null }> {
     const response = await this.fetch<{
       success: boolean;
       description: string;
+      final_url?: string;
     }>("/api/jobs/description", {
       method: "POST",
       body: JSON.stringify({ url, source: source || "" }),
     });
-    return response.description || "";
+    return {
+      description: response.description || "",
+      final_url: response.final_url || null,
+    };
   }
 
   // Job Fairs / Salons d'Emploi
