@@ -4,12 +4,18 @@ Job Search API Routes
 Endpoints for AI-powered job searching.
 """
 
+import logging
 from typing import List
+
+import httpx
+from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException, status, Query, Request
 
 from src.api.deps import ScoutAgentDep
 from src.api.middleware import limiter
 from src.models.schemas import JobSearchRequest, JobSearchResponse, SearchMetadata, Job
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -302,9 +308,6 @@ async def get_job_description(request: Request):
     CSS selectors, then falls back to the longest paragraph block.
     Returns HTML content and the final resolved URL after redirects.
     """
-    import httpx
-    from bs4 import BeautifulSoup
-
     try:
         body = await request.json()
         url = body.get("url", "")
@@ -354,9 +357,12 @@ async def get_job_description(request: Request):
                 for p in paragraphs if len(p.get_text()) > 50
             )
 
+        if not html_content or len(html_content.strip()) < 50:
+            return {"success": False, "description": "", "final_url": final_url}
         return {"success": True, "description": html_content[:8000], "final_url": final_url}
 
     except Exception:
+        logger.exception("description scrape failed for url=%s", url)
         return {"success": False, "description": "", "final_url": None}
 
 
