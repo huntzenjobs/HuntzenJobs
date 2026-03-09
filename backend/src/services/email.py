@@ -177,7 +177,7 @@ def send_application_confirmation(
                 </div>
                 <div class="footer">
                     <p>Besoin d'aide ? <a href="mailto:contact@huntzenjobs.com" style="color:#00D9FF;">contact@huntzenjobs.com</a></p>
-                    <p>© 2026 HuntZen · <a href="{frontend_url}/unsubscribe" style="color:#94a3b8;">Se désabonner</a></p>
+                    <p>© 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">Gérer mes notifications</a></p>
                 </div>
             </div>
         </body>
