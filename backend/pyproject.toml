@@ -19,6 +19,9 @@ classifiers = [
 ]
 
 dependencies = [
+    # Monitoring
+    "sentry-sdk[fastapi]>=2.0.0",
+
     # FastAPI & Web
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.27.0",

@@ -740,8 +740,9 @@ async def process_cv_webhook(request_body: dict) -> dict:
         job_description = request_body.get("job_description")
         language = request_body.get("language", "fr")
 
-        # Call main processing function using .local() to run in same container
-        result = await process_cv_analysis.local(
+        # .spawn() — container dédié, retourne en <1s au lieu de bloquer 15s
+        # Railway worker libéré immédiatement — callback /api/cv-analysis/callback déjà en place
+        process_cv_analysis.spawn(
             cv_id=cv_id,
             user_id=user_id,
             pdf_url=pdf_url,
@@ -752,7 +753,8 @@ async def process_cv_webhook(request_body: dict) -> dict:
 
         return {
             "success": True,
-            "result": result
+            "message": "processing_spawned",
+            "cv_id": cv_id
         }
 
     except Exception as e:

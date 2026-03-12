@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     environment: Literal["development", "staging", "production", "test"] = "development"
     
     # --------------------------------------------------------------------------
+    # Monitoring
+    # --------------------------------------------------------------------------
+    sentry_dsn: str = Field(default="", description="Sentry DSN for error tracking")
+
+    # --------------------------------------------------------------------------
     # Server
     # --------------------------------------------------------------------------
     host: str = "0.0.0.0"
