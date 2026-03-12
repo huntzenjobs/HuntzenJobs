@@ -39,6 +39,8 @@ import { useFullJobDescription } from "@/hooks/use-full-job-description";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
+import { useAuth } from "@/contexts/auth-context";
+import { sendXpEvent } from "@/hooks/use-career-score";
 import { ApplyModal } from "./apply-modal";
 import { InsiderFinderDrawer } from "./insider-finder-drawer";
 
@@ -106,6 +108,7 @@ export function JobDetailsModal({
   // All hooks must be called before any conditional return (Rules of Hooks)
   const { canUse, openPricingModal } = useSubscription();
   const { authenticatedFetch } = useAuthenticatedFetch();
+  const { session } = useAuth();
   const {
     description: fullDescription,
     finalUrl,
@@ -226,6 +229,10 @@ export function JobDetailsModal({
           job_source: job.source,
           confirmed_by_user: true,
         }),
+      });
+      sendXpEvent(session?.access_token ?? "", "application", {
+        job_title: job.title,
+        company: job.company,
       });
     } catch {
       // Fail silently

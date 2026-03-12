@@ -1,5 +1,8 @@
 import useSWR from "swr";
+import { useRef, useEffect } from "react";
 import { huntzenApi, Job } from "@/lib/api/huntzen-client";
+import { useAuth } from "@/contexts/auth-context";
+import { sendXpEvent } from "@/hooks/use-career-score";
 
 interface JobSearchParams {
   job_title: string;
@@ -30,6 +33,9 @@ interface JobSearchResult {
  *   })
  */
 export function useJobSearch(params: JobSearchParams | null) {
+  const { session } = useAuth();
+  const prevCacheKey = useRef<string | null>(null);
+
   // Generate unique cache key from search parameters
   const cacheKey = params
     ? `/jobs/search/${params.job_title}/${params.country_code}/${params.city || ""}/${params.contract_type || ""}`
@@ -64,6 +70,22 @@ export function useJobSearch(params: JobSearchParams | null) {
       errorRetryInterval: 1000,
     },
   );
+
+  // Fire XP event only on new searches (not on cache hits or re-renders)
+  useEffect(() => {
+    if (
+      data &&
+      cacheKey &&
+      cacheKey !== prevCacheKey.current &&
+      session?.access_token
+    ) {
+      prevCacheKey.current = cacheKey;
+      sendXpEvent(session.access_token, "job_search", {
+        job_title: params?.job_title,
+        country_code: params?.country_code,
+      });
+    }
+  }, [data, cacheKey, session?.access_token]);
 
   return {
     jobs: data?.jobs || [],

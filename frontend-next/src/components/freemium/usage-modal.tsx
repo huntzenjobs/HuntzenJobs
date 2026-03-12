@@ -23,6 +23,7 @@ import {
   Briefcase,
   Clock,
 } from "lucide-react";
+import { CareerScoreCard } from "@/components/career-score/career-score-card";
 import { cn } from "@/lib/utils";
 
 interface UsageModalProps {
@@ -210,6 +211,16 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 Passer à un plan payant
               </Button>
             )}
+          </div>
+
+          <Separator />
+
+          {/* Career Score */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Ta progression
+            </h3>
+            <CareerScoreCard />
           </div>
 
           <Separator />

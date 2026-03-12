@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { LandingHeader } from "@/components/landing-header";
@@ -32,6 +32,7 @@ import { useOptionalAuth } from "@/contexts/auth-context";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { toast } from "sonner";
+import { useConversionPopup } from "@/components/freemium/conversion-popups";
 import { useTranslations } from "next-intl";
 
 const plans = [
@@ -180,6 +181,22 @@ export default function PricingPage() {
   const apiData = useSubscriptionApi();
   const t = useTranslations("pricing");
 
+  const pricingHoverPopup = useConversionPopup("pricing_hover");
+
+  // Show pricing_hover popup after 20s (once per session)
+  useEffect(() => {
+    if (
+      typeof sessionStorage !== "undefined" &&
+      sessionStorage.getItem("pricing_popup_shown")
+    )
+      return;
+    const t = setTimeout(() => {
+      sessionStorage.setItem("pricing_popup_shown", "1");
+      pricingHoverPopup.open();
+    }, 20000);
+    return () => clearTimeout(t);
+  }, []);
+
   const currentPlan =
     apiData.subscription?.plan_name || subscription?.plan || "free";
 
@@ -268,599 +285,606 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <LandingHeader />
+    <>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <LandingHeader />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-20 pb-16">
-        {/* Background effects */}
-        <div className="absolute inset-0">
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300D9FF' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-              backgroundSize: "60px 60px",
-            }}
-          />
-        </div>
-
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.1, 0.15, 0.1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-[#00D9FF]/10 rounded-full blur-3xl"
-        />
-
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#00D9FF]/10 border border-[#00D9FF]/20 mb-6"
-          >
-            <Star className="w-4 h-4 text-[#00D9FF]" />
-            <span className="text-sm font-medium text-white">
-              +100 000 candidats accompagnés
-            </span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6"
-          >
-            Choisissez votre plan
-            <br />
-            <span className="bg-gradient-to-r from-[#00D9FF] to-purple-400 bg-clip-text text-transparent">
-              et décrochez votre job
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-8"
-          >
-            Des outils puissants pour optimiser votre recherche, préparer vos
-            entretiens et trouver l&apos;emploi qui vous correspond
-          </motion.p>
-
-          {/* Trust indicators */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex items-center justify-center gap-6 sm:gap-8 flex-wrap text-sm text-white/70"
-          >
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-green-400" />
-              <span>Paiement sécurisé</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-[#00D9FF]" />
-              <span>Sans engagement</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
-              <span>87% de taux de réponse</span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Billing Toggle */}
-      <section className="py-8 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <span
-              className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === "monthly" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}
-            >
-              Mensuel
-            </span>
-            <button
-              onClick={() =>
-                setBillingPeriod(
-                  billingPeriod === "monthly" ? "yearly" : "monthly",
-                )
-              }
-              className="relative w-16 h-8 bg-gray-200 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#00D9FF] focus:ring-offset-2"
+        {/* Hero Section */}
+        <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-20 pb-16">
+          {/* Background effects */}
+          <div className="absolute inset-0">
+            <div
+              className="absolute inset-0 opacity-20"
               style={{
-                backgroundColor:
-                  billingPeriod === "yearly" ? "#00D9FF" : "#e5e7eb",
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300D9FF' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+                backgroundSize: "60px 60px",
               }}
-              aria-label="Toggle billing period"
-            >
-              <span
-                className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300"
-                style={{
-                  transform:
-                    billingPeriod === "yearly"
-                      ? "translateX(32px)"
-                      : "translateX(0)",
-                }}
-              />
-            </button>
-            <span
-              className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === "yearly" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}
-            >
-              Annuel
-            </span>
-            {billingPeriod === "yearly" && (
-              <motion.span
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full"
-              >
-                🎉 {t("saveUpTo20")}
-              </motion.span>
-            )}
+            />
           </div>
-        </div>
-      </section>
 
-      {/* Pricing Cards */}
-      <section className="py-12 sm:py-16 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
-            {plans.map((plan, index) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`relative rounded-3xl border-2 p-6 sm:p-8 bg-white dark:bg-gray-800 transition-all hover:shadow-2xl flex flex-col h-full ${
-                  plan.popular
-                    ? "border-[#00D9FF] shadow-2xl lg:scale-105"
-                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                }`}
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.1, 0.15, 0.1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-[#00D9FF]/10 rounded-full blur-3xl"
+          />
+
+          <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#00D9FF]/10 border border-[#00D9FF]/20 mb-6"
+            >
+              <Star className="w-4 h-4 text-[#00D9FF]" />
+              <span className="text-sm font-medium text-white">
+                +100 000 candidats accompagnés
+              </span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6"
+            >
+              Choisissez votre plan
+              <br />
+              <span className="bg-gradient-to-r from-[#00D9FF] to-purple-400 bg-clip-text text-transparent">
+                et décrochez votre job
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-8"
+            >
+              Des outils puissants pour optimiser votre recherche, préparer vos
+              entretiens et trouver l&apos;emploi qui vous correspond
+            </motion.p>
+
+            {/* Trust indicators */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex items-center justify-center gap-6 sm:gap-8 flex-wrap text-sm text-white/70"
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-green-400" />
+                <span>Paiement sécurisé</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-[#00D9FF]" />
+                <span>Sans engagement</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-purple-400" />
+                <span>87% de taux de réponse</span>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Billing Toggle */}
+        <section className="py-8 bg-white dark:bg-gray-900">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <span
+                className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === "monthly" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}
               >
-                {/* Popular badge */}
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                    <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 rounded-full bg-[#00D9FF] text-white text-xs sm:text-sm font-bold shadow-lg">
-                      <Sparkles className="w-4 h-4" />
-                      {plan.tagline}
-                    </span>
-                  </div>
-                )}
+                Mensuel
+              </span>
+              <button
+                onClick={() =>
+                  setBillingPeriod(
+                    billingPeriod === "monthly" ? "yearly" : "monthly",
+                  )
+                }
+                className="relative w-16 h-8 bg-gray-200 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#00D9FF] focus:ring-offset-2"
+                style={{
+                  backgroundColor:
+                    billingPeriod === "yearly" ? "#00D9FF" : "#e5e7eb",
+                }}
+                aria-label="Toggle billing period"
+              >
+                <span
+                  className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300"
+                  style={{
+                    transform:
+                      billingPeriod === "yearly"
+                        ? "translateX(32px)"
+                        : "translateX(0)",
+                  }}
+                />
+              </button>
+              <span
+                className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === "yearly" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}
+              >
+                Annuel
+              </span>
+              {billingPeriod === "yearly" && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full"
+                >
+                  🎉 {t("saveUpTo20")}
+                </motion.span>
+              )}
+            </div>
+          </div>
+        </section>
 
-                {/* Plan header */}
-                <div className="text-center mb-6">
-                  <div
-                    className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4 shadow-lg"
-                    style={{
-                      backgroundColor: `${plan.color}15`,
-                    }}
-                  >
-                    <plan.icon
-                      className="w-7 h-7 sm:w-8 sm:h-8"
-                      style={{ color: plan.color }}
-                    />
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-black mb-2 text-gray-900 dark:text-white">
-                    {plan.name}
-                  </h3>
-                  {!plan.popular && (
-                    <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                      {plan.tagline}
-                    </p>
-                  )}
-                </div>
-
-                {/* Price */}
-                <div className="text-center mb-6 py-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
-                  {plan.id !== "free" && billingPeriod === "yearly" && (
-                    <div className="mb-2">
-                      <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                        -
-                        {
-                          getSavings(plan.priceMonthly, plan.priceYearly)
-                            .percentage
-                        }
-                        % soit{" "}
-                        {getSavings(plan.priceMonthly, plan.priceYearly).amount}
-                        €/an
+        {/* Pricing Cards */}
+        <section className="py-12 sm:py-16 bg-white dark:bg-gray-900">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
+              {plans.map((plan, index) => (
+                <motion.div
+                  key={plan.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className={`relative rounded-3xl border-2 p-6 sm:p-8 bg-white dark:bg-gray-800 transition-all hover:shadow-2xl flex flex-col h-full ${
+                    plan.popular
+                      ? "border-[#00D9FF] shadow-2xl lg:scale-105"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                >
+                  {/* Popular badge */}
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                      <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 rounded-full bg-[#00D9FF] text-white text-xs sm:text-sm font-bold shadow-lg">
+                        <Sparkles className="w-4 h-4" />
+                        {plan.tagline}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-baseline justify-center gap-1">
-                    {plan.id === "free" ? (
-                      <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">
-                        Gratuit
-                      </span>
-                    ) : (
-                      <>
-                        <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">
-                          {billingPeriod === "monthly"
-                            ? plan.priceMonthly
-                            : getMonthlyEquivalent(plan.priceYearly)}
-                          €
-                        </span>
-                        <span className="text-lg text-gray-600 dark:text-gray-300 font-semibold">
-                          /mois
-                        </span>
-                      </>
+
+                  {/* Plan header */}
+                  <div className="text-center mb-6">
+                    <div
+                      className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl mb-4 shadow-lg"
+                      style={{
+                        backgroundColor: `${plan.color}15`,
+                      }}
+                    >
+                      <plan.icon
+                        className="w-7 h-7 sm:w-8 sm:h-8"
+                        style={{ color: plan.color }}
+                      />
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl font-black mb-2 text-gray-900 dark:text-white">
+                      {plan.name}
+                    </h3>
+                    {!plan.popular && (
+                      <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        {plan.tagline}
+                      </p>
                     )}
                   </div>
-                  {plan.id !== "free" && billingPeriod === "yearly" && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {plan.priceYearly}€ facturé annuellement
-                    </p>
-                  )}
-                  {plan.id !== "free" && billingPeriod === "monthly" && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 font-medium">
-                      Sans engagement
-                    </p>
-                  )}
-                </div>
 
-                {/* Description */}
-                <p className="text-sm text-gray-600 dark:text-gray-300 text-center mb-6 leading-relaxed">
-                  {plan.description}
-                </p>
-
-                {/* Features */}
-                <ul className="space-y-3 mb-6 flex-grow">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <div
-                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{
-                          backgroundColor: `${plan.color}15`,
-                        }}
-                      >
-                        <feature.icon
-                          className="w-4 h-4"
-                          style={{ color: plan.color }}
-                        />
+                  {/* Price */}
+                  <div className="text-center mb-6 py-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
+                    {plan.id !== "free" && billingPeriod === "yearly" && (
+                      <div className="mb-2">
+                        <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                          -
+                          {
+                            getSavings(plan.priceMonthly, plan.priceYearly)
+                              .percentage
+                          }
+                          % soit{" "}
+                          {
+                            getSavings(plan.priceMonthly, plan.priceYearly)
+                              .amount
+                          }
+                          €/an
+                        </span>
                       </div>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-medium leading-relaxed pt-1">
-                        {feature.name}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                <Button
-                  onClick={() => handleSelectPlan(plan.id)}
-                  className={`w-full h-12 sm:h-14 text-sm sm:text-base font-bold rounded-xl shadow-lg transition-all mt-auto ${
-                    plan.popular
-                      ? "bg-[#00D9FF] hover:bg-[#00C4EA] text-white hover:scale-[1.02]"
-                      : "border-2 hover:scale-[1.02]"
-                  }`}
-                  style={{
-                    backgroundColor: plan.popular ? "#00D9FF" : "white",
-                    borderColor: plan.popular ? "#00D9FF" : plan.color,
-                    color: plan.popular ? "white" : plan.color,
-                  }}
-                  disabled={plan.id === currentPlan}
-                >
-                  {plan.id === currentPlan
-                    ? t("currentPlan")
-                    : t("choosePlan", { name: plan.name })}
-                </Button>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Money back guarantee */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-green-50 border-2 border-green-200">
-              <Shield className="w-5 h-5 text-green-600" />
-              <span className="text-green-800 font-semibold text-sm sm:text-base">
-                Garantie satisfait ou remboursé pendant 14 jours
-              </span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-800">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
-            >
-              Ils ont transformé leur recherche d&apos;emploi
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
-            >
-              Découvrez comment HuntZen a aidé des milliers de professionnels
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white dark:bg-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-              >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-5 h-5 text-yellow-400 fill-yellow-400"
-                    />
-                  ))}
-                </div>
-                <p className="text-gray-700 dark:text-gray-200 mb-4 leading-relaxed">
-                  &ldquo;{testimonial.content}&rdquo;
-                </p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-gray-900 dark:text-white">
-                      {testimonial.name}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {testimonial.role}
-                    </p>
+                    )}
+                    <div className="flex items-baseline justify-center gap-1">
+                      {plan.id === "free" ? (
+                        <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">
+                          Gratuit
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">
+                            {billingPeriod === "monthly"
+                              ? plan.priceMonthly
+                              : getMonthlyEquivalent(plan.priceYearly)}
+                            €
+                          </span>
+                          <span className="text-lg text-gray-600 dark:text-gray-300 font-semibold">
+                            /mois
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {plan.id !== "free" && billingPeriod === "yearly" && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {plan.priceYearly}€ facturé annuellement
+                      </p>
+                    )}
+                    {plan.id !== "free" && billingPeriod === "monthly" && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 font-medium">
+                        Sans engagement
+                      </p>
+                    )}
                   </div>
-                  <span className="px-3 py-1 bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold rounded-full">
-                    {testimonial.plan}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* FAQ */}
-      <section className="py-16 sm:py-20 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
+                  {/* Description */}
+                  <p className="text-sm text-gray-600 dark:text-gray-300 text-center mb-6 leading-relaxed">
+                    {plan.description}
+                  </p>
+
+                  {/* Features */}
+                  <ul className="space-y-3 mb-6 flex-grow">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <div
+                          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor: `${plan.color}15`,
+                          }}
+                        >
+                          <feature.icon
+                            className="w-4 h-4"
+                            style={{ color: plan.color }}
+                          />
+                        </div>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-medium leading-relaxed pt-1">
+                          {feature.name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA */}
+                  <Button
+                    onClick={() => handleSelectPlan(plan.id)}
+                    className={`w-full h-12 sm:h-14 text-sm sm:text-base font-bold rounded-xl shadow-lg transition-all mt-auto ${
+                      plan.popular
+                        ? "bg-[#00D9FF] hover:bg-[#00C4EA] text-white hover:scale-[1.02]"
+                        : "border-2 hover:scale-[1.02]"
+                    }`}
+                    style={{
+                      backgroundColor: plan.popular ? "#00D9FF" : "white",
+                      borderColor: plan.popular ? "#00D9FF" : plan.color,
+                      color: plan.popular ? "white" : plan.color,
+                    }}
+                    disabled={plan.id === currentPlan}
+                  >
+                    {plan.id === currentPlan
+                      ? t("currentPlan")
+                      : t("choosePlan", { name: plan.name })}
+                  </Button>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Money back guarantee */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mt-12"
+            >
+              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-green-50 border-2 border-green-200">
+                <Shield className="w-5 h-5 text-green-600" />
+                <span className="text-green-800 font-semibold text-sm sm:text-base">
+                  Garantie satisfait ou remboursé pendant 14 jours
+                </span>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-16 bg-gray-50 dark:bg-gray-800">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
+              >
+                Ils ont transformé leur recherche d&apos;emploi
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
+              >
+                Découvrez comment HuntZen a aidé des milliers de professionnels
+              </motion.p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
+              {testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white dark:bg-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
+                >
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="w-5 h-5 text-yellow-400 fill-yellow-400"
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-200 mb-4 leading-relaxed">
+                    &ldquo;{testimonial.content}&rdquo;
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-gray-900 dark:text-white">
+                        {testimonial.name}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {testimonial.role}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold rounded-full">
+                      {testimonial.plan}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="py-16 sm:py-20 bg-white dark:bg-gray-900">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
+              >
+                Questions fréquentes
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
+              >
+                Tout ce que vous devez savoir sur nos abonnements
+              </motion.p>
+            </div>
+
+            <div className="max-w-3xl mx-auto space-y-4">
+              {faqs.map((faq, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  <button
+                    onClick={() =>
+                      setExpandedFaq(expandedFaq === index ? null : index)
+                    }
+                    className="w-full px-6 py-5 flex items-center justify-between text-left"
+                  >
+                    <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white pr-4">
+                      {faq.question}
+                    </h3>
+                    <ChevronDown
+                      className={`w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0 transition-transform ${
+                        expandedFaq === index ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {expandedFaq === index && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="px-6 pb-5"
+                    >
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        {faq.answer}
+                      </p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Vous avez d&apos;autres questions ?
+              </p>
+              <Button
+                variant="outline"
+                size="lg"
+                className="rounded-xl border-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+              >
+                Contactez notre support
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="relative py-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
+          {/* Background effects */}
+          <div className="absolute inset-0 opacity-20">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300D9FF' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+                backgroundSize: "60px 60px",
+              }}
+            />
+          </div>
+
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.1, 0.15, 0.1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#00D9FF]/10 rounded-full blur-3xl"
+          />
+
+          <div className="container mx-auto px-4 sm:px-6 text-center relative z-10">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
+              className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6"
             >
-              Questions fréquentes
+              Prêt à décrocher votre prochain job ?
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
+              className="text-lg sm:text-xl text-white/80 max-w-3xl mx-auto mb-10 leading-relaxed"
             >
-              Tout ce que vous devez savoir sur nos abonnements
+              Rejoignez +100 000 candidats qui utilisent HuntZen pour trouver
+              leur emploi idéal. Commencez gratuitement, aucune carte bancaire
+              requise.
             </motion.p>
-          </div>
-
-          <div className="max-w-3xl mx-auto space-y-4">
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <button
-                  onClick={() =>
-                    setExpandedFaq(expandedFaq === index ? null : index)
-                  }
-                  className="w-full px-6 py-5 flex items-center justify-between text-left"
-                >
-                  <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white pr-4">
-                    {faq.question}
-                  </h3>
-                  <ChevronDown
-                    className={`w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0 transition-transform ${
-                      expandedFaq === index ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {expandedFaq === index && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="px-6 pb-5"
-                  >
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                      {faq.answer}
-                    </p>
-                  </motion.div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Vous avez d&apos;autres questions ?
-            </p>
-            <Button
-              variant="outline"
-              size="lg"
-              className="rounded-xl border-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              Contactez notre support
-            </Button>
+              <Link href="/signup">
+                <Button
+                  size="lg"
+                  className="bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-bold rounded-xl shadow-2xl hover:scale-105 transition-transform w-full sm:w-auto"
+                >
+                  <Rocket className="w-5 h-5 mr-2" />
+                  Commencer gratuitement
+                </Button>
+              </Link>
+              <Link href="/">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white/10 h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-semibold rounded-xl backdrop-blur-sm w-full sm:w-auto"
+                >
+                  En savoir plus
+                </Button>
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="mt-10 flex items-center justify-center gap-6 sm:gap-8 text-white/70 text-sm flex-wrap"
+            >
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-[#00D9FF]" />
+                <span>Sans engagement</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-[#00D9FF]" />
+                <span>14 jours satisfait ou remboursé</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-[#00D9FF]" />
+                <span>Support francophone</span>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Final CTA */}
-      <section className="relative py-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0 opacity-20">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300D9FF' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-              backgroundSize: "60px 60px",
-            }}
-          />
-        </div>
-
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.1, 0.15, 0.1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#00D9FF]/10 rounded-full blur-3xl"
-        />
-
-        <div className="container mx-auto px-4 sm:px-6 text-center relative z-10">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6"
-          >
-            Prêt à décrocher votre prochain job ?
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-lg sm:text-xl text-white/80 max-w-3xl mx-auto mb-10 leading-relaxed"
-          >
-            Rejoignez +100 000 candidats qui utilisent HuntZen pour trouver leur
-            emploi idéal. Commencez gratuitement, aucune carte bancaire requise.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <Link href="/signup">
-              <Button
-                size="lg"
-                className="bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-bold rounded-xl shadow-2xl hover:scale-105 transition-transform w-full sm:w-auto"
-              >
-                <Rocket className="w-5 h-5 mr-2" />
-                Commencer gratuitement
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white/10 h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-semibold rounded-xl backdrop-blur-sm w-full sm:w-auto"
-              >
-                En savoir plus
-              </Button>
-            </Link>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="mt-10 flex items-center justify-center gap-6 sm:gap-8 text-white/70 text-sm flex-wrap"
-          >
-            <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-[#00D9FF]" />
-              <span>Sans engagement</span>
+        {/* Footer */}
+        <footer className="bg-black text-white py-10 sm:py-12">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-lg sm:text-xl">HuntZen</span>
+                <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
+              </div>
+              <p className="text-white/60 text-xs sm:text-sm text-center md:text-right max-w-md">
+                Votre allié carrière pour transformer votre recherche
+                d&apos;emploi en succès.
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-[#00D9FF]" />
-              <span>14 jours satisfait ou remboursé</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-[#00D9FF]" />
-              <span>Support francophone</span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-black text-white py-10 sm:py-12">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg sm:text-xl">HuntZen</span>
-              <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
-            </div>
-            <p className="text-white/60 text-xs sm:text-sm text-center md:text-right max-w-md">
-              Votre allié carrière pour transformer votre recherche
-              d&apos;emploi en succès.
-            </p>
-          </div>
-          <hr className="border-white/10 mb-8" />
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
-            <p>
-              &copy; {new Date().getFullYear()} HuntZen. Tous droits réservés.
-            </p>
-            <div className="flex items-center gap-4 sm:gap-6">
-              <Link
-                href="/privacy"
-                className="hover:text-[#00D9FF] transition-colors"
-              >
-                Politique de confidentialité
-              </Link>
-              <Link
-                href="/terms"
-                className="hover:text-[#00D9FF] transition-colors"
-              >
-                Conditions générales
-              </Link>
-              <Link
-                href="mailto:contact@huntzenjobs.co"
-                className="hover:text-[#00D9FF] transition-colors"
-              >
-                Contact
-              </Link>
+            <hr className="border-white/10 mb-8" />
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
+              <p>
+                &copy; {new Date().getFullYear()} HuntZen. Tous droits réservés.
+              </p>
+              <div className="flex items-center gap-4 sm:gap-6">
+                <Link
+                  href="/privacy"
+                  className="hover:text-[#00D9FF] transition-colors"
+                >
+                  Politique de confidentialité
+                </Link>
+                <Link
+                  href="/terms"
+                  className="hover:text-[#00D9FF] transition-colors"
+                >
+                  Conditions générales
+                </Link>
+                <Link
+                  href="mailto:contact@huntzenjobs.co"
+                  className="hover:text-[#00D9FF] transition-colors"
+                >
+                  Contact
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
+        </footer>
 
-      <style jsx global>{`
-        body {
-          font-family:
-            var(--font-dm-sans),
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif;
-        }
-      `}</style>
-    </div>
+        <style jsx global>{`
+          body {
+            font-family:
+              var(--font-dm-sans),
+              -apple-system,
+              BlinkMacSystemFont,
+              "Segoe UI",
+              sans-serif;
+          }
+        `}</style>
+      </div>
+      <pricingHoverPopup.PopupComponent />
+    </>
   );
 }

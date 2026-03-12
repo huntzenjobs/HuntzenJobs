@@ -21,9 +21,11 @@ import { AssistantConfig, AssistantType } from "@/types/assistant";
 export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
   "career-coach": {
     id: "career-coach",
-    name: "Assistant Coach Carrière",
-    shortName: "Assistant Coach Carrière",
-    description: "Discutez avec un expert en orientation professionnelle",
+    name: "Nova – Coach Carrière",
+    personaName: "Nova",
+    shortName: "Coach Carrière",
+    description:
+      "Je t'aide à clarifier ce que tu veux vraiment pour ta carrière et à construire un plan pour y arriver.",
     icon: UserCheck,
     color: "#2563eb", // blue-600
     bgColor: "#dbeafe", // blue-100
@@ -36,9 +38,9 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "Formation continue",
     ],
     exampleQuestions: [
-      "Comment me reconvertir dans la tech ?",
-      "Quel plan de carrière pour progresser ?",
-      "Quelles formations pour mes objectifs ?",
+      "On va définir ton objectif de carrière.",
+      "Tu veux évoluer, changer de job ou gagner plus ?",
+      "On construit ton plan ensemble.",
     ],
     apiEndpoint: "/api/coach/chat",
     responseTime: "< 2 min",
@@ -46,9 +48,11 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
 
   "job-scout": {
     id: "job-scout",
-    name: "Assistant Recherche d'Emploi",
-    shortName: "Assistant Recherche d'Emploi",
-    description: "Aide personnalisée pour votre recherche d'emploi",
+    name: "Maria – Coach Recherche d'Emploi",
+    personaName: "Maria",
+    shortName: "Recherche d'Emploi",
+    description:
+      "Je t'aide à trouver les bonnes offres et à postuler efficacement.",
     icon: Briefcase,
     color: "#059669", // emerald-600
     bgColor: "#d1fae5", // emerald-100
@@ -61,8 +65,8 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "Réseau professionnel",
     ],
     exampleQuestions: [
-      "Comment trouver des offres cachées ?",
-      "Où postuler dans mon secteur ?",
+      "Je viens de trouver des offres qui peuvent t'intéresser.",
+      "On va optimiser ta recherche pour trouver plus vite.",
       "Comment approcher un recruteur ?",
     ],
     apiEndpoint: "/api/jobs/search",
@@ -71,9 +75,11 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
 
   "cv-analyzer": {
     id: "cv-analyzer",
-    name: "Assistant Expert CV",
-    shortName: "Assistant Expert CV",
-    description: "Optimisation professionnelle de votre CV",
+    name: "Sofia – Expert CV",
+    personaName: "Sofia",
+    shortName: "Expert CV",
+    description:
+      "Je t'aide à créer un CV qui attire l'attention des recruteurs.",
     icon: FileText,
     color: "#7c3aed", // violet-600
     bgColor: "#ede9fe", // violet-100
@@ -84,20 +90,23 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "Structure et mise en page",
       "Mots-clés sectoriels",
       "Impact des expériences",
+      "Adaptation à une offre d'emploi",
     ],
     exampleQuestions: [
-      "Mon CV passe-t-il les ATS ?",
-      "Comment améliorer mon CV ?",
+      "Je peux améliorer ton CV en quelques minutes.",
+      "Ton CV peut être beaucoup plus impactant.",
       "Quels mots-clés utiliser ?",
     ],
     apiEndpoint: "/api/cv/analyze",
     responseTime: "< 5 min",
   },
 
+  // cv-adapter est conservé pour le backend (apply-modal) mais retiré de l'UI.
+  // Sofia (cv-analyzer) absorbe ce rôle en mode chat.
   "cv-adapter": {
     id: "cv-adapter",
     name: "Assistant Adaptation CV",
-    shortName: "Assistant Adaptation CV",
+    shortName: "Adaptation CV",
     description: "Personnalisation par un spécialiste pour chaque offre",
     icon: FileEdit,
     color: "#dc2626", // red-600
@@ -121,13 +130,16 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
 
   "interview-sim": {
     id: "interview-sim",
-    name: "Assistant Simulation Entretien",
-    shortName: "Assistant Simulation Entretien",
-    description: "Entraînement avec un recruteur professionnel",
+    name: "Lucas – Coach Entretien",
+    personaName: "Lucas",
+    shortName: "Coach Entretien",
+    description:
+      "Je te prépare aux entretiens pour que tu sois prêt le jour J.",
     icon: Mic,
     color: "#ea580c", // orange-600
     bgColor: "#ffedd5", // orange-100
-    isPremium: true, // Service premium
+    isPremium: true,
+    isComingSoon: true,
     certificationBadge: "Recruteur certifié",
     specialties: [
       "Entretien technique",
@@ -136,19 +148,20 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "Communication verbale",
     ],
     exampleQuestions: [
-      "Comment me préparer à un entretien tech ?",
-      "Quelles questions pièges prévoir ?",
+      "On va simuler un entretien.",
+      "Je vais te poser les questions que les recruteurs posent vraiment.",
       "Comment gérer le stress ?",
     ],
-    apiEndpoint: "/api/interview/start", // À créer (Sprint 2)
+    apiEndpoint: "/api/interview/start",
     responseTime: "Session live 30 min",
   },
 
   branding: {
     id: "branding",
-    name: "Assistant Branding",
-    shortName: "Assistant Branding",
-    description: "Créez votre présence LinkedIn et X avec l'IA",
+    name: "Jeff – Coach Personal Branding",
+    personaName: "Jeff",
+    shortName: "Personal Branding",
+    description: "Je t'aide à construire un profil qui attire les recruteurs.",
     icon: Linkedin,
     color: "#0077b5",
     bgColor: "#dbeafe",
@@ -161,9 +174,9 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "Stratégie de contenu",
     ],
     exampleQuestions: [
-      "Aide-moi à rédiger un post LinkedIn sur ma reconversion",
+      "Ton profil peut devenir beaucoup plus attractif.",
+      "On va améliorer ta présence professionnelle.",
       "Comment développer ma marque personnelle ?",
-      "Crée un post engageant sur mon expertise",
     ],
     apiEndpoint: "/api/branding/chat",
     responseTime: "< 2 min",
@@ -171,13 +184,12 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
 };
 
 /**
- * Ordre d'affichage des assistants dans l'UI
+ * Ordre d'affichage des assistants dans l'UI (cv-adapter exclu — géré en backend)
  */
 export const ASSISTANTS_ORDER: AssistantType[] = [
   "career-coach",
   "job-scout",
   "cv-analyzer",
-  "cv-adapter",
   "interview-sim",
   "branding",
 ];
@@ -195,7 +207,7 @@ export function getAssistantConfig(type: AssistantType): AssistantConfig {
 }
 
 /**
- * Helper pour obtenir tous les assistants (dans l'ordre)
+ * Helper pour obtenir tous les assistants (dans l'ordre, sans cv-adapter)
  */
 export function getAllAssistants(): AssistantConfig[] {
   return ASSISTANTS_ORDER.map((type) => ASSISTANTS_CONFIG[type]);

@@ -28,6 +28,9 @@ export interface AssistantConfig {
   /** Nom de l'expert (ex: "Marie Dupont - Coach Carrière") */
   name: string;
 
+  /** Prénom du persona Gamma (ex: "Nova", "Maria", "Sofia") */
+  personaName?: string;
+
   /** Titre court (ex: "Coach Carrière") */
   shortName: string;
 

@@ -232,7 +232,8 @@
       "candidatures": "My Applications",
       "recruiterContact": "Contact Recruiter",
       "documents": "My Documents",
-      "myUsage": "My Usage"
+      "myUsage": "My Usage",
+      "referral": "HuntZen Boost"
     },
     "plans": {
       "free": "Free",
@@ -590,7 +591,16 @@
       "unlockUnlimited": "Unlock unlimited time",
       "errorMessage": "Sorry, an error occurred. Could you rephrase your question?",
       "unlimited": "Unlimited",
-      "welcomeMessage": "Hi! I'm your job search expert. How can I help you today?"
+      "welcomeMessage": "Hi! I'm your job search expert. How can I help you today?",
+      "welcomeTeamWithName": "Hi {name}! Your career team is here to help.",
+      "welcomeTeam": "Your career team is here to help.",
+      "welcomeSubtitle": "We'll find your next job together.",
+      "welcomeChoose": "Choose where you want to start.",
+      "welcomeFooter": "5 coaches available 24/7",
+      "quickActionCV": "Improve my CV",
+      "quickActionJobs": "Find job offers",
+      "quickActionInterview": "Prepare for my interview",
+      "quickActionCareer": "Define my career goal"
     },
     "salons": {
       "title": "Job Fairs & Forums",

@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AvatarUpload } from "@/components/profile/avatar-upload";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { SubscriptionCard } from "@/components/profile/subscription-card";
+import { CareerScoreCard } from "@/components/career-score/career-score-card";
 import { SettingsSection } from "@/components/profile/settings-section";
 import { NotificationsSection } from "@/components/profile/notifications-section";
 import { Button } from "@/components/ui/button";
@@ -255,6 +256,13 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               Notifications
             </TabsTrigger>
             <TabsTrigger
+              value="progression"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Progression
+            </TabsTrigger>
+            <TabsTrigger
               value="referral"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
@@ -355,6 +363,25 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               className="max-w-2xl"
             >
               <NotificationsSection />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="progression" className="p-8">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="max-w-2xl"
+            >
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-black mb-2">
+                  Progression
+                </h2>
+                <p className="text-gray-600">
+                  Suivez votre Career Score et vos points d&apos;expérience
+                </p>
+              </div>
+              <CareerScoreCard />
             </motion.div>
           </TabsContent>
 

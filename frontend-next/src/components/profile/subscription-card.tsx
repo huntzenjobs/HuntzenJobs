@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { useConversionPopup } from "@/components/freemium/conversion-popups";
 
 // Plan configuration - Prices synced with database (subscription_plans table)
 const PLAN_CONFIG = {
@@ -87,6 +88,8 @@ export function SubscriptionCard() {
   const { session } = useAuth();
   const apiData = useSubscriptionApi();
   const t = useTranslations("profile");
+
+  const antiChurnPopup = useConversionPopup("anti_churn");
 
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -155,7 +158,8 @@ export function SubscriptionCard() {
     // Reset state fresh each time dialog opens
     setCancelError(null);
     setCancelSuccess(null);
-    setShowCancelDialog(true);
+    // Show anti-churn offer first; user can click cancel again to proceed
+    antiChurnPopup.open();
   };
 
   const handleCloseCancelDialog = () => {
@@ -468,6 +472,8 @@ export function SubscriptionCard() {
           </>
         )}
       </Card>
+
+      <antiChurnPopup.PopupComponent />
 
       <AlertDialog
         open={showCancelDialog}

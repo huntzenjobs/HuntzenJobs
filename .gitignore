@@ -331,3 +331,4 @@ playwright-report-production/
 !DOCKER_USAGE.md
 !supabase/migrations/*.sql
 !backend/USEFUL_SQL_QUERIES.sql
+.worktrees/

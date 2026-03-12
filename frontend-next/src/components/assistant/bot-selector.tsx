@@ -330,6 +330,7 @@ function DropdownMenu({
         {assistants.map((assistant) => {
           const isSelected = assistant.id === selectedAssistant;
           const isLocked = assistant.isPremium && (!user || isFreePlan);
+          const isComingSoon = !!assistant.isComingSoon;
 
           return (
             <button
@@ -339,8 +340,10 @@ function DropdownMenu({
                 "w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all",
                 isSelected
                   ? "bg-[#00D9FF]/10 ring-1 ring-[#00D9FF]/30"
-                  : "hover:bg-slate-50",
-                isLocked && "opacity-60",
+                  : isComingSoon
+                    ? "opacity-50 cursor-default hover:bg-transparent"
+                    : "hover:bg-slate-50",
+                isLocked && !isComingSoon && "opacity-60",
               )}
             >
               {/* Icône */}
@@ -357,23 +360,38 @@ function DropdownMenu({
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-medium text-slate-900 truncate">
-                    {assistant.shortName}
-                  </span>
+                  {assistant.personaName ? (
+                    <span className="text-sm font-bold text-slate-900 truncate">
+                      {assistant.personaName}
+                    </span>
+                  ) : (
+                    <span className="text-sm font-medium text-slate-900 truncate">
+                      {assistant.shortName}
+                    </span>
+                  )}
                   {assistant.certificationBadge && (
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-700 font-medium shrink-0">
                       {assistant.certificationBadge}
                     </span>
                   )}
                 </div>
+                {assistant.personaName ? (
+                  <p className="text-xs text-slate-600 truncate font-medium">
+                    {assistant.shortName}
+                  </p>
+                ) : null}
                 <p className="text-xs text-slate-500 truncate">
                   {assistant.description}
                 </p>
               </div>
 
-              {/* État (sélectionné, locked, premium) */}
+              {/* État (sélectionné, coming soon, locked, premium) */}
               <div className="shrink-0">
-                {isSelected ? (
+                {isComingSoon ? (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 font-semibold">
+                    Bientôt
+                  </span>
+                ) : isSelected ? (
                   <Check className="w-4 h-4 text-[#00D9FF]" />
                 ) : isLocked ? (
                   <Lock className="w-4 h-4 text-slate-300" />

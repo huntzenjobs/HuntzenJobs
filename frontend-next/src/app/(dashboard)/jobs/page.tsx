@@ -76,6 +76,7 @@ import {
   AdvancedFiltersModal,
   type AdvancedFilters,
 } from "@/components/jobs/advanced-filters-modal";
+import { useConversionPopup } from "@/components/freemium/conversion-popups";
 
 // ─── Fuzzy location helpers ───────────────────────────────────────────────────
 
@@ -258,6 +259,8 @@ export default function JobsPage() {
     isFreePlan,
     plan,
   } = useSubscription();
+
+  const searchLimitPopup = useConversionPopup("search_limit");
 
   // Simple direct calls - no useMemo needed since functions are stable
   const searchesRemaining = getRemaining("job_search");
@@ -711,7 +714,7 @@ export default function JobsPage() {
   const handleSearch = (params: SearchParams) => {
     // Check if user can search (quota check)
     if (!canUse("job_search")) {
-      openPricingModal("job_searches_per_day");
+      searchLimitPopup.open();
       return;
     }
 
@@ -1479,7 +1482,7 @@ export default function JobsPage() {
                       type="button"
                       variant="outline"
                       size="lg"
-                      onClick={() => openPricingModal("job_searches_per_day")}
+                      onClick={() => searchLimitPopup.open()}
                       className="gap-2 border-2 border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF]/10 h-12 font-semibold"
                     >
                       <Sparkles className="w-4 h-4" />
@@ -2362,6 +2365,9 @@ export default function JobsPage() {
         onApply={handleApplyAdvancedFilters}
         initialFilters={advancedFilters}
       />
+
+      {/* Conversion popup: quota recherches atteint */}
+      <searchLimitPopup.PopupComponent />
 
       {/* Internal Links Footer for SEO */}
     </div>

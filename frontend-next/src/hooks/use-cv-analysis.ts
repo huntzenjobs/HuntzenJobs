@@ -26,6 +26,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
 import { useLocale } from "@/contexts/i18n-context";
+import { sendXpEvent } from "@/hooks/use-career-score";
 
 // ============================================
 // TYPES
@@ -259,6 +260,8 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
             }
+
+            sendXpEvent(session?.access_token ?? "", "cv_analysis");
 
             console.log("✅ CV analysis completed", {
               cv_id: cvAnalysisId,

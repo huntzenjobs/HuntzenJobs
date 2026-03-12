@@ -1,364 +1,180 @@
 "use client";
 
 import * as React from "react";
-import { Sparkles, MessageSquare, Target, Zap } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssistant } from "@/contexts/assistant-context";
 import { getAssistantConfig } from "@/config/assistants";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { AssistantType } from "@/types/assistant";
 import { useTranslations } from "next-intl";
 
-/**
- * WelcomeScreen - Engaging empty state for Coach chat
- *
- * Features:
- * - Animated coach avatar
- * - Quick start questions
- * - Value proposition
- * - Smooth fade-in animation
- *
- * UX Benefits:
- * - Reduces blank screen anxiety
- * - Provides clear starting points
- * - Sets expectations for AI capabilities
- */
-
 export interface WelcomeScreenProps {
-  /** Quick start questions */
-  quickQuestions?: Array<{
-    id: string;
-    text: string;
-    category: "cv" | "interview" | "career" | "salary";
-  }>;
-  /** Handler for question click */
   onQuestionClick?: (question: string) => void;
-  /** Custom className */
   className?: string;
 }
 
-const DEFAULT_QUESTIONS = [
+// Coaches affichés sur l'écran d'accueil (cv-adapter exclu)
+const DISPLAY_COACHES: AssistantType[] = [
+  "career-coach",
+  "job-scout",
+  "cv-analyzer",
+  "interview-sim",
+  "branding",
+];
+
+// Mapping quick-actions : clé i18n → coach + message pré-rempli
+const QUICK_ACTION_CONFIGS = [
   {
-    id: "1",
-    text: "Comment améliorer mon CV pour un poste de développeur ?",
-    category: "cv" as const,
+    labelKey: "quickActionCV" as const,
+    assistantId: "cv-analyzer" as AssistantType,
+    message: "Je veux améliorer mon CV.",
   },
   {
-    id: "2",
-    text: "Quelles questions poser lors d'un entretien ?",
-    category: "interview" as const,
+    labelKey: "quickActionJobs" as const,
+    assistantId: "job-scout" as AssistantType,
+    message: "Je cherche des offres d'emploi qui correspondent à mon profil.",
   },
   {
-    id: "3",
-    text: "Comment négocier mon salaire efficacement ?",
-    category: "salary" as const,
+    labelKey: "quickActionInterview" as const,
+    assistantId: "interview-sim" as AssistantType,
+    message: "Je veux me préparer pour un entretien.",
   },
   {
-    id: "4",
-    text: "Quelles sont les tendances du marché dans mon secteur ?",
-    category: "career" as const,
+    labelKey: "quickActionCareer" as const,
+    assistantId: "career-coach" as AssistantType,
+    message: "Je veux définir mon objectif de carrière.",
   },
 ];
 
 export function WelcomeScreen({
-  quickQuestions,
   onQuestionClick,
   className,
 }: WelcomeScreenProps) {
   const t = useTranslations("dashboard.assistant");
-  // Get current assistant config
-  const { selectedAssistant } = useAssistant();
-  const assistantConfig = getAssistantConfig(selectedAssistant);
+  const { setSelectedAssistant } = useAssistant();
+  const auth = useOptionalAuth();
+  const fullName = auth?.user?.user_metadata?.full_name as string | undefined;
+  const firstName = fullName?.split(" ")[0] || null;
 
-  // Use assistant-specific questions if not provided
-  const questions =
-    quickQuestions ||
-    assistantConfig.exampleQuestions.map((text, i) => ({
-      id: `q${i}`,
-      text,
-      category: "career" as const, // Default category
-    }));
+  const coaches = DISPLAY_COACHES.map((id) => getAssistantConfig(id));
+
+  const handleCoachSelect = (assistantId: AssistantType) => {
+    setSelectedAssistant(assistantId);
+    const config = getAssistantConfig(assistantId);
+    if (onQuestionClick && config.exampleQuestions.length > 0) {
+      onQuestionClick(config.exampleQuestions[0]);
+    }
+  };
+
+  const handleQuickAction = (action: (typeof QUICK_ACTION_CONFIGS)[0]) => {
+    setSelectedAssistant(action.assistantId);
+    onQuestionClick?.(action.message);
+  };
 
   return (
     <div
-      key={selectedAssistant} // Force re-render avec animation quand l'assistant change
       className={cn(
         "flex flex-col items-center justify-center",
-        "h-full min-h-[500px] px-4 py-12",
+        "h-full min-h-[500px] px-4 py-10",
         "animate-fade-in",
         className,
       )}
     >
-      {/* Animated Avatar - Dynamique selon l'assistant */}
-      <div className="relative mb-8">
-        {/* Main avatar avec couleur de l'assistant */}
-        <div
-          className="relative size-20 rounded-full flex items-center justify-center shadow-2xl"
-          style={{ backgroundColor: assistantConfig.color }}
-        >
-          <assistantConfig.icon className="size-10 text-white animate-pulse" />
-
-          {/* Glow rings */}
-          <div
-            className="absolute inset-0 rounded-full opacity-30 animate-ping"
-            style={{
-              backgroundColor: assistantConfig.color,
-              animationDuration: "2s",
-            }}
-          />
-          <div
-            className="absolute inset-0 rounded-full opacity-20 animate-ping"
-            style={{
-              backgroundColor: assistantConfig.color,
-              animationDuration: "3s",
-              animationDelay: "0.5s",
-            }}
-          />
-        </div>
-
-        {/* Floating particles */}
-        <div
-          className="absolute -top-2 -right-2 size-3 rounded-full bg-yellow-400 animate-bounce"
-          style={{ animationDelay: "0ms", animationDuration: "2s" }}
-        />
-        <div
-          className="absolute -bottom-2 -left-2 size-2 rounded-full bg-blue-400 animate-bounce"
-          style={{ animationDelay: "400ms", animationDuration: "2s" }}
-        />
-        <div
-          className="absolute top-0 -left-4 size-2 rounded-full bg-pink-400 animate-bounce"
-          style={{ animationDelay: "800ms", animationDuration: "2s" }}
-        />
-      </div>
-
-      {/* Welcome message - Adapté à l'expert */}
-      <div className="text-center mb-10 max-w-2xl">
-        <h1 className="text-3xl font-bold text-gray-900 mb-3">
-          {t("welcomeMessage")}
+      {/* Header */}
+      <div className="text-center mb-8 max-w-2xl">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {firstName
+            ? t("welcomeTeamWithName", { name: firstName })
+            : t("welcomeTeam")}
         </h1>
-        {assistantConfig.certificationBadge && (
-          <div className="inline-block mb-3 px-3 py-1 rounded-full bg-green-500/10 text-green-700 text-sm font-medium">
-            ✓ {assistantConfig.certificationBadge}
-          </div>
-        )}
-        <p className="text-lg text-gray-600 leading-relaxed">
-          {assistantConfig.description}
-          {assistantConfig.specialties &&
-            assistantConfig.specialties.length > 0 && (
-              <>
-                {" "}
-                Je me spécialise dans :{" "}
-                <span
-                  className="font-semibold"
-                  style={{ color: assistantConfig.color }}
-                >
-                  {assistantConfig.specialties.join(", ")}
-                </span>
-              </>
+        <p className="text-lg text-gray-500">{t("welcomeSubtitle")}</p>
+      </div>
+
+      {/* 5 Coach Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8 w-full max-w-4xl">
+        {coaches.map((coach) => (
+          <button
+            key={coach.id}
+            onClick={() => handleCoachSelect(coach.id)}
+            className={cn(
+              "group flex flex-col items-center gap-2 p-4 rounded-xl",
+              "bg-white border-2 border-gray-200",
+              "hover:shadow-md",
+              "transition-all duration-200 transform hover:-translate-y-0.5",
+              "text-center",
             )}
-        </p>
-      </div>
-
-      {/* Value propositions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 max-w-4xl w-full">
-        <ValuePropCard
-          icon={<MessageSquare className="size-5" />}
-          title="Conseils personnalisés"
-          description="Réponses adaptées à votre situation unique"
-        />
-        <ValuePropCard
-          icon={<Target className="size-5" />}
-          title="Stratégies éprouvées"
-          description="Techniques utilisées par les meilleurs recruteurs"
-        />
-        <ValuePropCard
-          icon={<Zap className="size-5" />}
-          title="Résultats rapides"
-          description="Optimisez votre recherche d'emploi immédiatement"
-        />
-      </div>
-
-      {/* Quick start questions */}
-      <div className="w-full max-w-3xl">
-        <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide text-center mb-4">
-          Questions fréquentes pour {assistantConfig.shortName}
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {questions.map((question) => (
-            <button
-              key={question.id}
-              onClick={() => onQuestionClick?.(question.text)}
-              className={cn(
-                "group",
-                "flex items-start gap-3 p-4",
-                "bg-white hover:bg-gradient-to-br hover:from-violet-50 hover:to-purple-50",
-                "border-2 border-gray-200 hover:border-violet-300",
-                "rounded-xl",
-                "text-left",
-                "transition-all duration-200",
-                "shadow-sm hover:shadow-md",
-                "transform hover:-translate-y-0.5",
-              )}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor =
+                coach.color;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "";
+            }}
+          >
+            <div
+              className="size-12 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: coach.bgColor }}
             >
-              {/* Category icon */}
-              <div
+              <coach.icon className="size-6" style={{ color: coach.color }} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">
+                {coach.personaName || coach.shortName}
+              </p>
+              {coach.personaName && (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {coach.shortName}
+                </p>
+              )}
+            </div>
+            <ArrowRight className="size-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
+          </button>
+        ))}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="w-full max-w-2xl">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide text-center mb-4">
+          {t("welcomeChoose")}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {QUICK_ACTION_CONFIGS.map((action) => {
+            const config = getAssistantConfig(action.assistantId);
+            return (
+              <button
+                key={action.labelKey}
+                onClick={() => handleQuickAction(action)}
                 className={cn(
-                  "flex-shrink-0 size-8 rounded-lg",
-                  "flex items-center justify-center",
-                  "transition-colors duration-200",
-                  getCategoryStyles(question.category),
+                  "flex items-center gap-3 px-4 py-3",
+                  "bg-white border border-gray-200 rounded-xl",
+                  "hover:bg-gray-50 hover:border-gray-300",
+                  "text-left text-sm font-medium text-gray-700",
+                  "transition-all duration-150 group",
                 )}
               >
-                {getCategoryIcon(question.category)}
-              </div>
-
-              {/* Question text */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 group-hover:text-violet-700 transition-colors">
-                  {question.text}
-                </p>
-              </div>
-
-              {/* Arrow icon */}
-              <svg
-                className="flex-shrink-0 size-5 text-gray-400 group-hover:text-violet-600 transform group-hover:translate-x-1 transition-all"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-          ))}
+                <div
+                  className="size-7 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: config.bgColor }}
+                >
+                  <config.icon
+                    className="size-4"
+                    style={{ color: config.color }}
+                  />
+                </div>
+                <span className="flex-1">{t(action.labelKey)}</span>
+                <ArrowRight className="size-4 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Pro tip */}
-      <div className="mt-8 flex items-center gap-2 text-sm text-gray-500">
-        <Sparkles className="size-4" />
-        <span>
-          Astuce : Soyez précis dans vos questions pour obtenir les meilleurs
-          conseils
-        </span>
+      {/* Footer */}
+      <div className="mt-8 flex items-center gap-2 text-xs text-gray-400">
+        <Sparkles className="size-3.5" />
+        <span>{t("welcomeFooter")}</span>
       </div>
     </div>
   );
-}
-
-/**
- * ValuePropCard - Small card showing a value proposition
- */
-function ValuePropCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex flex-col items-center text-center p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200">
-      <div className="size-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 mb-3">
-        {icon}
-      </div>
-      <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-      <p className="text-sm text-gray-600">{description}</p>
-    </div>
-  );
-}
-
-/**
- * Get category-specific styles
- */
-function getCategoryStyles(category: string): string {
-  switch (category) {
-    case "cv":
-      return "bg-blue-100 group-hover:bg-blue-200 text-blue-600";
-    case "interview":
-      return "bg-green-100 group-hover:bg-green-200 text-green-600";
-    case "career":
-      return "bg-purple-100 group-hover:bg-purple-200 text-purple-600";
-    case "salary":
-      return "bg-amber-100 group-hover:bg-amber-200 text-amber-600";
-    default:
-      return "bg-gray-100 group-hover:bg-gray-200 text-gray-600";
-  }
-}
-
-/**
- * Get category-specific icon
- */
-function getCategoryIcon(category: string): React.ReactNode {
-  switch (category) {
-    case "cv":
-      return (
-        <svg
-          className="size-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      );
-    case "interview":
-      return (
-        <svg
-          className="size-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-          />
-        </svg>
-      );
-    case "career":
-      return (
-        <svg
-          className="size-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-          />
-        </svg>
-      );
-    case "salary":
-      return (
-        <svg
-          className="size-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      );
-    default:
-      return <Sparkles className="size-4" />;
-  }
 }

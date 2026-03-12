@@ -25,6 +25,7 @@ import {
   Activity,
   Users,
   Send,
+  Gift,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
@@ -36,6 +37,7 @@ import { UsageSummary } from "@/components/freemium/usage-counter";
 import { UsageModal } from "@/components/freemium/usage-modal";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcherCompact } from "@/components/language-switcher";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,6 +106,12 @@ export function Sidebar({ className }: SidebarProps) {
       icon: Send,
       premium: false,
       badge: isCandidaturesNew ? "Nouveau" : undefined,
+    },
+    {
+      name: t("nav.referral"),
+      href: "/referral",
+      icon: Gift,
+      premium: false,
     },
     {
       name: t("nav.recruiterContact"),
@@ -175,13 +183,16 @@ export function Sidebar({ className }: SidebarProps) {
             className="group-hover:opacity-80 transition-opacity"
           />
         </Link>
-        <button
-          className="lg:hidden text-white/70 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
-          onClick={() => setIsMobileMenuOpen(false)}
-          aria-label={t("aria.close")}
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          {user && <NotificationBell />}
+          <button
+            className="lg:hidden text-white/70 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label={t("aria.close")}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Navigation */}

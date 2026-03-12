@@ -7,6 +7,15 @@ const mockSubscriptionContext = {
   hasFeature: vi.fn(() => true),
 }
 
+vi.mock('@/components/freemium/conversion-popups', () => ({
+  useConversionPopup: () => ({
+    isOpen: false,
+    open: vi.fn(),
+    close: vi.fn(),
+    PopupComponent: () => null,
+  }),
+}))
+
 vi.mock('@/contexts/subscription-context', () => ({
   useSubscription: () => mockSubscriptionContext,
   useOptionalSubscription: () => mockSubscriptionContext,

@@ -232,7 +232,8 @@
       "candidatures": "Mes Candidatures",
       "recruiterContact": "Contact Recruteur",
       "documents": "Mes documents",
-      "myUsage": "Mon Utilisation"
+      "myUsage": "Mon Utilisation",
+      "referral": "HuntZen Boost"
     },
     "plans": {
       "free": "Gratuit",
@@ -267,6 +268,29 @@
       "logout": "Se déconnecter"
     }
   },
+  "team": {
+    "tagline": "Ton équipe carrière, toujours avec toi.",
+    "subtitle": "On t'aide à construire la carrière que tu veux vraiment."
+  },
+  "progression": {
+    "title": "Ta progression carrière",
+    "cvOptimised": "CV optimisé",
+    "profileImproved": "Profil amélioré",
+    "interviewSimulated": "Simulation entretien",
+    "applicationsSent": "Candidatures envoyées",
+    "progressMessage": "Tu avances bien. Encore quelques étapes et tu seras prêt à postuler."
+  },
+  "retention": {
+    "notification1": "Je viens de trouver 3 offres qui pourraient vraiment te correspondre.",
+    "notification2": "Ton CV peut encore être amélioré pour attirer plus de recruteurs.",
+    "notification3": "Tu veux faire une simulation d'entretien rapide ?",
+    "relance3days": "On continue à avancer sur ta carrière ?",
+    "relance7days": "Une opportunité pourrait t'attendre aujourd'hui."
+  },
+  "coachFeedback": {
+    "sofia": { "good": "Ton CV est déjà solide. On peut encore l'améliorer." },
+    "lucas": { "good": "Ta réponse est bonne. On peut la rendre encore plus percutante." }
+  },
   "pricingModal": {
     "title": "Débloquez toutes les fonctionnalités",
     "featureRequired": "Cette fonctionnalité nécessite un abonnement",
@@ -290,7 +314,8 @@
     "plans": {
       "free": {
         "name": "Gratuit",
-        "description": "Parfait pour découvrir HuntZen",
+        "tagline": "Exploration",
+        "description": "Je découvre, je teste",
         "period": "",
         "featureNames": [
           "3 recherches par jour",
@@ -306,7 +331,8 @@
       },
       "starter": {
         "name": "Starter",
-        "description": "Idéal pour commencer votre recherche",
+        "tagline": "Recherche active",
+        "description": "Je cherche sérieusement",
         "period": "/mois",
         "featureNames": [
           "Recherches illimitées",
@@ -322,7 +348,8 @@
       },
       "pro": {
         "name": "Pro",
-        "description": "Le plus populaire pour booster sa carrière",
+        "tagline": "Préparation et progression",
+        "description": "Je veux réussir",
         "period": "/mois",
         "featureNames": [
           "Tout Starter inclus",
@@ -338,7 +365,8 @@
       },
       "premium": {
         "name": "Premium",
-        "description": "Accès complet à toutes les fonctionnalités",
+        "tagline": "Optimisation carrière",
+        "description": "Je veux dominer",
         "period": "/mois",
         "featureNames": [
           "Tout Pro inclus",
@@ -590,11 +618,24 @@
       "unlockUnlimited": "Débloquer le temps illimité",
       "errorMessage": "Désolé, une erreur est survenue. Pouvez-vous reformuler votre question ?",
       "unlimited": "Illimité",
-      "welcomeMessage": "Bonjour ! Je suis votre expert en recherche d'emploi. Comment puis-je vous aider aujourd'hui ?"
+      "welcomeMessage": "Bienvenue. Tu viens de rejoindre ton équipe carrière. Choisis par quoi tu veux commencer.",
+      "welcomeTeamWithName": "Salut {name} ! Ton équipe carrière est là pour t'aider.",
+      "welcomeTeam": "Ton équipe carrière est là pour t'aider.",
+      "welcomeSubtitle": "On va trouver ton prochain job.",
+      "welcomeChoose": "Choisis par quoi tu veux commencer.",
+      "welcomeFooter": "5 coachs disponibles 24h/24",
+      "quickActionCV": "Améliorer mon CV",
+      "quickActionJobs": "Trouver des offres",
+      "quickActionInterview": "Préparer mon entretien",
+      "quickActionCareer": "Définir mon objectif carrière"
     },
     "salons": {
       "title": "Salons & Forums",
-      "subtitle": "Découvrez les événements emploi près de chez vous et rencontrez des recruteurs en personne ou en ligne",
+      "subtitle": "Trouve ici les salons et événements qui peuvent t'ouvrir de nouvelles opportunités professionnelles.",
+      "keyMessage1": "Découvre les événements clés pour ta carrière.",
+      "keyMessage2": "Élargis ton réseau et trouve de nouvelles opportunités.",
+      "ctaExplore": "Explorer les salons",
+      "ctaJoin": "Rejoindre un événement",
       "hideFilters": "Masquer les filtres",
       "showFilters": "Afficher les filtres",
       "eventsCount": "{count} événement(s)",
