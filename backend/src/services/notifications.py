@@ -21,6 +21,8 @@ VALID_TYPES = {
     "career_progress",
     "interview_ready",
     "win_back_7d",
+    "support_ticket_received",
+    "support_ticket_reply",
 }
 
 

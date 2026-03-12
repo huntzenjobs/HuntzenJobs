@@ -5,6 +5,7 @@ import { NavigationLoader } from "@/components/layout/navigation-loader";
 import { SubscriptionProvider } from "@/contexts/subscription-context";
 import { PricingModal } from "@/components/freemium/pricing-modal";
 import { UpgradeBanner } from "@/components/freemium/upgrade-banner";
+import { SupportBubble } from "@/components/support/support-bubble";
 import DashboardLoading from "./loading";
 
 export default async function DashboardLayout({
@@ -38,6 +39,9 @@ export default async function DashboardLayout({
 
         {/* Global pricing modal */}
         <PricingModal />
+
+        {/* Support chat bubble */}
+        <SupportBubble />
       </div>
     </SubscriptionProvider>
   );

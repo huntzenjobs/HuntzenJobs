@@ -606,3 +606,140 @@ def send_recruiter_request_notification(
     except Exception as e:
         logger.error(f"Failed to send admin notification for request {request_id}: {e}")
         return False
+
+
+def send_support_ticket_notification(
+    ticket_id: str,
+    subject: str,
+    category: str,
+    priority: str,
+    user_name: str,
+    user_email: str,
+    user_plan: str,
+    page_url: str,
+    description: str,
+) -> bool:
+    """
+    Notify admin of a new support ticket.
+    Sends to settings.admin_email.
+    """
+    try:
+        priority_emoji = {"urgent": "🔴", "normal": "🟡", "low": "🟢"}.get(priority, "🟡")
+        category_label = {"bug": "Bug", "question": "Question", "suggestion": "Suggestion"}.get(category, category)
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }}
+                .info-box {{ background: white; border-radius: 8px; padding: 20px; margin: 15px 0; border-left: 4px solid #2563EB; }}
+                .info-item {{ margin: 8px 0; }}
+                .label {{ font-weight: bold; color: #555; }}
+                .message-box {{ background: white; border-radius: 8px; padding: 20px; margin: 15px 0; border: 1px solid #e5e7eb; white-space: pre-wrap; }}
+                .button {{ display: inline-block; background: #2563EB; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 20px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>🎫 Nouveau ticket support #{ticket_id}</h2>
+                    <p>{priority_emoji} {priority.upper()} — {category_label}</p>
+                </div>
+                <div class="content">
+                    <div class="info-box">
+                        <div class="info-item"><span class="label">Utilisateur :</span> {user_name or "N/A"}</div>
+                        <div class="info-item"><span class="label">Email :</span> {user_email}</div>
+                        <div class="info-item"><span class="label">Plan :</span> {user_plan or "N/A"}</div>
+                        <div class="info-item"><span class="label">Page :</span> {page_url or "N/A"}</div>
+                    </div>
+                    <h3>📋 Sujet</h3>
+                    <p>{subject}</p>
+                    <h3>💬 Description</h3>
+                    <div class="message-box">{description}</div>
+                    <a href="{settings.get_primary_frontend_url()}/admin/support" class="button">Gérer dans l'admin</a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        params = {
+            "from": settings.from_email,
+            "to": [settings.admin_email],
+            "subject": f"[Support] Nouveau ticket #{ticket_id} — {category_label} — {priority.upper()}",
+            "html": html_content,
+        }
+
+        email = resend.Emails.send(params)
+        logger.info(f"Support ticket notification sent for ticket {ticket_id}: {email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send support ticket notification for {ticket_id}: {e}")
+        return False
+
+
+def send_support_ticket_reply(
+    user_email: str,
+    user_name: str,
+    ticket_id: str,
+    ticket_subject: str,
+    admin_reply: str,
+) -> bool:
+    """
+    Send admin reply to the user who submitted the ticket.
+    """
+    try:
+        first_name = user_name.split()[0] if user_name else "Utilisateur"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }}
+                .reply-box {{ background: white; border-radius: 8px; padding: 20px; margin: 15px 0; border-left: 4px solid #00d4aa; white-space: pre-wrap; }}
+                .footer {{ color: #888; font-size: 0.9em; margin-top: 20px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>✅ Réponse à votre ticket #{ticket_id}</h2>
+                </div>
+                <div class="content">
+                    <p>Bonjour {first_name},</p>
+                    <p>Notre équipe a répondu à votre demande : <strong>{ticket_subject}</strong></p>
+                    <div class="reply-box">{admin_reply}</div>
+                    <p class="footer">
+                        Si vous avez d'autres questions, n'hésitez pas à ouvrir un nouveau ticket depuis votre espace HuntZen.
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        params = {
+            "from": settings.from_email,
+            "to": [user_email],
+            "subject": f"Réponse à votre ticket #{ticket_id} — {ticket_subject}",
+            "html": html_content,
+        }
+
+        email = resend.Emails.send(params)
+        logger.info(f"Support reply sent to {user_email} for ticket {ticket_id}: {email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send support reply for ticket {ticket_id}: {e}")
+        return False

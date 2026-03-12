@@ -15,6 +15,7 @@ import {
   Target,
   Bot,
   Tag,
+  LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -66,6 +67,7 @@ export default function AdminNav() {
     { href: "/admin/segments", label: "Rétention", icon: Target },
     { href: "/admin/prompts", label: "Prompts IA", icon: Bot },
     { href: "/admin/coupons", label: "Codes promo", icon: Tag },
+    { href: "/admin/support", label: "Support", icon: LifeBuoy },
   ];
 
   return (
