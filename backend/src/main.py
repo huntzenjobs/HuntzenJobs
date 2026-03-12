@@ -41,7 +41,7 @@ if settings.sentry_dsn:
         traces_sample_rate=0.1,
         integrations=[StarletteIntegration(), FastApiIntegration()],
     )
-    logger.info("sentry_initialized", environment=settings.environment)
+    logger.info(f"Sentry initialized (environment={settings.environment})")
 
 
 @asynccontextmanager
