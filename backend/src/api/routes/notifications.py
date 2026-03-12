@@ -10,23 +10,17 @@ from typing import Optional
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel
-from supabase import create_client, Client
+from supabase import create_client
 import httpx
 
 from src.config.settings import get_settings
+from src.api.deps import get_supabase_client
 from src.services.email import send_job_alerts, send_weekly_summary
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
-
-
-def get_supabase_service_client() -> Client:
-    return create_client(
-        settings.supabase_url,
-        settings.get_supabase_service_role_key(),
-    )
 
 
 def get_user_id_and_email_from_header(authorization: Optional[str]):
@@ -98,7 +92,7 @@ async def send_job_alerts_route(payload: SendJobAlertsRequest):
     and send them as a job alert digest email.
     Called by the Vercel cron job at 08:00 daily.
     """
-    supabase = get_supabase_service_client()
+    supabase = get_supabase_client()
     user_id = payload.user_id
 
     email = _get_user_email_by_id(user_id)
@@ -155,7 +149,7 @@ async def send_weekly_summary_route(payload: SendWeeklySummaryRequest):
     Compute last-7-day activity stats for a user and send a weekly summary email.
     Called by the Vercel cron job every Monday at 09:00.
     """
-    supabase = get_supabase_service_client()
+    supabase = get_supabase_client()
     user_id = payload.user_id
 
     email = _get_user_email_by_id(user_id)
@@ -230,7 +224,7 @@ async def get_notification_preferences(authorization: Optional[str] = Header(Non
             detail="Authentication required",
         )
 
-    supabase = get_supabase_service_client()
+    supabase = get_supabase_client()
     try:
         resp = supabase.table("user_notification_preferences") \
             .select("*") \
@@ -291,7 +285,7 @@ async def update_notification_preferences(
     update_data["user_id"] = user_id
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-    supabase = get_supabase_service_client()
+    supabase = get_supabase_client()
     try:
         resp = supabase.table("user_notification_preferences") \
             .upsert(update_data, on_conflict="user_id") \
