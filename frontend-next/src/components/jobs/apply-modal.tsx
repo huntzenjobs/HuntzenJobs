@@ -258,6 +258,7 @@ export function ApplyModal({
       setResult(null);
       setGeneratingLabel("");
       setMarkedApplied(false);
+      setLanguage(initialLanguage ?? "fr");
       setPendingCvData(null);
       setPendingMatchScore(undefined);
       setPreviewHtml("");
