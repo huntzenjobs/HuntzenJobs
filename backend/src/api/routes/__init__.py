@@ -30,6 +30,10 @@ from src.api.routes.documents import router as documents_router
 from src.api.routes.referrals import router as referrals_router
 from src.api.routes.applications import router as applications_router
 from src.api.routes.notifications import router as notifications_router
+from src.api.routes.career_score import router as career_score_router
+from src.api.routes.coupons import router as coupons_router
+from src.api.routes.stats import router as stats_router
+from src.api.routes.cron import router as cron_router
 
 router = APIRouter()
 
@@ -58,3 +62,7 @@ router.include_router(documents_router, prefix="/api/documents", tags=["Document
 router.include_router(referrals_router, prefix="/api/referrals", tags=["Referrals"])
 router.include_router(applications_router, tags=["Applications"])
 router.include_router(notifications_router, tags=["Notifications"])
+router.include_router(career_score_router, prefix="/api/career-score", tags=["Career Score"])
+router.include_router(coupons_router, prefix="/api/coupons", tags=["Coupons"])
+router.include_router(stats_router, prefix="/api/stats", tags=["Stats"])
+router.include_router(cron_router, prefix="/api/cron", tags=["Cron"])
