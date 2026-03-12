@@ -30,6 +30,19 @@ from src.utils.logger import setup_logging, get_logger
 setup_logging()
 logger = get_logger(__name__)
 
+# Sentry — error tracking (active si SENTRY_DSN configuré sur Railway)
+if settings.sentry_dsn:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        traces_sample_rate=0.1,
+        integrations=[StarletteIntegration(), FastApiIntegration()],
+    )
+    logger.info("sentry_initialized", environment=settings.environment)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
