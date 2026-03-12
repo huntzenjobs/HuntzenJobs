@@ -648,6 +648,8 @@ export default function AssistantPage() {
                       showAvatar
                       showTimestamp
                       enableCopy
+                      assistantAvatarUrl={assistantConfig.avatarUrl}
+                      assistantColor={assistantConfig.color}
                     />
                   </motion.div>
                 );

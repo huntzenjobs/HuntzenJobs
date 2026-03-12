@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssistant } from "@/contexts/assistant-context";
 import { getAssistantConfig } from "@/config/assistants";
@@ -23,30 +23,6 @@ const DISPLAY_COACHES: AssistantType[] = [
   "branding",
 ];
 
-// Mapping quick-actions : clé i18n → coach + message pré-rempli
-const QUICK_ACTION_CONFIGS = [
-  {
-    labelKey: "quickActionCV" as const,
-    assistantId: "cv-analyzer" as AssistantType,
-    message: "Je veux améliorer mon CV.",
-  },
-  {
-    labelKey: "quickActionJobs" as const,
-    assistantId: "job-scout" as AssistantType,
-    message: "Je cherche des offres d'emploi qui correspondent à mon profil.",
-  },
-  {
-    labelKey: "quickActionInterview" as const,
-    assistantId: "interview-sim" as AssistantType,
-    message: "Je veux me préparer pour un entretien.",
-  },
-  {
-    labelKey: "quickActionCareer" as const,
-    assistantId: "career-coach" as AssistantType,
-    message: "Je veux définir mon objectif de carrière.",
-  },
-];
-
 export function WelcomeScreen({
   onQuestionClick,
   className,
@@ -57,19 +33,19 @@ export function WelcomeScreen({
   const fullName = auth?.user?.user_metadata?.full_name as string | undefined;
   const firstName = fullName?.split(" ")[0] || null;
 
+  const [hoveredCoach, setHoveredCoach] = React.useState<AssistantType | null>(
+    null,
+  );
+  const [selectedCoach, setSelectedCoach] =
+    React.useState<AssistantType>("career-coach");
+
+  const activeCoachId = hoveredCoach ?? selectedCoach;
+  const activeCoach = getAssistantConfig(activeCoachId);
   const coaches = DISPLAY_COACHES.map((id) => getAssistantConfig(id));
 
-  const handleCoachSelect = (assistantId: AssistantType) => {
-    setSelectedAssistant(assistantId);
-    const config = getAssistantConfig(assistantId);
-    if (onQuestionClick && config.exampleQuestions.length > 0) {
-      onQuestionClick(config.exampleQuestions[0]);
-    }
-  };
-
-  const handleQuickAction = (action: (typeof QUICK_ACTION_CONFIGS)[0]) => {
-    setSelectedAssistant(action.assistantId);
-    onQuestionClick?.(action.message);
+  const handleChipClick = (question: string) => {
+    setSelectedAssistant(activeCoach.id);
+    onQuestionClick?.(question);
   };
 
   return (
@@ -92,81 +68,115 @@ export function WelcomeScreen({
       </div>
 
       {/* 5 Coach Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8 w-full max-w-4xl">
-        {coaches.map((coach) => (
-          <button
-            key={coach.id}
-            onClick={() => handleCoachSelect(coach.id)}
-            className={cn(
-              "group flex flex-col items-center gap-2 p-4 rounded-xl",
-              "bg-white border-2 border-gray-200",
-              "hover:shadow-md",
-              "transition-all duration-200 transform hover:-translate-y-0.5",
-              "text-center",
-            )}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor =
-                coach.color;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "";
-            }}
-          >
-            <div
-              className="size-12 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: coach.bgColor }}
-            >
-              <coach.icon className="size-6" style={{ color: coach.color }} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">
-                {coach.personaName || coach.shortName}
-              </p>
-              {coach.personaName && (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {coach.shortName}
-                </p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 w-full max-w-4xl">
+        {coaches.map((coach) => {
+          const isActive = coach.id === activeCoachId;
+          return (
+            <button
+              key={coach.id}
+              onClick={() => setSelectedCoach(coach.id)}
+              onMouseEnter={() => setHoveredCoach(coach.id)}
+              onMouseLeave={() => setHoveredCoach(null)}
+              className={cn(
+                "group flex flex-col items-center gap-2 p-4 rounded-xl",
+                "bg-white border-2 transition-all duration-200 transform hover:-translate-y-0.5",
+                "text-center",
+                isActive ? "shadow-md" : "border-gray-200 hover:shadow-md",
               )}
-            </div>
-            <ArrowRight className="size-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
-          </button>
-        ))}
+              style={{
+                borderColor: isActive ? coach.color : undefined,
+              }}
+            >
+              <div
+                className="size-12 rounded-full flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: coach.bgColor }}
+              >
+                {coach.avatarUrl ? (
+                  <img
+                    src={coach.avatarUrl}
+                    alt={coach.personaName || coach.shortName}
+                    className="size-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <coach.icon
+                    className="size-6"
+                    style={{ color: coach.color }}
+                  />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900">
+                  {coach.personaName || coach.shortName}
+                </p>
+                {coach.personaName && (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {coach.shortName}
+                  </p>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Quick Actions */}
-      <div className="w-full max-w-2xl">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide text-center mb-4">
-          {t("welcomeChoose")}
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {QUICK_ACTION_CONFIGS.map((action) => {
-            const config = getAssistantConfig(action.assistantId);
-            return (
-              <button
-                key={action.labelKey}
-                onClick={() => handleQuickAction(action)}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3",
-                  "bg-white border border-gray-200 rounded-xl",
-                  "hover:bg-gray-50 hover:border-gray-300",
-                  "text-left text-sm font-medium text-gray-700",
-                  "transition-all duration-150 group",
-                )}
-              >
-                <div
-                  className="size-7 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: config.bgColor }}
-                >
-                  <config.icon
-                    className="size-4"
-                    style={{ color: config.color }}
-                  />
-                </div>
-                <span className="flex-1">{t(action.labelKey)}</span>
-                <ArrowRight className="size-4 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
-              </button>
-            );
-          })}
+      {/* Dynamic section — changes with active coach */}
+      <div
+        key={activeCoachId}
+        className="flex flex-col items-center gap-4 w-full max-w-2xl animate-fade-in"
+      >
+        {/* Avatar + identity */}
+        <div className="flex flex-col items-center gap-2">
+          <div
+            className="size-20 rounded-full flex items-center justify-center overflow-hidden shadow-md"
+            style={{ backgroundColor: activeCoach.bgColor }}
+          >
+            {activeCoach.avatarUrl ? (
+              <img
+                src={activeCoach.avatarUrl}
+                alt={activeCoach.personaName || activeCoach.shortName}
+                className="size-20 rounded-full object-cover"
+              />
+            ) : (
+              <activeCoach.icon
+                className="size-10"
+                style={{ color: activeCoach.color }}
+              />
+            )}
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">
+            Bonjour, je suis{" "}
+            <span style={{ color: activeCoach.color }}>
+              {activeCoach.personaName || activeCoach.shortName}
+            </span>
+          </h2>
+          <p className="text-sm text-gray-500 text-center max-w-sm">
+            {activeCoach.description}
+          </p>
+        </div>
+
+        {/* Question chips */}
+        <div className="flex flex-col gap-2 w-full">
+          {activeCoach.exampleQuestions.map((question, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleChipClick(question)}
+              className={cn(
+                "w-full px-4 py-3 rounded-xl text-left text-sm font-medium",
+                "bg-white border-2 border-gray-200",
+                "hover:shadow-sm transition-all duration-150",
+              )}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor =
+                  activeCoach.color;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "";
+              }}
+            >
+              <span style={{ color: activeCoach.color }}>→</span>{" "}
+              <span className="text-gray-700">{question}</span>
+            </button>
+          ))}
         </div>
       </div>
 

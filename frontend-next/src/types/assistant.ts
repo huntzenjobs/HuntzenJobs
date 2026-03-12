@@ -46,6 +46,9 @@ export interface AssistantConfig {
   /** Couleur de fond (plus claire) */
   bgColor: string;
 
+  /** URL avatar Dicebear open-source */
+  avatarUrl?: string;
+
   /** Est-ce un service premium ? */
   isPremium: boolean;
 

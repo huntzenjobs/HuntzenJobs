@@ -29,6 +29,8 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: UserCheck,
     color: "#2563eb", // blue-600
     bgColor: "#dbeafe", // blue-100
+    avatarUrl:
+      "https://api.dicebear.com/9.x/personas/svg?seed=Nova&backgroundColor=dbeafe",
     isPremium: false,
     certificationBadge: "Certifié RNCP",
     specialties: [
@@ -56,6 +58,8 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: Briefcase,
     color: "#059669", // emerald-600
     bgColor: "#d1fae5", // emerald-100
+    avatarUrl:
+      "https://api.dicebear.com/9.x/personas/svg?seed=Maria&backgroundColor=d1fae5",
     isPremium: false,
     certificationBadge: "10+ ans d'expérience",
     specialties: [
@@ -83,6 +87,8 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: FileText,
     color: "#7c3aed", // violet-600
     bgColor: "#ede9fe", // violet-100
+    avatarUrl:
+      "https://api.dicebear.com/9.x/personas/svg?seed=Sofia&backgroundColor=ede9fe",
     isPremium: false,
     certificationBadge: "Expert RH",
     specialties: [
@@ -111,6 +117,8 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: FileEdit,
     color: "#dc2626", // red-600
     bgColor: "#fee2e2", // red-100
+    avatarUrl:
+      "https://api.dicebear.com/9.x/personas/svg?seed=Adapter&backgroundColor=fee2e2",
     isPremium: false,
     certificationBadge: "Spécialiste Candidature",
     specialties: [
@@ -138,6 +146,8 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: Mic,
     color: "#ea580c", // orange-600
     bgColor: "#ffedd5", // orange-100
+    avatarUrl:
+      "https://api.dicebear.com/9.x/personas/svg?seed=Lucas&backgroundColor=ffedd5",
     isPremium: true,
     isComingSoon: true,
     certificationBadge: "Recruteur certifié",
@@ -165,6 +175,8 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: Linkedin,
     color: "#0077b5",
     bgColor: "#dbeafe",
+    avatarUrl:
+      "https://api.dicebear.com/9.x/personas/svg?seed=Jeff&backgroundColor=dbeafe",
     isPremium: false,
     certificationBadge: "Expert Personal Branding",
     specialties: [

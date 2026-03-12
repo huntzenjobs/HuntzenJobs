@@ -41,6 +41,10 @@ export interface ChatMessageProps {
   enableCopy?: boolean;
   /** Custom className */
   className?: string;
+  /** URL avatar Dicebear de l'assistant actif */
+  assistantAvatarUrl?: string;
+  /** Couleur hex de l'assistant pour le fallback */
+  assistantColor?: string;
 }
 
 export function ChatMessage({
@@ -49,6 +53,8 @@ export function ChatMessage({
   showTimestamp = true,
   enableCopy = true,
   className,
+  assistantAvatarUrl,
+  assistantColor,
 }: ChatMessageProps) {
   const [showCopyButton, setShowCopyButton] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
@@ -95,14 +101,32 @@ export function ChatMessage({
       {/* Avatar (assistant only, on left) */}
       {!isUser && showAvatar && (
         <div className="flex-shrink-0">
-          <div className="relative size-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md">
-            <Sparkles className="size-4 text-white animate-pulse" />
-
-            {/* Animated glow */}
-            <div
-              className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping"
-              style={{ animationDuration: "3s" }}
-            />
+          <div
+            className="relative size-8 rounded-full overflow-hidden flex items-center justify-center shadow-md"
+            style={{
+              backgroundColor: assistantAvatarUrl
+                ? undefined
+                : assistantColor || "#7c3aed",
+              background: assistantAvatarUrl
+                ? undefined
+                : `linear-gradient(135deg, ${assistantColor || "#7c3aed"}, ${assistantColor || "#6d28d9"})`,
+            }}
+          >
+            {assistantAvatarUrl ? (
+              <img
+                src={assistantAvatarUrl}
+                alt="assistant"
+                className="size-8 rounded-full object-cover"
+              />
+            ) : (
+              <>
+                <Sparkles className="size-4 text-white animate-pulse" />
+                <div
+                  className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping"
+                  style={{ animationDuration: "3s" }}
+                />
+              </>
+            )}
           </div>
         </div>
       )}
@@ -165,9 +189,7 @@ export function ChatMessage({
                     </ol>
                   ),
                   li: ({ children }) => (
-                    <li className="text-gray-800">
-                      {children}
-                    </li>
+                    <li className="text-gray-800">{children}</li>
                   ),
                   code: ({ inline, children, ...props }: any) =>
                     inline ? (
