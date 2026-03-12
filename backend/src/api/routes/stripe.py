@@ -214,7 +214,7 @@ async def create_portal_session(
         stripe_customer_id = result.data[0]["stripe_customer_id"]
 
         import stripe as stripe_lib
-        frontend_url = settings.frontend_url if hasattr(settings, "frontend_url") else "https://huntzenjobs.com"
+        frontend_url = settings.get_primary_frontend_url()
 
         portal_session = stripe_lib.billing_portal.Session.create(
             customer=stripe_customer_id,
