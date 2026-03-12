@@ -41,6 +41,7 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
 import { useAuth } from "@/contexts/auth-context";
 import { sendXpEvent } from "@/hooks/use-career-score";
+import { toast } from "sonner";
 import { ApplyModal } from "./apply-modal";
 import { InsiderFinderDrawer } from "./insider-finder-drawer";
 
@@ -97,6 +98,7 @@ export function JobDetailsModal({
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [insiderDrawerOpen, setInsiderDrawerOpen] = React.useState(false);
   const [showAppliedConfirm, setShowAppliedConfirm] = React.useState(false);
+  const [appliedConfirmed, setAppliedConfirmed] = React.useState(false);
   const confirmTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -212,9 +214,12 @@ export function JobDetailsModal({
 
   const handleConfirmApplied = async () => {
     setShowAppliedConfirm(false);
+    setAppliedConfirmed(true);
     pendingJobRef.current = null;
     // ✅ Seulement ici on marque "Postulé" dans le parent (localStorage + badge vert)
     onApplied?.(job.id);
+    // Auto-hide success banner after 5 seconds
+    setTimeout(() => setAppliedConfirmed(false), 5000);
     try {
       await authenticatedFetch(`${BACKEND_URL}/api/applications`, {
         method: "POST",
@@ -234,8 +239,9 @@ export function JobDetailsModal({
         job_title: job.title,
         company: job.company,
       });
-    } catch {
-      // Fail silently
+    } catch (err) {
+      console.error("[Applications] Failed to save:", err);
+      toast.error("Impossible d'enregistrer la candidature. Réessaie.");
     }
   };
 
@@ -616,25 +622,55 @@ export function JobDetailsModal({
               )}
             </div>
 
-            {/* Confirmation popup — "As-tu vraiment postulé ?" */}
-            {showAppliedConfirm && (
-              <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 flex items-center justify-between gap-3 shadow-lg z-10">
-                <p className="text-sm font-semibold text-slate-800">
-                  As-tu envoyé ta candidature ?
-                </p>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={handleConfirmApplied}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors"
-                  >
-                    ✓ Oui, postulé !
-                  </button>
-                  <button
-                    onClick={handleDenyApplied}
-                    className="inline-flex items-center px-3 py-2 border border-slate-200 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
-                  >
-                    Non
-                  </button>
+            {/* Bannière confirmation candidature */}
+            {showAppliedConfirm && !appliedConfirmed && (
+              <div className="sticky bottom-0 left-0 right-0 bg-blue-600 border-t-2 border-blue-700 p-4 shadow-xl z-10">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-white font-bold text-base">
+                      🎯 As-tu envoyé ta candidature chez {job.company} ?
+                    </p>
+                    <p className="text-blue-100 text-sm mt-0.5">
+                      On la retrouvera dans ton espace Candidatures
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={handleConfirmApplied}
+                      className="px-5 py-2.5 bg-white text-blue-600 font-bold text-sm rounded-xl hover:bg-blue-50 transition-colors shadow-md"
+                    >
+                      ✓ Oui !
+                    </button>
+                    <button
+                      onClick={handleDenyApplied}
+                      className="px-4 py-2.5 bg-blue-700 text-white text-sm font-medium rounded-xl hover:bg-blue-800 transition-colors"
+                    >
+                      Non
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bannière succès après confirmation */}
+            {appliedConfirmed && (
+              <div className="sticky bottom-0 left-0 right-0 bg-green-600 border-t-2 border-green-700 p-4 shadow-xl z-10">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">✅</span>
+                  <div>
+                    <p className="text-white font-bold text-base">
+                      Candidature enregistrée !
+                    </p>
+                    <p className="text-green-100 text-sm mt-0.5">
+                      Vous retrouverez cette annonce sur votre espace{" "}
+                      <a
+                        href="/candidatures"
+                        className="underline font-semibold hover:text-white transition-colors"
+                      >
+                        mes candidatures
+                      </a>
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
