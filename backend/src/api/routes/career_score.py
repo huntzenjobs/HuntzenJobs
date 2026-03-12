@@ -157,6 +157,7 @@ def _calculate_xp_score(supabase, user_id: str) -> tuple[int, int]:
             supabase.table("user_xp_events")
             .select("xp_gained")
             .eq("user_id", user_id)
+            .limit(500)
             .execute()
         )
         total_xp = sum(r.get("xp_gained", 0) for r in (xp_res.data or []))

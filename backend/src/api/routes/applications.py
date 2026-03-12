@@ -9,22 +9,16 @@ from typing import Optional
 from datetime import datetime, timezone
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel
-from supabase import create_client, Client
+from supabase import create_client
 
 from src.config.settings import get_settings
+from src.api.deps import get_supabase_client
 from src.services.email import send_application_confirmation, send_application_status_change
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
-
-
-def get_supabase_client() -> Client:
-    return create_client(
-        settings.supabase_url,
-        settings.get_supabase_service_role_key()
-    )
 
 
 def get_user_from_header(authorization: Optional[str]):

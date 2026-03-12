@@ -9,22 +9,13 @@ from typing import Optional, List
 from datetime import datetime, timezone
 from fastapi import APIRouter, Header, HTTPException, Query, status
 from pydantic import BaseModel
-from supabase import create_client, Client
-
 from src.config.settings import get_settings
+from src.api.deps import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
-
-
-def get_supabase_client() -> Client:
-    """Get Supabase client with service role (lazy initialization)."""
-    return create_client(
-        settings.supabase_url,
-        settings.get_supabase_service_role_key()
-    )
 
 
 class SavedJob(BaseModel):
