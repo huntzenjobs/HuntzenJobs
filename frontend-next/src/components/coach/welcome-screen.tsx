@@ -28,7 +28,7 @@ export function WelcomeScreen({
   className,
 }: WelcomeScreenProps) {
   const t = useTranslations("dashboard.assistant");
-  const { setSelectedAssistant } = useAssistant();
+  const { selectedAssistant, setSelectedAssistant } = useAssistant();
   const auth = useOptionalAuth();
   const fullName = auth?.user?.user_metadata?.full_name as string | undefined;
   const firstName = fullName?.split(" ")[0] || null;
@@ -36,12 +36,15 @@ export function WelcomeScreen({
   const [hoveredCoach, setHoveredCoach] = React.useState<AssistantType | null>(
     null,
   );
-  const [selectedCoach, setSelectedCoach] =
-    React.useState<AssistantType>("career-coach");
 
-  const activeCoachId = hoveredCoach ?? selectedCoach;
+  // selectedCoach suit selectedAssistant (BotSelector, clic card, etc.)
+  const activeCoachId = hoveredCoach ?? selectedAssistant;
   const activeCoach = getAssistantConfig(activeCoachId);
   const coaches = DISPLAY_COACHES.map((id) => getAssistantConfig(id));
+
+  const handleCardClick = (assistantId: AssistantType) => {
+    setSelectedAssistant(assistantId);
+  };
 
   const handleChipClick = (question: string) => {
     setSelectedAssistant(activeCoach.id);
@@ -74,7 +77,7 @@ export function WelcomeScreen({
           return (
             <button
               key={coach.id}
-              onClick={() => setSelectedCoach(coach.id)}
+              onClick={() => handleCardClick(coach.id)}
               onMouseEnter={() => setHoveredCoach(coach.id)}
               onMouseLeave={() => setHoveredCoach(null)}
               className={cn(
