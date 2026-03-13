@@ -4,9 +4,12 @@ Career Coach API Routes
 Endpoints for AI career coaching.
 """
 
+import asyncio
 import uuid
 
 from fastapi import APIRouter, HTTPException, status, Request, Depends
+
+_groq_semaphore = asyncio.Semaphore(20)  # max 20 appels Groq simultanés par worker
 
 from src.api.deps import (
     CoachAgentDep,
@@ -50,14 +53,15 @@ async def coach_chat(
     # Get conversation history
     history = get_session_history(data.session_id)
 
-    # Run agent
-    result = await agent.run(
-        message=data.message,
-        history=history,
-        language=data.language,
-        deep_analysis=True,
-    )
-    
+    # Run agent (semaphore global : max 20 Groq simultanés par worker)
+    async with _groq_semaphore:
+        result = await agent.run(
+            message=data.message,
+            history=history,
+            language=data.language,
+            deep_analysis=True,
+        )
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

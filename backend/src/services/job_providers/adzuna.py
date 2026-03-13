@@ -95,7 +95,7 @@ class AdzunaProvider(BaseJobProvider):
             if contract_type.lower() in contract_map:
                 params["contract_type"] = contract_map[contract_type.lower()]
 
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=25.0) as client:
             response = await client.get(url, params=params)
             response.raise_for_status()
             data = response.json()

@@ -4,6 +4,7 @@ Auth API Routes
 User authentication and profile management.
 """
 
+import json
 import logging
 from typing import Optional
 from fastapi import APIRouter, Header, HTTPException, status, Request
@@ -12,6 +13,7 @@ from supabase import create_client, Client
 
 from src.api.middleware import limiter
 from src.config.settings import get_settings
+from src.utils.cache import get_redis
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +110,16 @@ async def get_current_user_info(
         )
 
     user_id = user["id"]
+
+    # Cache Redis TTL 30s (réduit la charge Supabase ×10 sous charge)
+    try:
+        redis = await get_redis()
+        if redis:
+            cached = await redis.get(f"auth_me:{user_id}")
+            if cached:
+                return json.loads(cached)
+    except Exception:
+        pass
 
     try:
         # Get Supabase client
@@ -281,6 +293,13 @@ async def get_current_user_info(
         logger.debug(f"  - subscription.plan_display_name: {subscription_data.get('plan_display_name')}")
         logger.debug(f"  - subscription.status: {subscription_data.get('status')}")
         logger.debug("="*70)
+
+        try:
+            redis = await get_redis()
+            if redis:
+                await redis.setex(f"auth_me:{user_id}", 30, json.dumps(response_data))
+        except Exception:
+            pass
 
         return response_data
 
