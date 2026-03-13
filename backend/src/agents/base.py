@@ -9,6 +9,7 @@ Architecture:
 - SubAgent: Lightweight agent for delegation
 """
 
+import asyncio
 import json
 import logging
 import re
@@ -186,10 +187,17 @@ class BaseAgent(ABC):
             Agent response
         """
         messages = self.build_messages(message, history)
-        response = await self.llm.ainvoke(
-            messages,
-            config={"metadata": {"agent_name": self.name}, "run_name": f"Agent:{self.name}"}
-        )
+        try:
+            response = await asyncio.wait_for(
+                self.llm.ainvoke(
+                    messages,
+                    config={"metadata": {"agent_name": self.name}, "run_name": f"Agent:{self.name}"}
+                ),
+                timeout=45.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"LLM timeout after 45s for agent {self.name}")
+            return "Le service IA est temporairement surchargé. Réessayez dans quelques instants."
         return response.content
     
     def _parse_json(self, text: str) -> dict | None:
@@ -305,10 +313,17 @@ class SubAgent:
             HumanMessage(content=prompt),
         ]
         
-        response = await self.llm.ainvoke(
-            messages,
-            config={"metadata": {"sub_agent_name": self.name}, "run_name": f"SubAgent:{self.name}"}
-        )
+        try:
+            response = await asyncio.wait_for(
+                self.llm.ainvoke(
+                    messages,
+                    config={"metadata": {"sub_agent_name": self.name}, "run_name": f"SubAgent:{self.name}"}
+                ),
+                timeout=45.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"LLM timeout after 45s for sub-agent {self.name}")
+            return "Le service IA est temporairement surchargé. Réessayez dans quelques instants."
         return response.content
 
 

@@ -38,8 +38,10 @@ if settings.sentry_dsn:
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
-        traces_sample_rate=0.1,
+        traces_sample_rate=0.3,
+        profiles_sample_rate=0.1,
         integrations=[StarletteIntegration(), FastApiIntegration()],
+        send_default_pii=False,
     )
     logger.info(f"Sentry initialized (environment={settings.environment})")
 
@@ -51,7 +53,17 @@ async def lifespan(app: FastAPI):
     logger.info(f"{settings.app_name} v{settings.app_version} starting...")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"LLM Models: {settings.llm_model_fast} / {settings.llm_model_powerful}")
-    
+
+    # Initialiser le pool DB async
+    from app.database import init_connection_pool_async, get_pool_stats
+    await init_connection_pool_async()
+
+    # Valider que la DB est accessible avant d'accepter du trafic
+    pool_stats = await get_pool_stats()
+    if pool_stats.get("status") not in ("active", "disabled"):
+        raise RuntimeError(f"Database pool failed to initialize: {pool_stats}")
+    logger.info(f"DB pool ready: {pool_stats}")
+
     # Initialize LangSmith Tracing if enabled
     if settings.langchain_tracing_v2:
         import os
@@ -59,14 +71,16 @@ async def lifespan(app: FastAPI):
         os.environ["LANGCHAIN_ENDPOINT"] = settings.langchain_endpoint
         os.environ["LANGCHAIN_API_KEY"] = settings.langchain_api_key.get_secret_value()
         os.environ["LANGCHAIN_PROJECT"] = settings.langchain_project
-        logger.info(f"🚀 LangSmith Tracing enabled (Project: {settings.langchain_project})")
-    
+        logger.info(f"LangSmith Tracing enabled (Project: {settings.langchain_project})")
+
     logger.info("=" * 60)
-    
+
     yield
-    
-    # Clean shutdown: close Redis connection pool
+
+    # Shutdown propre : DB pool + Redis
+    from app.database import close_connection_pool
     from src.utils.cache import close_redis
+    await close_connection_pool()
     await close_redis()
     logger.info(f"{settings.app_name} shutting down...")
 

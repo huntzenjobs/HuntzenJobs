@@ -52,8 +52,8 @@ async def init_connection_pool_async() -> None:
     try:
         pool = AsyncConnectionPool(
             conninfo=database_url,
-            min_size=2,
-            max_size=10,  # 10/worker × 4 workers × 4 replicas = 160 max → safe avec Supabase Pooler port 6543
+            min_size=5,
+            max_size=20,  # 20/worker × 4 workers × 4 replicas = 320 clients → Supabase Pro pooler gère
             timeout=30,
             max_idle=300,  # 5 minutes
             kwargs={"row_factory": dict_row}
@@ -64,8 +64,8 @@ async def init_connection_pool_async() -> None:
 
         logger.info(
             "connection_pool_initialized",
-            min_size=2,
-            max_size=10,
+            min_size=5,
+            max_size=20,
             timeout=30,
             max_idle=300
         )

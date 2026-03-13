@@ -166,3 +166,18 @@ async def ping() -> Dict[str, str]:
         "service": "huntzen-backend",
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+@router.get("/pool")
+async def pool_health() -> Dict[str, Any]:
+    """
+    DB connection pool metrics pour monitoring Betterstack/Grafana.
+
+    Configurer une alerte si utilization > 0.8 ou requests_waiting > 3.
+    """
+    from app.database import get_pool_stats
+    stats = await get_pool_stats()
+    return {
+        **stats,
+        "timestamp": datetime.utcnow().isoformat()
+    }

@@ -7,6 +7,8 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 numReplicas = 2
+healthcheckPath = "/health"
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
@@ -16,11 +18,11 @@ enabled = true
 minReplicas = 2
 maxReplicas = 4
 
-# Scale up when CPU > 70% for 60 seconds
+# Scale up when CPU > 60% for 30 seconds (more reactive)
 [[deploy.autoscaling.triggers]]
 type = "cpu"
-threshold = 70
-duration = 60
+threshold = 60
+duration = 30
 
 # Scale down when CPU < 30% for 300 seconds (5 minutes)
 [[deploy.autoscaling.triggers]]
