@@ -50,13 +50,21 @@ async def init_connection_pool_async() -> None:
         return
 
     try:
+        async def no_reset(conn):
+            pass  # PgBouncer transaction mode : chaque transaction repart d'une connexion fraîche, RESET ALL inutile et cassant
+
         pool = AsyncConnectionPool(
             conninfo=database_url,
             min_size=5,
             max_size=10,  # 10/worker × 4 workers × 4 replicas = 160 clients < 200 max PgBouncer Micro
-            timeout=None,  # attend indéfiniment — Gunicorn killer à 120s est la vraie limite
+            timeout=30,
             max_idle=300,  # 5 minutes
-            kwargs={"row_factory": dict_row}
+            reset=no_reset,  # empêche RESET ALL → rejeté par PgBouncer transaction mode
+            kwargs={
+                "row_factory": dict_row,
+                "prepare_threshold": None,  # désactive prepared statements → non supporté en transaction mode
+                "autocommit": True,         # chaque requête = transaction autonome → PgBouncer libère immédiatement la connexion serveur
+            }
         )
 
         # Open the pool (async operation)
@@ -66,7 +74,7 @@ async def init_connection_pool_async() -> None:
             "connection_pool_initialized",
             min_size=5,
             max_size=10,
-            timeout="none (gunicorn 120s)",
+            timeout=30,
             max_idle=300
         )
     except Exception as e:
