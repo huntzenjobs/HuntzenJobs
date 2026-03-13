@@ -72,9 +72,10 @@ COPY --chown=huntzen:huntzen templates/ ./templates/
 RUN mkdir -p /home/huntzen/.cache && \
     chown -R huntzen:huntzen /home/huntzen/.cache
 
-# Create templates directory with correct ownership before switching user
-# (huntzen can't create dirs in /app which is root-owned)
-RUN mkdir -p /app/templates/cv_pdf && \
+# Donner ownership de /app à huntzen — nécessaire pour Gunicorn 25.x control server socket
+# Sans ça : [Errno 13] Permission denied au démarrage → master crash → workers meurent
+RUN chown huntzen:huntzen /app && \
+    mkdir -p /app/templates/cv_pdf && \
     chown -R huntzen:huntzen /app/templates
 
 # Switch to non-root user
