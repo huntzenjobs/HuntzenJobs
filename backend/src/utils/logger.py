@@ -63,6 +63,8 @@ def setup_logging(level: Optional[str] = None) -> None:
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
+    logging.getLogger("psycopg").setLevel(logging.WARNING)
+    logging.getLogger("psycopg_pool").setLevel(logging.WARNING)
 
 
 def get_logger(name: str) -> logging.Logger:

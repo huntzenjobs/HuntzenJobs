@@ -94,7 +94,7 @@ CMD gunicorn src.main:app \
     --worker-class uvicorn.workers.UvicornWorker \
     --workers ${WORKERS:-4} \
     --worker-tmp-dir /dev/shm \
-    --bind 0.0.0.0:8000 \
+    --bind 0.0.0.0:${PORT:-8000} \
     --timeout 120 \
     --graceful-timeout 30 \
     --keep-alive 5 \
