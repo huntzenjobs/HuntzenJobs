@@ -77,6 +77,7 @@ def get_limiter() -> Limiter:
                 key_func=get_remote_address,
                 storage_uri=settings.redis_limiter_url,  # Must be redis:// or rediss:// format with auth embedded
                 default_limits=["100/minute"],
+                swallow_errors=True,  # Redis down → pas de rate limit, pas de 503
             )
         except Exception as e:
             logger.error(f"❌ Failed to initialize Redis rate limiting: {e}")
@@ -134,7 +135,7 @@ def setup_middleware(app: FastAPI) -> None:
     # Rate limiting with custom error handling
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, custom_rate_limit_handler)
-    app.add_exception_handler(ConnectionError, custom_rate_limit_handler)
+    # ConnectionError retiré — trop large, retournait 503 sur TOUTE erreur réseau (Redis, Groq, DB...)
     app.add_middleware(SlowAPIMiddleware)
 
     # CORS
