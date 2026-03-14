@@ -24,6 +24,7 @@ from langchain_groq import ChatGroq
 from pydantic import BaseModel, Field
 
 from src.config.settings import settings
+from src.utils.groq_retry import with_groq_retry
 
 logger = logging.getLogger(__name__)
 
@@ -84,11 +85,13 @@ class BaseAgent(ABC):
         self._tools: list[LangChainBaseTool] = []
         
         # Initialize LLM
+        # max_retries=3 : retry natif LangChain sur 429 (backoff exponentiel intégré)
         self.llm = ChatGroq(
             model=config.model,
             api_key=settings.get_groq_key(),
             temperature=config.temperature,
             max_tokens=config.max_tokens,
+            max_retries=3,
         )
         
         # Load system prompt
@@ -189,14 +192,15 @@ class BaseAgent(ABC):
         messages = self.build_messages(message, history)
         try:
             response = await asyncio.wait_for(
-                self.llm.ainvoke(
+                with_groq_retry(
+                    self.llm.ainvoke,
                     messages,
-                    config={"metadata": {"agent_name": self.name}, "run_name": f"Agent:{self.name}"}
+                    config={"metadata": {"agent_name": self.name}, "run_name": f"Agent:{self.name}"},
                 ),
-                timeout=45.0,
+                timeout=60.0,  # +15s pour absorber les retries (max 3 * délai backoff)
             )
         except asyncio.TimeoutError:
-            logger.warning(f"LLM timeout after 45s for agent {self.name}")
+            logger.warning(f"LLM timeout after 60s for agent {self.name}")
             return "Le service IA est temporairement surchargé. Réessayez dans quelques instants."
         return response.content
     
@@ -287,11 +291,13 @@ class SubAgent:
         self.name = name
         self.system_prompt = system_prompt
         
+        # max_retries=3 : retry natif LangChain sur 429 (backoff exponentiel intégré)
         self.llm = ChatGroq(
             model=model,
             api_key=settings.get_groq_key(),
             temperature=temperature,
             max_tokens=max_tokens,
+            max_retries=3,
         )
         
         logger.debug(f"[SubAgent:{name}] Initialized")
@@ -315,14 +321,15 @@ class SubAgent:
         
         try:
             response = await asyncio.wait_for(
-                self.llm.ainvoke(
+                with_groq_retry(
+                    self.llm.ainvoke,
                     messages,
-                    config={"metadata": {"sub_agent_name": self.name}, "run_name": f"SubAgent:{self.name}"}
+                    config={"metadata": {"sub_agent_name": self.name}, "run_name": f"SubAgent:{self.name}"},
                 ),
-                timeout=45.0,
+                timeout=60.0,  # +15s pour absorber les retries backoff
             )
         except asyncio.TimeoutError:
-            logger.warning(f"LLM timeout after 45s for sub-agent {self.name}")
+            logger.warning(f"LLM timeout after 60s for sub-agent {self.name}")
             return "Le service IA est temporairement surchargé. Réessayez dans quelques instants."
         return response.content
 
