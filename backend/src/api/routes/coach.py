@@ -18,6 +18,10 @@ from typing import Union
 COACH_SYNC_THRESHOLD = 15  # max 15 Groq simultanés avant de basculer en queue
 _groq_semaphore = asyncio.Semaphore(20)  # garde-fou absolu (20 max)
 
+# Compteur atomique d'appels Groq actifs (plus fiable que _semaphore._value)
+_active_coach_count = 0
+_active_coach_lock = asyncio.Lock()
+
 from src.api.deps import (
     CoachAgentDep,
     get_session_history,
@@ -61,19 +65,19 @@ async def coach_chat(
     Réponse synchrone : CoachResponse standard
     Réponse queue     : {"queued": true, "job_id": "...", "position": N, "estimated_wait_seconds": N}
     """
-    # Vérifier la charge actuelle de la queue coach
-    try:
-        lengths = await get_queue_lengths()
-        coach_queue_len = lengths.get("coach", 0)
-    except Exception:
-        coach_queue_len = 0
+    global _active_coach_count
 
-    # Si queue non vide OU semaphore plein → basculer en queue
-    semaphore_slots_used = COACH_SYNC_THRESHOLD - _groq_semaphore._value
-    is_saturated = coach_queue_len > 0 or semaphore_slots_used >= COACH_SYNC_THRESHOLD
+    # Décision atomique : sync ou queue ?
+    # Le lock garantit qu'un seul coroutine à la fois lit+incrémente le compteur,
+    # évitant la race condition sur les bursts simultanés.
+    async with _active_coach_lock:
+        if _active_coach_count >= COACH_SYNC_THRESHOLD:
+            should_queue = True
+        else:
+            _active_coach_count += 1
+            should_queue = False
 
-    if is_saturated:
-        # Mode queue : enqueue et retourner job_id immédiatement
+    if should_queue:
         try:
             job_info = await enqueue("coach", {
                 "message": data.message,
@@ -81,23 +85,29 @@ async def coach_chat(
                 "language": data.language,
             })
             logger.info(
-                f"[coach/chat] Queued — queue_len={coach_queue_len} "
-                f"semaphore_used={semaphore_slots_used} job={job_info['job_id']}"
+                f"[coach/chat] Queued — active={_active_coach_count} "
+                f"job={job_info['job_id']} pos={job_info['position']}"
             )
             return {"queued": True, **job_info}
         except Exception as e:
-            # Si Redis indisponible, fallback vers sync
+            # Redis indisponible : fallback sync (on incrémente le compteur quand même)
             logger.warning(f"[coach/chat] Queue failed ({e}) — fallback sync")
+            async with _active_coach_lock:
+                _active_coach_count += 1
 
-    # Mode synchrone (fast path)
+    # Mode synchrone
     history = get_session_history(data.session_id)
-    async with _groq_semaphore:
-        result = await agent.run(
-            message=data.message,
-            history=history,
-            language=data.language,
-            deep_analysis=True,
-        )
+    try:
+        async with _groq_semaphore:
+            result = await agent.run(
+                message=data.message,
+                history=history,
+                language=data.language,
+                deep_analysis=True,
+            )
+    finally:
+        async with _active_coach_lock:
+            _active_coach_count = max(0, _active_coach_count - 1)
 
     if not result.get("success"):
         raise HTTPException(
