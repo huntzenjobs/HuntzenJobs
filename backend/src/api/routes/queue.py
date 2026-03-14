@@ -40,4 +40,18 @@ async def all_stats():
 
     Utile pour afficher "X personnes en attente" côté frontend.
     """
-    return await get_queue_stats()
+    from src.utils.cache import get_redis
+    stats = await get_queue_stats()
+
+    # Ajouter le compteur global Groq active (debug)
+    try:
+        redis = await get_redis()
+        if redis:
+            val = await redis.get("groq:active_coach")
+            stats["groq_active_coach"] = int(val) if val else 0
+        else:
+            stats["groq_active_coach"] = None  # Redis indisponible
+    except Exception as e:
+        stats["groq_active_coach"] = f"error:{e}"
+
+    return stats
