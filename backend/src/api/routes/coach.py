@@ -14,13 +14,34 @@ import uuid
 from fastapi import APIRouter, HTTPException, status, Request, Depends
 from typing import Union
 
-# Seuil : au-dessus → queue, en-dessous → sync immédiat
-COACH_SYNC_THRESHOLD = 15  # max 15 Groq simultanés avant de basculer en queue
-_groq_semaphore = asyncio.Semaphore(20)  # garde-fou absolu (20 max)
+# Seuil global (toutes replicas confondues) → au-dessus : queue Redis
+COACH_SYNC_THRESHOLD = 12  # max 12 Groq simultanés TOTAL (cross-replicas via Redis)
+_groq_semaphore = asyncio.Semaphore(20)  # garde-fou local par worker
 
-# Compteur atomique d'appels Groq actifs (plus fiable que _semaphore._value)
-_active_coach_count = 0
-_active_coach_lock = asyncio.Lock()
+# Clé Redis pour le compteur global cross-replicas
+_GROQ_ACTIVE_KEY = "groq:active_coach"
+_GROQ_ACTIVE_TTL = 120  # expire 2min (safety en cas de crash)
+
+
+async def _incr_active() -> int:
+    """Incrémente le compteur Redis, retourne la nouvelle valeur."""
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return 0  # Si Redis indisponible → pas de limite
+    count = await redis.incr(_GROQ_ACTIVE_KEY)
+    await redis.expire(_GROQ_ACTIVE_KEY, _GROQ_ACTIVE_TTL)
+    return count
+
+
+async def _decr_active() -> None:
+    """Décrémente le compteur Redis (jamais en dessous de 0)."""
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if redis:
+        val = await redis.decr(_GROQ_ACTIVE_KEY)
+        if val < 0:
+            await redis.set(_GROQ_ACTIVE_KEY, 0)
 
 from src.api.deps import (
     CoachAgentDep,
@@ -65,19 +86,15 @@ async def coach_chat(
     Réponse synchrone : CoachResponse standard
     Réponse queue     : {"queued": true, "job_id": "...", "position": N, "estimated_wait_seconds": N}
     """
-    global _active_coach_count
+    # Compteur global Redis cross-replicas : INCR atomique
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0  # Redis down → pas de quota, fallback sync
 
-    # Décision atomique : sync ou queue ?
-    # Le lock garantit qu'un seul coroutine à la fois lit+incrémente le compteur,
-    # évitant la race condition sur les bursts simultanés.
-    async with _active_coach_lock:
-        if _active_coach_count >= COACH_SYNC_THRESHOLD:
-            should_queue = True
-        else:
-            _active_coach_count += 1
-            should_queue = False
-
-    if should_queue:
+    if active > COACH_SYNC_THRESHOLD:
+        # Trop de Groq simultanés → décrémenter et mettre en queue
+        await _decr_active()
         try:
             job_info = await enqueue("coach", {
                 "message": data.message,
@@ -85,15 +102,14 @@ async def coach_chat(
                 "language": data.language,
             })
             logger.info(
-                f"[coach/chat] Queued — active={_active_coach_count} "
+                f"[coach/chat] Queued — active_global={active} "
                 f"job={job_info['job_id']} pos={job_info['position']}"
             )
             return {"queued": True, **job_info}
         except Exception as e:
-            # Redis indisponible : fallback sync (on incrémente le compteur quand même)
             logger.warning(f"[coach/chat] Queue failed ({e}) — fallback sync")
-            async with _active_coach_lock:
-                _active_coach_count += 1
+            # fallback : ré-incrémenter et continuer en sync
+            await _incr_active()
 
     # Mode synchrone
     history = get_session_history(data.session_id)
@@ -106,8 +122,7 @@ async def coach_chat(
                 deep_analysis=True,
             )
     finally:
-        async with _active_coach_lock:
-            _active_coach_count = max(0, _active_coach_count - 1)
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
