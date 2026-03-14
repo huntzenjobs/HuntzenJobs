@@ -300,6 +300,7 @@ def _clean_element_html(el) -> str:
 
 
 @router.post("/description")
+@limiter.limit("15/minute")
 async def get_job_description(request: Request):
     """
     Get full job description by scraping the job URL.
@@ -315,7 +316,7 @@ async def get_job_description(request: Request):
         if not url:
             return {"success": False, "description": "", "final_url": None}
 
-        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
             headers = {"User-Agent": "Mozilla/5.0 (compatible; HuntZen/1.0)"}
             response = await client.get(url, headers=headers)
 

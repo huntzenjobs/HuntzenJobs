@@ -17,7 +17,59 @@ import modal
 
 app = modal.App("huntzen-pdf-extractor")
 
-# Image identique au huntzen-cv-processor (même version docling = même comportement)
+
+def _download_docling_models():
+    """
+    Force Docling model download at image build time.
+
+    DocumentConverter() alone is lazy — models are only fetched when .convert()
+    is actually called. We run a minimal PDF conversion to pull all HuggingFace
+    weights (~1-2 GB) into the image layer so cold starts are near-instant.
+    """
+    import os
+    import tempfile
+    from docling.datamodel.base_models import InputFormat
+    from docling.datamodel.pipeline_options import PdfPipelineOptions
+    from docling.document_converter import DocumentConverter, PdfFormatOption
+
+    # Minimal valid single-page PDF with a text layer
+    minimal_pdf = (
+        b"%PDF-1.4\n"
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792]\n"
+        b"   /Resources << /Font << /F1 << /Type /Font /Subtype /Type1\n"
+        b"   /BaseFont /Helvetica >> >> >>\n"
+        b"   /Contents 4 0 R >>\nendobj\n"
+        b"4 0 obj\n<< /Length 44 >>\nstream\n"
+        b"BT\n/F1 12 Tf\n100 700 Td\n(Hello World) Tj\nET\n"
+        b"endstream\nendobj\n"
+        b"xref\n0 5\n"
+        b"0000000000 65535 f \n"
+        b"0000000009 00000 n \n"
+        b"0000000058 00000 n \n"
+        b"0000000115 00000 n \n"
+        b"0000000290 00000 n \n"
+        b"trailer\n<< /Size 5 /Root 1 0 R >>\n"
+        b"startxref\n385\n%%EOF"
+    )
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+        f.write(minimal_pdf)
+        fname = f.name
+
+    try:
+        opts = PdfPipelineOptions(do_ocr=False)
+        converter = DocumentConverter(
+            format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=opts)}
+        )
+        result = converter.convert(fname)
+        chars = len(result.document.export_to_markdown())
+        print(f"✅ Docling models downloaded and cached ({chars} chars extracted)")
+    finally:
+        os.unlink(fname)
+
+
 docling_image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install(
@@ -29,14 +81,19 @@ docling_image = (
         "fastapi[standard]>=0.115.0",
         "pypdf>=3.0.0",    # Fallback when Docling returns insufficient text
     )
+    # Pre-bake Docling models into the image layer at deploy time.
+    # Without this, each cold start re-downloads ~1-2 GB → 30-60s latency.
+    # With this, cold starts load models from local disk in ~1-2s.
+    .run_function(_download_docling_models)
 )
 
 
 @app.function(
     image=docling_image,
     cpu=2,
-    memory=4096,   # 4GB — docling needs ~2-4GB for ML models
-    timeout=120,   # 2 min max per extraction
+    memory=4096,        # 4 GB — Docling layout models need ~2-4 GB
+    timeout=120,        # 2 min max per extraction
+    min_containers=1,   # Always keep 1 warm container — eliminates cold starts (~$3-5/month)
 )
 @modal.fastapi_endpoint(method="POST")
 async def extract_pdf_text(body: dict) -> dict:

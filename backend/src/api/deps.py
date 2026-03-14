@@ -311,15 +311,32 @@ def get_supabase_client() -> Client:
     return _supabase_client
 
 
+_supabase_anon_client: Client | None = None
+_supabase_anon_client_lock = threading.Lock()
+
+
+def get_supabase_anon_client() -> Client:
+    """Get Supabase anon client singleton (thread-safe)."""
+    global _supabase_anon_client
+    if _supabase_anon_client is None:
+        with _supabase_anon_client_lock:
+            if _supabase_anon_client is None:
+                _settings = get_settings()
+                _supabase_anon_client = create_client(
+                    _settings.supabase_url,
+                    _settings.get_supabase_key()
+                )
+                logger.info("[deps] Supabase anon client singleton created")
+    return _supabase_anon_client
+
+
 def get_user_info_from_token(authorization: Optional[str]) -> Optional[dict]:
     """Return {"id": ..., "email": ...} or None if not authenticated."""
     if not authorization or not authorization.startswith("Bearer "):
         return None
     token = authorization.replace("Bearer ", "")
     try:
-        settings = get_settings()
-        supabase_anon = create_client(settings.supabase_url, settings.get_supabase_key())
-        response = supabase_anon.auth.get_user(token)
+        response = get_supabase_anon_client().auth.get_user(token)
         if response and response.user:
             return {"id": response.user.id, "email": response.user.email}
     except Exception as e:
@@ -343,13 +360,7 @@ def get_user_id_from_token(authorization: Optional[str]) -> Optional[str]:
     token = authorization.replace("Bearer ", "")
 
     try:
-        settings = get_settings()
-        # Use anon key for token verification
-        supabase_anon = create_client(
-            settings.supabase_url,
-            settings.get_supabase_key()
-        )
-        response = supabase_anon.auth.get_user(token)
+        response = get_supabase_anon_client().auth.get_user(token)
         if response and response.user:
             return response.user.id
     except Exception as e:
@@ -384,13 +395,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
     token = authorization.replace("Bearer ", "")
 
     try:
-        settings = get_settings()
-        # Use anon key for token verification
-        supabase_anon = create_client(
-            settings.supabase_url,
-            settings.get_supabase_key()
-        )
-        response = supabase_anon.auth.get_user(token)
+        response = get_supabase_anon_client().auth.get_user(token)
 
         if not response or not response.user:
             raise HTTPException(

@@ -140,7 +140,9 @@ async def find_recruiters_for_job(
 
             if resp.status_code == 429:
                 logger.warning("[RecruiterFinder] Hunter.io: rate limit exceeded")
-                return _empty_result(company_name, domain)
+                result = _empty_result(company_name, domain)
+                result["rate_limited"] = True
+                return result
 
             if resp.status_code != 200:
                 logger.warning(f"[RecruiterFinder] Hunter.io returned {resp.status_code}")
@@ -223,4 +225,5 @@ def _empty_result(company: str, domain: str) -> dict:
         "tech_team": [],
         "all_contacts": [],
         "total_found": 0,
+        "rate_limited": False,
     }

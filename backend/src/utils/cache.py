@@ -29,6 +29,8 @@ import inspect
 import json
 import os
 import threading
+
+import orjson
 from functools import wraps
 from typing import Any, Callable
 
@@ -206,7 +208,7 @@ def redis_cache(ttl: int = 300, prefix: str = ""):
                 cached = await redis.get(key)
                 if cached is not None:
                     logger.debug(f"✅ Cache HIT: {key[:60]}")
-                    return json.loads(cached)
+                    return orjson.loads(cached)
             except Exception as e:
                 logger.warning(f"⚠️ Cache GET error: {e}")
 
@@ -216,7 +218,7 @@ def redis_cache(ttl: int = 300, prefix: str = ""):
 
             # SET (non-blocking)
             try:
-                serialized = json.dumps(result, default=str)
+                serialized = orjson.dumps(result, option=orjson.OPT_NON_STR_KEYS).decode()
                 await redis.setex(key, ttl, serialized)
                 logger.debug(f"💾 Cached: {key[:60]} (TTL: {ttl}s)")
             except Exception as e:

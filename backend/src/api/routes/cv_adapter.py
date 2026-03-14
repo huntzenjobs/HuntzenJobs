@@ -291,19 +291,27 @@ async def adapt_cv_to_pdf(
         )
     
     # Run adaptation
-    result = await agent.run(
-        cv_text=cv_text,
-        job_description=job_description,
-        language=language,
-        template=template,
-    )
-    
+    try:
+        await _incr_active()
+    except Exception:
+        pass
+
+    try:
+        result = await agent.run(
+            cv_text=cv_text,
+            job_description=job_description,
+            language=language,
+            template=template,
+        )
+    finally:
+        await _decr_active()
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "CV adaptation failed"),
         )
-    
+
     # Generate PDF
     cv_data = result.get("cv_data", {})
     
@@ -550,20 +558,28 @@ async def generate_cover_letter(request: CoverLetterRequest, authorization: Opti
     Returns a PDF cover letter tailored to the specific job.
     """
     agent = get_adapter_agent()
-    
-    result = await agent.generate_cover_letter(
-        cv_data=request.cv_data,
-        job_description=request.job_description,
-        language=request.language,
-        company_name=request.company_name or "",
-    )
-    
+
+    try:
+        await _incr_active()
+    except Exception:
+        pass
+
+    try:
+        result = await agent.generate_cover_letter(
+            cv_data=request.cv_data,
+            job_description=request.job_description,
+            language=request.language,
+            company_name=request.company_name or "",
+        )
+    finally:
+        await _decr_active()
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "Cover letter generation failed"),
         )
-    
+
     # Generate PDF from cover letter content
     try:
         pdf_gen = get_pdf_generator()

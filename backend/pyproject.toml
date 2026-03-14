@@ -72,6 +72,7 @@ dependencies = [
     # Cache (Redis)
     "upstash-redis>=0.15.0",
     "redis>=5.0.0",  # Redis client for SlowAPI backend (REQUIRED!)
+    "orjson>=3.9.0",  # Fast JSON serialization for cache
 
     # Async Task Queue
     "arq>=0.26.0",  # ARQ async Redis queue

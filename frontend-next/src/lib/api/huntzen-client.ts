@@ -387,7 +387,7 @@ class HuntzenApiClient {
   }
 
   // ── ARQ job polling ───────────────────────────────────────────────────────
-  // Attendu max 2 min, poll toutes les 3s.
+  // Poll immédiat puis toutes les 3s. Timeout max 2 min.
   private async _waitForJob(
     jobId: string,
     token?: string,
@@ -397,15 +397,27 @@ class HuntzenApiClient {
     const deadline = Date.now() + maxWaitMs;
 
     while (Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, pollIntervalMs));
-
-      const status = await this.fetch<{
+      let status: {
         status: "queued" | "processing" | "completed" | "failed";
         result?: { success: boolean; response: string; agent: string };
         error?: string;
-      }>(`/api/queue/status/${jobId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      };
+
+      try {
+        status = await this.fetch<typeof status>(`/api/queue/status/${jobId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+      } catch (e: any) {
+        // Job expiré (TTL 1h dépassé) → erreur claire
+        if (e.message?.includes("404")) {
+          throw new Error(
+            "Ce traitement a expiré. Merci de renvoyer votre message.",
+          );
+        }
+        // Erreur réseau / 5xx transitoire → on continue de poller
+        await new Promise((r) => setTimeout(r, pollIntervalMs));
+        continue;
+      }
 
       if (status.status === "completed" && status.result) {
         return status.result;
@@ -415,7 +427,8 @@ class HuntzenApiClient {
           status.error || "La requête a échoué dans la file d'attente",
         );
       }
-      // queued | processing → continuer
+      // queued | processing → attendre avant prochain poll
+      await new Promise((r) => setTimeout(r, pollIntervalMs));
     }
 
     throw new Error("Timeout : la réponse a pris trop de temps (> 2 min)");

@@ -9,6 +9,7 @@ import logging
 from typing import Callable
 
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -76,7 +77,7 @@ def get_limiter() -> Limiter:
             return Limiter(
                 key_func=get_remote_address,
                 storage_uri=settings.redis_limiter_url,  # Must be redis:// or rediss:// format with auth embedded
-                default_limits=["100/minute"],
+                default_limits=["300/minute"],
                 swallow_errors=True,  # Redis down → pas de rate limit, pas de 503
             )
         except Exception as e:
@@ -92,7 +93,7 @@ def get_limiter() -> Limiter:
 
     return Limiter(
         key_func=get_remote_address,
-        default_limits=["100/minute"],
+        default_limits=["300/minute"],
     )
 
 
@@ -153,3 +154,6 @@ def setup_middleware(app: FastAPI) -> None:
 
     # Request logging
     app.add_middleware(RequestLoggingMiddleware)
+
+    # GZip compression — outermost (added last = position 0 in Starlette stack)
+    app.add_middleware(GZipMiddleware, minimum_size=1000)

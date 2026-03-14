@@ -18,6 +18,10 @@ from langchain_groq import ChatGroq
 
 logger = logging.getLogger(__name__)
 
+# Circuit breaker — compteur de failures 429 consécutives par index de clé
+_consecutive_failures: dict[int, int] = {}
+CIRCUIT_OPEN_THRESHOLD = 5
+
 
 async def with_groq_key_rotation(
     llms: list,
@@ -27,18 +31,30 @@ async def with_groq_key_rotation(
     """
     Essaie chaque LLM (clé Groq différente) sur 429.
     llms = liste de ChatGroq, un par clé.
+    Circuit breaker : skipppe une clé après 5 failures consécutives.
     """
     last_exc: Exception | None = None
     for i, llm in enumerate(llms):
+        # Circuit ouvert sur cette clé → skip sans essayer
+        if _consecutive_failures.get(i, 0) >= CIRCUIT_OPEN_THRESHOLD:
+            logger.warning(
+                f"[groq_circuit] Clé {i + 1} circuit OUVERT "
+                f"({_consecutive_failures[i]} failures consécutives) — skip"
+            )
+            continue
         try:
-            return await with_groq_retry(llm.ainvoke, messages, **kwargs)
+            result = await with_groq_retry(llm.ainvoke, messages, **kwargs)
+            _consecutive_failures[i] = 0  # reset sur succès
+            return result
         except Exception as exc:
-            if _is_rate_limit_error(exc) and i < len(llms) - 1:
-                logger.warning(
-                    f"[groq_rotation] Clé {i + 1} épuisée (429) — bascule sur clé {i + 2}"
-                )
-                last_exc = exc
-                continue
+            if _is_rate_limit_error(exc):
+                _consecutive_failures[i] = _consecutive_failures.get(i, 0) + 1
+                if i < len(llms) - 1:
+                    logger.warning(
+                        f"[groq_rotation] Clé {i + 1} épuisée (429) — bascule sur clé {i + 2}"
+                    )
+                    last_exc = exc
+                    continue
             raise
     if last_exc:
         raise last_exc
