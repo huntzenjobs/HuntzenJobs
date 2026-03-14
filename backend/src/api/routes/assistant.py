@@ -9,6 +9,7 @@ import logging
 import uuid
 from typing import Annotated, Literal
 
+from arq import create_pool
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
@@ -29,6 +30,43 @@ from src.services.cv_chat_extractor import extract_cv_structured
 from src.services.modal_pdf_extractor import extract_text_via_modal, is_modal_pdf_enabled
 
 logger = logging.getLogger(__name__)
+
+# ── ARQ queue — soupape de sécurité anti-429 Groq ────────────────────────────
+_arq_pool = None
+_GROQ_ACTIVE_KEY = "groq:active_assistant"
+_GROQ_ACTIVE_TTL = 120  # expire 2min en cas de crash
+ASSISTANT_SYNC_THRESHOLD = 12  # max appels Groq simultanés cross-replicas
+
+
+async def _get_arq_pool():
+    global _arq_pool
+    if _arq_pool is None:
+        try:
+            from src.workers.settings import _get_redis_settings
+            _arq_pool = await create_pool(_get_redis_settings())
+        except Exception as e:
+            logger.warning(f"[assistant] ARQ pool init failed: {e}")
+            _arq_pool = None
+    return _arq_pool
+
+
+async def _incr_active() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return 0
+    count = await redis.incr(_GROQ_ACTIVE_KEY)
+    await redis.expire(_GROQ_ACTIVE_KEY, _GROQ_ACTIVE_TTL)
+    return count
+
+
+async def _decr_active() -> None:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if redis:
+        val = await redis.decr(_GROQ_ACTIVE_KEY)
+        if val < 0:
+            await redis.set(_GROQ_ACTIVE_KEY, 0)
 
 # ── Prompts de réception du CV par assistant ─────────────────────────────────
 # Chaque assistant répond différemment à l'upload d'un CV.
@@ -122,15 +160,41 @@ async def job_scout_chat(
     user_id = current_user["id"]
     check_assistant_quota(user_id)
 
-    # Get conversation history
     history = get_session_history(request.session_id)
 
-    # Run conversational agent
-    result = await agent.run(
-        message=request.message,
-        history=history,
-        language=request.language,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > ASSISTANT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "assistant_task",
+                    message=request.message,
+                    session_id=request.session_id,
+                    assistant_type="job-scout",
+                    language=request.language,
+                    history=history,
+                )
+                logger.info(f"[assistant/job-scout] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[assistant/job-scout] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            message=request.message,
+            history=history,
+            language=request.language,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -138,13 +202,7 @@ async def job_scout_chat(
             detail=result.get("error", "Job Scout error"),
         )
 
-    # Update history
-    update_session_history(
-        request.session_id,
-        request.message,
-        result["response"],
-    )
-
+    update_session_history(request.session_id, request.message, result["response"])
     increment_assistant_messages(user_id)
 
     return AssistantResponse(
@@ -171,15 +229,41 @@ async def cv_analyzer_chat(
     user_id = current_user["id"]
     check_assistant_quota(user_id)
 
-    # Get conversation history
     history = get_session_history(request.session_id)
 
-    # Run conversational agent
-    result = await agent.run(
-        message=request.message,
-        history=history,
-        language=request.language,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > ASSISTANT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "assistant_task",
+                    message=request.message,
+                    session_id=request.session_id,
+                    assistant_type="cv-analyzer",
+                    language=request.language,
+                    history=history,
+                )
+                logger.info(f"[assistant/cv-analyzer] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[assistant/cv-analyzer] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            message=request.message,
+            history=history,
+            language=request.language,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -187,13 +271,7 @@ async def cv_analyzer_chat(
             detail=result.get("error", "CV Analyzer error"),
         )
 
-    # Update history
-    update_session_history(
-        request.session_id,
-        request.message,
-        result["response"],
-    )
-
+    update_session_history(request.session_id, request.message, result["response"])
     increment_assistant_messages(user_id)
 
     return AssistantResponse(
@@ -220,15 +298,41 @@ async def cv_adapter_chat(
     user_id = current_user["id"]
     check_assistant_quota(user_id)
 
-    # Get conversation history
     history = get_session_history(request.session_id)
 
-    # Run conversational agent
-    result = await agent.run(
-        message=request.message,
-        history=history,
-        language=request.language,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > ASSISTANT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "assistant_task",
+                    message=request.message,
+                    session_id=request.session_id,
+                    assistant_type="cv-adapter",
+                    language=request.language,
+                    history=history,
+                )
+                logger.info(f"[assistant/cv-adapter] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[assistant/cv-adapter] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            message=request.message,
+            history=history,
+            language=request.language,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -236,13 +340,7 @@ async def cv_adapter_chat(
             detail=result.get("error", "CV Adapter error"),
         )
 
-    # Update history
-    update_session_history(
-        request.session_id,
-        request.message,
-        result["response"],
-    )
-
+    update_session_history(request.session_id, request.message, result["response"])
     increment_assistant_messages(user_id)
 
     return AssistantResponse(
@@ -270,15 +368,41 @@ async def interview_sim_chat(
     user_id = current_user["id"]
     check_assistant_quota(user_id)
 
-    # Get conversation history
     history = get_session_history(request.session_id)
 
-    # Run conversational agent
-    result = await agent.run(
-        message=request.message,
-        history=history,
-        language=request.language,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > ASSISTANT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "assistant_task",
+                    message=request.message,
+                    session_id=request.session_id,
+                    assistant_type="interview-sim",
+                    language=request.language,
+                    history=history,
+                )
+                logger.info(f"[assistant/interview-sim] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[assistant/interview-sim] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            message=request.message,
+            history=history,
+            language=request.language,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -286,13 +410,7 @@ async def interview_sim_chat(
             detail=result.get("error", "Interview Simulator error"),
         )
 
-    # Update history
-    update_session_history(
-        request.session_id,
-        request.message,
-        result["response"],
-    )
-
+    update_session_history(request.session_id, request.message, result["response"])
     increment_assistant_messages(user_id)
 
     return AssistantResponse(
