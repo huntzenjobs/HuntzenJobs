@@ -5,10 +5,12 @@ Endpoints for smart CV adaptation to job offers.
 """
 
 import io
+import json
 import logging
 import re
 from typing import Optional
 
+from arq import create_pool
 from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile, status
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -20,6 +22,43 @@ from src.services.pdf_generator import get_pdf_generator
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# ── ARQ queue — soupape de sécurité anti-429 Groq ────────────────────────────
+_arq_pool = None
+_GROQ_ACTIVE_KEY = "groq:active_cv_adapt"
+_GROQ_ACTIVE_TTL = 120
+CV_ADAPT_SYNC_THRESHOLD = 12
+
+
+async def _get_arq_pool():
+    global _arq_pool
+    if _arq_pool is None:
+        try:
+            from src.workers.settings import _get_redis_settings
+            _arq_pool = await create_pool(_get_redis_settings())
+        except Exception as e:
+            logger.warning(f"[cv_adapter] ARQ pool init failed: {e}")
+            _arq_pool = None
+    return _arq_pool
+
+
+async def _incr_active() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return 0
+    count = await redis.incr(_GROQ_ACTIVE_KEY)
+    await redis.expire(_GROQ_ACTIVE_KEY, _GROQ_ACTIVE_TTL)
+    return count
+
+
+async def _decr_active() -> None:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if redis:
+        val = await redis.decr(_GROQ_ACTIVE_KEY)
+        if val < 0:
+            await redis.set(_GROQ_ACTIVE_KEY, 0)
 
 
 def _normalize_pdf_text(text: str) -> str:
@@ -157,15 +196,40 @@ async def adapt_cv(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Job description too short. Please provide a complete job posting.",
         )
-    
-    # Run adaptation
-    result = await agent.run(
-        cv_text=cv_text,
-        job_description=job_description,
-        language=language,
-        template=template,
-    )
-    
+
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > CV_ADAPT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "cv_adapt_task",
+                    cv_text=cv_text,
+                    job_description=job_description,
+                    language=language,
+                )
+                logger.info(f"[cv_adapter/adapt] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[cv_adapter/adapt] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            cv_text=cv_text,
+            job_description=job_description,
+            language=language,
+            template=template,
+        )
+    finally:
+        await _decr_active()
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -541,20 +605,49 @@ async def generate_cover_letter_json(request: CoverLetterRequest):
     Generate cover letter and return JSON data (for preview).
     """
     agent = get_adapter_agent()
-    
-    result = await agent.generate_cover_letter(
-        cv_data=request.cv_data,
-        job_description=request.job_description,
-        language=request.language,
-        company_name=request.company_name or "",
-    )
-    
+
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > CV_ADAPT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job_title = request.job_description.split("\n")[0][:60] if request.job_description else None
+                job = await pool.enqueue_job(
+                    "cover_letter_task",
+                    cv_text=json.dumps(request.cv_data, ensure_ascii=False),
+                    job_description=request.job_description,
+                    language=request.language,
+                    company_name=request.company_name,
+                    job_title=job_title,
+                )
+                logger.info(f"[cv_adapter/cover-letter-json] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[cv_adapter/cover-letter-json] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.generate_cover_letter(
+            cv_data=request.cv_data,
+            job_description=request.job_description,
+            language=request.language,
+            company_name=request.company_name or "",
+        )
+    finally:
+        await _decr_active()
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "Cover letter generation failed"),
         )
-    
+
     return {
         "success": True,
         "cover_letter": result,
