@@ -31,6 +31,9 @@ structlog  # Structured logging
 slowapi==0.1.9  # Rate limiting for FastAPI
 redis==5.0.1  # Redis client for SlowAPI + async cache (REQUIRED)
 
+# Async Task Queue
+arq>=0.26.0  # ARQ async Redis queue (remplace queue custom buggy)
+
 # Database & Storage
 supabase==2.3.4  # Supabase Python client
 

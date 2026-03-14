@@ -64,12 +64,8 @@ async def lifespan(app: FastAPI):
         raise RuntimeError(f"Database pool failed to initialize: {pool_stats}")
     logger.info(f"DB pool ready: {pool_stats}")
 
-    # Démarrer les queue workers asyncio (coach, assistant...)
-    try:
-        from src.utils.queue_workers import start_workers
-        await start_workers()
-    except Exception as e:
-        logger.warning(f"Queue workers startup failed (non-fatal): {e}")
+    # Workers ARQ lancés en service Railway séparé (src.workers.settings.WorkerSettings)
+    # Plus de workers asyncio in-process — ARQ gère ça en dehors de l'API
 
     # Initialize LangSmith Tracing if enabled
     if settings.langchain_tracing_v2:
@@ -84,11 +80,9 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown propre : workers → DB pool → Redis
-    from src.utils.queue_workers import stop_workers
+    # Shutdown propre : DB pool → Redis
     from app.database import close_connection_pool
     from src.utils.cache import close_redis
-    await stop_workers()
     await close_connection_pool()
     await close_redis()
     logger.info(f"{settings.app_name} shutting down...")

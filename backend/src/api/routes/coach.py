@@ -43,6 +43,8 @@ async def _decr_active() -> None:
         if val < 0:
             await redis.set(_GROQ_ACTIVE_KEY, 0)
 
+from arq import create_pool
+
 from src.api.deps import (
     CoachAgentDep,
     get_session_history,
@@ -52,9 +54,26 @@ from src.api.deps import (
 )
 from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
-from src.utils.queue import enqueue, get_queue_lengths
+from src.utils.queue import get_queue_lengths
 from pydantic import BaseModel, Field
 from structlog import get_logger
+
+# Pool ARQ (lazy init, réutilisé entre les requêtes)
+_arq_pool = None
+
+
+async def _get_arq_pool():
+    """Retourne le pool ARQ, l'initialise si besoin."""
+    global _arq_pool
+    if _arq_pool is None:
+        try:
+            from src.workers.settings import _get_redis_settings
+            _arq_pool = await create_pool(_get_redis_settings())
+        except Exception as e:
+            logger_init = get_logger(__name__)
+            logger_init.warning(f"[coach] ARQ pool init failed: {e}")
+            _arq_pool = None
+    return _arq_pool
 
 logger = get_logger(__name__)
 
@@ -93,23 +112,33 @@ async def coach_chat(
         active = 0  # Redis down → pas de quota, fallback sync
 
     if active > COACH_SYNC_THRESHOLD:
-        # Trop de Groq simultanés → décrémenter et mettre en queue
+        # Trop de Groq simultanés → décrémenter et déléguer à ARQ
         await _decr_active()
-        try:
-            job_info = await enqueue("coach", {
-                "message": data.message,
-                "session_id": data.session_id,
-                "language": data.language,
-            })
-            logger.info(
-                f"[coach/chat] Queued — active_global={active} "
-                f"job={job_info['job_id']} pos={job_info['position']}"
-            )
-            return {"queued": True, **job_info}
-        except Exception as e:
-            logger.warning(f"[coach/chat] Queue failed ({e}) — fallback sync")
-            # fallback : ré-incrémenter et continuer en sync
-            await _incr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "coach_task",
+                    message=data.message,
+                    session_id=data.session_id,
+                    language=data.language,
+                )
+                estimated_wait = active * 8
+                logger.info(
+                    f"[coach/chat] ARQ queued — active_global={active} "
+                    f"job={job.job_id} eta={estimated_wait}s"
+                )
+                return {
+                    "queued": True,
+                    "job_id": job.job_id,
+                    "estimated_wait_seconds": estimated_wait,
+                }
+            except Exception as e:
+                logger.warning(f"[coach/chat] ARQ enqueue failed ({e}) — fallback sync")
+        else:
+            logger.warning("[coach/chat] ARQ pool unavailable — fallback sync")
+        # Fallback : ré-incrémenter et continuer en sync
+        await _incr_active()
 
     # Mode synchrone
     history = get_session_history(data.session_id)
