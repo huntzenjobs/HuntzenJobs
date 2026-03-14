@@ -386,6 +386,41 @@ class HuntzenApiClient {
     }
   }
 
+  // ── ARQ job polling ───────────────────────────────────────────────────────
+  // Attendu max 2 min, poll toutes les 3s.
+  private async _waitForJob(
+    jobId: string,
+    token?: string,
+    maxWaitMs = 120_000,
+    pollIntervalMs = 3_000,
+  ): Promise<{ success: boolean; response: string; agent: string }> {
+    const deadline = Date.now() + maxWaitMs;
+
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, pollIntervalMs));
+
+      const status = await this.fetch<{
+        status: "queued" | "processing" | "completed" | "failed";
+        result?: { success: boolean; response: string; agent: string };
+        error?: string;
+      }>(`/api/queue/status/${jobId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (status.status === "completed" && status.result) {
+        return status.result;
+      }
+      if (status.status === "failed") {
+        throw new Error(
+          status.error || "La requête a échoué dans la file d'attente",
+        );
+      }
+      // queued | processing → continuer
+    }
+
+    throw new Error("Timeout : la réponse a pris trop de temps (> 2 min)");
+  }
+
   // Assistant Chat - Unified endpoint for all assistants
   async sendAssistantMessage(
     message: string,
@@ -410,19 +445,25 @@ class HuntzenApiClient {
 
     const endpoint = endpointMap[assistantType] || "/api/coach/chat";
 
-    return this.fetch<{ success: boolean; response: string; agent: string }>(
-      endpoint,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          message,
-          session_id: sessionId,
-          assistant_type: assistantType,
-          language,
-        }),
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
-    );
+    const raw = await this.fetch<
+      | { success: boolean; response: string; agent: string }
+      | { queued: true; job_id: string; estimated_wait_seconds: number }
+    >(endpoint, {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+        assistant_type: assistantType,
+        language,
+      }),
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    // Réponse immédiate (sync path)
+    if (!("queued" in raw)) return raw;
+
+    // Réponse différée (ARQ path) — poll jusqu'au résultat
+    return this._waitForJob(raw.job_id, token);
   }
 
   async sendBrandingMessage(
