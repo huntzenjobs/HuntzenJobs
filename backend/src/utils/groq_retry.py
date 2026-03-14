@@ -14,7 +14,34 @@ import asyncio
 import logging
 from typing import Any, Callable
 
+from langchain_groq import ChatGroq
+
 logger = logging.getLogger(__name__)
+
+
+async def with_groq_key_rotation(
+    llms: list,
+    messages: list,
+    **kwargs: Any,
+) -> Any:
+    """
+    Essaie chaque LLM (clé Groq différente) sur 429.
+    llms = liste de ChatGroq, un par clé.
+    """
+    last_exc: Exception | None = None
+    for i, llm in enumerate(llms):
+        try:
+            return await with_groq_retry(llm.ainvoke, messages, **kwargs)
+        except Exception as exc:
+            if _is_rate_limit_error(exc) and i < len(llms) - 1:
+                logger.warning(
+                    f"[groq_rotation] Clé {i + 1} épuisée (429) — bascule sur clé {i + 2}"
+                )
+                last_exc = exc
+                continue
+            raise
+    if last_exc:
+        raise last_exc
 
 
 def _is_rate_limit_error(exc: Exception) -> bool:

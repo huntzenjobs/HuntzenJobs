@@ -24,7 +24,7 @@ from langchain_groq import ChatGroq
 from pydantic import BaseModel, Field
 
 from src.config.settings import settings
-from src.utils.groq_retry import with_groq_retry
+from src.utils.groq_retry import with_groq_retry, with_groq_key_rotation
 
 logger = logging.getLogger(__name__)
 
@@ -84,15 +84,18 @@ class BaseAgent(ABC):
         self._sub_agents: dict[str, "SubAgent"] = {}
         self._tools: list[LangChainBaseTool] = []
         
-        # Initialize LLM
-        # max_retries=3 : retry natif LangChain sur 429 (backoff exponentiel intégré)
-        self.llm = ChatGroq(
-            model=config.model,
-            api_key=settings.get_groq_key(),
-            temperature=config.temperature,
-            max_tokens=config.max_tokens,
-            max_retries=3,
-        )
+        # Initialize LLMs — un par clé Groq (rotation anti-429)
+        self._llms = [
+            ChatGroq(
+                model=config.model,
+                api_key=key,
+                temperature=config.temperature,
+                max_tokens=config.max_tokens,
+                max_retries=1,  # on gère la rotation nous-mêmes
+            )
+            for key in settings.get_all_groq_keys()
+        ]
+        self.llm = self._llms[0]  # compatibilité avec le code existant
         
         # Load system prompt
         self.system_prompt = self._load_system_prompt(config)
@@ -192,12 +195,12 @@ class BaseAgent(ABC):
         messages = self.build_messages(message, history)
         try:
             response = await asyncio.wait_for(
-                with_groq_retry(
-                    self.llm.ainvoke,
+                with_groq_key_rotation(
+                    self._llms,
                     messages,
                     config={"metadata": {"agent_name": self.name}, "run_name": f"Agent:{self.name}"},
                 ),
-                timeout=60.0,  # +15s pour absorber les retries (max 3 * délai backoff)
+                timeout=60.0,
             )
         except asyncio.TimeoutError:
             logger.warning(f"LLM timeout after 60s for agent {self.name}")
