@@ -9,7 +9,14 @@ Lancement sur Railway (service séparé, même repo) :
 import os
 from arq.connections import RedisSettings
 
-from src.workers.tasks import coach_task, startup, shutdown
+from src.workers.tasks import (
+    coach_task,
+    assistant_task,
+    cv_adapt_task,
+    cover_letter_task,
+    startup,
+    shutdown,
+)
 
 
 def _get_redis_settings() -> RedisSettings:
@@ -35,7 +42,7 @@ def _get_redis_settings() -> RedisSettings:
 
 
 class WorkerSettings:
-    functions = [coach_task]
+    functions = [coach_task, assistant_task, cv_adapt_task, cover_letter_task]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = _get_redis_settings()
