@@ -2,14 +2,21 @@
 Career Coach API Routes
 ========================
 Endpoints for AI career coaching.
+
+Queue mode : si plus de COACH_SYNC_THRESHOLD requêtes Groq simultanées,
+la requête est mise en queue Redis et le client reçoit un job_id pour polling.
+En dessous du seuil, traitement synchrone immédiat (UX optimale).
 """
 
 import asyncio
 import uuid
 
 from fastapi import APIRouter, HTTPException, status, Request, Depends
+from typing import Union
 
-_groq_semaphore = asyncio.Semaphore(20)  # max 20 appels Groq simultanés par worker
+# Seuil : au-dessus → queue, en-dessous → sync immédiat
+COACH_SYNC_THRESHOLD = 15  # max 15 Groq simultanés avant de basculer en queue
+_groq_semaphore = asyncio.Semaphore(20)  # garde-fou absolu (20 max)
 
 from src.api.deps import (
     CoachAgentDep,
@@ -20,6 +27,7 @@ from src.api.deps import (
 )
 from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
+from src.utils.queue import enqueue, get_queue_lengths
 from pydantic import BaseModel, Field
 from structlog import get_logger
 
@@ -37,7 +45,7 @@ class CoachTimeSyncResponse(BaseModel):
 router = APIRouter()
 
 
-@router.post("/chat", response_model=CoachResponse)
+@router.post("/chat")
 @limiter.limit("30/minute")  # Rate limit: 30 messages per minute per IP
 async def coach_chat(
     request: Request,  # Required for rate limiting
@@ -47,13 +55,42 @@ async def coach_chat(
     """
     Chat with the Career Coach AI.
 
-    The coach provides personalized career advice, training recommendations,
-    and guidance for professional development.
-    """
-    # Get conversation history
-    history = get_session_history(data.session_id)
+    Mode synchrone (UX immédiate) si la charge est faible.
+    Mode queue (job_id + polling) si Groq est saturé.
 
-    # Run agent (semaphore global : max 20 Groq simultanés par worker)
+    Réponse synchrone : CoachResponse standard
+    Réponse queue     : {"queued": true, "job_id": "...", "position": N, "estimated_wait_seconds": N}
+    """
+    # Vérifier la charge actuelle de la queue coach
+    try:
+        lengths = await get_queue_lengths()
+        coach_queue_len = lengths.get("coach", 0)
+    except Exception:
+        coach_queue_len = 0
+
+    # Si queue non vide OU semaphore plein → basculer en queue
+    semaphore_slots_used = COACH_SYNC_THRESHOLD - _groq_semaphore._value
+    is_saturated = coach_queue_len > 0 or semaphore_slots_used >= COACH_SYNC_THRESHOLD
+
+    if is_saturated:
+        # Mode queue : enqueue et retourner job_id immédiatement
+        try:
+            job_info = await enqueue("coach", {
+                "message": data.message,
+                "session_id": data.session_id,
+                "language": data.language,
+            })
+            logger.info(
+                f"[coach/chat] Queued — queue_len={coach_queue_len} "
+                f"semaphore_used={semaphore_slots_used} job={job_info['job_id']}"
+            )
+            return {"queued": True, **job_info}
+        except Exception as e:
+            # Si Redis indisponible, fallback vers sync
+            logger.warning(f"[coach/chat] Queue failed ({e}) — fallback sync")
+
+    # Mode synchrone (fast path)
+    history = get_session_history(data.session_id)
     async with _groq_semaphore:
         result = await agent.run(
             message=data.message,
@@ -67,14 +104,13 @@ async def coach_chat(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "Unknown error"),
         )
-    
-    # Update history
+
     update_session_history(
         data.session_id,
         data.message,
         result["response"],
     )
-    
+
     return CoachResponse(
         success=True,
         response=result["response"],
