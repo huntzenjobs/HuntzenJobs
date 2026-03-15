@@ -162,7 +162,14 @@ async def extract_pdf_text(body: dict) -> dict:
         return {"success": True, "text": text}
 
     except Exception as e:
-        return {"success": False, "error": f"Docling extraction failed: {str(e)}"}
+        error_str = str(e)
+        # "is not valid" = PDF corrompu/invalide → faute de l'utilisateur, pas du serveur
+        is_user_error = "is not valid" in error_str or "not a valid PDF" in error_str.lower()
+        return {
+            "success": False,
+            "error": f"Docling extraction failed: {error_str}",
+            "user_error": is_user_error,
+        }
 
     finally:
         if tmp_path and os.path.exists(tmp_path):

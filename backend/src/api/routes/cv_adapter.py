@@ -109,6 +109,12 @@ async def _extract_cv_text_from_file(file: UploadFile) -> str:
                 try:
                     cv_text = await extract_text_via_modal(content)
                     logger.info("[cv_adapter] PDF text extracted via Modal")
+                except ValueError as user_err:
+                    # PDF invalide/corrompu — erreur utilisateur, pas de fallback
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=str(user_err),
+                    )
                 except Exception as modal_exc:
                     logger.warning(
                         f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"
@@ -409,6 +415,12 @@ async def adapt_cv_from_file(
                 try:
                     cv_text = await extract_text_via_modal(content)
                     logger.info(f"[cv_adapter] PDF text extracted via Modal: {len(cv_text)} chars")
+                except ValueError as user_err:
+                    # PDF invalide/corrompu — erreur utilisateur, pas de fallback
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=str(user_err),
+                    )
                 except Exception as modal_exc:
                     logger.warning(
                         f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"

@@ -100,8 +100,14 @@ async def extract_text_via_modal(pdf_bytes: bytes) -> str:
 
         if not data.get("success"):
             error_msg = data.get("error", "Unknown Modal extraction error")
-            logger.error(f"[ModalPDF] Extraction error: {error_msg}")
-            raise RuntimeError(f"Modal PDF extraction error: {error_msg}")
+            is_user_error = data.get("user_error", False)
+            if is_user_error:
+                # PDF corrompu/invalide = erreur utilisateur, pas un bug serveur
+                logger.warning(f"[ModalPDF] Invalid PDF rejected: {error_msg}")
+                raise ValueError(f"Le fichier PDF est invalide ou corrompu : {error_msg}")
+            else:
+                logger.error(f"[ModalPDF] Extraction error: {error_msg}")
+                raise RuntimeError(f"Modal PDF extraction error: {error_msg}")
 
         text = data.get("text", "")
         if not text or len(text.strip()) < 100:
