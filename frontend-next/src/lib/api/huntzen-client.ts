@@ -11,6 +11,12 @@ function getApiBaseUrl(): string {
   return url;
 }
 
+export interface QueueWaitingState {
+  status: "queued" | "processing";
+  estimatedWaitSeconds: number;
+  elapsedSeconds: number;
+}
+
 export interface Country {
   name: string;
   code: string;
@@ -320,11 +326,14 @@ class HuntzenApiClient {
   // Poll immédiat puis toutes les 3s. Timeout max 2 min.
   private async _waitForJob(
     jobId: string,
+    initialEstimatedWait: number = 30,
     token?: string,
     maxWaitMs = 120_000,
     pollIntervalMs = 3_000,
+    onQueueUpdate?: (state: QueueWaitingState) => void,
   ): Promise<{ success: boolean; response: string; agent: string }> {
     const deadline = Date.now() + maxWaitMs;
+    const startTime = Date.now();
 
     while (Date.now() < deadline) {
       let status: {
@@ -348,6 +357,13 @@ class HuntzenApiClient {
         await new Promise((r) => setTimeout(r, pollIntervalMs));
         continue;
       }
+
+      const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+      onQueueUpdate?.({
+        status: status.status === "processing" ? "processing" : "queued",
+        estimatedWaitSeconds: initialEstimatedWait,
+        elapsedSeconds,
+      });
 
       if (status.status === "completed" && status.result) {
         return status.result;
@@ -376,6 +392,7 @@ class HuntzenApiClient {
       | "interview-sim",
     language: string = "fr",
     token?: string,
+    onQueueUpdate?: (state: QueueWaitingState) => void,
   ): Promise<{ success: boolean; response: string; agent: string }> {
     // Route to appropriate endpoint based on assistant type
     const endpointMap = {
@@ -406,7 +423,14 @@ class HuntzenApiClient {
     if (!("queued" in raw)) return raw;
 
     // Réponse différée (ARQ path) — poll jusqu'au résultat
-    return this._waitForJob(raw.job_id, token);
+    return this._waitForJob(
+      raw.job_id,
+      raw.estimated_wait_seconds ?? 30,
+      token,
+      120_000,
+      3_000,
+      onQueueUpdate,
+    );
   }
 
   async sendBrandingMessage(

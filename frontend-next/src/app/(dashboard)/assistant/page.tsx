@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { huntzenApi } from "@/lib/api/huntzen-client";
+import type { QueueWaitingState } from "@/lib/api/huntzen-client";
 import { v4 as uuidv4 } from "uuid";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAssistant } from "@/contexts/assistant-context";
@@ -42,6 +43,7 @@ import {
   type Message as ChatMessageType,
 } from "@/components/coach/chat-message";
 import { WelcomeScreen } from "@/components/coach/welcome-screen";
+import { QueueWaitingIndicator } from "@/components/coach/queue-waiting-indicator";
 import { QuickQuestionsDrawer } from "@/components/coach/quick-questions-drawer";
 import { HistorySidebar } from "@/components/coach/history-sidebar";
 import { ExportDialog } from "@/components/coach/export-dialog";
@@ -55,6 +57,7 @@ export default function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [queueState, setQueueState] = useState<QueueWaitingState | null>(null);
   const [sessionId, setSessionId] = useState(() => uuidv4());
   const [brandingState, setBrandingState] = useState<Record<
     string,
@@ -208,6 +211,7 @@ export default function AssistantPage() {
           selectedAssistant,
           locale,
           accessToken,
+          (state) => setQueueState(state),
         );
       }
 
@@ -219,6 +223,7 @@ export default function AssistantPage() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      setQueueState(null);
     } catch (error) {
       const errorMessage: ChatMessageType = {
         id: uuidv4(),
@@ -229,6 +234,7 @@ export default function AssistantPage() {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setLoading(false);
+      setQueueState(null);
     }
   };
 
@@ -656,14 +662,18 @@ export default function AssistantPage() {
               })}
             </AnimatePresence>
 
-            {/* Typing indicator */}
+            {/* Typing indicator / Queue waiting indicator */}
             {loading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <TypingIndicator />
+                {loading && queueState ? (
+                  <QueueWaitingIndicator queueState={queueState} />
+                ) : loading ? (
+                  <TypingIndicator />
+                ) : null}
               </motion.div>
             )}
 
