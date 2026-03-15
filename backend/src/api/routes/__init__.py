@@ -9,7 +9,6 @@ from fastapi import APIRouter
 from src.api.routes.coach import router as coach_router
 from src.api.routes.assistant import router as assistant_router
 from src.api.routes.jobs import router as jobs_router
-from src.api.routes.cv import router as cv_router
 from src.api.routes.cv_adapter import router as cv_adapter_router
 from src.api.routes.events import router as events_router
 from src.api.routes.pages import router as pages_router
@@ -47,7 +46,6 @@ router.include_router(saved_jobs_router, tags=["Saved Jobs"])
 router.include_router(coach_router, prefix="/api/coach", tags=["Career Coach"])
 router.include_router(assistant_router, prefix="/api/assistant", tags=["Multi-Assistant"])
 router.include_router(jobs_router, prefix="/api/jobs", tags=["Job Search"])
-router.include_router(cv_router, prefix="/api/cv", tags=["CV Analysis"])
 router.include_router(cv_analysis_router, prefix="/api/cv-analysis", tags=["CV Analysis Async"])
 router.include_router(cv_adapter_router, prefix="/api/cv-adapter", tags=["CV Adapter"])
 router.include_router(recruiter_router, prefix="/api/recruiter", tags=["Recruiter Contact"])

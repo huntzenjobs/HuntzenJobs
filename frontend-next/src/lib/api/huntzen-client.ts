@@ -66,20 +66,6 @@ export interface Recruiter {
   location?: string;
 }
 
-export interface CVAnalysisResult {
-  success: boolean;
-  analysis: string;
-  score?: number;
-  cv_info?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    skills?: string[];
-  };
-  filename?: string;
-  error?: string;
-}
-
 export interface JobFair {
   title: string;
   event_type: string;
@@ -328,62 +314,6 @@ class HuntzenApiClient {
       }),
     });
     return response.recruiters || [];
-  }
-
-  // CV Analysis
-  async analyzeCV(
-    cvText: string,
-    jobDescription?: string,
-    language: string = "fr",
-  ): Promise<CVAnalysisResult> {
-    return this.fetch<CVAnalysisResult>("/api/analyze-cv", {
-      method: "POST",
-      body: JSON.stringify({
-        cv_text: cvText,
-        job_description: jobDescription || "",
-        language,
-      }),
-    });
-  }
-
-  async analyzeCVFile(
-    file: File,
-    jobDescription?: string,
-    language: string = "fr",
-  ): Promise<CVAnalysisResult> {
-    const formData = new FormData();
-    formData.append("file", file);
-    if (jobDescription) {
-      formData.append("job_description", jobDescription);
-    }
-    formData.append("language", language);
-
-    // Timeout de 5 minutes pour le chargement initial des modèles Marker et traitement OCR
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
-
-    try {
-      const response = await fetch(`${this.baseUrl}/api/analyze-cv-pdf`, {
-        method: "POST",
-        body: formData,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
-      }
-
-      return response.json();
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      if (error.name === "AbortError") {
-        throw new Error(
-          "L'analyse a pris trop de temps. Les modèles sont peut-être en cours de chargement. Veuillez réessayer dans quelques instants.",
-        );
-      }
-      throw error;
-    }
   }
 
   // ── ARQ job polling ───────────────────────────────────────────────────────

@@ -103,7 +103,6 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "Ton CV peut être beaucoup plus impactant.",
       "Quels mots-clés utiliser ?",
     ],
-    apiEndpoint: "/api/cv/analyze",
     responseTime: "< 5 min",
   },
 
