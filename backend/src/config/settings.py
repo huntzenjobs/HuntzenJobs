@@ -137,15 +137,10 @@ class Settings(BaseSettings):
         return [self.cors_origins_str.strip()]
 
     # --------------------------------------------------------------------------
-    # Redis Cache (Upstash)
+    # Redis Cache (Railway Redis — réseau privé interne)
     # --------------------------------------------------------------------------
-    # For upstash-redis library (cache.py) - REST API format
-    redis_url: str = Field(default="", description="Upstash Redis REST URL (https://...)")
-    redis_token: SecretStr = Field(default=SecretStr(""), description="Upstash Redis REST Token")
-
-    # For SlowAPI rate limiting (middleware.py) - Standard Redis protocol
-    # Format: redis://default:PASSWORD@host:6379
-    redis_limiter_url: str = Field(default="", description="Redis URL for rate limiting (redis://...)")
+    # Format: redis://redis.railway.internal:6379 (prod) ou redis://localhost:6379 (dev)
+    redis_url: str = Field(default="", description="Redis URL (redis://host:port)")
 
     # --------------------------------------------------------------------------
     # LangSmith Tracing
@@ -215,10 +210,6 @@ class Settings(BaseSettings):
     def get_resend_api_key(self) -> str:
         """Get Resend API key as string."""
         return self.resend_api_key.get_secret_value()
-
-    def get_redis_token(self) -> str:
-        """Get Redis token as string."""
-        return self.redis_token.get_secret_value()
 
     def get_frontend_urls(self) -> list[str]:
         """

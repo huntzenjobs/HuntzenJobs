@@ -65,30 +65,22 @@ def get_limiter() -> Limiter:
     # Use standard Redis URL (redis:// or rediss://...) for SlowAPI
     # SlowAPI expects Redis protocol URL with embedded auth, not Upstash REST URL
     # rediss:// is for TLS/SSL connections (required by Upstash)
-    if settings.redis_limiter_url and (
-        settings.redis_limiter_url.startswith("redis://") or
-        settings.redis_limiter_url.startswith("rediss://")
-    ):
+    redis_url = settings.redis_url
+    if redis_url and redis_url.startswith("redis://"):
         try:
-            # Extract host for logging (hide password)
-            redis_host = settings.redis_limiter_url.split('@')[1] if '@' in settings.redis_limiter_url else "configured"
-            protocol = "TLS" if settings.redis_limiter_url.startswith("rediss://") else "standard"
-            logger.info(f"✅ Initializing distributed rate limiting with Redis ({protocol}): {redis_host}")
+            logger.info(f"✅ Initializing distributed rate limiting with Railway Redis")
             return Limiter(
                 key_func=get_remote_address,
-                storage_uri=settings.redis_limiter_url,  # Must be redis:// or rediss:// format with auth embedded
+                storage_uri=redis_url,
                 default_limits=["300/minute"],
-                swallow_errors=True,  # Redis down → pas de rate limit, pas de 503
+                swallow_errors=True,
             )
         except Exception as e:
             logger.error(f"❌ Failed to initialize Redis rate limiting: {e}")
             logger.warning("⚠️ Falling back to in-memory rate limiting")
     else:
-        # Fallback to in-memory rate limiting (not recommended for production)
-        if settings.redis_limiter_url:
-            logger.warning(f"⚠️ Invalid Redis URL format (must start with redis:// or rediss://): {settings.redis_limiter_url[:30]}...")
-        else:
-            logger.warning("⚠️ No REDIS_LIMITER_URL configured")
+        if not redis_url:
+            logger.warning("⚠️ No REDIS_URL configured")
         logger.warning("⚠️ Using in-memory rate limiting (not distributed)")
 
     return Limiter(

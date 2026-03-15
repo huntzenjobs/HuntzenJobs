@@ -28,7 +28,6 @@ import hashlib
 import inspect
 import json
 import os
-import threading
 
 import orjson
 from functools import wraps
@@ -46,37 +45,12 @@ logger = get_logger(__name__)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _redis_client: aioredis.Redis | None = None
-_redis_client_lock = threading.Lock()
 _redis_initialized = False
 
 
 def _build_redis_url() -> str | None:
-    """
-    Build a proper rediss:// URL for Upstash (requires SSL on port 6380).
-
-    Tries multiple config sources:
-    1. UPSTASH_REDIS_URL env var (redis://default:TOKEN@host:6379)
-    2. settings.redis_limiter_url (same format)
-    3. settings.redis_url + redis_token (REST style fallback)
-    """
-    # Source 1: direct env var (most common in Railway/prod)
-    raw_url = os.getenv("UPSTASH_REDIS_URL", "") or settings.redis_limiter_url
-
-    if raw_url:
-        if raw_url.startswith("redis://"):
-            raw_url = raw_url.replace("redis://", "rediss://", 1)
-        if ":6379" in raw_url:
-            raw_url = raw_url.replace(":6379", ":6380")
-        return raw_url
-
-    # Source 2: REST URL + token (old config style)
-    rest_url = settings.redis_url
-    token = settings.get_redis_token()
-    if rest_url and token:
-        host = rest_url.replace("https://", "").replace("http://", "").rstrip("/")
-        return f"rediss://default:{token}@{host}:6380"
-
-    return None
+    """Retourne l'URL Redis depuis REDIS_URL (Railway Redis interne)."""
+    return os.getenv("REDIS_URL") or settings.redis_url or None
 
 
 async def get_redis() -> aioredis.Redis | None:
@@ -95,19 +69,13 @@ async def get_redis() -> aioredis.Redis | None:
     if not settings.cache_enabled:
         return None
 
-    # Thread-safe init
-    with _redis_client_lock:
-        if _redis_initialized:
-            return _redis_client
+    if not url:
+        logger.warning("⚠️ No Redis URL configured — caching disabled")
+        _redis_initialized = True
+        return None
 
-        url = _build_redis_url()
-        if not url:
-            logger.warning("⚠️ No Redis URL configured — caching disabled")
-            _redis_initialized = True
-            return None
-
-        try:
-            _redis_client = aioredis.from_url(
+    try:
+        _redis_client = aioredis.from_url(
                 url,
                 encoding="utf-8",
                 decode_responses=True,
@@ -116,13 +84,13 @@ async def get_redis() -> aioredis.Redis | None:
                 socket_keepalive=True,
             )
             await _redis_client.ping()
-            logger.info("✅ Async Redis client initialized (redis.asyncio)")
+            logger.info("✅ Redis client initialized (Railway Redis)")
         except Exception as e:
             logger.error(f"❌ Redis init failed: {e}")
             _redis_client = None
 
-        _redis_initialized = True
-        return _redis_client
+    _redis_initialized = True
+    return _redis_client
 
 
 async def close_redis() -> None:

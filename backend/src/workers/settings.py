@@ -20,25 +20,15 @@ from src.workers.tasks import (
 
 
 def _get_redis_settings() -> RedisSettings:
-    """Parse UPSTASH_REDIS_URL pour ARQ (SSL requis sur Upstash)."""
-    url = os.getenv("UPSTASH_REDIS_URL", "")
-    if url:
-        # Upstash expose redis:// sur port 6379 — ARQ nécessite rediss:// sur 6380
-        if url.startswith("redis://"):
-            url = url.replace("redis://", "rediss://", 1)
-        if ":6379" in url:
-            url = url.replace(":6379", ":6380")
-        # Extraire les composants
-        from urllib.parse import urlparse
-        parsed = urlparse(url)
-        return RedisSettings(
-            host=parsed.hostname,
-            port=parsed.port or 6380,
-            password=parsed.password,
-            ssl=True,
-        )
-    # Fallback localhost (dev sans Upstash)
-    return RedisSettings()
+    """Parse REDIS_URL pour ARQ (Railway Redis réseau interne)."""
+    from urllib.parse import urlparse
+    url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    parsed = urlparse(url)
+    return RedisSettings(
+        host=parsed.hostname or "localhost",
+        port=parsed.port or 6379,
+        password=parsed.password,
+    )
 
 
 class WorkerSettings:

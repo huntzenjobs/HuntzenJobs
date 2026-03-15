@@ -70,8 +70,7 @@ dependencies = [
     "structlog>=24.1.0",  # Logging for modal_integration
 
     # Cache (Redis)
-    "upstash-redis>=0.15.0",
-    "redis>=5.0.0",  # Redis client for SlowAPI backend (REQUIRED!)
+    "redis>=5.0.0",  # Redis client (Railway Redis + SlowAPI)
     "orjson>=3.9.0",  # Fast JSON serialization for cache
 
     # Async Task Queue

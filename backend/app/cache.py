@@ -33,18 +33,13 @@ async def init_redis_client() -> None:
     """Initialize Redis client with connection pooling."""
     global redis_client
 
-    redis_url = os.getenv("UPSTASH_REDIS_URL")
+    redis_url = os.getenv("REDIS_URL")
 
     if not redis_url:
-        logger.warning("UPSTASH_REDIS_URL not set - quota caching disabled")
+        logger.warning("REDIS_URL not set - quota caching disabled")
         return
 
-    # Convert redis:// to rediss:// for SSL and change port to 6380
-    if redis_url.startswith("redis://"):
-        redis_url = redis_url.replace("redis://", "rediss://", 1).replace(":6379", ":6380")
-
     try:
-        # Upstash Redis with SSL (rediss:// protocol)
         redis_client = redis.from_url(
             redis_url,
             encoding="utf-8",
