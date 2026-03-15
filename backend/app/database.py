@@ -55,8 +55,8 @@ async def init_connection_pool_async() -> None:
 
         pool = AsyncConnectionPool(
             conninfo=database_url,
-            min_size=5,
-            max_size=15,  # 15/worker × 4 workers × 2-4 replicas = 120–240 clients (marge PgBouncer 200)
+            min_size=3,
+            max_size=10,  # 10/worker × 4 workers × 2 replicas = 80 clients PgBouncer → 60 conn Postgres max
             timeout=30,
             max_idle=300,  # 5 minutes
             reset=no_reset,  # empêche RESET ALL → rejeté par PgBouncer transaction mode
