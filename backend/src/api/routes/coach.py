@@ -149,6 +149,19 @@ async def coach_chat(
                 language=data.language,
                 deep_analysis=True,
             )
+    except Exception as exc:
+        # Groq rate limit épuisé sur toutes les clés → 429 (pas 500)
+        exc_str = str(exc).lower()
+        if "rate limit" in exc_str or "429" in exc_str or "ratelimit" in exc_str.replace(" ", ""):
+            logger.warning("[coach/chat] Groq rate limit global atteint — retourner 429")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Service IA temporairement saturé. Réessayez dans quelques secondes.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur IA inattendue : {str(exc)[:200]}",
+        )
     finally:
         await _decr_active()
 
