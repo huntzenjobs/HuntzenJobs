@@ -51,8 +51,6 @@ class Settings(BaseSettings):
     # API Keys - LLM Providers
     # --------------------------------------------------------------------------
     groq_api_key: SecretStr = Field(default=SecretStr(""), description="Groq API Key")
-    groq_api_key_2: SecretStr = Field(default=SecretStr(""), description="Groq API Key 2 (rotation)")
-    groq_api_key_3: SecretStr = Field(default=SecretStr(""), description="Groq API Key 3 (rotation)")
     
     # --------------------------------------------------------------------------
     # API Keys - Job Providers
@@ -162,15 +160,6 @@ class Settings(BaseSettings):
         """Get Groq API key as string."""
         return self.groq_api_key.get_secret_value()
 
-    def get_all_groq_keys(self) -> list[str]:
-        """Retourne toutes les clés Groq configurées (rotation anti-429)."""
-        keys = [self.groq_api_key.get_secret_value()]
-        for k in [self.groq_api_key_2, self.groq_api_key_3]:
-            val = k.get_secret_value()
-            if val:
-                keys.append(val)
-        return keys
-    
     def get_serpapi_key(self) -> str:
         """Get SerpAPI key as string."""
         return self.serpapi_key.get_secret_value()

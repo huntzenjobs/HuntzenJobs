@@ -84,18 +84,15 @@ class BaseAgent(ABC):
         self._sub_agents: dict[str, "SubAgent"] = {}
         self._tools: list[LangChainBaseTool] = []
         
-        # Initialize LLMs — un par clé Groq (rotation anti-429)
-        self._llms = [
-            ChatGroq(
-                model=config.model,
-                api_key=key,
-                temperature=config.temperature,
-                max_tokens=config.max_tokens,
-                max_retries=1,  # on gère la rotation nous-mêmes
-            )
-            for key in settings.get_all_groq_keys()
-        ]
-        self.llm = self._llms[0]  # compatibilité avec le code existant
+        # Initialize LLM — clé payante unique (14 400 RPM, pas besoin de rotation)
+        self.llm = ChatGroq(
+            model=config.model,
+            api_key=settings.get_groq_key(),
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            max_retries=3,  # retry natif LangChain sur 429 (backoff exponentiel)
+        )
+        self._llms = [self.llm]  # compatibilité with_groq_key_rotation
         
         # Load system prompt
         self.system_prompt = self._load_system_prompt(config)

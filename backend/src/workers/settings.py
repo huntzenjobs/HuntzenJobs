@@ -36,7 +36,7 @@ class WorkerSettings:
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = _get_redis_settings()
-    max_jobs = 50        # max jobs simultanés par worker
+    max_jobs = 750       # sweet spot Groq payant : 240 req/sec × 3s = 720 max absorbables
     job_timeout = 120    # timeout 2 min par job
     keep_result = 3600   # garder résultat 1h dans Redis
     retry_jobs = True
