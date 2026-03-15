@@ -54,7 +54,6 @@ from src.api.deps import (
 )
 from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
-from src.utils.queue import get_queue_lengths
 from pydantic import BaseModel, Field
 from structlog import get_logger
 

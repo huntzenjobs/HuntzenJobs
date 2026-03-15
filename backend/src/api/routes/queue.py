@@ -9,7 +9,6 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Header
 
-from src.utils.queue import get_queue_stats
 
 router = APIRouter()
 
