@@ -52,11 +52,12 @@ import {
 } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { Job } from "@/lib/api/huntzen-client";
+import type { Job, QueueWaitingState } from "@/lib/api/huntzen-client";
 import { useDocuments } from "@/hooks/use-documents";
 import { useCvProfiles, type CvProfile } from "@/hooks/use-cv-profiles";
 import { CvBuilderWizard } from "@/components/cv-builder/cv-builder-wizard";
 import type { CvData } from "@/components/cv-builder/types";
+import { QueueWaitingIndicator } from "@/components/coach/queue-waiting-indicator";
 
 // ============================================================================
 // TYPES
@@ -212,6 +213,8 @@ export function ApplyModal({
     initialResult ?? null,
   );
   const [generatingLabel, setGeneratingLabel] = useState("");
+  const [queueWaitState, setQueueWaitState] =
+    useState<QueueWaitingState | null>(null);
   const [markedApplied, setMarkedApplied] = useState(false);
   const [pendingCvData, setPendingCvData] = useState<Record<
     string,
@@ -311,6 +314,54 @@ export function ApplyModal({
 
   const handleDragLeave = () => setIsDragging(false);
 
+  // ── Queue polling helper ─────────────────────────────────────────────────────
+
+  const _pollAdaptJob = async (
+    jobId: string,
+    estimatedWait: number,
+  ): Promise<{ cv_data: unknown; match_score?: number }> => {
+    const startTime = Date.now();
+    const deadline = Date.now() + 120_000;
+
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 3_000));
+      const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+
+      let status: {
+        status: "queued" | "processing" | "completed" | "failed";
+        result?: { cv_data: unknown; match_score?: number };
+        error?: string;
+      };
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/queue/status/${jobId}`);
+        status = await res.json();
+      } catch {
+        continue;
+      }
+
+      setQueueWaitState({
+        status: status.status === "processing" ? "processing" : "queued",
+        estimatedWaitSeconds: estimatedWait,
+        elapsedSeconds,
+      });
+
+      if (status.status === "completed" && status.result) {
+        setQueueWaitState(null);
+        return status.result;
+      }
+      if (status.status === "failed") {
+        setQueueWaitState(null);
+        throw new Error(
+          status.error || "La requête a échoué dans la file d'attente",
+        );
+      }
+    }
+
+    setQueueWaitState(null);
+    throw new Error("Délai d'attente dépassé. Veuillez réessayer.");
+  };
+
   // ── Generation from uploaded file ───────────────────────────────────────────
 
   const generateFromFile = async () => {
@@ -340,7 +391,13 @@ export function ApplyModal({
         throw new Error(err.detail || "Erreur lors de l'adaptation du CV");
       }
 
-      const adaptData = await adaptResponse.json();
+      let adaptData = await adaptResponse.json();
+      if (adaptData.queued && adaptData.job_id) {
+        adaptData = await _pollAdaptJob(
+          adaptData.job_id,
+          adaptData.estimated_wait_seconds ?? 30,
+        );
+      }
       const cvData = adaptData.cv_data;
       const matchScore = adaptData.match_score;
 
@@ -353,6 +410,7 @@ export function ApplyModal({
       const message =
         err instanceof Error ? err.message : "Une erreur est survenue";
       toast.error(message);
+      setQueueWaitState(null);
       setStep("upload");
       setGeneratingLabel("");
     }
@@ -390,7 +448,13 @@ export function ApplyModal({
         throw new Error(err.detail || "Erreur lors de l'adaptation du CV");
       }
 
-      const adaptData = await adaptResponse.json();
+      let adaptData = await adaptResponse.json();
+      if (adaptData.queued && adaptData.job_id) {
+        adaptData = await _pollAdaptJob(
+          adaptData.job_id,
+          adaptData.estimated_wait_seconds ?? 30,
+        );
+      }
       const cvData = adaptData.cv_data;
       const matchScore = adaptData.match_score;
 
@@ -403,6 +467,7 @@ export function ApplyModal({
       const message =
         err instanceof Error ? err.message : "Une erreur est survenue";
       toast.error(message);
+      setQueueWaitState(null);
       setStep("upload");
       setGeneratingLabel("");
     }
@@ -817,22 +882,28 @@ export function ApplyModal({
                 </p>
                 <p className="text-sm text-slate-500">{generatingLabel}</p>
               </div>
-              <div className="w-full space-y-2">
-                {[
-                  t("processingStep1"),
-                  t("processingStep2"),
-                  t("processingStep3"),
-                  t("processingStep4"),
-                ].map((label, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 text-xs text-slate-500"
-                  >
-                    <Loader2 className="h-3 w-3 animate-spin text-[#00D9FF]" />
-                    {label}
-                  </div>
-                ))}
-              </div>
+              {queueWaitState ? (
+                <div className="w-full">
+                  <QueueWaitingIndicator queueState={queueWaitState} />
+                </div>
+              ) : (
+                <div className="w-full space-y-2">
+                  {[
+                    t("processingStep1"),
+                    t("processingStep2"),
+                    t("processingStep3"),
+                    t("processingStep4"),
+                  ].map((label, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 text-xs text-slate-500"
+                    >
+                      <Loader2 className="h-3 w-3 animate-spin text-[#00D9FF]" />
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

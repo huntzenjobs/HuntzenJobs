@@ -481,48 +481,57 @@ Réponds UNIQUEMENT avec le JSON suivant. Aucun texte avant ou après. Aucun blo
 }}"""
 
     result_text = ""
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Tu es un expert ATS et recruteur senior. "
-                        "Tu analyses des CV avec précision et citant toujours des éléments concrets du CV. "
-                        "Tu réponds toujours en JSON valide, sans markdown, sans texte additionnel."
-                    )
-                },
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.2,
-            max_tokens=3000
-        )
+    last_error = None
 
-        result_text = response.choices[0].message.content.strip()
+    for attempt in range(1, 3):  # 2 tentatives max (cold JSON fail → retry)
+        try:
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "Tu es un expert ATS et recruteur senior. "
+                            "Tu analyses des CV avec précision et citant toujours des éléments concrets du CV. "
+                            "Tu réponds toujours en JSON valide, sans markdown, sans texte additionnel."
+                        )
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=3000,
+                response_format={"type": "json_object"},  # Force JSON mode — évite json_validate_failed
+            )
 
-        # Strip markdown code blocks if present
-        if result_text.startswith("```json"):
-            result_text = result_text[7:]
-        if result_text.startswith("```"):
-            result_text = result_text[3:]
-        if result_text.endswith("```"):
-            result_text = result_text[:-3]
+            result_text = response.choices[0].message.content.strip()
 
-        result = json.loads(result_text.strip())
+            # Strip markdown code blocks if present
+            if result_text.startswith("```json"):
+                result_text = result_text[7:]
+            if result_text.startswith("```"):
+                result_text = result_text[3:]
+            if result_text.endswith("```"):
+                result_text = result_text[:-3]
 
-        elapsed = time.time() - start_time
-        print(f"✅ Analysis completed in {elapsed:.2f}s (score: {result['ats_score']['overall_score']}/100)")
+            result = json.loads(result_text.strip())
 
-        return result
+            elapsed = time.time() - start_time
+            print(f"✅ Analysis completed in {elapsed:.2f}s (attempt {attempt}, score: {result['ats_score']['overall_score']}/100)")
 
-    except json.JSONDecodeError as e:
-        print(f"❌ JSON parse error: {e}")
-        print(f"   Raw response: {result_text[:500]}")
-        raise
-    except Exception as e:
-        print(f"❌ Groq analysis failed: {e}")
-        raise
+            return result
+
+        except json.JSONDecodeError as e:
+            last_error = e
+            print(f"⚠️ JSON parse error (attempt {attempt}/2): {e}")
+            print(f"   Raw response: {result_text[:500]}")
+            if attempt < 2:
+                print("   Retrying...")
+                continue
+            raise RuntimeError(f"Groq returned invalid JSON after 2 attempts: {e}") from e
+
+        except Exception as e:
+            print(f"❌ Groq analysis failed (attempt {attempt}): {e}")
+            raise
 
 
 # ============================================

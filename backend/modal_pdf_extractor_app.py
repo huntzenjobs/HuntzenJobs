@@ -77,7 +77,7 @@ docling_image = (
         "libglib2.0-0",     # GTK dependency
     )
     .pip_install(
-        "docling>=2.0.0",  # Aligné avec Railway (pyproject.toml: docling>=2.0.0)
+        "docling==2.70.0",  # Pincé — évite les breaking changes de l'API PdfPipelineOptions
         "fastapi[standard]>=0.115.0",
         "pypdf>=3.0.0",    # Fallback when Docling returns insufficient text
     )

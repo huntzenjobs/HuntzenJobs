@@ -430,7 +430,7 @@ async def get_cv_analysis_status(
         # Use maybeSingle() instead of single() to handle "not found" gracefully
         response = query.maybe_single().execute()
 
-        if not response.data:
+        if response is None or not response.data:
             raise HTTPException(status_code=404, detail="CV analysis not found")
 
         data = response.data

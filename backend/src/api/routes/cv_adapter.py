@@ -97,6 +97,12 @@ async def _extract_cv_text_from_file(file: UploadFile) -> str:
 
     content = await file.read()
 
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File is empty (0 bytes). Please upload a valid PDF.",
+        )
+
     try:
         if filename.endswith(".pdf"):
             if is_modal_pdf_enabled():
@@ -375,6 +381,21 @@ async def adapt_cv_from_file(
     
     # Read file
     content = await file.read()
+
+    # Validate file content
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File is empty (0 bytes). Please upload a valid PDF.",
+        )
+
+    # Validate file size (max 10MB)
+    MAX_SIZE_BYTES = 10 * 1024 * 1024
+    if len(content) > MAX_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large ({len(content) // (1024*1024)}MB). Maximum allowed size is 10MB.",
+        )
 
     # Extract text — PDF via Modal (if configured) to avoid Railway OOM from docling
     try:

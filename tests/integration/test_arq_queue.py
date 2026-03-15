@@ -29,8 +29,14 @@ async def _poll_until_done(client: httpx.AsyncClient, job_id: str, max_wait: int
             f"{PROD_URL}/api/queue/status/{job_id}",
             headers=auth_headers(),
         )
+        if resp.status_code == 404:
+            pytest.fail(f"Job {job_id} introuvable (404) — TTL expiré ou job_id invalide")
+        if resp.status_code != 200:
+            await asyncio.sleep(3)
+            continue
         data = resp.json()
-        if data["status"] in ("completed", "failed"):
+        status = data.get("status")
+        if status in ("completed", "failed"):
             return data
         await asyncio.sleep(3)
     pytest.fail(f"Job {job_id} not completed within {max_wait}s")
@@ -121,7 +127,8 @@ class TestCoachQueueBehavior:
     @pytest.mark.asyncio
     async def test_coach_chat_sync_or_queued_response(self):
         """POST /api/coach/chat → sync ou queued, poll si queued."""
-        payload = {"message": "Bonjour", "session_id": "test-arq-session"}
+        # session_id doit matcher ^[a-f0-9-]{36}$ (UUID lowercase)
+        payload = {"message": "Bonjour", "session_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 f"{PROD_URL}/api/coach/chat",
@@ -143,7 +150,7 @@ class TestCoachQueueBehavior:
     @pytest.mark.skipif(not AUTH_TOKEN, reason="TEST_AUTH_TOKEN not set")
     async def test_coach_chat_with_auth(self):
         """POST /api/coach/chat avec auth → sync ou queued, poll si queued."""
-        payload = {"message": "Bonjour", "session_id": "test-arq-session"}
+        payload = {"message": "Bonjour", "session_id": "aaaaaaaa-bbbb-cccc-dddd-ffffffffffff"}
         headers = {"Authorization": f"Bearer {AUTH_TOKEN}"}
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
@@ -172,7 +179,8 @@ class TestAssistantQueueBehavior:
         """POST /api/assistant/job-scout → sync ou queued, poll si queued."""
         payload = {
             "message": "Trouve des offres Python à Paris",
-            "session_id": "test-arq-session",
+            "session_id": "aaaaaaaa-bbbb-cccc-dddd-111111111111",
+            "assistant_type": "job-scout",
         }
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
@@ -196,7 +204,8 @@ class TestAssistantQueueBehavior:
         """POST /api/assistant/cv-analyzer → sync ou queued, poll si queued."""
         payload = {
             "message": "Analyse ce CV",
-            "session_id": "test-arq-session",
+            "session_id": "aaaaaaaa-bbbb-cccc-dddd-222222222222",
+            "assistant_type": "cv-analyzer",
             "cv_text": "Jean Dupont, Dev Python, Paris",
         }
         async with httpx.AsyncClient(timeout=30) as client:
@@ -223,16 +232,27 @@ class TestCvAdapterQueueBehavior:
 
     @pytest.mark.asyncio
     async def test_cv_adapt_sync_or_queued(self):
-        """POST /api/cv-adapter/adapt → sync ou queued, poll si queued."""
-        payload = {
-            "cv_text": "Jean Dupont, Développeur Python Senior, 5 ans d'expérience, Paris.",
-            "job_description": "Dev Python senior, maîtrise FastAPI, SQLAlchemy, Docker.",
+        """POST /api/cv-adapter/adapt → sync ou queued, poll si queued (multipart form-data)."""
+        # L'endpoint attend multipart/form-data, pas JSON
+        form_data = {
+            "cv_text": (
+                "Jean Dupont — Développeur Python Senior\n"
+                "Paris, France | jean.dupont@email.com | +33 6 00 00 00 00\n\n"
+                "EXPÉRIENCE\n"
+                "Tech SAS — Lead Dev Python (2020-2024) : FastAPI, PostgreSQL, Docker, CI/CD GitLab.\n"
+                "Startup Inc — Dev Backend (2018-2020) : API REST, SQLAlchemy, Redis, pytest.\n\n"
+                "COMPÉTENCES: Python, FastAPI, Django, PostgreSQL, Redis, Docker, Kubernetes, AWS.\n"
+                "FORMATION: Master Informatique — Université Paris-Saclay (2018).\n"
+                "LANGUES: Français natif, Anglais courant (C1)."
+            ),
+            "job_description": "Dev Python senior, maîtrise FastAPI, SQLAlchemy, Docker, 5+ ans expérience.",
             "language": "fr",
+            "template": "ats",
         }
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 f"{PROD_URL}/api/cv-adapter/adapt",
-                json=payload,
+                data=form_data,
                 headers=auth_headers(),
             )
             assert resp.status_code == 200, (
@@ -249,8 +269,15 @@ class TestCvAdapterQueueBehavior:
     @pytest.mark.asyncio
     async def test_cover_letter_json_sync_or_queued(self):
         """POST /api/cv-adapter/generate-cover-letter/json → sync ou queued, poll si queued."""
+        # Attend cv_data (objet structuré) + job_description, pas cv_text (string)
         payload = {
-            "cv_text": "Jean Dupont, Développeur Python Senior, 5 ans d'expérience, Paris.",
+            "cv_data": {
+                "personal_info": {"name": "Jean Dupont", "email": "jean@example.com", "location": "Paris"},
+                "summary": "Développeur Python Senior avec 5 ans d'expérience.",
+                "experiences": [{"title": "Dev Python", "company": "TechCo", "duration": "2019-2024"}],
+                "skills": ["Python", "FastAPI", "Docker"],
+                "education": [{"degree": "Master Info", "school": "Université Paris"}],
+            },
             "job_description": "Dev Python senior, maîtrise FastAPI, SQLAlchemy, Docker.",
             "language": "fr",
         }
@@ -285,7 +312,7 @@ class TestQueuePollingFlow:
         Vérifie qu'au moins une retourne {queued: true, job_id},
         puis poll cette à completion.
         """
-        payload = {"message": "Bonjour", "session_id": "test-arq-flood"}
+        payload = {"message": "Bonjour", "session_id": "aaaaaaaa-bbbb-cccc-dddd-000000000000"}
         headers = {"Authorization": f"Bearer {AUTH_TOKEN}"}
 
         async def send_one(client: httpx.AsyncClient) -> dict:

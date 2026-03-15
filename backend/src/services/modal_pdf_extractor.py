@@ -64,6 +64,9 @@ async def extract_text_via_modal(pdf_bytes: bytes) -> str:
             "MODAL_PDF_EXTRACT_URL not configured — cannot use Modal PDF extraction"
         )
 
+    if len(pdf_bytes) == 0:
+        raise RuntimeError("PDF is empty (0 bytes) — cannot extract text")
+
     if len(pdf_bytes) > MAX_PDF_SIZE_BYTES:
         raise RuntimeError(
             f"PDF too large for Modal extraction ({len(pdf_bytes) / 1024 / 1024:.1f}MB > 10MB limit)"
