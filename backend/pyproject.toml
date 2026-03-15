@@ -44,7 +44,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     
     # PDF Processing (IBM Docling)
-    "docling>=2.0.0",
+    "docling==2.70.0",  # Pincé — API PdfPipelineOptions stable sur cette version (testée en prod)
     "pypdf>=4.0.0",           # Lightweight fallback for PDF text extraction
     "python-docx>=1.1.0",
     "weasyprint>=62.0",

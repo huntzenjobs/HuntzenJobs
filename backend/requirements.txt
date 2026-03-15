@@ -11,7 +11,7 @@ langchain-groq
 langchain-core
 
 # PDF Processing
-docling
+docling==2.70.0  # Pincé — API PdfPipelineOptions stable sur cette version (testée en prod)
 
 # HTTP Clients
 httpx
