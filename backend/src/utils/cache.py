@@ -69,6 +69,7 @@ async def get_redis() -> aioredis.Redis | None:
     if not settings.cache_enabled:
         return None
 
+    url = _build_redis_url()
     if not url:
         logger.warning("⚠️ No Redis URL configured — caching disabled")
         _redis_initialized = True
@@ -76,18 +77,18 @@ async def get_redis() -> aioredis.Redis | None:
 
     try:
         _redis_client = aioredis.from_url(
-                url,
-                encoding="utf-8",
-                decode_responses=True,
-                max_connections=20,
-                socket_connect_timeout=5,
-                socket_keepalive=True,
-            )
-            await _redis_client.ping()
-            logger.info("✅ Redis client initialized (Railway Redis)")
-        except Exception as e:
-            logger.error(f"❌ Redis init failed: {e}")
-            _redis_client = None
+            url,
+            encoding="utf-8",
+            decode_responses=True,
+            max_connections=20,
+            socket_connect_timeout=5,
+            socket_keepalive=True,
+        )
+        await _redis_client.ping()
+        logger.info("✅ Redis client initialized (Railway Redis)")
+    except Exception as e:
+        logger.error(f"❌ Redis init failed: {e}")
+        _redis_client = None
 
     _redis_initialized = True
     return _redis_client
