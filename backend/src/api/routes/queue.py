@@ -8,6 +8,7 @@ Supporte les jobs ARQ (remplace la queue custom Redis).
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Header
+from src.utils.cache import get_redis
 
 
 router = APIRouter()
@@ -56,22 +57,28 @@ async def get_status(
 @router.get("/all-stats")
 async def all_stats():
     """
-    Stats en temps réel de toutes les queues.
-
+    Stats en temps réel des workers actifs (Groq + Modal).
     Utile pour afficher "X personnes en attente" côté frontend.
     """
-    from src.utils.cache import get_redis
-    stats = await get_queue_stats()
-
-    # Ajouter le compteur global Groq active (debug)
     try:
         redis = await get_redis()
-        if redis:
-            val = await redis.get("groq:active_coach")
-            stats["groq_active_coach"] = int(val) if val else 0
-        else:
-            stats["groq_active_coach"] = None  # Redis indisponible
-    except Exception as e:
-        stats["groq_active_coach"] = f"error:{e}"
+        if not redis:
+            return {"error": "Redis unavailable", "groq_active": {}, "modal_active": {}}
 
-    return stats
+        groq_coach     = await redis.get("groq:active_coach")
+        groq_assistant = await redis.get("groq:active_assistant")
+        groq_cv_adapt  = await redis.get("groq:active_cv_adapt")
+        modal_cv       = await redis.get("modal:active_cv_analysis")
+
+        return {
+            "groq_active": {
+                "coach":     int(groq_coach) if groq_coach else 0,
+                "assistant": int(groq_assistant) if groq_assistant else 0,
+                "cv_adapt":  int(groq_cv_adapt) if groq_cv_adapt else 0,
+            },
+            "modal_active": {
+                "cv_analysis": int(modal_cv) if modal_cv else 0,
+            },
+        }
+    except Exception as e:
+        return {"error": str(e), "groq_active": {}, "modal_active": {}}
