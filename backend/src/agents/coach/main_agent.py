@@ -324,6 +324,10 @@ class CareerCoachAgent(BaseAgent):
             return result
             
         except Exception as e:
+            # Re-raise Groq rate limit errors so coach.py can return 429 instead of 500
+            err_str = str(e).lower()
+            if "rate limit" in err_str or "429" in err_str or "ratelimit" in err_str.replace(" ", ""):
+                raise
             return {
                 "success": False,
                 "error": str(e),
