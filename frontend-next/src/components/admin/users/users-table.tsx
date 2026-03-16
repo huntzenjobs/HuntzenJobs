@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, RefreshCw, Download } from "lucide-react";
+import BroadcastNotificationDialog from "./broadcast-notification-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,6 +148,7 @@ export default function UsersTable() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Utilisateurs ({total})</CardTitle>
             <div className="flex gap-2">
+              <BroadcastNotificationDialog />
               <Button
                 variant="outline"
                 size="sm"

@@ -142,6 +142,32 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class BanIPMiddleware(BaseHTTPMiddleware):
+    """Bloque les IPs bannies via Redis (403)."""
+
+    # Chemins exemptés du check (healthcheck infra)
+    EXEMPT_PATHS = {"/health"}
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        if request.url.path in self.EXEMPT_PATHS:
+            return await call_next(request)
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis and request.client:
+                client_ip = request.client.host
+                is_banned = await redis.exists(f"banned_ip:{client_ip}")
+                if is_banned:
+                    return Response(
+                        content='{"error": "Access denied"}',
+                        status_code=403,
+                        media_type="application/json",
+                    )
+        except Exception:
+            pass  # fail-open si Redis down
+        return await call_next(request)
+
+
 def setup_middleware(app: FastAPI) -> None:
     """Configure all middleware for the application."""
 
@@ -163,6 +189,9 @@ def setup_middleware(app: FastAPI) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # IP ban check (avant le logging)
+    app.add_middleware(BanIPMiddleware)
 
     # Request logging
     app.add_middleware(RequestLoggingMiddleware)

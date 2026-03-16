@@ -58,6 +58,20 @@ class SetCustomLimitsRequest(BaseModel):
 class UpdateEmailRequest(BaseModel):
     new_email: str
 
+class BroadcastNotificationRequest(BaseModel):
+    segment: str  # "all" | "paying" | "free" | "at-risk"
+    type: str
+    title: str
+    body: str
+
+class BanIPRequest(BaseModel):
+    ip: str
+    reason: str = ""
+
+class BlacklistEmailRequest(BaseModel):
+    email: str
+    reason: str = ""
+
 
 def _log_admin_action(
     supabase,
@@ -2463,3 +2477,200 @@ async def export_users_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=huntzen-users.csv"},
     )
+
+
+# ============================================================
+# D1 — BROADCAST NOTIFICATION (segment → tous les users)
+# ============================================================
+
+@router.post("/broadcast-notification")
+async def broadcast_notification(
+    admin: AdminUserDep,
+    payload: BroadcastNotificationRequest,
+) -> Dict[str, Any]:
+    """Envoie une notification in-app à tous les users d'un segment."""
+    from src.services.notifications import create_notification, VALID_TYPES
+
+    if payload.type not in VALID_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Type invalide. Valeurs acceptées : {', '.join(VALID_TYPES)}",
+        )
+
+    VALID_SEGMENTS = {"all", "paying", "free", "at-risk"}
+    if payload.segment not in VALID_SEGMENTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Segment invalide. Valeurs acceptées : {', '.join(VALID_SEGMENTS)}",
+        )
+
+    supabase = get_supabase_client()
+
+    # Récupérer les user_ids selon le segment
+    if payload.segment == "all":
+        result = supabase.table("profiles").select("id").eq("status", "active").execute()
+        user_ids = [r["id"] for r in (result.data or [])]
+
+    elif payload.segment == "paying":
+        result = supabase.table("user_subscriptions").select("user_id").eq("status", "active").neq("plan_id", "free").execute()
+        user_ids = [r["user_id"] for r in (result.data or [])]
+
+    elif payload.segment == "free":
+        paying_result = supabase.table("user_subscriptions").select("user_id").eq("status", "active").neq("plan_id", "free").execute()
+        paying_ids = {r["user_id"] for r in (paying_result.data or [])}
+        all_result = supabase.table("profiles").select("id").eq("status", "active").execute()
+        user_ids = [r["id"] for r in (all_result.data or []) if r["id"] not in paying_ids]
+
+    else:  # at-risk : abonnés actifs sans activité depuis 7j
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        subs_result = supabase.table("user_subscriptions").select("user_id").eq("status", "active").execute()
+        all_paying_ids = [r["user_id"] for r in (subs_result.data or [])]
+        if not all_paying_ids:
+            return {"sent": 0, "segment": payload.segment}
+        recent_result = supabase.table("user_events").select("user_id").gt("created_at", cutoff).execute()
+        recent_ids = {r["user_id"] for r in (recent_result.data or [])}
+        user_ids = [uid for uid in all_paying_ids if uid not in recent_ids]
+
+    if not user_ids:
+        return {"sent": 0, "segment": payload.segment}
+
+    sent = 0
+    for uid in user_ids:
+        notif_id = create_notification(
+            supabase,
+            user_id=uid,
+            type=payload.type,
+            title=payload.title,
+            body=payload.body,
+            data={"broadcast": True, "segment": payload.segment, "admin_id": admin["id"]},
+        )
+        if notif_id:
+            sent += 1
+
+    _log_admin_action(
+        supabase, admin["id"], "admin.broadcast_notification", None,
+        {"segment": payload.segment, "type": payload.type, "sent": sent, "total": len(user_ids)},
+    )
+
+    return {"sent": sent, "total": len(user_ids), "segment": payload.segment}
+
+
+# ============================================================
+# D3 — BAN IP + LISTE NOIRE EMAILS (Redis, TTL 30j)
+# ============================================================
+
+BAN_TTL = 30 * 24 * 3600  # 30 jours en secondes
+
+
+@router.post("/ban-ip")
+async def ban_ip(
+    admin: AdminUserDep,
+    payload: BanIPRequest,
+) -> Dict[str, Any]:
+    """Bannit une IP (stockage Redis, TTL 30j)."""
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        raise HTTPException(status_code=503, detail="Redis indisponible")
+
+    import json as _json
+    meta = _json.dumps({"reason": payload.reason, "admin_id": admin["id"], "banned_at": datetime.now(timezone.utc).isoformat()})
+    await redis.setex(f"banned_ip:{payload.ip}", BAN_TTL, meta)
+
+    supabase = get_supabase_client()
+    _log_admin_action(supabase, admin["id"], "admin.ip_banned", None, {"ip": payload.ip, "reason": payload.reason})
+
+    return {"ip": payload.ip, "banned": True}
+
+
+@router.delete("/ban-ip/{ip:path}")
+async def unban_ip(
+    ip: str,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Lève le bannissement d'une IP."""
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        raise HTTPException(status_code=503, detail="Redis indisponible")
+
+    deleted = await redis.delete(f"banned_ip:{ip}")
+
+    supabase = get_supabase_client()
+    _log_admin_action(supabase, admin["id"], "admin.ip_unbanned", None, {"ip": ip})
+
+    return {"ip": ip, "banned": False, "was_banned": bool(deleted)}
+
+
+@router.get("/banned-ips")
+async def list_banned_ips(
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Liste toutes les IPs bannies avec leurs métadonnées."""
+    from src.utils.cache import get_redis
+    import json as _json
+    redis = await get_redis()
+    if not redis:
+        return {"ips": []}
+
+    keys = [k async for k in redis.scan_iter("banned_ip:*")]
+    ips = []
+    for key in keys:
+        raw = await redis.get(key)
+        ttl = await redis.ttl(key)
+        try:
+            meta = _json.loads(raw) if raw else {}
+        except Exception:
+            meta = {}
+        ip_addr = key.removeprefix("banned_ip:") if isinstance(key, str) else key.decode().removeprefix("banned_ip:")
+        ips.append({"ip": ip_addr, "ttl_seconds": ttl, **meta})
+
+    return {"ips": ips}
+
+
+@router.post("/blacklist-email")
+async def blacklist_email(
+    admin: AdminUserDep,
+    payload: BlacklistEmailRequest,
+) -> Dict[str, Any]:
+    """Ajoute un email à la liste noire (Redis, TTL 30j)."""
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        raise HTTPException(status_code=503, detail="Redis indisponible")
+
+    import json as _json
+    email_key = payload.email.lower().strip()
+    meta = _json.dumps({"reason": payload.reason, "admin_id": admin["id"], "added_at": datetime.now(timezone.utc).isoformat()})
+    await redis.setex(f"blacklisted_email:{email_key}", BAN_TTL, meta)
+
+    supabase = get_supabase_client()
+    _log_admin_action(supabase, admin["id"], "admin.email_blacklisted", None, {"email": email_key, "reason": payload.reason})
+
+    return {"email": email_key, "blacklisted": True}
+
+
+@router.get("/blacklisted-emails")
+async def list_blacklisted_emails(
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Liste tous les emails en liste noire."""
+    from src.utils.cache import get_redis
+    import json as _json
+    redis = await get_redis()
+    if not redis:
+        return {"emails": []}
+
+    keys = [k async for k in redis.scan_iter("blacklisted_email:*")]
+    emails = []
+    for key in keys:
+        raw = await redis.get(key)
+        ttl = await redis.ttl(key)
+        try:
+            meta = _json.loads(raw) if raw else {}
+        except Exception:
+            meta = {}
+        email_addr = key.removeprefix("blacklisted_email:") if isinstance(key, str) else key.decode().removeprefix("blacklisted_email:")
+        emails.append({"email": email_addr, "ttl_seconds": ttl, **meta})
+
+    return {"emails": emails}
