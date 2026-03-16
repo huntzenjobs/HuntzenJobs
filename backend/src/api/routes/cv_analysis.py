@@ -26,6 +26,7 @@ from src.modal_integration import (
     list_user_cv_analyses
 )
 from src.api.deps import get_user_id_from_token
+from src.services.user_events import log_event
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -307,6 +308,18 @@ async def cv_analysis_callback(
                 f"[CALLBACK] ✅ Incremented cv_analysis quota for user {user_id} "
                 f"after successful CV processing: {cv_id}"
             )
+            # Tracking événement analyse CV (best-effort)
+            if supabase_client:
+                log_event(
+                    supabase_client,
+                    event_name="cv_analyzed",
+                    event_label=f"Un utilisateur a analysé son CV",
+                    category="action",
+                    user_id=user_id,
+                    feature="cv_analysis",
+                    severity="info",
+                    properties={"cv_id": cv_id},
+                )
             try:
                 import httpx
                 r = httpx.get(

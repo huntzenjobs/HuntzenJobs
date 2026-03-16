@@ -24,6 +24,7 @@ from langchain_groq import ChatGroq
 from src.api.deps import get_supabase_client, CurrentUserDep
 from src.config.settings import get_settings
 from src.services.notifications import create_notification
+from src.services.user_events import log_event
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -324,6 +325,19 @@ async def _do_calculate(user_id: str, supabase) -> dict:
         f"[career_score] user={user_id} "
         f"activity={activity_score} ai={ai_score} xp={xp_score} total={total}"
     )
+
+    # Tracking événement (best-effort)
+    log_event(
+        supabase,
+        event_name="career_score_calculated",
+        event_label=f"Un utilisateur a calculé son score carrière — {total}/100",
+        category="action",
+        user_id=user_id,
+        feature="career_score",
+        severity="info",
+        properties={"score": total, "activity": activity_score, "ai": ai_score, "xp": xp_score},
+    )
+
     return result
 
 

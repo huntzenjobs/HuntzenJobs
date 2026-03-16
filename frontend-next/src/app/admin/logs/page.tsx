@@ -15,7 +15,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Search, CheckCircle } from "lucide-react";
+import {
+  RefreshCw,
+  Search,
+  CheckCircle,
+  RotateCcw,
+  ShieldBan,
+  Trash2,
+} from "lucide-react";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -243,6 +250,19 @@ function WebhookLogsTab() {
     }
   };
 
+  const retryWebhook = async (failureId: string) => {
+    try {
+      const data = await adminFetch(
+        `/api/admin/logs/webhooks/${failureId}/retry`,
+        { method: "POST" },
+      );
+      toast.success(`Webhook rejoué : ${data.event_type}`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors du retry");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -286,15 +306,26 @@ function WebhookLogsTab() {
                   </p>
                 </div>
                 {!f.resolved && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 h-7 text-xs"
-                    onClick={() => resolveFailure(f.id)}
-                  >
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Résoudre
-                  </Button>
+                  <div className="flex gap-1.5 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => retryWebhook(f.id)}
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Retry
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => resolveFailure(f.id)}
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Résoudre
+                    </Button>
+                  </div>
                 )}
               </div>
             </Card>
@@ -329,6 +360,233 @@ function WebhookLogsTab() {
   );
 }
 
+function SecurityIPTab() {
+  const [bannedIPs, setBannedIPs] = useState<any[]>([]);
+  const [blacklistedEmails, setBlacklistedEmails] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [ipInput, setIPInput] = useState("");
+  const [ipReason, setIPReason] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [emailReason, setEmailReason] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [ipsData, emailsData] = await Promise.all([
+        adminFetch("/api/admin/banned-ips"),
+        adminFetch("/api/admin/blacklisted-emails"),
+      ]);
+      setBannedIPs(ipsData.ips || []);
+      setBlacklistedEmails(emailsData.emails || []);
+    } catch {
+      toast.error("Erreur lors du chargement");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const banIP = async () => {
+    if (!ipInput.trim()) return;
+    try {
+      await adminFetch("/api/admin/ban-ip", {
+        method: "POST",
+        body: JSON.stringify({ ip: ipInput.trim(), reason: ipReason }),
+      });
+      toast.success(`IP ${ipInput} bannie`);
+      setIPInput("");
+      setIPReason("");
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    }
+  };
+
+  const unbanIP = async (ip: string) => {
+    try {
+      await adminFetch(`/api/admin/ban-ip/${encodeURIComponent(ip)}`, {
+        method: "DELETE",
+      });
+      toast.success(`IP ${ip} débannie`);
+      load();
+    } catch {
+      toast.error("Erreur lors du débannissement");
+    }
+  };
+
+  const blacklistEmail = async () => {
+    if (!emailInput.trim()) return;
+    try {
+      await adminFetch("/api/admin/blacklist-email", {
+        method: "POST",
+        body: JSON.stringify({ email: emailInput.trim(), reason: emailReason }),
+      });
+      toast.success(`Email ${emailInput} blacklisté`);
+      setEmailInput("");
+      setEmailReason("");
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    }
+  };
+
+  const ttlDays = (ttl: number) =>
+    ttl > 0 ? `${Math.ceil(ttl / 86400)}j` : "Expiré";
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* IPs bannies */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-sm flex items-center gap-1.5">
+            <ShieldBan className="h-4 w-4 text-destructive" />
+            IPs bannies ({bannedIPs.length})
+          </h3>
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
+
+        <div className="flex gap-2">
+          <Input
+            placeholder="Adresse IP..."
+            className="h-8 text-xs"
+            value={ipInput}
+            onChange={(e) => setIPInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && banIP()}
+          />
+          <Input
+            placeholder="Raison"
+            className="h-8 text-xs w-28"
+            value={ipReason}
+            onChange={(e) => setIPReason(e.target.value)}
+          />
+          <Button
+            size="sm"
+            className="h-8 text-xs"
+            onClick={banIP}
+            disabled={!ipInput.trim()}
+          >
+            Bannir
+          </Button>
+        </div>
+
+        <div className="rounded-md border overflow-hidden">
+          {bannedIPs.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">
+              Aucune IP bannie
+            </p>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-muted/30 border-b">
+                  <th className="text-left px-3 py-1.5 font-medium">IP</th>
+                  <th className="text-left px-3 py-1.5 font-medium">Raison</th>
+                  <th className="text-left px-3 py-1.5 font-medium">
+                    Expiration
+                  </th>
+                  <th className="px-2 py-1.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {bannedIPs.map((entry) => (
+                  <tr key={entry.ip} className="border-b hover:bg-muted/10">
+                    <td className="px-3 py-1.5 font-mono">{entry.ip}</td>
+                    <td className="px-3 py-1.5 text-muted-foreground truncate max-w-[100px]">
+                      {entry.reason || "—"}
+                    </td>
+                    <td className="px-3 py-1.5 text-muted-foreground">
+                      {ttlDays(entry.ttl_seconds)}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => unbanIP(entry.ip)}
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Emails blacklistés */}
+      <div className="space-y-3">
+        <h3 className="font-semibold text-sm flex items-center gap-1.5">
+          <ShieldBan className="h-4 w-4 text-orange-500" />
+          Emails blacklistés ({blacklistedEmails.length})
+        </h3>
+
+        <div className="flex gap-2">
+          <Input
+            placeholder="email@domaine.com"
+            className="h-8 text-xs"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && blacklistEmail()}
+          />
+          <Input
+            placeholder="Raison"
+            className="h-8 text-xs w-28"
+            value={emailReason}
+            onChange={(e) => setEmailReason(e.target.value)}
+          />
+          <Button
+            size="sm"
+            className="h-8 text-xs"
+            onClick={blacklistEmail}
+            disabled={!emailInput.trim()}
+          >
+            Bloquer
+          </Button>
+        </div>
+
+        <div className="rounded-md border overflow-hidden">
+          {blacklistedEmails.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">
+              Aucun email blacklisté
+            </p>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-muted/30 border-b">
+                  <th className="text-left px-3 py-1.5 font-medium">Email</th>
+                  <th className="text-left px-3 py-1.5 font-medium">Raison</th>
+                  <th className="text-left px-3 py-1.5 font-medium">
+                    Expiration
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {blacklistedEmails.map((entry) => (
+                  <tr key={entry.email} className="border-b hover:bg-muted/10">
+                    <td className="px-3 py-1.5 font-mono">{entry.email}</td>
+                    <td className="px-3 py-1.5 text-muted-foreground truncate max-w-[100px]">
+                      {entry.reason || "—"}
+                    </td>
+                    <td className="px-3 py-1.5 text-muted-foreground">
+                      {ttlDays(entry.ttl_seconds)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminLogsPage() {
   return (
     <div className="space-y-4">
@@ -343,12 +601,16 @@ export default function AdminLogsPage() {
         <TabsList>
           <TabsTrigger value="security">Événements sécurité</TabsTrigger>
           <TabsTrigger value="webhooks">Webhooks Stripe</TabsTrigger>
+          <TabsTrigger value="ip-security">Sécurité IP</TabsTrigger>
         </TabsList>
         <TabsContent value="security" className="mt-4">
           <SecurityLogsTab />
         </TabsContent>
         <TabsContent value="webhooks" className="mt-4">
           <WebhookLogsTab />
+        </TabsContent>
+        <TabsContent value="ip-security" className="mt-4">
+          <SecurityIPTab />
         </TabsContent>
       </Tabs>
     </div>

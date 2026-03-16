@@ -47,11 +47,14 @@ from arq import create_pool
 
 from src.api.deps import (
     CoachAgentDep,
+    CurrentUserDep,
     get_session_history,
     update_session_history,
     clear_session,
     get_current_user,
+    get_supabase_client,
 )
+from src.services.user_events import log_event
 from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
 from pydantic import BaseModel, Field
@@ -94,6 +97,7 @@ async def coach_chat(
     request: Request,  # Required for rate limiting
     data: CoachRequest,
     agent: CoachAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the Career Coach AI.
@@ -175,6 +179,22 @@ async def coach_chat(
         data.session_id,
         data.message,
         result["response"],
+    )
+
+    # Tracking événement coach (best-effort)
+    user_id = current_user.get("id")
+    prenom = (current_user.get("email", "") or "").split("@")[0].capitalize() or "Un utilisateur"
+    history = get_session_history(data.session_id)
+    questions_count = len([m for m in history if m.get("role") == "user"])
+    log_event(
+        get_supabase_client(),
+        event_name="coach_used",
+        event_label=f"{prenom} a utilisé le Coach — {questions_count} question(s)",
+        category="action",
+        user_id=user_id,
+        feature="coach",
+        severity="info",
+        properties={"assistant_type": "coach", "questions_count": questions_count},
     )
 
     return CoachResponse(

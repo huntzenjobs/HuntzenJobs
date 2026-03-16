@@ -19,6 +19,8 @@ import {
   logLogout,
   logSecurityEvent,
 } from "@/lib/security/logger";
+import { track } from "@/lib/track";
+import * as Sentry from "@sentry/nextjs";
 import { detectFailedLoginAnomaly } from "@/lib/security/anomaly-detection";
 import { tokenRefreshService } from "@/lib/auth/token-refresh-service";
 import { useAutoRefreshSession } from "@/hooks/use-auto-refresh-session";
@@ -116,6 +118,16 @@ export function AuthProvider({
       setUser(session?.user ?? null);
       setLoading(false);
 
+      // Sentry user context
+      if (session?.user) {
+        Sentry.setUser({
+          id: session.user.id,
+          email: session.user.email ?? undefined,
+        });
+      } else if (event === "SIGNED_OUT") {
+        Sentry.setUser(null);
+      }
+
       // Handle different auth events
       switch (event) {
         case "SIGNED_IN":
@@ -133,7 +145,6 @@ export function AuthProvider({
             }
           }
 
-
           // Register referral if a code cookie is present (fire-and-forget)
           if (session?.user) {
             const refCookie = document.cookie
@@ -145,11 +156,15 @@ export function AuthProvider({
               fetch(`${backendUrl}/api/referrals/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code: refCode, new_user_id: session.user.id }),
+                body: JSON.stringify({
+                  code: refCode,
+                  new_user_id: session.user.id,
+                }),
               })
                 .then((res) => {
                   if (res.ok) {
-                    document.cookie = "huntzen_referral_code=; path=/; max-age=0";
+                    document.cookie =
+                      "huntzen_referral_code=; path=/; max-age=0";
                   }
                 })
                 .catch(() => {});
@@ -249,6 +264,7 @@ export function AuthProvider({
             devError("Failed to log login success (non-critical):", err);
           },
         );
+        track.auth.signIn(data.session?.access_token);
       }
 
       // Check for redirectTo parameter in URL for deep links
@@ -339,6 +355,7 @@ export function AuthProvider({
         }).catch((err) => {
           devError("Failed to log signup (non-critical):", err);
         });
+        track.auth.signUp("free", data.session?.access_token ?? undefined);
       }
 
       setError(null);
@@ -402,6 +419,7 @@ export function AuthProvider({
         logLogout(user.id).catch((err) => {
           devError("Failed to log logout (non-critical):", err);
         });
+        track.auth.signOut();
       }
 
       // Attempt to sign out from Supabase

@@ -8,6 +8,8 @@ import time
 import logging
 from typing import Callable
 
+import sentry_sdk
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,7 +103,25 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
-        
+
+        # Enrichir Sentry avec l'user_id extrait du JWT (best-effort, non-bloquant)
+        try:
+            auth_header = request.headers.get("authorization", "")
+            if auth_header.startswith("Bearer "):
+                token = auth_header[7:]
+                # Décoder le JWT sans vérification de signature (payload public)
+                import base64, json as _json
+                parts = token.split(".")
+                if len(parts) == 3:
+                    padded = parts[1] + "=" * (-len(parts[1]) % 4)
+                    payload = _json.loads(base64.urlsafe_b64decode(padded))
+                    user_id = payload.get("sub")
+                    if user_id:
+                        with sentry_sdk.new_scope() as scope:
+                            scope.set_user({"id": user_id})
+        except Exception:
+            pass
+
         # Process request
         response = await call_next(request)
         
@@ -120,6 +140,32 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         response.headers["X-Response-Time"] = f"{duration_ms}ms"
         
         return response
+
+
+class BanIPMiddleware(BaseHTTPMiddleware):
+    """Bloque les IPs bannies via Redis (403)."""
+
+    # Chemins exemptés du check (healthcheck infra)
+    EXEMPT_PATHS = {"/health"}
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        if request.url.path in self.EXEMPT_PATHS:
+            return await call_next(request)
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis and request.client:
+                client_ip = request.client.host
+                is_banned = await redis.exists(f"banned_ip:{client_ip}")
+                if is_banned:
+                    return Response(
+                        content='{"error": "Access denied"}',
+                        status_code=403,
+                        media_type="application/json",
+                    )
+        except Exception:
+            pass  # fail-open si Redis down
+        return await call_next(request)
 
 
 def setup_middleware(app: FastAPI) -> None:
@@ -143,6 +189,9 @@ def setup_middleware(app: FastAPI) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # IP ban check (avant le logging)
+    app.add_middleware(BanIPMiddleware)
 
     # Request logging
     app.add_middleware(RequestLoggingMiddleware)

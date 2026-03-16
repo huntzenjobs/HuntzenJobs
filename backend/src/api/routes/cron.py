@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Header
 
 from src.api.deps import get_supabase_client
 from src.services.notifications import create_notification
+from src.services.user_events import purge_old_user_events
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -88,3 +89,20 @@ async def retention_notifications(authorization: Optional[str] = Header(None)):
         f"[cron] retention-notifications: sent={sent} / total_inactive={len(user_ids)}"
     )
     return {"success": True, "sent": sent, "total_inactive": len(user_ids)}
+
+
+# ---------------------------------------------------------------------------
+# POST /api/cron/purge-events (D6)
+# ---------------------------------------------------------------------------
+
+@router.post("/purge-events")
+async def purge_events(authorization: Optional[str] = Header(None)):
+    """
+    Purge les user_events de plus de 30 jours.
+    Appelé par cron quotidien (Vercel Cron ou Railway Cron).
+    """
+    _verify_cron_secret(authorization)
+    supabase = get_supabase_client()
+    deleted = purge_old_user_events(supabase, days=30)
+    logger.info(f"[cron] purge-events: {deleted} événements supprimés")
+    return {"success": True, "deleted": deleted}

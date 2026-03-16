@@ -119,13 +119,14 @@ export default function AdminAnalyticsPage() {
   const [funnel, setFunnel] = useState<any[]>([]);
   const [cohorts, setCohorts] = useState<any[]>([]);
   const [forecast, setForecast] = useState<any | null>(null);
+  const [heatmap, setHeatmap] = useState<{ hour: number; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [rev, subs, ch, us, gr, mrr, fn, co, fc] = await Promise.all([
+      const [rev, subs, ch, us, gr, mrr, fn, co, fc, hm] = await Promise.all([
         fetchRevenue(),
         fetchSubscriptions(),
         fetchChurn(days),
@@ -137,6 +138,7 @@ export default function AdminAnalyticsPage() {
         adminFetch(`/api/admin/analytics/funnel?days=${days}`),
         adminFetch(`/api/admin/analytics/cohorts?months=6`),
         adminFetch(`/api/admin/analytics/mrr-forecast`),
+        adminFetch(`/api/admin/analytics/usage-heatmap?days=${days}`),
       ]);
       setRevenue(rev);
       setBreakdown(subs.breakdown);
@@ -147,6 +149,7 @@ export default function AdminAnalyticsPage() {
       setFunnel(fn.funnel || []);
       setCohorts(co.cohorts || []);
       setForecast(fc);
+      setHeatmap(hm.heatmap || []);
     } finally {
       setLoading(false);
     }
@@ -211,6 +214,7 @@ export default function AdminAnalyticsPage() {
             <TabsTrigger value="funnel">Funnel</TabsTrigger>
             <TabsTrigger value="cohorts">Cohortes</TabsTrigger>
             <TabsTrigger value="forecast">Prévision MRR</TabsTrigger>
+            <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -797,6 +801,60 @@ export default function AdminAnalyticsPage() {
                       derniers jours. Les barres en pointillé représentent des
                       estimations.
                     </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Heatmap */}
+          <TabsContent value="heatmap" className="space-y-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Activité par heure de la journée — {days} derniers jours
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {heatmap.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    Chargement...
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-end gap-1 h-32">
+                      {heatmap.map((h) => {
+                        const max = Math.max(...heatmap.map((x) => x.count), 1);
+                        const pct = Math.max(
+                          (h.count / max) * 100,
+                          h.count > 0 ? 2 : 0,
+                        );
+                        return (
+                          <div
+                            key={h.hour}
+                            className="flex-1 flex flex-col items-center justify-end group relative"
+                          >
+                            <div
+                              className="w-full rounded-sm bg-primary opacity-70 group-hover:opacity-100 transition-opacity"
+                              style={{
+                                height: `${pct}%`,
+                                minHeight: h.count > 0 ? "3px" : "1px",
+                              }}
+                            />
+                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[10px] px-1.5 py-0.5 rounded shadow opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">
+                              {h.hour}h : <strong>{h.count}</strong>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>0h</span>
+                      <span>6h</span>
+                      <span>12h</span>
+                      <span>18h</span>
+                      <span>23h</span>
+                    </div>
                   </div>
                 )}
               </CardContent>

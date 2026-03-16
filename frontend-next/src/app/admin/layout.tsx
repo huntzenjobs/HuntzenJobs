@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AdminNav from "@/components/admin/admin-nav";
+import { AdminSearchDialog } from "@/components/admin/admin-search-dialog";
 
 export const metadata = {
   title: "Admin — Huntzen",
@@ -37,6 +38,7 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-screen bg-background">
       <AdminNav />
+      <AdminSearchDialog />
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto p-6 max-w-7xl">{children}</div>
       </main>

@@ -16,6 +16,7 @@ import {
   Bot,
   Tag,
   LifeBuoy,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -49,6 +50,7 @@ export default function AdminNav() {
 
   const navItems = [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/live", label: "⚡ Live", icon: Zap },
     { href: "/admin/users", label: "Utilisateurs", icon: Users },
     { href: "/admin/plans", label: "Packages", icon: Package },
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
