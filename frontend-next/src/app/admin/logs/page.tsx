@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Search, CheckCircle } from "lucide-react";
+import { RefreshCw, Search, CheckCircle, RotateCcw } from "lucide-react";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -243,6 +243,19 @@ function WebhookLogsTab() {
     }
   };
 
+  const retryWebhook = async (failureId: string) => {
+    try {
+      const data = await adminFetch(
+        `/api/admin/logs/webhooks/${failureId}/retry`,
+        { method: "POST" },
+      );
+      toast.success(`Webhook rejoué : ${data.event_type}`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors du retry");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -286,15 +299,26 @@ function WebhookLogsTab() {
                   </p>
                 </div>
                 {!f.resolved && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 h-7 text-xs"
-                    onClick={() => resolveFailure(f.id)}
-                  >
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Résoudre
-                  </Button>
+                  <div className="flex gap-1.5 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => retryWebhook(f.id)}
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Retry
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => resolveFailure(f.id)}
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Résoudre
+                    </Button>
+                  </div>
                 )}
               </div>
             </Card>

@@ -78,6 +78,11 @@ async def heartbeat(
         if not redis:
             return {"ok": True}
 
+        # Détection abus — sliding window 10 heartbeats/min max
+        from src.services.abuse_detection import is_rate_limited, HEARTBEAT_MAX, HEARTBEAT_WINDOW
+        if await is_rate_limited(redis, "ratelimit:heartbeat", user_id, HEARTBEAT_MAX, HEARTBEAT_WINDOW):
+            return {"ok": True}  # silencieux, ne pas casser l'UX
+
         now = int(time.time())
         expire_at = now - 60  # présent = actif dans la dernière minute
 

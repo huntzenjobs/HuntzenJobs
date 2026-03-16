@@ -68,3 +68,21 @@ def log_event(
 
     except Exception as e:
         logger.warning(f"[user_events] Échec log_event '{event_name}': {e}")
+
+
+def purge_old_user_events(supabase, days: int = 30) -> int:
+    """
+    Supprime les user_events antérieurs à `days` jours.
+    Retourne le nombre de lignes supprimées (-1 si erreur).
+    Ne lève jamais d'exception.
+    """
+    from datetime import datetime, timezone, timedelta
+    try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        res = supabase.table("user_events").delete().lt("created_at", cutoff).execute()
+        deleted = len(res.data) if res.data else 0
+        logger.info(f"[user_events] purge: {deleted} événements supprimés (>{days}j)")
+        return deleted
+    except Exception as e:
+        logger.warning(f"[user_events] purge_old_user_events failed: {e}")
+        return -1
