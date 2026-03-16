@@ -24,6 +24,9 @@ from supabase import create_client, Client
 
 logger = get_logger(__name__)
 
+from src.services.user_events import log_event
+from src.services.admin_alerts import send_admin_alert
+
 # Import quota cache invalidation
 try:
     from app.quota import invalidate_user_quota_cache
@@ -635,6 +638,33 @@ async def handle_checkout_completed(session: Dict[str, Any]):
             logger.info(f"Subscription created for user {user_id}: {plan_name}")
 
 
+        # Tracking événement paiement
+        amount_str = ""
+        try:
+            import stripe as stripe_lib
+            sub = stripe_lib.Subscription.retrieve(stripe_subscription_id)
+            amount_cents = sub["items"]["data"][0]["price"].get("unit_amount", 0)
+            amount_str = f" ({amount_cents // 100}€/mois)" if amount_cents else ""
+        except Exception:
+            pass
+        log_event(
+            supabase_client,
+            event_name="subscription_created",
+            event_label=f"Un utilisateur vient de passer au plan {plan_name}{amount_str} 🎉",
+            category="payment",
+            user_id=user_id,
+            feature="stripe",
+            severity="success",
+            properties={"plan_name": plan_name, "stripe_subscription_id": stripe_subscription_id},
+        )
+
+        # Alerte admin conversion (best-effort)
+        await send_admin_alert(
+            subject=f"Nouvelle conversion — {plan_name}",
+            body=f"User {user_id} vient de passer au plan {plan_name}.\nStripe sub: {stripe_subscription_id}",
+            severity="info",
+        )
+
         # Trigger referral conversion reward (fire-and-forget)
         try:
             from src.services.referrals import apply_referral_reward
@@ -754,6 +784,21 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
             user_id = result.data[0].get("user_id")
             if user_id:
                 await invalidate_user_quota_cache(user_id)
+                log_event(
+                    supabase_client,
+                    event_name="subscription_cancelled",
+                    event_label=f"Un utilisateur a annulé son abonnement",
+                    category="payment",
+                    user_id=user_id,
+                    feature="stripe",
+                    severity="warning",
+                    properties={"stripe_subscription_id": stripe_subscription_id},
+                )
+                await send_admin_alert(
+                    subject=f"Résiliation abonnement",
+                    body=f"User {user_id} a annulé.\nStripe sub: {stripe_subscription_id}",
+                    severity="warning",
+                )
 
         logger.info(f"Subscription cancelled: {stripe_subscription_id}")
 

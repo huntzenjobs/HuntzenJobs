@@ -8,6 +8,8 @@ import time
 import logging
 from typing import Callable
 
+import sentry_sdk
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,7 +103,25 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
-        
+
+        # Enrichir Sentry avec l'user_id extrait du JWT (best-effort, non-bloquant)
+        try:
+            auth_header = request.headers.get("authorization", "")
+            if auth_header.startswith("Bearer "):
+                token = auth_header[7:]
+                # Décoder le JWT sans vérification de signature (payload public)
+                import base64, json as _json
+                parts = token.split(".")
+                if len(parts) == 3:
+                    padded = parts[1] + "=" * (-len(parts[1]) % 4)
+                    payload = _json.loads(base64.urlsafe_b64decode(padded))
+                    user_id = payload.get("sub")
+                    if user_id:
+                        with sentry_sdk.new_scope() as scope:
+                            scope.set_user({"id": user_id})
+        except Exception:
+            pass
+
         # Process request
         response = await call_next(request)
         
