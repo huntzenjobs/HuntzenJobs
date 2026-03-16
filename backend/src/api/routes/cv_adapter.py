@@ -28,6 +28,9 @@ _arq_pool = None
 _GROQ_ACTIVE_KEY = "groq:active_cv_adapt"
 _GROQ_ACTIVE_TTL = 120
 CV_ADAPT_SYNC_THRESHOLD = 12
+_ARQ_QUEUE_KEY = "arq:queue"
+_ARQ_QUEUE_MAX_LENGTH = 3000
+_RETRY_AFTER_SECONDS = 10
 
 
 async def _get_arq_pool():
@@ -59,6 +62,23 @@ async def _decr_active() -> None:
         val = await redis.decr(_GROQ_ACTIVE_KEY)
         if val < 0:
             await redis.set(_GROQ_ACTIVE_KEY, 0)
+
+
+async def _get_arq_queue_depth() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return -1
+    depth = await redis.llen(_ARQ_QUEUE_KEY)
+    return int(depth)
+
+
+def _busy_exception(reason: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=reason,
+        headers={"Retry-After": str(_RETRY_AFTER_SECONDS)},
+    )
 
 
 def _normalize_pdf_text(text: str) -> str:
@@ -216,20 +236,32 @@ async def adapt_cv(
 
     if active > CV_ADAPT_SYNC_THRESHOLD:
         await _decr_active()
+
+        queue_depth = await _get_arq_queue_depth()
+        if queue_depth >= _ARQ_QUEUE_MAX_LENGTH:
+            raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
+
         pool = await _get_arq_pool()
-        if pool:
-            try:
-                job = await pool.enqueue_job(
-                    "cv_adapt_task",
-                    cv_text=cv_text,
-                    job_description=job_description,
-                    language=language,
-                )
-                logger.info(f"[cv_adapter/adapt] ARQ queued — active={active} job={job.job_id}")
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
-            except Exception as e:
-                logger.warning(f"[cv_adapter/adapt] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+        if not pool:
+            logger.warning("[cv_adapter/adapt] ARQ pool unavailable — rejecting to protect API")
+            raise _busy_exception("File d'attente indisponible. Réessayez dans quelques secondes.")
+
+        try:
+            job = await pool.enqueue_job(
+                "cv_adapt_task",
+                cv_text=cv_text,
+                job_description=job_description,
+                language=language,
+            )
+            estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+            logger.info(
+                f"[cv_adapter/adapt] ARQ queued — active={active} "
+                f"queue_depth={queue_depth} job={job.job_id}"
+            )
+            return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": estimated_wait}
+        except Exception as e:
+            logger.warning(f"[cv_adapter/adapt] ARQ enqueue failed ({e}) — rejecting to protect API")
+            raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
 
     # Mode synchrone
     try:
@@ -662,23 +694,37 @@ async def generate_cover_letter_json(request: CoverLetterRequest):
 
     if active > CV_ADAPT_SYNC_THRESHOLD:
         await _decr_active()
+
+        queue_depth = await _get_arq_queue_depth()
+        if queue_depth >= _ARQ_QUEUE_MAX_LENGTH:
+            raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
+
         pool = await _get_arq_pool()
-        if pool:
-            try:
-                job_title = request.job_description.split("\n")[0][:60] if request.job_description else None
-                job = await pool.enqueue_job(
-                    "cover_letter_task",
-                    cv_text=json.dumps(request.cv_data, ensure_ascii=False),
-                    job_description=request.job_description,
-                    language=request.language,
-                    company_name=request.company_name,
-                    job_title=job_title,
-                )
-                logger.info(f"[cv_adapter/cover-letter-json] ARQ queued — active={active} job={job.job_id}")
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
-            except Exception as e:
-                logger.warning(f"[cv_adapter/cover-letter-json] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+        if not pool:
+            logger.warning("[cv_adapter/cover-letter-json] ARQ pool unavailable — rejecting to protect API")
+            raise _busy_exception("File d'attente indisponible. Réessayez dans quelques secondes.")
+
+        try:
+            job_title = request.job_description.split("\n")[0][:60] if request.job_description else None
+            job = await pool.enqueue_job(
+                "cover_letter_task",
+                cv_text=json.dumps(request.cv_data, ensure_ascii=False),
+                job_description=request.job_description,
+                language=request.language,
+                company_name=request.company_name,
+                job_title=job_title,
+            )
+            estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+            logger.info(
+                f"[cv_adapter/cover-letter-json] ARQ queued — active={active} "
+                f"queue_depth={queue_depth} job={job.job_id}"
+            )
+            return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": estimated_wait}
+        except Exception as e:
+            logger.warning(
+                f"[cv_adapter/cover-letter-json] ARQ enqueue failed ({e}) — rejecting to protect API"
+            )
+            raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
 
     # Mode synchrone
     try:

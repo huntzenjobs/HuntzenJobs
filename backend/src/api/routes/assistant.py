@@ -36,6 +36,9 @@ _arq_pool = None
 _GROQ_ACTIVE_KEY = "groq:active_assistant"
 _GROQ_ACTIVE_TTL = 120  # expire 2min en cas de crash
 ASSISTANT_SYNC_THRESHOLD = 12  # max appels Groq simultanés cross-replicas
+_ARQ_QUEUE_KEY = "arq:queue"
+_ARQ_QUEUE_MAX_LENGTH = 3000
+_RETRY_AFTER_SECONDS = 8
 
 
 async def _get_arq_pool():
@@ -67,6 +70,62 @@ async def _decr_active() -> None:
         val = await redis.decr(_GROQ_ACTIVE_KEY)
         if val < 0:
             await redis.set(_GROQ_ACTIVE_KEY, 0)
+
+
+async def _get_arq_queue_depth() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return -1
+    depth = await redis.llen(_ARQ_QUEUE_KEY)
+    return int(depth)
+
+
+def _busy_exception(reason: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=reason,
+        headers={"Retry-After": str(_RETRY_AFTER_SECONDS)},
+    )
+
+
+async def _queue_assistant_or_reject(
+    *,
+    route_label: str,
+    message: str,
+    session_id: str,
+    assistant_type: str,
+    language: str,
+    history: list,
+    active: int,
+) -> dict:
+    queue_depth = await _get_arq_queue_depth()
+    if queue_depth >= _ARQ_QUEUE_MAX_LENGTH:
+        raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
+
+    pool = await _get_arq_pool()
+    if not pool:
+        logger.warning(f"[assistant/{route_label}] ARQ pool unavailable — rejecting to protect API")
+        raise _busy_exception("File d'attente indisponible. Réessayez dans quelques secondes.")
+
+    try:
+        job = await pool.enqueue_job(
+            "assistant_task",
+            message=message,
+            session_id=session_id,
+            assistant_type=assistant_type,
+            language=language,
+            history=history,
+        )
+        estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+        logger.info(
+            f"[assistant/{route_label}] ARQ queued — active={active} "
+            f"queue_depth={queue_depth} job={job.job_id}"
+        )
+        return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": estimated_wait}
+    except Exception as e:
+        logger.warning(f"[assistant/{route_label}] ARQ enqueue failed ({e}) — rejecting to protect API")
+        raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
 
 # ── Prompts de réception du CV par assistant ─────────────────────────────────
 # Chaque assistant répond différemment à l'upload d'un CV.
@@ -169,22 +228,15 @@ async def job_scout_chat(
 
     if active > ASSISTANT_SYNC_THRESHOLD:
         await _decr_active()
-        pool = await _get_arq_pool()
-        if pool:
-            try:
-                job = await pool.enqueue_job(
-                    "assistant_task",
-                    message=request.message,
-                    session_id=request.session_id,
-                    assistant_type="job-scout",
-                    language=request.language,
-                    history=history,
-                )
-                logger.info(f"[assistant/job-scout] ARQ queued — active={active} job={job.job_id}")
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
-            except Exception as e:
-                logger.warning(f"[assistant/job-scout] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+        return await _queue_assistant_or_reject(
+            route_label="job-scout",
+            message=request.message,
+            session_id=request.session_id,
+            assistant_type="job-scout",
+            language=request.language,
+            history=history,
+            active=active,
+        )
 
     # Mode synchrone
     try:
@@ -238,22 +290,15 @@ async def cv_analyzer_chat(
 
     if active > ASSISTANT_SYNC_THRESHOLD:
         await _decr_active()
-        pool = await _get_arq_pool()
-        if pool:
-            try:
-                job = await pool.enqueue_job(
-                    "assistant_task",
-                    message=request.message,
-                    session_id=request.session_id,
-                    assistant_type="cv-analyzer",
-                    language=request.language,
-                    history=history,
-                )
-                logger.info(f"[assistant/cv-analyzer] ARQ queued — active={active} job={job.job_id}")
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
-            except Exception as e:
-                logger.warning(f"[assistant/cv-analyzer] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+        return await _queue_assistant_or_reject(
+            route_label="cv-analyzer",
+            message=request.message,
+            session_id=request.session_id,
+            assistant_type="cv-analyzer",
+            language=request.language,
+            history=history,
+            active=active,
+        )
 
     # Mode synchrone
     try:
@@ -307,22 +352,15 @@ async def cv_adapter_chat(
 
     if active > ASSISTANT_SYNC_THRESHOLD:
         await _decr_active()
-        pool = await _get_arq_pool()
-        if pool:
-            try:
-                job = await pool.enqueue_job(
-                    "assistant_task",
-                    message=request.message,
-                    session_id=request.session_id,
-                    assistant_type="cv-adapter",
-                    language=request.language,
-                    history=history,
-                )
-                logger.info(f"[assistant/cv-adapter] ARQ queued — active={active} job={job.job_id}")
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
-            except Exception as e:
-                logger.warning(f"[assistant/cv-adapter] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+        return await _queue_assistant_or_reject(
+            route_label="cv-adapter",
+            message=request.message,
+            session_id=request.session_id,
+            assistant_type="cv-adapter",
+            language=request.language,
+            history=history,
+            active=active,
+        )
 
     # Mode synchrone
     try:
@@ -377,22 +415,15 @@ async def interview_sim_chat(
 
     if active > ASSISTANT_SYNC_THRESHOLD:
         await _decr_active()
-        pool = await _get_arq_pool()
-        if pool:
-            try:
-                job = await pool.enqueue_job(
-                    "assistant_task",
-                    message=request.message,
-                    session_id=request.session_id,
-                    assistant_type="interview-sim",
-                    language=request.language,
-                    history=history,
-                )
-                logger.info(f"[assistant/interview-sim] ARQ queued — active={active} job={job.job_id}")
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
-            except Exception as e:
-                logger.warning(f"[assistant/interview-sim] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+        return await _queue_assistant_or_reject(
+            route_label="interview-sim",
+            message=request.message,
+            session_id=request.session_id,
+            assistant_type="interview-sim",
+            language=request.language,
+            history=history,
+            active=active,
+        )
 
     # Mode synchrone
     try:

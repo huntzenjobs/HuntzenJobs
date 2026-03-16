@@ -21,6 +21,9 @@ _groq_semaphore = asyncio.Semaphore(20)  # garde-fou local par worker
 # Clé Redis pour le compteur global cross-replicas
 _GROQ_ACTIVE_KEY = "groq:active_coach"
 _GROQ_ACTIVE_TTL = 120  # expire 2min (safety en cas de crash)
+_ARQ_QUEUE_KEY = "arq:queue"
+_ARQ_QUEUE_MAX_LENGTH = 2000
+_RETRY_AFTER_SECONDS = 8
 
 
 async def _incr_active() -> int:
@@ -42,6 +45,23 @@ async def _decr_active() -> None:
         val = await redis.decr(_GROQ_ACTIVE_KEY)
         if val < 0:
             await redis.set(_GROQ_ACTIVE_KEY, 0)
+
+
+async def _get_arq_queue_depth() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return -1
+    depth = await redis.llen(_ARQ_QUEUE_KEY)
+    return int(depth)
+
+
+def _busy_exception(reason: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=reason,
+        headers={"Retry-After": str(_RETRY_AFTER_SECONDS)},
+    )
 
 from arq import create_pool
 
@@ -113,31 +133,36 @@ async def coach_chat(
     if active > COACH_SYNC_THRESHOLD:
         # Trop de Groq simultanés → décrémenter et déléguer à ARQ
         await _decr_active()
+
+        queue_depth = await _get_arq_queue_depth()
+        if queue_depth >= _ARQ_QUEUE_MAX_LENGTH:
+            raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
+
         pool = await _get_arq_pool()
-        if pool:
-            try:
-                job = await pool.enqueue_job(
-                    "coach_task",
-                    message=data.message,
-                    session_id=data.session_id,
-                    language=data.language,
-                )
-                estimated_wait = active * 8
-                logger.info(
-                    f"[coach/chat] ARQ queued — active_global={active} "
-                    f"job={job.job_id} eta={estimated_wait}s"
-                )
-                return {
-                    "queued": True,
-                    "job_id": job.job_id,
-                    "estimated_wait_seconds": estimated_wait,
-                }
-            except Exception as e:
-                logger.warning(f"[coach/chat] ARQ enqueue failed ({e}) — fallback sync")
-        else:
-            logger.warning("[coach/chat] ARQ pool unavailable — fallback sync")
-        # Fallback : ré-incrémenter et continuer en sync
-        await _incr_active()
+        if not pool:
+            logger.warning("[coach/chat] ARQ pool unavailable — rejecting to protect API")
+            raise _busy_exception("File d'attente indisponible. Réessayez dans quelques secondes.")
+
+        try:
+            job = await pool.enqueue_job(
+                "coach_task",
+                message=data.message,
+                session_id=data.session_id,
+                language=data.language,
+            )
+            estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+            logger.info(
+                f"[coach/chat] ARQ queued — active_global={active} "
+                f"queue_depth={queue_depth} job={job.job_id} eta={estimated_wait}s"
+            )
+            return {
+                "queued": True,
+                "job_id": job.job_id,
+                "estimated_wait_seconds": estimated_wait,
+            }
+        except Exception as e:
+            logger.warning(f"[coach/chat] ARQ enqueue failed ({e}) — rejecting to protect API")
+            raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
 
     # Mode synchrone
     history = get_session_history(data.session_id)
