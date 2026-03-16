@@ -4,47 +4,35 @@ uvicorn[standard]
 gunicorn==25.0.2  # Production WSGI server with multi-worker support
 jinja2
 python-multipart
-
 # AI / LLM
 langchain
 langchain-groq
 langchain-core
-
 # PDF Processing
 docling==2.70.0  # Pincé — API PdfPipelineOptions stable sur cette version (testée en prod)
-
 # HTTP Clients
 httpx
 aiohttp
-
 # Configuration
 pydantic
 pydantic-settings
 python-dotenv
-
 # Utilities
 tenacity
 cachetools
 structlog  # Structured logging
-
 # Rate Limiting & Cache (Phase 1) - Updated 2026-02-07
 slowapi==0.1.9  # Rate limiting for FastAPI
 redis==5.0.1  # Redis client for SlowAPI + async cache (REQUIRED)
-
 # Async Task Queue
 arq>=0.26.0  # ARQ async Redis queue (remplace queue custom buggy)
-
 # Database & Storage
 supabase==2.3.4  # Supabase Python client
-
 # Payments
 stripe  # Stripe payment processing
-
 # Country & City Data (Phase 2 - Hybrid approach)
 pycountry==24.6.1  # ISO 3166 country codes
 geonamescache==2.1.2  # Local cities fallback
-
 sentry-sdk[fastapi]==2.19.2
-
 # HTML Parsing (job description scraping)
 beautifulsoup4
