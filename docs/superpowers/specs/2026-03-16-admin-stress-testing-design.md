@@ -46,6 +46,8 @@ Admin UI (/admin/stress)
 
 La queue `stress_test` est séparée de la queue principale. Le worker dédié tourne avec `functions = [stress_test_task]` uniquement, sans impact sur les jobs users (coach, CV-adapt, cover-letter).
 
+**Déploiement Railway :** Un second service Railway `worker-stress` avec `startCommand = "python -m arq src.workers.stress_settings.StressWorkerSettings"`. Fichier `backend/src/workers/stress_settings.py` dédié (mirror de `settings.py` mais avec `functions = [stress_test_task]` uniquement).
+
 ---
 
 ## Backend
@@ -87,10 +89,14 @@ GET    /admin/stress/runs/{run_id}    Détail complet d'un run
 1. Reçoit la config depuis ARQ
 2. Met à jour `stress_test_runs.status = 'running'`
 3. Lance `N` coroutines asyncio concurrentes (ramp-up progressif)
-4. Chaque 500ms : agrège latences (p50/p95/p99), req/s, taux erreur par feature
-5. Publie dans Redis `stress:{run_id}` → consommé par SSE
-6. À la fin : calcule stats finales, persiste `metrics_timeseries` JSONB, `status = 'completed'`
-7. En cas d'annulation : `status = 'cancelled'`
+4. Chaque 500ms :
+   - Vérifie `redis.get(f"cancel:{run_id}")` → si présent, interrompt la boucle et passe à l'étape 6
+   - Agrège latences (p50/p95/p99), req/s, taux erreur par feature
+   - Écrit le snapshot dans `redis.set(f"stress:metrics:{run_id}", json.dumps(snapshot), ex=600)`
+5. Appende le snapshot à la liste in-memory `metrics_timeseries`
+6. À la fin (ou annulation) : persiste `metrics_timeseries` JSONB en DB, met à jour `status`
+
+**Mécanisme d'annulation :** Le DELETE endpoint écrit `redis.set(f"cancel:{run_id}", "1", ex=300)`. Le worker vérifie cette clé à chaque tick (500ms) et s'arrête proprement. ARQ ne supporte pas l'interruption mid-job nativement.
 
 ### Métriques publiées (Redis → SSE)
 
@@ -108,9 +114,6 @@ GET    /admin/stress/runs/{run_id}    Détail complet d'un run
     "cv_analysis": { "active": 12, "req_s": 89,  "errors": 0 }
   },
   "infra": {
-    "groq_tpm_pct": 78,
-    "supabase_conn_pct": 45,
-    "redis_mem_pct": 12,
     "arq_queue_depth": 23
   }
 }
@@ -132,6 +135,8 @@ async def redis_subscribe_generator(channel: str):
         if message["type"] == "message":
             yield json.loads(message["data"])
 ```
+
+Le SSE endpoint souscrit au channel `stress:{run_id}` et yield chaque message publié par le worker (toutes les 500ms).
 
 ---
 
@@ -187,7 +192,7 @@ CREATE POLICY "service_role_all" ON stress_test_runs
 - KPIs temps réel : req/s, latence p95, taux erreur, users actifs
 - Deux courbes (recharts) : latence p50/p95/p99 + req/s avec erreurs superposées
 - Tableau features : coach actifs, CV analyses, jobs searches, ARQ queue depth
-- Jauges infra : Groq TPM %, Supabase connexions %, Redis mémoire %
+- Jauge infra : ARQ queue depth (seule métrique infra fiable disponible)
 - Bouton "Stop" → DELETE /admin/stress/run/{run_id}
 - Barre de progression durée totale
 
@@ -224,4 +229,4 @@ CREATE POLICY "service_role_all" ON stress_test_runs
 - [ ] Annuler un test en cours → statut `cancelled` en DB + SSE s'arrête
 - [ ] Historique : le run terminé est consultable avec les courbes complètes
 - [ ] Builder custom : slider 200 users, 2min, coach only → test se lance correctement
-- [ ] Infra gauges : Groq TPM visible et cohérent avec les logs Railway
+- [ ] ARQ queue depth visible et mis à jour pendant le test
