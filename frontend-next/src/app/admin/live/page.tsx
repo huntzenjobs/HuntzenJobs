@@ -50,7 +50,7 @@ export default function AdminLivePage() {
 
   // Charger l'état réel de maintenance au montage
   useEffect(() => {
-    adminFetch("/api/admin/maintenance")
+    adminFetch("/admin/maintenance")
       .then((d) => setMaintenance(d.active ?? false))
       .catch(() => {});
   }, []);
