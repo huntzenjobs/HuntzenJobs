@@ -2441,8 +2441,8 @@ async def get_user_events(
 
 @router.get("/search")
 async def admin_search(
-    q: str = Query(..., min_length=2),
     admin: AdminUserDep,
+    q: str = Query(..., min_length=2),
 ) -> Dict[str, Any]:
     """Recherche globale admin : users par email/nom."""
     supabase = get_supabase_client()

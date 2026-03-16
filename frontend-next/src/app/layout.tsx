@@ -11,7 +11,7 @@ import { HomePageSchemas } from "@/components/seo/structured-data";
 import { inter, dmSans } from "@/lib/fonts";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import { SiteBanner } from "@/components/layout/site-banner";
+import SiteBanner from "@/components/layout/site-banner";
 
 // Metadata optimisées pour SEO 100/100
 export const metadata: Metadata = homeMetadata;
