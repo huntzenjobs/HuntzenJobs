@@ -15,6 +15,7 @@ import {
   StickyNote,
   AtSign,
   ShieldOff,
+  Settings2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,7 +59,8 @@ async function adminPost(path: string, body?: object) {
   } = await supabase.auth.getSession();
   const token = session?.access_token;
   const res = await fetch(`${BACKEND_URL}${path}`, {
-    method: path.includes("/email") && !path.includes("send-email") ? "PUT" : "POST",
+    method:
+      path.includes("/email") && !path.includes("send-email") ? "PUT" : "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -80,6 +82,10 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
   const [changeEmailOpen, setChangeEmailOpen] = useState(false);
   const [grantDaysOpen, setGrantDaysOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
+  const [customLimitsOpen, setCustomLimitsOpen] = useState(false);
+  const [limitCV, setLimitCV] = useState("");
+  const [limitCoach, setLimitCoach] = useState("");
+  const [limitJobs, setLimitJobs] = useState("");
 
   const [suspendReason, setSuspendReason] = useState("");
   const [banReason, setBanReason] = useState("");
@@ -221,6 +227,31 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
     }
   };
 
+  const handleSetCustomLimits = async () => {
+    setActing(true);
+    try {
+      const body: Record<string, number | null> = {};
+      if (limitCV !== "")
+        body.cv_analyses_daily = limitCV === "0" ? null : parseInt(limitCV, 10);
+      if (limitCoach !== "")
+        body.coach_seconds_daily =
+          limitCoach === "0" ? null : parseInt(limitCoach, 10);
+      if (limitJobs !== "")
+        body.job_searches_daily =
+          limitJobs === "0" ? null : parseInt(limitJobs, 10);
+      await adminPost(`/api/admin/users/${user.id}/set-custom-limits`, body);
+      toast.success("Limites personnalisées appliquées");
+      setCustomLimitsOpen(false);
+      setLimitCV("");
+      setLimitCoach("");
+      setLimitJobs("");
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setActing(false);
+    }
+  };
+
   const handleAddNote = async () => {
     if (!noteContent.trim()) return;
     setActing(true);
@@ -272,6 +303,10 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
           <DropdownMenuItem onClick={() => setNoteOpen(true)}>
             <StickyNote className="h-4 w-4 mr-2" />
             Ajouter une note
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setCustomLimitsOpen(true)}>
+            <Settings2 className="h-4 w-4 mr-2" />
+            Limites personnalisées
           </DropdownMenuItem>
           {user.status === "active" && (
             <DropdownMenuItem onClick={() => setImpersonateOpen(true)}>
@@ -368,7 +403,8 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
             <AlertDialogTitle>Bannir {user.email} ?</AlertDialogTitle>
             <AlertDialogDescription>
               Le compte sera banni via Supabase Auth (876 600h) et marqué{" "}
-              <code>is_banned=true</code>. La session sera révoquée immédiatement.
+              <code>is_banned=true</code>. La session sera révoquée
+              immédiatement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-2">
@@ -418,9 +454,7 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       <AlertDialog open={changeEmailOpen} onOpenChange={setChangeEmailOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Changer l'email de {user.email}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Changer l'email de {user.email}</AlertDialogTitle>
           </AlertDialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="new-email">Nouvel email *</Label>
@@ -448,9 +482,7 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       <AlertDialog open={grantDaysOpen} onOpenChange={setGrantDaysOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Offrir des jours à {user.email}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Offrir des jours à {user.email}</AlertDialogTitle>
             <AlertDialogDescription>
               Extension via Stripe trial si abonnement actif, sinon accès Pro
               temporaire.
@@ -515,6 +547,60 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
               disabled={!noteContent.trim() || acting}
             >
               {acting ? "Ajout..." : "Ajouter la note"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Custom limits dialog */}
+      <AlertDialog open={customLimitsOpen} onOpenChange={setCustomLimitsOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limites personnalisées</AlertDialogTitle>
+            <AlertDialogDescription>
+              Laissez vide pour conserver la limite du plan. Entrez 0 pour
+              revenir aux limites par défaut.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Analyses CV / jour</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="Limite du plan"
+                value={limitCV}
+                onChange={(e) => setLimitCV(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Secondes coach / jour</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="Limite du plan"
+                value={limitCoach}
+                onChange={(e) => setLimitCoach(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Recherches emploi / jour</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="Limite du plan"
+                value={limitJobs}
+                onChange={(e) => setLimitJobs(e.target.value)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSetCustomLimits}
+              disabled={acting}
+            >
+              {acting ? "Enregistrement..." : "Appliquer"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

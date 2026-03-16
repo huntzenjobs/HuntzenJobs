@@ -2379,8 +2379,12 @@ async def set_custom_limits(
     return {"ok": True, "custom_limits": limits}
 
 
+VALID_ARQ_FUNCTIONS = {"coach_task", "assistant_task", "cv_adapt_task", "cover_letter_task"}
+
+
 class RetryJobRequest(BaseModel):
-    job_id: str
+    function_name: str
+    kwargs: dict = {}
 
 
 @router.post("/users/{user_id}/retry-job")
@@ -2389,19 +2393,30 @@ async def retry_arq_job(
     req: RetryJobRequest,
     admin: AdminUserDep,
 ) -> Dict[str, Any]:
-    """Réenqueue un job ARQ par son ID (lu depuis user_events.properties.arq_job_id)."""
+    """Réenqueue réellement un job ARQ pour un utilisateur."""
+    if req.function_name not in VALID_ARQ_FUNCTIONS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Fonction invalide. Valeurs acceptées : {', '.join(sorted(VALID_ARQ_FUNCTIONS))}",
+        )
+
+    try:
+        from uuid import uuid4
+        from arq import create_pool
+        from src.workers.settings import _get_redis_settings
+        pool = await create_pool(_get_redis_settings())
+        job = await pool.enqueue_job(req.function_name, _job_id=str(uuid4()), **req.kwargs)
+        await pool.close()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Redis/ARQ indisponible : {e}")
+
     supabase = get_supabase_client()
-
-    job_id = req.job_id
-    if not job_id:
-        raise HTTPException(status_code=400, detail="job_id requis")
-
-    # Log uniquement — le réenqueue réel nécessite l'accès au worker ARQ
-    # Pour le moment on loggue l'intention ; le worker peut être déclenché via Redis manuellement
-    _log_admin_action(supabase, admin["id"], "admin.job_retry_requested", user_id, {
-        "job_id": job_id,
+    new_job_id = job.job_id if job else None
+    _log_admin_action(supabase, admin["id"], "admin.job_retried", user_id, {
+        "function": req.function_name,
+        "new_job_id": new_job_id,
     })
-    return {"ok": True, "job_id": job_id, "note": "Retry loggué — redéclencher via ARQ si nécessaire"}
+    return {"ok": True, "job_id": new_job_id, "function": req.function_name}
 
 
 @router.get("/users/{user_id}/events")
@@ -2578,7 +2593,7 @@ async def ban_ip(
     await redis.setex(f"banned_ip:{payload.ip}", BAN_TTL, meta)
 
     supabase = get_supabase_client()
-    _log_admin_action(supabase, admin["id"], "admin.ip_banned", None, {"ip": payload.ip, "reason": payload.reason})
+    _log_admin_action(supabase, admin["id"], "admin.ip_banned", None, {"ip": payload.ip, "reason": payload.reason, "ttl_days": 30})
 
     return {"ip": payload.ip, "banned": True}
 

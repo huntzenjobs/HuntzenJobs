@@ -7,11 +7,14 @@ Throttle via Redis : max 1 email par type d'alerte par heure.
 
 import hashlib
 import logging
+import time
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 _THROTTLE_TTL = 3600  # 1 heure
+# Fallback throttle en mémoire si Redis absent (process-local)
+_last_sent_fallback: dict = {}
 
 
 async def send_admin_alert(
@@ -45,6 +48,13 @@ async def send_admin_alert(
                 logger.debug(f"[admin_alerts] Throttled: '{subject}'")
                 return
             await redis.set(throttle_key, "1", ex=_THROTTLE_TTL)
+        else:
+            # Throttle mémoire (process-local) quand Redis indisponible
+            now = time.time()
+            if _last_sent_fallback.get(throttle_key, 0) + _THROTTLE_TTL > now:
+                logger.warning(f"[admin_alerts] throttle mémoire actif pour '{subject}'")
+                return
+            _last_sent_fallback[throttle_key] = now
 
         # Envoi via Resend
         import resend
