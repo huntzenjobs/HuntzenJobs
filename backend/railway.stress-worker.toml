@@ -1,0 +1,13 @@
+# Railway Configuration — Stress Test Worker (ARQ, pas de HTTP)
+# Worker dédié queue "stress_test" — aucun healthcheck HTTP
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "python -m arq src.workers.stress_settings.StressWorkerSettings"
+numReplicas = 1
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+healthcheckPath = ""
