@@ -84,6 +84,7 @@ export default function UserDetailDrawer({
   const [payments, setPayments] = useState<any[]>([]);
   const [features, setFeatures] = useState<any[]>([]);
   const [togglingFeature, setTogglingFeature] = useState<string | null>(null);
+  const [userEvents, setUserEvents] = useState<any[]>([]);
 
   const reload = useCallback(() => {
     if (!userId || !open) return;
@@ -106,6 +107,9 @@ export default function UserDetailDrawer({
     adminFetch(`/api/admin/users/${userId}/feature-overrides`)
       .then((d) => setFeatures(d.features || []))
       .catch(() => setFeatures([]));
+    adminFetch(`/api/admin/users/${userId}/events`)
+      .then((d) => setUserEvents(d.events || []))
+      .catch(() => setUserEvents([]));
   }, [userId, open]);
 
   const handleResetUsage = async () => {
@@ -527,6 +531,40 @@ export default function UserDetailDrawer({
                           </button>
                         )}
                       </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            {/* Activité utilisateur (user_events) */}
+            {userEvents.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Activité ({userEvents.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+                  {userEvents.map((e: any) => (
+                    <div key={e.id} className="text-xs space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] ${SEVERITY_COLORS[e.severity] || "bg-gray-50 text-gray-700"}`}
+                        >
+                          {e.severity || "info"}
+                        </span>
+                        <span className="font-mono text-muted-foreground truncate flex-1">
+                          {e.event_label || e.event_name}
+                        </span>
+                        <span className="text-muted-foreground/60 shrink-0">
+                          {formatDate(e.created_at)}
+                        </span>
+                      </div>
+                      {e.feature && (
+                        <div className="pl-1 text-muted-foreground/60">
+                          {e.feature}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </CardContent>

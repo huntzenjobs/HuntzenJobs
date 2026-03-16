@@ -10,6 +10,11 @@ import {
   ArrowUpDown,
   Mail,
   LogIn,
+  LogOut,
+  Gift,
+  StickyNote,
+  AtSign,
+  ShieldOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { AdminUser } from "@/hooks/admin/use-admin-users";
 import ForcePlanDialog from "./force-plan-dialog";
@@ -45,13 +51,42 @@ interface Props {
   onAction: (action: string, userId: string, extra?: any) => Promise<void>;
 }
 
+async function adminPost(path: string, body?: object) {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    method: path.includes("/email") && !path.includes("send-email") ? "PUT" : "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export default function UserActionsMenu({ user, plans, onAction }: Props) {
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [forcePlanOpen, setForcePlanOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [impersonateOpen, setImpersonateOpen] = useState(false);
+  const [banOpen, setBanOpen] = useState(false);
+  const [forceSignoutOpen, setForceSignoutOpen] = useState(false);
+  const [changeEmailOpen, setChangeEmailOpen] = useState(false);
+  const [grantDaysOpen, setGrantDaysOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+
   const [suspendReason, setSuspendReason] = useState("");
+  const [banReason, setBanReason] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [grantDays, setGrantDays] = useState("7");
+  const [grantReason, setGrantReason] = useState("");
+  const [noteContent, setNoteContent] = useState("");
   const [acting, setActing] = useState(false);
 
   const handleImpersonate = async () => {
@@ -97,6 +132,114 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
     setDeleteOpen(false);
   };
 
+  const handleBan = async () => {
+    setActing(true);
+    try {
+      await adminPost(`/api/admin/users/${user.id}/ban`, { reason: banReason });
+      toast.success(`${user.email} banni`);
+      setBanOpen(false);
+      setBanReason("");
+      await onAction("reactivate", user.id); // refresh
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors du ban");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleUnban = async () => {
+    setActing(true);
+    try {
+      await adminPost(`/api/admin/users/${user.id}/unban`);
+      toast.success(`${user.email} débanni`);
+      await onAction("reactivate", user.id); // refresh
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors du unban");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleForceSignout = async () => {
+    setForceSignoutOpen(false);
+    try {
+      await adminPost(`/api/admin/users/${user.id}/force-signout`);
+      toast.success(`Sessions révoquées pour ${user.email}`);
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    if (!newEmail.trim()) return;
+    setActing(true);
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch(
+        `${BACKEND_URL}/api/admin/users/${user.id}/email`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ new_email: newEmail }),
+        },
+      );
+      if (!res.ok) throw new Error(await res.text());
+      toast.success(`Email mis à jour : ${newEmail}`);
+      setChangeEmailOpen(false);
+      setNewEmail("");
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleGrantDays = async () => {
+    const days = parseInt(grantDays, 10);
+    if (!days || days < 1) return;
+    setActing(true);
+    try {
+      await adminPost(`/api/admin/users/${user.id}/grant-days`, {
+        days,
+        reason: grantReason,
+      });
+      toast.success(`${days} jours offerts à ${user.email}`);
+      setGrantDaysOpen(false);
+      setGrantDays("7");
+      setGrantReason("");
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!noteContent.trim()) return;
+    setActing(true);
+    try {
+      await adminPost(`/api/admin/users/${user.id}/add-note`, {
+        content: noteContent,
+      });
+      toast.success("Note ajoutée");
+      setNoteOpen(false);
+      setNoteContent("");
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const isBanned = (user as any).is_banned === true;
+
   return (
     <>
       <DropdownMenu>
@@ -118,13 +261,47 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
             <ArrowUpDown className="h-4 w-4 mr-2" />
             Changer le plan
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setChangeEmailOpen(true)}>
+            <AtSign className="h-4 w-4 mr-2" />
+            Changer l'email
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setGrantDaysOpen(true)}>
+            <Gift className="h-4 w-4 mr-2" />
+            Offrir des jours
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setNoteOpen(true)}>
+            <StickyNote className="h-4 w-4 mr-2" />
+            Ajouter une note
+          </DropdownMenuItem>
           {user.status === "active" && (
             <DropdownMenuItem onClick={() => setImpersonateOpen(true)}>
               <LogIn className="h-4 w-4 mr-2" />
               Impersonner
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem onClick={() => setForceSignoutOpen(true)}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Forcer déconnexion
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
+          {isBanned ? (
+            <DropdownMenuItem
+              className="text-green-600"
+              onClick={handleUnban}
+              disabled={acting}
+            >
+              <ShieldOff className="h-4 w-4 mr-2" />
+              Lever le ban
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              className="text-red-700"
+              onClick={() => setBanOpen(true)}
+            >
+              <Ban className="h-4 w-4 mr-2" />
+              Bannir (Auth)
+            </DropdownMenuItem>
+          )}
           {user.status === "active" ? (
             <DropdownMenuItem
               className="text-orange-600"
@@ -179,6 +356,165 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
               className="bg-orange-600 hover:bg-orange-700"
             >
               {acting ? "Suspension..." : "Suspendre"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Ban dialog */}
+      <AlertDialog open={banOpen} onOpenChange={setBanOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bannir {user.email} ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Le compte sera banni via Supabase Auth (876 600h) et marqué{" "}
+              <code>is_banned=true</code>. La session sera révoquée immédiatement.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="ban-reason">Raison (optionnel)</Label>
+            <Input
+              id="ban-reason"
+              placeholder="Ex: abus, fraude, spam..."
+              value={banReason}
+              onChange={(e) => setBanReason(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBan}
+              disabled={acting}
+              className="bg-red-700 hover:bg-red-800"
+            >
+              {acting ? "Bannissement..." : "Bannir définitivement"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Force signout dialog */}
+      <AlertDialog open={forceSignoutOpen} onOpenChange={setForceSignoutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Forcer la déconnexion de {user.email} ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Tous les tokens actifs seront révoqués. L'utilisateur devra se
+              reconnecter sur tous ses appareils.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleForceSignout}>
+              Déconnecter
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Change email dialog */}
+      <AlertDialog open={changeEmailOpen} onOpenChange={setChangeEmailOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Changer l'email de {user.email}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="new-email">Nouvel email *</Label>
+            <Input
+              id="new-email"
+              type="email"
+              placeholder="nouveau@exemple.com"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleChangeEmail}
+              disabled={!newEmail.trim() || acting}
+            >
+              {acting ? "Mise à jour..." : "Changer l'email"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Grant days dialog */}
+      <AlertDialog open={grantDaysOpen} onOpenChange={setGrantDaysOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Offrir des jours à {user.email}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Extension via Stripe trial si abonnement actif, sinon accès Pro
+              temporaire.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label htmlFor="days">Nombre de jours *</Label>
+              <Input
+                id="days"
+                type="number"
+                min="1"
+                max="365"
+                value={grantDays}
+                onChange={(e) => setGrantDays(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="grant-reason">Raison (optionnel)</Label>
+              <Input
+                id="grant-reason"
+                placeholder="Ex: compensation bug, geste commercial..."
+                value={grantReason}
+                onChange={(e) => setGrantReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleGrantDays}
+              disabled={!grantDays || parseInt(grantDays) < 1 || acting}
+            >
+              {acting ? "En cours..." : `Offrir ${grantDays}j`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Note dialog */}
+      <AlertDialog open={noteOpen} onOpenChange={setNoteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Ajouter une note sur {user.email}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="note-content">Note interne *</Label>
+            <Textarea
+              id="note-content"
+              placeholder="Note visible uniquement par les admins..."
+              rows={4}
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleAddNote}
+              disabled={!noteContent.trim() || acting}
+            >
+              {acting ? "Ajout..." : "Ajouter la note"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

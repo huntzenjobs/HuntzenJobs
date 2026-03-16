@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { useAdminLive } from "@/hooks/admin/use-admin-live";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -207,6 +208,7 @@ interface HealthData {
 }
 
 export default function AdminDashboardPage() {
+  const { presence, connected } = useAdminLive();
   const [stats, setStats] = useState<Stats | null>(null);
   const [growth, setGrowth] = useState<GrowthPoint[]>([]);
   const [recentEvents, setRecentEvents] = useState<any[]>([]);
@@ -274,6 +276,48 @@ export default function AdminDashboardPage() {
           Actualiser
         </Button>
       </div>
+
+      {/* Live users card */}
+      <Link href="/admin/live">
+        <Card className="border-primary/20 hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer bg-primary/5">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Actifs maintenant
+                </p>
+                <p className="text-3xl font-bold text-primary">
+                  {presence.total}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  utilisateurs en ligne → voir le live
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-1 text-right">
+                  {Object.entries(presence.by_page)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 3)
+                    .map(([page, count]) => (
+                      <p key={page} className="text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          {count}
+                        </span>{" "}
+                        {page}
+                      </p>
+                    ))}
+                </div>
+                <div className="relative h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Activity className="h-5 w-5 text-primary" />
+                  {connected && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-background" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* KPI Grid */}
       {loading && !stats ? (

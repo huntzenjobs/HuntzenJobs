@@ -6,6 +6,7 @@ import { SubscriptionProvider } from "@/contexts/subscription-context";
 import { PricingModal } from "@/components/freemium/pricing-modal";
 import { UpgradeBanner } from "@/components/freemium/upgrade-banner";
 import { SupportBubble } from "@/components/support/support-bubble";
+import { PresenceTracker } from "@/components/layout/presence-tracker";
 import DashboardLoading from "./loading";
 
 export default async function DashboardLayout({
@@ -24,6 +25,9 @@ export default async function DashboardLayout({
           id="main-content"
           className="huntzen-main lg:ml-[280px] min-h-screen transition-all"
         >
+          {/* Presence heartbeat — tracks user on /dashboard */}
+          <PresenceTracker page="/dashboard" />
+
           {/* Mobile spacer for fixed header */}
           <div className="h-14 lg:hidden" />
 

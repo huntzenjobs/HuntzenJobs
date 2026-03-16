@@ -169,6 +169,36 @@ export async function middleware(request: NextRequest) {
     });
   }
 
+  // Maintenance mode — si le backend retourne 503, rediriger vers /maintenance
+  const pathname = request.nextUrl.pathname;
+  const isMaintenancePage = pathname === "/maintenance";
+  const isApiOrStatic =
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.includes(".");
+
+  if (!isMaintenancePage && !isApiOrStatic) {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
+      if (backendUrl) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+        const bannerRes = await fetch(`${backendUrl}/api/banner`, {
+          signal: controller.signal,
+          headers: { "Cache-Control": "no-store" },
+        });
+        clearTimeout(timeoutId);
+        if (bannerRes.status === 503) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/maintenance";
+          return NextResponse.redirect(url);
+        }
+      }
+    } catch {
+      // Backend injoignable — on laisse passer pour éviter de bloquer le site
+    }
+  }
+
   // Routes protegees - rediriger vers login si non authentifie
   // Note: /jobs, /cv-analysis, /assistant sont maintenant accessibles sans compte (freemium)
   // /admin is protected here (auth check), is_admin check is in the admin layout (Server Component)

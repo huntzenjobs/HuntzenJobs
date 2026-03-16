@@ -40,6 +40,25 @@ class DeleteUserRequest(BaseModel):
     confirm: bool = False
 
 
+class BanUserRequest(BaseModel):
+    reason: str = ""
+
+class AddNoteRequest(BaseModel):
+    content: str
+
+class GrantDaysRequest(BaseModel):
+    days: int
+    reason: str = ""
+
+class SetCustomLimitsRequest(BaseModel):
+    cv_analyses_daily: Optional[int] = None
+    coach_seconds_daily: Optional[int] = None
+    job_searches_daily: Optional[int] = None
+
+class UpdateEmailRequest(BaseModel):
+    new_email: str
+
+
 def _log_admin_action(
     supabase,
     admin_id: str,
@@ -2060,3 +2079,305 @@ async def apply_coupon_to_user(
         return {"ok": True, "coupon_applied": req.coupon_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}")
+
+
+# ============================================================
+# USER MANAGEMENT — PHASE C ACTIONS
+# ============================================================
+
+@router.post("/users/{user_id}/ban")
+async def ban_user(
+    user_id: str,
+    req: BanUserRequest,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Bannit un utilisateur (Supabase Auth ban_duration + is_banned=True)."""
+    supabase = get_supabase_client()
+    settings = get_settings()
+
+    # Import Supabase admin client avec service_role
+    from supabase import create_client
+    supabase_admin = create_client(settings.supabase_url, settings.supabase_service_role_key)
+
+    # Ban via Supabase Auth Admin (876600h ≈ 100 ans)
+    supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": "876600h"})
+
+    # Mettre à jour le profil
+    supabase.table("profiles").update({
+        "is_banned": True,
+        "status": "suspended",
+    }).eq("id", user_id).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.user_banned", user_id, {
+        "reason": req.reason,
+    })
+    return {"ok": True}
+
+
+@router.post("/users/{user_id}/unban")
+async def unban_user(
+    user_id: str,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Lève le ban d'un utilisateur."""
+    supabase = get_supabase_client()
+    settings = get_settings()
+
+    from supabase import create_client
+    supabase_admin = create_client(settings.supabase_url, settings.supabase_service_role_key)
+
+    supabase_admin.auth.admin.update_user_by_id(user_id, {"ban_duration": "none"})
+
+    supabase.table("profiles").update({
+        "is_banned": False,
+        "status": "active",
+    }).eq("id", user_id).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.user_unbanned", user_id, {})
+    return {"ok": True}
+
+
+@router.post("/users/{user_id}/force-signout")
+async def force_signout_user(
+    user_id: str,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Force la déconnexion globale d'un utilisateur (révoque tous ses tokens)."""
+    supabase = get_supabase_client()
+    settings = get_settings()
+
+    from supabase import create_client
+    supabase_admin = create_client(settings.supabase_url, settings.supabase_service_role_key)
+
+    supabase_admin.auth.admin.sign_out(user_id, scope="global")
+
+    _log_admin_action(supabase, admin["id"], "admin.force_signout", user_id, {})
+    return {"ok": True}
+
+
+@router.put("/users/{user_id}/email")
+async def update_user_email(
+    user_id: str,
+    req: UpdateEmailRequest,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Met à jour l'email d'un utilisateur (Supabase Auth + profil)."""
+    supabase = get_supabase_client()
+    settings = get_settings()
+
+    from supabase import create_client
+    supabase_admin = create_client(settings.supabase_url, settings.supabase_service_role_key)
+
+    supabase_admin.auth.admin.update_user_by_id(user_id, {"email": req.new_email})
+
+    supabase.table("profiles").update({"email": req.new_email}).eq("id", user_id).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.email_updated", user_id, {
+        "new_email": req.new_email,
+    })
+    return {"ok": True}
+
+
+@router.post("/users/{user_id}/add-note")
+async def add_admin_note(
+    user_id: str,
+    req: AddNoteRequest,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Ajoute une note interne sur un utilisateur."""
+    supabase = get_supabase_client()
+
+    supabase.table("admin_notes").insert({
+        "user_id": user_id,
+        "admin_id": admin["id"],
+        "content": req.content,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.note_added", user_id, {
+        "content_preview": req.content[:100],
+    })
+    return {"ok": True}
+
+
+@router.post("/users/{user_id}/grant-days")
+async def grant_free_days(
+    user_id: str,
+    req: GrantDaysRequest,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Offre des jours gratuits : via Stripe trial si abonnement actif, sinon via user_subscriptions."""
+    supabase = get_supabase_client()
+    settings = get_settings()
+
+    sub = supabase.table("user_subscriptions").select(
+        "stripe_subscription_id, current_period_end, status, plan_id"
+    ).eq("user_id", user_id).eq("status", "active").maybe_single().execute()
+
+    if sub.data and sub.data.get("stripe_subscription_id"):
+        # Étend via Stripe trial_end
+        stripe_lib.api_key = settings.get_stripe_secret_key()
+        current_end = sub.data.get("current_period_end")
+        if current_end:
+            if isinstance(current_end, str):
+                current_dt = datetime.fromisoformat(current_end.replace("Z", "+00:00"))
+            else:
+                current_dt = datetime.fromtimestamp(current_end, tz=timezone.utc)
+        else:
+            current_dt = datetime.now(timezone.utc)
+
+        new_end = current_dt + timedelta(days=req.days)
+        stripe_lib.Subscription.modify(
+            sub.data["stripe_subscription_id"],
+            trial_end=int(new_end.timestamp()),
+        )
+    else:
+        # Freemium : créer ou prolonger un abonnement local
+        plan_id = sub.data["plan_id"] if sub.data else None
+        new_end = datetime.now(timezone.utc) + timedelta(days=req.days)
+        if sub.data:
+            supabase.table("user_subscriptions").update({
+                "current_period_end": new_end.isoformat(),
+            }).eq("user_id", user_id).eq("status", "active").execute()
+        else:
+            # Récupère le plan Pro
+            pro_plan = supabase.table("subscription_plans").select("id").eq("name", "Pro").maybe_single().execute()
+            supabase.table("user_subscriptions").insert({
+                "user_id": user_id,
+                "plan_id": pro_plan.data["id"] if pro_plan.data else None,
+                "status": "active",
+                "current_period_start": datetime.now(timezone.utc).isoformat(),
+                "current_period_end": new_end.isoformat(),
+                "payment_provider": "admin_grant",
+            }).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.days_granted", user_id, {
+        "days": req.days,
+        "reason": req.reason,
+    })
+    return {"ok": True, "days_granted": req.days}
+
+
+@router.post("/users/{user_id}/set-custom-limits")
+async def set_custom_limits(
+    user_id: str,
+    req: SetCustomLimitsRequest,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Définit des limites personnalisées pour un utilisateur."""
+    supabase = get_supabase_client()
+
+    limits: Dict[str, Any] = {}
+    if req.cv_analyses_daily is not None:
+        limits["cv_analyses_daily"] = req.cv_analyses_daily
+    if req.coach_seconds_daily is not None:
+        limits["coach_seconds_daily"] = req.coach_seconds_daily
+    if req.job_searches_daily is not None:
+        limits["job_searches_daily"] = req.job_searches_daily
+
+    if not limits:
+        raise HTTPException(status_code=400, detail="Aucune limite spécifiée")
+
+    supabase.table("user_subscriptions").update({
+        "custom_limits": limits,
+    }).eq("user_id", user_id).eq("status", "active").execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.custom_limits_set", user_id, limits)
+    return {"ok": True, "custom_limits": limits}
+
+
+@router.post("/users/{user_id}/retry-job")
+async def retry_arq_job(
+    user_id: str,
+    req: Dict[str, Any],
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Réenqueue un job ARQ par son ID (lu depuis user_events.properties.arq_job_id)."""
+    supabase = get_supabase_client()
+
+    job_id = req.get("job_id") or req.get("arq_job_id")
+    if not job_id:
+        raise HTTPException(status_code=400, detail="job_id requis")
+
+    # Log uniquement — le réenqueue réel nécessite l'accès au worker ARQ
+    # Pour le moment on loggue l'intention ; le worker peut être déclenché via Redis manuellement
+    _log_admin_action(supabase, admin["id"], "admin.job_retry_requested", user_id, {
+        "job_id": job_id,
+    })
+    return {"ok": True, "job_id": job_id, "note": "Retry loggué — redéclencher via ARQ si nécessaire"}
+
+
+@router.get("/users/{user_id}/events")
+async def get_user_events(
+    user_id: str,
+    admin: AdminUserDep,
+    limit: int = Query(default=100, le=200),
+) -> Dict[str, Any]:
+    """Retourne les 100 derniers événements d'un utilisateur (user_events)."""
+    supabase = get_supabase_client()
+
+    result = supabase.table("user_events").select(
+        "id, created_at, event_name, event_label, category, feature, severity, properties, error_code"
+    ).eq("user_id", user_id).order("created_at", desc=True).limit(limit).execute()
+
+    return {"events": result.data or [], "total": len(result.data or [])}
+
+
+# ============================================================
+# SEARCH GLOBAL (C3)
+# ============================================================
+
+@router.get("/search")
+async def admin_search(
+    q: str = Query(..., min_length=2),
+    admin: AdminUserDep = None,
+) -> Dict[str, Any]:
+    """Recherche globale admin : users par email/nom."""
+    supabase = get_supabase_client()
+
+    users = supabase.table("profiles").select(
+        "id, email, full_name, status, is_admin, created_at"
+    ).or_(
+        f"email.ilike.%{q}%,full_name.ilike.%{q}%"
+    ).limit(20).execute()
+
+    return {"users": users.data or []}
+
+
+# ============================================================
+# CSV EXPORT (C4)
+# ============================================================
+
+@router.get("/users/export")
+async def export_users_csv(
+    admin: AdminUserDep,
+    format: str = Query(default="csv"),
+) -> Any:
+    """Exporte tous les utilisateurs en CSV (StreamingResponse)."""
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+
+    supabase = get_supabase_client()
+
+    result = supabase.table("profiles").select(
+        "id, email, full_name, status, created_at, is_admin"
+    ).order("created_at", desc=True).limit(5000).execute()
+
+    users = result.data or []
+
+    def generate():
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=["id", "email", "full_name", "status", "is_admin", "created_at"])
+        writer.writeheader()
+        for u in users:
+            writer.writerow({k: u.get(k, "") for k in ["id", "email", "full_name", "status", "is_admin", "created_at"]})
+        yield buf.getvalue()
+
+    _log_admin_action(supabase, admin["id"], "admin.users_exported", None, {"count": len(users)})
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=huntzen-users.csv"},
+    )
