@@ -271,6 +271,20 @@ async def get_current_user_info(
         except Exception as e:
             logger.warning(f"Could not fetch feature overrides for {user_id}: {e}")
 
+        # Fetch plan-level feature flags from DB (dynamic, set by admin)
+        plan_feature_flags: dict = {}
+        try:
+            plan_name = subscription_data.get("plan_name", "free")
+            flags_res = supabase.table("subscription_plans") \
+                .select("feature_flags") \
+                .eq("name", plan_name) \
+                .single() \
+                .execute()
+            if flags_res.data and flags_res.data.get("feature_flags"):
+                plan_feature_flags = flags_res.data["feature_flags"]
+        except Exception as e:
+            logger.warning(f"Could not fetch plan feature_flags for {user_id}: {e}")
+
         # Build response
         response_data = {
             "success": True,
@@ -283,7 +297,8 @@ async def get_current_user_info(
             },
             "subscription": subscription_data,
             "quotas": quotas,
-            "feature_overrides": feature_overrides
+            "feature_overrides": feature_overrides,
+            "plan_feature_flags": plan_feature_flags,
         }
 
         # 🔍 DEBUG: Log final response

@@ -16,6 +16,17 @@ from structlog import get_logger
 from src.api.deps import AdminUserDep, get_supabase_client
 from src.config.settings import get_settings
 
+
+async def _invalidate_user_cache(user_id: str) -> None:
+    """Invalide le cache Redis auth_me:{user_id} après un changement admin."""
+    try:
+        from src.utils.cache import get_redis
+        redis = await get_redis()
+        if redis:
+            await redis.delete(f"auth_me:{user_id}")
+    except Exception:
+        pass
+
 logger = get_logger(__name__)
 router = APIRouter()
 
@@ -465,6 +476,7 @@ async def force_plan_change(
             "new_plan_name": plan.data["name"],
         })
 
+        await _invalidate_user_cache(user_id)
         logger.info(
             f"Admin {admin['email']} force-changed {user_id} to plan {plan.data['name']}"
         )
@@ -549,33 +561,60 @@ async def update_plan_features(
     body: Dict[str, Any],
     admin: AdminUserDep,
 ) -> Dict[str, Any]:
-    """Update feature flags array for a plan."""
+    """
+    Met à jour les feature flags d'un plan.
+    - feature_flags : dict booléen {"has_pdf_export": true, ...} → accès réel (DB → API → frontend)
+    - features       : liste texte marketing ["CV Analysis", ...] → page pricing uniquement
+    """
     supabase = get_supabase_client()
 
+    feature_flags = body.get("feature_flags")
     features = body.get("features")
-    if not isinstance(features, list):
+
+    if feature_flags is None and features is None:
+        raise HTTPException(status_code=400, detail="feature_flags (dict) ou features (list) requis")
+    if feature_flags is not None and not isinstance(feature_flags, dict):
+        raise HTTPException(status_code=400, detail="feature_flags must be a dict")
+    if features is not None and not isinstance(features, list):
         raise HTTPException(status_code=400, detail="features must be a list")
 
     try:
         current = supabase.table("subscription_plans").select(
-            "name"
+            "name, feature_flags"
         ).eq("id", plan_id).single().execute()
 
         if not current.data:
             raise HTTPException(status_code=404, detail="Plan not found")
 
-        result = supabase.table("subscription_plans").update({
-            "features": features,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }).eq("id", plan_id).execute()
+        update_data: Dict[str, Any] = {"updated_at": datetime.now(timezone.utc).isoformat()}
+        if feature_flags is not None:
+            # Merge avec les flags existants (ne pas écraser les flags non fournis)
+            merged_flags = {**(current.data.get("feature_flags") or {}), **feature_flags}
+            update_data["feature_flags"] = merged_flags
+        if features is not None:
+            update_data["features"] = features
+
+        supabase.table("subscription_plans").update(update_data).eq("id", plan_id).execute()
+
+        # Invalider TOUS les caches auth_me (changement de plan = impact global)
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis:
+                keys = [k async for k in redis.scan_iter("auth_me:*")]
+                if keys:
+                    await redis.delete(*keys)
+        except Exception:
+            pass
 
         _log_admin_action(supabase, admin["id"], "admin.plan_features_updated", None, {
             "plan_id": plan_id,
             "plan_name": current.data["name"],
+            "feature_flags": feature_flags,
             "features": features,
         })
 
-        return {"success": True, "features": features}
+        return {"success": True, "feature_flags": update_data.get("feature_flags"), "features": features}
 
     except HTTPException:
         raise
@@ -1105,8 +1144,19 @@ async def get_referral_leaderboard(
 ) -> Dict[str, Any]:
     """Top referrers sorted by total_conversions."""
     supabase = get_supabase_client()
-    result = supabase.table("referrals")         .select("id, referral_code, total_clicks, total_signups, total_conversions, referrer_id, profiles(email, full_name)")         .eq("is_active", True).order("total_conversions", desc=True).limit(limit).execute()
-    return {"leaderboard": result.data or []}
+    result = supabase.table("referrals").select(
+        "id, referral_code, total_clicks, total_signups, total_conversions, referrer_id"
+    ).eq("is_active", True).order("total_conversions", desc=True).limit(limit).execute()
+
+    rows = result.data or []
+    referrer_ids = list({r["referrer_id"] for r in rows if r.get("referrer_id")})
+    profiles_map: Dict[str, Any] = {}
+    if referrer_ids:
+        pr = supabase.table("profiles").select("id, email, full_name").in_("id", referrer_ids).execute()
+        profiles_map = {p["id"]: {"email": p["email"], "full_name": p.get("full_name")} for p in (pr.data or [])}
+
+    leaderboard = [{**r, "profiles": profiles_map.get(r["referrer_id"])} for r in rows]
+    return {"leaderboard": leaderboard}
 
 
 @router.get("/referrals/stats")
@@ -1146,7 +1196,7 @@ async def update_referral_config(body: ReferralConfigUpdate, admin: AdminUserDep
         raise HTTPException(status_code=400, detail="No fields to update")
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     result = supabase.table("referral_config").update(updates).eq("id", 1).execute()
-    _log_admin_action(supabase, admin["id"], "admin.referral_config_updated", {"changes": list(updates.keys())})
+    _log_admin_action(supabase, admin["id"], "admin.referral_config_updated", None, {"changes": list(updates.keys())})
     return result.data[0] if result.data else {}
 
 
@@ -1972,6 +2022,7 @@ async def set_feature_override(
         "updated_by": admin["id"],
     }, on_conflict="user_id,feature_name").execute()
 
+    await _invalidate_user_cache(user_id)
     _log_admin_action(supabase, admin["id"], "admin.feature_override_set", user_id, {
         "feature": req.feature_name,
         "enabled": req.enabled,
@@ -1990,6 +2041,7 @@ async def delete_feature_override(
     supabase.table("user_feature_overrides").delete().eq(
         "user_id", user_id
     ).eq("feature_name", feature_name).execute()
+    await _invalidate_user_cache(user_id)
     _log_admin_action(supabase, admin["id"], "admin.feature_override_removed", user_id, {
         "feature": feature_name,
     })
@@ -2315,6 +2367,19 @@ async def update_user_email(
     return {"ok": True}
 
 
+@router.get("/users/{user_id}/notes")
+async def get_admin_notes(
+    user_id: str,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Retourne les notes internes sur un utilisateur."""
+    supabase = get_supabase_client()
+    res = supabase.table("admin_notes").select(
+        "id, note, admin_id, created_at"
+    ).eq("user_id", user_id).order("created_at", desc=True).execute()
+    return {"notes": res.data or []}
+
+
 @router.post("/users/{user_id}/add-note")
 async def add_admin_note(
     user_id: str,
@@ -2327,7 +2392,7 @@ async def add_admin_note(
     supabase.table("admin_notes").insert({
         "user_id": user_id,
         "admin_id": admin["id"],
-        "content": req.content,
+        "note": req.content,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }).execute()
 
@@ -2378,14 +2443,13 @@ async def grant_free_days(
             }).eq("user_id", user_id).eq("status", "active").execute()
         else:
             # Récupère le plan Pro
-            pro_plan = supabase.table("subscription_plans").select("id").eq("name", "Pro").maybe_single().execute()
+            pro_plan = supabase.table("subscription_plans").select("id").eq("name", "pro").maybe_single().execute()
             supabase.table("user_subscriptions").insert({
                 "user_id": user_id,
                 "plan_id": pro_plan.data["id"] if pro_plan.data else None,
                 "status": "active",
                 "current_period_start": datetime.now(timezone.utc).isoformat(),
                 "current_period_end": new_end.isoformat(),
-                "payment_provider": "admin_grant",
             }).execute()
 
     _log_admin_action(supabase, admin["id"], "admin.days_granted", user_id, {
@@ -2419,6 +2483,7 @@ async def set_custom_limits(
         "custom_limits": limits,
     }).eq("user_id", user_id).eq("status", "active").execute()
 
+    await _invalidate_user_cache(user_id)
     _log_admin_action(supabase, admin["id"], "admin.custom_limits_set", user_id, limits)
     return {"ok": True, "custom_limits": limits}
 
@@ -2571,12 +2636,22 @@ async def broadcast_notification(
         user_ids = [r["id"] for r in (result.data or [])]
 
     elif payload.segment == "paying":
-        result = supabase.table("user_subscriptions").select("user_id").eq("status", "active").neq("plan_id", "free").execute()
-        user_ids = [r["user_id"] for r in (result.data or [])]
+        result = supabase.table("user_subscriptions").select(
+            "user_id, subscription_plans(name)"
+        ).eq("status", "active").execute()
+        user_ids = [
+            r["user_id"] for r in (result.data or [])
+            if (r.get("subscription_plans") or {}).get("name") != "free"
+        ]
 
     elif payload.segment == "free":
-        paying_result = supabase.table("user_subscriptions").select("user_id").eq("status", "active").neq("plan_id", "free").execute()
-        paying_ids = {r["user_id"] for r in (paying_result.data or [])}
+        paying_result = supabase.table("user_subscriptions").select(
+            "user_id, subscription_plans(name)"
+        ).eq("status", "active").execute()
+        paying_ids = {
+            r["user_id"] for r in (paying_result.data or [])
+            if (r.get("subscription_plans") or {}).get("name") != "free"
+        }
         all_result = supabase.table("profiles").select("id").eq("status", "active").execute()
         user_ids = [r["id"] for r in (all_result.data or []) if r["id"] not in paying_ids]
 

@@ -169,10 +169,12 @@ async def cancel_stress_run(
     supabase = get_supabase_client()
     await redis_set_cancel(run_id)
 
+    from datetime import datetime, timezone
+    now_iso = datetime.now(timezone.utc).isoformat()
     supabase.table("stress_test_runs").update({
         "status": "cancelled",
-        "completed_at": "now()",
-        "updated_at": "now()",
+        "completed_at": now_iso,
+        "updated_at": now_iso,
     }).eq("id", run_id).eq("status", "running").execute()
 
     return {"ok": True, "run_id": run_id}

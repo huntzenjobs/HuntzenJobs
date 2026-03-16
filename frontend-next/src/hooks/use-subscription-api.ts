@@ -44,6 +44,7 @@ interface ApiResponse {
   subscription: SubscriptionData;
   quotas: QuotasData;
   feature_overrides: Record<string, boolean>;
+  plan_feature_flags: Record<string, boolean>;
   error?: string;
 }
 
@@ -52,6 +53,7 @@ interface SubscriptionApiData {
   subscription: SubscriptionData | null;
   quotas: QuotasData | null;
   feature_overrides: Record<string, boolean>;
+  plan_feature_flags: Record<string, boolean>;
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -79,6 +81,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
     subscription: null,
     quotas: null,
     feature_overrides: {},
+    plan_feature_flags: {},
     isLoading: true,
     error: null,
     isFromCache: false,
@@ -154,6 +157,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
             subscription: cachedData.subscription,
             quotas: cachedData.quotas,
             feature_overrides: cachedData.feature_overrides ?? {},
+            plan_feature_flags: cachedData.plan_feature_flags ?? {},
             isLoading: false,
             error: null,
             isFromCache: true,
@@ -164,6 +168,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
             subscription: null,
             quotas: null,
             feature_overrides: {},
+            plan_feature_flags: {},
             isLoading: false,
             error: null,
             isFromCache: false,
@@ -254,6 +259,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
                 subscription: retryData.subscription,
                 quotas: retryData.quotas,
                 feature_overrides: retryData.feature_overrides ?? {},
+                plan_feature_flags: retryData.plan_feature_flags ?? {},
                 isLoading: false,
                 error: null,
                 isFromCache: false,
@@ -283,6 +289,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
         subscription: apiData.subscription,
         quotas: apiData.quotas,
         feature_overrides: apiData.feature_overrides ?? {},
+        plan_feature_flags: apiData.plan_feature_flags ?? {},
         isLoading: false,
         error: null,
         isFromCache: false,
@@ -299,6 +306,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
           subscription: cachedData.subscription,
           quotas: cachedData.quotas,
           feature_overrides: cachedData.feature_overrides ?? {},
+          plan_feature_flags: cachedData.plan_feature_flags ?? {},
           isLoading: false,
           error: "Données en cache (mode hors ligne)",
           isFromCache: true,
@@ -309,6 +317,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
           subscription: null,
           quotas: null,
           feature_overrides: {},
+          plan_feature_flags: {},
           isLoading: false,
           error: error instanceof Error ? error.message : "Erreur inconnue",
           isFromCache: false,

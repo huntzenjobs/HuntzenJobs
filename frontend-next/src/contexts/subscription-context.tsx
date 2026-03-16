@@ -348,11 +348,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const overrides = apiData.feature_overrides ?? {};
       if (feature in overrides) return overrides[feature as string];
 
+      // Feature flags dynamiques depuis la DB (via /api/auth/me → plan_feature_flags)
+      const planFlags = apiData.plan_feature_flags ?? {};
+      if (feature in planFlags) return !!planFlags[feature as string];
+
+      // Fallback PLAN_LIMITS si plan_feature_flags absent (API indisponible)
       const currentPlan = apiData.subscription?.plan_name || freemium.plan;
       const limits = PLAN_LIMITS[currentPlan];
       return !!limits[feature];
     },
-    [apiData.subscription?.plan_name, apiData.feature_overrides, freemium.plan],
+    [
+      apiData.subscription?.plan_name,
+      apiData.feature_overrides,
+      apiData.plan_feature_flags,
+      freemium.plan,
+    ],
   );
 
   // Computed assistant message quota values
