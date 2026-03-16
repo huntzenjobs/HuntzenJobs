@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import StripePriceDialog from "./stripe-price-dialog";
 import type { Plan } from "@/hooks/admin/use-admin-plans";
 
@@ -128,206 +127,202 @@ export default function PlanCardEditor({
           <p className="text-xs text-muted-foreground">{plan.description}</p>
         </CardHeader>
 
-        <CardContent className="space-y-5">
-          {/* — Limites numériques — */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Limites quotidiennes</span>
+        <CardContent>
+          <div
+            className={`grid grid-cols-1 gap-6 lg:gap-0 lg:divide-x lg:divide-border ${plan.name !== "free" ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}
+          >
+            {/* — Section 1: Limites numériques — */}
+            <div className="space-y-3 lg:pr-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Limites / jour
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Analyses CV</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.cv_analyses}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        cv_analyses: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.cv_analyses)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Messages assistant</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.assistant_messages}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        assistant_messages: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.assistant_messages)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Recherches emploi</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.job_searches}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        job_searches: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.job_searches)}
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">-1 = illimité</p>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleSaveLimits}
                 disabled={saving === "limits"}
+                className="w-full"
               >
                 <Save className="h-3.5 w-3.5 mr-1.5" />
                 {saving === "limits" ? "Sauvegarde..." : "Sauvegarder"}
               </Button>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Analyses CV/jour</Label>
-                <Input
-                  type="number"
-                  min="-1"
-                  value={limits.cv_analyses}
-                  onChange={(e) =>
-                    setLimits((l) => ({
-                      ...l,
-                      cv_analyses: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  className="h-8 text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {formatLimit(limits.cv_analyses)}
-                </p>
+            {/* — Section 2: Feature flags — */}
+            <div className="space-y-2 lg:px-6">
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Feature Flags
+              </span>
+              <div className="space-y-1.5 mt-2">
+                {FEATURE_FLAGS.map(({ key, label }) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between py-0.5"
+                  >
+                    <Label
+                      className="text-xs font-normal cursor-pointer"
+                      htmlFor={`${plan.id}-${key}`}
+                    >
+                      {label}
+                    </Label>
+                    <Switch
+                      id={`${plan.id}-${key}`}
+                      checked={features.includes(key)}
+                      onCheckedChange={() => toggleFeature(key)}
+                    />
+                  </div>
+                ))}
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Messages assistant/jour</Label>
-                <Input
-                  type="number"
-                  min="-1"
-                  value={limits.assistant_messages}
-                  onChange={(e) =>
-                    setLimits((l) => ({
-                      ...l,
-                      assistant_messages: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  className="h-8 text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {formatLimit(limits.assistant_messages)}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Recherches emploi/jour</Label>
-                <Input
-                  type="number"
-                  min="-1"
-                  value={limits.job_searches}
-                  onChange={(e) =>
-                    setLimits((l) => ({
-                      ...l,
-                      job_searches: parseInt(e.target.value) || 0,
-                    }))
-                  }
-                  className="h-8 text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {formatLimit(limits.job_searches)}
-                </p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Entrer -1 pour illimité
-            </p>
-          </div>
-
-          <Separator />
-
-          {/* — Feature flags — */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Fonctionnalités</span>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleSaveFeatures}
                 disabled={saving === "features"}
+                className="w-full mt-3"
               >
                 <Save className="h-3.5 w-3.5 mr-1.5" />
                 {saving === "features" ? "Sauvegarde..." : "Sauvegarder"}
               </Button>
             </div>
-            <div className="space-y-2">
-              {FEATURE_FLAGS.map(({ key, label }) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between py-0.5"
-                >
-                  <Label
-                    className="text-sm font-normal cursor-pointer"
-                    htmlFor={`${plan.id}-${key}`}
-                  >
-                    {label}
-                  </Label>
-                  <Switch
-                    id={`${plan.id}-${key}`}
-                    checked={features.includes(key)}
-                    onCheckedChange={() => toggleFeature(key)}
-                  />
+
+            {/* — Section 3: Prix affichés — */}
+            <div className="space-y-3 lg:px-6">
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Prix affiché
+              </span>
+              <div className="space-y-2 mt-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Mensuel (€)</Label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-2 text-muted-foreground text-xs">
+                      €
+                    </span>
+                    <Input
+                      className="h-8 text-sm pl-6"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={priceMonthly}
+                      onChange={(e) => setPriceMonthly(e.target.value)}
+                    />
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* — Prix affichés — */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Prix affiché (€)</span>
+                <div className="space-y-1">
+                  <Label className="text-xs">Annuel (€)</Label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-2 text-muted-foreground text-xs">
+                      €
+                    </span>
+                    <Input
+                      className="h-8 text-sm pl-6"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={priceYearly}
+                      onChange={(e) => setPriceYearly(e.target.value)}
+                      placeholder="—"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ne modifie pas Stripe.
+              </p>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleSavePrice}
                 disabled={saving === "price"}
+                className="w-full"
               >
                 <Save className="h-3.5 w-3.5 mr-1.5" />
                 {saving === "price" ? "Sauvegarde..." : "Sauvegarder"}
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Mensuel (€)</Label>
-                <div className="relative">
-                  <span className="absolute left-2.5 top-2 text-muted-foreground text-xs">
-                    €
-                  </span>
-                  <Input
-                    className="h-8 text-sm pl-6"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={priceMonthly}
-                    onChange={(e) => setPriceMonthly(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Annuel (€)</Label>
-                <div className="relative">
-                  <span className="absolute left-2.5 top-2 text-muted-foreground text-xs">
-                    €
-                  </span>
-                  <Input
-                    className="h-8 text-sm pl-6"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={priceYearly}
-                    onChange={(e) => setPriceYearly(e.target.value)}
-                    placeholder="—"
-                  />
-                </div>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Prix affiché uniquement — ne modifie pas Stripe.
-            </p>
-          </div>
 
-          {plan.name !== "free" && (
-            <>
-              <Separator />
-              {/* — Stripe Price IDs — */}
-              <div className="space-y-3">
-                <span className="text-sm font-medium">Stripe Price IDs</span>
-                <div className="space-y-2">
+            {/* — Section 4: Stripe Price IDs (plans payants uniquement) — */}
+            {plan.name !== "free" && (
+              <div className="space-y-3 lg:pl-6">
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Stripe Prices
+                </span>
+                <div className="space-y-2 mt-2">
                   {(["monthly", "yearly"] as const).map((period) => {
                     const sp =
                       period === "monthly"
                         ? activeMonthlyStripePrice
                         : activeYearlyStripePrice;
                     return (
-                      <div
-                        key={period}
-                        className="flex items-center justify-between gap-2"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium capitalize">
-                            {period === "monthly" ? "Mensuel" : "Annuel"}
-                          </p>
-                          <p className="text-xs text-muted-foreground font-mono truncate">
-                            {sp?.stripe_price_id || "Non configuré"}
-                          </p>
-                        </div>
+                      <div key={period} className="space-y-1">
+                        <p className="text-xs font-medium">
+                          {period === "monthly" ? "Mensuel" : "Annuel"}
+                        </p>
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          {sp?.stripe_price_id || "Non configuré"}
+                        </p>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="shrink-0 h-7 text-xs"
+                          className="w-full h-7 text-xs"
                           onClick={() => setStripePriceOpen(period)}
                         >
                           <Zap className="h-3 w-3 mr-1" />
@@ -337,13 +332,13 @@ export default function PlanCardEditor({
                     );
                   })}
                 </div>
-                <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
-                  Changer un prix Stripe crée un nouveau price et archive
-                  l'ancien. Les abonnements existants ne sont pas affectés.
+                <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1.5 rounded leading-relaxed">
+                  Crée un nouveau price et archive l'ancien. Abonnements
+                  existants non affectés.
                 </p>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
 

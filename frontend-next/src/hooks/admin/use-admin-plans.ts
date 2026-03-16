@@ -72,6 +72,7 @@ export function useAdminPlans() {
           body: JSON.stringify(limits),
         });
         toast.success("Limites mises à jour");
+        window.dispatchEvent(new Event("subscription-changed"));
         return true;
       } catch (e: any) {
         toast.error(e.message || "Erreur lors de la mise à jour");
@@ -92,6 +93,7 @@ export function useAdminPlans() {
           body: JSON.stringify({ features }),
         });
         toast.success("Fonctionnalités mises à jour");
+        window.dispatchEvent(new Event("subscription-changed"));
         return true;
       } catch (e: any) {
         toast.error(e.message || "Erreur lors de la mise à jour");
@@ -115,6 +117,7 @@ export function useAdminPlans() {
           body: JSON.stringify(prices),
         });
         toast.success("Prix affiché mis à jour");
+        window.dispatchEvent(new Event("subscription-changed"));
         return true;
       } catch (e: any) {
         toast.error(e.message || "Erreur lors de la mise à jour du prix");
