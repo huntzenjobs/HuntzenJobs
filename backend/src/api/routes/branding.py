@@ -4,8 +4,10 @@ Branding Agent API Routes
 Endpoints for AI personal branding assistant (LinkedIn & X).
 """
 
+from typing import Union
 import uuid
 
+from arq import create_pool
 from fastapi import APIRouter, HTTPException, status, Request
 
 from src.api.deps import (
@@ -21,6 +23,62 @@ from structlog import get_logger
 logger = get_logger(__name__)
 
 router = APIRouter()
+
+_GROQ_ACTIVE_KEY = "groq:active_branding"
+_GROQ_ACTIVE_TTL = 120
+BRANDING_SYNC_THRESHOLD = 8
+_ARQ_QUEUE_KEY = "arq:queue"
+_ARQ_QUEUE_MAX_LENGTH = 1500
+_RETRY_AFTER_SECONDS = 8
+_arq_pool = None
+
+
+async def _get_arq_pool():
+    global _arq_pool
+    if _arq_pool is None:
+        try:
+            from src.workers.settings import _get_redis_settings
+            _arq_pool = await create_pool(_get_redis_settings())
+        except Exception as e:
+            logger.warning(f"[branding] ARQ pool init failed: {e}")
+            _arq_pool = None
+    return _arq_pool
+
+
+async def _incr_active() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return 0
+    count = await redis.incr(_GROQ_ACTIVE_KEY)
+    await redis.expire(_GROQ_ACTIVE_KEY, _GROQ_ACTIVE_TTL)
+    return count
+
+
+async def _decr_active() -> None:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if redis:
+        val = await redis.decr(_GROQ_ACTIVE_KEY)
+        if val < 0:
+            await redis.set(_GROQ_ACTIVE_KEY, 0)
+
+
+async def _get_arq_queue_depth() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return -1
+    depth = await redis.llen(_ARQ_QUEUE_KEY)
+    return int(depth)
+
+
+def _busy_exception(reason: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=reason,
+        headers={"Retry-After": str(_RETRY_AFTER_SECONDS)},
+    )
 
 
 class BrandingRequest(BaseModel):
@@ -39,7 +97,13 @@ class BrandingResponse(BaseModel):
     branding_state: dict | None = None
 
 
-@router.post("/chat", response_model=BrandingResponse)
+class QueuedResponse(BaseModel):
+    queued: bool = True
+    job_id: str
+    estimated_wait_seconds: int
+
+
+@router.post("/chat", response_model=Union[BrandingResponse, QueuedResponse])
 @limiter.limit("30/minute")
 async def branding_chat(
     request: Request,
@@ -56,16 +120,58 @@ async def branding_chat(
     3. Target audience — who they want to reach
     4. Generation — create personalized content
     """
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > BRANDING_SYNC_THRESHOLD:
+        await _decr_active()
+
+        queue_depth = await _get_arq_queue_depth()
+        if queue_depth >= _ARQ_QUEUE_MAX_LENGTH:
+            raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
+
+        pool = await _get_arq_pool()
+        if not pool:
+            logger.warning("[branding/chat] ARQ pool unavailable — rejecting to protect API")
+            raise _busy_exception("File d'attente indisponible. Réessayez dans quelques secondes.")
+
+        try:
+            job = await pool.enqueue_job(
+                "branding_task",
+                message=data.message,
+                session_id=data.session_id,
+                language=data.language,
+                branding_state=data.branding_state,
+            )
+            estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+            logger.info(
+                f"[branding/chat] ARQ queued — active={active} "
+                f"queue_depth={queue_depth} job={job.job_id}"
+            )
+            return {
+                "queued": True,
+                "job_id": job.job_id,
+                "estimated_wait_seconds": estimated_wait,
+            }
+        except Exception as e:
+            logger.warning(f"[branding/chat] ARQ enqueue failed ({e}) — rejecting to protect API")
+            raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
+
     # Get conversation history
     history = get_session_history(data.session_id)
 
     # Run agent with branding state
-    result = await agent.run(
-        message=data.message,
-        history=history,
-        language=data.language,
-        branding_state=data.branding_state,
-    )
+    try:
+        result = await agent.run(
+            message=data.message,
+            history=history,
+            language=data.language,
+            branding_state=data.branding_state,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(

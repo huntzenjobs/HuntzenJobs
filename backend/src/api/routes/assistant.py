@@ -7,7 +7,7 @@ Handles routing to the appropriate agent based on assistant_type parameter.
 
 import logging
 import uuid
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Union
 
 from arq import create_pool
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -200,11 +200,17 @@ class AssistantResponse(BaseModel):
     metadata: dict | None = None
 
 
+class QueuedResponse(BaseModel):
+    queued: bool = True
+    job_id: str
+    estimated_wait_seconds: int
+
+
 # ============================================================================
 # Routes
 # ============================================================================
 
-@router.post("/job-scout", response_model=AssistantResponse)
+@router.post("/job-scout", response_model=Union[AssistantResponse, QueuedResponse])
 async def job_scout_chat(
     request: AssistantRequest,
     agent: ScoutConversationalAgentDep,
@@ -266,7 +272,7 @@ async def job_scout_chat(
     )
 
 
-@router.post("/cv-analyzer", response_model=AssistantResponse)
+@router.post("/cv-analyzer", response_model=Union[AssistantResponse, QueuedResponse])
 async def cv_analyzer_chat(
     request: AssistantRequest,
     agent: CVAgentDep,
@@ -328,7 +334,7 @@ async def cv_analyzer_chat(
     )
 
 
-@router.post("/cv-adapter", response_model=AssistantResponse)
+@router.post("/cv-adapter", response_model=Union[AssistantResponse, QueuedResponse])
 async def cv_adapter_chat(
     request: AssistantRequest,
     agent: CVAdapterAgentDep,
@@ -390,7 +396,7 @@ async def cv_adapter_chat(
     )
 
 
-@router.post("/interview-sim", response_model=AssistantResponse)
+@router.post("/interview-sim", response_model=Union[AssistantResponse, QueuedResponse])
 async def interview_sim_chat(
     request: AssistantRequest,
     agent: InterviewSimAgentDep,

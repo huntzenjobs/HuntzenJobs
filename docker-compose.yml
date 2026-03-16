@@ -4,6 +4,46 @@
 # ============================================
 
 services:
+  # Redis (local queue + cache + rate limit)
+  redis:
+    image: redis:7-alpine
+    container_name: huntzen-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - huntzen-network
+    restart: unless-stopped
+
+  # ARQ worker (async heavy tasks)
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: huntzen-worker
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+      - REDIS_LIMITER_URL=redis://redis:6379
+      - FRONTEND_URL=http://localhost:3000
+      - FASTAPI_URL=http://backend:8000
+    command: python -m arq src.workers.settings.WorkerSettings
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - huntzen-network
+    restart: unless-stopped
+
   # FastAPI Backend
   backend:
     build:
@@ -23,18 +63,24 @@ services:
       - .env
     environment:
       - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+      - REDIS_LIMITER_URL=redis://redis:6379
       # CORS - allow frontend
       - FRONTEND_URL=http://localhost:3000
+      - FASTAPI_URL=http://backend:8000
       # Marker PDF configuration - use home directory for fonts/static
       - MARKER_DATA_DIR=/home/huntzen/.cache/marker
       - HF_HOME=/home/huntzen/.cache/huggingface
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 1 --timeout-keep-alive 300 --timeout-graceful-shutdown 60 --reload
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/ping"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    depends_on:
+      redis:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -57,11 +103,14 @@ services:
         - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
         # API URL for browser (not container network)
         - NEXT_PUBLIC_API_URL=http://localhost:8000
+        - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
     container_name: huntzen-frontend
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
     depends_on:
       backend:
         condition: service_healthy
@@ -89,4 +138,6 @@ networks:
 
 volumes:
   marker-cache:
+    driver: local
+  redis-data:
     driver: local

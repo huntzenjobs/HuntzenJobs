@@ -5,14 +5,14 @@ function getApiBaseUrl(): string {
     process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
   if (!url) {
     throw new Error(
-      "NEXT_PUBLIC_BACKEND_URL or NEXT_PUBLIC_API_URL is not configured",
+      'NEXT_PUBLIC_BACKEND_URL or NEXT_PUBLIC_API_URL is not configured',
     );
   }
   return url;
 }
 
 export interface QueueWaitingState {
-  status: "queued" | "processing";
+  status: 'queued' | 'processing';
   estimatedWaitSeconds: number;
   elapsedSeconds: number;
 }
@@ -30,7 +30,7 @@ export interface ContractType {
 
 export interface LocationResult {
   name: string;
-  type: "city" | "region" | "department";
+  type: 'city' | 'region' | 'department';
   code?: string; // department number (e.g., "75" for Paris)
 }
 
@@ -124,7 +124,7 @@ class HuntzenApiClient {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         ...options?.headers,
       },
     });
@@ -139,7 +139,7 @@ class HuntzenApiClient {
   // Countries & Cities
   async getCountries(): Promise<Country[]> {
     const response = await this.fetch<{ success: boolean; data: Country[] }>(
-      "/api/countries",
+      '/api/countries',
     );
     return response.data || [];
   }
@@ -176,7 +176,7 @@ class HuntzenApiClient {
     const response = await this.fetch<{
       success: boolean;
       data: ContractType[];
-    }>("/api/contract-types");
+    }>('/api/contract-types');
     return response.data || [];
   }
 
@@ -198,27 +198,27 @@ class HuntzenApiClient {
   }): Promise<{ jobs: Job[]; count: number; corrected_query?: string }> {
     // Build query parameters
     const queryParams = new URLSearchParams();
-    queryParams.append("q", params.job_title);
-    queryParams.append("country", params.country_code);
-    if (params.city) queryParams.append("city", params.city);
+    queryParams.append('q', params.job_title);
+    queryParams.append('country', params.country_code);
+    if (params.city) queryParams.append('city', params.city);
     if (params.contract_type)
-      queryParams.append("contract", params.contract_type);
+      queryParams.append('contract', params.contract_type);
     if (params.radiusKm !== undefined)
-      queryParams.append("radius", params.radiusKm.toString());
+      queryParams.append('radius', params.radiusKm.toString());
     if (params.includeRemote !== undefined)
-      queryParams.append("include_remote", params.includeRemote.toString());
+      queryParams.append('include_remote', params.includeRemote.toString());
 
     // Add advanced filters if provided
-    if (params.industries) queryParams.append("industries", params.industries);
-    if (params.keywords) queryParams.append("keywords", params.keywords);
+    if (params.industries) queryParams.append('industries', params.industries);
+    if (params.keywords) queryParams.append('keywords', params.keywords);
     if (params.experienceLevel)
-      queryParams.append("experience_level", params.experienceLevel);
+      queryParams.append('experience_level', params.experienceLevel);
     if (params.salaryMin !== undefined)
-      queryParams.append("salary_min", params.salaryMin.toString());
+      queryParams.append('salary_min', params.salaryMin.toString());
     if (params.salaryMax !== undefined)
-      queryParams.append("salary_max", params.salaryMax.toString());
+      queryParams.append('salary_max', params.salaryMax.toString());
     if (params.companySize)
-      queryParams.append("company_size", params.companySize);
+      queryParams.append('company_size', params.companySize);
 
     const response = await this.fetch<{
       success: boolean;
@@ -243,8 +243,8 @@ class HuntzenApiClient {
     job: Job,
     token: string,
   ): Promise<{ success: boolean; job_id: string }> {
-    return this.fetch<{ success: boolean; job_id: string }>("/api/saved-jobs", {
-      method: "POST",
+    return this.fetch<{ success: boolean; job_id: string }>('/api/saved-jobs', {
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -263,7 +263,7 @@ class HuntzenApiClient {
 
   async getSavedJobs(token: string): Promise<SavedJob[]> {
     const response = await this.fetch<{ success: boolean; jobs: SavedJob[] }>(
-      "/api/saved-jobs",
+      '/api/saved-jobs',
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -278,7 +278,7 @@ class HuntzenApiClient {
     token: string,
   ): Promise<{ success: boolean }> {
     return this.fetch<{ success: boolean }>(`/api/saved-jobs/${jobId}`, {
-      method: "DELETE",
+      method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -293,11 +293,11 @@ class HuntzenApiClient {
     const response = await this.fetch<{
       success: boolean;
       recruiters: Recruiter[];
-    }>("/api/search/recruiter", {
-      method: "POST",
+    }>('/api/search/recruiter', {
+      method: 'POST',
       body: JSON.stringify({
         company_name: companyName,
-        location: location || "",
+        location: location || '',
       }),
     });
     return response.recruiters || [];
@@ -311,18 +311,116 @@ class HuntzenApiClient {
     const response = await this.fetch<{
       success: boolean;
       recruiters: Recruiter[];
-    }>("/api/search/recruiters-by-domain", {
-      method: "POST",
+    }>('/api/search/recruiters-by-domain', {
+      method: 'POST',
       body: JSON.stringify({
         domain,
-        country: country || "France",
-        city: city || "",
+        country: country || 'France',
+        city: city || '',
       }),
     });
     return response.recruiters || [];
   }
 
   // ── ARQ job polling ───────────────────────────────────────────────────────
+  // SSE first, polling fallback.
+  private async _waitForJobSSE(
+    jobId: string,
+    initialEstimatedWait: number = 30,
+    maxWaitMs = 120_000,
+    onQueueUpdate?: (state: QueueWaitingState) => void,
+  ): Promise<any> {
+    if (typeof window === 'undefined' || typeof EventSource === 'undefined') {
+      throw new Error('SSE unavailable');
+    }
+
+    return new Promise((resolve, reject) => {
+      const streamUrl = `${this.baseUrl}/api/queue/stream/${encodeURIComponent(jobId)}`;
+      const source = new EventSource(streamUrl);
+      const startedAt = Date.now();
+      let settled = false;
+
+      const timeoutId = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        source.close();
+        reject(
+          new Error('Timeout SSE: la réponse a pris trop de temps (> 2 min)'),
+        );
+      }, maxWaitMs);
+
+      const finish = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        source.close();
+        fn();
+      };
+
+      const parseData = (event: MessageEvent): any => {
+        try {
+          return JSON.parse(event.data || '{}');
+        } catch {
+          return {};
+        }
+      };
+
+      const handleUpdate = (event: MessageEvent) => {
+        const payload = parseData(event);
+        const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+        const status =
+          payload.status === 'processing' ? 'processing' : 'queued';
+        onQueueUpdate?.({
+          status,
+          estimatedWaitSeconds: initialEstimatedWait,
+          elapsedSeconds,
+        });
+      };
+
+      source.addEventListener('update', (event) => {
+        handleUpdate(event as MessageEvent);
+      });
+
+      source.addEventListener('completed', (event) => {
+        const payload = parseData(event as MessageEvent);
+        finish(() => resolve(payload.result));
+      });
+
+      source.addEventListener('failed', (event) => {
+        const payload = parseData(event as MessageEvent);
+        finish(() =>
+          reject(
+            new Error(
+              payload.error || "La requête a échoué dans la file d'attente",
+            ),
+          ),
+        );
+      });
+
+      source.addEventListener('not_found', () => {
+        finish(() =>
+          reject(
+            new Error(
+              'Ce traitement a expiré. Merci de renvoyer votre message.',
+            ),
+          ),
+        );
+      });
+
+      source.addEventListener('timeout', () => {
+        finish(() =>
+          reject(
+            new Error('Timeout : la réponse a pris trop de temps (> 2 min)'),
+          ),
+        );
+      });
+
+      source.onerror = () => {
+        finish(() => reject(new Error('SSE disconnected')));
+      };
+    });
+  }
+
   // Poll immédiat puis toutes les 3s. Timeout max 2 min.
   private async _waitForJob(
     jobId: string,
@@ -331,14 +429,14 @@ class HuntzenApiClient {
     maxWaitMs = 120_000,
     pollIntervalMs = 3_000,
     onQueueUpdate?: (state: QueueWaitingState) => void,
-  ): Promise<{ success: boolean; response: string; agent: string }> {
+  ): Promise<any> {
     const deadline = Date.now() + maxWaitMs;
     const startTime = Date.now();
 
     while (Date.now() < deadline) {
       let status: {
-        status: "queued" | "processing" | "completed" | "failed";
-        result?: { success: boolean; response: string; agent: string };
+        status: 'queued' | 'processing' | 'completed' | 'failed';
+        result?: any;
         error?: string;
       };
 
@@ -348,9 +446,9 @@ class HuntzenApiClient {
         });
       } catch (e: any) {
         // Job expiré (TTL 1h dépassé) → erreur claire
-        if (e.message?.includes("404")) {
+        if (e.message?.includes('404')) {
           throw new Error(
-            "Ce traitement a expiré. Merci de renvoyer votre message.",
+            'Ce traitement a expiré. Merci de renvoyer votre message.',
           );
         }
         // Erreur réseau / 5xx transitoire → on continue de poller
@@ -360,15 +458,15 @@ class HuntzenApiClient {
 
       const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
       onQueueUpdate?.({
-        status: status.status === "processing" ? "processing" : "queued",
+        status: status.status === 'processing' ? 'processing' : 'queued',
         estimatedWaitSeconds: initialEstimatedWait,
         elapsedSeconds,
       });
 
-      if (status.status === "completed" && status.result) {
+      if (status.status === 'completed' && status.result) {
         return status.result;
       }
-      if (status.status === "failed") {
+      if (status.status === 'failed') {
         throw new Error(
           status.error || "La requête a échoué dans la file d'attente",
         );
@@ -377,7 +475,7 @@ class HuntzenApiClient {
       await new Promise((r) => setTimeout(r, pollIntervalMs));
     }
 
-    throw new Error("Timeout : la réponse a pris trop de temps (> 2 min)");
+    throw new Error('Timeout : la réponse a pris trop de temps (> 2 min)');
   }
 
   // Assistant Chat - Unified endpoint for all assistants
@@ -385,31 +483,31 @@ class HuntzenApiClient {
     message: string,
     sessionId: string,
     assistantType:
-      | "career-coach"
-      | "job-scout"
-      | "cv-analyzer"
-      | "cv-adapter"
-      | "interview-sim",
-    language: string = "fr",
+      | 'career-coach'
+      | 'job-scout'
+      | 'cv-analyzer'
+      | 'cv-adapter'
+      | 'interview-sim',
+    language: string = 'fr',
     token?: string,
     onQueueUpdate?: (state: QueueWaitingState) => void,
   ): Promise<{ success: boolean; response: string; agent: string }> {
     // Route to appropriate endpoint based on assistant type
     const endpointMap = {
-      "career-coach": "/api/coach/chat",
-      "job-scout": "/api/assistant/job-scout",
-      "cv-analyzer": "/api/assistant/cv-analyzer",
-      "cv-adapter": "/api/assistant/cv-adapter",
-      "interview-sim": "/api/assistant/interview-sim",
+      'career-coach': '/api/coach/chat',
+      'job-scout': '/api/assistant/job-scout',
+      'cv-analyzer': '/api/assistant/cv-analyzer',
+      'cv-adapter': '/api/assistant/cv-adapter',
+      'interview-sim': '/api/assistant/interview-sim',
     };
 
-    const endpoint = endpointMap[assistantType] || "/api/coach/chat";
+    const endpoint = endpointMap[assistantType] || '/api/coach/chat';
 
     const raw = await this.fetch<
       | { success: boolean; response: string; agent: string }
       | { queued: true; job_id: string; estimated_wait_seconds: number }
     >(endpoint, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({
         message,
         session_id: sessionId,
@@ -420,23 +518,32 @@ class HuntzenApiClient {
     });
 
     // Réponse immédiate (sync path)
-    if (!("queued" in raw)) return raw;
+    if (!('queued' in raw)) return raw;
 
-    // Réponse différée (ARQ path) — poll jusqu'au résultat
-    return this._waitForJob(
-      raw.job_id,
-      raw.estimated_wait_seconds ?? 30,
-      token,
-      120_000,
-      3_000,
-      onQueueUpdate,
-    );
+    // Réponse différée (ARQ path) — SSE d'abord, polling fallback
+    try {
+      return await this._waitForJobSSE(
+        raw.job_id,
+        raw.estimated_wait_seconds ?? 30,
+        120_000,
+        onQueueUpdate,
+      );
+    } catch {
+      return this._waitForJob(
+        raw.job_id,
+        raw.estimated_wait_seconds ?? 30,
+        token,
+        120_000,
+        3_000,
+        onQueueUpdate,
+      );
+    }
   }
 
   async sendBrandingMessage(
     message: string,
     sessionId: string,
-    language: string = "fr",
+    language: string = 'fr',
     brandingState?: Record<string, unknown> | null,
     token?: string,
   ): Promise<{
@@ -445,8 +552,16 @@ class HuntzenApiClient {
     language: string;
     branding_state: Record<string, unknown> | null;
   }> {
-    return this.fetch("/api/branding/chat", {
-      method: "POST",
+    const raw = await this.fetch<
+      | {
+          success: boolean;
+          response: string;
+          language: string;
+          branding_state: Record<string, unknown> | null;
+        }
+      | { queued: true; job_id: string; estimated_wait_seconds: number }
+    >('/api/branding/chat', {
+      method: 'POST',
       body: JSON.stringify({
         message,
         session_id: sessionId,
@@ -455,6 +570,26 @@ class HuntzenApiClient {
       }),
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
+
+    if (!('queued' in raw)) {
+      return raw;
+    }
+
+    try {
+      return await this._waitForJobSSE(
+        raw.job_id,
+        raw.estimated_wait_seconds ?? 30,
+        120_000,
+      );
+    } catch {
+      return this._waitForJob(
+        raw.job_id,
+        raw.estimated_wait_seconds ?? 30,
+        token,
+        120_000,
+        3_000,
+      );
+    }
   }
 
   // Legacy method - kept for backwards compatibility
@@ -462,16 +597,16 @@ class HuntzenApiClient {
     message: string,
     sessionId: string,
   ): Promise<{ success: boolean; response: string; agent: string }> {
-    return this.sendAssistantMessage(message, sessionId, "career-coach");
+    return this.sendAssistantMessage(message, sessionId, 'career-coach');
   }
 
   // Specific assistant methods for better type safety
   async sendCareerCoachMessage(message: string, sessionId: string) {
-    return this.sendAssistantMessage(message, sessionId, "career-coach");
+    return this.sendAssistantMessage(message, sessionId, 'career-coach');
   }
 
   async sendJobScoutMessage(message: string, sessionId: string) {
-    return this.sendAssistantMessage(message, sessionId, "job-scout");
+    return this.sendAssistantMessage(message, sessionId, 'job-scout');
   }
 
   async sendCVAnalyzerMessage(
@@ -480,13 +615,13 @@ class HuntzenApiClient {
     cvData?: any,
   ) {
     return this.fetch<{ success: boolean; response: string; agent: string }>(
-      "/api/assistant/cv-analyzer",
+      '/api/assistant/cv-analyzer',
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({
           message,
           session_id: sessionId,
-          assistant_type: "cv-analyzer",
+          assistant_type: 'cv-analyzer',
           cv_data: cvData,
         }),
       },
@@ -500,13 +635,13 @@ class HuntzenApiClient {
     jobDescription?: string,
   ) {
     return this.fetch<{ success: boolean; response: string; agent: string }>(
-      "/api/assistant/cv-adapter",
+      '/api/assistant/cv-adapter',
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({
           message,
           session_id: sessionId,
-          assistant_type: "cv-adapter",
+          assistant_type: 'cv-adapter',
           cv_data: cvData,
           job_description: jobDescription,
         }),
@@ -520,13 +655,13 @@ class HuntzenApiClient {
     jobInfo?: any,
   ) {
     return this.fetch<{ success: boolean; response: string; agent: string }>(
-      "/api/assistant/interview-sim",
+      '/api/assistant/interview-sim',
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({
           message,
           session_id: sessionId,
-          assistant_type: "interview-sim",
+          assistant_type: 'interview-sim',
           job_info: jobInfo,
         }),
       },
@@ -538,7 +673,7 @@ class HuntzenApiClient {
     file: File,
     assistantType: string,
     sessionId: string,
-    language: string = "fr",
+    language: string = 'fr',
     token?: string,
   ): Promise<{
     success: boolean;
@@ -557,13 +692,13 @@ class HuntzenApiClient {
     initial_response: string;
   }> {
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("assistant_type", assistantType);
-    formData.append("session_id", sessionId);
-    formData.append("language", language);
+    formData.append('file', file);
+    formData.append('assistant_type', assistantType);
+    formData.append('session_id', sessionId);
+    formData.append('language', language);
 
     const response = await fetch(`${this.baseUrl}/api/assistant/attach-cv`, {
-      method: "POST",
+      method: 'POST',
       body: formData,
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
@@ -587,12 +722,12 @@ class HuntzenApiClient {
       success: boolean;
       description: string;
       final_url?: string;
-    }>("/api/jobs/description", {
-      method: "POST",
-      body: JSON.stringify({ url, source: source || "" }),
+    }>('/api/jobs/description', {
+      method: 'POST',
+      body: JSON.stringify({ url, source: source || '' }),
     });
     return {
-      description: response.description || "",
+      description: response.description || '',
       final_url: response.final_url || null,
     };
   }
@@ -606,31 +741,31 @@ class HuntzenApiClient {
     format_type?: string;
   }): Promise<JobFairSearchResult> {
     const queryParams = new URLSearchParams();
-    if (params.region) queryParams.append("region", params.region);
-    if (params.sector) queryParams.append("sector", params.sector);
-    if (params.public) queryParams.append("public", params.public);
-    if (params.event_type) queryParams.append("event_type", params.event_type);
+    if (params.region) queryParams.append('region', params.region);
+    if (params.sector) queryParams.append('sector', params.sector);
+    if (params.public) queryParams.append('public', params.public);
+    if (params.event_type) queryParams.append('event_type', params.event_type);
     if (params.format_type)
-      queryParams.append("format_type", params.format_type);
+      queryParams.append('format_type', params.format_type);
 
     const query = queryParams.toString();
     const url = query
       ? `/api/job-fairs/search?${query}`
-      : "/api/job-fairs/search";
+      : '/api/job-fairs/search';
 
     return this.fetch<JobFairSearchResult>(url);
   }
 
   async getJobFairRegions(): Promise<string[]> {
     const response = await this.fetch<{ success: boolean; regions: string[] }>(
-      "/api/job-fairs/regions",
+      '/api/job-fairs/regions',
     );
     return response.regions || [];
   }
 
   async getJobFairSectors(): Promise<string[]> {
     const response = await this.fetch<{ success: boolean; sectors: string[] }>(
-      "/api/job-fairs/sectors",
+      '/api/job-fairs/sectors',
     );
     return response.sectors || [];
   }
@@ -639,7 +774,7 @@ class HuntzenApiClient {
     const response = await this.fetch<{
       success: boolean;
       event_types: string[];
-    }>("/api/job-fairs/event-types");
+    }>('/api/job-fairs/event-types');
     return response.event_types || [];
   }
 
@@ -654,9 +789,9 @@ class HuntzenApiClient {
     preferredDate?: string;
   }): Promise<{ request_id: string; status: string; message: string }> {
     return this.fetch<{ request_id: string; status: string; message: string }>(
-      "/api/recruiter/request",
+      '/api/recruiter/request',
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({
           full_name: data.fullName,
           email: data.email,
@@ -674,9 +809,9 @@ class HuntzenApiClient {
     requestId: string,
   ): Promise<{ checkout_url: string; session_id: string }> {
     return this.fetch<{ checkout_url: string; session_id: string }>(
-      "/api/recruiter/create-payment",
+      '/api/recruiter/create-payment',
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({ request_id: requestId }),
       },
     );

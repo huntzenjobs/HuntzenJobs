@@ -19,6 +19,38 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+_GROQ_ACTIVE_KEY = "groq:active_jobs"
+_GROQ_ACTIVE_TTL = 120
+JOBS_SYNC_THRESHOLD = 10
+_RETRY_AFTER_SECONDS = 10
+
+
+async def _incr_active() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return 0
+    count = await redis.incr(_GROQ_ACTIVE_KEY)
+    await redis.expire(_GROQ_ACTIVE_KEY, _GROQ_ACTIVE_TTL)
+    return count
+
+
+async def _decr_active() -> None:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if redis:
+        val = await redis.decr(_GROQ_ACTIVE_KEY)
+        if val < 0:
+            await redis.set(_GROQ_ACTIVE_KEY, 0)
+
+
+def _busy_exception() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Service temporairement surchargé. Réessayez dans quelques secondes.",
+        headers={"Retry-After": str(_RETRY_AFTER_SECONDS)},
+    )
+
 
 def apply_advanced_filters(
     jobs: List[dict],
@@ -146,17 +178,29 @@ async def search_jobs(
     - Deduplicate and rank results
     - Provide market insights
     """
-    result = await agent.run(
-        job_title=data.job_title,
-        country_code=data.country_code,
-        city=data.city,
-        contract_type=data.contract_type,
-        max_results=data.max_results,
-        max_days=data.max_days,
-        radius_km=data.radius_km,
-        include_remote=data.include_remote,
-        include_insights=True,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > JOBS_SYNC_THRESHOLD:
+        await _decr_active()
+        raise _busy_exception()
+
+    try:
+        result = await agent.run(
+            job_title=data.job_title,
+            country_code=data.country_code,
+            city=data.city,
+            contract_type=data.contract_type,
+            max_results=data.max_results,
+            max_days=data.max_days,
+            radius_km=data.radius_km,
+            include_remote=data.include_remote,
+            include_insights=True,
+        )
+    finally:
+        await _decr_active()
     
     if not result.get("success"):
         raise HTTPException(
@@ -220,15 +264,27 @@ async def search_jobs_get(
     """
     Search for jobs (GET endpoint for simple queries).
     """
-    result = await agent.run(
-        job_title=q,
-        country_code=country,
-        city=city,
-        contract_type=contract,
-        max_results=limit,
-        radius_km=radius,
-        include_remote=include_remote,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > JOBS_SYNC_THRESHOLD:
+        await _decr_active()
+        raise _busy_exception()
+
+    try:
+        result = await agent.run(
+            job_title=q,
+            country_code=country,
+            city=city,
+            contract_type=contract,
+            max_results=limit,
+            radius_km=radius,
+            include_remote=include_remote,
+        )
+    finally:
+        await _decr_active()
 
     # Apply advanced filters if any are provided (Premium feature)
     if any([industries, keywords, experience_level, salary_min, salary_max, company_size]):

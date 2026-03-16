@@ -14,6 +14,7 @@ from src.workers.tasks import (
     assistant_task,
     cv_adapt_task,
     cover_letter_task,
+    branding_task,
     startup,
     shutdown,
 )
@@ -32,7 +33,7 @@ def _get_redis_settings() -> RedisSettings:
 
 
 class WorkerSettings:
-    functions = [coach_task, assistant_task, cv_adapt_task, cover_letter_task]
+    functions = [coach_task, assistant_task, cv_adapt_task, cover_letter_task, branding_task]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = _get_redis_settings()

@@ -5,13 +5,34 @@ Endpoint universel de polling pour tous les jobs async.
 Supporte les jobs ARQ (remplace la queue custom Redis).
 """
 
+import asyncio
+import json
+import time
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Header
+from fastapi.responses import StreamingResponse
 from src.utils.cache import get_redis
 
 
 router = APIRouter()
+
+
+async def _get_arq_job_state(pool, job_id: str) -> dict:
+    from arq.jobs import Job
+
+    job = Job(job_id, pool)
+    info = await job.info()
+
+    if info is None:
+        return {"status": "not_found", "error": "Job not found or expired"}
+    if info.success is True:
+        return {"status": "completed", "result": info.result}
+    if info.success is False:
+        return {"status": "failed", "error": str(info.result)}
+    if info.start_time is not None:
+        return {"status": "processing"}
+    return {"status": "queued"}
 
 
 @router.get("/status/{job_id}")
@@ -29,29 +50,91 @@ async def get_status(
     - `failed`     → {status, error}
     """
     try:
-        from arq.jobs import Job
         from arq import create_pool
         from src.workers.settings import _get_redis_settings
 
         pool = await create_pool(_get_redis_settings())
-        job = Job(job_id, pool)
-        info = await job.info()
-
-        if info is None:
+        state = await _get_arq_job_state(pool, job_id)
+        if state["status"] == "not_found":
             raise HTTPException(status_code=404, detail="Job not found or expired")
-
-        if info.success is True:
-            return {"status": "completed", "result": info.result}
-        elif info.success is False:
-            return {"status": "failed", "error": str(info.result)}
-        elif info.start_time is not None:
-            return {"status": "processing"}
-        else:
-            return {"status": "queued"}
+        return state
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Queue error: {e}")
+    finally:
+        try:
+            await pool.close()
+        except Exception:
+            pass
+
+
+@router.get("/stream/{job_id}")
+async def stream_status(
+    job_id: str,
+    authorization: Optional[str] = Header(None),
+):
+    """
+    SSE stream for ARQ job status updates.
+
+    Events:
+    - `update` (queued/processing)
+    - `completed`
+    - `failed`
+    - `not_found`
+    - `timeout`
+    - `close`
+    """
+    del authorization
+
+    try:
+        from arq import create_pool
+        from src.workers.settings import _get_redis_settings
+
+        pool = await create_pool(_get_redis_settings())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Queue stream init error: {e}")
+
+    async def event_stream():
+        deadline = time.monotonic() + 125
+        last_status = None
+
+        try:
+            while time.monotonic() < deadline:
+                state = await _get_arq_job_state(pool, job_id)
+                status = state.get("status", "queued")
+
+                if status != last_status or status in ("completed", "failed", "not_found"):
+                    event_name = "update" if status in ("queued", "processing") else status
+                    payload = json.dumps(state, ensure_ascii=False)
+                    yield f"event: {event_name}\ndata: {payload}\n\n"
+                    last_status = status
+
+                if status in ("completed", "failed", "not_found"):
+                    break
+
+                await asyncio.sleep(2)
+            else:
+                yield "event: timeout\ndata: {\"status\":\"timeout\"}\n\n"
+        except Exception as e:
+            payload = json.dumps({"status": "error", "error": str(e)}, ensure_ascii=False)
+            yield f"event: failed\ndata: {payload}\n\n"
+        finally:
+            try:
+                await pool.close()
+            except Exception:
+                pass
+            yield "event: close\ndata: {}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/all-stats")

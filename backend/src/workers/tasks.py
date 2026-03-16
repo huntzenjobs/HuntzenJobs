@@ -136,6 +136,35 @@ async def cover_letter_task(
     return result
 
 
+# ─── Branding ────────────────────────────────────────────────────────────────
+
+async def branding_task(
+    ctx: dict,
+    message: str,
+    session_id: str,
+    language: str = "fr",
+    branding_state: dict | None = None,
+) -> dict:
+    """Traite un message branding via Groq (BrandingAgent)."""
+    from src.api.deps import get_branding_agent, get_session_history, update_session_history
+
+    agent = get_branding_agent()
+    history = get_session_history(session_id)
+
+    async with _groq_semaphore:
+        result = await agent.run(
+            message=message,
+            history=history,
+            language=language,
+            branding_state=branding_state,
+        )
+
+    if result.get("success"):
+        update_session_history(session_id, message, result["response"])
+
+    return result
+
+
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 async def startup(ctx: dict) -> None:
