@@ -36,6 +36,7 @@ from src.api.routes.cron import router as cron_router
 from src.api.routes.support import router as support_router
 from src.api.routes.queue import router as queue_router
 from src.api.routes.presence import presence_router, tracking_router, banner_router
+from src.api.routes.stress import router as stress_router
 
 router = APIRouter()
 
@@ -72,3 +73,4 @@ router.include_router(queue_router, prefix="/api/queue", tags=["Queue"])
 router.include_router(presence_router, prefix="/api/presence", tags=["Presence"])
 router.include_router(tracking_router, prefix="/api/track", tags=["Tracking"])
 router.include_router(banner_router, tags=["Banner & Maintenance"])
+router.include_router(stress_router, prefix="/api/admin/stress", tags=["Stress Testing"])

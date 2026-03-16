@@ -233,3 +233,36 @@ async def invalidate_cache(prefix: str = "", pattern: str = "*") -> int:
     except Exception as e:
         logger.error(f"❌ Cache invalidation error: {e}")
         return 0
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STRESS TEST HELPERS — Pub/Sub + Cancel signal
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def redis_publish(channel: str, message: dict) -> None:
+    """Publie un message JSON sur un channel Redis (pub/sub)."""
+    redis = await get_redis()
+    if redis:
+        try:
+            await redis.publish(channel, json.dumps(message))
+        except Exception as e:
+            logger.warning(f"⚠️ Redis publish error: {e}")
+
+
+async def redis_set_cancel(run_id: str, ttl_sec: int = 300) -> None:
+    """Pose le signal d'annulation pour un run de stress test."""
+    redis = await get_redis()
+    if redis:
+        await redis.set(f"cancel:{run_id}", "1", ex=ttl_sec)
+
+
+async def redis_check_cancel(run_id: str) -> bool:
+    """Vérifie si un signal d'annulation est présent."""
+    redis = await get_redis()
+    if not redis:
+        return False
+    try:
+        val = await redis.get(f"cancel:{run_id}")
+        return val is not None
+    except Exception:
+        return False
