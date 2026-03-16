@@ -116,11 +116,9 @@ async def list_users(
     supabase = get_supabase_client()
 
     try:
-        # Build query: join profiles with user_subscriptions and subscription_plans
+        # Profiles query (sans join — user_subscriptions.user_id → auth.users, pas profiles)
         query = supabase.table("profiles").select(
-            "id, email, full_name, status, is_admin, created_at, suspended_at, suspended_reason,"
-            "user_subscriptions!left(id, status, current_period_end, "
-            "subscription_plans!inner(name, display_name, price_monthly))"
+            "id, email, full_name, status, is_admin, created_at, suspended_at, suspended_reason"
         ).order("created_at", desc=True)
 
         if search:
@@ -131,27 +129,46 @@ async def list_users(
         offset = (page - 1) * per_page
         result = query.range(offset, offset + per_page - 1).execute()
 
-        # Count total
-        count_result = supabase.table("profiles").select("id", count="exact").execute()
+        # Count total (avec les mêmes filtres)
+        count_query = supabase.table("profiles").select("id", count="exact")
+        if search:
+            count_query = count_query.ilike("email", f"%{search}%")
+        if user_status:
+            count_query = count_query.eq("status", user_status)
+        count_result = count_query.execute()
         total = count_result.count or 0
 
-        # Get today's usage for each user
-        today = datetime.now(timezone.utc).date().isoformat()
         user_ids = [u["id"] for u in result.data]
-        usage_result = supabase.table("usage_quotas").select(
-            "user_id, cv_analyses_used, coach_seconds_used, job_searches_used"
-        ).eq("quota_date", today).in_("user_id", user_ids).execute()
 
-        usage_map = {u["user_id"]: u for u in (usage_result.data or [])}
+        # Subscriptions séparées (FK user_subscriptions.plan_id → subscription_plans fonctionne)
+        subs_map: Dict[str, Any] = {}
+        if user_ids:
+            subs_result = supabase.table("user_subscriptions").select(
+                "id, user_id, status, current_period_end, "
+                "subscription_plans(name, display_name, price_monthly)"
+            ).in_("user_id", user_ids).execute()
+            for s in (subs_result.data or []):
+                uid = s["user_id"]
+                if s.get("status") == "active" and uid not in subs_map:
+                    subs_map[uid] = s
 
-        # Merge usage into users
+        # Usage du jour
+        today = datetime.now(timezone.utc).date().isoformat()
+        usage_map: Dict[str, Any] = {}
+        if user_ids:
+            usage_result = supabase.table("usage_quotas").select(
+                "user_id, cv_analyses_used, coach_seconds_used, job_searches_used"
+            ).eq("quota_date", today).in_("user_id", user_ids).execute()
+            usage_map = {u["user_id"]: u for u in (usage_result.data or [])}
+
+        # Merge
         users = []
         for user in result.data:
-            active_sub = next(
-                (s for s in (user.get("user_subscriptions") or []) if s.get("status") == "active"),
-                None
+            active_sub = subs_map.get(user["id"])
+            plan_filter_name = (
+                (active_sub.get("subscription_plans") or {}).get("name", "free")
+                if active_sub else "free"
             )
-            plan_filter_name = (active_sub or {}).get("subscription_plans", {}).get("name", "free")
             if plan and plan_filter_name != plan:
                 continue
 
@@ -750,12 +767,22 @@ async def get_churn_analytics(
     """Users who cancelled in the last N days."""
     supabase = get_supabase_client()
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    # subscription_plans!left fonctionne (FK plan_id → subscription_plans)
+    # profiles!left retiré : subscription_history.user_id → auth.users, pas profiles
     result = supabase.table("subscription_history").select(
         "id, user_id, created_at, old_values, notes, "
-        "profiles!left(email, full_name), "
         "subscription_plans!left(name, display_name)"
     ).eq("action_type", "cancelled").gte("created_at", since).order("created_at", desc=True).limit(100).execute()
-    return {"churned": result.data or [], "total": len(result.data or []), "period_days": days}
+
+    rows = result.data or []
+    churn_user_ids = list({r["user_id"] for r in rows if r.get("user_id")})
+    profiles_map: Dict[str, Any] = {}
+    if churn_user_ids:
+        pr = supabase.table("profiles").select("id, email, full_name").in_("id", churn_user_ids).execute()
+        profiles_map = {p["id"]: {"email": p["email"], "full_name": p.get("full_name")} for p in (pr.data or [])}
+
+    churned = [{**r, "profiles": profiles_map.get(r["user_id"])} for r in rows]
+    return {"churned": churned, "total": len(churned), "period_days": days}
 
 
 @router.get("/analytics/usage")
@@ -769,7 +796,7 @@ async def get_usage_analytics(
     since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
     result = supabase.table("usage_quotas").select(
         "cv_analyses_used, coach_seconds_used, job_searches_used, user_id"
-    ).gte("date", since).execute()
+    ).gte("quota_date", since).execute()
     rows = result.data or []
     totals = {
         "cv_analyses": sum(r.get("cv_analyses_used") or 0 for r in rows),
@@ -928,8 +955,7 @@ async def get_security_logs(
 
     try:
         query = supabase.table("security_events").select(
-            "id, event_type, severity, user_id, ip_address, created_at, event_data, "
-            "profiles!left(email, full_name)"
+            "id, event_type, severity, user_id, ip_address, created_at, event_data"
         ).order("created_at", desc=True)
 
         if user_id:
@@ -951,8 +977,26 @@ async def get_security_logs(
             count_q = count_q.eq("user_id", user_id)
         count_result = count_q.execute()
 
+        # Récupérer les profils séparément (pas de FK directe security_events → profiles)
+        events_data = result.data or []
+        event_user_ids = list({e["user_id"] for e in events_data if e.get("user_id")})
+        profiles_map: Dict[str, Any] = {}
+        if event_user_ids:
+            profiles_res = supabase.table("profiles").select(
+                "id, email, full_name"
+            ).in_("id", event_user_ids).execute()
+            profiles_map = {
+                p["id"]: {"email": p["email"], "full_name": p.get("full_name")}
+                for p in (profiles_res.data or [])
+            }
+
+        events = [
+            {**e, "profiles": profiles_map.get(e.get("user_id"))}
+            for e in events_data
+        ]
+
         return {
-            "events": result.data or [],
+            "events": events,
             "total": count_result.count or 0,
             "page": page,
             "per_page": per_page,
