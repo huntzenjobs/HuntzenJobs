@@ -60,6 +60,17 @@ export default function HomePage() {
 
       {/* SECTION 1 — HERO */}
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-slate-900 pt-20">
+        {/* Hero background image */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop")',
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "brightness(0.25) saturate(0.7)",
+          }}
+        />
         <div
           className="absolute inset-0 opacity-20"
           style={{ backgroundImage: GRID_PATTERN, backgroundSize: "60px 60px" }}
@@ -71,7 +82,12 @@ export default function HomePage() {
         />
         <motion.div
           animate={{ scale: [1, 1.3, 1], opacity: [0.08, 0.12, 0.08] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
           className="absolute bottom-1/4 right-1/4 w-64 sm:w-80 h-64 sm:h-80 bg-purple-500/10 rounded-full blur-3xl"
         />
 
@@ -168,7 +184,14 @@ export default function HomePage() {
             transition={{ duration: 0.5, delay: 0.15 }}
             className="flex flex-wrap items-center justify-center gap-3"
           >
-            {["France Travail", "Indeed", "LinkedIn", "Welcome to the Jungle", "HelloWork", "APEC"].map((name) => (
+            {[
+              "France Travail",
+              "Indeed",
+              "LinkedIn",
+              "Welcome to the Jungle",
+              "HelloWork",
+              "APEC",
+            ].map((name) => (
               <span
                 key={name}
                 className="px-4 py-1.5 rounded-full bg-slate-200 border border-slate-300 text-slate-600 text-sm font-semibold"
@@ -176,6 +199,9 @@ export default function HomePage() {
                 {name}
               </span>
             ))}
+            <span className="px-4 py-1.5 rounded-full bg-slate-200 border border-slate-300 text-slate-500 text-sm font-semibold italic">
+              et plus…
+            </span>
           </motion.div>
         </div>
       </section>
@@ -203,9 +229,15 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="text-center px-4"
               >
-                <div className="text-5xl font-black text-[#00D9FF] mb-4">{step.num}</div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{step.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{step.desc}</p>
+                <div className="text-5xl font-black text-[#00D9FF] mb-4">
+                  {step.num}
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  {step.title}
+                </h3>
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  {step.desc}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -215,7 +247,6 @@ export default function HomePage() {
       {/* SECTION 4 — 3 FEATURES STAR */}
       <section className="py-16 sm:py-24 bg-white">
         <div className="container mx-auto px-4 sm:px-6 max-w-6xl">
-
           {/* Feature A — Recherche (image gauche, texte droite) */}
           <div className="grid md:grid-cols-2 gap-12 items-center mb-20 sm:mb-28">
             <motion.div
@@ -223,9 +254,15 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 aspect-square flex items-center justify-center border border-slate-200"
+              className="rounded-3xl overflow-hidden aspect-square border-2 border-slate-200 shadow-xl"
             >
-              <Search className="w-20 h-20 text-slate-400" />
+              <div
+                className="w-full h-full bg-cover bg-center"
+                style={{
+                  backgroundImage:
+                    'url("https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2340&auto=format&fit=crop")',
+                }}
+              />
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -236,17 +273,29 @@ export default function HomePage() {
               <span className="inline-block px-3 py-1 rounded-full bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold tracking-widest mb-4">
                 {tFeatures("jobs.badge")}
               </span>
-              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">{tFeatures("jobs.title")}</h3>
-              <p className="text-slate-600 text-base leading-relaxed mb-6">{tFeatures("jobs.description")}</p>
+              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
+                {tFeatures("jobs.title")}
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed mb-6">
+                {tFeatures("jobs.description")}
+              </p>
               <ul className="space-y-3 mb-6">
-                {[tFeatures("jobs.bullet1"), tFeatures("jobs.bullet2"), tFeatures("jobs.bullet3"), tFeatures("jobs.bullet4")].map((b, i) => (
+                {[
+                  tFeatures("jobs.bullet1"),
+                  tFeatures("jobs.bullet2"),
+                  tFeatures("jobs.bullet3"),
+                  tFeatures("jobs.bullet4"),
+                ].map((b, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
                     <span className="text-slate-700 text-sm">{b}</span>
                   </li>
                 ))}
               </ul>
-              <Link href="/jobs" className="text-[#00D9FF] font-semibold hover:underline text-sm">
+              <Link
+                href="/jobs"
+                className="text-[#00D9FF] font-semibold hover:underline text-sm"
+              >
                 {tFeatures("jobs.cta")}
               </Link>
             </motion.div>
@@ -263,17 +312,29 @@ export default function HomePage() {
               <span className="inline-block px-3 py-1 rounded-full bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold tracking-widest mb-4">
                 {tFeatures("cv.badge")}
               </span>
-              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">{tFeatures("cv.title")}</h3>
-              <p className="text-slate-600 text-base leading-relaxed mb-6">{tFeatures("cv.description")}</p>
+              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
+                {tFeatures("cv.title")}
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed mb-6">
+                {tFeatures("cv.description")}
+              </p>
               <ul className="space-y-3 mb-6">
-                {[tFeatures("cv.bullet1"), tFeatures("cv.bullet2"), tFeatures("cv.bullet3"), tFeatures("cv.bullet4")].map((b, i) => (
+                {[
+                  tFeatures("cv.bullet1"),
+                  tFeatures("cv.bullet2"),
+                  tFeatures("cv.bullet3"),
+                  tFeatures("cv.bullet4"),
+                ].map((b, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
                     <span className="text-slate-700 text-sm">{b}</span>
                   </li>
                 ))}
               </ul>
-              <Link href="/cv-analysis" className="text-[#00D9FF] font-semibold hover:underline text-sm">
+              <Link
+                href="/cv-analysis"
+                className="text-[#00D9FF] font-semibold hover:underline text-sm"
+              >
                 {tFeatures("cv.cta")}
               </Link>
             </motion.div>
@@ -282,9 +343,15 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 aspect-square flex items-center justify-center border border-slate-200"
+              className="rounded-3xl overflow-hidden aspect-square border-2 border-slate-200 shadow-xl"
             >
-              <FileText className="w-20 h-20 text-slate-400" />
+              <div
+                className="w-full h-full bg-cover bg-center"
+                style={{
+                  backgroundImage:
+                    'url("https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2340&auto=format&fit=crop")',
+                }}
+              />
             </motion.div>
           </div>
 
@@ -295,9 +362,15 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 aspect-square flex items-center justify-center border border-slate-200"
+              className="rounded-3xl overflow-hidden aspect-square border-2 border-slate-200 shadow-xl"
             >
-              <Users className="w-20 h-20 text-slate-400" />
+              <div
+                className="w-full h-full bg-cover bg-center"
+                style={{
+                  backgroundImage:
+                    'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop")',
+                }}
+              />
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -308,8 +381,12 @@ export default function HomePage() {
               <span className="inline-block px-3 py-1 rounded-full bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold tracking-widest mb-4">
                 {tFeatures("coaches.badge")}
               </span>
-              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">{tFeatures("coaches.title")}</h3>
-              <p className="text-slate-600 text-base leading-relaxed mb-6">{tFeatures("coaches.description")}</p>
+              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
+                {tFeatures("coaches.title")}
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed mb-6">
+                {tFeatures("coaches.description")}
+              </p>
               <ul className="space-y-3 mb-6">
                 {[
                   { name: "Nova", desc: "Stratégie et plan de carrière" },
@@ -320,11 +397,16 @@ export default function HomePage() {
                 ].map((c, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-700 text-sm"><strong>{c.name}</strong> · {c.desc}</span>
+                    <span className="text-slate-700 text-sm">
+                      <strong>{c.name}</strong> · {c.desc}
+                    </span>
                   </li>
                 ))}
               </ul>
-              <Link href="/assistant" className="text-[#00D9FF] font-semibold hover:underline text-sm">
+              <Link
+                href="/assistant"
+                className="text-[#00D9FF] font-semibold hover:underline text-sm"
+              >
                 {tFeatures("coaches.cta")}
               </Link>
             </motion.div>
@@ -336,7 +418,10 @@ export default function HomePage() {
       <section className="py-16 sm:py-24 bg-slate-50">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <motion.h2 {...fadeUp} className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+            <motion.h2
+              {...fadeUp}
+              className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3"
+            >
               {tFeaturesGrid("title")}
             </motion.h2>
             <motion.p
@@ -353,19 +438,84 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
             {(
               [
-                { icon: Search, name: "Recherche d'emplois", desc: "Agrégateur multi-plateformes mis à jour quotidiennement", badge: null },
-                { icon: FileText, name: "Analyse CV & Score ATS", desc: "Optimise ton CV pour passer tous les filtres automatiquement", badge: null },
-                { icon: UserCheck, name: "Nova — Coach Carrière", desc: "Stratégie, reconversion, plan d'action personnalisé", badge: null },
-                { icon: Briefcase, name: "Maria — Coach Emploi", desc: "Trouve les bonnes offres et postule efficacement", badge: null },
-                { icon: Award, name: "Sofia — Expert CV", desc: "CV percutant qui attire l'attention des recruteurs", badge: null },
-                { icon: Mic, name: "Lucas — Coach Entretien", desc: "Prépare les questions difficiles, gère le stress", badge: tFeaturesGrid("badgeSoon") },
-                { icon: Linkedin, name: "David — Personal Branding", desc: "Profil LinkedIn qui attire les recruteurs à toi", badge: null },
-                { icon: Calendar, name: "Salons & Forums", desc: "Événements emploi partout en France", badge: null },
-                { icon: Bookmark, name: "Offres sauvegardées", desc: "Retrouve et suis toutes tes candidatures favorites", badge: null },
-                { icon: UserCheck2, name: "Contact Recruteur", desc: "Session 1:1 avec un expert RH", badge: "50€" },
-                { icon: FilePlus, name: "Génération Documents", desc: "CV + lettre de motivation adaptés à chaque offre", badge: null },
-                { icon: Globe, name: "Guide Expatriation", desc: "S'installer et travailler dans 15 pays", badge: null },
-              ] as Array<{ icon: React.ElementType; name: string; desc: string; badge: string | null }>
+                {
+                  icon: Search,
+                  name: "Recherche d'emplois",
+                  desc: "Agrégateur multi-plateformes mis à jour quotidiennement",
+                  badge: null,
+                },
+                {
+                  icon: FileText,
+                  name: "Analyse CV & Score ATS",
+                  desc: "Optimise ton CV pour passer tous les filtres automatiquement",
+                  badge: null,
+                },
+                {
+                  icon: UserCheck,
+                  name: "Nova — Coach Carrière",
+                  desc: "Stratégie, reconversion, plan d'action personnalisé",
+                  badge: null,
+                },
+                {
+                  icon: Briefcase,
+                  name: "Maria — Coach Emploi",
+                  desc: "Trouve les bonnes offres et postule efficacement",
+                  badge: null,
+                },
+                {
+                  icon: Award,
+                  name: "Sofia — Expert CV",
+                  desc: "CV percutant qui attire l'attention des recruteurs",
+                  badge: null,
+                },
+                {
+                  icon: Mic,
+                  name: "Lucas — Coach Entretien",
+                  desc: "Prépare les questions difficiles, gère le stress",
+                  badge: tFeaturesGrid("badgeSoon"),
+                },
+                {
+                  icon: Linkedin,
+                  name: "David — Personal Branding",
+                  desc: "Profil LinkedIn qui attire les recruteurs à toi",
+                  badge: null,
+                },
+                {
+                  icon: Calendar,
+                  name: "Salons & Forums",
+                  desc: "Événements emploi partout en France",
+                  badge: null,
+                },
+                {
+                  icon: Bookmark,
+                  name: "Offres sauvegardées",
+                  desc: "Retrouve et suis toutes tes candidatures favorites",
+                  badge: null,
+                },
+                {
+                  icon: UserCheck2,
+                  name: "Contact Recruteur",
+                  desc: "Session 1:1 avec un expert RH",
+                  badge: "50€",
+                },
+                {
+                  icon: FilePlus,
+                  name: "Génération Documents",
+                  desc: "CV + lettre de motivation adaptés à chaque offre",
+                  badge: null,
+                },
+                {
+                  icon: Globe,
+                  name: "Guide Expatriation",
+                  desc: "S'installer et travailler dans 15 pays",
+                  badge: null,
+                },
+              ] as Array<{
+                icon: React.ElementType;
+                name: string;
+                desc: string;
+                badge: string | null;
+              }>
             ).map((item, i) => {
               const Icon = item.icon;
               return (
@@ -387,8 +537,12 @@ export default function HomePage() {
                       </span>
                     )}
                   </div>
-                  <h3 className="font-bold text-slate-900 text-sm mb-1">{item.name}</h3>
-                  <p className="text-slate-500 text-xs leading-relaxed">{item.desc}</p>
+                  <h3 className="font-bold text-slate-900 text-sm mb-1">
+                    {item.name}
+                  </h3>
+                  <p className="text-slate-500 text-xs leading-relaxed">
+                    {item.desc}
+                  </p>
                 </motion.div>
               );
             })}
@@ -400,7 +554,10 @@ export default function HomePage() {
       <section className="py-16 sm:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <motion.h2 {...fadeUp} className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+            <motion.h2
+              {...fadeUp}
+              className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3"
+            >
               {tStats("title")}
             </motion.h2>
             <motion.p
@@ -415,9 +572,21 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[
-              { value: tStats("candidates.value"), label: tStats("candidates.label"), icon: Users },
-              { value: tStats("responseRate.value"), label: tStats("responseRate.label"), icon: CheckCircle2 },
-              { value: tStats("salary.value"), label: tStats("salary.label"), icon: TrendingUp },
+              {
+                value: tStats("candidates.value"),
+                label: tStats("candidates.label"),
+                icon: Users,
+              },
+              {
+                value: tStats("responseRate.value"),
+                label: tStats("responseRate.label"),
+                icon: CheckCircle2,
+              },
+              {
+                value: tStats("salary.value"),
+                label: tStats("salary.label"),
+                icon: TrendingUp,
+              },
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -432,12 +601,18 @@ export default function HomePage() {
                     <stat.icon className="w-6 h-6 text-[#00D9FF]" />
                   </div>
                 </div>
-                <div className="text-4xl sm:text-5xl font-black text-[#00D9FF] mb-2">{stat.value}</div>
-                <div className="text-slate-600 font-medium text-sm">{stat.label}</div>
+                <div className="text-4xl sm:text-5xl font-black text-[#00D9FF] mb-2">
+                  {stat.value}
+                </div>
+                <div className="text-slate-600 font-medium text-sm">
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </div>
-          <p className="text-center text-xs text-slate-400 mt-6">{tStats("disclaimer")}</p>
+          <p className="text-center text-xs text-slate-400 mt-6">
+            {tStats("disclaimer")}
+          </p>
         </div>
       </section>
 
@@ -445,7 +620,10 @@ export default function HomePage() {
       <section className="py-16 sm:py-20 bg-slate-50">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <motion.h2 {...fadeUp} className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+            <motion.h2
+              {...fadeUp}
+              className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3"
+            >
               {tPricing("title")}
             </motion.h2>
             <motion.p
@@ -477,7 +655,9 @@ export default function HomePage() {
                 color: "#00D9FF",
                 popular: true,
                 features: tPlans.raw("plans.starter.features") as string[],
-                unavailable: tPlans.raw("plans.starter.unavailable") as string[],
+                unavailable: tPlans.raw(
+                  "plans.starter.unavailable",
+                ) as string[],
                 cta: tPlans("plans.starter.cta"),
               },
               {
@@ -495,7 +675,9 @@ export default function HomePage() {
                 period: tPlans("plans.premium.period"),
                 color: "#F97316",
                 features: tPlans.raw("plans.premium.features") as string[],
-                unavailable: tPlans.raw("plans.premium.unavailable") as string[],
+                unavailable: tPlans.raw(
+                  "plans.premium.unavailable",
+                ) as string[],
                 cta: tPlans("plans.premium.cta"),
               },
             ].map((plan, index) => (
@@ -506,7 +688,9 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`bg-white rounded-2xl p-5 sm:p-6 border-2 ${
-                  plan.popular ? "border-[#00D9FF] shadow-xl lg:scale-105" : "border-slate-200"
+                  plan.popular
+                    ? "border-[#00D9FF] shadow-xl lg:scale-105"
+                    : "border-slate-200"
                 } hover:shadow-lg transition-all relative flex flex-col h-full`}
               >
                 {plan.popular && (
@@ -515,21 +699,39 @@ export default function HomePage() {
                   </div>
                 )}
                 <div className="text-center mb-6">
-                  <div className="text-slate-600 font-bold text-xs mb-2">{plan.name}</div>
+                  <div className="text-slate-600 font-bold text-xs mb-2">
+                    {plan.name}
+                  </div>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl sm:text-5xl font-black" style={{ color: plan.color }}>{plan.price}</span>
-                    <span className="text-slate-400 text-xs">{plan.period}</span>
+                    <span
+                      className="text-4xl sm:text-5xl font-black"
+                      style={{ color: plan.color }}
+                    >
+                      {plan.price}
+                    </span>
+                    <span className="text-slate-400 text-xs">
+                      {plan.period}
+                    </span>
                   </div>
                 </div>
                 <ul className="space-y-2.5 sm:space-y-3 mb-6 flex-grow">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm">
-                      <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: plan.color }} />
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-xs sm:text-sm"
+                    >
+                      <CheckCircle2
+                        className="w-4 h-4 flex-shrink-0 mt-0.5"
+                        style={{ color: plan.color }}
+                      />
                       <span className="text-slate-700">{feature}</span>
                     </li>
                   ))}
                   {plan.unavailable.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-slate-400">
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-xs sm:text-sm text-slate-400"
+                    >
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </li>
@@ -561,7 +763,12 @@ export default function HomePage() {
         />
         <motion.div
           animate={{ scale: [1, 1.3, 1], opacity: [0.08, 0.12, 0.08] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
           className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"
         />
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
@@ -599,9 +806,14 @@ export default function HomePage() {
       <Footer />
 
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap");
         body {
-          font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-family:
+            "Plus Jakarta Sans",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
         }
       `}</style>
     </div>
