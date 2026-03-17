@@ -172,6 +172,24 @@
           "Exportación PDF de informes"
         ]
       },
+      "starter": {
+        "name": "STARTER",
+        "period": "/mes",
+        "cta": "Comenzar con Starter",
+        "features": [
+          "Búsquedas ilimitadas",
+          "Acceso a todas las ofertas",
+          "Filtros avanzados (salario, remoto, fecha)",
+          "Gestión de favoritos",
+          "Análisis de CV ilimitados",
+          "Puntuación de compatibilidad detallada",
+          "Coaches de carrera (30 min/día)"
+        ],
+        "unavailable": [
+          "Exportación PDF de informes",
+          "Simulación de entrevista"
+        ]
+      },
       "essential": {
         "name": "ESENCIAL",
         "period": "/mes",

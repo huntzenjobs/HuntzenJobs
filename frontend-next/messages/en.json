@@ -172,6 +172,24 @@
           "PDF report export"
         ]
       },
+      "starter": {
+        "name": "STARTER",
+        "period": "/month",
+        "cta": "Start with Starter",
+        "features": [
+          "Unlimited job searches",
+          "Access to all job listings",
+          "Advanced filters (salary, remote, date)",
+          "Manage your favorites",
+          "Unlimited CV analyses",
+          "Detailed compatibility score",
+          "Career coaches (30 min/day)"
+        ],
+        "unavailable": [
+          "PDF report export",
+          "Interview simulation"
+        ]
+      },
       "essential": {
         "name": "ESSENTIAL",
         "period": "/month",
