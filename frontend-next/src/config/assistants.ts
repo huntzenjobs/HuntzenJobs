@@ -29,6 +29,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: UserCheck,
     color: "#2563eb", // blue-600
     bgColor: "#dbeafe", // blue-100
+    accentColor: "#7C3AED", // violet-700
     avatarUrl:
       "https://api.dicebear.com/9.x/personas/svg?seed=Nova&backgroundColor=dbeafe",
     isPremium: false,
@@ -58,6 +59,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: Briefcase,
     color: "#059669", // emerald-600
     bgColor: "#d1fae5", // emerald-100
+    accentColor: "#0D9488", // teal-600
     avatarUrl:
       "https://api.dicebear.com/9.x/lorelei/svg?seed=Maria&backgroundColor=d1fae5",
     isPremium: false,
@@ -87,6 +89,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: FileText,
     color: "#7c3aed", // violet-600
     bgColor: "#ede9fe", // violet-100
+    accentColor: "#EC4899", // pink-500
     avatarUrl:
       "https://api.dicebear.com/9.x/personas/svg?seed=Sofia&backgroundColor=ede9fe",
     isPremium: false,
@@ -146,6 +149,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: Mic,
     color: "#ea580c", // orange-600
     bgColor: "#ffedd5", // orange-100
+    accentColor: "#EA580C", // orange-600
     avatarUrl:
       "https://api.dicebear.com/9.x/personas/svg?seed=Lucas&backgroundColor=ffedd5",
     isPremium: true,
@@ -175,6 +179,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: Linkedin,
     color: "#0077b5",
     bgColor: "#dbeafe",
+    accentColor: "#DC2626", // red-600
     avatarUrl:
       "https://api.dicebear.com/9.x/personas/svg?seed=David&backgroundColor=dbeafe&hair=shortHair&skinColor=light",
     isPremium: false,

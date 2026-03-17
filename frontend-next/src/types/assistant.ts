@@ -46,6 +46,9 @@ export interface AssistantConfig {
   /** Couleur de fond (plus claire) */
   bgColor: string;
 
+  /** Couleur d'accent pour les transitions d'identité (bordure, message système) */
+  accentColor?: string;
+
   /** URL avatar Dicebear open-source */
   avatarUrl?: string;
 

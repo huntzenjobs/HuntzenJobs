@@ -26,6 +26,7 @@ import {
   Users,
   Send,
   Gift,
+  Globe,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
@@ -106,6 +107,12 @@ export function Sidebar({ className }: SidebarProps) {
       icon: Send,
       premium: false,
       badge: isCandidaturesNew ? "Nouveau" : undefined,
+    },
+    {
+      name: t("nav.expat"),
+      href: "/expat",
+      icon: Globe,
+      premium: false,
     },
     {
       name: t("nav.referral"),
