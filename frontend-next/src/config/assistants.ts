@@ -189,6 +189,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "Ton profil peut devenir beaucoup plus attractif.",
       "On va améliorer ta présence professionnelle.",
       "Comment développer ma marque personnelle ?",
+      "Fais moi un post LinkedIn viral pour créer de l'engagement.",
     ],
     apiEndpoint: "/api/branding/chat",
     responseTime: "< 2 min",
