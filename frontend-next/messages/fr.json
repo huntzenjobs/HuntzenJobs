@@ -1,6 +1,6 @@
 {
   "nav": {
-    "jobs": "Recherche d'emplois",
+    "jobs": "Recherche d'emploi",
     "salons": "Salons & Forums",
     "tools": "Outils",
     "resources": "Ressources",
@@ -92,20 +92,20 @@
     "subtitle": "Pourtant, les candidats perdent des mois à naviguer à l'aveugle",
     "items": {
       "ghosting": {
-        "title": "VOS CV RESTENT SANS RÉPONSE ?",
-        "description": "80% des CVs sont filtrés par des logiciels ATS avant même d'atteindre un recruteur. HuntZen génère un CV certifié ATS qui passe tous les filtres automatiquement."
+        "title": "GHOSTING PERMANENT",
+        "description": "73% des candidats n'obtiennent jamais de retour, même après plusieurs relances"
       },
       "exhausting": {
-        "title": "LA RECHERCHE EST CHRONOPHAGE ?",
-        "description": "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier. HuntZen agrège toutes les offres de France Travail, Indeed et LinkedIn en un seul endroit."
+        "title": "RECHERCHE ÉPUISANTE",
+        "description": "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier"
       },
       "negotiation": {
-        "title": "NÉGOCIER VOTRE SALAIRE ?",
-        "description": "Impossible de connaître les salaires réels selon votre expérience et localisation. Notre coach IA vous prépare à chaque entretien et vous aide à négocier votre juste valeur."
+        "title": "NÉGOCIATION À L'AVEUGLE",
+        "description": "Impossible de connaître les salaires réels selon votre expérience et localisation"
       },
       "feedback": {
-        "title": "VOUS CANDIDATEZ DANS LE VIDE ?",
-        "description": "Aucun accompagnement, aucune visibilité sur vos points forts. Obtenez un feedback immédiat sur votre CV et adaptez-le à chaque offre en moins de 2 minutes."
+        "title": "MANQUE DE FEEDBACK",
+        "description": "Aucun accompagnement, aucune visibilité sur vos points forts et axes d'amélioration"
       }
     }
   },
@@ -156,16 +156,6 @@
       ]
     }
   },
-  "featuresGrid": {
-    "title": "Tout ce dont tu as besoin pour réussir",
-    "subtitle": "Une seule plateforme. Zéro outil manquant.",
-    "badgeSoon": "Bientôt"
-  },
-  "ctaFinal": {
-    "title": "Prêt à décrocher ton prochain emploi ?",
-    "subtitle": "Rejoins +2 000 candidats qui avancent avec HuntZen.",
-    "cta": "Commencer gratuitement — c'est sans engagement"
-  },
   "stats": {
     "title": "Ils nous font confiance",
     "subtitle": "Des candidats qui avancent avec HuntZen chaque jour",
@@ -182,6 +172,16 @@
       "label": "De salaire négocié en moyenne"
     },
     "disclaimer": "* Données indicatives basées sur nos utilisateurs actifs"
+  },
+  "featuresGrid": {
+    "title": "Tout ce dont tu as besoin pour réussir",
+    "subtitle": "Une seule plateforme. Zéro outil manquant.",
+    "badgeSoon": "Bientôt"
+  },
+  "ctaFinal": {
+    "title": "Prêt à décrocher ton prochain emploi ?",
+    "subtitle": "Rejoins +2 000 candidats qui avancent avec HuntZen.",
+    "cta": "Commencer gratuitement — c'est sans engagement"
   },
   "pricing": {
     "title": "Choisissez votre plan",
@@ -251,11 +251,28 @@
           "Gestion de vos favoris",
           "Analyses de CV illimitées",
           "Score de compatibilité détaillé",
-          "Coach IA (30 min/jour)"
+          "Coachs carrière (30 min/jour)"
         ],
         "unavailable": [
           "Export PDF rapports",
           "Simulation d'entretien"
+        ]
+      },
+      "essential": {
+        "name": "ESSENTIEL",
+        "period": "/mois",
+        "cta": "Commencer avec Essentiel",
+        "features": [
+          "Recherches d'offres illimitées",
+          "Accès à toutes les offres d'emploi",
+          "Filtres avancés (salaire, télétravail, date)",
+          "Gestion de vos favoris",
+          "Analyses de CV illimitées",
+          "Score de compatibilité détaillé",
+          "Coaching personnalisé (30 min/jour)"
+        ],
+        "unavailable": [
+          "Export PDF rapports"
         ]
       },
       "pro": {
@@ -302,8 +319,7 @@
       "recruiterContact": "Contact Recruteur",
       "documents": "Mes documents",
       "myUsage": "Mon Utilisation",
-      "referral": "HuntZen Boost",
-      "expat": "Guide Expat"
+      "referral": "HuntZen Boost"
     },
     "plans": {
       "free": "Gratuit",
@@ -411,9 +427,9 @@
           "Favoris",
           "CV illimité + Score visuel",
           "Coach IA 30 min/jour",
-          "Alertes email nouvelles offres",
           "Export PDF",
-          "Simulation entretien"
+          "Simulation entretien",
+          "Alertes email"
         ]
       },
       "pro": {
