@@ -26,6 +26,8 @@ from src.models.schemas import ATSScore, CVAnalysisResponse, TrainingRecommendat
 
 logger = logging.getLogger(__name__)
 
+HUNTZEN_CV_MARKERS = ["HuntZen Jobs", "Optimisé par HuntZen", "HuntZen ATS", "huntzenjobs.com", "HuntZen ATS Certified"]
+
 
 class CVAnalyzerAgent(BaseAgent):
     """
@@ -133,8 +135,7 @@ class CVAnalyzerAgent(BaseAgent):
         """
         try:
             # Détecter si le CV vient du pipeline HuntZen
-            HUNTZEN_MARKERS = ["HuntZen Jobs", "Optimisé par HuntZen", "HuntZen ATS", "huntzenjobs.com", "HuntZen ATS Certified"]
-            is_huntzen_optimized = any(marker in cv_text for marker in HUNTZEN_MARKERS)
+            is_huntzen_optimized = bool(cv_text) and any(marker in cv_text for marker in HUNTZEN_CV_MARKERS)
 
             # Run sub-agents in parallel
             tasks = [
@@ -228,14 +229,6 @@ class CVAnalyzerAgent(BaseAgent):
             filtered["content_improvements"] = [
                 s for s in content
                 if not any(kw in str(s).lower() for kw in ats_format_keywords)
-            ]
-        missing = filtered.get("missing_sections", [])
-        if isinstance(missing, list):
-            # Les sections manquantes liées au format sont déjà gérées par HuntZen
-            ats_sections = ["résumé professionnel", "compétences", "expérience", "formation"]
-            filtered["missing_sections"] = [
-                s for s in missing
-                if not any(kw in str(s).lower() for kw in ats_sections)
             ]
         return filtered
 
