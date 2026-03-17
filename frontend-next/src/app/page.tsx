@@ -137,7 +137,7 @@ export default function HomePage() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link
-              href="/jobs"
+              href="/signup"
               className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-2xl hover:shadow-[#00D9FF]/50 hover:-translate-y-1 w-full sm:w-auto justify-center"
             >
               <Search className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -156,6 +156,14 @@ export default function HomePage() {
               </motion.span>
             </a>
           </motion.div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="text-white/50 text-xs sm:text-sm mt-2"
+          >
+            {tHero("socialProof")}
+          </motion.p>
         </div>
       </section>
 
@@ -600,6 +608,9 @@ export default function HomePage() {
               {tStats("subtitle")}
             </p>
           </motion.div>
+          <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
+            {tStats("disclaimer")}
+          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {[
@@ -685,16 +696,16 @@ export default function HomePage() {
                 cta: tPlans("plans.free.cta"),
               },
               {
-                name: tPlans("plans.essential.name"),
+                name: tPlans("plans.starter.name"),
                 price: "8.90€",
-                period: tPlans("plans.essential.period"),
+                period: tPlans("plans.starter.period"),
                 color: "#00D9FF",
                 popular: true,
-                features: tPlans.raw("plans.essential.features") as string[],
+                features: tPlans.raw("plans.starter.features") as string[],
                 unavailable: tPlans.raw(
-                  "plans.essential.unavailable",
+                  "plans.starter.unavailable",
                 ) as string[],
-                cta: tPlans("plans.essential.cta"),
+                cta: tPlans("plans.starter.cta"),
               },
               {
                 name: tPlans("plans.pro.name"),

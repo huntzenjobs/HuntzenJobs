@@ -1,6 +1,6 @@
 {
   "nav": {
-    "jobs": "Recherche d'emploi",
+    "jobs": "Recherche d'emplois",
     "salons": "Salons & Forums",
     "tools": "Outils",
     "resources": "Ressources",
@@ -19,9 +19,10 @@
     "language": "Langue"
   },
   "hero": {
-    "subtitle": "Votre allié carrière complet pour décrocher l'emploi qui vous ressemble. Recherche ciblée, CV optimisé, et accompagnement personnalisé à chaque étape.",
-    "ctaSearch": "Commencer ma recherche",
-    "ctaDiscover": "Découvrir nos outils"
+    "subtitle": "CV certifié ATS · Coach IA personnalisé · Offres ciblées pour votre profil",
+    "ctaSearch": "Commencer gratuitement",
+    "ctaDiscover": "Voir comment ça marche",
+    "socialProof": "Déjà +2 000 candidats accompagnés"
   },
   "tools": {
     "badge": "Tous nos outils",
@@ -76,20 +77,20 @@
     "subtitle": "Pourtant, les candidats perdent des mois à naviguer à l'aveugle",
     "items": {
       "ghosting": {
-        "title": "GHOSTING PERMANENT",
-        "description": "73% des candidats n'obtiennent jamais de retour, même après plusieurs relances"
+        "title": "VOS CV RESTENT SANS RÉPONSE ?",
+        "description": "80% des CVs sont filtrés par des logiciels ATS avant même d'atteindre un recruteur. HuntZen génère un CV certifié ATS qui passe tous les filtres automatiquement."
       },
       "exhausting": {
-        "title": "RECHERCHE ÉPUISANTE",
-        "description": "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier"
+        "title": "LA RECHERCHE EST CHRONOPHAGE ?",
+        "description": "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier. HuntZen agrège toutes les offres de France Travail, Indeed et LinkedIn en un seul endroit."
       },
       "negotiation": {
-        "title": "NÉGOCIATION À L'AVEUGLE",
-        "description": "Impossible de connaître les salaires réels selon votre expérience et localisation"
+        "title": "NÉGOCIER VOTRE SALAIRE ?",
+        "description": "Impossible de connaître les salaires réels selon votre expérience et localisation. Notre coach IA vous prépare à chaque entretien et vous aide à négocier votre juste valeur."
       },
       "feedback": {
-        "title": "MANQUE DE FEEDBACK",
-        "description": "Aucun accompagnement, aucune visibilité sur vos points forts et axes d'amélioration"
+        "title": "VOUS CANDIDATEZ DANS LE VIDE ?",
+        "description": "Aucun accompagnement, aucune visibilité sur vos points forts. Obtenez un feedback immédiat sur votre CV et adaptez-le à chaque offre en moins de 2 minutes."
       }
     }
   },
@@ -192,10 +193,10 @@
           "Export PDF rapports"
         ]
       },
-      "essential": {
-        "name": "ESSENTIEL",
+      "starter": {
+        "name": "STARTER",
         "period": "/mois",
-        "cta": "Commencer avec Essentiel",
+        "cta": "Commencer avec Starter",
         "features": [
           "Recherches d'offres illimitées",
           "Accès à toutes les offres d'emploi",
@@ -203,10 +204,11 @@
           "Gestion de vos favoris",
           "Analyses de CV illimitées",
           "Score de compatibilité détaillé",
-          "Coaching personnalisé (30 min/jour)"
+          "Coach IA (30 min/jour)"
         ],
         "unavailable": [
-          "Export PDF rapports"
+          "Export PDF rapports",
+          "Simulation d'entretien"
         ]
       },
       "pro": {
@@ -362,9 +364,9 @@
           "Favoris",
           "CV illimité + Score visuel",
           "Coach IA 30 min/jour",
+          "Alertes email nouvelles offres",
           "Export PDF",
-          "Simulation entretien",
-          "Alertes email"
+          "Simulation entretien"
         ]
       },
       "pro": {
