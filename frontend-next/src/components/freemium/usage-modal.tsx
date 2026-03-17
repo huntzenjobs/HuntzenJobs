@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useSubscription } from "@/contexts/subscription-context";
-import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 import {
   Crown,
   Sparkles,
@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Briefcase,
   Clock,
+  RefreshCw,
 } from "lucide-react";
 import { CareerScoreCard } from "@/components/career-score/career-score-card";
 import { cn } from "@/lib/utils";
@@ -141,31 +142,49 @@ function QuotaCard({
 }
 
 export function UsageModal({ isOpen, onClose }: UsageModalProps) {
-  const { plan, planName, limits, usage, openPricingModal, isFreePlan } =
-    useSubscription();
+  const {
+    plan,
+    planName,
+    limits,
+    usage,
+    openPricingModal,
+    isFreePlan,
+    refreshQuotas,
+    isLoaded,
+  } = useSubscription();
+
+  // Refetch live quotas every time the modal opens
+  const prevOpenRef = useRef(false);
+  useEffect(() => {
+    if (isOpen && !prevOpenRef.current) {
+      refreshQuotas();
+    }
+    prevOpenRef.current = isOpen;
+  }, [isOpen, refreshQuotas]);
 
   const planConfig = PLAN_CONFIG[plan];
-  const planLimits = PLAN_LIMITS[plan];
 
   const handleUpgrade = () => {
     onClose();
     openPricingModal();
   };
 
-  // Assistant messages usage
+  // Assistant messages usage — use API limits (source of truth)
   const assistantMessagesUsed = usage?.assistantMessagesUsedToday ?? 0;
-  const assistantMessagesLimit =
-    planLimits.assistant_messages_per_day === Infinity
-      ? Infinity
-      : planLimits.assistant_messages_per_day;
+  const assistantMessagesLimit = limits.assistant_messages_per_day;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            Mon Utilisation
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl font-bold">
+              Mon Utilisation
+            </DialogTitle>
+            {!isLoaded && (
+              <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -243,7 +262,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 title="Analyses CV"
                 icon={<FileText className="w-4 h-4 text-white" />}
                 used={usage?.cvAnalysesToday || 0}
-                limit={planLimits.cv_analyses_per_day}
+                limit={limits.cv_analyses_per_day}
                 color="bg-blue-500"
               />
 
@@ -262,7 +281,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 title="Recherches d'emploi"
                 icon={<Briefcase className="w-4 h-4 text-white" />}
                 used={usage?.searchesToday || 0}
-                limit={planLimits.job_searches_per_day}
+                limit={limits.job_searches_per_day}
                 color="bg-green-500"
               />
             </div>

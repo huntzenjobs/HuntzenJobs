@@ -66,6 +66,8 @@ interface SubscriptionContextType {
 
   // Subscription sync
   reconcileSubscription: () => Promise<void>;
+  // Silent refresh (no toast) — use when opening usage modal
+  refreshQuotas: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | null>(null);
@@ -415,6 +417,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       pricingModalFeature,
 
       reconcileSubscription,
+      refreshQuotas: apiData.refetch,
     }),
     [
       // Plan data from API
@@ -449,6 +452,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       openPricingModal,
       closePricingModal,
       reconcileSubscription,
+      apiData.refetch,
     ],
   );
 
