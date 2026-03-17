@@ -19,6 +19,12 @@ from src.workers.tasks import (
     shutdown,
 )
 
+QUEUE_COACH = "arq:coach"
+QUEUE_ASSISTANT = "arq:assistant"
+QUEUE_BRANDING = "arq:branding"
+QUEUE_CV_ADAPT = "arq:cv_adapt"
+QUEUE_COVER_LETTER = "arq:cover_letter"
+
 
 def _get_redis_settings() -> RedisSettings:
     """Parse REDIS_URL pour ARQ (Railway Redis réseau interne)."""
@@ -32,13 +38,47 @@ def _get_redis_settings() -> RedisSettings:
     )
 
 
-class WorkerSettings:
-    functions = [coach_task, assistant_task, cv_adapt_task, cover_letter_task, branding_task]
+class _BaseWorkerSettings:
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = _get_redis_settings()
-    max_jobs = 750       # sweet spot Groq payant : 240 req/sec × 3s = 720 max absorbables
+    max_jobs = 150
     job_timeout = 120    # timeout 2 min par job
     keep_result = 3600   # garder résultat 1h dans Redis
     retry_jobs = True
     max_tries = 3        # retry ARQ si crash du worker
+
+
+class CoachWorkerSettings(_BaseWorkerSettings):
+    functions = [coach_task]
+    queue_name = QUEUE_COACH
+    max_jobs = 120
+
+
+class AssistantWorkerSettings(_BaseWorkerSettings):
+    functions = [assistant_task]
+    queue_name = QUEUE_ASSISTANT
+    max_jobs = 200
+
+
+class BrandingWorkerSettings(_BaseWorkerSettings):
+    functions = [branding_task]
+    queue_name = QUEUE_BRANDING
+    max_jobs = 80
+
+
+class CVAdaptWorkerSettings(_BaseWorkerSettings):
+    functions = [cv_adapt_task]
+    queue_name = QUEUE_CV_ADAPT
+    max_jobs = 100
+
+
+class CoverLetterWorkerSettings(_BaseWorkerSettings):
+    functions = [cover_letter_task]
+    queue_name = QUEUE_COVER_LETTER
+    max_jobs = 80
+
+
+# Legacy class name kept for compatibility (uses assistant queue as default)
+class WorkerSettings(AssistantWorkerSettings):
+    pass

@@ -36,7 +36,7 @@ _arq_pool = None
 _GROQ_ACTIVE_KEY = "groq:active_assistant"
 _GROQ_ACTIVE_TTL = 120  # expire 2min en cas de crash
 ASSISTANT_SYNC_THRESHOLD = 12  # max appels Groq simultanés cross-replicas
-_ARQ_QUEUE_KEY = "arq:queue"
+_ARQ_QUEUE_KEY = "arq:assistant"
 _ARQ_QUEUE_MAX_LENGTH = 3000
 _RETRY_AFTER_SECONDS = 8
 
@@ -116,6 +116,7 @@ async def _queue_assistant_or_reject(
             assistant_type=assistant_type,
             language=language,
             history=history,
+            _queue_name=_ARQ_QUEUE_KEY,
         )
         estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
         logger.info(

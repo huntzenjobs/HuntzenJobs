@@ -21,7 +21,7 @@ _groq_semaphore = asyncio.Semaphore(20)  # garde-fou local par worker
 # Clé Redis pour le compteur global cross-replicas
 _GROQ_ACTIVE_KEY = "groq:active_coach"
 _GROQ_ACTIVE_TTL = 120  # expire 2min (safety en cas de crash)
-_ARQ_QUEUE_KEY = "arq:queue"
+_ARQ_QUEUE_KEY = "arq:coach"
 _ARQ_QUEUE_MAX_LENGTH = 2000
 _RETRY_AFTER_SECONDS = 8
 
@@ -149,6 +149,7 @@ async def coach_chat(
                 message=data.message,
                 session_id=data.session_id,
                 language=data.language,
+                _queue_name=_ARQ_QUEUE_KEY,
             )
             estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
             logger.info(

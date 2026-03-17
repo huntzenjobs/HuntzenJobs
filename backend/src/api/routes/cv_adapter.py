@@ -28,7 +28,8 @@ _arq_pool = None
 _GROQ_ACTIVE_KEY = "groq:active_cv_adapt"
 _GROQ_ACTIVE_TTL = 120
 CV_ADAPT_SYNC_THRESHOLD = 12
-_ARQ_QUEUE_KEY = "arq:queue"
+_ARQ_QUEUE_KEY = "arq:cv_adapt"
+_ARQ_COVER_LETTER_QUEUE_KEY = "arq:cover_letter"
 _ARQ_QUEUE_MAX_LENGTH = 3000
 _RETRY_AFTER_SECONDS = 10
 
@@ -64,12 +65,12 @@ async def _decr_active() -> None:
             await redis.set(_GROQ_ACTIVE_KEY, 0)
 
 
-async def _get_arq_queue_depth() -> int:
+async def _get_arq_queue_depth(queue_key: str = _ARQ_QUEUE_KEY) -> int:
     from src.utils.cache import get_redis
     redis = await get_redis()
     if not redis:
         return -1
-    depth = await redis.llen(_ARQ_QUEUE_KEY)
+    depth = await redis.llen(queue_key)
     return int(depth)
 
 
@@ -252,6 +253,7 @@ async def adapt_cv(
                 cv_text=cv_text,
                 job_description=job_description,
                 language=language,
+                _queue_name=_ARQ_QUEUE_KEY,
             )
             estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
             logger.info(
@@ -695,7 +697,7 @@ async def generate_cover_letter_json(request: CoverLetterRequest):
     if active > CV_ADAPT_SYNC_THRESHOLD:
         await _decr_active()
 
-        queue_depth = await _get_arq_queue_depth()
+        queue_depth = await _get_arq_queue_depth(_ARQ_COVER_LETTER_QUEUE_KEY)
         if queue_depth >= _ARQ_QUEUE_MAX_LENGTH:
             raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
 
@@ -713,6 +715,7 @@ async def generate_cover_letter_json(request: CoverLetterRequest):
                 language=request.language,
                 company_name=request.company_name,
                 job_title=job_title,
+                _queue_name=_ARQ_COVER_LETTER_QUEUE_KEY,
             )
             estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
             logger.info(

@@ -27,7 +27,7 @@ router = APIRouter()
 _GROQ_ACTIVE_KEY = "groq:active_branding"
 _GROQ_ACTIVE_TTL = 120
 BRANDING_SYNC_THRESHOLD = 8
-_ARQ_QUEUE_KEY = "arq:queue"
+_ARQ_QUEUE_KEY = "arq:branding"
 _ARQ_QUEUE_MAX_LENGTH = 1500
 _RETRY_AFTER_SECONDS = 8
 _arq_pool = None
@@ -144,6 +144,7 @@ async def branding_chat(
                 session_id=data.session_id,
                 language=data.language,
                 branding_state=data.branding_state,
+                _queue_name=_ARQ_QUEUE_KEY,
             )
             estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
             logger.info(

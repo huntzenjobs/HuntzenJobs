@@ -153,12 +153,21 @@ async def all_stats():
         groq_cv_adapt  = await redis.get("groq:active_cv_adapt")
         modal_cv       = await redis.get("modal:active_cv_analysis")
 
+        queue_lengths = {
+            "coach": int(await redis.llen("arq:coach")),
+            "assistant": int(await redis.llen("arq:assistant")),
+            "branding": int(await redis.llen("arq:branding")),
+            "cv_adapt": int(await redis.llen("arq:cv_adapt")),
+            "cover_letter": int(await redis.llen("arq:cover_letter")),
+        }
+
         return {
             "groq_active": {
                 "coach":     int(groq_coach) if groq_coach else 0,
                 "assistant": int(groq_assistant) if groq_assistant else 0,
                 "cv_adapt":  int(groq_cv_adapt) if groq_cv_adapt else 0,
             },
+            "queue_lengths": queue_lengths,
             "modal_active": {
                 "cv_analysis": int(modal_cv) if modal_cv else 0,
             },

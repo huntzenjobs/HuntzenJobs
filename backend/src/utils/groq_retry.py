@@ -26,15 +26,6 @@ def _is_rate_limit_error(exc: Exception) -> bool:
     )
 
 
-async def with_groq_key_rotation(
-    llms: list,
-    messages: list,
-    **kwargs: Any,
-) -> Any:
-    """Single-key wrapper — garde la signature pour compatibilité."""
-    return await with_groq_retry(llms[0].ainvoke, messages, **kwargs)
-
-
 async def with_groq_retry(
     coro_fn: Callable,
     *args: Any,

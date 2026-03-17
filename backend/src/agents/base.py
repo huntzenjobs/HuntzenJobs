@@ -24,7 +24,7 @@ from langchain_groq import ChatGroq
 from pydantic import BaseModel, Field
 
 from src.config.settings import settings
-from src.utils.groq_retry import with_groq_retry, with_groq_key_rotation
+from src.utils.groq_retry import with_groq_retry
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +92,6 @@ class BaseAgent(ABC):
             max_tokens=config.max_tokens,
             max_retries=3,  # retry natif LangChain sur 429 (backoff exponentiel)
         )
-        self._llms = [self.llm]  # compatibilité with_groq_key_rotation
-        
         # Load system prompt
         self.system_prompt = self._load_system_prompt(config)
         
@@ -192,8 +190,8 @@ class BaseAgent(ABC):
         messages = self.build_messages(message, history)
         try:
             response = await asyncio.wait_for(
-                with_groq_key_rotation(
-                    self._llms,
+                with_groq_retry(
+                    self.llm.ainvoke,
                     messages,
                     config={"metadata": {"agent_name": self.name}, "run_name": f"Agent:{self.name}"},
                 ),
