@@ -132,7 +132,8 @@
     "salary": {
       "value": "+ 35%",
       "label": "De salaire négocié en moyenne"
-    }
+    },
+    "disclaimer": "* Données indicatives basées sur nos utilisateurs actifs"
   },
   "pricing": {
     "title": "Choisissez votre plan",
@@ -150,7 +151,26 @@
     "copyright": "Tous droits réservés.",
     "privacy": "Politique de confidentialité",
     "terms": "Conditions générales",
-    "contact": "Contact"
+    "contact": "Contact",
+    "sections": {
+      "product": "Produit",
+      "resources": "Ressources",
+      "legal": "Légal"
+    },
+    "links": {
+      "cvAnalysis": "Analyse CV",
+      "jobSearch": "Recherche d'emploi",
+      "coach": "Coach IA",
+      "pricing": "Tarifs",
+      "faq": "FAQ",
+      "blog": "Blog",
+      "testimonials": "Témoignages",
+      "about": "À propos",
+      "legalNotice": "Mentions légales"
+    },
+    "social": {
+      "follow": "Suivez-nous"
+    }
   },
   "pricingPlans": {
     "popular": "POPULAIRE",

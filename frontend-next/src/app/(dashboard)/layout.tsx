@@ -39,6 +39,23 @@ export default async function DashboardLayout({
           <div className="p-4 lg:p-6">
             <Suspense fallback={<DashboardLoading />}>{children}</Suspense>
           </div>
+
+          <footer className="border-t py-3 px-4 text-center">
+            <p className="text-xs text-muted-foreground">
+              &copy; {new Date().getFullYear()} HuntZen &middot;{" "}
+              <a href="/privacy" className="hover:underline">
+                Confidentialité
+              </a>
+              {" · "}
+              <a href="/terms" className="hover:underline">
+                CGU
+              </a>
+              {" · "}
+              <a href="/contact" className="hover:underline">
+                Contact
+              </a>
+            </p>
+          </footer>
         </main>
 
         {/* Global pricing modal */}

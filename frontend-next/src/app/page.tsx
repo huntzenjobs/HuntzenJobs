@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
+import { Footer } from "@/components/layout/footer";
 import { useTranslations } from "next-intl";
 
 export default function HomePage() {
@@ -28,7 +29,6 @@ export default function HomePage() {
   const tStats = useTranslations("stats");
   const tPricing = useTranslations("pricing");
   const tPlans = useTranslations("pricingPlans");
-  const tFooter = useTranslations("footer");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -794,45 +794,7 @@ export default function HomePage() {
       {/* Internal Links Footer for SEO */}
 
       {/* Footer */}
-      <footer className="bg-black text-white py-10 sm:py-12">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg sm:text-xl">HuntZen</span>
-              <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
-            </div>
-            <p className="text-white/60 text-xs sm:text-sm text-center md:text-right max-w-md">
-              {tFooter("tagline")}
-            </p>
-          </div>
-          <hr className="border-white/10 mb-8" />
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
-            <p>
-              &copy; {new Date().getFullYear()} HuntZen. {tFooter("copyright")}
-            </p>
-            <div className="flex items-center gap-4 sm:gap-6">
-              <Link
-                href="/privacy"
-                className="hover:text-[#00D9FF] transition-colors"
-              >
-                {tFooter("privacy")}
-              </Link>
-              <Link
-                href="/terms"
-                className="hover:text-[#00D9FF] transition-colors"
-              >
-                {tFooter("terms")}
-              </Link>
-              <Link
-                href="mailto:contact@huntzenjobs.co"
-                className="hover:text-[#00D9FF] transition-colors"
-              >
-                {tFooter("contact")}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       <style jsx global>{`
         body {
