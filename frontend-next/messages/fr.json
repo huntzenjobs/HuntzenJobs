@@ -19,9 +19,25 @@
     "language": "Langue"
   },
   "hero": {
-    "subtitle": "Votre allié carrière complet pour décrocher l'emploi qui vous ressemble. Recherche ciblée, CV optimisé, et accompagnement personnalisé à chaque étape.",
-    "ctaSearch": "Commencer ma recherche",
-    "ctaDiscover": "Découvrir nos outils"
+    "tag": "Pour les candidats qui en ont assez de postuler dans le vide",
+    "h1": "Ton CV mérite d'être vu. On s'en assure.",
+    "h2": "Toutes les offres du marché, en un seul endroit.",
+    "subtitle": "CV certifié ATS · Experts carrière · Offres ciblées pour ton profil",
+    "ctaSearch": "Commencer gratuitement",
+    "ctaDiscover": "Voir comment ça marche",
+    "socialProof": "Déjà +2 000 candidats accompagnés · Sans carte bancaire"
+  },
+  "trustBar": {
+    "title": "Offres agrégées en temps réel depuis :"
+  },
+  "howItWorks": {
+    "title": "Comment ça marche ?",
+    "step1Title": "Dépose ton CV",
+    "step1Desc": "Reçois un score ATS et des recommandations concrètes en moins d'une minute",
+    "step2Title": "Découvre les offres qui te correspondent",
+    "step2Desc": "Filtre, sauvegarde et postule aux meilleures en un clic",
+    "step3Title": "Prépare-toi avec les bons outils",
+    "step3Desc": "Coachs carrière, simulation d'entretien, génération de documents — tout est là"
   },
   "tools": {
     "badge": "Tous nos outils",
@@ -97,15 +113,37 @@
     "title": "Votre allié carrière au quotidien",
     "titleHighlight": "allié carrière",
     "subtitle": "Des outils puissants et un accompagnement personnalisé pour transformer votre recherche d'emploi",
+    "jobs": {
+      "badge": "RECHERCHE",
+      "title": "Des milliers d'offres triées rien que pour toi.",
+      "description": "Plus besoin de jongler entre 10 sites. Toutes les offres sont ici, filtrées, scorées et mises à jour quotidiennement.",
+      "bullet1": "Offres de +6 plateformes (France Travail, Indeed, LinkedIn...)",
+      "bullet2": "Filtres avancés : salaire, télétravail, taille d'entreprise",
+      "bullet3": "Score de compatibilité par offre",
+      "bullet4": "Sauvegarde & suivi de tes candidatures",
+      "cta": "Explorer les offres →"
+    },
     "cv": {
-      "title": "Analyse experte et optimisation de votre CV",
+      "title": "Ton CV passe tous les filtres.",
       "titleHighlight": "Analyse experte",
-      "description": "Bénéficiez d'une analyse approfondie de votre profil pour identifier précisément vos atouts et les compétences recherchées par le marché. Recevez des recommandations concrètes pour maximiser vos chances.",
+      "badge": "CV & ATS",
+      "description": "Obtiens un score ATS détaillé, corrige les points faibles, génère un CV optimisé en PDF — prêt à être vu par les recruteurs, pas rejeté par les logiciels.",
+      "bullet1": "Score ATS sur 100 avec analyse détaillée",
+      "bullet2": "Recommandations personnalisées par section",
+      "bullet3": "Export PDF professionnel certifié ATS",
+      "bullet4": "Postes recommandés selon ton profil",
+      "cta": "Analyser mon CV →",
       "items": [
         "Évaluation détaillée de vos compétences techniques et humaines",
         "Recommandations de formations certifiantes ciblées",
         "Score d'employabilité actualisé en temps réel"
       ]
+    },
+    "coaches": {
+      "badge": "COACHS CARRIÈRE",
+      "title": "Cinq experts carrière dans ta poche.",
+      "description": "Nova, Maria, Sofia, Lucas et David — chacun spécialisé dans un domaine. Disponibles 24h/24, sans rendez-vous.",
+      "cta": "Parler à un coach →"
     },
     "matching": {
       "title": "Matching intelligent et recherche ciblée",
@@ -120,7 +158,7 @@
   },
   "stats": {
     "title": "Ils nous font confiance",
-    "subtitle": "Des milliers de candidats ont déjà trouvé leur voie avec HuntZen",
+    "subtitle": "Des candidats qui avancent avec HuntZen chaque jour",
     "candidates": {
       "value": "+ 100 000",
       "label": "Candidats accompagnés"
@@ -134,6 +172,16 @@
       "label": "De salaire négocié en moyenne"
     },
     "disclaimer": "* Données indicatives basées sur nos utilisateurs actifs"
+  },
+  "featuresGrid": {
+    "title": "Tout ce dont tu as besoin pour réussir",
+    "subtitle": "Une seule plateforme. Zéro outil manquant.",
+    "badgeSoon": "Bientôt"
+  },
+  "ctaFinal": {
+    "title": "Prêt à décrocher ton prochain emploi ?",
+    "subtitle": "Rejoins +2 000 candidats qui avancent avec HuntZen.",
+    "cta": "Commencer gratuitement — c'est sans engagement"
   },
   "pricing": {
     "title": "Choisissez votre plan",
@@ -190,6 +238,24 @@
           "Filtres avancés",
           "Gestion favoris",
           "Export PDF rapports"
+        ]
+      },
+      "starter": {
+        "name": "STARTER",
+        "period": "/mois",
+        "cta": "Commencer avec Starter",
+        "features": [
+          "Recherches d'offres illimitées",
+          "Accès à toutes les offres d'emploi",
+          "Filtres avancés (salaire, télétravail, date)",
+          "Gestion de vos favoris",
+          "Analyses de CV illimitées",
+          "Score de compatibilité détaillé",
+          "Coachs carrière (30 min/jour)"
+        ],
+        "unavailable": [
+          "Export PDF rapports",
+          "Simulation d'entretien"
         ]
       },
       "essential": {
