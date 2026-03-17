@@ -51,6 +51,7 @@ export interface Plan {
   price_yearly: number | null;
   limits: PlanLimit;
   features: string[];
+  feature_flags: Record<string, boolean>;
   is_active: boolean;
   sort_order: number;
   stripe_prices: StripePrice[];
@@ -85,12 +86,12 @@ export function useAdminPlans() {
   );
 
   const updateFeatures = useCallback(
-    async (planId: string, features: string[]) => {
+    async (planId: string, featureFlags: Record<string, boolean>) => {
       setLoading(true);
       try {
         await adminFetch(`/api/admin/plans/${planId}/features`, {
           method: "PATCH",
-          body: JSON.stringify({ features }),
+          body: JSON.stringify({ feature_flags: featureFlags }),
         });
         toast.success("Fonctionnalités mises à jour");
         window.dispatchEvent(new Event("subscription-changed"));
@@ -161,7 +162,7 @@ export function useAdminPlans() {
     loading,
     fetchPlans,
     updateLimits,
-    updateFeatures,
+    updateFeatures, // now accepts Record<string, boolean>
     updateDisplayPrice,
     updateStripePrice,
   };

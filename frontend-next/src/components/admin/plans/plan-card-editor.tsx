@@ -39,7 +39,10 @@ interface Props {
     planId: string,
     limits: Record<string, number>,
   ) => Promise<boolean>;
-  onUpdateFeatures: (planId: string, features: string[]) => Promise<boolean>;
+  onUpdateFeatures: (
+    planId: string,
+    featureFlags: Record<string, boolean>,
+  ) => Promise<boolean>;
   onUpdatePrice: (
     planId: string,
     prices: Record<string, number>,
@@ -68,7 +71,13 @@ export default function PlanCardEditor({
   const [priceYearly, setPriceYearly] = useState(
     String(plan.price_yearly ?? ""),
   );
-  const [features, setFeatures] = useState<string[]>(plan.features || []);
+  // Initialise les toggles depuis plan.feature_flags (accès réel) en retirant le préfixe "has_"
+  // Ex: { has_pdf_export: true } → ["pdf_export"]
+  const [features, setFeatures] = useState<string[]>(() =>
+    FEATURE_FLAGS.map(({ key }) => key).filter(
+      (key) => (plan.feature_flags || {})[`has_${key}`] === true,
+    ),
+  );
   const [stripePriceOpen, setStripePriceOpen] = useState<
     "monthly" | "yearly" | null
   >(null);
@@ -88,7 +97,13 @@ export default function PlanCardEditor({
 
   const handleSaveFeatures = async () => {
     setSaving("features");
-    await onUpdateFeatures(plan.id, features);
+    // Convertit ["pdf_export", "advanced_filters"] → { has_pdf_export: true, has_advanced_filters: true, ... }
+    // Tous les flags connus sont envoyés (true ou false) pour un merge complet côté backend
+    const featureFlags: Record<string, boolean> = {};
+    for (const { key } of FEATURE_FLAGS) {
+      featureFlags[`has_${key}`] = features.includes(key);
+    }
+    await onUpdateFeatures(plan.id, featureFlags);
     setSaving(null);
   };
 

@@ -546,6 +546,17 @@ async def update_plan_limits(
             "changes": limits,
         })
 
+        # Invalider TOUS les caches auth_me (changement de limites = impact global)
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis:
+                keys = [k async for k in redis.scan_iter("auth_me:*")]
+                if keys:
+                    await redis.delete(*keys)
+        except Exception:
+            pass
+
         return {"success": True, "limits": merged_limits}
 
     except HTTPException:
