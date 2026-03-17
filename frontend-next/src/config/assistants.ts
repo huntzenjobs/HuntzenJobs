@@ -59,7 +59,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     color: "#059669", // emerald-600
     bgColor: "#d1fae5", // emerald-100
     avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=Maria&backgroundColor=d1fae5",
+      "https://api.dicebear.com/9.x/lorelei/svg?seed=Maria&backgroundColor=d1fae5",
     isPremium: false,
     certificationBadge: "10+ ans d'expérience",
     specialties: [
@@ -168,15 +168,15 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
 
   branding: {
     id: "branding",
-    name: "Jeff – Coach Personal Branding",
-    personaName: "Jeff",
+    name: "David – Coach Personal Branding",
+    personaName: "David",
     shortName: "Personal Branding",
     description: "Je t'aide à construire un profil qui attire les recruteurs.",
     icon: Linkedin,
     color: "#0077b5",
     bgColor: "#dbeafe",
     avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=Jeff&backgroundColor=dbeafe",
+      "https://api.dicebear.com/9.x/personas/svg?seed=David&backgroundColor=dbeafe&hair=shortHair&skinColor=light",
     isPremium: false,
     certificationBadge: "Expert Personal Branding",
     specialties: [
