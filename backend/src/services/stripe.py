@@ -27,13 +27,17 @@ logger = get_logger(__name__)
 from src.services.user_events import log_event
 from src.services.admin_alerts import send_admin_alert
 
-# Import quota cache invalidation
-try:
-    from app.quota import invalidate_user_quota_cache
-except ImportError:
-    logger.warning("Could not import invalidate_user_quota_cache - cache invalidation disabled")
-    async def invalidate_user_quota_cache(user_id: str) -> bool:
-        return False
+async def invalidate_user_quota_cache(user_id: str) -> bool:
+    """Invalidate Redis auth_me cache for a user so /api/auth/me returns fresh data."""
+    try:
+        from src.utils.cache import get_redis
+        redis = await get_redis()
+        if redis:
+            deleted = await redis.delete(f"auth_me:{user_id}")
+            return deleted > 0
+    except Exception as e:
+        logger.warning(f"[cache] invalidate_user_quota_cache failed for {user_id}: {e}")
+    return False
 
 # Import email service for recruiter confirmations
 try:

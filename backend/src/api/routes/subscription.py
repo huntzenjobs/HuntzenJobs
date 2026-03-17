@@ -19,7 +19,6 @@ router = APIRouter()
 # Import dependencies
 try:
     from src.api.deps import get_current_user
-    from app.quota import invalidate_user_quota_cache, get_user_quota_status
     from src.services.stripe import supabase_client
 except ImportError as e:
     logger.error(f"Failed to import dependencies: {e}")
@@ -47,20 +46,41 @@ async def sync_subscription_cache(current_user: dict = Depends(get_current_user)
 
         logger.info(f"Syncing subscription cache for user {user_id}")
 
-        # Invalidate all quota caches
-        success = await invalidate_user_quota_cache(user_id)
+        # Invalidate Redis cache (auth_me key) so /api/auth/me returns fresh data
+        cache_invalidated = False
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis:
+                deleted = await redis.delete(f"auth_me:{user_id}")
+                cache_invalidated = deleted > 0
+                logger.info(f"Redis cache invalidated for user {user_id}: {cache_invalidated}")
+        except Exception as e:
+            logger.warning(f"Redis cache invalidation failed (non-blocking): {e}")
 
-        if not success:
-            logger.warning(f"Cache invalidation returned false for user {user_id}")
-
-        # Return fresh quota status
-        quota_status = await get_user_quota_status(user_id)
+        # Return fresh quota status via Supabase RPC
+        quota_status = {}
+        if supabase_client:
+            try:
+                quota_result = supabase_client.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+                for row in (quota_result.data or []):
+                    feature = row.get("feature")
+                    if feature:
+                        quota_status[feature] = {
+                            "limit": row.get("quota_limit"),
+                            "used": row.get("quota_used"),
+                            "remaining": row.get("quota_remaining"),
+                            "has_access": row.get("has_access"),
+                            "reset_at": str(row.get("reset_at", "")),
+                        }
+            except Exception as e:
+                logger.warning(f"Failed to fetch quota status for {user_id}: {e}")
 
         logger.info(f"Cache synced successfully for user {user_id}")
 
         return {
             "success": True,
-            "cache_invalidated": success,
+            "cache_invalidated": cache_invalidated,
             "quotas": quota_status
         }
 
@@ -232,9 +252,12 @@ async def manage_coach_session(
 
             logger.info(f"Stopped coach session for user {user_id}: {elapsed_seconds}s")
 
-            # Invalidate cache to refresh quota
+            # Invalidate Redis cache so next /api/auth/me reflects updated quota
             try:
-                invalidate_user_quota_cache(user_id)
+                from src.utils.cache import get_redis
+                redis = await get_redis()
+                if redis:
+                    await redis.delete(f"auth_me:{user_id}")
             except Exception as e:
                 logger.warning(f"Failed to invalidate quota cache after coach session: {e}")
 
