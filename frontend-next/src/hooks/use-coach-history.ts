@@ -168,10 +168,12 @@ export function useCoachHistory(): UseCoachHistoryReturn {
       messages,
       sessionId,
       conversationId,
+      assistantType,
     }: {
       messages: CoachMessage[];
       sessionId: string;
       conversationId?: string;
+      assistantType?: string;
     }) => {
       if (!userId) throw new Error("User not authenticated");
 
@@ -201,6 +203,7 @@ export function useCoachHistory(): UseCoachHistoryReturn {
             session_id: sessionId,
             messages,
             title,
+            ...(assistantType ? { assistant_type: assistantType } : {}),
           })
           .select()
           .single();
@@ -545,6 +548,7 @@ export function useCoachHistory(): UseCoachHistoryReturn {
       messages: CoachMessage[],
       sessionId: string,
       conversationId?: string,
+      assistantType?: string,
     ): Promise<string | null> => {
       if (!canUseHistory) {
         console.warn("User does not have access to coach history feature");
@@ -563,6 +567,7 @@ export function useCoachHistory(): UseCoachHistoryReturn {
           messages,
           sessionId,
           conversationId,
+          assistantType,
         });
         return result;
       } catch (err) {

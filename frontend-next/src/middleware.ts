@@ -130,31 +130,20 @@ export async function middleware(request: NextRequest) {
   if (!existingLocaleCookie) {
     let detectedLocale = DEFAULT_LOCALE;
 
-    // Priority 1: IP Geolocation (Vercel Edge provides request.geo automatically)
-    const geo = request.geo;
-    const countryCode = geo?.country; // ISO country code (e.g., "FR", "US", "BR")
+    // Priority 1: Vercel geo headers (works in production on Vercel Edge)
+    // x-vercel-ip-country is the reliable header — request.geo is deprecated
+    const countryCode =
+      request.headers.get("x-vercel-ip-country") || request.geo?.country;
 
     if (countryCode && COUNTRY_TO_LANG[countryCode]) {
       detectedLocale = COUNTRY_TO_LANG[countryCode];
-    } else {
-      // Priority 2: Accept-Language header
-      const acceptLanguage = request.headers.get("accept-language");
-      if (acceptLanguage) {
-        // Parse "fr-FR,fr;q=0.9,en;q=0.8" → extract primary language
-        const primaryLang = acceptLanguage
-          .split(",")[0]
-          .split("-")[0]
-          .toLowerCase();
-        if (SUPPORTED_LOCALES.includes(primaryLang as any)) {
-          detectedLocale = primaryLang;
-        }
-      }
     }
+    // No Accept-Language fallback — default stays "fr" for French-first platform
 
-    // Set locale cookie (1 year expiry)
+    // Set locale cookie (7 days — auto-re-detect weekly, avoids stale wrong locale)
     supabaseResponse.cookies.set("NEXT_LOCALE", detectedLocale, {
       path: "/",
-      maxAge: 365 * 24 * 60 * 60, // 1 year
+      maxAge: 7 * 24 * 60 * 60, // 7 days
       sameSite: "lax",
     });
   }

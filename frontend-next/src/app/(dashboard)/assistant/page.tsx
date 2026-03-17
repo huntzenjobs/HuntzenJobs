@@ -154,7 +154,12 @@ export default function AssistantPage() {
       const coachMessages = debouncedMessages.map(toCoachMessage);
 
       saveConversationRef
-        .current(coachMessages, sessionId, currentConversationId || undefined)
+        .current(
+          coachMessages,
+          sessionId,
+          currentConversationId || undefined,
+          selectedAssistant,
+        )
         .then((id) => {
           if (id && !currentConversationId) {
             setCurrentConversationId(id);
@@ -327,6 +332,18 @@ export default function AssistantPage() {
 
       setMessages(chatMessages);
       setCurrentConversationId(conversation.id);
+
+      // Restore the assistant that created this conversation
+      if (conversation.assistant_type) {
+        const { ASSISTANTS_CONFIG } = await import("@/lib/assistants");
+        if (
+          conversation.assistant_type in ASSISTANTS_CONFIG &&
+          conversation.assistant_type !== selectedAssistant
+        ) {
+          triggerTransition();
+          setSelectedAssistant(conversation.assistant_type as AssistantType);
+        }
+      }
     }
   };
 
@@ -361,6 +378,7 @@ export default function AssistantPage() {
         coachMessages,
         sessionId,
         currentConversationId || undefined,
+        selectedAssistant,
       );
     }
 
