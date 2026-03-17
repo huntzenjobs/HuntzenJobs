@@ -42,7 +42,10 @@ export default function ReferralPage() {
   const [copied, setCopied] = useState(false);
 
   const fetchStatus = useCallback(async () => {
-    if (!session?.access_token) return;
+    if (!session?.access_token) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/referrals/boost-status`,
@@ -84,7 +87,7 @@ export default function ReferralPage() {
       </div>
     );
   }
-  if (!status && !isLoading) {
+  if (!status) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 text-center">
         <p className="text-muted-foreground mb-4">
@@ -119,7 +122,7 @@ export default function ReferralPage() {
         <p className="text-sm font-semibold mb-3">Ton lien de parrainage</p>
         <div className="flex gap-2">
           <div className="flex-1 text-xs font-mono bg-muted rounded-lg px-3 py-2.5 truncate text-muted-foreground">
-            {status.referral_link}
+            {status?.referral_link}
           </div>
           <button
             onClick={handleCopy}
@@ -150,6 +153,7 @@ export default function ReferralPage() {
               window.open(
                 `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(status.referral_link)}`,
                 "_blank",
+                "noopener,noreferrer",
               );
             }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0A66C2] text-white text-sm font-medium hover:bg-[#004182] transition-colors"
