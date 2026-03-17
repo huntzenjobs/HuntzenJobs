@@ -151,6 +151,8 @@ class CVAnalyzerAgent(BaseAgent):
             improvements_result = results[2] if isinstance(results[2], dict) else {}
             job_match_result = results[3] if len(results) > 3 and isinstance(results[3], dict) else {}
             
+            recommended_titles = self._extract_recommended_titles(skills_result)
+
             # Build response (with score capping to prevent validation errors)
             return {
                 "success": True,
@@ -167,6 +169,7 @@ class CVAnalyzerAgent(BaseAgent):
                 "job_match": job_match_result if job_description else None,
                 "strengths": self._extract_strengths(ats_result, skills_result),
                 "weaknesses": self._extract_weaknesses(ats_result, improvements_result),
+                "recommended_job_titles": recommended_titles,
             }
             
         except Exception as e:
@@ -199,6 +202,13 @@ class CVAnalyzerAgent(BaseAgent):
         result = await self.improvement_advisor.run(task=f"Suggest improvements:\n\n{cv_text}")
         return self._parse_json(result) or {}
     
+    def _extract_recommended_titles(self, skills_result: dict) -> list[str]:
+        """Extraire les titres de poste recommandés depuis l'analyse des skills."""
+        titles = skills_result.get("suggested_job_titles", [])
+        if isinstance(titles, list):
+            return [str(t) for t in titles[:4] if t]
+        return []
+
     def _extract_strengths(self, ats_result: dict, skills_result: dict) -> list[str]:
         """Extract strengths from analysis."""
         strengths = []

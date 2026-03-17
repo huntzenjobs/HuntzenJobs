@@ -51,6 +51,7 @@ interface CVAnalysisResult {
   keywords_missing: string[];
   job_match_score?: number;
   job_match_explanation?: string;
+  suggested_job_titles?: string[];
   analysis_language: "fr" | "en";
   processed_at: string;
   processing_time_seconds?: number;
