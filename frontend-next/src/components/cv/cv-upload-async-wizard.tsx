@@ -1408,7 +1408,7 @@ export function CVUploadAsyncWizard({
                 <p className="text-green-700 text-sm">
                   {loadedHistoryResult
                     ? "Résultats précédemment générés"
-                    : `Traité en ${displayResult.processing_time_seconds || elapsedTime} secondes avec Modal Labs`}
+                    : `Traité en ${displayResult.processing_time_seconds || elapsedTime} secondes`}
                 </p>
               </div>
             </div>

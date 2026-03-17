@@ -53,6 +53,7 @@ from src.api.deps import (
     clear_session,
     get_current_user,
     get_supabase_client,
+    check_assistant_quota,
 )
 from src.services.user_events import log_event
 from src.api.middleware import limiter
@@ -78,6 +79,36 @@ async def _get_arq_pool():
     return _arq_pool
 
 logger = get_logger(__name__)
+
+
+def _check_coach_quota(user_id: str) -> None:
+    """Check coach seconds quota. Raises 429 if exhausted."""
+    try:
+        supabase = get_supabase_client()
+        result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if not result.data:
+            return
+        for row in result.data:
+            if row.get("feature") == "coach":
+                if not row.get("has_access", True):
+                    from fastapi import HTTPException, status
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "code": "QUOTA_EXCEEDED",
+                            "feature": "coach",
+                            "limit": row.get("quota_limit"),
+                            "used": row.get("quota_used"),
+                            "reset_at": str(row.get("reset_at", "")),
+                            "message": "Quota de coaching journalier atteint. Passez à un plan supérieur pour continuer."
+                        }
+                    )
+                return
+    except Exception as e:
+        if hasattr(e, 'status_code'):
+            raise
+        logger.warning(f"[quota] coach check failed for {user_id}, allowing through: {e}")
+
 
 # Pydantic models for sync-time endpoint
 class CoachTimeSyncRequest(BaseModel):
@@ -108,6 +139,11 @@ async def coach_chat(
     Réponse synchrone : CoachResponse standard
     Réponse queue     : {"queued": true, "job_id": "...", "position": N, "estimated_wait_seconds": N}
     """
+    # ✅ CHECK QUOTA COACH AVANT TRAITEMENT
+    user_id_for_quota = current_user.get("id")
+    if user_id_for_quota:
+        _check_coach_quota(user_id_for_quota)
+
     # Compteur global Redis cross-replicas : INCR atomique
     try:
         active = await _incr_active()

@@ -49,6 +49,38 @@ else:
 # QUOTA INCREMENT HELPER
 # ============================================
 
+def check_cv_analysis_quota(user_id: str) -> None:
+    """
+    Check if user has remaining CV analysis quota.
+    Raises HTTP 429 if quota exceeded. Mirrors check_assistant_quota() in deps.py.
+    """
+    if not supabase_client:
+        return  # No Supabase = allow through (dev mode)
+    try:
+        result = supabase_client.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if not result.data:
+            return
+        for row in result.data:
+            if row.get("feature") == "cv_analysis":
+                if not row.get("has_access", True):
+                    raise HTTPException(
+                        status_code=429,
+                        detail={
+                            "code": "QUOTA_EXCEEDED",
+                            "feature": "cv_analysis",
+                            "limit": row.get("quota_limit"),
+                            "used": row.get("quota_used"),
+                            "reset_at": str(row.get("reset_at", "")),
+                            "message": "Quota d'analyses CV journalier atteint. Passez à un plan supérieur pour continuer."
+                        }
+                    )
+                return
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"[quota] CV check failed for {user_id}, allowing through: {e}")
+
+
 async def increment_user_cv_quota(user_id: str) -> bool:
     """
     Increment cv_analysis usage quota for user via Supabase RPC.
@@ -144,6 +176,9 @@ async def analyze_cv_async(
             status_code=400,
             detail="Please provide either a file or cv_text parameter"
         )
+
+    # ✅ CHECK QUOTA BEFORE PROCESSING — blocks if daily limit exceeded
+    check_cv_analysis_quota(user_id)
 
     return await process_cv_async(
         user_id=user_id,

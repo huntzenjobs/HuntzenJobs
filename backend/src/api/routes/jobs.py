@@ -9,15 +9,57 @@ from typing import List
 
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, HTTPException, status, Query, Request
+from fastapi import APIRouter, HTTPException, status, Query, Request, Header
+from typing import Optional
 
-from src.api.deps import ScoutAgentDep
+from src.api.deps import ScoutAgentDep, get_user_id_from_token, get_supabase_client
 from src.api.middleware import limiter
 from src.models.schemas import JobSearchRequest, JobSearchResponse, SearchMetadata, Job
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _check_job_search_quota(user_id: str) -> None:
+    """Check job_search quota. Raises 429 if exhausted."""
+    try:
+        supabase = get_supabase_client()
+        result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if not result.data:
+            return
+        for row in result.data:
+            if row.get("feature") == "job_search":
+                if not row.get("has_access", True):
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "code": "QUOTA_EXCEEDED",
+                            "feature": "job_search",
+                            "limit": row.get("quota_limit"),
+                            "used": row.get("quota_used"),
+                            "reset_at": str(row.get("reset_at", "")),
+                            "message": "Quota de recherches journalier atteint. Passez à un plan supérieur pour continuer."
+                        }
+                    )
+                return
+    except Exception as e:
+        if hasattr(e, 'status_code'):
+            raise
+        logger.warning(f"[quota] job_search check failed for {user_id}, allowing through: {e}")
+
+
+def _increment_job_search_quota(user_id: str) -> None:
+    """Increment job_search usage. Best-effort, never raises."""
+    try:
+        supabase = get_supabase_client()
+        supabase.rpc("increment_usage", {
+            "p_user_id": user_id,
+            "p_feature": "job_search",
+            "p_amount": 1,
+        }).execute()
+    except Exception as e:
+        logger.warning(f"[quota] job_search increment failed for {user_id}: {e}")
 
 
 def apply_advanced_filters(
@@ -136,6 +178,7 @@ async def search_jobs(
     request: Request,  # Required for rate limiting
     data: JobSearchRequest,
     agent: ScoutAgentDep,
+    authorization: Optional[str] = Header(default=None),
 ):
     """
     Search for jobs across multiple providers.
@@ -146,6 +189,11 @@ async def search_jobs(
     - Deduplicate and rank results
     - Provide market insights
     """
+    # ✅ CHECK QUOTA AVANT RECHERCHE
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        _check_job_search_quota(user_id)
+
     result = await agent.run(
         job_title=data.job_title,
         country_code=data.country_code,
@@ -184,7 +232,7 @@ async def search_jobs(
     
     metadata = result.get("metadata", {})
     
-    return JobSearchResponse(
+    response = JobSearchResponse(
         success=True,
         jobs=jobs,
         metadata=SearchMetadata(
@@ -197,6 +245,12 @@ async def search_jobs(
         ),
         ai_insights=str(result.get("insights", "")) if result.get("insights") else None,
     )
+
+    # ✅ INCRÉMENTER QUOTA APRÈS SUCCÈS
+    if user_id:
+        _increment_job_search_quota(user_id)
+
+    return response
 
 
 @router.get("/search")
