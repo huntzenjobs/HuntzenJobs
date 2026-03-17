@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter
 
-from src.db.supabase_client import get_supabase_client
+from src.api.deps import get_supabase_client
 
 logger = logging.getLogger(__name__)
 

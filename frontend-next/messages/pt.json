@@ -918,5 +918,50 @@
     "downloadCoverLetter": "Baixar carta",
     "cancelButton": "Cancelar",
     "retryButton": "Tentar novamente"
+  },
+  "trustBar": {
+    "title": "Ofertas agregadas em tempo real de:"
+  },
+  "howItWorks": {
+    "title": "Como funciona?",
+    "step1Title": "Carregue o seu CV",
+    "step1Desc": "Receba uma pontuação ATS e recomendações concretas em menos de um minuto",
+    "step2Title": "Descubra as ofertas que lhe correspondem",
+    "step2Desc": "Filtre, guarde e candidate-se às melhores com um clique",
+    "step3Title": "Prepare-se com as ferramentas certas",
+    "step3Desc": "Coaches de carreira, simulação de entrevistas, geração de documentos — tudo está aqui"
+  },
+  "featuresGrid": {
+    "title": "Tudo o que precisa para ter sucesso",
+    "subtitle": "Uma plataforma. Nenhuma ferramenta em falta.",
+    "badgeSoon": "Em breve"
+  },
+  "team": {
+    "tagline": "A sua equipa de carreira, sempre consigo.",
+    "subtitle": "Ajudamo-lo a construir a carreira que realmente quer."
+  },
+  "progression": {
+    "title": "O seu progresso profissional",
+    "cvOptimised": "CV otimizado",
+    "profileImproved": "Perfil melhorado",
+    "interviewSimulated": "Entrevista simulada",
+    "applicationsSent": "Candidaturas enviadas",
+    "progressMessage": "Está a progredir bem. Mais alguns passos e estará pronto para se candidatar."
+  },
+  "retention": {
+    "notification1": "Acabei de encontrar 3 ofertas que podem corresponder-lhe.",
+    "notification2": "O seu CV ainda pode ser melhorado para atrair mais recrutadores.",
+    "notification3": "Quer fazer uma simulação de entrevista rápida?",
+    "relance3days": "Continuamos a avançar na sua carreira?",
+    "relance7days": "Uma oportunidade pode estar à sua espera hoje."
+  },
+  "coachFeedback": {
+    "sofia": { "good": "O seu CV já é sólido. Ainda o podemos melhorar." },
+    "lucas": { "good": "A sua resposta é boa. Podemos torná-la ainda mais impactante." }
+  },
+  "ctaFinal": {
+    "title": "Pronto para conseguir o seu próximo emprego?",
+    "subtitle": "Junte-se a mais de 2.000 candidatos que avançam com HuntZen.",
+    "cta": "Começar gratuitamente — sem compromisso"
   }
 }

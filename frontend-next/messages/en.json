@@ -928,5 +928,50 @@
     "downloadCoverLetter": "Download the letter",
     "cancelButton": "Cancel",
     "retryButton": "Retry"
+  },
+  "trustBar": {
+    "title": "Real-time aggregated job offers from:"
+  },
+  "howItWorks": {
+    "title": "How does it work?",
+    "step1Title": "Upload your CV",
+    "step1Desc": "Get an ATS score and concrete recommendations in under a minute",
+    "step2Title": "Discover matching jobs",
+    "step2Desc": "Filter, save and apply to the best ones in one click",
+    "step3Title": "Prepare with the right tools",
+    "step3Desc": "Career coaches, interview simulation, document generation — everything is here"
+  },
+  "featuresGrid": {
+    "title": "Everything you need to succeed",
+    "subtitle": "One platform. Zero missing tools.",
+    "badgeSoon": "Soon"
+  },
+  "team": {
+    "tagline": "Your career team, always with you.",
+    "subtitle": "We help you build the career you truly want."
+  },
+  "progression": {
+    "title": "Your career progress",
+    "cvOptimised": "CV optimized",
+    "profileImproved": "Profile improved",
+    "interviewSimulated": "Interview simulated",
+    "applicationsSent": "Applications sent",
+    "progressMessage": "You're making great progress. A few more steps and you'll be ready to apply."
+  },
+  "retention": {
+    "notification1": "I just found 3 offers that could really match you.",
+    "notification2": "Your CV can still be improved to attract more recruiters.",
+    "notification3": "Would you like to do a quick interview simulation?",
+    "relance3days": "Shall we keep moving on your career?",
+    "relance7days": "An opportunity might be waiting for you today."
+  },
+  "coachFeedback": {
+    "sofia": { "good": "Your CV is already solid. We can still improve it." },
+    "lucas": { "good": "Your answer is good. We can make it even more impactful." }
+  },
+  "ctaFinal": {
+    "title": "Ready to land your next job?",
+    "subtitle": "Join +2,000 candidates moving forward with HuntZen.",
+    "cta": "Start for free — no commitment"
   }
 }
