@@ -33,7 +33,6 @@ import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { toast } from "sonner";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
-import { useTranslations } from "next-intl";
 import { usePlansConfig } from "@/hooks/use-plans-config";
 
 // Icon mapping — décoratives, statiques
@@ -154,8 +153,6 @@ export default function PricingPage() {
   const user = auth?.user;
   const subscription = useOptionalSubscription();
   const apiData = useSubscriptionApi();
-  const t = useTranslations("pricing");
-
   const { getPlan, formatPrice, isLoading: plansLoading } = usePlansConfig();
 
   const pricingHoverPopup = useConversionPopup("pricing_hover");
@@ -337,9 +334,7 @@ export default function PricingPage() {
             >
               Choisissez votre plan
               <br />
-              <span className="bg-gradient-to-r from-[#00D9FF] to-purple-400 bg-clip-text text-transparent">
-                et décrochez votre job
-              </span>
+              <span className="text-[#00D9FF]">et décrochez votre job</span>
             </motion.h1>
 
             <motion.p
@@ -418,7 +413,7 @@ export default function PricingPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full"
                 >
-                  🎉 {t("saveUpTo20")}
+                  🎉 Économisez jusqu&apos;à 20%
                 </motion.span>
               )}
             </div>
@@ -582,27 +577,12 @@ export default function PricingPage() {
                     disabled={plan.id === currentPlan}
                   >
                     {plan.id === currentPlan
-                      ? t("currentPlan")
-                      : t("choosePlan", { name: plan.name })}
+                      ? "✓ Plan actuel"
+                      : `Choisir ${plan.name}`}
                   </Button>
                 </motion.div>
               ))}
             </div>
-
-            {/* Money back guarantee */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mt-12"
-            >
-              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-green-50 border-2 border-green-200">
-                <Shield className="w-5 h-5 text-green-600" />
-                <span className="text-green-800 font-semibold text-sm sm:text-base">
-                  Garantie satisfait ou remboursé pendant 14 jours
-                </span>
-              </div>
-            </motion.div>
           </div>
         </section>
 
@@ -832,10 +812,6 @@ export default function PricingPage() {
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-[#00D9FF]" />
                 <span>Sans engagement</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-[#00D9FF]" />
-                <span>14 jours satisfait ou remboursé</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-[#00D9FF]" />
