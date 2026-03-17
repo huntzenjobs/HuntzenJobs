@@ -978,6 +978,71 @@ async def get_usage_heatmap(
 # LOGS
 # ============================================================
 
+@router.get("/events")
+async def get_platform_events(
+    admin: AdminUserDep,
+    feature: Optional[str] = Query(default=None),
+    category: Optional[str] = Query(default=None),
+    severity: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None, description="Search in event_label"),
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=50, ge=1, le=200),
+) -> Dict[str, Any]:
+    """Fetch all platform user_events (business events with readable labels)."""
+    supabase = get_supabase_client()
+    try:
+        query = supabase.table("user_events").select(
+            "id, created_at, event_name, event_label, category, feature, severity, user_id, properties"
+        ).order("created_at", desc=True)
+
+        if feature:
+            query = query.eq("feature", feature)
+        if category:
+            query = query.eq("category", category)
+        if severity:
+            query = query.eq("severity", severity)
+        if search:
+            query = query.ilike("event_label", f"%{search}%")
+
+        offset = (page - 1) * per_page
+        result = query.range(offset, offset + per_page - 1).execute()
+
+        count_q = supabase.table("user_events").select("id", count="exact")
+        if feature:
+            count_q = count_q.eq("feature", feature)
+        if category:
+            count_q = count_q.eq("category", category)
+        if severity:
+            count_q = count_q.eq("severity", severity)
+        if search:
+            count_q = count_q.ilike("event_label", f"%{search}%")
+        count_result = count_q.execute()
+
+        events_data = result.data or []
+        user_ids = list({e["user_id"] for e in events_data if e.get("user_id")})
+        profiles_map: Dict[str, str] = {}
+        if user_ids:
+            profiles_res = supabase.table("profiles").select(
+                "id, email"
+            ).in_("id", user_ids).execute()
+            profiles_map = {p["id"]: p["email"] for p in (profiles_res.data or [])}
+
+        events = [
+            {**e, "email": profiles_map.get(e.get("user_id") or "")}
+            for e in events_data
+        ]
+
+        return {
+            "events": events,
+            "total": count_result.count or 0,
+            "page": page,
+            "per_page": per_page,
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch platform events: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch events")
+
+
 @router.get("/logs/security")
 async def get_security_logs(
     admin: AdminUserDep,
