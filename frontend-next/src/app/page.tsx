@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -29,6 +29,15 @@ export default function HomePage() {
   const tPricing = useTranslations("pricing");
   const tPlans = useTranslations("pricingPlans");
   const tFooter = useTranslations("footer");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref && /^[a-zA-Z0-9_-]{3,32}$/.test(ref)) {
+      document.cookie = `huntzen_referral_code=${ref}; path=/; max-age=604800; SameSite=Lax`;
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <LandingHeader />

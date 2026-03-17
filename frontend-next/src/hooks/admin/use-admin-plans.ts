@@ -130,6 +130,30 @@ export function useAdminPlans() {
     [],
   );
 
+  const updateWording = useCallback(
+    async (
+      planId: string,
+      wording: { display_name?: string; description?: string },
+    ) => {
+      setLoading(true);
+      try {
+        await adminFetch(`/api/admin/plans/${planId}/wording`, {
+          method: "PATCH",
+          body: JSON.stringify(wording),
+        });
+        toast.success("Wording mis à jour");
+        window.dispatchEvent(new Event("subscription-changed"));
+        return true;
+      } catch (e: any) {
+        toast.error(e.message || "Erreur lors de la mise à jour du wording");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   const updateStripePrice = useCallback(
     async (
       planId: string,
@@ -164,6 +188,7 @@ export function useAdminPlans() {
     updateLimits,
     updateFeatures, // now accepts Record<string, boolean>
     updateDisplayPrice,
+    updateWording,
     updateStripePrice,
   };
 }

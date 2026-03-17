@@ -4,13 +4,7 @@ import { Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/contexts/subscription-context";
 import { PlanType, PLAN_LIMITS } from "@/hooks/use-freemium-limits";
-
-const PLAN_NAMES: Record<PlanType, string> = {
-  free: "Gratuit",
-  starter: "Starter",
-  pro: "Pro",
-  premium: "Premium",
-};
+import { usePlansConfig } from "@/hooks/use-plans-config";
 
 const PLAN_COLORS: Record<PlanType, string> = {
   free: "gray",
@@ -33,6 +27,7 @@ export function FeatureLockOverlay({
   message,
 }: FeatureLockOverlayProps) {
   const { hasFeature, getRequiredPlan, openPricingModal } = useSubscription();
+  const { getPlan } = usePlansConfig();
 
   const hasAccess = hasFeature(feature);
   const requiredPlan = getRequiredPlan(feature);
@@ -55,7 +50,8 @@ export function FeatureLockOverlay({
             <Lock className="w-6 h-6 text-gray-500" />
           </div>
           <p className="text-sm font-medium text-gray-700 mb-1">
-            {message || `Disponible avec ${PLAN_NAMES[requiredPlan]}`}
+            {message ||
+              `Disponible avec ${getPlan(requiredPlan)?.display_name ?? requiredPlan}`}
           </p>
           <Button
             size="sm"
@@ -83,6 +79,7 @@ export function FeatureLockBadge({
   showText = true,
 }: FeatureLockBadgeProps) {
   const { hasFeature, getRequiredPlan, openPricingModal } = useSubscription();
+  const { getPlan } = usePlansConfig();
 
   const hasAccess = hasFeature(feature);
   const requiredPlan = getRequiredPlan(feature);
@@ -106,7 +103,7 @@ export function FeatureLockBadge({
       } ${className}`}
     >
       <Lock className="w-3 h-3" />
-      {showText && PLAN_NAMES[requiredPlan]}
+      {showText && (getPlan(requiredPlan)?.display_name ?? requiredPlan)}
     </button>
   );
 }

@@ -227,6 +227,9 @@
     letter-spacing: 0.02em;
   }
 </style>
+{% if cv.huntzen_certified %}
+<meta name="generator" content="HuntZen Jobs ATS Optimizer">
+{% endif %}
 </head>
 <body>
 
@@ -397,7 +400,10 @@
 {% endif %}
 
 {% if cv.huntzen_certified %}
+<!-- Texte visible discret -->
 <div class="hz-certified-footer">Optimisé par HuntZen Jobs · ATS Certified</div>
+<!-- Texte invisible pour extraction fiable par les parsers PDF (hors écran, dans le flux DOM) -->
+<span style="font-size:1pt;color:white;position:absolute;left:-9999px;">HuntZen ATS Certified huntzenjobs.com Optimisé par HuntZen</span>
 {% endif %}
 
 </body>

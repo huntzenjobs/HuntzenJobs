@@ -1485,6 +1485,27 @@ export function CVUploadAsyncWizard({
             </div>
           )}
 
+          {/* Postes recommandés */}
+          {displayResult.suggested_job_titles &&
+            displayResult.suggested_job_titles.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                  Postes recommandés pour votre profil
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {displayResult.suggested_job_titles.map((title: string) => (
+                    <a
+                      key={title}
+                      href={`/jobs?q=${encodeURIComponent(title)}`}
+                      className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors"
+                    >
+                      {title} →
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
           {/* Smart CTAs — "Et maintenant ?" */}
           <div className="mt-8 border-t border-gray-100 pt-6">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
@@ -1522,10 +1543,15 @@ export function CVUploadAsyncWizard({
 
               {/* CTA 2 : Offres recommandées */}
               {(() => {
+                const suggestedTitles: string[] =
+                  displayResult.suggested_job_titles || [];
                 const topSkills: string[] = (
                   displayResult.keywords_found || []
                 ).slice(0, 3);
-                const query = topSkills.join(" ");
+                const query =
+                  suggestedTitles.length > 0
+                    ? suggestedTitles[0]
+                    : topSkills.join(" ");
                 return (
                   <a
                     href={`/jobs${query ? `?q=${encodeURIComponent(query)}` : ""}`}
@@ -1537,7 +1563,9 @@ export function CVUploadAsyncWizard({
                         Offres recommandées
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Trouver des offres qui correspondent à ce profil
+                        {suggestedTitles.length > 0
+                          ? suggestedTitles[0]
+                          : "Trouver des offres qui correspondent à ce profil"}
                       </p>
                     </div>
                   </a>

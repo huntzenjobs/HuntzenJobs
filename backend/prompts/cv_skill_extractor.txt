@@ -47,7 +47,8 @@ You produce ONLY this JSON structure:
   "languages": [{"name": "string", "level": "string"}],
   "certifications": [],
   "experience_years": integer,
-  "seniority_level": "junior|mid|mid-senior|senior|lead"
+  "seniority_level": "junior|mid|mid-senior|senior|lead",
+  "suggested_job_titles": ["string", "string", "string"]
 }
 
 
@@ -59,6 +60,7 @@ You produce ONLY this JSON structure:
 - Categorize Soft Skills and Domain Knowledge.
 - Detect proficiency levels for languages.
 - Calculate approximate years of experience and seniority level.
+- suggested_job_titles: Based on all skills and experience level, suggest 3-4 job titles the candidate should target. Use standard job title formats (ex: "Développeur Full-Stack React/Node.js", "Data Scientist Python").
 
 🎯 SOFT SKILLS DETECTION - CRITICAL RULES:
 Look for soft skills under ANY of these section names (case-insensitive):

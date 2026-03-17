@@ -77,6 +77,15 @@ import {
   type AdvancedFilters,
 } from "@/components/jobs/advanced-filters-modal";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { RecruiterEmailFinder } from "@/components/recruiter/recruiter-email-finder";
+import { UserSearch } from "lucide-react";
 
 // ─── Fuzzy location helpers ───────────────────────────────────────────────────
 
@@ -2135,6 +2144,29 @@ export default function JobsPage() {
                           <ExternalLink className="ml-2 h-4 w-4" />
                         </Button>
                       </div>
+
+                      {/* Recruiter email finder */}
+                      <Sheet>
+                        <SheetTrigger asChild>
+                          <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                            <UserSearch className="w-3.5 h-3.5" />
+                            Trouver les recruteurs
+                            <span className="px-1 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-semibold rounded">
+                              BÊTA
+                            </span>
+                          </button>
+                        </SheetTrigger>
+                        <SheetContent>
+                          <SheetHeader>
+                            <SheetTitle>Trouver les recruteurs</SheetTitle>
+                          </SheetHeader>
+                          <div className="mt-4">
+                            <RecruiterEmailFinder
+                              companyName={job.company || ""}
+                            />
+                          </div>
+                        </SheetContent>
+                      </Sheet>
                     </CardContent>
                   </Card>
                 </motion.div>

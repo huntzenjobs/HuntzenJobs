@@ -445,6 +445,8 @@ MISSION : Analyser ce CV avec rigueur et précision.
 
 RÈGLE ABSOLUE : Chaque explication DOIT citer le contenu réel du CV (noms d'entreprises, technologies, dates, chiffres trouvés dans le texte). Les phrases génériques comme "votre CV est bien structuré" sont INTERDITES.
 
+Pour suggested_job_titles : propose 3 titres de postes que le candidat devrait cibler, en te basant sur ses compétences et son niveau d'expérience. Utilise des formats standards (ex: "Développeur Full-Stack React/Node.js", "Data Scientist Python", "Chef de Projet IT").
+
 CV à analyser :
 ---
 {cv_text}
@@ -477,6 +479,7 @@ Réponds UNIQUEMENT avec le JSON suivant. Aucun texte avant ou après. Aucun blo
     "missing_sections": ["<sections ATS standard absentes du CV, ex: Résumé professionnel, Liens GitHub/Portfolio, Certifications>"],
     "keywords_found": ["<liste des mots-clés techniques pertinents TROUVÉS dans le CV>"],
     "keywords_missing": ["<liste des mots-clés importants ABSENTS du CV pour ce type de profil>"],
+    "suggested_job_titles": ["<titre poste 1 : format standard ex: 'Développeur Full-Stack React/Node.js'>", "<titre poste 2>", "<titre poste 3>"],
     {job_match_json_fields}
 }}"""
 

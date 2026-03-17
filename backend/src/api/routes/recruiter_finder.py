@@ -5,16 +5,95 @@ Expose Hunter.io contact discovery via a single POST endpoint.
 """
 
 import logging
+import os
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Header, status
 from pydantic import BaseModel
+from supabase import create_client, Client
 
 from src.services.recruiter_finder.hunter import find_recruiters_for_job
+from src.api.deps import get_user_id_from_token
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# ============================================================================
+# Supabase client for quota management
+# ============================================================================
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase_client: Optional[Client] = create_client(SUPABASE_URL, SUPABASE_KEY)
+else:
+    supabase_client = None
+    logger.warning("Supabase not configured for quota management (recruiter_finder)")
+
+
+# ============================================================================
+# Quota helpers
+# ============================================================================
+
+
+def check_recruiter_search_quota(user_id: str) -> None:
+    """
+    Vérifie le quota recruiter_search de l'utilisateur.
+    Lève HTTP 429 si le quota est dépassé.
+    """
+    if not supabase_client:
+        return  # Dev mode — pas de Supabase configuré
+    try:
+        result = supabase_client.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if not result.data:
+            return
+        for row in result.data:
+            if row.get("feature") == "recruiter_search":
+                if not row.get("has_access", True):
+                    raise HTTPException(
+                        status_code=429,
+                        detail={
+                            "code": "QUOTA_EXCEEDED",
+                            "feature": "recruiter_search",
+                            "limit": row.get("quota_limit"),
+                            "used": row.get("quota_used"),
+                            "reset_at": str(row.get("reset_at", "")),
+                            "message": "Quota de recherche recruteur atteint (3/jour en version gratuite). Passez à Pro pour un accès illimité.",
+                        }
+                    )
+                return
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"[quota] recruiter_search check failed for {user_id}, allowing through: {e}")
+
+
+def increment_recruiter_search_quota(user_id: str) -> bool:
+    """
+    Incrémente le quota recruiter_search de l'utilisateur via Supabase RPC.
+    """
+    if not supabase_client:
+        return False
+    try:
+        response = supabase_client.rpc(
+            "increment_usage",
+            {
+                "p_user_id": user_id,
+                "p_feature": "recruiter_search",
+                "p_amount": 1,
+            }
+        ).execute()
+        success = bool(response.data) if response.data else False
+        if success:
+            logger.info(f"[quota] Incremented recruiter_search quota for user {user_id}")
+        else:
+            logger.warning(f"[quota] Failed to increment recruiter_search quota for user {user_id}")
+        return success
+    except Exception as e:
+        logger.error(f"[quota] Error incrementing recruiter_search quota for {user_id}: {e}")
+        return False
 
 
 # ============================================================================
@@ -56,18 +135,34 @@ class RecruiterFinderResponse(BaseModel):
 
 
 @router.post("/find", response_model=RecruiterFinderResponse)
-async def find_recruiters(body: RecruiterFinderRequest):
+async def find_recruiters(
+    body: RecruiterFinderRequest,
+    authorization: Optional[str] = Header(default=None),
+):
     """
     Discover recruiter contacts at a company using Hunter.io.
 
     Returns HR/recruiter contacts, tech team members, and the email pattern
     for the company domain.
+
+    Requires authentication. Subject to daily quota (3/day on free plan).
     """
+    # Auth
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required to search for recruiter contacts",
+        )
+
     if not body.company_name or not body.company_name.strip():
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="company_name is required",
         )
+
+    # Quota check — bloque si limite journalière dépassée
+    check_recruiter_search_quota(user_id)
 
     try:
         result = await find_recruiters_for_job(
@@ -76,7 +171,11 @@ async def find_recruiters(body: RecruiterFinderRequest):
             company_website=body.company_website or "",
             job_title=body.job_title or "",
         )
+        # Incrémenter le quota après succès
+        increment_recruiter_search_quota(user_id)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[RecruiterFinder] Unexpected error: {e}")
         raise HTTPException(

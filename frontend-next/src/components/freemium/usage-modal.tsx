@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { CareerScoreCard } from "@/components/career-score/career-score-card";
 import { cn } from "@/lib/utils";
+import { usePlansConfig } from "@/hooks/use-plans-config";
 
 interface UsageModalProps {
   isOpen: boolean;
@@ -163,6 +164,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
   }, [isOpen, refreshQuotas]);
 
   const planConfig = PLAN_CONFIG[plan];
+  const { getPlan } = usePlansConfig();
 
   const handleUpgrade = () => {
     onClose();
@@ -209,7 +211,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">
-                    Plan {planConfig.name}
+                    Plan {getPlan(plan)?.display_name ?? planConfig.name}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {isFreePlan

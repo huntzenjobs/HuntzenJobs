@@ -32,6 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
+import { usePlansConfig } from "@/hooks/use-plans-config";
 
 // Plan configuration - Prices synced with database (subscription_plans table)
 const PLAN_CONFIG = {
@@ -133,6 +134,13 @@ export function SubscriptionCard() {
 
   const planConfig = PLAN_CONFIG[plan];
   const planLimits = PLAN_LIMITS[plan];
+  const { getPlan, formatPrice } = usePlansConfig();
+
+  const dynamicPrice = (() => {
+    const p = getPlan(plan);
+    if (!p || p.price_monthly === 0) return "0€";
+    return `${formatPrice(p.price_monthly)}€/mois`;
+  })();
 
   // Get list of features (boolean flags)
   const features = Object.entries(planLimits)
@@ -244,7 +252,8 @@ export function SubscriptionCard() {
                 Annulation programmée
               </p>
               <p className="text-xs text-amber-700">
-                Votre abonnement {planConfig.name} restera actif
+                Votre abonnement{" "}
+                {getPlan(plan)?.display_name ?? planConfig.name} restera actif
                 {formattedPeriodEnd
                   ? ` jusqu'au ${formattedPeriodEnd}`
                   : " jusqu'à la fin de la période"}
@@ -260,7 +269,7 @@ export function SubscriptionCard() {
             <div className="flex items-center gap-2">
               <Badge className={cn("gap-1", planConfig.color)}>
                 {planConfig.icon}
-                {planConfig.name}
+                {getPlan(plan)?.display_name ?? planConfig.name}
               </Badge>
               {isPaidPlan && !cancelAtPeriodEnd && !isPastDue && (
                 <Badge
@@ -293,13 +302,10 @@ export function SubscriptionCard() {
               )}
             </div>
             <div>
-              <p className="text-2xl font-bold">
-                {planConfig.price}
-                <span className="text-sm font-normal text-gray-500">
-                  {planConfig.period}
-                </span>
+              <p className="text-2xl font-bold">{dynamicPrice}</p>
+              <p className="text-sm text-gray-600">
+                {getPlan(plan)?.description ?? planConfig.description}
               </p>
-              <p className="text-sm text-gray-600">{planConfig.description}</p>
             </div>
           </div>
 

@@ -18,6 +18,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
+import { usePlansConfig } from "@/hooks/use-plans-config";
 
 interface PricingPlan {
   id: PlanType;
@@ -110,16 +111,19 @@ export function PricingModal() {
       ...(FEATURE_CONFIGS[id]?.[i] ?? { included: false }),
     }));
 
+  const { getPlan, formatPrice } = usePlansConfig();
+
   const plans: PricingPlan[] = [
     {
       id: "free",
-      name: tModal("plans.free.name"),
-      price: "0",
-      priceYearly: "0",
-      priceValue: 0,
-      priceYearlyValue: 0,
+      name: getPlan("free")?.display_name ?? tModal("plans.free.name"),
+      price: formatPrice(getPlan("free")?.price_monthly ?? 0),
+      priceYearly: formatPrice(getPlan("free")?.price_yearly ?? 0),
+      priceValue: getPlan("free")?.price_monthly ?? 0,
+      priceYearlyValue: getPlan("free")?.price_yearly ?? 0,
       period: tModal("plans.free.period"),
-      description: tModal("plans.free.description"),
+      description:
+        getPlan("free")?.description ?? tModal("plans.free.description"),
       icon: <Gift className="w-6 h-6" />,
       color: "text-gray-600",
       bgGradient: "from-gray-400 to-gray-500",
@@ -127,13 +131,14 @@ export function PricingModal() {
     },
     {
       id: "starter",
-      name: tModal("plans.starter.name"),
-      price: "8,90",
-      priceYearly: "85",
-      priceValue: 8.9,
-      priceYearlyValue: 85,
+      name: getPlan("starter")?.display_name ?? tModal("plans.starter.name"),
+      price: formatPrice(getPlan("starter")?.price_monthly ?? 8.9),
+      priceYearly: formatPrice(getPlan("starter")?.price_yearly ?? 85),
+      priceValue: getPlan("starter")?.price_monthly ?? 8.9,
+      priceYearlyValue: getPlan("starter")?.price_yearly ?? 85,
       period: tModal("plans.starter.period"),
-      description: tModal("plans.starter.description"),
+      description:
+        getPlan("starter")?.description ?? tModal("plans.starter.description"),
       icon: <Zap className="w-6 h-6" />,
       color: "text-blue-600",
       bgGradient: "from-blue-500 to-blue-600",
@@ -141,13 +146,14 @@ export function PricingModal() {
     },
     {
       id: "pro",
-      name: tModal("plans.pro.name"),
-      price: "13,90",
-      priceYearly: "133",
-      priceValue: 13.9,
-      priceYearlyValue: 133,
+      name: getPlan("pro")?.display_name ?? tModal("plans.pro.name"),
+      price: formatPrice(getPlan("pro")?.price_monthly ?? 13.9),
+      priceYearly: formatPrice(getPlan("pro")?.price_yearly ?? 133),
+      priceValue: getPlan("pro")?.price_monthly ?? 13.9,
+      priceYearlyValue: getPlan("pro")?.price_yearly ?? 133,
       period: tModal("plans.pro.period"),
-      description: tModal("plans.pro.description"),
+      description:
+        getPlan("pro")?.description ?? tModal("plans.pro.description"),
       icon: <Sparkles className="w-6 h-6" />,
       color: "text-violet-600",
       bgGradient: "from-violet-500 to-purple-600",
@@ -156,13 +162,14 @@ export function PricingModal() {
     },
     {
       id: "premium",
-      name: tModal("plans.premium.name"),
-      price: "19,90",
-      priceYearly: "191",
-      priceValue: 19.9,
-      priceYearlyValue: 191,
+      name: getPlan("premium")?.display_name ?? tModal("plans.premium.name"),
+      price: formatPrice(getPlan("premium")?.price_monthly ?? 19.9),
+      priceYearly: formatPrice(getPlan("premium")?.price_yearly ?? 191),
+      priceValue: getPlan("premium")?.price_monthly ?? 19.9,
+      priceYearlyValue: getPlan("premium")?.price_yearly ?? 191,
       period: tModal("plans.premium.period"),
-      description: tModal("plans.premium.description"),
+      description:
+        getPlan("premium")?.description ?? tModal("plans.premium.description"),
       icon: <Crown className="w-6 h-6" />,
       color: "text-amber-600",
       bgGradient: "from-amber-500 to-orange-500",
@@ -495,16 +502,19 @@ export function PricingCards({
       ...(FEATURE_CONFIGS[id]?.[i] ?? { included: false }),
     }));
 
+  const { getPlan, formatPrice } = usePlansConfig();
+
   const plans: PricingPlan[] = [
     {
       id: "free",
-      name: tModal("plans.free.name"),
-      price: "0",
-      priceYearly: "0",
-      priceValue: 0,
-      priceYearlyValue: 0,
+      name: getPlan("free")?.display_name ?? tModal("plans.free.name"),
+      price: formatPrice(getPlan("free")?.price_monthly ?? 0),
+      priceYearly: formatPrice(getPlan("free")?.price_yearly ?? 0),
+      priceValue: getPlan("free")?.price_monthly ?? 0,
+      priceYearlyValue: getPlan("free")?.price_yearly ?? 0,
       period: tModal("plans.free.period"),
-      description: tModal("plans.free.description"),
+      description:
+        getPlan("free")?.description ?? tModal("plans.free.description"),
       icon: <Gift className="w-6 h-6" />,
       color: "text-gray-600",
       bgGradient: "from-gray-400 to-gray-500",
@@ -512,13 +522,14 @@ export function PricingCards({
     },
     {
       id: "starter",
-      name: tModal("plans.starter.name"),
-      price: "8,90",
-      priceYearly: "85",
-      priceValue: 8.9,
-      priceYearlyValue: 85,
+      name: getPlan("starter")?.display_name ?? tModal("plans.starter.name"),
+      price: formatPrice(getPlan("starter")?.price_monthly ?? 8.9),
+      priceYearly: formatPrice(getPlan("starter")?.price_yearly ?? 85),
+      priceValue: getPlan("starter")?.price_monthly ?? 8.9,
+      priceYearlyValue: getPlan("starter")?.price_yearly ?? 85,
       period: tModal("plans.starter.period"),
-      description: tModal("plans.starter.description"),
+      description:
+        getPlan("starter")?.description ?? tModal("plans.starter.description"),
       icon: <Zap className="w-6 h-6" />,
       color: "text-blue-600",
       bgGradient: "from-blue-500 to-blue-600",
@@ -526,13 +537,14 @@ export function PricingCards({
     },
     {
       id: "pro",
-      name: tModal("plans.pro.name"),
-      price: "13,90",
-      priceYearly: "133",
-      priceValue: 13.9,
-      priceYearlyValue: 133,
+      name: getPlan("pro")?.display_name ?? tModal("plans.pro.name"),
+      price: formatPrice(getPlan("pro")?.price_monthly ?? 13.9),
+      priceYearly: formatPrice(getPlan("pro")?.price_yearly ?? 133),
+      priceValue: getPlan("pro")?.price_monthly ?? 13.9,
+      priceYearlyValue: getPlan("pro")?.price_yearly ?? 133,
       period: tModal("plans.pro.period"),
-      description: tModal("plans.pro.description"),
+      description:
+        getPlan("pro")?.description ?? tModal("plans.pro.description"),
       icon: <Sparkles className="w-6 h-6" />,
       color: "text-violet-600",
       bgGradient: "from-violet-500 to-purple-600",
@@ -541,13 +553,14 @@ export function PricingCards({
     },
     {
       id: "premium",
-      name: tModal("plans.premium.name"),
-      price: "19,90",
-      priceYearly: "191",
-      priceValue: 19.9,
-      priceYearlyValue: 191,
+      name: getPlan("premium")?.display_name ?? tModal("plans.premium.name"),
+      price: formatPrice(getPlan("premium")?.price_monthly ?? 19.9),
+      priceYearly: formatPrice(getPlan("premium")?.price_yearly ?? 191),
+      priceValue: getPlan("premium")?.price_monthly ?? 19.9,
+      priceYearlyValue: getPlan("premium")?.price_yearly ?? 191,
       period: tModal("plans.premium.period"),
-      description: tModal("plans.premium.description"),
+      description:
+        getPlan("premium")?.description ?? tModal("plans.premium.description"),
       icon: <Crown className="w-6 h-6" />,
       color: "text-amber-600",
       bgGradient: "from-amber-500 to-orange-500",

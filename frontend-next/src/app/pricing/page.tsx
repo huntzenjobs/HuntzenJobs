@@ -34,81 +34,56 @@ import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { toast } from "sonner";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
 import { useTranslations } from "next-intl";
+import { usePlansConfig } from "@/hooks/use-plans-config";
 
-const plans = [
-  {
-    id: "free",
-    name: "Gratuit",
-    priceMonthly: "0",
-    priceYearly: "0",
-    tagline: "Pour découvrir",
-    description: "Testez gratuitement les fonctionnalités essentielles",
-    icon: Gift,
-    color: "#9CA3AF",
-    features: [
-      { icon: Search, name: "3 recherches d'offres par jour" },
-      { icon: FileText, name: "1 analyse de CV par jour" },
-      { icon: MessageSquare, name: "5 minutes de coaching personnel" },
-      { icon: Shield, name: "Support standard" },
-    ],
-  },
-  {
-    id: "starter",
-    name: "Essentiel",
-    priceMonthly: "8,90",
-    priceYearly: "85,00",
-    tagline: "Le plus choisi",
-    description: "Idéal pour démarrer votre recherche efficacement",
-    icon: Zap,
-    color: "#00D9FF",
-    popular: true,
-    features: [
-      { icon: Search, name: "Recherches d'offres illimitées" },
-      { icon: Target, name: "Filtres avancés de recherche" },
-      { icon: Briefcase, name: "Gestion de vos favoris" },
-      { icon: FileText, name: "Analyses de CV illimitées" },
-      { icon: Award, name: "Score de compatibilité détaillé" },
-      { icon: MessageSquare, name: "Coaching personnalisé (30 min/jour)" },
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    priceMonthly: "13,90",
-    priceYearly: "133,00",
-    tagline: "Le plus complet",
-    description: "Pour les professionnels exigeants en recherche active",
-    icon: Sparkles,
-    color: "#9333EA",
-    features: [
-      { icon: Check, name: "Toutes les fonctionnalités Essentiel" },
-      { icon: MessageSquare, name: "Coaching disponible 24/7 illimité" },
-      { icon: FileText, name: "Export PDF professionnel" },
-      { icon: Users, name: "Simulations d'entretien réalistes" },
-      { icon: TrendingUp, name: "Feedback détaillé sur performances" },
-      { icon: Shield, name: "Support prioritaire par email" },
-    ],
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    priceMonthly: "19,90",
-    priceYearly: "191,00",
-    tagline: "L'excellence",
-    description: "L'expérience ultime pour maximiser vos chances",
-    icon: Crown,
-    color: "#F97316",
-    features: [
-      { icon: Check, name: "Toutes les fonctionnalités Pro" },
-      { icon: Calendar, name: "Historique illimité de vos analyses" },
-      { icon: Target, name: "Conseils personnalisés ultra-ciblés" },
-      { icon: Sparkles, name: "Alertes email instantanées" },
-      { icon: Award, name: "Accès anticipé nouvelles fonctionnalités" },
-      { icon: Crown, name: "Support VIP prioritaire" },
-      { icon: TrendingUp, name: "Rapports mensuels de progression" },
-    ],
-  },
-];
+// Icon mapping — décoratives, statiques
+const PLAN_ICONS: Record<string, React.ElementType> = {
+  free: Gift,
+  starter: Zap,
+  pro: Sparkles,
+  premium: Crown,
+};
+const PLAN_COLORS: Record<string, string> = {
+  free: "#9CA3AF",
+  starter: "#00D9FF",
+  pro: "#9333EA",
+  premium: "#F97316",
+};
+
+// Fallback features si API indisponible
+const FALLBACK_FEATURES: Record<string, string[]> = {
+  free: [
+    "3 recherches d'offres par jour",
+    "1 analyse de CV par jour",
+    "5 minutes de coaching personnel",
+    "Support standard",
+  ],
+  starter: [
+    "Recherches d'offres illimitées",
+    "Filtres avancés de recherche",
+    "Gestion de vos favoris",
+    "Analyses de CV illimitées",
+    "Score de compatibilité détaillé",
+    "Coaching personnalisé (30 min/jour)",
+  ],
+  pro: [
+    "Toutes les fonctionnalités Essentiel",
+    "Coaching disponible 24/7 illimité",
+    "Export PDF professionnel",
+    "Simulations d'entretien réalistes",
+    "Feedback détaillé sur performances",
+    "Support prioritaire par email",
+  ],
+  premium: [
+    "Toutes les fonctionnalités Pro",
+    "Historique illimité de vos analyses",
+    "Conseils personnalisés ultra-ciblés",
+    "Alertes email instantanées",
+    "Accès anticipé nouvelles fonctionnalités",
+    "Support VIP prioritaire",
+    "Rapports mensuels de progression",
+  ],
+};
 
 const testimonials = [
   {
@@ -181,7 +156,30 @@ export default function PricingPage() {
   const apiData = useSubscriptionApi();
   const t = useTranslations("pricing");
 
+  const { getPlan, formatPrice, isLoading: plansLoading } = usePlansConfig();
+
   const pricingHoverPopup = useConversionPopup("pricing_hover");
+
+  const plans = plansLoading
+    ? []
+    : (["free", "starter", "pro", "premium"] as const).map((id) => {
+        const p = getPlan(id);
+        const featureNames = p?.features ?? FALLBACK_FEATURES[id] ?? [];
+        return {
+          id,
+          name: p?.display_name ?? FALLBACK_FEATURES[id]?.[0] ?? id,
+          priceMonthly: formatPrice(p?.price_monthly ?? 0),
+          priceYearly: formatPrice(p?.price_yearly ?? 0),
+          priceMonthlyRaw: p?.price_monthly ?? 0,
+          priceYearlyRaw: p?.price_yearly ?? 0,
+          tagline: p?.description ?? "",
+          description: p?.description ?? "",
+          icon: PLAN_ICONS[id] ?? Gift,
+          color: PLAN_COLORS[id] ?? "#9CA3AF",
+          popular: id === "starter",
+          features: featureNames.map((name: string) => ({ icon: Check, name })),
+        };
+      });
 
   // Show pricing_hover popup after 20s (once per session)
   useEffect(() => {
@@ -204,16 +202,18 @@ export default function PricingPage() {
     return billingPeriod === "monthly" ? plan.priceMonthly : plan.priceYearly;
   };
 
-  const getMonthlyEquivalent = (yearlyPrice: string) => {
-    return (parseFloat(yearlyPrice) / 12).toFixed(2);
+  const getMonthlyEquivalent = (yearlyRaw: number) => {
+    if (!yearlyRaw) return "0,00";
+    return (yearlyRaw / 12).toFixed(2).replace(".", ",");
   };
 
-  const getSavings = (monthlyPrice: string, yearlyPrice: string) => {
-    const monthlyCost = parseFloat(monthlyPrice) * 12;
-    const yearlyCost = parseFloat(yearlyPrice);
+  const getSavings = (monthlyRaw: number, yearlyRaw: number) => {
+    const monthlyCost = monthlyRaw * 12;
+    const yearlyCost = yearlyRaw;
     const savings = monthlyCost - yearlyCost;
-    const percentage = Math.round((savings / monthlyCost) * 100);
-    return { amount: savings.toFixed(2), percentage };
+    const percentage =
+      monthlyCost > 0 ? Math.round((savings / monthlyCost) * 100) : 0;
+    return { amount: savings.toFixed(2).replace(".", ","), percentage };
   };
 
   const handleSelectPlan = async (planId: string) => {
@@ -428,6 +428,16 @@ export default function PricingPage() {
         {/* Pricing Cards */}
         <section className="py-12 sm:py-16 bg-white dark:bg-gray-900">
           <div className="container mx-auto px-4 sm:px-6">
+            {plansLoading && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="h-96 bg-gray-100 dark:bg-gray-700 rounded-3xl animate-pulse"
+                  />
+                ))}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
               {plans.map((plan, index) => (
                 <motion.div
@@ -482,13 +492,17 @@ export default function PricingPage() {
                         <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
                           -
                           {
-                            getSavings(plan.priceMonthly, plan.priceYearly)
-                              .percentage
+                            getSavings(
+                              plan.priceMonthlyRaw,
+                              plan.priceYearlyRaw,
+                            ).percentage
                           }
                           % soit{" "}
                           {
-                            getSavings(plan.priceMonthly, plan.priceYearly)
-                              .amount
+                            getSavings(
+                              plan.priceMonthlyRaw,
+                              plan.priceYearlyRaw,
+                            ).amount
                           }
                           €/an
                         </span>
@@ -504,7 +518,7 @@ export default function PricingPage() {
                           <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">
                             {billingPeriod === "monthly"
                               ? plan.priceMonthly
-                              : getMonthlyEquivalent(plan.priceYearly)}
+                              : getMonthlyEquivalent(plan.priceYearlyRaw)}
                             €
                           </span>
                           <span className="text-lg text-gray-600 dark:text-gray-300 font-semibold">

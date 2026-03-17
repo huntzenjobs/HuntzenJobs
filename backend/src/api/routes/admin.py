@@ -551,6 +551,7 @@ async def update_plan_limits(
             from src.utils.cache import get_redis
             redis = await get_redis()
             if redis:
+                await redis.delete("plans_config")
                 keys = [k async for k in redis.scan_iter("auth_me:*")]
                 if keys:
                     await redis.delete(*keys)
@@ -612,6 +613,7 @@ async def update_plan_features(
             from src.utils.cache import get_redis
             redis = await get_redis()
             if redis:
+                await redis.delete("plans_config")
                 keys = [k async for k in redis.scan_iter("auth_me:*")]
                 if keys:
                     await redis.delete(*keys)
@@ -631,6 +633,60 @@ async def update_plan_features(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to update features")
+
+
+@router.patch("/plans/{plan_id}/wording")
+async def update_plan_wording(
+    plan_id: str,
+    body: Dict[str, Any],
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Update display_name and/or description for a plan (admin only)."""
+    supabase = get_supabase_client()
+
+    update_data: Dict[str, Any] = {}
+    if "display_name" in body and isinstance(body["display_name"], str):
+        update_data["display_name"] = body["display_name"].strip()
+    if "description" in body and isinstance(body["description"], str):
+        update_data["description"] = body["description"].strip()
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="display_name ou description requis")
+
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    try:
+        current = supabase.table("subscription_plans").select("name").eq("id", plan_id).single().execute()
+        if not current.data:
+            raise HTTPException(status_code=404, detail="Plan not found")
+
+        supabase.table("subscription_plans").update(update_data).eq("id", plan_id).execute()
+
+        # Invalider cache public plans_config
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis:
+                await redis.delete("plans_config")
+                # Invalider aussi auth_me car plan_display_name change
+                keys = [k async for k in redis.scan_iter("auth_me:*")]
+                if keys:
+                    await redis.delete(*keys)
+        except Exception:
+            pass
+
+        _log_admin_action(supabase, admin["id"], "admin.plan_wording_updated", None, {
+            "plan_id": plan_id,
+            "plan_name": current.data["name"],
+            "changes": update_data,
+        })
+
+        return {"success": True, **update_data}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to update wording")
 
 
 @router.patch("/plans/{plan_id}/price")
@@ -659,6 +715,15 @@ async def update_plan_display_price(
             raise HTTPException(status_code=404, detail="Plan not found")
 
         result = supabase.table("subscription_plans").update(update_data).eq("id", plan_id).execute()
+
+        # Invalider cache public plans_config
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis:
+                await redis.delete("plans_config")
+        except Exception:
+            pass
 
         _log_admin_action(supabase, admin["id"], "admin.plan_price_display_updated", None, {
             "plan_id": plan_id, "plan_name": current.data["name"], "changes": update_data

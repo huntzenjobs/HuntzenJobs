@@ -26,6 +26,8 @@ from src.models.schemas import ATSScore, CVAnalysisResponse, TrainingRecommendat
 
 logger = logging.getLogger(__name__)
 
+HUNTZEN_CV_MARKERS = ["HuntZen Jobs", "Optimisé par HuntZen", "HuntZen ATS", "huntzenjobs.com", "HuntZen ATS Certified"]
+
 
 class CVAnalyzerAgent(BaseAgent):
     """
@@ -132,25 +134,33 @@ class CVAnalyzerAgent(BaseAgent):
             Complete analysis results
         """
         try:
+            # Détecter si le CV vient du pipeline HuntZen
+            is_huntzen_optimized = bool(cv_text) and any(marker in cv_text for marker in HUNTZEN_CV_MARKERS)
+
             # Run sub-agents in parallel
             tasks = [
                 self._score_ats(cv_text),
                 self._extract_skills(cv_text),
                 self._get_improvements(cv_text),
             ]
-            
+
             # Add job matching if description provided
             if job_description:
                 tasks.append(self._match_job(cv_text, job_description))
-            
+
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             # Process results
             ats_result = results[0] if isinstance(results[0], dict) else {}
             skills_result = results[1] if isinstance(results[1], dict) else {}
             improvements_result = results[2] if isinstance(results[2], dict) else {}
             job_match_result = results[3] if len(results) > 3 and isinstance(results[3], dict) else {}
+
+            if is_huntzen_optimized:
+                improvements_result = self._filter_improvements_for_certified_cv(improvements_result)
             
+            recommended_titles = self._extract_recommended_titles(skills_result)
+
             # Build response (with score capping to prevent validation errors)
             return {
                 "success": True,
@@ -167,6 +177,7 @@ class CVAnalyzerAgent(BaseAgent):
                 "job_match": job_match_result if job_description else None,
                 "strengths": self._extract_strengths(ats_result, skills_result),
                 "weaknesses": self._extract_weaknesses(ats_result, improvements_result),
+                "recommended_job_titles": recommended_titles,
             }
             
         except Exception as e:
@@ -199,6 +210,28 @@ class CVAnalyzerAgent(BaseAgent):
         result = await self.improvement_advisor.run(task=f"Suggest improvements:\n\n{cv_text}")
         return self._parse_json(result) or {}
     
+    def _extract_recommended_titles(self, skills_result: dict) -> list[str]:
+        """Extraire les titres de poste recommandés depuis l'analyse des skills."""
+        titles = skills_result.get("suggested_job_titles", [])
+        if isinstance(titles, list):
+            return [str(t) for t in titles[:4] if t]
+        return []
+
+    def _filter_improvements_for_certified_cv(self, improvements: dict) -> dict:
+        """Supprimer les suggestions de format ATS pour les CV déjà certifiés HuntZen."""
+        filtered = dict(improvements)
+        ats_format_keywords = [
+            "section", "en-tête", "header", "format", "police", "font",
+            "structure", "template", "mise en page", "layout"
+        ]
+        content = filtered.get("content_improvements", [])
+        if isinstance(content, list):
+            filtered["content_improvements"] = [
+                s for s in content
+                if not any(kw in str(s).lower() for kw in ats_format_keywords)
+            ]
+        return filtered
+
     def _extract_strengths(self, ats_result: dict, skills_result: dict) -> list[str]:
         """Extract strengths from analysis."""
         strengths = []

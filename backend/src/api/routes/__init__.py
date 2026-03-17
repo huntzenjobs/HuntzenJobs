@@ -38,6 +38,7 @@ from src.api.routes.queue import router as queue_router
 from src.api.routes.presence import presence_router, tracking_router, banner_router
 from src.api.routes.stress import router as stress_router
 from src.api.routes.suggestions import router as suggestions_router
+from src.api.routes.public_plans import router as public_plans_router
 
 router = APIRouter()
 
@@ -76,3 +77,4 @@ router.include_router(tracking_router, prefix="/api/track", tags=["Tracking"])
 router.include_router(banner_router, tags=["Banner & Maintenance"])
 router.include_router(stress_router, prefix="/api/admin/stress", tags=["Stress Testing"])
 router.include_router(suggestions_router, prefix="/api/assistant", tags=["Assistant Suggestions"])
+router.include_router(public_plans_router, prefix="/api/public", tags=["Public Plans"])
