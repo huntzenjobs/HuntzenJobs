@@ -77,6 +77,13 @@ export default function AssistantPage() {
   // Assistant state
   const { selectedAssistant, setSelectedAssistant } = useAssistant();
   const assistantConfig = getAssistantConfig(selectedAssistant);
+  const accentColor = assistantConfig.accentColor ?? assistantConfig.color;
+  const [transitioning, setTransitioning] = useState(false);
+
+  const triggerTransition = () => {
+    setTransitioning(true);
+    setTimeout(() => setTransitioning(false), 300);
+  };
 
   // Reset branding state and attached CV when switching assistants
   useEffect(() => {
@@ -337,6 +344,7 @@ export default function AssistantPage() {
   const handleAssistantChange = (newType: AssistantType) => {
     if (newType === selectedAssistant) return;
     if (messages.length === 0) {
+      triggerTransition();
       setSelectedAssistant(newType);
       return;
     }
@@ -356,7 +364,16 @@ export default function AssistantPage() {
       );
     }
 
-    setMessages([]);
+    const newConfig = getAssistantConfig(pendingAssistant);
+    const systemMessage: ChatMessageType = {
+      id: `system-change-${Date.now()}`,
+      role: "assistant",
+      content: `Vous parlez maintenant avec **${newConfig.personaName ?? newConfig.shortName}** — ${newConfig.description}`,
+      isSystem: true,
+      timestamp: new Date(),
+    };
+
+    triggerTransition();
     setCurrentConversationId(null);
     setInput("");
     setBrandingState(null);
@@ -364,6 +381,7 @@ export default function AssistantPage() {
     setSessionId(uuidv4());
     setSelectedAssistant(pendingAssistant);
     setPendingAssistant(null);
+    setMessages([systemMessage]);
   };
 
   const handleCancelSwitch = () => {
@@ -398,8 +416,8 @@ export default function AssistantPage() {
         {/* Info assistant au centre */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          animate={{ opacity: transitioning ? 0 : 1, y: 0 }}
+          transition={{ duration: 0.3, delay: transitioning ? 0 : 0.2 }}
           className="flex-1 min-w-0"
         >
           <div className="flex items-center gap-3">
@@ -407,9 +425,14 @@ export default function AssistantPage() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] shadow-lg shadow-[#00D9FF]/30"
+              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
+              style={{
+                backgroundColor: `${accentColor}20`,
+                color: accentColor,
+                boxShadow: `0 4px 14px ${accentColor}30`,
+              }}
             >
-              <MessageSquare className="w-6 h-6 text-white" />
+              <assistantConfig.icon className="w-6 h-6" />
             </motion.div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -548,7 +571,10 @@ export default function AssistantPage() {
 
       <div className="flex flex-1">
         {/* Chat Section - Full width */}
-        <Card className="w-full flex flex-col shadow-sm border-2 border-slate-200 bg-white">
+        <Card
+          className="w-full flex flex-col shadow-sm border-2 border-slate-200 bg-white"
+          style={{ borderLeft: `3px solid ${accentColor}` }}
+        >
           {/* Time warning banner */}
           <AnimatePresence>
             {isTimeWarning && (
@@ -636,6 +662,29 @@ export default function AssistantPage() {
             {/* Chat messages */}
             <AnimatePresence mode="popLayout">
               {messages.map((message, index) => {
+                // Message système : notification centrée de changement d'assistant
+                if (message.isSystem) {
+                  return (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="flex justify-center py-2"
+                    >
+                      <span
+                        className="text-xs italic px-4 py-1.5 rounded-full"
+                        style={{
+                          backgroundColor: `${accentColor}15`,
+                          color: accentColor,
+                        }}
+                      >
+                        {message.content}
+                      </span>
+                    </motion.div>
+                  );
+                }
+
                 // Attach ref to the last user message for smart scrolling
                 const isLastUserMessage =
                   message.role === "user" && index === messages.length - 1;

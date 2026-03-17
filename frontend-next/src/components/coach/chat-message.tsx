@@ -29,6 +29,8 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date | string;
+  /** Message système (ex: notification de changement d'assistant) */
+  isSystem?: boolean;
 }
 
 export interface ChatMessageProps {
