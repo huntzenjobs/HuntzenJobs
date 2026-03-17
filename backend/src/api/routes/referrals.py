@@ -230,7 +230,7 @@ async def get_boost_status(current_user: CurrentUserDep):
 
     return {
         "referral_code": referral_code,
-        "referral_link": f"{APP_URL}/ref/{referral_code}",
+        "referral_link": f"{APP_URL}/?ref={referral_code}",
         "total_clicks": stats.get("total_clicks", 0),
         "total_signups": stats.get("total_signups", 0),
         "total_validated": total_validated,
