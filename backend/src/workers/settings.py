@@ -27,14 +27,32 @@ QUEUE_COVER_LETTER = "arq:cover_letter"
 
 
 def _get_redis_settings() -> RedisSettings:
-    """Parse REDIS_URL pour ARQ (Railway Redis réseau interne)."""
+    """Parse Redis URL for ARQ with safe env precedence.
+
+    Precedence:
+    1) REDIS_URL (explicit runtime override)
+    2) UPSTASH_REDIS_URL (legacy/env compatibility)
+    3) Sensible fallback:
+       - inside Docker: redis://redis:6379
+       - local host: redis://localhost:6379
+    """
     from urllib.parse import urlparse
-    url = os.getenv("REDIS_URL", "redis://localhost:6379")
+
+    url = os.getenv("REDIS_URL") or os.getenv("UPSTASH_REDIS_URL")
+    if not url:
+        in_docker = os.path.exists("/.dockerenv")
+        url = "redis://redis:6379" if in_docker else "redis://localhost:6379"
+
     parsed = urlparse(url)
+
+    if parsed.scheme not in {"redis", "rediss"}:
+        parsed = urlparse(f"redis://{url}")
+
     return RedisSettings(
         host=parsed.hostname or "localhost",
         port=parsed.port or 6379,
         password=parsed.password,
+        ssl=parsed.scheme == "rediss",
     )
 
 

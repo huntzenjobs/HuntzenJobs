@@ -6,6 +6,7 @@ Endpoints for smart CV adaptation to job offers.
 
 import io
 import json
+import hashlib
 import logging
 import re
 from typing import Optional
@@ -198,6 +199,7 @@ async def adapt_cv(
     template: str = Form(default="ats", description="Template (ats/modern)"),
     cv_text: Optional[str] = Form(default=None, description="Original CV content as text"),
     file: Optional[UploadFile] = File(default=None, description="CV file (PDF or DOCX)"),
+    request_id: Optional[str] = Form(default=None, description="Optional idempotency key for queue deduplication"),
     authorization: Optional[str] = Header(default=None),
 ):
     """
@@ -248,19 +250,26 @@ async def adapt_cv(
             raise _busy_exception("File d'attente indisponible. Réessayez dans quelques secondes.")
 
         try:
+            dedupe_job_id = None
+            if request_id:
+                digest = hashlib.sha1(f"cv-adapt:{request_id}".encode("utf-8")).hexdigest()[:24]
+                dedupe_job_id = f"cv-adapt:{digest}"
+
             job = await pool.enqueue_job(
                 "cv_adapt_task",
                 cv_text=cv_text,
                 job_description=job_description,
                 language=language,
                 _queue_name=_ARQ_QUEUE_KEY,
+                _job_id=dedupe_job_id,
             )
             estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+            final_job_id = job.job_id if job else dedupe_job_id
             logger.info(
                 f"[cv_adapter/adapt] ARQ queued — active={active} "
-                f"queue_depth={queue_depth} job={job.job_id}"
+                f"queue_depth={queue_depth} job={final_job_id}"
             )
-            return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": estimated_wait}
+            return {"queued": True, "job_id": final_job_id, "estimated_wait_seconds": estimated_wait}
         except Exception as e:
             logger.warning(f"[cv_adapter/adapt] ARQ enqueue failed ({e}) — rejecting to protect API")
             raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
@@ -615,6 +624,7 @@ class CoverLetterRequest(BaseModel):
     job_description: str
     language: str = "fr"
     company_name: str | None = None
+    request_id: str | None = None
 
 
 @router.post("/generate-cover-letter")
@@ -708,6 +718,10 @@ async def generate_cover_letter_json(request: CoverLetterRequest):
 
         try:
             job_title = request.job_description.split("\n")[0][:60] if request.job_description else None
+            dedupe_job_id = None
+            if request.request_id:
+                digest = hashlib.sha1(f"cover-letter:{request.request_id}".encode("utf-8")).hexdigest()[:24]
+                dedupe_job_id = f"cover-letter:{digest}"
             job = await pool.enqueue_job(
                 "cover_letter_task",
                 cv_text=json.dumps(request.cv_data, ensure_ascii=False),
@@ -716,13 +730,15 @@ async def generate_cover_letter_json(request: CoverLetterRequest):
                 company_name=request.company_name,
                 job_title=job_title,
                 _queue_name=_ARQ_COVER_LETTER_QUEUE_KEY,
+                _job_id=dedupe_job_id,
             )
             estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+            final_job_id = job.job_id if job else dedupe_job_id
             logger.info(
                 f"[cv_adapter/cover-letter-json] ARQ queued — active={active} "
-                f"queue_depth={queue_depth} job={job.job_id}"
+                f"queue_depth={queue_depth} job={final_job_id}"
             )
-            return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": estimated_wait}
+            return {"queued": True, "job_id": final_job_id, "estimated_wait_seconds": estimated_wait}
         except Exception as e:
             logger.warning(
                 f"[cv_adapter/cover-letter-json] ARQ enqueue failed ({e}) — rejecting to protect API"

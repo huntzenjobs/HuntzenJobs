@@ -120,6 +120,13 @@ class HuntzenApiClient {
     return this._baseUrl ?? getApiBaseUrl();
   }
 
+  private _newRequestId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
@@ -503,6 +510,8 @@ class HuntzenApiClient {
 
     const endpoint = endpointMap[assistantType] || '/api/coach/chat';
 
+    const requestId = this._newRequestId();
+
     const raw = await this.fetch<
       | { success: boolean; response: string; agent: string }
       | { queued: true; job_id: string; estimated_wait_seconds: number }
@@ -513,6 +522,7 @@ class HuntzenApiClient {
         session_id: sessionId,
         assistant_type: assistantType,
         language,
+        request_id: requestId,
       }),
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
@@ -552,6 +562,8 @@ class HuntzenApiClient {
     language: string;
     branding_state: Record<string, unknown> | null;
   }> {
+    const requestId = this._newRequestId();
+
     const raw = await this.fetch<
       | {
           success: boolean;
@@ -566,6 +578,7 @@ class HuntzenApiClient {
         message,
         session_id: sessionId,
         language,
+        request_id: requestId,
         branding_state: brandingState ?? null,
       }),
       headers: token ? { Authorization: `Bearer ${token}` } : {},

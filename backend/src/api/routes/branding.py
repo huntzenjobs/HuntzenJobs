@@ -5,6 +5,7 @@ Endpoints for AI personal branding assistant (LinkedIn & X).
 """
 
 from typing import Union
+import hashlib
 import uuid
 
 from arq import create_pool
@@ -86,6 +87,7 @@ class BrandingRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=3000, description="User message")
     session_id: str = Field(..., pattern=r"^[a-f0-9\-]{36}$", description="Session UUID")
     language: str = Field(default="fr", description="Response language")
+    request_id: str | None = Field(default=None, description="Optional idempotency key for queue deduplication")
     branding_state: dict | None = Field(default=None, description="Current branding profile state")
 
 
@@ -138,6 +140,13 @@ async def branding_chat(
             raise _busy_exception("File d'attente indisponible. Réessayez dans quelques secondes.")
 
         try:
+            dedupe_job_id = None
+            if data.request_id:
+                digest = hashlib.sha1(
+                    f"branding:{data.session_id}:{data.request_id}".encode("utf-8")
+                ).hexdigest()[:24]
+                dedupe_job_id = f"branding:{digest}"
+
             job = await pool.enqueue_job(
                 "branding_task",
                 message=data.message,
@@ -145,15 +154,17 @@ async def branding_chat(
                 language=data.language,
                 branding_state=data.branding_state,
                 _queue_name=_ARQ_QUEUE_KEY,
+                _job_id=dedupe_job_id,
             )
             estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+            final_job_id = job.job_id if job else dedupe_job_id
             logger.info(
                 f"[branding/chat] ARQ queued — active={active} "
-                f"queue_depth={queue_depth} job={job.job_id}"
+                f"queue_depth={queue_depth} job={final_job_id}"
             )
             return {
                 "queued": True,
-                "job_id": job.job_id,
+                "job_id": final_job_id,
                 "estimated_wait_seconds": estimated_wait,
             }
         except Exception as e:

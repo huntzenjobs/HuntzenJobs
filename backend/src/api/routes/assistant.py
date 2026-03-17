@@ -6,6 +6,7 @@ Handles routing to the appropriate agent based on assistant_type parameter.
 """
 
 import logging
+import hashlib
 import uuid
 from typing import Annotated, Literal, Union
 
@@ -98,6 +99,7 @@ async def _queue_assistant_or_reject(
     language: str,
     history: list,
     active: int,
+    request_id: str | None = None,
 ) -> dict:
     queue_depth = await _get_arq_queue_depth()
     if queue_depth >= _ARQ_QUEUE_MAX_LENGTH:
@@ -109,6 +111,13 @@ async def _queue_assistant_or_reject(
         raise _busy_exception("File d'attente indisponible. Réessayez dans quelques secondes.")
 
     try:
+        dedupe_job_id = None
+        if request_id:
+            digest = hashlib.sha1(
+                f"assistant:{assistant_type}:{session_id}:{request_id}".encode("utf-8")
+            ).hexdigest()[:24]
+            dedupe_job_id = f"assistant:{digest}"
+
         job = await pool.enqueue_job(
             "assistant_task",
             message=message,
@@ -117,13 +126,15 @@ async def _queue_assistant_or_reject(
             language=language,
             history=history,
             _queue_name=_ARQ_QUEUE_KEY,
+            _job_id=dedupe_job_id,
         )
         estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
+        final_job_id = job.job_id if job else dedupe_job_id
         logger.info(
             f"[assistant/{route_label}] ARQ queued — active={active} "
-            f"queue_depth={queue_depth} job={job.job_id}"
+            f"queue_depth={queue_depth} job={final_job_id}"
         )
-        return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": estimated_wait}
+        return {"queued": True, "job_id": final_job_id, "estimated_wait_seconds": estimated_wait}
     except Exception as e:
         logger.warning(f"[assistant/{route_label}] ARQ enqueue failed ({e}) — rejecting to protect API")
         raise _busy_exception("Service temporairement surchargé. Réessayez dans quelques secondes.")
@@ -185,6 +196,7 @@ class AssistantRequest(BaseModel):
         "interview-sim"
     ] = Field(..., description="Type of assistant to use")
     language: str = Field(default="fr", description="Response language (fr/en)")
+    request_id: str | None = Field(default=None, description="Optional idempotency key for queue deduplication")
 
     # Optional context data for specific assistants
     cv_data: dict | None = Field(default=None, description="CV data for cv-analyzer/cv-adapter")
@@ -243,6 +255,7 @@ async def job_scout_chat(
             language=request.language,
             history=history,
             active=active,
+            request_id=request.request_id,
         )
 
     # Mode synchrone
@@ -305,6 +318,7 @@ async def cv_analyzer_chat(
             language=request.language,
             history=history,
             active=active,
+            request_id=request.request_id,
         )
 
     # Mode synchrone
@@ -367,6 +381,7 @@ async def cv_adapter_chat(
             language=request.language,
             history=history,
             active=active,
+            request_id=request.request_id,
         )
 
     # Mode synchrone
@@ -430,6 +445,7 @@ async def interview_sim_chat(
             language=request.language,
             history=history,
             active=active,
+            request_id=request.request_id,
         )
 
     # Mode synchrone

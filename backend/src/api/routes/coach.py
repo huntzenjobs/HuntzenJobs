@@ -9,6 +9,7 @@ En dessous du seuil, traitement synchrone immédiat (UX optimale).
 """
 
 import asyncio
+import hashlib
 import uuid
 
 from fastapi import APIRouter, HTTPException, status, Request, Depends
@@ -62,6 +63,13 @@ def _busy_exception(reason: str) -> HTTPException:
         detail=reason,
         headers={"Retry-After": str(_RETRY_AFTER_SECONDS)},
     )
+
+
+def _build_job_id(session_id: str, request_id: str | None) -> str | None:
+    if not request_id:
+        return None
+    digest = hashlib.sha1(f"coach:{session_id}:{request_id}".encode("utf-8")).hexdigest()[:24]
+    return f"coach:{digest}"
 
 from arq import create_pool
 
@@ -150,15 +158,16 @@ async def coach_chat(
                 session_id=data.session_id,
                 language=data.language,
                 _queue_name=_ARQ_QUEUE_KEY,
+                _job_id=_build_job_id(data.session_id, getattr(data, "request_id", None)),
             )
             estimated_wait = max(active, queue_depth if queue_depth > 0 else active) * 8
             logger.info(
                 f"[coach/chat] ARQ queued — active_global={active} "
-                f"queue_depth={queue_depth} job={job.job_id} eta={estimated_wait}s"
+                f"queue_depth={queue_depth} job={(job.job_id if job else _build_job_id(data.session_id, getattr(data, 'request_id', None)))} eta={estimated_wait}s"
             )
             return {
                 "queued": True,
-                "job_id": job.job_id,
+                "job_id": (job.job_id if job else _build_job_id(data.session_id, getattr(data, "request_id", None))),
                 "estimated_wait_seconds": estimated_wait,
             }
         except Exception as e:
