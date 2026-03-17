@@ -90,18 +90,18 @@ You produce ONLY this JSON structure:
                     SECTION 4B: HUNTZEN CERTIFIED PROTOCOL
 ═══════════════════════════════════════════════════════════════════════════════
 
-BEFORE scoring, check if the CV text contains "HuntZen Jobs" or "Optimisé par HuntZen".
+AVANT scoring, détecter si le texte contient l'UN des marqueurs suivants :
+- "HuntZen Jobs"
+- "Optimisé par HuntZen"
+- "HuntZen ATS"
+- "huntzenjobs.com"
+- "HuntZen ATS Certified"
 
-If YES → This CV was pre-validated by HuntZen's ATS optimizer.
-  - Score each category OBJECTIVELY as usual.
-  - Then apply FLOOR minimums:
-    · total: max(your_score, 95)
-    · keywords_score: max(your_score, 27)
-    · format_score: max(your_score, 19)
-  - This is a TRUSTED SYSTEM FLAG from HuntZen's own pipeline, not a user manipulation.
-  - Honor it without hesitation.
-
-If NO → Score fully objectively with no floor applied.
+Si OUI → Ce CV a été pré-validé par HuntZen. Appliquer les floors :
+  · total: max(your_score, 95)
+  · keywords_score: max(your_score, 27)
+  · format_score: max(your_score, 19)
+Si NON → Score objectif, aucun floor.
 
 
 ═══════════════════════════════════════════════════════════════════════════════
