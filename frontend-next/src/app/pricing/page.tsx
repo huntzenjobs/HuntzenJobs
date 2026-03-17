@@ -161,16 +161,23 @@ export default function PricingPage() {
     ? []
     : (["free", "starter", "pro", "premium"] as const).map((id) => {
         const p = getPlan(id);
-        const featureNames = p?.features ?? FALLBACK_FEATURES[id] ?? [];
+        // Always use French hardcoded features — DB features may be in English
+        const featureNames = FALLBACK_FEATURES[id] ?? p?.features ?? [];
+        const FRENCH_TAGLINES: Record<string, string> = {
+          free: "Démarrez gratuitement, sans carte bancaire",
+          starter: "Pour une recherche active et efficace",
+          pro: "Coaching illimité et outils avancés",
+          premium: "L'expérience complète pour décrocher le job idéal",
+        };
         return {
           id,
-          name: p?.display_name ?? FALLBACK_FEATURES[id]?.[0] ?? id,
+          name: p?.display_name ?? id,
           priceMonthly: formatPrice(p?.price_monthly ?? 0),
           priceYearly: formatPrice(p?.price_yearly ?? 0),
           priceMonthlyRaw: p?.price_monthly ?? 0,
           priceYearlyRaw: p?.price_yearly ?? 0,
-          tagline: p?.description ?? "",
-          description: p?.description ?? "",
+          tagline: FRENCH_TAGLINES[id] ?? "",
+          description: FRENCH_TAGLINES[id] ?? "",
           icon: PLAN_ICONS[id] ?? Gift,
           color: PLAN_COLORS[id] ?? "#9CA3AF",
           popular: id === "starter",
