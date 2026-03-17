@@ -349,22 +349,30 @@ async def sync_coach_time(
 
         logger.info(f"Syncing coach time for user {user_id}: {data.seconds_used}s")
 
-        # Import quota functions
-        try:
-            from app.quota import increment_user_usage, get_user_quota_status
-        except ImportError:
-            raise HTTPException(status_code=500, detail="Quota module not available")
+        # Increment usage via Supabase RPC (source de vérité)
+        supabase = get_supabase_client()
+        inc_result = supabase.rpc("increment_usage", {
+            "p_user_id": user_id,
+            "p_feature": "coach",
+            "p_amount": data.seconds_used,
+        }).execute()
 
-        # Increment usage in database
-        success = await increment_user_usage(user_id, "coach", data.seconds_used)
-
-        if not success:
+        if not inc_result.data:
             logger.error(f"Failed to increment coach usage for user {user_id}")
             raise HTTPException(status_code=500, detail="Failed to sync time")
 
         # Get updated quota status
-        quota_status = await get_user_quota_status(user_id)
-        coach_quota = quota_status.get("coach", {})
+        quota_result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        coach_quota = {}
+        for row in (quota_result.data or []):
+            if row.get("feature") == "coach":
+                coach_quota = {
+                    "limit": row.get("quota_limit"),
+                    "used": row.get("quota_used"),
+                    "remaining": row.get("quota_remaining"),
+                    "has_access": row.get("has_access"),
+                }
+                break
 
         logger.info(f"Coach time synced successfully for user {user_id}: {data.seconds_used}s")
 
