@@ -2873,3 +2873,93 @@ async def list_blacklisted_emails(
         emails.append({"email": email_addr, "ttl_seconds": ttl, **meta})
 
     return {"emails": emails}
+
+
+# ============================================================
+# ASSISTANT SUGGESTIONS MANAGEMENT
+# ============================================================
+
+@router.get("/suggestions")
+async def admin_get_suggestions(admin: AdminUserDep) -> Dict[str, Any]:
+    """Get all suggestions grouped by assistant."""
+    supabase = get_supabase_client()
+    result = supabase.table("assistant_suggestions").select(
+        "id, assistant_id, text, display_order, is_active, created_at"
+    ).order("assistant_id").order("display_order").execute()
+
+    grouped: Dict[str, list] = {}
+    for row in (result.data or []):
+        aid = row["assistant_id"]
+        if aid not in grouped:
+            grouped[aid] = []
+        grouped[aid].append(row)
+
+    return {"suggestions": grouped}
+
+
+@router.post("/suggestions")
+async def admin_add_suggestion(
+    body: Dict[str, Any],
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Add a new suggestion for an assistant."""
+    supabase = get_supabase_client()
+    assistant_id = body.get("assistant_id")
+    text = body.get("text", "").strip()
+
+    if not assistant_id or not text:
+        raise HTTPException(status_code=400, detail="assistant_id and text are required")
+
+    # Get next order
+    existing = supabase.table("assistant_suggestions").select("display_order").eq(
+        "assistant_id", assistant_id
+    ).order("display_order", desc=True).limit(1).execute()
+    next_order = (existing.data[0]["display_order"] + 1) if existing.data else 0
+
+    result = supabase.table("assistant_suggestions").insert({
+        "assistant_id": assistant_id,
+        "text": text,
+        "display_order": next_order,
+        "is_active": True,
+    }).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.suggestion_added", None, {"assistant_id": assistant_id, "text": text})
+    return {"success": True, "suggestion": result.data[0] if result.data else {}}
+
+
+@router.patch("/suggestions/{suggestion_id}")
+async def admin_update_suggestion(
+    suggestion_id: str,
+    body: Dict[str, Any],
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Update a suggestion (text or is_active)."""
+    supabase = get_supabase_client()
+    update_data: Dict[str, Any] = {}
+    if "text" in body:
+        update_data["text"] = body["text"].strip()
+    if "is_active" in body:
+        update_data["is_active"] = body["is_active"]
+    if "display_order" in body:
+        update_data["display_order"] = body["display_order"]
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+
+    result = supabase.table("assistant_suggestions").update(update_data).eq(
+        "id", suggestion_id
+    ).execute()
+
+    return {"success": True, "suggestion": result.data[0] if result.data else {}}
+
+
+@router.delete("/suggestions/{suggestion_id}")
+async def admin_delete_suggestion(
+    suggestion_id: str,
+    admin: AdminUserDep,
+) -> Dict[str, Any]:
+    """Delete a suggestion."""
+    supabase = get_supabase_client()
+    supabase.table("assistant_suggestions").delete().eq("id", suggestion_id).execute()
+    _log_admin_action(supabase, admin["id"], "admin.suggestion_deleted", None, {"suggestion_id": suggestion_id})
+    return {"success": True}

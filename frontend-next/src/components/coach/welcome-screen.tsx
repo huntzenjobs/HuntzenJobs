@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { useAssistant } from "@/contexts/assistant-context";
 import { getAssistantConfig } from "@/config/assistants";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
+
 export interface WelcomeScreenProps {
   onQuestionClick?: (question: string) => void;
   className?: string;
@@ -16,6 +18,42 @@ export function WelcomeScreen({
 }: WelcomeScreenProps) {
   const { selectedAssistant } = useAssistant();
   const assistant = getAssistantConfig(selectedAssistant);
+  const [dynamicQuestions, setDynamicQuestions] = React.useState<string[] | null>(null);
+
+  React.useEffect(() => {
+    if (!selectedAssistant) return;
+    let cancelled = false;
+
+    async function fetchSuggestions() {
+      try {
+        const res = await fetch(
+          `${BACKEND_URL}/api/assistant/suggestions?assistant_id=${selectedAssistant}`,
+          { cache: "no-store" }
+        );
+        if (!res.ok) throw new Error("fetch failed");
+        const data = await res.json();
+        const items: Array<{ text: string }> = Array.isArray(data.suggestions)
+          ? data.suggestions
+          : [];
+        if (!cancelled && items.length > 0) {
+          setDynamicQuestions(items.map((s) => s.text));
+        }
+      } catch {
+        // Fallback to hardcoded questions — do nothing
+      }
+    }
+
+    setDynamicQuestions(null);
+    fetchSuggestions();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAssistant]);
+
+  const questions =
+    dynamicQuestions && dynamicQuestions.length > 0
+      ? dynamicQuestions
+      : assistant.exampleQuestions;
 
   return (
     <div
@@ -69,7 +107,7 @@ export function WelcomeScreen({
 
       {/* Suggestions */}
       <div className="flex flex-col gap-3 w-full max-w-lg">
-        {assistant.exampleQuestions.map((question, idx) => (
+        {questions.map((question, idx) => (
           <button
             key={idx}
             onClick={() => onQuestionClick?.(question)}
