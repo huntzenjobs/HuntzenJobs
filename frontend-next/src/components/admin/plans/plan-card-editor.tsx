@@ -53,6 +53,10 @@ interface Props {
     amount: number,
     currency: string,
   ) => Promise<any>;
+  onUpdateWording: (
+    planId: string,
+    wording: { display_name?: string; description?: string },
+  ) => Promise<boolean>;
 }
 
 export default function PlanCardEditor({
@@ -61,6 +65,7 @@ export default function PlanCardEditor({
   onUpdateFeatures,
   onUpdatePrice,
   onUpdateStripePrice,
+  onUpdateWording,
 }: Props) {
   const [limits, setLimits] = useState({
     cv_analyses: plan.limits?.cv_analyses ?? 0,
@@ -78,6 +83,8 @@ export default function PlanCardEditor({
       (key) => (plan.feature_flags || {})[`has_${key}`] === true,
     ),
   );
+  const [displayName, setDisplayName] = useState(plan.display_name || "");
+  const [description, setDescription] = useState(plan.description || "");
   const [stripePriceOpen, setStripePriceOpen] = useState<
     "monthly" | "yearly" | null
   >(null);
@@ -104,6 +111,12 @@ export default function PlanCardEditor({
       featureFlags[`has_${key}`] = features.includes(key);
     }
     await onUpdateFeatures(plan.id, featureFlags);
+    setSaving(null);
+  };
+
+  const handleSaveWording = async () => {
+    setSaving("wording");
+    await onUpdateWording(plan.id, { display_name: displayName, description });
     setSaving(null);
   };
 
@@ -144,7 +157,7 @@ export default function PlanCardEditor({
 
         <CardContent>
           <div
-            className={`grid grid-cols-1 gap-6 lg:gap-0 lg:divide-x lg:divide-border ${plan.name !== "free" ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}
+            className={`grid grid-cols-1 gap-6 lg:gap-0 lg:divide-x lg:divide-border ${plan.name !== "free" ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
           >
             {/* — Section 1: Limites numériques — */}
             <div className="space-y-3 lg:pr-6">
@@ -314,7 +327,44 @@ export default function PlanCardEditor({
               </Button>
             </div>
 
-            {/* — Section 4: Stripe Price IDs (plans payants uniquement) — */}
+            {/* — Section 4: Wording — */}
+            <div className="space-y-3 lg:px-6">
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Wording
+              </span>
+              <div className="space-y-2 mt-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Nom affiché</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Ex: Starter"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Description courte</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Ex: Le plus choisi"
+                  />
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSaveWording}
+                disabled={saving === "wording"}
+                className="w-full"
+              >
+                <Save className="h-3.5 w-3.5 mr-1.5" />
+                {saving === "wording" ? "Sauvegarde..." : "Sauvegarder"}
+              </Button>
+            </div>
+
+            {/* — Section 5: Stripe Price IDs (plans payants uniquement) — */}
             {plan.name !== "free" && (
               <div className="space-y-3 lg:pl-6">
                 <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">

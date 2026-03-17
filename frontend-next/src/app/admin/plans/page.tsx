@@ -11,6 +11,7 @@ export default function AdminPlansPage() {
     updateLimits,
     updateFeatures,
     updateDisplayPrice,
+    updateWording,
     updateStripePrice,
     loading,
   } = useAdminPlans();
@@ -73,6 +74,11 @@ export default function AdminPlansPage() {
                 );
                 if (result) refresh();
                 return result;
+              }}
+              onUpdateWording={async (id, wording) => {
+                const ok = await updateWording(id, wording);
+                if (ok) refresh();
+                return ok;
               }}
             />
           ))}
