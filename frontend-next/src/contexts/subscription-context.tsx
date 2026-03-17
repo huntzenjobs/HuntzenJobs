@@ -72,13 +72,6 @@ interface SubscriptionContextType {
 
 const SubscriptionContext = createContext<SubscriptionContextType | null>(null);
 
-const PLAN_NAMES: Record<PlanType, string> = {
-  free: "Gratuit",
-  starter: "Starter",
-  pro: "Pro",
-  premium: "Premium",
-};
-
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // NEW: Fetch subscription data from backend API
   const apiData = useSubscriptionApi();
@@ -159,7 +152,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     // No subscription data = new user or free user, default to 'free'
     return apiData.subscription?.plan_name || "free";
   })();
-  const planName = PLAN_NAMES[plan];
+  // plan_display_name vient directement de /api/auth/me (champ subscription)
+  const planName = apiData.subscription?.plan_display_name || plan;
 
   // Detect inconsistency: user authenticated but no subscription data from API
   useEffect(() => {
