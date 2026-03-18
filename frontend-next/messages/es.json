@@ -138,7 +138,7 @@
     "title": "Elige tu plan",
     "subtitle": "Empieza gratis, evoluciona según tus necesidades",
     "saveUpTo20": "Ahorra hasta un 20%",
-    "currentPlan": "Actual Plan.",
+    "currentPlan": "Plan actual",
     "choosePlan": "Elegir {name}"
   },
   "cta": {
@@ -762,7 +762,7 @@
       "deleteButton": "Eliminar",
       "cvLabel": "CV",
       "coverLetterLabel": "Carta de presentación",
-      "generatedOn": "Generat el"
+      "generatedOn": "Generado el"
     }
   },
   "error": {
@@ -819,7 +819,7 @@
       "questionsTitle": "¿Preguntas sobre nuestras suscripciones?",
       "contactSupport": "Contactar soporte →",
       "tip": "Pruebe el plan gratuito para descubrir HuntZen antes de suscribirse",
-      "tipLabel": "Propina"
+      "tipLabel": "Consejo"
     }
   },
   "profile": {
