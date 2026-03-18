@@ -217,11 +217,11 @@ class FranceTravailProvider(BaseJobProvider):
         if not raw:
             return None
         mapping = {
-            "CDI": "cdi",
-            "CDD": "cdd",
-            "MIS": "interim",
-            "SAI": "saisonnier",
-            "LIB": "freelance",
+            "CDI": "CDI",
+            "CDD": "CDD",
+            "MIS": "Intérim",
+            "SAI": "Saisonnier",
+            "LIB": "Freelance",
             # Alternance — libellés textuels retournés par typeContratLibelle
             # Note : "ALT" est le code de requête API, jamais retourné dans ce champ.
             "Contrat d'apprentissage": "alternance",
