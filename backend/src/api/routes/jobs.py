@@ -254,7 +254,9 @@ async def search_jobs(
 
 
 @router.get("/search")
+@limiter.limit("10/minute")
 async def search_jobs_get(
+    request: Request,
     agent: ScoutAgentDep,
     q: str = Query(..., description="Job title to search", min_length=2),
     country: str = Query(default="us", description="Country code"),
@@ -270,10 +272,15 @@ async def search_jobs_get(
     salary_min: int = Query(default=None, ge=0, description="Minimum salary (annual)"),
     salary_max: int = Query(default=None, ge=0, description="Maximum salary (annual)"),
     company_size: str = Query(default="", description="Company size: startup, scaleup, enterprise"),
+    authorization: Optional[str] = Header(None),
 ):
     """
     Search for jobs (GET endpoint for simple queries).
+    Authenticated users are subject to their plan quota.
     """
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        _check_job_search_quota(user_id)
     result = await agent.run(
         job_title=q,
         country_code=country,

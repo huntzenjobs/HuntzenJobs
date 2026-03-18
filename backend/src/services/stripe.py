@@ -215,14 +215,21 @@ async def create_checkout_session(
         is_upgrade = target_rank > current_rank
         is_downgrade = target_rank < current_rank
 
-        # ── Monthly → Annual: cancel monthly, start new annual checkout ──────
+        # ── Monthly → Annual: schedule end-of-period cancel, then new annual checkout ──────
+        # Safe order: schedule cancel BEFORE creating checkout.
+        # If user abandons checkout, monthly sub stays active (no loss).
+        # When checkout.session.completed fires, webhook creates the annual sub
+        # and DB trigger auto-cancels the old monthly.
         if current_billing == "monthly" and billing_period == "yearly":
             if is_real_stripe_sub:
                 try:
-                    stripe.Subscription.delete(current_stripe_sub_id)
-                    logger.info(f"[CHECKOUT] Cancelled monthly sub {current_stripe_sub_id} for annual upgrade")
+                    stripe.Subscription.modify(
+                        current_stripe_sub_id,
+                        cancel_at_period_end=True,
+                    )
+                    logger.info(f"[CHECKOUT] Scheduled monthly sub {current_stripe_sub_id} for end-of-period cancel (annual upgrade)")
                 except Exception as e:
-                    logger.warning(f"[CHECKOUT] Could not cancel monthly sub: {e}")
+                    logger.warning(f"[CHECKOUT] Could not schedule monthly sub cancellation: {e}")
             return await _create_new_checkout(
                 user_email=user_email,
                 price_id=new_price_id,
