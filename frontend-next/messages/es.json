@@ -658,7 +658,7 @@
       "statusApplied": "Solicitado",
       "tipTitle": "Truco",
       "tipText": "Haga clic en una oferta para generar un CV y una carta de presentación adaptados en cuestión de segundos.",
-      "comingSoonTitle": "<g id=\"1\">Próximamente</g>",
+      "comingSoonTitle": "Próximamente",
       "comingSoonText": "Seguimiento de solicitudes, recordatorios automáticos y análisis.",
       "savedCount": "{count} oferta(s) guardada(s)",
       "generateCvLm": "Generar CV + LM",

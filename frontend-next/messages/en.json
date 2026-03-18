@@ -19,9 +19,13 @@
     "language": "Language"
   },
   "hero": {
+    "tag": "For candidates tired of applying into the void",
+    "h1": "Your resume deserves to be seen. We make sure of it.",
+    "h2": "Every job on the market, in one place.",
     "subtitle": "Your complete career ally for landing the job that truly fits you. Targeted search, optimized CV, and personalized guidance at every step.",
     "ctaSearch": "Start my job search",
-    "ctaDiscover": "Discover our tools"
+    "ctaDiscover": "Discover our tools",
+    "socialProof": "Already 100,000+ candidates supported"
   },
   "tools": {
     "badge": "All our tools",
@@ -97,15 +101,37 @@
     "title": "Your everyday career ally",
     "titleHighlight": "career ally",
     "subtitle": "Powerful tools and personalized support to transform your job search",
+    "jobs": {
+      "badge": "SEARCH",
+      "title": "Thousands of jobs sorted just for you.",
+      "description": "No more juggling between 10 sites. All jobs are here, filtered, scored, and updated daily.",
+      "bullet1": "Jobs from 6+ platforms (France Travail, Indeed, LinkedIn...)",
+      "bullet2": "Advanced filters: salary, remote work, company size",
+      "bullet3": "Compatibility score per job",
+      "bullet4": "Save & track your applications",
+      "cta": "Explore jobs →"
+    },
     "cv": {
+      "badge": "RESUME & ATS",
       "title": "Expert analysis and CV optimization",
       "titleHighlight": "Expert analysis",
       "description": "Get an in-depth analysis of your profile to precisely identify your strengths and the skills the market is looking for. Receive concrete recommendations to maximize your chances.",
+      "bullet1": "ATS score out of 100 with detailed analysis",
+      "bullet2": "Personalized recommendations per section",
+      "bullet3": "ATS-certified professional PDF export",
+      "bullet4": "Jobs recommended based on your profile",
+      "cta": "Analyze my resume →",
       "items": [
         "Detailed evaluation of your technical and soft skills",
         "Targeted certified training recommendations",
         "Real-time updated employability score"
       ]
+    },
+    "coaches": {
+      "badge": "CAREER COACHES",
+      "title": "Five career experts in your pocket.",
+      "description": "Nova, Maria, Sofia, Lucas and David — each specialized in a domain. Available 24/7, no appointment needed.",
+      "cta": "Talk to a coach →"
     },
     "matching": {
       "title": "Smart matching and targeted search",
@@ -132,7 +158,8 @@
     "salary": {
       "value": "+ 35%",
       "label": "Average salary increase negotiated"
-    }
+    },
+    "disclaimer": "* Indicative data based on our active users"
   },
   "pricing": {
     "title": "Choose your plan",
@@ -150,7 +177,26 @@
     "copyright": "All rights reserved.",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
-    "contact": "Contact"
+    "contact": "Contact",
+    "sections": {
+      "product": "Product",
+      "resources": "Resources",
+      "legal": "Legal"
+    },
+    "links": {
+      "cvAnalysis": "Resume Analysis",
+      "jobSearch": "Job Search",
+      "coach": "AI Coach",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "blog": "Blog",
+      "testimonials": "Testimonials",
+      "about": "About",
+      "legalNotice": "Legal Notice"
+    },
+    "social": {
+      "follow": "Follow us"
+    }
   },
   "pricingPlans": {
     "popular": "POPULAR",
@@ -309,6 +355,7 @@
     "plans": {
       "free": {
         "name": "Free",
+        "tagline": "Exploration",
         "description": "Perfect for discovering HuntZen",
         "period": "",
         "featureNames": [
@@ -325,6 +372,7 @@
       },
       "starter": {
         "name": "Starter",
+        "tagline": "Active search",
         "description": "Ideal for starting your job search",
         "period": "/month",
         "featureNames": [
@@ -341,6 +389,7 @@
       },
       "pro": {
         "name": "Pro",
+        "tagline": "Preparation and progression",
         "description": "Most popular to boost your career",
         "period": "/month",
         "featureNames": [
@@ -357,6 +406,7 @@
       },
       "premium": {
         "name": "Premium",
+        "tagline": "Career optimization",
         "description": "Full access to all features",
         "period": "/month",
         "featureNames": [
@@ -624,20 +674,24 @@
       "title": "Job Fairs & Forums",
       "filterAll": "All",
       "filterUpcoming": "Coming soon",
-      "filterOnline": "Inline",
+      "filterOnline": "Online",
       "filterFree": "Free",
-      "searchPlaceholder": "Search Property",
-      "noResults": "No Property found.",
+      "searchPlaceholder": "Search Events",
+      "noResults": "No events found.",
       "noResultsSub": "Try other filters or check back later.",
       "registerButton": "Register",
       "registeredButton": "enrolled",
-      "onlineLabel": "Inline",
+      "onlineLabel": "Online",
       "freeLabel": "Free",
       "loadingText": "Loading the groups of the community. Please wait.",
       "errorText": "Error while uploading",
       "emptyStateTitle": "No lounges available",
       "emptyStateSubtitle": "Check back soon for upcoming events.",
       "subtitle": "Check out job events near you and meet recruiters in person or online",
+      "keyMessage1": "Discover key events for your career.",
+      "keyMessage2": "Expand your network and find new opportunities.",
+      "ctaExplore": "Explore events",
+      "ctaJoin": "Join an event",
       "hideFilters": "Hide Filters",
       "showFilters": "Show Filters",
       "eventsCount": "{count} event(s)",
@@ -645,11 +699,11 @@
       "filterTitle": "Filter events",
       "resetFilters": "Reset",
       "activeFilters": "active filter(s)",
-      "searchButton": "News Search",
+      "searchButton": "Search",
       "loadingEvents": "Loading {current}/{total} events...",
       "clearFilters": "Clear Filters",
       "notCommunicated": "Undisclosed",
-      "viewDetails": "View Detail Logs"
+      "viewDetails": "View Details"
     },
     "savedJobs": {
       "title": "Saved Jobs",
@@ -768,7 +822,7 @@
       "filterCvAndCoverLetter": "CV + LM",
       "emptyStateTitle": "No papers",
       "emptyStateSubtitle": "Your generated CVs and cover letters will appear here.",
-      "downloadButton": "Upload",
+      "downloadButton": "Download",
       "deleteButton": "Remove",
       "cvLabel": "CV",
       "coverLetterLabel": "Covering letter",
@@ -888,7 +942,7 @@
     "searchRadius": "Search radius",
     "radiusKm": "Radius (Km)",
     "searchesRemaining": "{count} search(s) left today",
-    "searchButton": "News Search",
+    "searchButton": "Search",
     "advancedFilters": "Advanced filters",
     "typeYourCountry": "Your country",
     "typeYourCity": "Type your city.",
