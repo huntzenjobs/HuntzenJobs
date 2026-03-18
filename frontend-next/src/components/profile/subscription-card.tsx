@@ -90,7 +90,16 @@ export function SubscriptionCard() {
   const apiData = useSubscriptionApi();
   const t = useTranslations("profile");
 
-  const antiChurnPopup = useConversionPopup("anti_churn");
+  const antiChurnPopup = useConversionPopup("anti_churn", {
+    onUpgrade: (checkoutUrl) => {
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        openPricingModal();
+      }
+    },
+    onSecondaryAction: () => setShowCancelDialog(true),
+  });
 
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);

@@ -99,6 +99,7 @@ interface ConversionPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onUpgrade?: (checkoutUrl?: string) => void;
+  onSecondaryAction?: () => void;
 }
 
 export function ConversionPopup({
@@ -106,6 +107,7 @@ export function ConversionPopup({
   isOpen,
   onClose,
   onUpgrade,
+  onSecondaryAction,
 }: ConversionPopupProps) {
   const { session } = useAuth();
   const config = POPUP_CONFIGS.find((p) => p.id === popupId);
@@ -209,7 +211,13 @@ export function ConversionPopup({
           </p>
           <button
             onClick={() => {
-              onUpgrade?.(checkoutUrl ?? undefined);
+              if (onUpgrade) {
+                onUpgrade(checkoutUrl ?? undefined);
+              } else if (checkoutUrl) {
+                window.location.href = checkoutUrl;
+              } else {
+                window.location.href = "/pricing";
+              }
               onClose();
             }}
             className={cn(
@@ -221,7 +229,10 @@ export function ConversionPopup({
           </button>
           {config.secondaryCta && (
             <button
-              onClick={onClose}
+              onClick={() => {
+                onSecondaryAction?.();
+                onClose();
+              }}
               className="w-full mt-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {config.secondaryCta}
@@ -233,7 +244,13 @@ export function ConversionPopup({
   );
 }
 
-export function useConversionPopup(popupId: string) {
+export function useConversionPopup(
+  popupId: string,
+  options?: {
+    onUpgrade?: (checkoutUrl?: string) => void;
+    onSecondaryAction?: () => void;
+  },
+) {
   const [isOpen, setIsOpen] = useState(false);
   return {
     isOpen,
@@ -244,6 +261,8 @@ export function useConversionPopup(popupId: string) {
         popupId={popupId}
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
+        onUpgrade={options?.onUpgrade}
+        onSecondaryAction={options?.onSecondaryAction}
       />
     ),
   };

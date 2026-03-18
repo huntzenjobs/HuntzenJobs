@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const CACHE_KEY = "plans_config_cache";
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
