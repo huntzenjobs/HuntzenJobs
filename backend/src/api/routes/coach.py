@@ -243,15 +243,18 @@ async def coach_chat(
 
 
 @router.post("/training-recommendations")
+@limiter.limit("10/minute")
 async def get_training_recommendations(
+    request: Request,
     agent: CoachAgentDep,
+    current_user: CurrentUserDep,
     domain: str,
     level: str = "intermediate",
     budget: str = "mixed",
 ):
     """
     Get targeted training recommendations for a domain.
-    
+
     Args:
         domain: Career domain (data, dev, security, cloud, etc.)
         level: Current level (beginner, intermediate, advanced)
@@ -262,7 +265,7 @@ async def get_training_recommendations(
         current_level=level,
         budget=budget,
     )
-    
+
     return {
         "success": True,
         "domain": domain,
@@ -272,15 +275,18 @@ async def get_training_recommendations(
 
 
 @router.post("/career-plan")
+@limiter.limit("10/minute")
 async def generate_career_plan(
+    request: Request,
     agent: CoachAgentDep,
+    current_user: CurrentUserDep,
     current_role: str,
     target_role: str,
     years: int = 5,
 ):
     """
     Generate a career progression plan.
-    
+
     Args:
         current_role: Current job title
         target_role: Target job title
@@ -291,7 +297,7 @@ async def generate_career_plan(
         target_role=target_role,
         years=years,
     )
-    
+
     return {
         "success": True,
         "current_role": current_role,

@@ -17,11 +17,11 @@ export const faqCategories = [
       },
       {
         q: "HuntZen Jobs est-il gratuit ?",
-        a: "Oui ! HuntZen Jobs propose un plan gratuit avec 1 analyse CV par jour et accès aux offres d'emploi. Pour débloquer toutes les fonctionnalités de HuntZen (analyses CV illimitées, coaching IA, alertes emploi personnalisées), passez au plan Pro HuntZen Jobs à seulement 19€/mois.",
+        a: "Oui ! HuntZen Jobs propose un plan gratuit avec 1 analyse CV par jour et accès aux offres d'emploi. Pour débloquer toutes les fonctionnalités de HuntZen (analyses CV illimitées, coaching personnalisé, alertes emploi personnalisées), passez au plan Pro HuntZen Jobs à seulement 19€/mois.",
       },
       {
         q: "Pourquoi choisir HuntZen Jobs plutôt qu'Indeed ou LinkedIn ?",
-        a: "Contrairement à Indeed ou LinkedIn, HuntZen Jobs vous offre un coach IA personnalisé, une analyse CV ATS professionnelle, et un matching intelligent. HuntZen ne se contente pas de lister des offres : nous vous accompagnons de A à Z. 87% de nos utilisateurs HuntZen Jobs reçoivent plus de réponses qu'avec Indeed ou LinkedIn.",
+        a: "Contrairement à Indeed ou LinkedIn, HuntZen Jobs vous offre un coach personnalisé, une analyse CV ATS professionnelle, et un matching intelligent. HuntZen ne se contente pas de lister des offres : nous vous accompagnons de A à Z. La majorité de nos utilisateurs HuntZen Jobs reçoivent plus de réponses qu'avec Indeed ou LinkedIn.",
       },
     ],
   },
@@ -55,7 +55,7 @@ export const faqCategories = [
       },
       {
         q: "Comment HuntZen Jobs trouve les offres d'emploi qui me correspondent ?",
-        a: "HuntZen Jobs utilise un algorithme de matching IA qui analyse votre CV, vos compétences, votre expérience et vos préférences. Ensuite, HuntZen compare ces données avec +100 000 offres d'emploi pour vous proposer un top 10 personnalisé chaque jour. Le matching HuntZen s'améliore au fur et à mesure.",
+        a: "HuntZen Jobs utilise un algorithme de matching qui analyse votre CV, vos compétences, votre expérience et vos préférences. Ensuite, HuntZen compare ces données avec les offres d'emploi disponibles pour vous proposer les meilleures opportunités chaque jour. Le matching HuntZen s'améliore au fur et à mesure.",
       },
       {
         q: "Puis-je postuler directement via HuntZen Jobs ?",
@@ -63,16 +63,16 @@ export const faqCategories = [
       },
       {
         q: "HuntZen Jobs propose-t-il des alertes emploi ?",
-        a: "Oui ! Avec HuntZen Jobs Pro, vous recevez des alertes emploi personnalisées par email ou SMS. HuntZen vous prévient dès qu'une nouvelle offre correspond à votre profil. Configurez vos critères (secteur, localisation, salaire) et laissez HuntZen travailler pour vous 24/7.",
+        a: "Oui ! Avec HuntZen Jobs Pro, vous recevez des alertes emploi personnalisées par email. HuntZen vous prévient dès qu'une nouvelle offre correspond à votre profil. Configurez vos critères (secteur, localisation, salaire) et laissez HuntZen analyser les nouvelles offres pour vous.",
       },
     ],
   },
   {
-    category: "Assistant Carrière IA",
+    category: "Assistant Carrière",
     questions: [
       {
         q: "Qu'est-ce que l'Assistant Carrière HuntZen Jobs ?",
-        a: "L'Assistant Carrière HuntZen Jobs est un coach IA personnalisé disponible 24/7. HuntZen vous aide à préparer vos entretiens, négocier votre salaire, rédiger lettres de motivation, et construire votre stratégie de recherche d'emploi. C'est comme avoir un consultant carrière dédié sur HuntZen.",
+        a: "L'Assistant Carrière HuntZen Jobs est un coach personnalisé accessible depuis votre tableau de bord. HuntZen vous aide à préparer vos entretiens, rédiger des lettres de motivation, optimiser votre CV, et construire votre stratégie de recherche d'emploi. C'est comme avoir un consultant carrière dédié sur HuntZen.",
       },
       {
         q: "Comment HuntZen Jobs m'aide à préparer mes entretiens ?",
@@ -80,7 +80,7 @@ export const faqCategories = [
       },
       {
         q: "HuntZen Jobs peut-il rédiger ma lettre de motivation ?",
-        a: "Oui ! HuntZen Jobs génère des lettres de motivation personnalisées en quelques secondes. Donnez à HuntZen l'offre d'emploi et votre CV : notre IA rédige une lettre professionnelle, convaincante et adaptée. Vous pouvez ensuite personnaliser le texte généré par HuntZen.",
+        a: "Oui ! HuntZen Jobs génère des lettres de motivation personnalisées en quelques secondes. Donnez à HuntZen l'offre d'emploi et votre CV : votre coach rédige une lettre professionnelle, convaincante et adaptée. Vous pouvez ensuite personnaliser le texte généré par HuntZen.",
       },
     ],
   },
@@ -89,7 +89,7 @@ export const faqCategories = [
     questions: [
       {
         q: "Combien coûte HuntZen Jobs ?",
-        a: "HuntZen Jobs propose 2 plans : Gratuit (0€/mois) avec 1 analyse CV/jour et accès aux offres, et Pro (19€/mois) avec analyses CV illimitées, assistant IA, alertes emploi, et coaching personnalisé. HuntZen Jobs offre aussi 7 jours d'essai gratuit du plan Pro.",
+        a: "HuntZen Jobs propose 2 plans : Gratuit (0€/mois) avec 1 analyse CV/jour et accès aux offres, et Pro (19€/mois) avec analyses CV illimitées, coach personnel, alertes emploi, et accompagnement personnalisé. HuntZen Jobs offre aussi 7 jours d'essai gratuit du plan Pro.",
       },
       {
         q: "Comment annuler mon abonnement HuntZen Jobs ?",
@@ -106,15 +106,15 @@ export const faqCategories = [
     questions: [
       {
         q: "Comment contacter le support HuntZen Jobs ?",
-        a: "Le support HuntZen Jobs est disponible par email (support@huntzenjobs.com), chat en direct (24/7), et téléphone (lundi-vendredi 9h-18h). Nos équipes HuntZen répondent en moins de 2h en moyenne. Pour les utilisateurs Pro, HuntZen offre un support prioritaire.",
+        a: "Le support HuntZen Jobs est disponible par email à support@huntzenjobs.com. Nos équipes HuntZen répondent en moins de 48h en semaine. Pour les utilisateurs Pro, HuntZen offre un support prioritaire.",
       },
       {
         q: "HuntZen Jobs propose-t-il des tutoriels vidéo ?",
-        a: "Oui ! HuntZen Jobs met à disposition une bibliothèque complète de tutoriels vidéo, guides PDF, et webinaires. Consultez notre centre d'aide HuntZen Jobs pour apprendre à maximiser votre utilisation de la plateforme. Nouveaux contenus HuntZen chaque semaine !",
+        a: "HuntZen Jobs met à disposition des guides d'utilisation directement dans l'interface. Pour toute question, notre équipe support est disponible par email à support@huntzenjobs.com.",
       },
       {
         q: "Puis-je utiliser HuntZen Jobs sur mobile ?",
-        a: "Oui ! HuntZen Jobs est 100% responsive et fonctionne parfaitement sur mobile et tablette. Téléchargez aussi notre app mobile HuntZen Jobs (iOS/Android) pour rechercher des emplois, analyser votre CV, et recevoir des alertes en temps réel où que vous soyez.",
+        a: "Oui ! HuntZen Jobs est 100% responsive et fonctionne parfaitement sur mobile et tablette via votre navigateur. Accédez à toutes les fonctionnalités depuis votre smartphone : recherche d'emploi, analyse de CV, et coaching personnalisé.",
       },
     ],
   },

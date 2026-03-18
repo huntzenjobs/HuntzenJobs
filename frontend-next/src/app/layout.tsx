@@ -12,6 +12,7 @@ import { inter, dmSans } from "@/lib/fonts";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import SiteBanner from "@/components/layout/site-banner";
+import { CookieBanner } from "@/components/layout/cookie-banner";
 
 // Metadata optimisées pour SEO 100/100
 export const metadata: Metadata = homeMetadata;
@@ -88,6 +89,7 @@ export default async function RootLayout({
         <SkipLink />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers initialUser={user}>{children}</Providers>
+          <CookieBanner />
         </NextIntlClientProvider>
       </body>
     </html>

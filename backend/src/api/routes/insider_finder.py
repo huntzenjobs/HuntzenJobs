@@ -1,9 +1,11 @@
 
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from src.api.deps import get_user_id_from_token
+from src.api.middleware import limiter
 from src.services.recruiter_finder.insider_service import InsiderFinderService
 
 logger = logging.getLogger(__name__)
@@ -40,10 +42,22 @@ class InsiderSearchResponse(BaseModel):
 # ============================================================================
 
 @router.post("/find", response_model=InsiderSearchResponse)
-async def find_insiders(request: InsiderSearchRequest):
+@limiter.limit("5/minute")
+async def find_insiders(
+    http_request: Request,
+    request: InsiderSearchRequest,
+    authorization: Optional[str] = Header(None),
+):
     """
     Find company insiders (recruiters, colleagues) using AI strategy and Google/LinkedIn search.
+    Requires authentication — calls SerpAPI/Google (paid service).
     """
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
     try:
         result = await service.find_insiders(
             job_title=request.job_title,
@@ -51,15 +65,17 @@ async def find_insiders(request: InsiderSearchRequest):
             city=request.city or "",
             is_alternance=request.is_alternance
         )
-        
+
         if not result.get("success"):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=result.get("error", "Failed to find insiders")
             )
-            
+
         return result
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[InsiderFinderAPI] Unexpected error: {e}")
         raise HTTPException(

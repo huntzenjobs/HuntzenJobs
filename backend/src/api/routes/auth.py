@@ -334,8 +334,9 @@ class WelcomeRequest(BaseModel):
 
 
 @router.post("/api/auth/welcome")
-async def send_welcome_email(payload: WelcomeRequest):
-    """Send welcome email after signup. No auth required — called from frontend post-signup."""
+@limiter.limit("3/minute")
+async def send_welcome_email(request: Request, payload: WelcomeRequest):
+    """Send welcome email after signup. Rate limited to 3/min to prevent email abuse."""
     from src.services.email import send_welcome
     try:
         send_welcome(to_email=payload.email, full_name=payload.full_name)

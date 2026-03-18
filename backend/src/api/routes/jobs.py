@@ -311,15 +311,24 @@ async def search_jobs_get(
 
 
 @router.post("/analyze-query")
+@limiter.limit("20/minute")
 async def analyze_query(
+    request: Request,
     agent: ScoutAgentDep,
     query: str,
+    authorization: Optional[str] = Header(None),
 ):
     """
     Analyze a natural language job search query.
-    
+
     Extracts job title, location, contract type from free text.
     """
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
     analysis = await agent.analyze_query(query)
     return {
         "success": True,
@@ -329,16 +338,25 @@ async def analyze_query(
 
 
 @router.get("/market-insights")
+@limiter.limit("10/minute")
 async def get_market_insights(
+    request: Request,
     agent: ScoutAgentDep,
     job_title: str = Query(..., description="Job title"),
     country: str = Query(default="us", description="Country code"),
+    authorization: Optional[str] = Header(None),
 ):
     """
     Get job market insights for a role.
 
     Provides demand level, salary ranges, required skills, and hot locations.
     """
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
     insights = await agent._get_market_insights(job_title, country)
     return {
         "success": True,
@@ -461,7 +479,8 @@ async def track_job_view(request: Request):
 # ============================================================================
 
 @router.post("/find-recruiter")
-async def find_recruiter(request: Request):
+@limiter.limit("5/minute")
+async def find_recruiter(request: Request, authorization: Optional[str] = Header(None)):
     """
     Find the recruiter / decision-maker behind a job posting.
 
@@ -474,7 +493,14 @@ async def find_recruiter(request: Request):
     }
 
     Returns recruiters (HR/managers), tech team, email pattern, and LinkedIn URLs.
+    Requires authentication — calls Hunter.io API (paid service).
     """
+    user_id = get_user_id_from_token(authorization)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
     try:
         body = await request.json()
         company_name = body.get("company_name", "")
