@@ -937,11 +937,26 @@ export default function JobsPage() {
       result = result.filter((j) => quickFilters.sources.includes(j.source));
     }
     if (quickFilters.contractTypes.length > 0) {
-      result = result.filter(
-        (j) =>
-          j.contract_type &&
-          quickFilters.contractTypes.includes(j.contract_type),
-      );
+      const hasAlternance = quickFilters.contractTypes.includes("alternance");
+      result = result.filter((j) => {
+        if (hasAlternance) {
+          const text = `${j.title ?? ""} ${j.description ?? ""}`.toLowerCase();
+          const isAlternance =
+            j.contract_type === "alternance" ||
+            text.includes("alternance") ||
+            text.includes("apprenti");
+          if (quickFilters.contractTypes.length === 1) return isAlternance;
+          return (
+            isAlternance ||
+            (j.contract_type != null &&
+              quickFilters.contractTypes.includes(j.contract_type))
+          );
+        }
+        return (
+          j.contract_type != null &&
+          quickFilters.contractTypes.includes(j.contract_type)
+        );
+      });
     }
     if (quickFilters.maxDays !== null) {
       const cutoff = Date.now() - quickFilters.maxDays * 24 * 60 * 60 * 1000;
@@ -1698,6 +1713,24 @@ export default function JobsPage() {
                     {t("results.refresh")}
                   </span>
                 </Button>
+                {/* Toggle alternance — first-class, déclenche un nouveau search via React Query */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next =
+                      contractType === "alternance" ? "" : "alternance";
+                    setContractType(next);
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all",
+                    contractType === "alternance"
+                      ? "bg-blue-500 text-white border-blue-500 shadow-sm"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+                  )}
+                >
+                  🎓 Alternance
+                </button>
                 {/* Quick filter toggle button */}
                 <Button
                   variant="outline"
