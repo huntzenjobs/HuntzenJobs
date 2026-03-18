@@ -95,6 +95,7 @@ export function SearchFormInline({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const t = useTranslations("searchForm");
+  const tJobs = useTranslations("jobs");
   const { canUse, getRemaining, isFreePlan } = useSubscription();
 
   // Fetch countries for autocomplete
@@ -199,7 +200,7 @@ export function SearchFormInline({
   const handleSearch = () => {
     // Validate form
     if (!validate()) {
-      toast.error("Veuillez remplir tous les champs requis");
+      toast.error(tJobs("toasts.fillAllFields"));
       return;
     }
 

@@ -71,16 +71,18 @@ export default function DocumentsPage() {
     return matchSearch && matchFilter;
   });
 
+  const tProfile = useTranslations("profile");
+
   const handleWizardSave = async (name: string, data: CvData) => {
     if (editingProfile) {
       await updateProfile(editingProfile.id, name, data);
-      toast.success("Profil mis à jour !");
+      toast.success(tProfile("toasts.profileUpdated"));
     } else {
       const saved = await saveProfile(name, data);
       if (saved) {
-        toast.success("Profil sauvegardé !");
+        toast.success(tProfile("toasts.profileSaved"));
       } else {
-        toast.error("Erreur lors de la sauvegarde du profil.");
+        toast.error(tProfile("toasts.profileSaveError"));
       }
     }
     setEditingProfile(null);
@@ -88,7 +90,7 @@ export default function DocumentsPage() {
 
   const handleDeleteProfile = async (id: string) => {
     await deleteProfile(id);
-    toast.success("Profil supprimé.");
+    toast.success(tProfile("toasts.profileDeleted"));
   };
 
   const openEditWizard = (profile: CvProfile) => {

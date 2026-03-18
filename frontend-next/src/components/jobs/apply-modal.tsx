@@ -228,6 +228,7 @@ export function ApplyModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const t = useTranslations("applyModal");
+  const tJobs = useTranslations("jobs");
   const { saveDocument } = useDocuments();
   const {
     profiles,
@@ -536,13 +537,13 @@ export function ApplyModal({
   const handleGenerate = async () => {
     if (cvSource === "upload") {
       if (!selectedFile) {
-        toast.error("Veuillez sélectionner votre CV avant de continuer.");
+        toast.error(tJobs("toasts.selectCvFirst"));
         return;
       }
       await generateFromFile();
     } else {
       if (!selectedProfile) {
-        toast.error("Veuillez sélectionner un profil sauvegardé.");
+        toast.error(tJobs("toasts.selectSavedProfile"));
         return;
       }
       await generateFromProfile();
@@ -574,9 +575,9 @@ export function ApplyModal({
         body: JSON.stringify({ cv_data: data, template: "ats", language }),
       });
       if (res.ok) setPreviewHtml(await res.text());
-      else toast.error("Impossible de charger la prévisualisation");
+      else toast.error(tJobs("toasts.previewLoadError"));
     } catch {
-      toast.error("Erreur lors de la prévisualisation");
+      toast.error(tJobs("toasts.previewError"));
     } finally {
       setPreviewLoading(false);
     }
@@ -588,9 +589,9 @@ export function ApplyModal({
     const saved = await saveProfile(name, data);
     if (saved) {
       setSelectedProfile(saved);
-      toast.success("Profil sauvegardé !");
+      toast.success(tJobs("toasts.profileSaved"));
     } else {
-      toast.error("Erreur lors de la sauvegarde du profil.");
+      toast.error(tJobs("toasts.profileSaveError"));
     }
   };
 
@@ -1383,7 +1384,7 @@ export function ApplyModal({
                 disabled={markedApplied}
                 onClick={() => {
                   setMarkedApplied(true);
-                  toast.success("Candidature marquée comme envoyée !");
+                  toast.success(tJobs("toasts.applicationSent"));
                 }}
               >
                 {markedApplied ? (

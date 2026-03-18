@@ -19,6 +19,7 @@ import {
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 type PlanLimits = (typeof PLAN_LIMITS)[PlanType];
 
@@ -73,6 +74,8 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | null>(null);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
+  const t = useTranslations("subscription");
+
   // NEW: Fetch subscription data from backend API
   const apiData = useSubscriptionApi();
 
@@ -122,12 +125,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     // Force refetch from API
     if (apiData.refetch) {
       await apiData.refetch();
-      toast.success("Abonnement synchronisé", {
-        description: "Vos informations d'abonnement ont été actualisées.",
+      toast.success(t("toasts.synced"), {
+        description: t("toasts.syncedDesc"),
       });
     } else {
-      toast.error("Synchronisation impossible", {
-        description: "La fonction de synchronisation n'est pas disponible.",
+      toast.error(t("toasts.syncFailed"), {
+        description: t("toasts.syncFailedDesc"),
       });
     }
 
@@ -213,10 +216,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // Listen for token-expired event and show reconnect toast
   useEffect(() => {
     const handleTokenExpired = () => {
-      toast.error("Session expirée", {
-        description: "Votre session a expiré. Veuillez vous reconnecter.",
+      toast.error(t("toasts.sessionExpired"), {
+        description: t("toasts.sessionExpiredDesc"),
         action: {
-          label: "Reconnecter",
+          label: t("toasts.sessionExpiredAction"),
           onClick: () => (window.location.href = "/login"),
         },
         duration: 10000,

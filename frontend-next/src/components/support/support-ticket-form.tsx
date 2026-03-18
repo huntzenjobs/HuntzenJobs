@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Paperclip, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +26,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export function SupportTicketForm() {
   const { user } = useAuth();
   const { planName } = useSubscription();
+  const tSupport = useTranslations("support");
   const { isSubmitting, submitTicket, refetch } = useSupportTicket();
 
   const [category, setCategory] = useState("question");
@@ -42,11 +44,11 @@ export function SupportTicketForm() {
     const f = e.target.files?.[0];
     if (!f) return;
     if (f.size > MAX_FILE_SIZE) {
-      toast.error("Fichier trop volumineux (max 5MB)");
+      toast.error(tSupport("toasts.fileTooLarge"));
       return;
     }
     if (!f.type.startsWith("image/") && f.type !== "application/pdf") {
-      toast.error("Format non supporté. Images ou PDF uniquement.");
+      toast.error(tSupport("toasts.fileFormatUnsupported"));
       return;
     }
     setFile(f);
@@ -64,7 +66,7 @@ export function SupportTicketForm() {
       if (error) throw error;
       return path;
     } catch (err) {
-      toast.error("Erreur lors de l'upload du fichier");
+      toast.error(tSupport("toasts.fileUploadError"));
       return null;
     }
   };
@@ -72,11 +74,11 @@ export function SupportTicketForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (subject.length < 5) {
-      toast.error("Sujet trop court (min 5 caractères)");
+      toast.error(tSupport("toasts.subjectTooShort"));
       return;
     }
     if (description.length < 20) {
-      toast.error("Description trop courte (min 20 caractères)");
+      toast.error(tSupport("toasts.descriptionTooShort"));
       return;
     }
 

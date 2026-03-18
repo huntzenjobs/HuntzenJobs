@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Bell, Send, BarChart3, Clock, Loader2 } from "lucide-react";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -34,6 +35,7 @@ const DEFAULT_PREFS: NotifPrefs = {
 
 export function NotificationsSection() {
   const { fetchJSON } = useAuthenticatedFetch();
+  const tProfile = useTranslations("profile");
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,7 +46,7 @@ export function NotificationsSection() {
     const load = async () => {
       try {
         const data = await fetchJSON<NotifPrefs>(
-          `${BACKEND_URL}/api/notifications/preferences`
+          `${BACKEND_URL}/api/notifications/preferences`,
         );
         const loaded: NotifPrefs = {
           job_alerts: data.job_alerts ?? true,
@@ -72,7 +74,7 @@ export function NotificationsSection() {
       if (!initialPrefs.current) return;
       // Don't save if nothing changed
       const changed = (Object.keys(toSave) as (keyof NotifPrefs)[]).some(
-        (k) => toSave[k] !== initialPrefs.current![k]
+        (k) => toSave[k] !== initialPrefs.current![k],
       );
       if (!changed) return;
 
@@ -84,12 +86,12 @@ export function NotificationsSection() {
         });
         initialPrefs.current = toSave;
       } catch {
-        toast.error("Erreur lors de la sauvegarde des préférences");
+        toast.error(tProfile("toasts.notifSaveError"));
       } finally {
         setSaving(false);
       }
     },
-    [fetchJSON]
+    [fetchJSON],
   );
 
   // Auto-save when debounced value changes (skip initial load)
@@ -219,8 +221,8 @@ export function NotificationsSection() {
             </SelectContent>
           </Select>
           <p className="text-xs text-gray-400">
-            Le cron filtre les users par préférence — seuls les "daily" reçoivent
-            un email chaque jour.
+            Le cron filtre les users par préférence — seuls les "daily"
+            reçoivent un email chaque jour.
           </p>
         </div>
       )}

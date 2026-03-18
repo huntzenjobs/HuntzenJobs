@@ -72,14 +72,14 @@ export function SettingsSection({
 
         if (error) {
           console.error("Settings update error:", error);
-          toast.error("Erreur lors de la mise à jour des paramètres");
+          toast.error(t("toasts.settingsUpdateError"));
           return false;
         }
 
         return true;
       } catch (err) {
         console.error("Unexpected error:", err);
-        toast.error("Une erreur inattendue est survenue");
+        toast.error(t("toasts.unexpectedError"));
         return false;
       }
     },
@@ -102,10 +102,10 @@ export function SettingsSection({
         router.refresh();
       }
 
-      toast.success("Déconnexion réussie");
+      toast.success(t("toasts.logoutSuccess"));
     } catch (error) {
       console.error("Logout error:", error);
-      toast.error("Erreur lors de la déconnexion");
+      toast.error(t("toasts.logoutError"));
       setIsLoggingOut(false);
     }
   };

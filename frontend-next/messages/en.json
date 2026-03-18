@@ -166,7 +166,15 @@
     "subtitle": "Start for free, scale as you grow",
     "saveUpTo20": "Save up to 20%",
     "currentPlan": "Current Plan",
-    "choosePlan": "Choose {name}"
+    "choosePlan": "Choose {name}",
+    "toasts": {
+      "alreadyOnPlan": "You are already on this plan",
+      "mustBeLoggedIn": "You must be logged in to subscribe to a plan",
+      "redirecting": "Redirecting to payment...",
+      "sessionExpired": "Session expired, please log in again",
+      "upgraded": "✨ Subscription upgraded!",
+      "scheduledChange": "📅 Change scheduled for the end of your current period."
+    }
   },
   "cta": {
     "startFree": "Start for free",
@@ -886,6 +894,23 @@
       "tipLabel": "Hint"
     }
   },
+  "subscription": {
+    "toasts": {
+      "synced": "Subscription synced",
+      "syncedDesc": "Your subscription information has been refreshed.",
+      "syncFailed": "Sync failed",
+      "syncFailedDesc": "The sync function is not available.",
+      "sessionExpired": "Session expired",
+      "sessionExpiredDesc": "Your session has expired. Please log in again.",
+      "sessionExpiredAction": "Reconnect"
+    }
+  },
+  "contact": {
+    "toasts": {
+      "fillAllFields": "Please fill in all required fields.",
+      "sendError": "An error occurred. Please try again or send an email directly."
+    }
+  },
   "profile": {
     "multilingualComingSoon": "Multilingual support will be available soon",
     "thankSubscription": "Thanks for purchasing a membership!",
@@ -893,6 +918,18 @@
     "cancelSubscriptionComingSoon": "Subscription cancellation will be available soon",
     "cancelSubscription": "Cancel subscription",
     "cancelling": "Cancelling...",
+    "toasts": {
+      "linkCopied": "Link copied!",
+      "profileUpdated": "Profile updated!",
+      "profileSaved": "Profile saved!",
+      "profileSaveError": "Error saving profile.",
+      "profileDeleted": "Profile deleted.",
+      "settingsUpdateError": "Error updating settings",
+      "unexpectedError": "An unexpected error occurred",
+      "logoutSuccess": "Logged out successfully",
+      "logoutError": "Error during logout",
+      "notifSaveError": "Error saving preferences"
+    },
     "cancelDialog": {
       "title": "Cancel your subscription?",
       "description": "No further payment will be charged. You will keep access to all features until the end of your already-paid billing period, then your account will automatically switch to the Free plan.",
@@ -905,6 +942,30 @@
   "cv": {
     "inProgress": "In progress",
     "matchingJobOffer": "Job 🎯 Matching"
+  },
+  "support": {
+    "toasts": {
+      "fileTooLarge": "File too large (max 5MB)",
+      "fileFormatUnsupported": "Unsupported format. Images or PDF only.",
+      "fileUploadError": "Error uploading file",
+      "subjectTooShort": "Subject too short (min 5 characters)",
+      "descriptionTooShort": "Description too short (min 20 characters)"
+    }
+  },
+  "jobs": {
+    "toasts": {
+      "fillAllFields": "Please fill in all required fields",
+      "selectCvFirst": "Please select your CV before continuing.",
+      "selectSavedProfile": "Please select a saved profile.",
+      "previewLoadError": "Unable to load preview",
+      "previewError": "Error loading preview",
+      "profileSaved": "Profile saved!",
+      "profileSaveError": "Error saving profile.",
+      "applicationSent": "Application marked as sent!",
+      "emailCopied": "Email copied!",
+      "contactsLoadError": "Unable to retrieve contacts. Try again later.",
+      "applicationSaveError": "Unable to save application. Try again."
+    }
   },
   "jobDetails": {
     "close": "Close",

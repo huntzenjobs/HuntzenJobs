@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 
 interface ProfilePageClientProps {
@@ -44,7 +45,13 @@ interface ProfilePageClientProps {
   };
 }
 
-function ReferralWidget({ userId }: { userId: string }) {
+function ReferralWidget({
+  userId,
+  tProfile,
+}: {
+  userId: string;
+  tProfile: (key: string) => string;
+}) {
   const [code, setCode] = useState<string | null>(null);
   const [stats, setStats] = useState({
     total_clicks: 0,
@@ -91,7 +98,7 @@ function ReferralWidget({ userId }: { userId: string }) {
     if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
-    toast.success("Lien copié !");
+    toast.success(tProfile("toasts.linkCopied"));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -167,6 +174,7 @@ function ReferralWidget({ userId }: { userId: string }) {
 }
 
 export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
+  const tProfile = useTranslations("profile");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [fullName, setFullName] = useState(profile.full_name || "");
   const { subscription } = useSubscriptionApi();
@@ -392,7 +400,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               transition={{ duration: 0.4 }}
               className="max-w-2xl"
             >
-              <ReferralWidget userId={user.id} />
+              <ReferralWidget userId={user.id} tProfile={tProfile} />
             </motion.div>
           </TabsContent>
         </Tabs>

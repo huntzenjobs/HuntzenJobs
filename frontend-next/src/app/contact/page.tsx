@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 const contactReasons = [
   { value: "support", label: "Problème technique" },
@@ -19,14 +20,20 @@ const contactReasons = [
 ];
 
 export default function ContactPage() {
-  const [form, setForm] = useState({ name: "", email: "", reason: "", message: "" });
+  const t = useTranslations("contact");
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    reason: "",
+    message: "",
+  });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) {
-      toast.error("Merci de remplir tous les champs obligatoires.");
+      toast.error(t("toasts.fillAllFields"));
       return;
     }
     setLoading(true);
@@ -35,7 +42,7 @@ export default function ContactPage() {
       await new Promise((resolve) => setTimeout(resolve, 800));
       setSent(true);
     } catch {
-      toast.error("Une erreur est survenue. Veuillez réessayer ou envoyer un email directement.");
+      toast.error(t("toasts.sendError"));
     } finally {
       setLoading(false);
     }
@@ -55,7 +62,8 @@ export default function ContactPage() {
             <h1 className="text-4xl sm:text-5xl font-black">Nous contacter</h1>
           </div>
           <p className="text-xl text-white/80">
-            Une question, un problème, une suggestion ? Notre équipe vous répond sous 48h en semaine.
+            Une question, un problème, une suggestion ? Notre équipe vous répond
+            sous 48h en semaine.
           </p>
         </div>
       </div>
@@ -63,7 +71,6 @@ export default function ContactPage() {
       {/* Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-
           {/* Info cards */}
           <div className="space-y-6">
             <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200">
@@ -71,7 +78,9 @@ export default function ContactPage() {
                 <Mail className="w-5 h-5 text-[#00D9FF]" />
               </div>
               <h3 className="font-bold text-gray-900 mb-2">Email direct</h3>
-              <p className="text-sm text-gray-600 mb-3">Pour toute demande urgente :</p>
+              <p className="text-sm text-gray-600 mb-3">
+                Pour toute demande urgente :
+              </p>
               <a
                 href="mailto:support@huntzenjobs.com"
                 className="text-[#00D9FF] font-medium hover:underline text-sm"
@@ -86,7 +95,8 @@ export default function ContactPage() {
               </div>
               <h3 className="font-bold text-gray-900 mb-2">Temps de réponse</h3>
               <p className="text-sm text-gray-600">
-                Notre équipe répond sous <strong>48h en semaine</strong> (lundi – vendredi).
+                Notre équipe répond sous <strong>48h en semaine</strong> (lundi
+                – vendredi).
               </p>
               <p className="text-sm text-gray-500 mt-2">
                 Les utilisateurs Pro bénéficient d&apos;un support prioritaire.
@@ -122,14 +132,20 @@ export default function ContactPage() {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
                   <Mail className="w-8 h-8 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Message envoyé !</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                  Message envoyé !
+                </h2>
                 <p className="text-gray-600 max-w-sm">
-                  Merci pour votre message. Notre équipe vous répondra dans les 48h en semaine.
+                  Merci pour votre message. Notre équipe vous répondra dans les
+                  48h en semaine.
                 </p>
                 <Button
                   className="mt-8"
                   variant="outline"
-                  onClick={() => { setSent(false); setForm({ name: "", email: "", reason: "", message: "" }); }}
+                  onClick={() => {
+                    setSent(false);
+                    setForm({ name: "", email: "", reason: "", message: "" });
+                  }}
                 >
                   Envoyer un autre message
                 </Button>
@@ -137,13 +153,20 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Envoyez-nous un message</h2>
-                  <p className="text-gray-500 text-sm">Tous les champs marqués * sont obligatoires.</p>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    Envoyez-nous un message
+                  </h2>
+                  <p className="text-gray-500 text-sm">
+                    Tous les champs marqués * sont obligatoires.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label htmlFor="name" className="text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="name"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Nom complet *
                     </label>
                     <Input
@@ -151,12 +174,17 @@ export default function ContactPage() {
                       type="text"
                       placeholder="Jean Dupont"
                       value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, name: e.target.value }))
+                      }
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="email"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Adresse email *
                     </label>
                     <Input
@@ -164,31 +192,43 @@ export default function ContactPage() {
                       type="email"
                       placeholder="jean@exemple.com"
                       value={form.email}
-                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, email: e.target.value }))
+                      }
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="reason" className="text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="reason"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Motif de contact
                   </label>
                   <select
                     id="reason"
                     value={form.reason}
-                    onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, reason: e.target.value }))
+                    }
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     <option value="">Sélectionner un motif</option>
                     {contactReasons.map((r) => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="message" className="text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="message"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Message *
                   </label>
                   <Textarea
@@ -196,7 +236,9 @@ export default function ContactPage() {
                     placeholder="Décrivez votre demande en détail..."
                     rows={6}
                     value={form.message}
-                    onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, message: e.target.value }))
+                    }
                     required
                   />
                 </div>
@@ -205,7 +247,10 @@ export default function ContactPage() {
                   <Mail className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                   <p className="text-sm text-blue-700">
                     Vous pouvez aussi nous écrire directement à{" "}
-                    <a href="mailto:support@huntzenjobs.com" className="font-medium hover:underline">
+                    <a
+                      href="mailto:support@huntzenjobs.com"
+                      className="font-medium hover:underline"
+                    >
                       support@huntzenjobs.com
                     </a>
                   </p>
@@ -228,9 +273,15 @@ export default function ContactPage() {
       <div className="border-t border-gray-200 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-            <Link href="/privacy" className="hover:text-[#00D9FF]">Politique de confidentialité</Link>
-            <Link href="/terms" className="hover:text-[#00D9FF]">Conditions d&apos;utilisation</Link>
-            <Link href="/legal" className="hover:text-[#00D9FF]">Mentions légales</Link>
+            <Link href="/privacy" className="hover:text-[#00D9FF]">
+              Politique de confidentialité
+            </Link>
+            <Link href="/terms" className="hover:text-[#00D9FF]">
+              Conditions d&apos;utilisation
+            </Link>
+            <Link href="/legal" className="hover:text-[#00D9FF]">
+              Mentions légales
+            </Link>
           </div>
         </div>
       </div>

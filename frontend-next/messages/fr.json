@@ -188,7 +188,15 @@
     "subtitle": "Commencez gratuitement, évoluez selon vos besoins",
     "saveUpTo20": "Économisez jusqu'à 20%",
     "currentPlan": "✓ Plan actuel",
-    "choosePlan": "Choisir {name}"
+    "choosePlan": "Choisir {name}",
+    "toasts": {
+      "alreadyOnPlan": "Vous utilisez déjà ce plan",
+      "mustBeLoggedIn": "Vous devez être connecté pour souscrire à un plan",
+      "redirecting": "Redirection vers le paiement...",
+      "sessionExpired": "Session expirée, veuillez vous reconnecter",
+      "upgraded": "✨ Abonnement mis à niveau !",
+      "scheduledChange": "📅 Changement planifié pour la fin de votre période actuelle."
+    }
   },
   "cta": {
     "startFree": "Commencer gratuitement",
@@ -931,6 +939,23 @@
       "tipLabel": "Astuce"
     }
   },
+  "subscription": {
+    "toasts": {
+      "synced": "Abonnement synchronisé",
+      "syncedDesc": "Vos informations d'abonnement ont été actualisées.",
+      "syncFailed": "Synchronisation impossible",
+      "syncFailedDesc": "La fonction de synchronisation n'est pas disponible.",
+      "sessionExpired": "Session expirée",
+      "sessionExpiredDesc": "Votre session a expiré. Veuillez vous reconnecter.",
+      "sessionExpiredAction": "Reconnecter"
+    }
+  },
+  "contact": {
+    "toasts": {
+      "fillAllFields": "Merci de remplir tous les champs obligatoires.",
+      "sendError": "Une erreur est survenue. Veuillez réessayer ou envoyer un email directement."
+    }
+  },
   "profile": {
     "multilingualComingSoon": "Le support multilingue sera disponible prochainement",
     "thankSubscription": "🎉 Merci de votre abonnement !",
@@ -938,6 +963,18 @@
     "cancelSubscriptionComingSoon": "L'annulation d'abonnement sera disponible prochainement",
     "cancelSubscription": "Annuler l'abonnement",
     "cancelling": "Annulation...",
+    "toasts": {
+      "linkCopied": "Lien copié !",
+      "profileUpdated": "Profil mis à jour !",
+      "profileSaved": "Profil sauvegardé !",
+      "profileSaveError": "Erreur lors de la sauvegarde du profil.",
+      "profileDeleted": "Profil supprimé.",
+      "settingsUpdateError": "Erreur lors de la mise à jour des paramètres",
+      "unexpectedError": "Une erreur inattendue est survenue",
+      "logoutSuccess": "Déconnexion réussie",
+      "logoutError": "Erreur lors de la déconnexion",
+      "notifSaveError": "Erreur lors de la sauvegarde des préférences"
+    },
     "cancelDialog": {
       "title": "Annuler votre abonnement ?",
       "description": "Aucun prélèvement supplémentaire ne sera effectué. Vous conserverez l'accès à toutes vos fonctionnalités jusqu'à la fin de la période déjà payée, puis votre compte passera automatiquement au plan Gratuit.",
@@ -950,6 +987,30 @@
   "cv": {
     "inProgress": "En cours...",
     "matchingJobOffer": "🎯 Matching avec offre d'emploi"
+  },
+  "support": {
+    "toasts": {
+      "fileTooLarge": "Fichier trop volumineux (max 5MB)",
+      "fileFormatUnsupported": "Format non supporté. Images ou PDF uniquement.",
+      "fileUploadError": "Erreur lors de l'upload du fichier",
+      "subjectTooShort": "Sujet trop court (min 5 caractères)",
+      "descriptionTooShort": "Description trop courte (min 20 caractères)"
+    }
+  },
+  "jobs": {
+    "toasts": {
+      "fillAllFields": "Veuillez remplir tous les champs requis",
+      "selectCvFirst": "Veuillez sélectionner votre CV avant de continuer.",
+      "selectSavedProfile": "Veuillez sélectionner un profil sauvegardé.",
+      "previewLoadError": "Impossible de charger la prévisualisation",
+      "previewError": "Erreur lors de la prévisualisation",
+      "profileSaved": "Profil sauvegardé !",
+      "profileSaveError": "Erreur lors de la sauvegarde du profil.",
+      "applicationSent": "Candidature marquée comme envoyée !",
+      "emailCopied": "Email copié !",
+      "contactsLoadError": "Impossible de récupérer les contacts. Réessayez plus tard.",
+      "applicationSaveError": "Impossible d'enregistrer la candidature. Réessaie."
+    }
   },
   "jobDetails": {
     "close": "Fermer",

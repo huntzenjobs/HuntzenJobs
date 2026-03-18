@@ -106,6 +106,7 @@ export function JobDetailsModal({
   const pendingJobRef = React.useRef<Job | null>(null);
 
   const t = useTranslations("jobDetails");
+  const tJobs = useTranslations("jobs");
 
   // All hooks must be called before any conditional return (Rules of Hooks)
   const { canUse, openPricingModal } = useSubscription();
@@ -241,7 +242,7 @@ export function JobDetailsModal({
       });
     } catch (err) {
       console.error("[Applications] Failed to save:", err);
-      toast.error("Impossible d'enregistrer la candidature. Réessaie.");
+      toast.error(tJobs("toasts.applicationSaveError"));
     }
   };
 

@@ -28,6 +28,7 @@ import {
   AtSign,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import type { Job } from "@/lib/api/huntzen-client";
 
 // ============================================================================
@@ -67,11 +68,12 @@ interface RecruiterFinderDrawerProps {
 
 function CopyEmailButton({ email }: { email: string }) {
   const [copied, setCopied] = useState(false);
+  const tJobs = useTranslations("jobs");
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(email);
     setCopied(true);
-    toast.success("Email copié !");
+    toast.success(tJobs("toasts.emailCopied"));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -158,6 +160,7 @@ export function RecruiterFinderDrawer({
   onOpenChange,
   job,
 }: RecruiterFinderDrawerProps) {
+  const tJobs = useTranslations("jobs");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FinderResult | null>(null);
   const [searched, setSearched] = useState(false);
@@ -185,7 +188,7 @@ export function RecruiterFinderDrawer({
       const data: FinderResult = await response.json();
       setResult(data);
     } catch (err) {
-      toast.error("Impossible de récupérer les contacts. Réessayez plus tard.");
+      toast.error(tJobs("toasts.contactsLoadError"));
       setResult(null);
     } finally {
       setLoading(false);

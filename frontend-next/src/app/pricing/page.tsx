@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
 import { usePricingPlans } from "@/hooks/use-pricing-data";
 import { createClient } from "@/lib/supabase/client";
@@ -118,6 +119,7 @@ export default function PricingPage() {
   const auth = useOptionalAuth();
   const user = auth?.user;
   const subscription = useOptionalSubscription();
+  const tPricing = useTranslations("pricing");
   const router = useRouter();
   const {
     plans: dbPlans,
@@ -185,18 +187,18 @@ export default function PricingPage() {
 
   const handleSelectPlan = async (planId: string) => {
     if (planId === "free" || planId === currentPlan) {
-      toast.info("Vous utilisez déjà ce plan");
+      toast.info(tPricing("toasts.alreadyOnPlan"));
       return;
     }
 
     if (!user || !auth?.session) {
-      toast.error("Vous devez être connecté pour souscrire à un plan");
+      toast.error(tPricing("toasts.mustBeLoggedIn"));
       window.location.href = "/login?redirectTo=/pricing";
       return;
     }
 
     try {
-      toast.loading("Redirection vers le paiement...", {
+      toast.loading(tPricing("toasts.redirecting"), {
         id: "stripe-redirect",
       });
 
@@ -208,7 +210,7 @@ export default function PricingPage() {
       } = await supabase.auth.refreshSession();
       if (refreshErr || !refreshedSession) {
         toast.dismiss("stripe-redirect");
-        toast.error("Session expirée, veuillez vous reconnecter");
+        toast.error(tPricing("toasts.sessionExpired"));
         router.push("/login?redirectTo=/pricing");
         return;
       }
@@ -243,11 +245,9 @@ export default function PricingPage() {
 
       if (data.modified) {
         if (data.immediate) {
-          toast.success("✨ Abonnement mis à niveau !");
+          toast.success(tPricing("toasts.upgraded"));
         } else {
-          toast.success(
-            "📅 Changement planifié pour la fin de votre période actuelle.",
-          );
+          toast.success(tPricing("toasts.scheduledChange"));
         }
         window.location.href = `/payment/success?session_id=mod_${Date.now()}&type=modification`;
       } else {
