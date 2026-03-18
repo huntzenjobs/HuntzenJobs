@@ -83,7 +83,10 @@ class AdzunaProvider(BaseJobProvider):
         }
         
         # Map contract types to Adzuna values
-        if contract_type:
+        if contract_type in ("alternance", "apprentissage"):
+            # Adzuna n'a pas de type natif alternance — enrichir la query
+            params["what"] = f"{params['what']} alternance".strip()
+        elif contract_type:
             contract_map = {
                 "cdi": "permanent",
                 "cdd": "contract",
