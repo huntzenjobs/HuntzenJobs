@@ -582,13 +582,16 @@ async def update_plan_features(
 
     feature_flags = body.get("feature_flags")
     features = body.get("features")
+    features_excluded = body.get("features_excluded")
 
-    if feature_flags is None and features is None:
-        raise HTTPException(status_code=400, detail="feature_flags (dict) ou features (list) requis")
+    if feature_flags is None and features is None and features_excluded is None:
+        raise HTTPException(status_code=400, detail="feature_flags (dict), features (list) ou features_excluded (list) requis")
     if feature_flags is not None and not isinstance(feature_flags, dict):
         raise HTTPException(status_code=400, detail="feature_flags must be a dict")
     if features is not None and not isinstance(features, list):
         raise HTTPException(status_code=400, detail="features must be a list")
+    if features_excluded is not None and not isinstance(features_excluded, list):
+        raise HTTPException(status_code=400, detail="features_excluded must be a list")
 
     try:
         current = supabase.table("subscription_plans").select(
@@ -605,6 +608,8 @@ async def update_plan_features(
             update_data["feature_flags"] = merged_flags
         if features is not None:
             update_data["features"] = features
+        if features_excluded is not None:
+            update_data["features_excluded"] = features_excluded
 
         supabase.table("subscription_plans").update(update_data).eq("id", plan_id).execute()
 
@@ -625,9 +630,10 @@ async def update_plan_features(
             "plan_name": current.data["name"],
             "feature_flags": feature_flags,
             "features": features,
+            "features_excluded": features_excluded,
         })
 
-        return {"success": True, "feature_flags": update_data.get("feature_flags"), "features": features}
+        return {"success": True, "feature_flags": update_data.get("feature_flags"), "features": features, "features_excluded": features_excluded}
 
     except HTTPException:
         raise

@@ -87,13 +87,14 @@ export function useAutoRefreshSession() {
     };
 
     // Visibilité: setTimeout ne s'exécute pas pendant le sleep/onglet masqué.
-    // Quand l'utilisateur revient, on recheck la session immédiatement.
+    // Quand l'utilisateur revient, on tente un refresh immédiat pour valider la session.
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible") {
         const {
           data: { session },
-        } = await supabase.auth.getSession();
-        if (!session) {
+          error,
+        } = await supabase.auth.refreshSession();
+        if (error || !session) {
           console.log("[Auth] Session expirée détectée au retour sur la page");
           redirectToLogin("session_expired");
         } else {

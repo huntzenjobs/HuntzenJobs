@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Zap, ExternalLink } from "lucide-react";
+import { Save, Zap } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +53,11 @@ interface Props {
   ) => Promise<boolean>;
   onUpdateFeatures: (
     planId: string,
-    featureFlags: Record<string, boolean>,
+    payload: {
+      feature_flags?: Record<string, boolean>;
+      features?: string[];
+      features_excluded?: string[];
+    },
   ) => Promise<boolean>;
   onUpdatePrice: (
     planId: string,
@@ -102,15 +118,29 @@ export default function PlanCardEditor({
     setSaving(null);
   };
 
+  const [featuresText, setFeaturesText] = useState(
+    (plan.features ?? []).join("\n"),
+  );
+  const [featuresExcludedText, setFeaturesExcludedText] = useState(
+    (plan.features_excluded ?? []).join("\n"),
+  );
+
   const handleSaveFeatures = async () => {
     setSaving("features");
-    // Convertit ["pdf_export", "advanced_filters"] → { has_pdf_export: true, has_advanced_filters: true, ... }
-    // Tous les flags connus sont envoyés (true ou false) pour un merge complet côté backend
     const featureFlags: Record<string, boolean> = {};
     for (const { key } of FEATURE_FLAGS) {
       featureFlags[`has_${key}`] = features.includes(key);
     }
-    await onUpdateFeatures(plan.id, featureFlags);
+    await onUpdateFeatures(plan.id, { feature_flags: featureFlags });
+    setSaving(null);
+  };
+
+  const handleSaveFeaturesText = async () => {
+    setSaving("featuresText");
+    await onUpdateFeatures(plan.id, {
+      features: featuresText.split("\n").filter(Boolean),
+      features_excluded: featuresExcludedText.split("\n").filter(Boolean),
+    });
     setSaving(null);
   };
 
@@ -364,7 +394,64 @@ export default function PlanCardEditor({
               </Button>
             </div>
 
-            {/* — Section 5: Stripe Price IDs (plans payants uniquement) — */}
+            {/* — Section 5: Features texte — */}
+            <div className="space-y-3 lg:px-6">
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Features texte
+              </span>
+              <div className="space-y-2 mt-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">✓ Incluses (une par ligne)</Label>
+                  <Textarea
+                    className="text-xs min-h-[80px] font-mono"
+                    value={featuresText}
+                    onChange={(e) => setFeaturesText(e.target.value)}
+                    placeholder="Recherches illimitées&#10;Filtres avancés"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">✗ Exclues (une par ligne)</Label>
+                  <Textarea
+                    className="text-xs min-h-[60px] font-mono"
+                    value={featuresExcludedText}
+                    onChange={(e) => setFeaturesExcludedText(e.target.value)}
+                    placeholder="Export PDF&#10;Simulation entretien"
+                  />
+                </div>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={saving === "featuresText"}
+                    className="w-full"
+                  >
+                    <Save className="h-3.5 w-3.5 mr-1.5" />
+                    {saving === "featuresText"
+                      ? "Sauvegarde..."
+                      : "Sauvegarder les features"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmer la sauvegarde</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Les features texte du plan {plan.display_name} seront
+                      remplacées. Cette action écrasera les listes existantes.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSaveFeaturesText}>
+                      Confirmer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+
+            {/* — Section 6: Stripe Price IDs (plans payants uniquement) — */}
             {plan.name !== "free" && (
               <div className="space-y-3 lg:pl-6">
                 <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">

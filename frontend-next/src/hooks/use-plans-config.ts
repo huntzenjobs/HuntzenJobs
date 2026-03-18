@@ -14,6 +14,7 @@ export interface PlanConfig {
   price_monthly: number;
   price_yearly: number | null;
   features: string[];
+  features_excluded: string[];
   sort_order: number;
 }
 
@@ -84,11 +85,13 @@ export function usePlansConfig() {
       fetchPlans();
     };
     window.addEventListener("subscription-changed", handleChange);
-    return () => window.removeEventListener("subscription-changed", handleChange);
+    return () =>
+      window.removeEventListener("subscription-changed", handleChange);
   }, [fetchPlans]);
 
   const getPlan = useCallback(
-    (name: string): PlanConfig | undefined => plans.find((p) => p.name === name),
+    (name: string): PlanConfig | undefined =>
+      plans.find((p) => p.name === name),
     [plans],
   );
 

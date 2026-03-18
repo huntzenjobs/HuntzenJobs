@@ -51,6 +51,7 @@ export interface Plan {
   price_yearly: number | null;
   limits: PlanLimit;
   features: string[];
+  features_excluded: string[];
   feature_flags: Record<string, boolean>;
   is_active: boolean;
   sort_order: number;
@@ -86,12 +87,19 @@ export function useAdminPlans() {
   );
 
   const updateFeatures = useCallback(
-    async (planId: string, featureFlags: Record<string, boolean>) => {
+    async (
+      planId: string,
+      payload: {
+        feature_flags?: Record<string, boolean>;
+        features?: string[];
+        features_excluded?: string[];
+      },
+    ) => {
       setLoading(true);
       try {
         await adminFetch(`/api/admin/plans/${planId}/features`, {
           method: "PATCH",
-          body: JSON.stringify({ feature_flags: featureFlags }),
+          body: JSON.stringify(payload),
         });
         toast.success("Fonctionnalités mises à jour");
         window.dispatchEvent(new Event("subscription-changed"));

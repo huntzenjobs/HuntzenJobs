@@ -30,58 +30,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
-import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { toast } from "sonner";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
-import { usePlansConfig } from "@/hooks/use-plans-config";
+import { usePricingPlans } from "@/hooks/use-pricing-data";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 // Icon mapping — décoratives, statiques
 const PLAN_ICONS: Record<string, React.ElementType> = {
-  free: Gift,
-  starter: Zap,
-  pro: Sparkles,
-  premium: Crown,
+  Gift,
+  Zap,
+  Sparkles,
+  Crown,
 };
 const PLAN_COLORS: Record<string, string> = {
-  free: "#9CA3AF",
-  starter: "#00D9FF",
-  pro: "#9333EA",
-  premium: "#F97316",
-};
-
-// Fallback features si API indisponible
-const FALLBACK_FEATURES: Record<string, string[]> = {
-  free: [
-    "3 recherches d'offres par jour",
-    "1 analyse de CV par jour",
-    "5 minutes de coaching personnel",
-    "Support standard",
-  ],
-  starter: [
-    "Recherches d'offres illimitées",
-    "Filtres avancés de recherche",
-    "Gestion de vos favoris",
-    "Analyses de CV illimitées",
-    "Score de compatibilité détaillé",
-    "Coaching personnalisé (30 min/jour)",
-  ],
-  pro: [
-    "Toutes les fonctionnalités Essentiel",
-    "Coaching disponible 24/7 illimité",
-    "Export PDF professionnel",
-    "Simulations d'entretien réalistes",
-    "Feedback détaillé sur performances",
-    "Support prioritaire par email",
-  ],
-  premium: [
-    "Toutes les fonctionnalités Pro",
-    "Historique illimité de vos analyses",
-    "Conseils personnalisés ultra-ciblés",
-    "Alertes email instantanées",
-    "Accès anticipé nouvelles fonctionnalités",
-    "Support VIP prioritaire",
-    "Rapports mensuels de progression",
-  ],
+  zinc: "#9CA3AF",
+  blue: "#00D9FF",
+  purple: "#9333EA",
+  amber: "#F97316",
 };
 
 const testimonials = [
@@ -152,38 +118,36 @@ export default function PricingPage() {
   const auth = useOptionalAuth();
   const user = auth?.user;
   const subscription = useOptionalSubscription();
-  const apiData = useSubscriptionApi();
-  const { getPlan, formatPrice, isLoading: plansLoading } = usePlansConfig();
+  const router = useRouter();
+  const {
+    plans: dbPlans,
+    isLoading: plansLoading,
+    formatPrice,
+  } = usePricingPlans();
 
   const pricingHoverPopup = useConversionPopup("pricing_hover");
 
-  const plans = plansLoading
-    ? []
-    : (["free", "starter", "pro", "premium"] as const).map((id) => {
-        const p = getPlan(id);
-        // Always use French hardcoded features — DB features may be in English
-        const featureNames = FALLBACK_FEATURES[id] ?? p?.features ?? [];
-        const FRENCH_TAGLINES: Record<string, string> = {
-          free: "Démarrez gratuitement, sans carte bancaire",
-          starter: "Pour une recherche active et efficace",
-          pro: "Coaching illimité et outils avancés",
-          premium: "L'expérience complète pour décrocher le job idéal",
-        };
-        return {
-          id,
-          name: p?.display_name ?? id,
-          priceMonthly: formatPrice(p?.price_monthly ?? 0),
-          priceYearly: formatPrice(p?.price_yearly ?? 0),
-          priceMonthlyRaw: p?.price_monthly ?? 0,
-          priceYearlyRaw: p?.price_yearly ?? 0,
-          tagline: FRENCH_TAGLINES[id] ?? "",
-          description: FRENCH_TAGLINES[id] ?? "",
-          icon: PLAN_ICONS[id] ?? Gift,
-          color: PLAN_COLORS[id] ?? "#9CA3AF",
-          popular: id === "starter",
-          features: featureNames.map((name: string) => ({ icon: Check, name })),
-        };
-      });
+  const plans = dbPlans.map((p) => ({
+    id: p.name,
+    name: p.display_name,
+    priceMonthly: formatPrice(p.price_monthly),
+    priceYearly: formatPrice(p.price_yearly ?? 0),
+    priceMonthlyRaw: p.price_monthly,
+    priceYearlyRaw: p.price_yearly ?? 0,
+    tagline: p.description,
+    description: p.description,
+    icon: PLAN_ICONS[p.icon] ?? Gift,
+    color: PLAN_COLORS[p.color] ?? "#9CA3AF",
+    popular: p.isPopular,
+    features: [
+      ...p.features.map((name) => ({ icon: Check, name, excluded: false })),
+      ...(p.features_excluded ?? []).map((name) => ({
+        icon: X,
+        name,
+        excluded: true,
+      })),
+    ],
+  }));
 
   // Show pricing_hover popup after 20s (once per session)
   useEffect(() => {
@@ -199,8 +163,7 @@ export default function PricingPage() {
     return () => clearTimeout(t);
   }, []);
 
-  const currentPlan =
-    apiData.subscription?.plan_name || subscription?.plan || "free";
+  const currentPlan = subscription?.plan || "free";
 
   const getPrice = (plan: (typeof plans)[0]) => {
     return billingPeriod === "monthly" ? plan.priceMonthly : plan.priceYearly;
@@ -237,6 +200,20 @@ export default function PricingPage() {
         id: "stripe-redirect",
       });
 
+      // BUG 3 FIX: Refresh session avant Stripe pour garantir token valide
+      const supabase = createClient();
+      const {
+        data: { session: refreshedSession },
+        error: refreshErr,
+      } = await supabase.auth.refreshSession();
+      if (refreshErr || !refreshedSession) {
+        toast.dismiss("stripe-redirect");
+        toast.error("Session expirée, veuillez vous reconnecter");
+        router.push("/login?redirectTo=/pricing");
+        return;
+      }
+      const accessToken = refreshedSession.access_token;
+
       const apiUrl =
         process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
       if (!apiUrl) throw new Error("Backend URL not configured");
@@ -247,7 +224,7 @@ export default function PricingPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${auth.session.access_token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: new URLSearchParams({
             plan_name: planId,

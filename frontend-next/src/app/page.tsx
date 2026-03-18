@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
+import { LandingPricingSection } from "@/components/landing/pricing-section";
 import { Footer } from "@/components/layout/footer";
 import { useTranslations } from "next-intl";
 
@@ -43,7 +44,6 @@ export default function HomePage() {
   const tFeaturesGrid = useTranslations("featuresGrid");
   const tStats = useTranslations("stats");
   const tPricing = useTranslations("pricing");
-  const tPlans = useTranslations("pricingPlans");
   const tCtaFinal = useTranslations("ctaFinal");
 
   useEffect(() => {
@@ -637,116 +637,7 @@ export default function HomePage() {
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
-            {[
-              {
-                name: tPlans("plans.free.name"),
-                price: "0€",
-                period: tPlans("plans.free.period"),
-                color: "#9CA3AF",
-                features: tPlans.raw("plans.free.features") as string[],
-                unavailable: tPlans.raw("plans.free.unavailable") as string[],
-                cta: tPlans("plans.free.cta"),
-              },
-              {
-                name: tPlans("plans.starter.name"),
-                price: "8.90€",
-                period: tPlans("plans.starter.period"),
-                color: "#00D9FF",
-                popular: true,
-                features: tPlans.raw("plans.starter.features") as string[],
-                unavailable: tPlans.raw(
-                  "plans.starter.unavailable",
-                ) as string[],
-                cta: tPlans("plans.starter.cta"),
-              },
-              {
-                name: tPlans("plans.pro.name"),
-                price: "13.90€",
-                period: tPlans("plans.pro.period"),
-                color: "#9333EA",
-                features: tPlans.raw("plans.pro.features") as string[],
-                unavailable: tPlans.raw("plans.pro.unavailable") as string[],
-                cta: tPlans("plans.pro.cta"),
-              },
-              {
-                name: tPlans("plans.premium.name"),
-                price: "19.90€",
-                period: tPlans("plans.premium.period"),
-                color: "#F97316",
-                features: tPlans.raw("plans.premium.features") as string[],
-                unavailable: tPlans.raw(
-                  "plans.premium.unavailable",
-                ) as string[],
-                cta: tPlans("plans.premium.cta"),
-              },
-            ].map((plan, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`bg-white rounded-2xl p-5 sm:p-6 border-2 ${
-                  plan.popular
-                    ? "border-[#00D9FF] shadow-xl lg:scale-105"
-                    : "border-slate-200"
-                } hover:shadow-lg transition-all relative flex flex-col h-full`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#00D9FF] text-white text-xs font-bold rounded-full">
-                    {tPlans("popular")}
-                  </div>
-                )}
-                <div className="text-center mb-6">
-                  <div className="text-slate-600 font-bold text-xs mb-2">
-                    {plan.name}
-                  </div>
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span
-                      className="text-4xl sm:text-5xl font-black"
-                      style={{ color: plan.color }}
-                    >
-                      {plan.price}
-                    </span>
-                    <span className="text-slate-400 text-xs">
-                      {plan.period}
-                    </span>
-                  </div>
-                </div>
-                <ul className="space-y-2.5 sm:space-y-3 mb-6 flex-grow">
-                  {plan.features.map((feature, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2 text-xs sm:text-sm"
-                    >
-                      <CheckCircle2
-                        className="w-4 h-4 flex-shrink-0 mt-0.5"
-                        style={{ color: plan.color }}
-                      />
-                      <span className="text-slate-700">{feature}</span>
-                    </li>
-                  ))}
-                  {plan.unavailable.map((feature, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2 text-xs sm:text-sm text-slate-400"
-                    >
-                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/signup"
-                  className="block w-full text-center px-4 py-2.5 sm:py-3 rounded-xl font-semibold text-white text-xs sm:text-sm transition-all hover:shadow-lg mt-auto"
-                  style={{ backgroundColor: plan.color }}
-                >
-                  {plan.cta}
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          <LandingPricingSection />
         </div>
       </section>
 

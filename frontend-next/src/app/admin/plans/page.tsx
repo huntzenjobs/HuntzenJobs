@@ -55,8 +55,8 @@ export default function AdminPlansPage() {
                 if (ok) refresh();
                 return ok;
               }}
-              onUpdateFeatures={async (id, featureFlags) => {
-                const ok = await updateFeatures(id, featureFlags);
+              onUpdateFeatures={async (id, payload) => {
+                const ok = await updateFeatures(id, payload);
                 if (ok) refresh();
                 return ok;
               }}

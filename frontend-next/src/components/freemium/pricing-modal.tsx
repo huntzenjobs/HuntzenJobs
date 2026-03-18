@@ -11,14 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Sparkles, Zap, Crown, Gift } from "lucide-react";
 import { useSubscription } from "@/contexts/subscription-context";
-import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { PlanType } from "@/hooks/use-freemium-limits";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
-import { usePlansConfig } from "@/hooks/use-plans-config";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePricingData } from "@/hooks/use-pricing-data";
 
 interface PricingPlan {
   id: PlanType;
@@ -42,146 +42,70 @@ interface PricingPlan {
 
 type BillingPeriod = "monthly" | "yearly";
 
-// Static config: booleans only (no translatable text)
-const FEATURE_CONFIGS: Record<
-  string,
-  { included: boolean; highlight?: boolean }[]
-> = {
-  free: [
-    { included: true },
-    { included: true },
-    { included: true },
-    { included: true },
-    { included: false },
-    { included: false },
-    { included: false },
-    { included: false },
-    { included: false },
-  ],
-  starter: [
-    { included: true, highlight: true },
-    { included: true, highlight: true },
-    { included: true },
-    { included: true },
-    { included: true },
-    { included: true },
-    { included: false },
-    { included: false },
-    { included: false },
-  ],
-  pro: [
-    { included: true },
-    { included: true, highlight: true },
-    { included: true, highlight: true },
-    { included: true, highlight: true },
-    { included: true },
-    { included: false },
-    { included: false },
-    { included: false },
-    { included: false },
-  ],
-  premium: [
-    { included: true },
-    { included: true, highlight: true },
-    { included: true, highlight: true },
-    { included: true, highlight: true },
-    { included: true },
-    { included: true },
-    { included: true },
-    { included: true },
-    { included: true },
-  ],
-};
-
 export function PricingModal() {
   const tModal = useTranslations("pricingModal");
-  const {
-    showPricingModal,
-    closePricingModal,
-    pricingModalFeature,
-    plan: contextPlan,
-  } = useSubscription();
+  const { showPricingModal, closePricingModal, pricingModalFeature } =
+    useSubscription();
   const auth = useOptionalAuth();
   const user = auth?.user;
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
 
-  const buildFeatures = (id: string) =>
-    (tModal.raw(`plans.${id}.featureNames`) as string[]).map((name, i) => ({
-      name,
-      ...(FEATURE_CONFIGS[id]?.[i] ?? { included: false }),
-    }));
+  const {
+    plans: dbPlans,
+    currentPlan,
+    isLoading: plansLoading,
+    formatPrice,
+  } = usePricingData();
 
-  const { getPlan, formatPrice } = usePlansConfig();
+  // Map DB plans to PricingPlan shape for the modal
+  const ICON_MAP: Record<string, React.ReactNode> = {
+    Gift: <Gift className="w-6 h-6" />,
+    Zap: <Zap className="w-6 h-6" />,
+    Sparkles: <Sparkles className="w-6 h-6" />,
+    Crown: <Crown className="w-6 h-6" />,
+  };
+  const COLOR_MAP: Record<string, { text: string; gradient: string }> = {
+    zinc: { text: "text-gray-600", gradient: "from-gray-400 to-gray-500" },
+    blue: { text: "text-blue-600", gradient: "from-blue-500 to-blue-600" },
+    purple: {
+      text: "text-violet-600",
+      gradient: "from-violet-500 to-purple-600",
+    },
+    amber: { text: "text-amber-600", gradient: "from-amber-500 to-orange-500" },
+  };
 
-  const plans: PricingPlan[] = [
-    {
-      id: "free",
-      name: getPlan("free")?.display_name ?? tModal("plans.free.name"),
-      price: formatPrice(getPlan("free")?.price_monthly ?? 0),
-      priceYearly: formatPrice(getPlan("free")?.price_yearly ?? 0),
-      priceValue: getPlan("free")?.price_monthly ?? 0,
-      priceYearlyValue: getPlan("free")?.price_yearly ?? 0,
+  const plans: PricingPlan[] = dbPlans.map((p) => {
+    const colors = COLOR_MAP[p.color] ?? COLOR_MAP.zinc;
+    // Build feature list: included (✓) first, then excluded (✗)
+    // First included feature is highlighted (bold)
+    const features = [
+      ...p.features.map((name, i) => ({
+        name,
+        included: true,
+        highlight: i === 0,
+      })),
+      ...(p.features_excluded ?? []).map((name) => ({
+        name,
+        included: false,
+        highlight: false,
+      })),
+    ];
+    return {
+      id: p.name as PlanType,
+      name: p.display_name,
+      price: formatPrice(p.price_monthly),
+      priceYearly: formatPrice(p.price_yearly ?? 0),
+      priceValue: p.price_monthly,
+      priceYearlyValue: p.price_yearly ?? 0,
       period: tModal("plans.free.period"),
-      description:
-        getPlan("free")?.description ?? tModal("plans.free.description"),
-      icon: <Gift className="w-6 h-6" />,
-      color: "text-gray-600",
-      bgGradient: "from-gray-400 to-gray-500",
-      features: buildFeatures("free"),
-    },
-    {
-      id: "starter",
-      name: getPlan("starter")?.display_name ?? tModal("plans.starter.name"),
-      price: formatPrice(getPlan("starter")?.price_monthly ?? 8.9),
-      priceYearly: formatPrice(getPlan("starter")?.price_yearly ?? 85),
-      priceValue: getPlan("starter")?.price_monthly ?? 8.9,
-      priceYearlyValue: getPlan("starter")?.price_yearly ?? 85,
-      period: tModal("plans.starter.period"),
-      description:
-        getPlan("starter")?.description ?? tModal("plans.starter.description"),
-      icon: <Zap className="w-6 h-6" />,
-      color: "text-blue-600",
-      bgGradient: "from-blue-500 to-blue-600",
-      features: buildFeatures("starter"),
-    },
-    {
-      id: "pro",
-      name: getPlan("pro")?.display_name ?? tModal("plans.pro.name"),
-      price: formatPrice(getPlan("pro")?.price_monthly ?? 13.9),
-      priceYearly: formatPrice(getPlan("pro")?.price_yearly ?? 133),
-      priceValue: getPlan("pro")?.price_monthly ?? 13.9,
-      priceYearlyValue: getPlan("pro")?.price_yearly ?? 133,
-      period: tModal("plans.pro.period"),
-      description:
-        getPlan("pro")?.description ?? tModal("plans.pro.description"),
-      icon: <Sparkles className="w-6 h-6" />,
-      color: "text-violet-600",
-      bgGradient: "from-violet-500 to-purple-600",
-      popular: true,
-      features: buildFeatures("pro"),
-    },
-    {
-      id: "premium",
-      name: getPlan("premium")?.display_name ?? tModal("plans.premium.name"),
-      price: formatPrice(getPlan("premium")?.price_monthly ?? 19.9),
-      priceYearly: formatPrice(getPlan("premium")?.price_yearly ?? 191),
-      priceValue: getPlan("premium")?.price_monthly ?? 19.9,
-      priceYearlyValue: getPlan("premium")?.price_yearly ?? 191,
-      period: tModal("plans.premium.period"),
-      description:
-        getPlan("premium")?.description ?? tModal("plans.premium.description"),
-      icon: <Crown className="w-6 h-6" />,
-      color: "text-amber-600",
-      bgGradient: "from-amber-500 to-orange-500",
-      features: buildFeatures("premium"),
-    },
-  ];
-
-  // 🔥 FIX: Use useSubscriptionApi directly to get fresh data from backend
-  const apiData = useSubscriptionApi();
-
-  // Use API data as source of truth, fallback to context if API not loaded yet
-  const currentPlan = apiData.subscription?.plan_name || contextPlan;
+      description: p.description,
+      icon: ICON_MAP[p.icon] ?? <Gift className="w-6 h-6" />,
+      color: colors.text,
+      bgGradient: colors.gradient,
+      popular: p.isPopular,
+      features,
+    };
+  });
 
   const handleSelectPlan = async (planId: PlanType) => {
     if (planId === "free" || planId === currentPlan) {
@@ -450,21 +374,25 @@ export function PricingModal() {
                   )}
                 </ul>
 
-                {/* CTA Button */}
-                <Button
-                  onClick={() => handleSelectPlan(plan.id)}
-                  className={`w-full h-11 text-sm font-semibold ${
-                    plan.popular
-                      ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
-                      : ""
-                  }`}
-                  variant={plan.popular ? "default" : "outline"}
-                  disabled={plan.id === "free"}
-                >
-                  {plan.id === "free"
-                    ? tModal("currentPlan")
-                    : tModal("choosePlan", { name: plan.name })}
-                </Button>
+                {/* CTA Button — Skeleton pendant chargement (BUG 2) */}
+                {currentPlan === null ? (
+                  <Skeleton className="h-9 w-full rounded-md" />
+                ) : (
+                  <Button
+                    onClick={() => handleSelectPlan(plan.id)}
+                    className={`w-full h-11 text-sm font-semibold ${
+                      plan.popular
+                        ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                        : ""
+                    }`}
+                    variant={plan.popular ? "default" : "outline"}
+                    disabled={plan.id === "free" || plan.id === currentPlan}
+                  >
+                    {plan.id === currentPlan
+                      ? tModal("currentPlan")
+                      : tModal("choosePlan", { name: plan.name })}
+                  </Button>
+                )}
               </div>
             ))}
           </div>
@@ -495,170 +423,113 @@ export function PricingCards({
   onSelectPlan?: (plan: PlanType) => void;
 }) {
   const tModal = useTranslations("pricingModal");
+  const { plans: dbPlans, formatPrice } = usePricingData();
 
-  const buildFeatures = (id: string) =>
-    (tModal.raw(`plans.${id}.featureNames`) as string[]).map((name, i) => ({
-      name,
-      ...(FEATURE_CONFIGS[id]?.[i] ?? { included: false }),
-    }));
-
-  const { getPlan, formatPrice } = usePlansConfig();
-
-  const plans: PricingPlan[] = [
-    {
-      id: "free",
-      name: getPlan("free")?.display_name ?? tModal("plans.free.name"),
-      price: formatPrice(getPlan("free")?.price_monthly ?? 0),
-      priceYearly: formatPrice(getPlan("free")?.price_yearly ?? 0),
-      priceValue: getPlan("free")?.price_monthly ?? 0,
-      priceYearlyValue: getPlan("free")?.price_yearly ?? 0,
-      period: tModal("plans.free.period"),
-      description:
-        getPlan("free")?.description ?? tModal("plans.free.description"),
-      icon: <Gift className="w-6 h-6" />,
-      color: "text-gray-600",
-      bgGradient: "from-gray-400 to-gray-500",
-      features: buildFeatures("free"),
-    },
-    {
-      id: "starter",
-      name: getPlan("starter")?.display_name ?? tModal("plans.starter.name"),
-      price: formatPrice(getPlan("starter")?.price_monthly ?? 8.9),
-      priceYearly: formatPrice(getPlan("starter")?.price_yearly ?? 85),
-      priceValue: getPlan("starter")?.price_monthly ?? 8.9,
-      priceYearlyValue: getPlan("starter")?.price_yearly ?? 85,
-      period: tModal("plans.starter.period"),
-      description:
-        getPlan("starter")?.description ?? tModal("plans.starter.description"),
-      icon: <Zap className="w-6 h-6" />,
-      color: "text-blue-600",
-      bgGradient: "from-blue-500 to-blue-600",
-      features: buildFeatures("starter"),
-    },
-    {
-      id: "pro",
-      name: getPlan("pro")?.display_name ?? tModal("plans.pro.name"),
-      price: formatPrice(getPlan("pro")?.price_monthly ?? 13.9),
-      priceYearly: formatPrice(getPlan("pro")?.price_yearly ?? 133),
-      priceValue: getPlan("pro")?.price_monthly ?? 13.9,
-      priceYearlyValue: getPlan("pro")?.price_yearly ?? 133,
-      period: tModal("plans.pro.period"),
-      description:
-        getPlan("pro")?.description ?? tModal("plans.pro.description"),
-      icon: <Sparkles className="w-6 h-6" />,
-      color: "text-violet-600",
-      bgGradient: "from-violet-500 to-purple-600",
-      popular: true,
-      features: buildFeatures("pro"),
-    },
-    {
-      id: "premium",
-      name: getPlan("premium")?.display_name ?? tModal("plans.premium.name"),
-      price: formatPrice(getPlan("premium")?.price_monthly ?? 19.9),
-      priceYearly: formatPrice(getPlan("premium")?.price_yearly ?? 191),
-      priceValue: getPlan("premium")?.price_monthly ?? 19.9,
-      priceYearlyValue: getPlan("premium")?.price_yearly ?? 191,
-      period: tModal("plans.premium.period"),
-      description:
-        getPlan("premium")?.description ?? tModal("plans.premium.description"),
-      icon: <Crown className="w-6 h-6" />,
-      color: "text-amber-600",
-      bgGradient: "from-amber-500 to-orange-500",
-      features: buildFeatures("premium"),
-    },
-  ];
+  const ICON_MAP: Record<string, React.ReactNode> = {
+    Gift: <Gift className="w-6 h-6" />,
+    Zap: <Zap className="w-6 h-6" />,
+    Sparkles: <Sparkles className="w-6 h-6" />,
+    Crown: <Crown className="w-6 h-6" />,
+  };
+  const GRADIENT_MAP: Record<string, string> = {
+    zinc: "from-gray-400 to-gray-500",
+    blue: "from-blue-500 to-blue-600",
+    purple: "from-violet-500 to-purple-600",
+    amber: "from-amber-500 to-orange-500",
+  };
 
   return (
     <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-      {plans.map((plan) => (
-        <div
-          key={plan.id}
-          className={`relative rounded-2xl border-2 p-6 transition-all hover:shadow-xl ${
-            plan.popular
-              ? "border-violet-500 shadow-violet-100 shadow-lg scale-[1.02]"
-              : "border-gray-200 hover:border-gray-300"
-          }`}
-        >
-          {plan.popular && (
-            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 px-4">
-              {tModal("popular")}
-            </Badge>
-          )}
-
-          <div className="text-center mb-6">
-            <div
-              className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${plan.bgGradient} text-white mb-4`}
-            >
-              {plan.icon}
-            </div>
-            <h3 className="text-2xl font-bold">{plan.name}</h3>
-            <p className="text-muted-foreground mt-2">{plan.description}</p>
-          </div>
-
-          <div className="text-center mb-6">
-            <div className="flex items-baseline justify-center gap-1">
-              {plan.id === "free" ? (
-                <span className="text-5xl font-bold">{tModal("free")}</span>
-              ) : (
-                <>
-                  <span className="text-5xl font-bold">{plan.price}</span>
-                  <span className="text-xl text-muted-foreground">
-                    {plan.period}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <ul className="space-y-3 mb-8">
-            {plan.features
-              .filter((f) => f.name)
-              .map((feature, index) => (
-                <li
-                  key={index}
-                  className={`flex items-center gap-3 ${
-                    feature.highlight ? "font-medium" : ""
-                  }`}
-                >
-                  {feature.included ? (
-                    <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                        feature.highlight
-                          ? `bg-gradient-to-br ${plan.bgGradient}`
-                          : "bg-green-500"
-                      }`}
-                    >
-                      <Check className="w-3 h-3 text-white" />
-                    </div>
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                      <X className="w-3 h-3 text-gray-400" />
-                    </div>
-                  )}
-                  <span className={feature.included ? "" : "text-gray-400"}>
-                    {feature.name}
-                  </span>
-                </li>
-              ))}
-          </ul>
-
-          <Button
-            onClick={() => onSelectPlan?.(plan.id)}
-            className={`w-full h-12 text-lg ${
-              plan.popular
-                ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
-                : ""
+      {dbPlans.map((p) => {
+        const gradient = GRADIENT_MAP[p.color] ?? GRADIENT_MAP.zinc;
+        const features = [
+          ...p.features.map((name, i) => ({
+            name,
+            included: true,
+            highlight: i === 0,
+          })),
+          ...(p.features_excluded ?? []).map((name) => ({
+            name,
+            included: false,
+            highlight: false,
+          })),
+        ];
+        return (
+          <div
+            key={p.name}
+            className={`relative rounded-2xl border-2 p-6 transition-all hover:shadow-xl ${
+              p.isPopular
+                ? "border-violet-500 shadow-violet-100 shadow-lg scale-[1.02]"
+                : "border-gray-200 hover:border-gray-300"
             }`}
-            variant={plan.popular ? "default" : "outline"}
-            size="lg"
-            disabled={plan.id === "free"}
           >
-            {plan.id === "free"
-              ? tModal("currentPlan")
-              : tModal("startWith", { name: plan.name })}
-          </Button>
-        </div>
-      ))}
+            {p.isPopular && (
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 px-4">
+                {tModal("popular")}
+              </Badge>
+            )}
+            <div className="text-center mb-6">
+              <div
+                className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} text-white mb-4`}
+              >
+                {ICON_MAP[p.icon] ?? <Gift className="w-6 h-6" />}
+              </div>
+              <h3 className="text-2xl font-bold">{p.display_name}</h3>
+              <p className="text-muted-foreground mt-2">{p.description}</p>
+            </div>
+            <div className="text-center mb-6">
+              <div className="flex items-baseline justify-center gap-1">
+                {p.name === "free" ? (
+                  <span className="text-5xl font-bold">{tModal("free")}</span>
+                ) : (
+                  <>
+                    <span className="text-5xl font-bold">
+                      {formatPrice(p.price_monthly)}€
+                    </span>
+                    <span className="text-xl text-muted-foreground">/mois</span>
+                  </>
+                )}
+              </div>
+            </div>
+            <ul className="space-y-3 mb-8">
+              {features
+                .filter((f) => f.name)
+                .map((feature, index) => (
+                  <li
+                    key={index}
+                    className={`flex items-center gap-3 ${feature.highlight ? "font-medium" : ""}`}
+                  >
+                    {feature.included ? (
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center ${feature.highlight ? `bg-gradient-to-br ${gradient}` : "bg-green-500"}`}
+                      >
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+                        <X className="w-3 h-3 text-gray-400" />
+                      </div>
+                    )}
+                    <span className={feature.included ? "" : "text-gray-400"}>
+                      {feature.name}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+            <Button
+              onClick={() => onSelectPlan?.(p.name as PlanType)}
+              className={`w-full h-12 text-lg ${p.isPopular ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700" : ""}`}
+              variant={p.isPopular ? "default" : "outline"}
+              size="lg"
+              disabled={p.name === "free"}
+            >
+              {p.name === "free"
+                ? tModal("currentPlan")
+                : tModal("startWith", { name: p.display_name })}
+            </Button>
+          </div>
+        );
+      })}
     </div>
   );
 }

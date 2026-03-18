@@ -40,7 +40,7 @@ async def get_public_plans() -> List[Dict[str, Any]]:
 
     supabase = get_supabase_client()
     result = supabase.table("subscription_plans").select(
-        "id, name, display_name, description, price_monthly, price_yearly, features, sort_order, is_active"
+        "id, name, display_name, description, price_monthly, price_yearly, features, features_excluded, sort_order, is_active"
     ).eq("is_active", True).order("sort_order").execute()
 
     plans = result.data or []
