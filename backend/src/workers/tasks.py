@@ -100,10 +100,11 @@ async def cv_adapt_task(
     agent = get_cv_adapter_main()
 
     async with _groq_semaphore:
-        result = await agent.adapt(
+        result = await agent.run(
             cv_text=cv_text,
             job_description=job_description,
             language=language,
+            template="ats",
         )
 
     return result

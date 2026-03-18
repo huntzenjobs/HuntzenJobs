@@ -18,6 +18,18 @@ from src.utils.cache import get_redis
 router = APIRouter()
 
 
+async def _queue_length(redis, key: str) -> int:
+    key_type = await redis.type(key)
+    if isinstance(key_type, bytes):
+        key_type = key_type.decode("utf-8")
+
+    if key_type == "zset":
+        return int(await redis.zcard(key))
+    if key_type == "list":
+        return int(await redis.llen(key))
+    return 0
+
+
 async def _get_arq_job_state(pool, job_id: str) -> dict:
     from arq.jobs import Job
 
@@ -154,11 +166,11 @@ async def all_stats():
         modal_cv       = await redis.get("modal:active_cv_analysis")
 
         queue_lengths = {
-            "coach": int(await redis.llen("arq:coach")),
-            "assistant": int(await redis.llen("arq:assistant")),
-            "branding": int(await redis.llen("arq:branding")),
-            "cv_adapt": int(await redis.llen("arq:cv_adapt")),
-            "cover_letter": int(await redis.llen("arq:cover_letter")),
+            "coach": await _queue_length(redis, "arq:coach"),
+            "assistant": await _queue_length(redis, "arq:assistant"),
+            "branding": await _queue_length(redis, "arq:branding"),
+            "cv_adapt": await _queue_length(redis, "arq:cv_adapt"),
+            "cover_letter": await _queue_length(redis, "arq:cover_letter"),
         }
 
         return {
