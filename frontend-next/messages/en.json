@@ -718,7 +718,7 @@
       "savedAt": "Saved on",
       "searchJobs": "Search for jobs",
       "statusCvGenerated": "Resume generated",
-      "statusCoverLetterGenerated": "LM generated",
+      "statusCoverLetterGenerated": "Cover letter generated",
       "statusApplied": "Applied",
       "tipTitle": "TIP",
       "tipText": "Click on an offer to generate an adapted CV and cover letter in seconds.",
@@ -826,7 +826,7 @@
       "deleteButton": "Remove",
       "cvLabel": "CV",
       "coverLetterLabel": "Covering letter",
-      "generatedOn": "Generated!"
+      "generatedOn": "Generated on"
     }
   },
   "error": {
