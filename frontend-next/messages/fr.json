@@ -382,8 +382,12 @@
     "relance7days": "Une opportunité pourrait t'attendre aujourd'hui."
   },
   "coachFeedback": {
-    "sofia": { "good": "Ton CV est déjà solide. On peut encore l'améliorer." },
-    "lucas": { "good": "Ta réponse est bonne. On peut la rendre encore plus percutante." }
+    "sofia": {
+      "good": "Ton CV est déjà solide. On peut encore l'améliorer."
+    },
+    "lucas": {
+      "good": "Ta réponse est bonne. On peut la rendre encore plus percutante."
+    }
   },
   "pricingModal": {
     "title": "Débloquez toutes les fonctionnalités",
@@ -1106,5 +1110,13 @@
     "downloadCoverLetter": "Télécharger la lettre",
     "cancelButton": "Annuler",
     "retryButton": "Réessayer"
+  },
+  "cvBuilder": {
+    "step1": {
+      "textPlaceholder": "Collez ici le contenu de votre CV..."
+    },
+    "step2": {
+      "jobOfferPlaceholder": "Collez ici la description complète de l'offre d'emploi (missions, compétences requises, profil recherché...)..."
+    }
   }
 }

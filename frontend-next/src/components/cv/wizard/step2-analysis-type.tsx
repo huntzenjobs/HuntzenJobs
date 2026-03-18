@@ -3,26 +3,27 @@
  * Features: 2 large cards (Global vs Match), conditional job offer textarea
  */
 
-'use client'
+"use client";
 
-import { Target, GitCompare } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { AnalysisTypeCard } from '@/components/cv/analysis-type-card'
-import { cn } from '@/lib/utils'
+import { useTranslations } from "next-intl";
+import { Target, GitCompare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { AnalysisTypeCard } from "@/components/cv/analysis-type-card";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface Step2AnalysisTypeProps {
-  analysisType: 'global' | 'match' | null
-  jobOffer: string
-  onAnalysisTypeChange: (type: 'global' | 'match') => void
-  onJobOfferChange: (text: string) => void
-  onBack: () => void
-  onNext: () => void
-  className?: string
+  analysisType: "global" | "match" | null;
+  jobOffer: string;
+  onAnalysisTypeChange: (type: "global" | "match") => void;
+  onJobOfferChange: (text: string) => void;
+  onBack: () => void;
+  onNext: () => void;
+  className?: string;
 }
 
 // ============================================================================
@@ -31,28 +32,28 @@ interface Step2AnalysisTypeProps {
 
 const ANALYSIS_TYPES = [
   {
-    type: 'global' as const,
+    type: "global" as const,
     icon: Target,
-    title: 'Score Global',
-    description: 'Analyse complète de votre CV pour maximiser vos chances',
+    title: "Score Global",
+    description: "Analyse complète de votre CV pour maximiser vos chances",
     features: [
-      'Score ATS détaillé sur 100 points',
-      'Points forts et axes d\'amélioration',
-      'Recommandations personnalisées'
-    ]
+      "Score ATS détaillé sur 100 points",
+      "Points forts et axes d'amélioration",
+      "Recommandations personnalisées",
+    ],
   },
   {
-    type: 'match' as const,
+    type: "match" as const,
     icon: GitCompare,
-    title: 'Match avec Offre',
-    description: 'Comparez votre CV avec une offre d\'emploi spécifique',
+    title: "Match avec Offre",
+    description: "Comparez votre CV avec une offre d'emploi spécifique",
     features: [
-      'Taux de compatibilité avec le poste',
-      'Compétences manquantes identifiées',
-      'Conseils pour adapter votre CV'
-    ]
-  }
-]
+      "Taux de compatibilité avec le poste",
+      "Compétences manquantes identifiées",
+      "Conseils pour adapter votre CV",
+    ],
+  },
+];
 
 // ============================================================================
 // COMPONENT
@@ -65,14 +66,15 @@ export function Step2AnalysisType({
   onJobOfferChange,
   onBack,
   onNext,
-  className
+  className,
 }: Step2AnalysisTypeProps) {
+  const t = useTranslations("cvBuilder");
   const canProceed =
     analysisType !== null &&
-    (analysisType === 'global' || jobOffer.trim().length > 0)
+    (analysisType === "global" || jobOffer.trim().length > 0);
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn("space-y-6", className)}>
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Type d'analyse</h2>
@@ -97,21 +99,24 @@ export function Step2AnalysisType({
       </div>
 
       {/* Conditional: Job Offer Textarea (slideDown animation) */}
-      {analysisType === 'match' && (
+      {analysisType === "match" && (
         <div
           className={cn(
-            'space-y-3 overflow-hidden transition-all duration-300 ease-in-out',
-            'animate-in slide-in-from-top-2 fade-in'
+            "space-y-3 overflow-hidden transition-all duration-300 ease-in-out",
+            "animate-in slide-in-from-top-2 fade-in",
           )}
         >
           <div className="pt-2">
-            <label htmlFor="job-offer" className="block text-sm font-medium text-gray-900 mb-2">
+            <label
+              htmlFor="job-offer"
+              className="block text-sm font-medium text-gray-900 mb-2"
+            >
               Description de l'offre d'emploi
               <span className="text-red-500 ml-1">*</span>
             </label>
             <Textarea
               id="job-offer"
-              placeholder="Collez ici la description complète de l'offre d'emploi (missions, compétences requises, profil recherché...)..."
+              placeholder={t("step2.jobOfferPlaceholder")}
               value={jobOffer}
               onChange={(e) => onJobOfferChange(e.target.value)}
               className="min-h-[150px] resize-y"
@@ -125,12 +130,7 @@ export function Step2AnalysisType({
 
       {/* Navigation Buttons */}
       <div className="flex items-center justify-between pt-4">
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={onBack}
-          className="px-8"
-        >
+        <Button variant="outline" size="lg" onClick={onBack} className="px-8">
           <svg
             className="mr-2 h-4 w-4"
             fill="none"
@@ -170,5 +170,5 @@ export function Step2AnalysisType({
         </Button>
       </div>
     </div>
-  )
+  );
 }

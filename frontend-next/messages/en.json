@@ -1099,12 +1099,24 @@
     "relance7days": "An opportunity might be waiting for you today."
   },
   "coachFeedback": {
-    "sofia": { "good": "Your CV is already solid. We can still improve it." },
-    "lucas": { "good": "Your answer is good. We can make it even more impactful." }
+    "sofia": {
+      "good": "Your CV is already solid. We can still improve it."
+    },
+    "lucas": {
+      "good": "Your answer is good. We can make it even more impactful."
+    }
   },
   "ctaFinal": {
     "title": "Ready to land your next job?",
     "subtitle": "Join +2,000 candidates moving forward with HuntZen.",
     "cta": "Start for free — no commitment"
+  },
+  "cvBuilder": {
+    "step1": {
+      "textPlaceholder": "Paste your resume content here..."
+    },
+    "step2": {
+      "jobOfferPlaceholder": "Paste the full job description here (responsibilities, required skills, candidate profile...)..."
+    }
   }
 }
