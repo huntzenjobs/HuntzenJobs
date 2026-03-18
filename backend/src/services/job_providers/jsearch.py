@@ -92,6 +92,11 @@ class JSearchProvider(BaseJobProvider):
         else:
             search_query = f"{query} in {location_str}"
 
+        # Enrichissement si alternance — enrichir search_query pour préserver radius_km
+        contract_type = kwargs.get("contract_type", "")
+        if contract_type in ("alternance", "apprentissage"):
+            search_query = f"alternance apprentissage {search_query}"
+
         # Request up to 2 pages (~20 results)
         num_pages = min(2, max(1, max_results // 10))
 
@@ -221,6 +226,10 @@ class JSearchProvider(BaseJobProvider):
         if not raw:
             return None
         raw_lower = raw.lower().replace("_", " ").replace("-", " ")
+        # Détection alternance en premier
+        alternance_keywords = {"alternance", "apprenticeship", "apprentissage", "work-study", "work study", "contrat pro"}
+        if any(kw in raw_lower for kw in alternance_keywords):
+            return "alternance"
         mapping = {
             "fulltime": "CDI",
             "full time": "CDI",
@@ -235,4 +244,4 @@ class JSearchProvider(BaseJobProvider):
         for key, value in mapping.items():
             if key in raw_lower:
                 return value
-        return raw  # Return as-is if no match
+        return raw
