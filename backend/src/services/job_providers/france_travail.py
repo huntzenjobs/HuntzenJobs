@@ -187,7 +187,7 @@ class FranceTravailProvider(BaseJobProvider):
             "title": item.get("intitule", ""),
             "company": company,
             "location": location,
-            "description": (item.get("description") or "")[:5000],
+            "description": (item.get("description") or "")[:500],
             "url": url,
             "salary": salary,
             "contract_type": contract,
