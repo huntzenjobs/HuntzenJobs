@@ -177,7 +177,16 @@ class JobScoutAgent(BaseAgent):
             if not include_remote:
                 active_providers = [p for p in active_providers if p.name != "remoteok"]
                 logger.info(f"[{self.name}] Remote jobs excluded")
-            
+
+            # Alternance : remote ≠ alternance (présentiel requis)
+            if contract_type in ("alternance", "apprentissage"):
+                active_providers = [p for p in active_providers if p.name != "remoteok"]
+                # Prioriser France Travail (asyncio.gather respecte l'ordre input)
+                active_providers = sorted(
+                    active_providers,
+                    key=lambda p: 0 if p.name == "france_travail" else 1,
+                )
+
             logger.info(f"[{self.name}] Using {len(active_providers)} providers")
 
             # Step 3: Aggregate from active providers
@@ -200,7 +209,10 @@ class JobScoutAgent(BaseAgent):
             logger.info(f"[{self.name}] Pre-filter: {len(unique_jobs)} → {len(filtered_jobs)} jobs")
 
             # Step 3.6: Filter school/training-org offers disguised as employers
-            filtered_jobs = self._filter_school_offers(filtered_jobs)
+            # Skip pour l'alternance : _SCHOOL_CONTENT_PATTERNS contient
+            # "programme de formation en alternance" qui filtre des offres légitimes
+            if contract_type not in ("alternance", "apprentissage"):
+                filtered_jobs = self._filter_school_offers(filtered_jobs)
 
             # Step 4: Rank with AI (sample for performance)
             ranked_jobs = await self._rank_jobs(filtered_jobs, job_title)
