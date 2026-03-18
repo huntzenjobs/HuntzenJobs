@@ -77,6 +77,11 @@ class SerpAPIProvider(BaseJobProvider):
             "api_key": api_key,
         }
 
+        # Enrichissement query si alternance
+        contract_type = kwargs.get("contract_type", "")
+        if contract_type in ("alternance", "apprentissage"):
+            params["q"] = f"{params['q']} alternance"
+
         async with httpx.AsyncClient(timeout=20.0) as client:
             response = await client.get(self.BASE_URL, params=params)
             response.raise_for_status()
@@ -116,6 +121,14 @@ class SerpAPIProvider(BaseJobProvider):
     def _extract_contract_type(self, item: dict) -> str | None:
         """Extract contract type from extensions."""
         extensions = item.get("detected_extensions", {})
-        if extensions.get("schedule_type"):
-            return extensions["schedule_type"]
+        schedule = extensions.get("schedule_type", "") or ""
+        if schedule:
+            schedule_lower = schedule.lower()
+            if any(kw in schedule_lower for kw in ("alternance", "apprenti", "apprenticeship", "work-study")):
+                return "alternance"
+            return schedule
+        # Fallback : vérifier le titre
+        title = (item.get("title") or "").lower()
+        if "alternance" in title or "apprenti" in title:
+            return "alternance"
         return None
