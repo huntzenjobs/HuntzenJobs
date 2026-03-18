@@ -121,6 +121,11 @@ class FranceTravailProvider(BaseJobProvider):
         if location:
             params["motsCles"] = f"{query} {location}"
 
+        # Filtre natif France Travail pour l'alternance
+        contract_type = kwargs.get("contract_type", "")
+        if contract_type in ("alternance", "apprentissage"):
+            params["typeContrat"] = "ALT"
+
         headers = {"Authorization": f"Bearer {token}"}
 
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -212,10 +217,17 @@ class FranceTravailProvider(BaseJobProvider):
         if not raw:
             return None
         mapping = {
-            "CDI": "CDI",
-            "CDD": "CDD",
-            "MIS": "Intérim",
-            "SAI": "Saisonnier",
-            "LIB": "Freelance",
+            "CDI": "cdi",
+            "CDD": "cdd",
+            "MIS": "interim",
+            "SAI": "saisonnier",
+            "LIB": "freelance",
+            # Alternance — libellés textuels retournés par typeContratLibelle
+            # Note : "ALT" est le code de requête API, jamais retourné dans ce champ.
+            "Contrat d'apprentissage": "alternance",
+            "Apprentissage": "alternance",
+            "Alternance": "alternance",
+            "Contrat de professionnalisation": "alternance",
+            "Contrat pro": "alternance",
         }
         return mapping.get(raw, raw)
