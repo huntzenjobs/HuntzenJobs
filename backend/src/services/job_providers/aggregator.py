@@ -14,6 +14,22 @@ from src.services.job_providers.base import BaseJobProvider
 logger = logging.getLogger(__name__)
 
 
+ALTERNANCE_SIGNALS = frozenset({
+    "alternance", "apprenti", "apprentissage",
+    "contrat pro", "contrat d'apprentissage",
+    "work-study", "work study",
+})
+
+
+def _is_alternance_job(job: dict) -> bool:
+    """Retourne True si l'offre présente un signal alternance clair."""
+    text = f"{job.get('title', '')} {job.get('description', '') or ''}".lower()
+    return (
+        job.get("contract_type") == "alternance"
+        or any(signal in text for signal in ALTERNANCE_SIGNALS)
+    )
+
+
 async def aggregate_jobs(
     providers: list[BaseJobProvider],
     query: str,
@@ -50,9 +66,12 @@ async def aggregate_jobs(
                 "country_code": country_code,
                 "max_results": max_per_provider,
             }
-            # Adzuna supports max_days and contract_type
+            # Adzuna supporte max_days — conserver ce comportement spécifique
             if hasattr(provider, 'name') and provider.name == 'adzuna':
                 kwargs["max_days"] = max_days
+
+            # Transmettre contract_type à TOUS les providers via **kwargs
+            if contract_type:
                 kwargs["contract_type"] = contract_type
 
             # Pass radius_km to providers that support it
@@ -78,7 +97,16 @@ async def aggregate_jobs(
         all_jobs.extend(jobs)
     
     logger.info(f"[Aggregator] Collected {len(all_jobs)} total jobs | {source_stats}")
-    
+
+    # Post-filter alternance — filet de sécurité contre les faux positifs résiduels
+    if contract_type in ("alternance", "apprentissage"):
+        before = len(all_jobs)
+        all_jobs = [j for j in all_jobs if _is_alternance_job(j)]
+        for j in all_jobs:
+            if j.get("contract_type") != "alternance":
+                j["contract_type"] = "alternance"
+        logger.info(f"[Aggregator] Post-filter alternance: {before} → {len(all_jobs)} jobs")
+
     return all_jobs
 
 
