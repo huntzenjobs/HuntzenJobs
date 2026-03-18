@@ -65,7 +65,10 @@ class JobSearchRequest(BaseModel):
     job_title: str = Field(..., min_length=2, max_length=200, description="Job title to search")
     country_code: str = Field(default="us", min_length=2, max_length=3)
     city: str = Field(default="", max_length=100)
-    contract_type: Literal["", "cdi", "cdd", "freelance", "internship", "remote", "permanent", "contract"] = ""
+    contract_type: Literal[
+        "", "cdi", "cdd", "freelance", "internship", "remote",
+        "permanent", "contract", "alternance", "apprentissage"
+    ] = ""
     salary_min: Optional[int] = Field(default=None, ge=0)
     max_results: int = Field(default=100, ge=5, le=200)
     max_days: int = Field(default=7, ge=1, le=30, description="Max days since posting (1-30)")
