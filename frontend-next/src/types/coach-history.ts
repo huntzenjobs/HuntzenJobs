@@ -148,6 +148,7 @@ export interface UseCoachHistoryReturn {
     messages: CoachMessage[],
     sessionId: string,
     conversationId?: string,
+    assistantType?: string,
   ) => Promise<string | null>;
 
   loadConversation: (

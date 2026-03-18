@@ -940,11 +940,11 @@
     "cancelling": "Annulation...",
     "cancelDialog": {
       "title": "Annuler votre abonnement ?",
-      "description": "Vous conserverez l'accès à toutes vos fonctionnalités jusqu'à la fin de la période en cours. Aucun remboursement ne sera effectué.",
+      "description": "Aucun prélèvement supplémentaire ne sera effectué. Vous conserverez l'accès à toutes vos fonctionnalités jusqu'à la fin de la période déjà payée, puis votre compte passera automatiquement au plan Gratuit.",
       "keep": "Garder mon abonnement",
       "confirm": "Confirmer l'annulation",
       "successTitle": "Annulation confirmée",
-      "successDescription": "Votre plan {plan} sera annulé à la fin de la période en cours. Vous conservez l'accès jusqu'à cette date."
+      "successDescription": "Votre plan {plan} restera actif jusqu'à la fin de la période en cours, sans aucun nouveau prélèvement. Vous passerez ensuite au plan Gratuit."
     }
   },
   "cv": {

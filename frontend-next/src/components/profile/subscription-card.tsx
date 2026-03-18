@@ -17,7 +17,7 @@ import {
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
-import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
+import { PLAN_LIMITS } from "@/hooks/use-freemium-limits"; // feature flags only
 import { UsageCounter } from "@/components/freemium/usage-counter";
 import {
   Check,
@@ -106,6 +106,8 @@ export function SubscriptionCard() {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccess, setCancelSuccess] = useState<string | null>(null);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
+  const [reactivateError, setReactivateError] = useState<string | null>(null);
 
   // Enriched data from API (cancel_at_period_end, past_due status)
   const subStatus = apiData.subscription?.status ?? "active";
@@ -142,7 +144,7 @@ export function SubscriptionCard() {
   };
 
   const planConfig = PLAN_CONFIG[plan];
-  const planLimits = PLAN_LIMITS[plan];
+  const planLimits = PLAN_LIMITS[plan]; // used only for feature flags (has_*)
   const { getPlan, formatPrice } = usePlansConfig();
 
   const dynamicPrice = (() => {
@@ -170,6 +172,31 @@ export function SubscriptionCard() {
 
   const nextPlan = getNextPlan();
   const canUpgrade = nextPlan !== null;
+
+  const handleReactivateSubscription = async () => {
+    setIsReactivating(true);
+    setReactivateError(null);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/stripe/reactivate-subscription`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        },
+      );
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || "Erreur lors de la réactivation");
+      }
+      window.location.reload();
+    } catch (err) {
+      setReactivateError(
+        err instanceof Error ? err.message : "Erreur inconnue",
+      );
+    } finally {
+      setIsReactivating(false);
+    }
+  };
 
   const handleOpenCancelDialog = () => {
     // Reset state fresh each time dialog opens
@@ -256,7 +283,7 @@ export function SubscriptionCard() {
         {cancelAtPeriodEnd && !isPastDue && (
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
+            <div className="flex-1 space-y-2">
               <p className="text-sm font-semibold text-amber-800">
                 Annulation programmée
               </p>
@@ -268,6 +295,19 @@ export function SubscriptionCard() {
                   : " jusqu'à la fin de la période"}
                 , puis passera au plan Gratuit.
               </p>
+              {reactivateError && (
+                <p className="text-xs text-red-600">{reactivateError}</p>
+              )}
+              <Button
+                size="sm"
+                onClick={handleReactivateSubscription}
+                disabled={isReactivating}
+                className="bg-amber-600 hover:bg-amber-700 text-white h-8 text-xs"
+              >
+                {isReactivating
+                  ? "Réactivation..."
+                  : "Réactiver mon abonnement"}
+              </Button>
             </div>
           </div>
         )}
@@ -368,25 +408,25 @@ export function SubscriptionCard() {
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
               <span>
-                {planLimits.cv_analyses_per_day === Infinity
+                {limits.cv_analyses_per_day === Infinity
                   ? "Analyses CV illimitées"
-                  : `${planLimits.cv_analyses_per_day} analyse(s) CV par jour`}
+                  : `${limits.cv_analyses_per_day} analyse(s) CV par jour`}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
               <span>
-                {planLimits.assistant_messages_per_day === Infinity
+                {limits.assistant_messages_per_day === Infinity
                   ? "Messages Assistant illimités"
-                  : `${planLimits.assistant_messages_per_day} messages Assistant par jour`}
+                  : `${limits.assistant_messages_per_day} messages Assistant par jour`}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
               <span>
-                {planLimits.job_searches_per_day === Infinity
+                {limits.job_searches_per_day === Infinity
                   ? "Recherches d'emploi illimitées"
-                  : `${planLimits.job_searches_per_day} recherches d'emploi par jour`}
+                  : `${limits.job_searches_per_day} recherches d'emploi par jour`}
               </span>
             </div>
           </div>
@@ -467,22 +507,41 @@ export function SubscriptionCard() {
               >
                 Changer de plan
               </Button>
-              <Button
-                variant="ghost"
-                className="sm:flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={handleOpenCancelDialog}
-                disabled={isCancelling}
-                aria-label={t("cancelSubscription")}
-              >
-                {isCancelling ? (
-                  <span className="flex items-center gap-2">
-                    <span className="animate-spin h-4 w-4 border-2 border-red-400 border-t-transparent rounded-full inline-block" />
-                    {t("cancelling")}
-                  </span>
-                ) : (
-                  t("cancelSubscription")
-                )}
-              </Button>
+              {cancelAtPeriodEnd ? (
+                <Button
+                  variant="ghost"
+                  className="sm:flex-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                  onClick={handleReactivateSubscription}
+                  disabled={isReactivating}
+                  aria-label="Réactiver mon abonnement"
+                >
+                  {isReactivating ? (
+                    <span className="flex items-center gap-2">
+                      <span className="animate-spin h-4 w-4 border-2 border-amber-400 border-t-transparent rounded-full inline-block" />
+                      Réactivation...
+                    </span>
+                  ) : (
+                    "Réactiver mon abonnement"
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  className="sm:flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={handleOpenCancelDialog}
+                  disabled={isCancelling}
+                  aria-label={t("cancelSubscription")}
+                >
+                  {isCancelling ? (
+                    <span className="flex items-center gap-2">
+                      <span className="animate-spin h-4 w-4 border-2 border-red-400 border-t-transparent rounded-full inline-block" />
+                      {t("cancelling")}
+                    </span>
+                  ) : (
+                    t("cancelSubscription")
+                  )}
+                </Button>
+              )}
             </div>
           </>
         )}

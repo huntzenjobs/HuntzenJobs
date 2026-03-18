@@ -831,11 +831,11 @@
     "cancelling": "Cancelando...",
     "cancelDialog": {
       "title": "Cancelar sua assinatura?",
-      "description": "Você manterá acesso a todas as funcionalidades até o final do período de cobrança atual. Nenhum reembolso será realizado.",
+      "description": "Nenhuma cobrança adicional será realizada. Você manterá acesso a todas as funcionalidades até o final do período já pago, depois sua conta passará automaticamente para o plano Gratuito.",
       "keep": "Manter minha assinatura",
       "confirm": "Confirmar cancelamento",
       "successTitle": "Cancelamento confirmado",
-      "successDescription": "Seu plano {plan} será cancelado no final do período atual. Você mantém o acesso até essa data."
+      "successDescription": "Seu plano {plan} permanecerá ativo até o final do período atual, sem nenhuma cobrança adicional. Você passará para o plano Gratuito em seguida."
     }
   },
   "cv": {

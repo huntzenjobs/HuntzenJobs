@@ -179,6 +179,69 @@ async def cancel_subscription(
         raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}")
 
 
+@router.post("/reactivate-subscription")
+async def reactivate_subscription(
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Reactivate a subscription scheduled for cancellation.
+    Sets cancel_at_period_end=False — subscription continues as normal.
+    Only works while the subscription is still active (not yet expired).
+    """
+    try:
+        user_id = current_user.get("id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid user")
+
+        if not supabase_client:
+            raise HTTPException(status_code=500, detail="Database not configured")
+
+        result = (
+            supabase_client
+            .table("user_subscriptions")
+            .select("stripe_subscription_id, status, subscription_plans(name)")
+            .eq("user_id", user_id)
+            .in_("status", ["active", "past_due"])
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="No active subscription found")
+
+        subscription = result.data[0]
+        stripe_subscription_id = subscription.get("stripe_subscription_id")
+        plan_name = (subscription.get("subscription_plans") or {}).get("name", "unknown")
+
+        if not stripe_subscription_id or not stripe_subscription_id.startswith("sub_"):
+            raise HTTPException(status_code=400, detail="Invalid subscription ID")
+
+        import stripe as stripe_lib
+        updated = stripe_lib.Subscription.modify(
+            stripe_subscription_id,
+            cancel_at_period_end=False
+        )
+
+        logger.info(
+            f"[STRIPE] Subscription {stripe_subscription_id} reactivated for user {user_id}"
+        )
+
+        return {
+            "success": True,
+            "cancel_at_period_end": False,
+            "plan_name": plan_name,
+            "current_period_end": updated.get("current_period_end"),
+            "message": f"{plan_name} subscription has been reactivated"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[STRIPE] Reactivate subscription failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to reactivate subscription: {str(e)}")
+
+
 @router.post("/create-portal-session")
 async def create_portal_session(
     current_user: dict = Depends(get_current_user)

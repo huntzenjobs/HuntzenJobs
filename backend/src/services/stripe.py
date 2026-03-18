@@ -760,7 +760,7 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
         user_subscription = supabase_client.table("user_subscriptions")\
             .select("user_id")\
             .eq("stripe_subscription_id", stripe_subscription_id)\
-            .single()\
+            .maybe_single()\
             .execute()
 
         if user_subscription.data:

@@ -831,11 +831,11 @@
     "cancelling": "Cancelando...",
     "cancelDialog": {
       "title": "¿Cancelar tu suscripción?",
-      "description": "Conservarás acceso a todas las funcionalidades hasta el final del período de facturación actual. No se realizará ningún reembolso.",
+      "description": "No se realizará ningún cobro adicional. Conservarás acceso a todas las funcionalidades hasta el final del período ya pagado, luego tu cuenta pasará automáticamente al plan Gratuito.",
       "keep": "Mantener mi suscripción",
       "confirm": "Confirmar cancelación",
       "successTitle": "Cancelación confirmada",
-      "successDescription": "Tu plan {plan} será cancelado al final del período actual. Conservas el acceso hasta esa fecha."
+      "successDescription": "Tu plan {plan} permanecerá activo hasta el final del período actual, sin ningún cargo adicional. Luego pasarás al plan Gratuito."
     }
   },
   "cv": {

@@ -335,7 +335,6 @@ export default function AssistantPage() {
 
       // Restore the assistant that created this conversation
       if (conversation.assistant_type) {
-        const { ASSISTANTS_CONFIG } = await import("@/lib/assistants");
         if (
           conversation.assistant_type in ASSISTANTS_CONFIG &&
           conversation.assistant_type !== selectedAssistant
