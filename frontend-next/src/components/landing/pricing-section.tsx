@@ -36,8 +36,7 @@ export function LandingPricingSection() {
           <motion.div
             key={plan.name}
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             className={`relative rounded-2xl border-2 p-6 bg-white flex flex-col h-full ${
               plan.isPopular
@@ -60,7 +59,10 @@ export function LandingPricingSection() {
               </div>
               <div className="flex items-baseline justify-center gap-1">
                 {plan.name === "free" ? (
-                  <span className="text-4xl sm:text-5xl font-black" style={{ color }}>
+                  <span
+                    className="text-4xl sm:text-5xl font-black"
+                    style={{ color }}
+                  >
                     Gratuit
                   </span>
                 ) : (
@@ -76,18 +78,25 @@ export function LandingPricingSection() {
                 )}
               </div>
               {plan.description && (
-                <p className="text-xs text-slate-500 mt-2">{plan.description}</p>
+                <p className="text-xs text-slate-500 mt-2">
+                  {plan.description}
+                </p>
               )}
             </div>
 
             <ul className="space-y-2.5 sm:space-y-3 mb-6 flex-grow">
               {plan.features.map((feature, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm">
+                <li
+                  key={idx}
+                  className="flex items-start gap-2 text-xs sm:text-sm"
+                >
                   <Check
                     className="w-4 h-4 flex-shrink-0 mt-0.5"
                     style={{ color }}
                   />
-                  <span className={`text-slate-700 ${idx === 0 ? "font-semibold" : ""}`}>
+                  <span
+                    className={`text-slate-700 ${idx === 0 ? "font-semibold" : ""}`}
+                  >
                     {feature}
                   </span>
                 </li>
@@ -108,7 +117,9 @@ export function LandingPricingSection() {
               className="block w-full text-center px-4 py-2.5 sm:py-3 rounded-xl font-semibold text-white text-xs sm:text-sm transition-all hover:shadow-lg mt-auto"
               style={{ backgroundColor: color }}
             >
-              {plan.name === "free" ? "Commencer gratuitement" : `Choisir ${plan.display_name}`}
+              {plan.name === "free"
+                ? "Commencer gratuitement"
+                : `Choisir ${plan.display_name}`}
             </Link>
           </motion.div>
         );
