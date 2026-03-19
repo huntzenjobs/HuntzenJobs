@@ -68,3 +68,60 @@ export function HomePageSchemas() {
     </>
   );
 }
+
+interface JobPostingData {
+  title: string;
+  description: string;
+  datePosted: string;
+  company: string;
+  location: string;
+  country?: string;
+  employmentType?: string;
+  salary?: { min?: number; max?: number; currency?: string };
+  url?: string;
+}
+
+export function JobPostingSchema({ job }: { job: JobPostingData }) {
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description,
+    datePosted: job.datePosted,
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.company,
+    },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: job.location,
+        addressCountry: job.country || "FR",
+      },
+    },
+  };
+  if (job.employmentType) schema.employmentType = job.employmentType;
+  if (job.salary?.min || job.salary?.max) {
+    schema.baseSalary = {
+      "@type": "MonetaryAmount",
+      currency: job.salary.currency || "EUR",
+      value: {
+        "@type": "QuantitativeValue",
+        minValue: job.salary.min,
+        maxValue: job.salary.max,
+        unitText: "YEAR",
+      },
+    };
+  }
+  if (job.url) schema.url = job.url;
+
+  return (
+    <Script
+      id={`job-posting-${job.title.slice(0, 20).replace(/\s/g, "-")}`}
+      type="application/ld+json"
+    >
+      {JSON.stringify(schema)}
+    </Script>
+  );
+}

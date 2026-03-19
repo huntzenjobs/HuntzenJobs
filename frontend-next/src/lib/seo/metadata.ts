@@ -565,7 +565,7 @@ export const testimonialsMetadata: Metadata = {
  */
 export function generateLocationMetadata(
   city: string,
-  citySlug: string
+  citySlug: string,
 ): Metadata {
   return {
     title: `Offres d'Emploi à ${city} - CDI, CDD, Alternance | HuntZen`,
@@ -590,9 +590,45 @@ export function generateLocationMetadata(
   };
 }
 
+export const blogMetadata: Metadata = {
+  title: "Blog",
+  description:
+    "Conseils, actualités et guides pour réussir votre recherche d'emploi — HuntZen Jobs",
+  openGraph: {
+    title: "Blog | HuntZen Jobs",
+    description: "Conseils et actualités pour réussir votre recherche d'emploi",
+    url: `${SITE_URL}/blog`,
+  },
+  alternates: { canonical: `${SITE_URL}/blog` },
+};
+
+export const loginMetadata: Metadata = {
+  title: "Connexion",
+  description: "Connectez-vous à votre compte HuntZen Jobs",
+  robots: { index: false, follow: true },
+};
+
+export const signupMetadata: Metadata = {
+  title: "Inscription gratuite",
+  description:
+    "Créez votre compte HuntZen Jobs gratuitement et boostez votre recherche d'emploi",
+  openGraph: {
+    title: "Inscription gratuite | HuntZen Jobs",
+    description: "Créez votre compte gratuitement",
+    url: `${SITE_URL}/signup`,
+  },
+  alternates: { canonical: `${SITE_URL}/signup` },
+};
+
+export const forgotPasswordMetadata: Metadata = {
+  title: "Mot de passe oublié",
+  description: "Réinitialisez votre mot de passe HuntZen Jobs",
+  robots: { index: false, follow: true },
+};
+
 export function generateSectorMetadata(
   sector: string,
-  sectorSlug: string
+  sectorSlug: string,
 ): Metadata {
   return {
     title: `Offres d'Emploi en ${sector} - France | HuntZen`,

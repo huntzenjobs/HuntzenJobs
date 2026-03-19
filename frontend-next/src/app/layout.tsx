@@ -73,18 +73,6 @@ export default async function RootLayout({
           crossOrigin="anonymous"
         />
 
-        {/* Preload critical fonts (déjà géré par next/font mais explicite pour le navigateur) */}
-        <link
-          rel="preload"
-          as="style"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        />
-        <link
-          rel="preload"
-          as="style"
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap"
-        />
-
         <HomePageSchemas />
       </head>
       <body

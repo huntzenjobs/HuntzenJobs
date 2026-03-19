@@ -138,9 +138,6 @@ const nextConfig = {
   // Compression (gzip/brotli) automatique
   compress: true,
 
-  // SWC Minification (plus rapide que Terser)
-  swcMinify: true,
-
   // Optimizations de production
   poweredByHeader: false, // Retire header "X-Powered-By: Next.js"
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 const GRID_PATTERN =
@@ -21,16 +22,16 @@ interface HeroSectionProps {
 export function HeroSection({ texts }: HeroSectionProps) {
   return (
     <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-slate-900 pt-20">
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage:
-            'url("https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          filter: "brightness(0.25) saturate(0.7)",
-        }}
-      />
+      <div className="absolute inset-0">
+        <Image
+          src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop"
+          alt="Équipe en collaboration professionnelle"
+          fill
+          className="object-cover brightness-[0.25] saturate-[0.7]"
+          priority
+          sizes="100vw"
+        />
+      </div>
       <div
         className="absolute inset-0 opacity-20"
         style={{ backgroundImage: GRID_PATTERN, backgroundSize: "60px 60px" }}
