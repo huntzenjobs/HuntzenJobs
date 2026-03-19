@@ -3,7 +3,7 @@
  * Utilise next/font/google pour le meilleur chargement et performance
  */
 
-import { Inter, DM_Sans } from "next/font/google";
+import { Inter, DM_Sans, Plus_Jakarta_Sans } from "next/font/google";
 
 // Inter - Police principale
 export const inter = Inter({
@@ -21,4 +21,13 @@ export const dmSans = DM_Sans({
   display: "swap",
   preload: true,
   weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+// Plus Jakarta Sans - Police landing page
+export const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+  preload: true,
+  weight: ["400", "500", "600", "700", "800"],
 });
