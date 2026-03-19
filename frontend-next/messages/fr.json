@@ -184,18 +184,18 @@
     "cta": "Commencer gratuitement — c'est sans engagement"
   },
   "pricing": {
-    "title": "Choisissez votre plan",
-    "subtitle": "Commencez gratuitement, évoluez selon vos besoins",
+    "title": "Choisis ton plan",
+    "subtitle": "Commence gratuitement, évolue selon tes besoins",
     "saveUpTo20": "Économisez jusqu'à 20%",
     "currentPlan": "✓ Plan actuel",
     "choosePlan": "Choisir {name}",
     "toasts": {
-      "alreadyOnPlan": "Vous utilisez déjà ce plan",
-      "mustBeLoggedIn": "Vous devez être connecté pour souscrire à un plan",
+      "alreadyOnPlan": "Tu utilises déjà ce plan",
+      "mustBeLoggedIn": "Tu dois être connecté pour souscrire à un plan",
       "redirecting": "Redirection vers le paiement...",
       "sessionExpired": "Session expirée, veuillez vous reconnecter",
       "upgraded": "✨ Abonnement mis à niveau !",
-      "scheduledChange": "📅 Changement planifié pour la fin de votre période actuelle."
+      "scheduledChange": "📅 Changement planifié pour la fin de ta période actuelle."
     },
     "secure": "Paiement sécurisé",
     "noCommitment": "Sans engagement",
@@ -263,7 +263,7 @@
           "Recherches d'offres illimitées",
           "Accès à toutes les offres d'emploi",
           "Filtres avancés (salaire, télétravail, date)",
-          "Gestion de vos favoris",
+          "Gestion de tes favoris",
           "Analyses de CV illimitées",
           "Score de compatibilité détaillé",
           "Coachs carrière (30 min/jour)"
@@ -281,7 +281,7 @@
           "Recherches d'offres illimitées",
           "Accès à toutes les offres d'emploi",
           "Filtres avancés (salaire, télétravail, date)",
-          "Gestion de vos favoris",
+          "Gestion de tes favoris",
           "Analyses de CV illimitées",
           "Score de compatibilité détaillé",
           "Coaching personnalisé (30 min/jour)"
@@ -299,7 +299,7 @@
           "Coaching disponible 24/7 sans limite",
           "Export PDF professionnel",
           "Simulations d'entretien réalistes",
-          "Feedback détaillé sur vos performances",
+          "Feedback détaillé sur tes performances",
           "Support prioritaire par email"
         ],
         "unavailable": []
@@ -310,7 +310,7 @@
         "cta": "Commencer avec Premium",
         "features": [
           "Toutes les fonctionnalités Pro",
-          "Historique illimité de vos analyses",
+          "Historique illimité de tes analyses",
           "Conseils personnalisés ultra-ciblés",
           "Alertes email instantanées",
           "Historique complet coaching",
@@ -359,7 +359,7 @@
     },
     "logout": {
       "title": "Confirmer la déconnexion",
-      "description": "Êtes-vous sûr de vouloir vous déconnecter ? Vos données sauvegardées seront conservées.",
+      "description": "Tu veux te déconnecter ? Tes données sauvegardées seront conservées.",
       "cancel": "Annuler",
       "confirm": "Se déconnecter"
     },
@@ -408,12 +408,12 @@
     "guarantee": "✓ Satisfait ou remboursé pendant 14 jours",
     "seeComparison": "Voir le comparatif complet des fonctionnalités",
     "toasts": {
-      "alreadyOnPlan": "Vous utilisez déjà ce plan",
-      "mustBeLoggedIn": "Vous devez être connecté pour souscrire à un plan",
+      "alreadyOnPlan": "Tu utilises déjà ce plan",
+      "mustBeLoggedIn": "Tu dois être connecté pour souscrire à un plan",
       "preparingPayment": "Préparation du paiement...",
       "upgraded": "✨ Abonnement mis à niveau ! Vérification en cours...",
-      "scheduled": "📅 Changement planifié ! Votre nouveau plan sera actif à la fin de la période actuelle.",
-      "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+      "scheduled": "📅 Changement planifié ! Ton nouveau plan sera actif à la fin de la période actuelle.",
+      "sessionExpired": "Ta session a expiré. Reconnecte-toi.",
       "paymentError": "Erreur lors de la création de la session de paiement"
     },
     "plans": {
@@ -494,7 +494,7 @@
     },
     "gradient": {
       "title": "Passez à HuntZen Pro",
-      "subtitle": "Débloquez toutes les fonctionnalités et boostez votre carrière",
+      "subtitle": "Débloquez toutes les fonctionnalités et booste ta carrière",
       "cta": "Voir les offres"
     },
     "default": {
@@ -617,8 +617,8 @@
       "title": "Recherche d'Emplois",
       "subtitle": "Accédez à des milliers d'offres d'emploi provenant des meilleures plateformes de recrutement, agrégées et mises à jour quotidiennement.",
       "form": {
-        "title": "Définissez vos critères de recherche",
-        "subtitle": "Remplissez les champs ci-dessous pour trouver les offres qui correspondent à votre profil",
+        "title": "Définis tes critères de recherche",
+        "subtitle": "Remplis les champs ci-dessous pour trouver les offres qui correspondent à ton profil",
         "contractType": "Type de contrat",
         "optional": "(optionnel)",
         "allContracts": "Tous les types de contrat",
@@ -649,7 +649,7 @@
       },
       "corrected": {
         "title": "Recherche améliorée",
-        "subtitle": "Nous avons optimisé votre recherche :"
+        "subtitle": "Nous avons optimisé ta recherche :"
       },
       "results": {
         "count_one": "{count} offre trouvée",
@@ -676,7 +676,7 @@
       "card": {
         "details": "Voir détails",
         "save": "Sauvegarder cette offre",
-        "alreadySaved": "Déjà dans vos favoris",
+        "alreadySaved": "Déjà dans tes favoris",
         "premiumFeature": "Fonctionnalite Premium",
         "locationUnknown": "Localisation non specifiee",
         "alreadySavedShort": "Déjà sauvegardé",
@@ -684,19 +684,19 @@
       },
       "empty": {
         "title": "Aucune offre trouvee",
-        "subtitle": "Nous n'avons pas trouve d'offres correspondant a vos criteres pour le moment.",
+        "subtitle": "Nous n'avons pas trouvé d'offres correspondant à tes critères pour le moment.",
         "tips": "💡 Suggestions :",
         "tip1": "Essayez avec des mots-cles plus generaux",
         "tip2": "Verifiez l'orthographe du titre de poste",
-        "tip3": "Elargissez votre zone geographique (ville → pays entier)",
+        "tip3": "Élargis ta zone géographique (ville → pays entier)",
         "tip4": "Selectionnez \"Tous les types\" pour le contrat"
       },
       "toast": {
         "saved": "Offre ajoutée aux favoris ✨",
         "saveError": "Erreur lors de la sauvegarde",
-        "mustLogin": "Connectez-vous pour sauvegarder des offres",
-        "mustLoginSave": "Vous devez être connecté pour sauvegarder des offres",
-        "alreadySaved": "Cette offre est déjà dans vos favoris",
+        "mustLogin": "Connecte-toi pour sauvegarder des offres",
+        "mustLoginSave": "Tu dois être connecté pour sauvegarder des offres",
+        "alreadySaved": "Cette offre est déjà dans tes favoris",
         "filtersApplied": "{count} filtre(s) avancé(s) appliqué(s)",
         "filtersAppliedDesc": "Recherche mise à jour avec les nouveaux filtres",
         "filtersAppliedNext": "Les filtres seront appliqués à la prochaine recherche",
@@ -705,23 +705,23 @@
     },
     "cvAnalysis": {
       "title": "Analyse de CV",
-      "loading": "Chargement de votre espace...",
+      "loading": "Chargement de ton espace...",
       "errorTitle": "Erreur lors du chargement de l'analyse CV",
       "errorDesc": "Une erreur s'est produite. Veuillez rafraîchir la page.",
-      "subtitle": "Optimisez votre CV pour maximiser vos chances de décrocher un entretien. Obtenez une analyse détaillée et des recommandations personnalisées."
+      "subtitle": "Optimise ton CV pour maximiser tes chances de décrocher un entretien. Obtiens une analyse détaillée et des recommandations personnalisées."
     },
     "assistant": {
       "title": "Assistant Carrière",
       "history": "Historique",
       "newConversation": "Nouvelle",
       "simulation": "Simulation",
-      "timeWarning": "Il vous reste moins de 3 minutes ! Passez Premium pour un temps illimité.",
+      "timeWarning": "Il te reste moins de 3 minutes ! Passe Premium pour un temps illimité.",
       "upgradePremium": "Passer Premium",
-      "placeholder": "Posez votre question... (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)",
+      "placeholder": "Pose ta question... (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)",
       "timeExpiredTitle": "Temps écoulé",
-      "timeExpiredDesc": "Vous avez utilisé vos {minutes} minutes gratuites",
+      "timeExpiredDesc": "Tu as utilisé tes {minutes} minutes gratuites",
       "unlockUnlimited": "Débloquer le temps illimité",
-      "errorMessage": "Désolé, une erreur est survenue. Pouvez-vous reformuler votre question ?",
+      "errorMessage": "Désolé, une erreur est survenue. Peux-tu reformuler ta question ?",
       "unlimited": "Illimité",
       "welcomeMessage": "Bienvenue. Tu viens de rejoindre ton équipe carrière. Choisis par quoi tu veux commencer.",
       "welcomeTeamWithName": "Salut {name} ! Ton équipe carrière est là pour t'aider.",
@@ -771,13 +771,13 @@
     },
     "documents": {
       "title": "Mes Documents",
-      "subtitle": "Gérez vos CV et lettres de motivation générés",
+      "subtitle": "Gère tes CV et lettres de motivation générés",
       "searchPlaceholder": "Rechercher un document...",
       "filterAll": "Tous",
       "filterCvOnly": "CV seul",
       "filterCvAndCoverLetter": "CV + LM",
       "emptyStateTitle": "Aucun document",
-      "emptyStateSubtitle": "Vos CV et lettres de motivation générés apparaîtront ici.",
+      "emptyStateSubtitle": "Tes CV et lettres de motivation générés apparaîtront ici.",
       "downloadButton": "Télécharger",
       "deleteButton": "Supprimer",
       "cvLabel": "CV",
@@ -786,10 +786,10 @@
     },
     "savedJobs": {
       "title": "Offres Sauvegardées",
-      "searchPlaceholder": "Rechercher dans vos offres...",
-      "noJobs": "Vous n'avez pas encore sauvegardé d'offres",
-      "noJobsDesc": "Explorez les offres disponibles et sauvegardez celles qui vous intéressent",
-      "loginRequired": "Connectez-vous pour voir vos offres sauvegardées",
+      "searchPlaceholder": "Rechercher dans tes offres...",
+      "noJobs": "Tu n'as pas encore sauvegardé d'offres",
+      "noJobsDesc": "Explore les offres disponibles et sauvegarde celles qui t'intéressent",
+      "loginRequired": "Connecte-toi pour voir tes offres sauvegardées",
       "deleteError": "Erreur lors de la suppression",
       "deleted": "Offre supprimée",
       "viewOffer": "Voir l'offre",
@@ -806,7 +806,7 @@
       "comingSoonTitle": "🚀 Prochainement",
       "comingSoonText": "Suivi de candidatures, rappels automatiques et analytics.",
       "comingSoonText2": "Alertes automatiques si une offre favorite expire",
-      "comingSoonText3": "Exportation de vos favoris en PDF"
+      "comingSoonText3": "Exportation de tes favoris en PDF"
     },
     "recruiterContact": {
       "title": "Contacter un Recruteur",
@@ -817,11 +817,11 @@
       },
       "benefits": {
         "personalizedTitle": "Conseils personnalisés",
-        "personalizedDesc": "Un recruteur expert analyse votre profil et vous donne des recommandations sur-mesure",
+        "personalizedDesc": "Un recruteur expert analyse ton profil et te donne des recommandations sur-mesure",
         "expertiseTitle": "Expertise professionnelle",
         "expertiseDesc": "Nos recruteurs ont 10+ ans d'expérience dans le recrutement de cadres et talents",
         "fastResponseTitle": "Réponse rapide",
-        "fastResponseDesc": "Vous serez contacté sous 48h pour planifier votre consultation de 30 minutes"
+        "fastResponseDesc": "Tu seras contacté(e) sous 48h pour planifier ta consultation de 30 minutes"
       },
       "pricing": {
         "title": "Consultation Recruteur",
@@ -845,15 +845,15 @@
         "email": "Email *",
         "phone": "Téléphone",
         "sector": "Secteur d'activité *",
-        "sectorPlaceholder": "Sélectionnez votre secteur",
+        "sectorPlaceholder": "Sélectionne ton secteur",
         "experienceLevel": "Niveau d'expérience *",
-        "experiencePlaceholder": "Sélectionnez votre niveau",
+        "experiencePlaceholder": "Sélectionne ton niveau",
         "preferredDate": "Date préférée (optionnel)",
         "message": "Message / Questions *",
-        "messagePlaceholder": "Décrivez brièvement votre situation et vos objectifs professionnels...",
+        "messagePlaceholder": "Décris brièvement ta situation et tes objectifs professionnels...",
         "submitting": "Traitement en cours...",
         "submit": "Réserver ma consultation (50€)",
-        "submitNote": "Après validation, vous serez redirigé vers le paiement sécurisé Stripe",
+        "submitNote": "Après validation, tu seras redirigé(e) vers le paiement sécurisé Stripe",
         "error": "Une erreur est survenue. Veuillez réessayer.",
         "sectors": {
           "tech": "Tech / IT",
@@ -887,7 +887,7 @@
         "messageTooShort": "Le message doit contenir au moins 10 caractères"
       },
       "cta": {
-        "title": "Prêt à booster votre carrière ?",
+        "title": "Prêt à booster ta carrière ?",
         "spots": "👥 5 consultations réservées cette semaine",
         "button": "Réserver maintenant (50€)"
       }
@@ -987,7 +987,7 @@
       "notifSaveError": "Erreur lors de la sauvegarde des préférences"
     },
     "cancelDialog": {
-      "title": "Annuler votre abonnement ?",
+      "title": "Annuler ton abonnement ?",
       "description": "Aucun prélèvement supplémentaire ne sera effectué. Vous conserverez l'accès à toutes vos fonctionnalités jusqu'à la fin de la période déjà payée, puis votre compte passera automatiquement au plan Gratuit.",
       "keep": "Garder mon abonnement",
       "confirm": "Confirmer l'annulation",
@@ -1011,7 +1011,7 @@
   "jobs": {
     "toasts": {
       "fillAllFields": "Veuillez remplir tous les champs requis",
-      "selectCvFirst": "Veuillez sélectionner votre CV avant de continuer.",
+      "selectCvFirst": "Sélectionne ton CV avant de continuer.",
       "selectSavedProfile": "Veuillez sélectionner un profil sauvegardé.",
       "previewLoadError": "Impossible de charger la prévisualisation",
       "previewError": "Erreur lors de la prévisualisation",
@@ -1039,11 +1039,11 @@
     "truncatedDescription": "Cliquez sur \"Voir l'offre\" pour accéder à la description complète.",
     "findInternalContact": "Trouver un contact interne",
     "insiderTitle": "Contacts internes chez {company}",
-    "insiderSubtitle": "Trouvez de vraies personnes à contacter sur LinkedIn pour maximiser vos chances",
+    "insiderSubtitle": "Trouve de vraies personnes à contacter sur LinkedIn pour maximiser tes chances",
     "insiderWhyTitle": "Pourquoi contacter un insider ?",
-    "insiderWhyColleague": "Futur collègue — renseignez-vous sur l'ambiance et le poste réel",
-    "insiderWhyRecruiter": "Recruteur interne — envoyez votre CV directement, sans passer par le formulaire",
-    "insiderWhyStats": "Une recommandation interne multiplie par 5 vos chances d'être convoqué",
+    "insiderWhyColleague": "Futur collègue — renseigne-toi sur l'ambiance et le poste réel",
+    "insiderWhyRecruiter": "Recruteur interne — envoie ton CV directement, sans passer par le formulaire",
+    "insiderWhyStats": "Une recommandation interne multiplie par 5 tes chances d'être convoqué",
     "insiderSearchButton": "Trouver des contacts LinkedIn (5–8s)",
     "insiderSearching": "Recherche des profils en cours…",
     "insiderNoResults": "Aucun profil trouvé pour {company}. Essayez de postuler directement sur leur site.",
@@ -1061,8 +1061,8 @@
     "searchesRemaining": "{count} recherche(s) restante(s) aujourd'hui",
     "searchButton": "Rechercher",
     "advancedFilters": "Filtres avancés",
-    "typeYourCountry": "Tapez votre pays",
-    "typeYourCity": "Tapez votre ville",
+    "typeYourCountry": "Tape ton pays",
+    "typeYourCity": "Tape ta ville",
     "noCountryFound": "Aucun pays trouvé",
     "noCityFound": "Aucune ville trouvée",
     "selectCountryFirst": "Sélectionnez d'abord un pays"
@@ -1103,8 +1103,8 @@
   },
   "applyModal": {
     "title": "Postuler à cette offre",
-    "uploadCv": "Télécharger votre CV",
-    "uploadInstruction": "Glissez-déposez votre CV ou cliquez pour sélectionner",
+    "uploadCv": "Télécharger ton CV",
+    "uploadInstruction": "Glisse-dépose ton CV ou clique pour sélectionner",
     "selectLanguage": "Langue du document",
     "languageFr": "Français",
     "languageEn": "Anglais",
@@ -1120,7 +1120,7 @@
   },
   "cvBuilder": {
     "step1": {
-      "textPlaceholder": "Collez ici le contenu de votre CV..."
+      "textPlaceholder": "Colle ici le contenu de ton CV..."
     },
     "step2": {
       "jobOfferPlaceholder": "Collez ici la description complète de l'offre d'emploi (missions, compétences requises, profil recherché...)..."
@@ -1160,7 +1160,7 @@
     }
   },
   "referral": {
-    "errorLoad": "Impossible de charger vos données de parrainage.",
+    "errorLoad": "Impossible de charger tes données de parrainage.",
     "retry": "Réessayer",
     "title": "HuntZen Boost",
     "tagline": "Invitez. Débloquez. Progressez.",
@@ -1206,11 +1206,11 @@
     "admin": {
       "title": "Démarches administratives",
       "officialSite": "Site officiel →",
-      "savedProgress": "Votre progression est sauvegardée automatiquement dans votre navigateur."
+      "savedProgress": "Ta progression est sauvegardée automatiquement dans ton navigateur."
     },
     "coach": {
-      "title": "Des questions sur votre expatriation ?",
-      "subtitle": "Notre coach IA peut vous aider à préparer votre projet d'expatriation en {country}.",
+      "title": "Des questions sur ton expatriation ?",
+      "subtitle": "Notre coach IA peut t'aider à préparer ton projet d'expatriation en {country}.",
       "cta": "Demander au Coach"
     },
     "domains": {
