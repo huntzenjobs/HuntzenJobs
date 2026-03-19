@@ -38,27 +38,42 @@ const buttonVariants = cva(
   }
 )
 
-function Button({
-  className,
-  variant = "default",
-  size = "default",
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
+type ButtonProps = React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot.Root : "button"
+  }
 
-  return (
-    <Comp
-      data-slot="button"
-      data-variant={variant}
-      data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  )
-}
+// forwardRef est nécessaire avec Radix (ex: `DropdownMenuTrigger asChild`)
+// sinon le `ref` ne remonte pas jusqu'au DOM, ce qui peut casser l'ouverture/la
+// position du dropdown.
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant = "default",
+      size = "default",
+      asChild = false,
+      ...props
+    },
+    ref,
+  ) => {
+    const Comp = asChild ? Slot.Root : "button"
+
+    return (
+      <Comp
+        // Slot n'est pas typé de la même façon que `button`,
+        // donc on cast pour garder la compat Radix/shadcn.
+        ref={ref as any}
+        data-slot="button"
+        data-variant={variant}
+        data-size={size}
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      />
+    )
+  },
+)
+
+Button.displayName = "Button"
 
 export { Button, buttonVariants }

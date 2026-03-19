@@ -8,6 +8,7 @@ import {
   ReactNode,
   useCallback,
 } from "react";
+import { useRouter } from "next/navigation";
 
 // Supported locales (must match middleware.ts)
 export type Locale = "fr" | "en" | "es" | "pt";
@@ -34,6 +35,7 @@ const I18nContext = createContext<I18nContextType | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const router = useRouter();
 
   // Read locale from cookie on mount
   useEffect(() => {
@@ -43,22 +45,25 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Update locale and cookie
-  const setLocale = useCallback((newLocale: Locale) => {
-    if (!SUPPORTED_LOCALES.includes(newLocale)) {
-      console.warn(
-        `Unsupported locale: ${newLocale}, falling back to ${DEFAULT_LOCALE}`,
-      );
-      newLocale = DEFAULT_LOCALE;
-    }
+  // Update locale and cookie, then refresh server components
+  const setLocale = useCallback(
+    (newLocale: Locale) => {
+      if (!SUPPORTED_LOCALES.includes(newLocale)) {
+        console.warn(
+          `Unsupported locale: ${newLocale}, falling back to ${DEFAULT_LOCALE}`,
+        );
+        newLocale = DEFAULT_LOCALE;
+      }
 
-    setLocaleState(newLocale);
-    setCookie(LOCALE_COOKIE_NAME, newLocale, 365); // 1 year expiry
+      setLocaleState(newLocale);
+      setCookie(LOCALE_COOKIE_NAME, newLocale, 365); // 1 year expiry
 
-    // Optional: Reload page to apply changes (required for middleware to pick up new cookie)
-    // This ensures server-side rendering uses the correct locale
-    window.location.reload();
-  }, []);
+      // router.refresh() re-exécute le Server Component (layout.tsx → getLocale())
+      // sans détruire l'état React côté client. Plus fluide que window.location.reload().
+      router.refresh();
+    },
+    [router],
+  );
 
   const value = {
     locale,

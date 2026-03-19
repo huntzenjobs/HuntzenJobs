@@ -22,13 +22,25 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const check = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user?.user_metadata?.onboarding_completed) {
-        router.replace("/jobs");
-      } else {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          // Pas authentifié → redirect login
+          router.replace("/login");
+          return;
+        }
+
+        if (user.user_metadata?.onboarding_completed) {
+          router.replace("/jobs");
+        } else {
+          setIsChecking(false);
+        }
+      } catch {
+        // Erreur réseau ou Supabase → afficher le formulaire quand même
         setIsChecking(false);
       }
     };

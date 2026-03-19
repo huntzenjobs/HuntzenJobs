@@ -52,6 +52,16 @@ function SignupForm() {
   const emailFromUrl = searchParams.get("email");
   const [showSuccessModal, setShowSuccessModal] = useState(success === "true");
 
+  // Bug fix: useState initial value doesn't re-run on client-side navigation
+  // When router.push("/signup?success=true") is called from signUpWithEmail,
+  // the component is already mounted → useState won't re-initialize.
+  // This useEffect reacts to the URL param change.
+  useEffect(() => {
+    if (success === "true") {
+      setShowSuccessModal(true);
+    }
+  }, [success]);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

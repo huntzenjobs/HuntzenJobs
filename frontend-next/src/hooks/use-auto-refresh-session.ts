@@ -88,21 +88,48 @@ export function useAutoRefreshSession() {
 
     // Visibilité: setTimeout ne s'exécute pas pendant le sleep/onglet masqué.
     // Quand l'utilisateur revient, on tente un refresh immédiat pour valider la session.
+    // On retry avant de rediriger pour tolérer les pertes réseau temporaires.
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible") {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.refreshSession();
-        if (error || !session) {
-          console.log("[Auth] Session expirée détectée au retour sur la page");
-          redirectToLogin("session_expired");
-        } else {
-          // Re-schedule refresh timer in case it fired during sleep
-          clearTimeout(refreshTimer);
-          setupRefreshTimer();
+      if (document.visibilityState !== "visible") return;
+
+      // Vérifier d'abord si on a une session locale (cookies/localStorage)
+      const {
+        data: { session: localSession },
+      } = await supabase.auth.getSession();
+
+      // Pas de session locale du tout → l'utilisateur n'était pas connecté
+      if (!localSession) return;
+
+      // Tenter le refresh avec retry (réseau peut être instable au réveil)
+      let lastError: Error | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const {
+            data: { session },
+            error,
+          } = await supabase.auth.refreshSession();
+          if (!error && session) {
+            // Re-schedule refresh timer in case it fired during sleep
+            clearTimeout(refreshTimer);
+            setupRefreshTimer();
+            return; // Succès → on sort
+          }
+          lastError = error as Error | null;
+        } catch (e) {
+          lastError = e as Error;
+        }
+        // Attendre avant le prochain retry (500ms, 1s, 2s)
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
         }
       }
+
+      // 3 tentatives échouées → session vraiment expirée
+      console.log(
+        "[Auth] Session expirée après 3 tentatives:",
+        lastError?.message,
+      );
+      redirectToLogin("session_expired");
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
