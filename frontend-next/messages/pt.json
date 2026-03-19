@@ -974,8 +974,12 @@
     "relance7days": "Uma oportunidade pode estar à sua espera hoje."
   },
   "coachFeedback": {
-    "sofia": { "good": "O seu CV já é sólido. Ainda o podemos melhorar." },
-    "lucas": { "good": "A sua resposta é boa. Podemos torná-la ainda mais impactante." }
+    "sofia": {
+      "good": "O seu CV já é sólido. Ainda o podemos melhorar."
+    },
+    "lucas": {
+      "good": "A sua resposta é boa. Podemos torná-la ainda mais impactante."
+    }
   },
   "ctaFinal": {
     "title": "Pronto para conseguir o seu próximo emprego?",
@@ -1070,5 +1074,149 @@
     "ctaSubtitle": "Transform your job search with HuntZen Jobs today",
     "ctaSignup": "Create my free account",
     "ctaAbout": "Learn more about HuntZen"
+  },
+  "subscription": {
+    "toasts": {
+      "synced": "Subscription synced",
+      "syncedDesc": "Your subscription information has been refreshed.",
+      "syncFailed": "Sync failed",
+      "syncFailedDesc": "The sync function is not available.",
+      "sessionExpired": "Session expired",
+      "sessionExpiredDesc": "Your session has expired. Please log in again.",
+      "sessionExpiredAction": "Reconnect"
+    }
+  },
+  "contact": {
+    "toasts": {
+      "fillAllFields": "Please fill in all required fields.",
+      "sendError": "An error occurred. Please try again or send an email directly."
+    }
+  },
+  "support": {
+    "toasts": {
+      "fileTooLarge": "File too large (max 5MB)",
+      "fileFormatUnsupported": "Unsupported format. Images or PDF only.",
+      "fileUploadError": "Error uploading file",
+      "subjectTooShort": "Subject too short (min 5 characters)",
+      "descriptionTooShort": "Description too short (min 20 characters)"
+    }
+  },
+  "jobs": {
+    "toasts": {
+      "fillAllFields": "Please fill in all required fields",
+      "selectCvFirst": "Please select your CV before continuing.",
+      "selectSavedProfile": "Please select a saved profile.",
+      "previewLoadError": "Unable to load preview",
+      "previewError": "Error loading preview",
+      "profileSaved": "Profile saved!",
+      "profileSaveError": "Error saving profile.",
+      "applicationSent": "Application marked as sent!",
+      "emailCopied": "Email copied!",
+      "contactsLoadError": "Unable to retrieve contacts. Try again later.",
+      "applicationSaveError": "Unable to save application. Try again."
+    }
+  },
+  "cvBuilder": {
+    "step1": {
+      "textPlaceholder": "Paste your resume content here..."
+    },
+    "step2": {
+      "jobOfferPlaceholder": "Paste the full job description here (responsibilities, required skills, candidate profile...)..."
+    }
+  },
+  "candidatures": {
+    "title": "My Applications",
+    "subtitle": "Track the progress of all your applications",
+    "loginRequired": "Log in to see your applications",
+    "status": {
+      "all": "All statuses",
+      "applied": "Applied",
+      "viewed": "CV viewed",
+      "interview": "Interview",
+      "rejected": "Rejected",
+      "offer": "Offer received 🎉"
+    },
+    "stats": {
+      "total": "Total",
+      "pending": "Pending",
+      "interviews": "Interviews",
+      "offers": "Offers"
+    },
+    "date": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{count} days ago"
+    },
+    "empty": {
+      "noneYet": "No applications yet — start applying!",
+      "filtered": "No applications with this status",
+      "searchCta": "Browse job listings"
+    },
+    "actions": {
+      "viewOffer": "View offer",
+      "delete": "Delete"
+    }
+  },
+  "referral": {
+    "errorLoad": "Unable to load your referral data.",
+    "retry": "Try again",
+    "title": "HuntZen Boost",
+    "tagline": "Invite. Unlock. Progress.",
+    "subtitle": "Refer friends and unlock exclusive rewards.",
+    "link": {
+      "title": "Your referral link",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "whatsapp": "WhatsApp",
+      "whatsappMessage": "Join HuntZen and find your next job faster! {link}",
+      "linkedin": "LinkedIn"
+    },
+    "stats": {
+      "clicks": "Clicks",
+      "signups": "Sign-ups",
+      "validated": "Validated"
+    },
+    "sections": {
+      "progress": "Your progress",
+      "rewards": "Rewards",
+      "friends": "Your referrals"
+    }
+  },
+  "expat": {
+    "title": "Expat Guide",
+    "subtitle": "Salaries, cost of living and administrative steps by country",
+    "destination": "Destination",
+    "costOfLiving": {
+      "title": "Cost of living",
+      "rent": "1-bed rent (city centre)",
+      "transport": "Transport",
+      "food": "Food",
+      "index": "Cost of living index",
+      "baseCountry": "France = 100",
+      "perMonth": "/ month"
+    },
+    "salaries": {
+      "title": "Median gross annual salaries",
+      "domain": "Field",
+      "salary": "Salary",
+      "disclaimer": "* Indicative data. Salaries vary by experience, sector and city."
+    },
+    "admin": {
+      "title": "Administrative steps",
+      "officialSite": "Official site →",
+      "savedProgress": "Your progress is automatically saved in your browser."
+    },
+    "coach": {
+      "title": "Questions about your relocation?",
+      "subtitle": "Our AI coach can help you prepare your expat project in {country}.",
+      "cta": "Ask the Coach"
+    },
+    "domains": {
+      "tech": "Tech & IT",
+      "marketing": "Marketing",
+      "finance": "Finance",
+      "health": "Healthcare",
+      "sales": "Sales"
+    }
   }
 }
