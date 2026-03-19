@@ -266,7 +266,7 @@ export default function HomePage() {
                 return (
                   <div
                     key={`${dupeIndex}-${i}`}
-                    className="flex-shrink-0 w-64 bg-white border border-slate-200 rounded-2xl p-6 hover:border-[#00D9FF]/40 hover:shadow-lg transition-all"
+                    className="flex-shrink-0 w-56 sm:w-64 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 hover:border-[#00D9FF]/40 hover:shadow-lg transition-all"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
