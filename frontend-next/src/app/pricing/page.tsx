@@ -349,7 +349,7 @@ export default function PricingPage() {
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-purple-400" />
-                <span>87% de taux de réponse</span>
+                <span>{tPricing("responseRate")}</span>
               </div>
             </motion.div>
           </div>
@@ -398,7 +398,8 @@ export default function PricingPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full"
                 >
-                  🎉 Économisez jusqu&apos;à 20%
+                  {"🎉 "}
+                  {tPricing("saveBadge")}
                 </motion.span>
               )}
             </div>
@@ -562,8 +563,8 @@ export default function PricingPage() {
                     disabled={plan.id === currentPlan}
                   >
                     {plan.id === currentPlan
-                      ? "✓ Plan actuel"
-                      : `Choisir ${plan.name}`}
+                      ? tPricing("currentPlan")
+                      : tPricing("choosePlan", { name: plan.name })}
                   </Button>
                 </motion.div>
               ))}
@@ -581,7 +582,7 @@ export default function PricingPage() {
                 viewport={{ once: true }}
                 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
               >
-                Ils ont transformé leur recherche d&apos;emploi
+                {tPricing("testimonialsTitle")}
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -590,7 +591,7 @@ export default function PricingPage() {
                 transition={{ delay: 0.1 }}
                 className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
               >
-                Découvrez comment HuntZen a aidé des milliers de professionnels
+                {tPricing("testimonialsSubtitle")}
               </motion.p>
             </div>
 
@@ -644,7 +645,7 @@ export default function PricingPage() {
                 viewport={{ once: true }}
                 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
               >
-                Questions fréquentes
+                {tPricing("faqTitle")}
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -653,7 +654,7 @@ export default function PricingPage() {
                 transition={{ delay: 0.1 }}
                 className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
               >
-                Tout ce que vous devez savoir sur nos abonnements
+                {tPricing("faqSubtitle")}
               </motion.p>
             </div>
 
@@ -700,14 +701,14 @@ export default function PricingPage() {
 
             <div className="text-center mt-12">
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Vous avez d&apos;autres questions ?
+                {tPricing("faqMore")}
               </p>
               <Button
                 variant="outline"
                 size="lg"
                 className="rounded-xl border-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               >
-                Contactez notre support
+                {tPricing("faqContact")}
               </Button>
             </div>
           </div>
@@ -747,7 +748,7 @@ export default function PricingPage() {
               viewport={{ once: true }}
               className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6"
             >
-              Prêt à décrocher votre prochain job ?
+              {tPricing("ctaTitle")}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -756,9 +757,7 @@ export default function PricingPage() {
               transition={{ delay: 0.1 }}
               className="text-lg sm:text-xl text-white/80 max-w-3xl mx-auto mb-10 leading-relaxed"
             >
-              Rejoignez +100 000 candidats qui utilisent HuntZen pour trouver
-              leur emploi idéal. Commencez gratuitement, aucune carte bancaire
-              requise.
+              {tPricing("ctaSubtitle")}
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -773,7 +772,7 @@ export default function PricingPage() {
                   className="bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-bold rounded-xl shadow-2xl hover:scale-105 transition-transform w-full sm:w-auto"
                 >
                   <Rocket className="w-5 h-5 mr-2" />
-                  Commencer gratuitement
+                  {tPricing("ctaButton")}
                 </Button>
               </Link>
               <Link href="/">

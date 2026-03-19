@@ -139,7 +139,17 @@
     "subtitle": "Comece gratuitamente, evolua conforme suas necessidades",
     "saveUpTo20": "Economize até 20%",
     "currentPlan": "✓ Plano Actual",
-    "choosePlan": "Escolher {name}"
+    "choosePlan": "Escolher {name}",
+    "saveBadge": "Save up to 20%",
+    "testimonialsTitle": "They transformed their job search",
+    "testimonialsSubtitle": "Discover how HuntZen has helped thousands of professionals",
+    "faqTitle": "Frequently asked questions",
+    "faqSubtitle": "Everything you need to know about our plans",
+    "faqMore": "Have more questions?",
+    "faqContact": "Contact our support",
+    "ctaTitle": "Ready to land your next job?",
+    "ctaSubtitle": "Join 100,000+ candidates using HuntZen to find their ideal job. Start for free, no credit card required.",
+    "ctaButton": "Start for free"
   },
   "cta": {
     "startFree": "Começar gratuitamente",

@@ -203,7 +203,17 @@
     "monthly": "Mensuel",
     "yearly": "Annuel",
     "toggleBillingLabel": "Basculer la période de facturation",
-    "frenchSupport": "Support francophone"
+    "frenchSupport": "Support francophone",
+    "saveBadge": "Économisez jusqu'à 20%",
+    "testimonialsTitle": "Ils ont transformé leur recherche d'emploi",
+    "testimonialsSubtitle": "Découvrez comment HuntZen a aidé des milliers de professionnels",
+    "faqTitle": "Questions fréquentes",
+    "faqSubtitle": "Tout ce que vous devez savoir sur nos abonnements",
+    "faqMore": "Vous avez d'autres questions ?",
+    "faqContact": "Contactez notre support",
+    "ctaTitle": "Prêt à décrocher votre prochain job ?",
+    "ctaSubtitle": "Rejoignez +100 000 candidats qui utilisent HuntZen pour trouver leur emploi idéal. Commencez gratuitement, aucune carte bancaire requise.",
+    "ctaButton": "Commencer gratuitement"
   },
   "cta": {
     "startFree": "Commencer gratuitement",
