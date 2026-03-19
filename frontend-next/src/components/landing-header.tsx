@@ -246,17 +246,21 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
 
         {/* Auth Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Language Switcher */}
-          <LanguageSwitcher
-            className={
-              shouldBeWhite
-                ? "text-gray-900 hover:text-black"
-                : "text-white hover:text-white"
-            }
-          />
+          {/* Language Switcher — hidden on mobile, in hamburger menu */}
+          <div className="hidden md:block">
+            <LanguageSwitcher
+              className={
+                shouldBeWhite
+                  ? "text-gray-900 hover:text-black"
+                  : "text-white hover:text-white"
+              }
+            />
+          </div>
 
-          {/* Theme Toggle */}
-          <ThemeToggle />
+          {/* Theme Toggle — hidden on mobile */}
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
 
           {user ? (
             <Link href="/jobs">
@@ -277,13 +281,13 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             <>
               <Link
                 href="/login"
-                className={`hidden md:inline-flex items-center px-4 lg:px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white hover:text-[#00D9FF]"}`}
+                className={`inline-flex items-center px-3 sm:px-4 lg:px-5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white hover:text-[#00D9FF]"}`}
               >
                 {t("login")}
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-lg hover:shadow-[#00D9FF]/50"
+                className="inline-flex items-center px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-lg hover:shadow-[#00D9FF]/50 whitespace-nowrap"
               >
                 {t("signup")}
               </Link>
