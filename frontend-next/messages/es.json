@@ -663,7 +663,11 @@
       "savedCount": "{count} oferta(s) guardada(s)",
       "generateCvLm": "Generar CV + LM",
       "comingSoonText2": "Alertas automáticas si caduca una oferta favorita",
-      "comingSoonText3": "Exportar tus favoritos a PDF"
+      "comingSoonText3": "Exportar tus favoritos a PDF",
+      "confirmDeleteTitle": "¿Eliminar esta oferta?",
+      "confirmDeleteDescription": "Esta acción no se puede deshacer. La oferta será eliminada de tus guardados.",
+      "confirmDeleteCancel": "Cancelar",
+      "confirmDeleteConfirm": "Eliminar"
     },
     "error": {
       "title": "Oops, something went wrong",

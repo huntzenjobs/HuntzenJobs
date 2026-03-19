@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bookmark,
@@ -17,6 +18,17 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -41,6 +53,7 @@ interface SavedJob {
 export default function SavedJobsPage() {
   const auth = useOptionalAuth();
   const user = auth?.user;
+  const router = useRouter();
   const t = useTranslations("dashboard.savedJobs");
 
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
@@ -132,7 +145,7 @@ export default function SavedJobsPage() {
           </h2>
           <p className="text-slate-600 max-w-md mx-auto">{t("noJobsDesc")}</p>
           <Button
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => router.push("/login")}
             className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
           >
             {t("searchJobs")}
@@ -247,7 +260,7 @@ export default function SavedJobsPage() {
                 </h3>
                 <p className="text-slate-600 mb-4">{t("noJobsDesc")}</p>
                 <Button
-                  onClick={() => (window.location.href = "/jobs")}
+                  onClick={() => router.push("/jobs")}
                   className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                 >
                   <Briefcase className="w-4 h-4 mr-2" />
@@ -366,15 +379,39 @@ export default function SavedJobsPage() {
                           <ExternalLink className="w-4 h-4 mr-2" />
                           {t("viewOffer")}
                         </Button>
-                        <Button
-                          onClick={() => handleRemoveSavedJob(job.id)}
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          {t("delete")}
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              {t("delete")}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                {t("confirmDeleteTitle")}
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t("confirmDeleteDescription")}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>
+                                {t("confirmDeleteCancel")}
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRemoveSavedJob(job.id)}
+                                className="bg-red-500 hover:bg-red-600"
+                              >
+                                {t("confirmDeleteConfirm")}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </motion.div>

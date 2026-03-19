@@ -742,7 +742,11 @@
       "savedCount": "{count} job(s) saved",
       "generateCvLm": "Generate CV + LM",
       "comingSoonText2": "Automatic alerts if a favorite offer expires",
-      "comingSoonText3": "Exporting your favorites to PDF"
+      "comingSoonText3": "Exporting your favorites to PDF",
+      "confirmDeleteTitle": "Remove this job?",
+      "confirmDeleteDescription": "This action cannot be undone. The job will be removed from your saved jobs.",
+      "confirmDeleteCancel": "Cancel",
+      "confirmDeleteConfirm": "Remove"
     },
     "error": {
       "title": "Oops, something went wrong",

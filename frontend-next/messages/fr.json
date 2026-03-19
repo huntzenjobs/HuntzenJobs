@@ -806,7 +806,11 @@
       "comingSoonTitle": "🚀 Prochainement",
       "comingSoonText": "Suivi de candidatures, rappels automatiques et analytics.",
       "comingSoonText2": "Alertes automatiques si une offre favorite expire",
-      "comingSoonText3": "Exportation de tes favoris en PDF"
+      "comingSoonText3": "Exportation de tes favoris en PDF",
+      "confirmDeleteTitle": "Supprimer cette offre ?",
+      "confirmDeleteDescription": "Cette action est irréversible. L'offre sera retirée de tes sauvegardes.",
+      "confirmDeleteCancel": "Annuler",
+      "confirmDeleteConfirm": "Supprimer"
     },
     "error": {
       "title": "Oups, une erreur est survenue",

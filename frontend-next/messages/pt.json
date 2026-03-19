@@ -663,7 +663,11 @@
       "savedCount": "{count} trabalho(s) guardado(s)",
       "generateCvLm": "Gerar CV + LM",
       "comingSoonText2": "Alertas automáticos se uma oferta favorita expirar",
-      "comingSoonText3": "Exportar os seus favoritos para PDF"
+      "comingSoonText3": "Exportar os seus favoritos para PDF",
+      "confirmDeleteTitle": "Excluir esta vaga?",
+      "confirmDeleteDescription": "Esta ação não pode ser desfeita. A vaga será removida dos seus salvos.",
+      "confirmDeleteCancel": "Cancelar",
+      "confirmDeleteConfirm": "Excluir"
     },
     "error": {
       "title": "Oops, something went wrong",
