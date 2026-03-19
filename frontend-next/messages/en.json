@@ -744,6 +744,12 @@
       "comingSoonText2": "Automatic alerts if a favorite offer expires",
       "comingSoonText3": "Exporting your favorites to PDF"
     },
+    "error": {
+      "title": "Oops, something went wrong",
+      "subtitle": "Something went wrong. You can try again or go back to jobs.",
+      "retry": "Try again",
+      "back": "Back to jobs"
+    },
     "recruiterContact": {
       "title": "Contact a Recruiter",
       "stats": {

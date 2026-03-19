@@ -808,6 +808,12 @@
       "comingSoonText2": "Alertes automatiques si une offre favorite expire",
       "comingSoonText3": "Exportation de tes favoris en PDF"
     },
+    "error": {
+      "title": "Oups, une erreur est survenue",
+      "subtitle": "Quelque chose s'est mal passé. Tu peux réessayer ou retourner aux offres.",
+      "retry": "Réessayer",
+      "back": "Retour aux offres"
+    },
     "recruiterContact": {
       "title": "Contacter un Recruteur",
       "stats": {

@@ -665,6 +665,12 @@
       "comingSoonText2": "Alertas automáticos se uma oferta favorita expirar",
       "comingSoonText3": "Exportar os seus favoritos para PDF"
     },
+    "error": {
+      "title": "Oops, something went wrong",
+      "subtitle": "Something went wrong. You can try again or go back to jobs.",
+      "retry": "Try again",
+      "back": "Back to jobs"
+    },
     "recruiterContact": {
       "title": "Contatar um Recrutador",
       "stats": {
