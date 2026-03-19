@@ -9,6 +9,7 @@ from typing import Optional
 from structlog import get_logger
 
 from src.api.deps import get_current_user
+from src.api.middleware import limiter
 from src.services.stripe import create_checkout_session, handle_stripe_webhook, supabase_client
 from src.config.settings import settings
 
@@ -180,8 +181,10 @@ async def cancel_subscription(
 
 
 @router.post("/reactivate-subscription")
+@limiter.limit("5/minute")
 async def reactivate_subscription(
-    current_user: dict = Depends(get_current_user)
+    request: Request,
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Reactivate a subscription scheduled for cancellation.

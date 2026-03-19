@@ -20,15 +20,16 @@
   },
   "hero": {
     "tag": "Pour les candidats qui en ont assez de postuler dans le vide",
-    "h1": "Ton CV mérite d'être vu. On s'en assure.",
-    "h2": "Toutes les offres du marché, en un seul endroit.",
-    "subtitle": "CV certifié ATS · Experts carrière · Offres ciblées pour ton profil",
-    "ctaSearch": "Commencer gratuitement",
-    "ctaDiscover": "Voir comment ça marche",
+    "h1": "Trouver un job ne devrait pas être un parcours du combattant.",
+    "h2": "Accédez aux offres qui vous correspondent, améliorez votre CV et obtenez plus d'entretiens — sans perdre des heures à chercher.",
+    "subtitle": "CV certifié ATS · 5 coachs carrière · Score de compatibilité · +6 plateformes d'offres",
+    "ctaSearch": "Commencer ma recherche",
+    "ctaDiscover": "Découvrir la méthode",
     "socialProof": "Déjà +100 000 candidats accompagnés"
   },
   "trustBar": {
-    "title": "Offres agrégées en temps réel depuis :"
+    "title": "Offres agrégées en temps réel depuis :",
+    "andMore": "et plus…"
   },
   "howItWorks": {
     "title": "Comment ça marche ?",
@@ -41,24 +42,24 @@
   },
   "tools": {
     "badge": "Tous nos outils",
-    "title": "Une plateforme complète pour réussir votre recherche d'emploi",
-    "subtitle": "Des outils pensés pour vous accompagner à chaque étape : de la recherche d'offres à la négociation salariale",
-    "explore": "Explorer",
+    "title": "Tous les leviers pour décrocher plus d'entretiens",
+    "subtitle": "Chaque outil répond à un problème précis de la recherche d'emploi.",
+    "explore": "Découvrir",
     "items": {
       "jobSearch": {
         "category": "Recherche",
         "title": "Agrégateur d'offres intelligent",
-        "description": "Toutes les offres du marché centralisées et filtrées pour vous"
+        "description": "Regroupez toutes les opportunités pertinentes en un seul endroit et évitez des heures de recherche."
       },
       "compatibility": {
         "category": "Recherche",
         "title": "Score de compatibilité",
-        "description": "Découvrez les offres qui vous correspondent vraiment"
+        "description": "Sachez immédiatement si une offre correspond à votre profil avant de postuler."
       },
       "cvAnalysis": {
         "category": "CV",
         "title": "Analyse CV experte",
-        "description": "Optimisez votre CV pour chaque candidature"
+        "description": "Identifiez les points faibles de votre CV et recevez des conseils concrets pour l'améliorer."
       },
       "skills": {
         "category": "CV",
@@ -68,17 +69,17 @@
       "interview": {
         "category": "Coaching",
         "title": "Simulation d'entretien",
-        "description": "Entraînez-vous en conditions réelles avec l'IA"
+        "description": "Préparez-vous dans des conditions réelles pour ne plus être pris au dépourvu."
       },
       "coach": {
         "category": "Coaching",
         "title": "Coach carrière 24/7",
-        "description": "Un accompagnement personnalisé à chaque étape"
+        "description": "Un accompagnement personnalisé à chaque étape pour ne plus rester seul."
       },
       "salary": {
         "category": "Coaching",
         "title": "Projections salariales",
-        "description": "Négociez avec les bons arguments et les bons chiffres"
+        "description": "Négociez avec les bons arguments grâce à des données salariales fiables."
       },
       "salons": {
         "category": "Networking",
@@ -88,35 +89,35 @@
     }
   },
   "painPoints": {
-    "title": "Chercher un emploi ne devrait pas être un parcours du combattant",
-    "subtitle": "Pourtant, les candidats perdent des mois à naviguer à l'aveugle",
+    "title": "Pourquoi la recherche d'emploi est si frustrante ?",
+    "subtitle": "Si vous vivez ces situations, vous n'êtes pas seul.",
     "items": {
       "ghosting": {
         "title": "GHOSTING PERMANENT",
-        "description": "73% des candidats n'obtiennent jamais de retour, même après plusieurs relances"
+        "description": "Vous postulez et aucune réponse n'arrive, même après plusieurs relances."
       },
       "exhausting": {
         "title": "RECHERCHE ÉPUISANTE",
-        "description": "Des dizaines de sites à consulter, des centaines d'offres non pertinentes à trier"
+        "description": "Vous passez des heures sur des annonces qui ne vous correspondent pas."
       },
       "negotiation": {
         "title": "NÉGOCIATION À L'AVEUGLE",
-        "description": "Impossible de connaître les salaires réels selon votre expérience et localisation"
+        "description": "Difficile de savoir combien vaut réellement votre profil sur le marché."
       },
       "feedback": {
         "title": "MANQUE DE FEEDBACK",
-        "description": "Aucun accompagnement, aucune visibilité sur vos points forts et axes d'amélioration"
+        "description": "Impossible de comprendre pourquoi votre candidature n'a pas été retenue."
       }
     }
   },
   "features": {
-    "title": "Votre allié carrière au quotidien",
-    "titleHighlight": "allié carrière",
-    "subtitle": "Des outils puissants et un accompagnement personnalisé pour transformer votre recherche d'emploi",
+    "title": "Une méthode simple pour avancer plus vite",
+    "titleHighlight": "avancer plus vite",
+    "subtitle": "Chaque outil est conçu pour résoudre un problème concret et vous faire gagner du temps.",
     "jobs": {
       "badge": "RECHERCHE",
-      "title": "Des milliers d'offres triées rien que pour toi.",
-      "description": "Plus besoin de jongler entre 10 sites. Toutes les offres sont ici, filtrées, scorées et mises à jour quotidiennement.",
+      "title": "Arrêtez de postuler à l'aveugle.",
+      "description": "Concentrez-vous sur les offres où vous avez une vraie chance grâce à notre score de compatibilité. Résultat : moins de candidatures, plus d'entretiens.",
       "bullet1": "Offres de +6 plateformes (France Travail, Indeed, LinkedIn...)",
       "bullet2": "Filtres avancés : salaire, télétravail, taille d'entreprise",
       "bullet3": "Score de compatibilité par offre",
@@ -124,10 +125,10 @@
       "cta": "Explorer les offres →"
     },
     "cv": {
-      "title": "Ton CV passe tous les filtres.",
+      "title": "Rendez votre CV irrésistible.",
       "titleHighlight": "Analyse experte",
       "badge": "CV & ATS",
-      "description": "Obtiens un score ATS détaillé, corrige les points faibles, génère un CV optimisé en PDF — prêt à être vu par les recruteurs, pas rejeté par les logiciels.",
+      "description": "Découvrez précisément ce qui bloque et recevez des conseils applicables rapidement. Résultat : plus de réponses et plus d'entretiens.",
       "bullet1": "Score ATS sur 100 avec analyse détaillée",
       "bullet2": "Recommandations personnalisées par section",
       "bullet3": "Export PDF professionnel certifié ATS",
@@ -143,7 +144,14 @@
       "badge": "COACHS CARRIÈRE",
       "title": "Cinq experts carrière dans ta poche.",
       "description": "Nova, Maria, Sofia, Lucas et David — chacun spécialisé dans un domaine. Disponibles 24h/24, sans rendez-vous.",
-      "cta": "Parler à un coach →"
+      "cta": "Parler à un coach →",
+      "list": {
+        "nova": "Stratégie et plan de carrière",
+        "maria": "Recherche d'emploi et candidatures",
+        "sofia": "Optimisation et analyse de CV",
+        "lucas": "Préparation aux entretiens",
+        "david": "Personal Branding et LinkedIn"
+      }
     },
     "matching": {
       "title": "Matching intelligent et recherche ciblée",
@@ -157,15 +165,15 @@
     }
   },
   "stats": {
-    "title": "Ils nous font confiance",
-    "subtitle": "Des candidats qui avancent avec HuntZen chaque jour",
+    "title": "Des résultats mesurables",
+    "subtitle": "Des candidats avancent avec HuntZen chaque jour",
     "candidates": {
       "value": "+ 100 000",
-      "label": "Candidats accompagnés"
+      "label": "Candidats accompagnés chaque jour"
     },
     "responseRate": {
       "value": "87%",
-      "label": "Taux de réponse positif"
+      "label": "Obtiennent au moins une réponse"
     },
     "salary": {
       "value": "+ 35%",
@@ -176,7 +184,22 @@
   "featuresGrid": {
     "title": "Tout ce dont tu as besoin pour réussir",
     "subtitle": "Une seule plateforme. Zéro outil manquant.",
-    "badgeSoon": "Bientôt"
+    "badgeSoon": "Bientôt",
+    "items": {
+      "jobSearch": { "name": "Recherche d'emplois", "desc": "Agrégateur multi-plateformes mis à jour quotidiennement" },
+      "cvAnalysis": { "name": "Analyse CV & Score ATS", "desc": "Optimise ton CV pour passer tous les filtres automatiquement" },
+      "nova": { "name": "Nova — Coach Carrière", "desc": "Stratégie, reconversion, plan d'action personnalisé" },
+      "maria": { "name": "Maria — Coach Emploi", "desc": "Trouve les bonnes offres et postule efficacement" },
+      "sofia": { "name": "Sofia — Expert CV", "desc": "CV percutant qui attire l'attention des recruteurs" },
+      "lucas": { "name": "Lucas — Coach Entretien", "desc": "Prépare les questions difficiles, gère le stress" },
+      "david": { "name": "David — Personal Branding", "desc": "Profil LinkedIn qui attire les recruteurs à toi" },
+      "salons": { "name": "Salons & Forums", "desc": "Événements emploi partout en France" },
+      "savedJobs": { "name": "Offres sauvegardées", "desc": "Retrouve et suis toutes tes candidatures favorites" },
+      "recruiterContact": { "name": "Contact Recruteur", "desc": "Session 1:1 avec un expert RH" },
+      "documents": { "name": "Génération Documents", "desc": "CV + lettre de motivation adaptés à chaque offre" },
+      "expat": { "name": "Guide Expatriation", "desc": "S'installer et travailler dans 15 pays" }
+    },
+    "recruiterBadge": "50€"
   },
   "landingPricing": {
     "startFree": "Commencer gratuitement",
@@ -187,12 +210,12 @@
   },
   "ctaFinal": {
     "title": "Prêt à décrocher ton prochain emploi ?",
-    "subtitle": "Rejoins +100 000 candidats qui avancent avec HuntZen.",
+    "subtitle": "Rejoins des milliers de candidats qui avancent avec HuntZen.",
     "cta": "Commencer gratuitement — c'est sans engagement"
   },
   "pricing": {
-    "title": "Choisis ton plan",
-    "subtitle": "Commence gratuitement, évolue selon tes besoins",
+    "title": "Choisissez l'accompagnement adapté à votre besoin",
+    "subtitle": "Commencez gratuitement, évoluez ensuite selon votre rythme.",
     "saveUpTo20": "Économisez jusqu'à 20%",
     "currentPlan": "✓ Plan actuel",
     "choosePlan": "Choisir {name}",
@@ -227,7 +250,7 @@
     "learnMore": "En savoir plus"
   },
   "footer": {
-    "tagline": "Votre allié carrière pour transformer votre recherche d'emploi en succès.",
+    "tagline": "La méthode pour transformer votre recherche d'emploi en résultats concrets.",
     "copyright": "Tous droits réservés.",
     "privacy": "Politique de confidentialité",
     "terms": "Conditions générales",
@@ -256,7 +279,7 @@
     "popular": "POPULAIRE",
     "plans": {
       "free": {
-        "name": "GRATUIT",
+        "name": "EXPLORATION",
         "period": "/7 jours",
         "cta": "Commencer gratuitement",
         "features": [
@@ -273,7 +296,7 @@
         ]
       },
       "starter": {
-        "name": "STARTER",
+        "name": "RECHERCHE ACTIVE",
         "period": "/mois",
         "cta": "Commencer avec Starter",
         "features": [
@@ -308,7 +331,7 @@
         ]
       },
       "pro": {
-        "name": "PRO",
+        "name": "ACCÉLÉRATEUR",
         "period": "/mois",
         "cta": "Commencer avec Pro",
         "features": [
@@ -322,7 +345,7 @@
         "unavailable": []
       },
       "premium": {
-        "name": "PREMIUM",
+        "name": "CARRIÈRE",
         "period": "/mois",
         "cta": "Commencer avec Premium",
         "features": [
@@ -355,10 +378,10 @@
       "expat": "Expat & International"
     },
     "plans": {
-      "free": "Gratuit",
-      "starter": "Starter",
-      "pro": "Pro",
-      "premium": "Premium"
+      "free": "Exploration",
+      "starter": "Recherche Active",
+      "pro": "Accélérateur",
+      "premium": "Carrière"
     },
     "user": {
       "default": "Utilisateur"
@@ -427,6 +450,9 @@
         "pdfError": "Échec de la génération du PDF",
         "markdownError": "Échec de l'export Markdown"
       }
+    },
+    "history": {
+      "searchPlaceholder": "Rechercher... (Cmd/Ctrl + K)"
     }
   },
   "coachFeedback": {
@@ -461,7 +487,7 @@
       "free": {
         "name": "Gratuit",
         "tagline": "Exploration",
-        "description": "Je découvre, je teste",
+        "description": "Pour découvrir la plateforme en toute liberté",
         "period": "",
         "featureNames": [
           "3 recherches par jour",
@@ -477,8 +503,8 @@
       },
       "starter": {
         "name": "Starter",
-        "tagline": "Recherche active",
-        "description": "Je cherche sérieusement",
+        "tagline": "Recherche Active",
+        "description": "Pour progresser rapidement dans votre recherche",
         "period": "/mois",
         "featureNames": [
           "Recherches illimitées",
@@ -494,8 +520,8 @@
       },
       "pro": {
         "name": "Pro",
-        "tagline": "Préparation et progression",
-        "description": "Je veux réussir",
+        "tagline": "Accélérateur",
+        "description": "Pour passer à la vitesse supérieure et être recruté",
         "period": "/mois",
         "featureNames": [
           "Tout Starter inclus",
@@ -511,8 +537,8 @@
       },
       "premium": {
         "name": "Premium",
-        "tagline": "Optimisation carrière",
-        "description": "Je veux dominer",
+        "tagline": "Carrière",
+        "description": "Pour un accompagnement complet de A à Z",
         "period": "/mois",
         "featureNames": [
           "Tout Pro inclus",
@@ -752,7 +778,18 @@
         "filtersAppliedDesc": "Recherche mise à jour avec les nouveaux filtres",
         "filtersAppliedNext": "Les filtres seront appliqués à la prochaine recherche",
         "filtersReset": "Filtres avancés réinitialisés"
-      }
+      },
+      "sort": {
+        "placeholder": "Trier",
+        "relevance": "Pertinence",
+        "dateDesc": "Plus récent",
+        "dateAsc": "Plus ancien",
+        "salaryDesc": "Salaire (↓)",
+        "salaryAsc": "Salaire (↑)",
+        "companyAsc": "Entreprise A→Z"
+      },
+      "perPage": "Offres par page",
+      "salaryMinPlaceholder": "ex: 35000"
     },
     "cvAnalysis": {
       "title": "Analyse de CV",
@@ -818,7 +855,28 @@
       "loadingText": "Chargement des salons...",
       "errorText": "Erreur lors du chargement",
       "emptyStateTitle": "Aucun salon disponible",
-      "emptyStateSubtitle": "Revenez bientôt pour découvrir les prochains événements."
+      "emptyStateSubtitle": "Revenez bientôt pour découvrir les prochains événements.",
+      "filters": {
+        "regionLabel": "Région",
+        "allRegions": "Toutes les régions",
+        "sectorLabel": "Secteur",
+        "allSectors": "Tous les secteurs",
+        "publicLabel": "Public",
+        "allPublics": "Tous publics",
+        "students": "Étudiants",
+        "professionals": "Professionnels",
+        "seniors": "Seniors",
+        "reconversion": "Reconversion",
+        "all": "Tous",
+        "typeLabel": "Type",
+        "allTypes": "Tous types",
+        "formatLabel": "Format",
+        "allFormats": "Tous formats",
+        "physical": "Physique",
+        "virtual": "Virtuel",
+        "hybrid": "Hybride",
+        "companies": "{count} entreprises"
+      }
     },
     "documents": {
       "title": "Mes Documents",
@@ -833,7 +891,11 @@
       "deleteButton": "Supprimer",
       "cvLabel": "CV",
       "coverLetterLabel": "Lettre de motivation",
-      "generatedOn": "Généré le"
+      "generatedOn": "Généré le",
+      "edit": {
+        "startDatePlaceholder": "Ex: 2022-01",
+        "endDatePlaceholder": "Ex: 2024-06 ou Présent"
+      }
     },
     "savedJobs": {
       "title": "Offres Sauvegardées",
@@ -909,8 +971,11 @@
         "title": "Réserver ma consultation",
         "desc": "Remplissez le formulaire pour être contacté par un recruteur expert",
         "fullName": "Nom complet *",
+        "fullNamePlaceholder": "Jean Dupont",
         "email": "Email *",
+        "emailPlaceholder": "jean.dupont@example.com",
         "phone": "Téléphone",
+        "phonePlaceholder": "+33 6 12 34 56 78",
         "sector": "Secteur d'activité *",
         "sectorPlaceholder": "Sélectionne ton secteur",
         "experienceLevel": "Niveau d'expérience *",
@@ -962,7 +1027,13 @@
         "toastError": "Une erreur est survenue. Veuillez réessayer.",
         "messagePlaceholder": "Décrivez votre situation...",
         "sectorPlaceholder": "Sélectionnez",
-        "experiencePlaceholder": "Sélectionnez"
+        "experiencePlaceholder": "Sélectionnez",
+        "fullNamePlaceholder": "Jean Dupont",
+        "emailPlaceholder": "jean.dupont@example.com",
+        "phonePlaceholder": "+33 6 12 34 56 78"
+      },
+      "finder": {
+        "companyPlaceholder": "Nom de l'entreprise"
       }
     }
   },
@@ -1032,7 +1103,14 @@
       "sessionExpired": "Session expirée",
       "sessionExpiredDesc": "Votre session a expiré. Veuillez vous reconnecter.",
       "sessionExpiredAction": "Reconnecter"
-    }
+    },
+    "cancelScheduled": "Annulation programmée",
+    "cancelScheduledDesc": "Votre abonnement {plan} restera actif{until}, puis passera au plan Gratuit.",
+    "cancelScheduledUntil": " jusqu'au {date}",
+    "cancelScheduledUntilFallback": " jusqu'à la fin de la période",
+    "reactivate": "Réactiver mon abonnement",
+    "reactivating": "Réactivation...",
+    "unknownError": "Erreur inconnue"
   },
   "contact": {
     "toasts": {
@@ -1069,6 +1147,9 @@
       "profileUpdateSuccess": "Profil mis à jour avec succès"
     },
     "settingsLanguagePlaceholder": "Sélectionner une langue",
+    "placeholders": {
+      "fullName": "Votre nom complet"
+    },
     "cancelDialog": {
       "title": "Annuler ton abonnement ?",
       "description": "Aucun prélèvement supplémentaire ne sera effectué. Vous conserverez l'accès à toutes vos fonctionnalités jusqu'à la fin de la période déjà payée, puis votre compte passera automatiquement au plan Gratuit.",
@@ -1090,7 +1171,8 @@
     },
     "placeholders": {
       "pasteCvText": "Collez le contenu de votre CV ici (minimum 100 caractères)...",
-      "pasteJobDescription": "Collez la description du poste pour obtenir un score de compatibilité..."
+      "pasteJobDescription": "Collez la description du poste pour obtenir un score de compatibilité...",
+      "pasteJobDescriptionHere": "Collez la description du poste ici..."
     }
   },
   "support": {
@@ -1103,7 +1185,8 @@
     },
     "placeholders": {
       "subjectPlaceholder": "Décrivez brièvement votre demande",
-      "descriptionPlaceholder": "Décrivez en détail votre problème ou question..."
+      "descriptionPlaceholder": "Décrivez en détail votre problème ou question...",
+      "chatbotQuestion": "Posez votre question..."
     },
     "widget": {
       "minimize": "Réduire"
@@ -1168,7 +1251,9 @@
     "typeYourCity": "Tape ta ville",
     "noCountryFound": "Aucun pays trouvé",
     "noCityFound": "Aucune ville trouvée",
-    "selectCountryFirst": "Sélectionnez d'abord un pays"
+    "selectCountryFirst": "Sélectionnez d'abord un pays",
+    "countryPlaceholder": "Pays",
+    "selectCountryInList": "Veuillez sélectionner un pays dans la liste"
   },
   "advancedFilters": {
     "title": "Filtres avancés",
@@ -1196,7 +1281,22 @@
     "companySizeEnterprise": "Grand groupe",
     "salaryMin": "Salaire min",
     "salaryMax": "Salaire max",
-    "premiumFeature": "Fonctionnalité Premium"
+    "premiumFeature": "Fonctionnalité Premium",
+    "selectIndustries": "Sélectionner des industries...",
+    "searchIndustry": "Rechercher une industrie...",
+    "noIndustryFound": "Aucune industrie trouvée.",
+    "industriesSelected": "{count} industrie(s) sélectionnée(s)",
+    "keywordsLabel": "Mots-clés techniques",
+    "keywordsPlaceholder": "Ex: React, Python, AWS...",
+    "addKeyword": "Ajouter",
+    "selectLevel": "Sélectionner un niveau...",
+    "description": "Affinez votre recherche avec des critères supplémentaires",
+    "salaryMinPlaceholder": "30 000",
+    "salaryMaxPlaceholder": "100 000",
+    "salaryError": "Le salaire minimum doit être inférieur au maximum",
+    "companySizeStartupDesc": "Petite équipe agile",
+    "companySizeScaleupDesc": "Croissance rapide",
+    "companySizeEnterpriseDesc": "Grande organisation"
   },
   "gradientJobCard": {
     "lockedOffer": "Offre verrouillée",
@@ -1227,6 +1327,40 @@
     },
     "step2": {
       "jobOfferPlaceholder": "Collez ici la description complète de l'offre d'emploi (missions, compétences requises, profil recherché...)..."
+    },
+    "wizard": {
+      "profileNamePlaceholder": "Mon CV principal"
+    },
+    "personalInfo": {
+      "namePlaceholder": "Marie Dupont",
+      "titlePlaceholder": "Développeur Full-Stack",
+      "emailPlaceholder": "marie@exemple.com",
+      "phonePlaceholder": "+33 6 12 34 56 78",
+      "locationPlaceholder": "Paris, France",
+      "linkedinPlaceholder": "linkedin.com/in/marie-dupont"
+    },
+    "summary": {
+      "placeholder": "Développeur passionné avec 5 ans d'expérience en React et Node.js, spécialisé dans la création d'applications web performantes..."
+    },
+    "experiences": {
+      "titlePlaceholder": "Développeur Full-Stack",
+      "companyPlaceholder": "Google",
+      "startDatePlaceholder": "janv. 2022",
+      "endDatePlaceholder": "déc. 2023",
+      "locationPlaceholder": "Paris, France",
+      "descriptionPlaceholder": "Développement et maintenance d'une application SaaS B2B utilisée par 500+ clients..."
+    },
+    "education": {
+      "degreePlaceholder": "Master Informatique",
+      "institutionPlaceholder": "Université Paris-Saclay",
+      "fieldPlaceholder": "Intelligence Artificielle",
+      "yearPlaceholder": "2022"
+    },
+    "skills": {
+      "technicalPlaceholder": "React, Python, SQL... (Entrée pour ajouter)",
+      "softPlaceholder": "Leadership, Travail en équipe... (Entrée pour ajouter)",
+      "languagePlaceholder": "Français, Anglais...",
+      "levelPlaceholder": "Niveau"
     }
   },
   "candidatures": {

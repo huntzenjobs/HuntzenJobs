@@ -89,6 +89,7 @@ export function SubscriptionCard() {
   const { session } = useAuth();
   const apiData = useSubscriptionApi();
   const t = useTranslations("profile");
+  const tSub = useTranslations("subscription");
 
   const antiChurnPopup = useConversionPopup("anti_churn", {
     onUpgrade: (checkoutUrl) => {
@@ -191,7 +192,7 @@ export function SubscriptionCard() {
       window.location.reload();
     } catch (err) {
       setReactivateError(
-        err instanceof Error ? err.message : "Erreur inconnue",
+        err instanceof Error ? err.message : tSub("unknownError"),
       );
     } finally {
       setIsReactivating(false);
@@ -239,7 +240,7 @@ export function SubscriptionCard() {
         window.location.reload();
       }, 2500);
     } catch (err) {
-      setCancelError(err instanceof Error ? err.message : "Erreur inconnue");
+      setCancelError(err instanceof Error ? err.message : tSub("unknownError"));
     } finally {
       setIsCancelling(false);
     }
@@ -285,15 +286,15 @@ export function SubscriptionCard() {
             <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="flex-1 space-y-2">
               <p className="text-sm font-semibold text-amber-800">
-                Annulation programmée
+                {tSub("cancelScheduled")}
               </p>
               <p className="text-xs text-amber-700">
-                Votre abonnement{" "}
-                {getPlan(plan)?.display_name ?? planConfig.name} restera actif
-                {formattedPeriodEnd
-                  ? ` jusqu'au ${formattedPeriodEnd}`
-                  : " jusqu'à la fin de la période"}
-                , puis passera au plan Gratuit.
+                {tSub("cancelScheduledDesc", {
+                  plan: getPlan(plan)?.display_name ?? planConfig.name,
+                  until: formattedPeriodEnd
+                    ? tSub("cancelScheduledUntil", { date: formattedPeriodEnd })
+                    : tSub("cancelScheduledUntilFallback"),
+                })}
               </p>
               {reactivateError && (
                 <p className="text-xs text-red-600">{reactivateError}</p>
@@ -304,9 +305,7 @@ export function SubscriptionCard() {
                 disabled={isReactivating}
                 className="bg-amber-600 hover:bg-amber-700 text-white h-8 text-xs"
               >
-                {isReactivating
-                  ? "Réactivation..."
-                  : "Réactiver mon abonnement"}
+                {isReactivating ? tSub("reactivating") : tSub("reactivate")}
               </Button>
             </div>
           </div>
@@ -513,15 +512,15 @@ export function SubscriptionCard() {
                   className="sm:flex-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                   onClick={handleReactivateSubscription}
                   disabled={isReactivating}
-                  aria-label="Réactiver mon abonnement"
+                  aria-label={tSub("reactivate")}
                 >
                   {isReactivating ? (
                     <span className="flex items-center gap-2">
                       <span className="animate-spin h-4 w-4 border-2 border-amber-400 border-t-transparent rounded-full inline-block" />
-                      Réactivation...
+                      {tSub("reactivating")}
                     </span>
                   ) : (
-                    "Réactiver mon abonnement"
+                    tSub("reactivate")
                   )}
                 </Button>
               ) : (
