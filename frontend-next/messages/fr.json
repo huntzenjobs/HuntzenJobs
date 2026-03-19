@@ -280,19 +280,21 @@
     "plans": {
       "free": {
         "name": "EXPLORATION",
-        "period": "/7 jours",
+        "period": "Gratuit",
         "cta": "Commencer gratuitement",
         "features": [
-          "3 recherches d'offres par jour",
-          "10 offres d'emploi visibles maximum",
-          "1 analyse de CV par jour",
-          "5 minutes de coaching personnel",
-          "Support standard"
+          "5 analyses de CV par jour",
+          "10 messages par coach",
+          "Offres d'emploi illimitées",
+          "Gestion des favoris illimitée",
+          "2 exports CV par jour",
+          "2-3 suivis de candidatures"
         ],
         "unavailable": [
-          "Filtres avancés",
-          "Gestion favoris",
-          "Export PDF rapports"
+          "Coach illimité",
+          "Contact recruteur",
+          "Simulateur d'entretien",
+          "Amélioration auto CV"
         ]
       },
       "starter": {
@@ -300,66 +302,48 @@
         "period": "/mois",
         "cta": "Commencer avec Recherche Active",
         "features": [
-          "Recherches d'offres illimitées",
-          "Accès à toutes les offres d'emploi",
-          "Filtres avancés (salaire, télétravail, date)",
-          "Gestion de tes favoris",
-          "Analyses de CV illimitées",
-          "Score de compatibilité détaillé",
-          "Coachs carrière (30 min/jour)"
+          "5 analyses de CV par jour",
+          "20 messages coach par jour",
+          "Offres d'emploi illimitées",
+          "Suivi candidatures illimité",
+          "Page documents (CV & LM)",
+          "Analyse détaillée ATS",
+          "2 exports CV par jour"
         ],
         "unavailable": [
-          "Export PDF rapports",
-          "Simulation d'entretien"
+          "Coach illimité",
+          "Contact recruteur",
+          "Simulateur d'entretien"
         ]
       },
-      "essential": {
+      "pro": {
         "name": "ACCÉLÉRATEUR",
         "period": "/mois",
         "cta": "Commencer avec Accélérateur",
         "features": [
-          "Recherches d'offres illimitées",
-          "Accès à toutes les offres d'emploi",
-          "Filtres avancés (salaire, télétravail, date)",
-          "Gestion de tes favoris",
-          "Analyses de CV illimitées",
-          "Score de compatibilité détaillé",
-          "Coaching personnalisé (30 min/jour)",
-          "Contact recruteur par email"
-        ],
-        "unavailable": [
-          "Export PDF rapports"
-        ]
-      },
-      "pro": {
-        "name": "CARRIÈRE",
-        "period": "/mois",
-        "cta": "Commencer avec Carrière",
-        "features": [
-          "Toutes les fonctionnalités Accélérateur",
-          "Coaching disponible 24/7 sans limite",
-          "Export PDF professionnel",
-          "Simulations d'entretien réalistes",
-          "Contact recruteur par email",
-          "Feedback détaillé sur tes performances",
-          "Support prioritaire par email"
+          "20 analyses de CV par jour",
+          "Coach IA illimité 24/7",
+          "Export PDF illimité",
+          "Contact recruteur (email + LinkedIn)",
+          "Amélioration automatique CV (ATS)",
+          "Historique conversations par thème",
+          "Coaching expatriation & négociation",
+          "Support prioritaire"
         ],
         "unavailable": []
       },
       "premium": {
-        "name": "EXCELLENCE",
+        "name": "CARRIÈRE",
         "period": "/mois",
-        "cta": "Commencer avec Excellence",
+        "cta": "Commencer avec Carrière",
         "features": [
-          "Toutes les fonctionnalités Carrière",
-          "Historique illimité de tes analyses",
-          "Conseils personnalisés ultra-ciblés",
-          "Contact recruteur par email",
-          "Alertes email instantanées",
-          "Historique complet coaching",
+          "Tout Accélérateur inclus",
+          "Simulateur d'entretien (voicebot)",
+          "Guide Expatriation (+15 pays)",
+          "Coaching avancé : voicebot, négociation, branding",
+          "Historique complet & sauvegarde auto",
           "Accès anticipé nouvelles fonctionnalités",
-          "Support VIP prioritaire",
-          "Rapports mensuels de progression"
+          "Support VIP prioritaire"
         ],
         "unavailable": []
       }
@@ -384,12 +368,12 @@
       "free": "Exploration",
       "starter": "Recherche Active",
       "pro": "Carrière",
-      "premium": "Excellence"
+      "premium": "Carrière"
     },
     "user": {
       "default": "Utilisateur"
     },
-    "upgradeCta": "Passer Excellence",
+    "upgradeCta": "Passer Carrière",
     "footer": {
       "pricing": "Tarifs",
       "help": "Aide",
@@ -488,20 +472,17 @@
     },
     "plans": {
       "free": {
-        "name": "Gratuit",
+        "name": "Exploration",
         "tagline": "Exploration",
         "description": "Pour découvrir la plateforme en toute liberté",
-        "period": "",
+        "period": "Gratuit",
         "featureNames": [
-          "3 recherches par jour",
-          "10 offres visibles max",
-          "1 analyse CV par jour",
-          "5 minutes de coaching IA",
-          "Filtres avancés",
-          "Favoris",
-          "Score visuel CV",
-          "Export PDF",
-          "Simulation entretien"
+          "5 analyses CV / jour",
+          "10 messages / coach",
+          "Offres illimitées",
+          "Favoris illimités",
+          "2 exports CV / jour",
+          "2-3 suivis candidatures"
         ]
       },
       "starter": {
@@ -510,15 +491,13 @@
         "description": "Pour progresser rapidement dans votre recherche",
         "period": "/mois",
         "featureNames": [
-          "Recherches illimitées",
-          "Toutes les offres visibles",
-          "Filtres avancés",
-          "Favoris",
-          "CV illimité + Score visuel",
-          "Coach IA 30 min/jour",
-          "Export PDF",
-          "Simulation entretien",
-          "Alertes email"
+          "5 analyses CV / jour",
+          "20 messages coach / jour",
+          "Offres illimitées",
+          "Suivi candidatures illimité",
+          "Documents (CV & LM)",
+          "Analyse ATS détaillée",
+          "2 exports CV / jour"
         ]
       },
       "pro": {
@@ -527,43 +506,40 @@
         "description": "Pour passer à la vitesse supérieure et être recruté",
         "period": "/mois",
         "featureNames": [
-          "Tout Recherche Active inclus",
-          "Coach IA illimité",
-          "Export PDF rapports CV",
-          "Simulation entretien IA",
-          "Contact recruteur par email",
-          "Support prioritaire",
-          "Historique CV",
-          "Conseils personnalisés",
-          "Alertes email"
+          "20 analyses CV / jour",
+          "Coach IA illimité 24/7",
+          "Export PDF illimité",
+          "Contact recruteur (email + LinkedIn)",
+          "Amélioration auto CV (ATS)",
+          "Historique par thème",
+          "Coaching expat & négociation",
+          "Support prioritaire"
         ]
       },
       "premium": {
         "name": "Carrière",
         "tagline": "Carrière",
-        "description": "Pour un accompagnement complet de A à Z",
+        "description": "L'accompagnement complet de A à Z",
         "period": "/mois",
         "featureNames": [
           "Tout Accélérateur inclus",
-          "Historique CV illimité",
-          "Conseils personnalisés CV",
-          "Contact recruteur par email",
-          "Alertes email nouvelles offres",
-          "Historique sessions coach",
-          "Accès beta nouvelles fonctions",
-          "Support VIP",
-          ""
+          "Simulateur d'entretien (voicebot)",
+          "Guide Expatriation (+15 pays)",
+          "Coaching avancé & branding",
+          "Historique complet & sauvegarde",
+          "Accès anticipé nouvelles fonctions",
+          "Support VIP"
         ]
       }
     }
   },
   "upgradeBanner": {
     "minimal": {
-      "text": "Passez Premium pour débloquer toutes les fonctionnalités",
+      "text": "Passez Carrière pour débloquer toutes les fonctionnalités",
       "cta": "Voir les offres"
     },
     "gradient": {
-      "title": "Passez à HuntZen Pro",
+      "title": "Passez à HuntZen Carrière",
       "subtitle": "Débloquez toutes les fonctionnalités et booste ta carrière",
       "cta": "Voir les offres"
     },
@@ -757,7 +733,7 @@
         "details": "Voir détails",
         "save": "Sauvegarder cette offre",
         "alreadySaved": "Déjà dans tes favoris",
-        "premiumFeature": "Fonctionnalite Premium",
+        "premiumFeature": "Fonctionnalité Carrière",
         "locationUnknown": "Localisation non specifiee",
         "alreadySavedShort": "Déjà sauvegardé",
         "saveShort": "Sauvegarder"
@@ -807,7 +783,7 @@
       "newConversation": "Nouvelle",
       "simulation": "Simulation",
       "timeWarning": "Il te reste moins de 3 minutes ! Passe Premium pour un temps illimité.",
-      "upgradePremium": "Passer Premium",
+      "upgradePremium": "Passer Carrière",
       "placeholder": "Pose ta question... (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)",
       "timeExpiredTitle": "Temps écoulé",
       "timeExpiredDesc": "Tu as utilisé tes {minutes} minutes gratuites",
@@ -1284,7 +1260,7 @@
     "companySizeEnterprise": "Grand groupe",
     "salaryMin": "Salaire min",
     "salaryMax": "Salaire max",
-    "premiumFeature": "Fonctionnalité Premium",
+    "premiumFeature": "Fonctionnalité Carrière",
     "selectIndustries": "Sélectionner des industries...",
     "searchIndustry": "Rechercher une industrie...",
     "noIndustryFound": "Aucune industrie trouvée.",
@@ -1303,7 +1279,7 @@
   },
   "gradientJobCard": {
     "lockedOffer": "Offre verrouillée",
-    "upgradeToPremium": "Passez Premium pour voir cette offre",
+    "upgradeToPremium": "Passez Carrière pour voir cette offre",
     "unlock": "Débloquer",
     "moreOffers": "+{count} offres supplémentaires"
   },
