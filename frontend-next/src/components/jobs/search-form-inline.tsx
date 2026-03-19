@@ -260,7 +260,7 @@ export function SearchFormInline({
               <input
                 id="query-inline"
                 type="text"
-                placeholder="Métier ou poste recherché"
+                placeholder={t("jobTitlePlaceholder")}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 disabled={disabled || isLoading}
@@ -317,7 +317,7 @@ export function SearchFormInline({
           {/* Location Autocomplete - APRÈS LE PAYS */}
           <div className="flex-1 min-w-0">
             <AutocompleteInput
-              placeholder="Ville, département ou région (optionnel)"
+              placeholder={t("locationPlaceholder")}
               value={location}
               onChange={setLocation}
               onSearch={fetchCities}
@@ -400,7 +400,7 @@ export function SearchFormInline({
             <input
               id="query-mobile"
               type="text"
-              placeholder="Métier ou poste recherché"
+              placeholder={t("jobTitlePlaceholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={disabled || isLoading}
@@ -454,7 +454,7 @@ export function SearchFormInline({
 
         {/* Location Autocomplete - APRÈS LE PAYS */}
         <AutocompleteInput
-          placeholder="Ville, département ou région (optionnel)"
+          placeholder={t("locationPlaceholder")}
           value={location}
           onChange={setLocation}
           onSearch={fetchCities}
@@ -500,7 +500,7 @@ export function SearchFormInline({
             htmlFor="include-remote-mobile"
             className="text-sm font-medium text-gray-700 cursor-pointer select-none"
           >
-            Inclure jobs remote
+            {t("includeRemote")}
           </label>
         </div>
 

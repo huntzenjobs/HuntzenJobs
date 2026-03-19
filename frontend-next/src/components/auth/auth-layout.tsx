@@ -2,33 +2,18 @@
 
 import { motion } from "framer-motion";
 import { Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { LandingHeader } from "@/components/landing-header";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-const features = [
-  {
-    icon: <Sparkles className="w-5 h-5" />,
-    title: "Analyse CV experte",
-    description: "Optimisez votre CV selon les standards ATS et du marché",
-  },
-  {
-    icon: <TrendingUp className="w-5 h-5" />,
-    title: "Recherche d'emploi ciblée",
-    description: "Trouvez les meilleures opportunités adaptées à votre profil",
-  },
-  {
-    icon: <Shield className="w-5 h-5" />,
-    title: "Données sécurisées",
-    description: "Vos informations sont protégées et confidentielles",
-  },
-  {
-    icon: <Zap className="w-5 h-5" />,
-    title: "Résultats instantanés",
-    description: "Analyses rapides et recommandations personnalisées",
-  },
+const featureIcons = [
+  <Sparkles key="sparkles" className="w-5 h-5" />,
+  <TrendingUp key="trending" className="w-5 h-5" />,
+  <Shield key="shield" className="w-5 h-5" />,
+  <Zap key="zap" className="w-5 h-5" />,
 ];
 
 const testimonials = [
@@ -50,6 +35,31 @@ const testimonials = [
 ];
 
 export function AuthLayout({ children }: AuthLayoutProps) {
+  const t = useTranslations("auth.layout");
+
+  const features = [
+    {
+      icon: featureIcons[0],
+      title: t("feature1Title"),
+      description: t("feature1Desc"),
+    },
+    {
+      icon: featureIcons[1],
+      title: t("feature2Title"),
+      description: t("feature2Desc"),
+    },
+    {
+      icon: featureIcons[2],
+      title: t("feature3Title"),
+      description: t("feature3Desc"),
+    },
+    {
+      icon: featureIcons[3],
+      title: t("feature4Title"),
+      description: t("feature4Desc"),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header - Using LandingHeader with forced white background */}

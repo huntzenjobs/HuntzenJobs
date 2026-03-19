@@ -242,7 +242,7 @@ export function CVUploadAsyncWizard({
           }
         } catch (error) {
           console.error("Failed to load CV history:", error);
-          toast.error("Impossible de charger l'historique des analyses");
+          toast.error(t("toasts.historyLoadError"));
         }
       };
 
@@ -288,7 +288,7 @@ export function CVUploadAsyncWizard({
           }
         } catch (error) {
           console.error("Failed to reload CV history:", error);
-          toast.error("Impossible de rafraîchir l'historique");
+          toast.error(t("toasts.historyRefreshError"));
         }
       };
 
@@ -431,7 +431,7 @@ export function CVUploadAsyncWizard({
     if (file && file.name.toLowerCase().endsWith(".pdf")) {
       setWizardState((prev) => ({ ...prev, file }));
     } else {
-      toast.error("Seuls les fichiers PDF sont acceptés");
+      toast.error(t("toasts.pdfOnlyAccepted"));
     }
   };
 
@@ -690,7 +690,7 @@ export function CVUploadAsyncWizard({
       }
     } catch (error) {
       console.error("Failed to load from history:", error);
-      toast.error("Erreur lors du chargement de l'analyse");
+      toast.error(t("toasts.analysisLoadError"));
     }
   };
 
@@ -800,7 +800,7 @@ export function CVUploadAsyncWizard({
           <textarea
             value={wizardState.cvText}
             onChange={(e) => handleTextChange(e.target.value)}
-            placeholder="Collez le contenu de votre CV ici (minimum 100 caractères)..."
+            placeholder={t("placeholders.pasteCvText")}
             className="w-full h-64 p-4 bg-white text-gray-900 placeholder:text-gray-400 border-2 border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-2">
@@ -1597,7 +1597,7 @@ export function CVUploadAsyncWizard({
                   try {
                     await exportCVAnalysisToPDF(displayResult);
                   } catch (error) {
-                    toast.error("Erreur lors de l'export PDF");
+                    toast.error(t("toasts.pdfExportError"));
                     console.error(error);
                   }
                 }}

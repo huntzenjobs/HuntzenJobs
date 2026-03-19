@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 interface RecruiterContactModalProps {
@@ -55,6 +56,7 @@ export function RecruiterContactModal({
 }: RecruiterContactModalProps) {
   const router = useRouter();
   const auth = useOptionalAuth();
+  const t = useTranslations("dashboard.recruiterContact.modal");
   const user = auth?.user;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,7 +96,7 @@ export function RecruiterContactModal({
         window.location.href = paymentResponse.checkout_url;
       }
     } catch (error: any) {
-      toast.error("Une erreur est survenue. Veuillez réessayer.");
+      toast.error(t("toastError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -256,7 +258,7 @@ export function RecruiterContactModal({
                     required
                   >
                     <SelectTrigger id="modal-sector" className="h-10">
-                      <SelectValue placeholder="Sélectionnez" />
+                      <SelectValue placeholder={t("sectorPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="tech">Tech / IT</SelectItem>
@@ -282,7 +284,7 @@ export function RecruiterContactModal({
                     required
                   >
                     <SelectTrigger id="modal-experience" className="h-10">
-                      <SelectValue placeholder="Sélectionnez" />
+                      <SelectValue placeholder={t("experiencePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="junior">Junior (0-3 ans)</SelectItem>
@@ -301,7 +303,7 @@ export function RecruiterContactModal({
                   </Label>
                   <Textarea
                     id="modal-message"
-                    placeholder="Décrivez votre situation..."
+                    placeholder={t("messagePlaceholder")}
                     rows={3}
                     value={formData.message}
                     onChange={(e) => handleChange("message", e.target.value)}

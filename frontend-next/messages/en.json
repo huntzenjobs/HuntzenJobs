@@ -538,6 +538,16 @@
         "description": "The request took too long. Check your internet connection and try again in a moment."
       }
     },
+    "layout": {
+      "feature1Title": "Expert CV Analysis",
+      "feature1Desc": "Optimize your CV according to ATS and market standards",
+      "feature2Title": "Targeted Job Search",
+      "feature2Desc": "Find the best opportunities suited to your profile",
+      "feature3Title": "Secure Data",
+      "feature3Desc": "Your information is protected and confidential",
+      "feature4Title": "Instant Results",
+      "feature4Desc": "Fast analyses and personalized recommendations"
+    },
     "errors": {
       "emailNotConfirmed": "Please confirm your email address. We sent you a confirmation email when you signed up. Check your inbox (and spam folder).",
       "invalidCredentials": "Invalid email or password",
@@ -853,6 +863,12 @@
         "title": "Ready to boost your career?",
         "spots": "👥 5 consultations booked this week",
         "button": "Book now (€50)"
+      },
+      "modal": {
+        "toastError": "An error occurred. Please try again.",
+        "messagePlaceholder": "Describe your situation...",
+        "sectorPlaceholder": "Select",
+        "experiencePlaceholder": "Select"
       }
     },
     "documents": {
@@ -943,6 +959,11 @@
     "toasts": {
       "fillAllFields": "Please fill in all required fields.",
       "sendError": "An error occurred. Please try again or send an email directly."
+    },
+    "placeholders": {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "message": "Describe your request in detail..."
     }
   },
   "profile": {
@@ -962,8 +983,13 @@
       "unexpectedError": "An unexpected error occurred",
       "logoutSuccess": "Logged out successfully",
       "logoutError": "Error during logout",
-      "notifSaveError": "Error saving preferences"
+      "notifSaveError": "Error saving preferences",
+      "avatarUpdated": "Profile photo updated",
+      "avatarUploadError": "An error occurred",
+      "profileUpdateError": "Error updating profile",
+      "profileUpdateSuccess": "Profile updated successfully"
     },
+    "settingsLanguagePlaceholder": "Select a language",
     "cancelDialog": {
       "title": "Cancel your subscription?",
       "description": "No further payment will be charged. You will keep access to all features until the end of your already-paid billing period, then your account will automatically switch to the Free plan.",
@@ -975,7 +1001,18 @@
   },
   "cv": {
     "inProgress": "In progress",
-    "matchingJobOffer": "Job 🎯 Matching"
+    "matchingJobOffer": "Job 🎯 Matching",
+    "toasts": {
+      "pdfOnlyAccepted": "Only PDF files are accepted",
+      "historyLoadError": "Unable to load analysis history",
+      "historyRefreshError": "Unable to refresh history",
+      "analysisLoadError": "Error loading analysis",
+      "pdfExportError": "Error exporting PDF"
+    },
+    "placeholders": {
+      "pasteCvText": "Paste your CV content here (minimum 100 characters)...",
+      "pasteJobDescription": "Paste the job description to get a compatibility score..."
+    }
   },
   "support": {
     "toasts": {
@@ -984,6 +1021,13 @@
       "fileUploadError": "Error uploading file",
       "subjectTooShort": "Subject too short (min 5 characters)",
       "descriptionTooShort": "Description too short (min 20 characters)"
+    },
+    "placeholders": {
+      "subjectPlaceholder": "Briefly describe your request",
+      "descriptionPlaceholder": "Describe your issue or question in detail..."
+    },
+    "widget": {
+      "minimize": "Minimize"
     }
   },
   "jobs": {
@@ -1031,6 +1075,8 @@
     "insiderProfilesPlural": "{count} profiles"
   },
   "searchForm": {
+    "jobTitlePlaceholder": "Job title or position",
+    "locationPlaceholder": "City, department or region (optional)",
     "jobTitleRequired": "Job is required",
     "countryRequired": "Country is required",
     "includeRemote": "Include remote jobs",
@@ -1132,6 +1178,29 @@
     "relance3days": "Shall we keep moving on your career?",
     "relance7days": "An opportunity might be waiting for you today."
   },
+  "coach": {
+    "export": {
+      "button": "Export",
+      "title": "Export conversation",
+      "description": "Choose the export format to save this conversation.",
+      "formatLabel": "Export format",
+      "pdfDescription": "Formatted document with HuntZen design (recommended)",
+      "markdownDescription": "Plain text file with simple formatting (.md)",
+      "previewTitle": "Export preview",
+      "previewTitleLabel": "Title",
+      "previewMessagesLabel": "Messages",
+      "previewSizeLabel": "Estimated size",
+      "cancel": "Cancel",
+      "exporting": "Exporting...",
+      "exportButton": "Export",
+      "toasts": {
+        "pdfSuccess": "PDF generated successfully!",
+        "markdownSuccess": "Markdown exported successfully!",
+        "pdfError": "Failed to generate PDF",
+        "markdownError": "Failed to export Markdown"
+      }
+    }
+  },
   "coachFeedback": {
     "sofia": {
       "good": "Your CV is already solid. We can still improve it."
@@ -1139,6 +1208,16 @@
     "lucas": {
       "good": "Your answer is good. We can make it even more impactful."
     }
+  },
+  "landingPricing": {
+    "startFree": "Start for free",
+    "choosePlan": "Choose {name}",
+    "free": "Free",
+    "perMonth": "/month",
+    "mostPopular": "Most popular"
+  },
+  "theme": {
+    "toggleAriaLabel": "Toggle theme"
   },
   "ctaFinal": {
     "title": "Ready to land your next job?",

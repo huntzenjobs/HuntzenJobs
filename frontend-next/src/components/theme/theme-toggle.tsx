@@ -8,6 +8,7 @@
 
 import { Moon, Sun, Monitor } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ import { motion } from "framer-motion";
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const t = useTranslations("theme");
 
   return (
     <DropdownMenu>
@@ -36,7 +38,7 @@ export function ThemeToggle({ className }: { className?: string }) {
             transition-all duration-300
             ${className}
           `}
-          aria-label="Changer le thème"
+          aria-label={t("toggleAriaLabel")}
         >
           <motion.div
             className="flex items-center justify-center"

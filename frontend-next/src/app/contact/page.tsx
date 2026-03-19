@@ -172,7 +172,7 @@ export default function ContactPage() {
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Jean Dupont"
+                      placeholder={t("placeholders.name")}
                       value={form.name}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, name: e.target.value }))
@@ -190,7 +190,7 @@ export default function ContactPage() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="jean@exemple.com"
+                      placeholder={t("placeholders.email")}
                       value={form.email}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, email: e.target.value }))
@@ -233,7 +233,7 @@ export default function ContactPage() {
                   </label>
                   <Textarea
                     id="message"
-                    placeholder="Décrivez votre demande en détail..."
+                    placeholder={t("placeholders.message")}
                     rows={6}
                     value={form.message}
                     onChange={(e) =>

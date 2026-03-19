@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { X, Minus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { SupportChatbot } from "./support-chatbot";
@@ -14,8 +15,13 @@ interface SupportWidgetProps {
   onClose: () => void;
 }
 
-export function SupportWidget({ activeTab, onTabChange, onClose }: SupportWidgetProps) {
+export function SupportWidget({
+  activeTab,
+  onTabChange,
+  onClose,
+}: SupportWidgetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("support.widget");
 
   // Close on Escape
   useEffect(() => {
@@ -55,7 +61,7 @@ export function SupportWidget({ activeTab, onTabChange, onClose }: SupportWidget
         "bg-background border border-border rounded-xl shadow-2xl",
         "animate-in slide-in-from-bottom-4 fade-in duration-200",
         // Mobile: full screen
-        "max-sm:bottom-0 max-sm:right-0 max-sm:w-full max-sm:h-full max-sm:rounded-none max-sm:border-0"
+        "max-sm:bottom-0 max-sm:right-0 max-sm:w-full max-sm:h-full max-sm:rounded-none max-sm:border-0",
       )}
     >
       {/* Header */}
@@ -67,7 +73,7 @@ export function SupportWidget({ activeTab, onTabChange, onClose }: SupportWidget
         <div className="flex items-center gap-1">
           <button
             onClick={onClose}
-            aria-label="Réduire"
+            aria-label={t("minimize")}
             className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
           >
             <Minus className="w-4 h-4" />
@@ -103,11 +109,17 @@ export function SupportWidget({ activeTab, onTabChange, onClose }: SupportWidget
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="chatbot" className="flex-1 min-h-0 m-0 overflow-hidden">
+        <TabsContent
+          value="chatbot"
+          className="flex-1 min-h-0 m-0 overflow-hidden"
+        >
           <SupportChatbot onOpenTicket={() => onTabChange("ticket")} />
         </TabsContent>
 
-        <TabsContent value="ticket" className="flex-1 min-h-0 m-0 overflow-y-auto">
+        <TabsContent
+          value="ticket"
+          className="flex-1 min-h-0 m-0 overflow-y-auto"
+        >
           <div className="p-4 space-y-4">
             <SupportTicketForm />
             <SupportTicketList />

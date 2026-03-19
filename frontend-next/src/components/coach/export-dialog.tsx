@@ -4,11 +4,11 @@
  * Features format selection, options, and export with loading state
  */
 
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import { FileDown, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import React, { useState } from "react";
+import { FileDown, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -17,68 +17,73 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { toast } from 'sonner'
-import type { CoachMessage, ExportMetadata } from '@/types/coach-history'
-import { exportToMarkdown } from '@/lib/export/markdown-exporter'
-import { exportToPDF, validatePDFSize } from '@/lib/export/pdf-exporter'
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import type { CoachMessage, ExportMetadata } from "@/types/coach-history";
+import { exportToMarkdown } from "@/lib/export/markdown-exporter";
+import { exportToPDF, validatePDFSize } from "@/lib/export/pdf-exporter";
 
 interface ExportDialogProps {
-  messages: CoachMessage[]
-  title?: string
-  conversationDate?: string
+  messages: CoachMessage[];
+  title?: string;
+  conversationDate?: string;
 }
 
-export function ExportDialog({ messages, title, conversationDate }: ExportDialogProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [format, setFormat] = useState<'pdf' | 'markdown'>('pdf')
-  const [isExporting, setIsExporting] = useState(false)
+export function ExportDialog({
+  messages,
+  title,
+  conversationDate,
+}: ExportDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [format, setFormat] = useState<"pdf" | "markdown">("pdf");
+  const [isExporting, setIsExporting] = useState(false);
+  const t = useTranslations("coach.export");
 
   if (messages.length === 0) {
-    return null
+    return null;
   }
 
   const metadata: ExportMetadata = {
-    title: title || 'Conversation Coach IA',
+    title: title || "Conversation Coach IA",
     exportedAt: new Date().toISOString(),
     messageCount: messages.length,
-    conversationDate: conversationDate || messages[0]?.timestamp || new Date().toISOString(),
-  }
+    conversationDate:
+      conversationDate || messages[0]?.timestamp || new Date().toISOString(),
+  };
 
   const handleExport = async () => {
-    setIsExporting(true)
+    setIsExporting(true);
 
     try {
-      if (format === 'pdf') {
+      if (format === "pdf") {
         // Validate PDF size
-        const validation = validatePDFSize(messages.length)
+        const validation = validatePDFSize(messages.length);
         if (validation.warning) {
-          toast.warning(validation.warning)
+          toast.warning(validation.warning);
         }
 
         // Export PDF
-        await exportToPDF(messages, metadata)
-        toast.success('PDF généré avec succès !')
+        await exportToPDF(messages, metadata);
+        toast.success(t("toasts.pdfSuccess"));
       } else {
         // Export Markdown
-        exportToMarkdown(messages, metadata)
-        toast.success('Markdown exporté avec succès !')
+        exportToMarkdown(messages, metadata);
+        toast.success(t("toasts.markdownSuccess"));
       }
 
-      setIsOpen(false)
+      setIsOpen(false);
     } catch (error) {
-      console.error('Export error:', error)
+      console.error("Export error:", error);
       toast.error(
-        format === 'pdf'
-          ? 'Échec de la génération du PDF'
-          : "Échec de l'export Markdown"
-      )
+        format === "pdf" ? t("toasts.pdfError") : t("toasts.markdownError"),
+      );
     } finally {
-      setIsExporting(false)
+      setIsExporting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -105,7 +110,10 @@ export function ExportDialog({ messages, title, conversationDate }: ExportDialog
           {/* Format Selection */}
           <div className="space-y-2">
             <Label>Format d'export</Label>
-            <RadioGroup value={format} onValueChange={(value) => setFormat(value as 'pdf' | 'markdown')}>
+            <RadioGroup
+              value={format}
+              onValueChange={(value) => setFormat(value as "pdf" | "markdown")}
+            >
               <div className="flex items-center space-x-2 border-2 border-gray-200 rounded-lg p-3 hover:border-huntzen-blue transition-colors cursor-pointer">
                 <RadioGroupItem value="pdf" id="pdf" />
                 <Label htmlFor="pdf" className="flex-1 cursor-pointer">
@@ -130,13 +138,15 @@ export function ExportDialog({ messages, title, conversationDate }: ExportDialog
 
           {/* Preview Info */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
-            <div className="font-medium text-gray-700 mb-1">Aperçu de l'export</div>
+            <div className="font-medium text-gray-700 mb-1">
+              Aperçu de l'export
+            </div>
             <div className="text-gray-600 space-y-1">
               <div>📄 Titre: {metadata.title}</div>
               <div>💬 Messages: {metadata.messageCount}</div>
               <div>
                 📦 Taille estimée: ~
-                {format === 'pdf'
+                {format === "pdf"
                   ? `${Math.ceil(messages.length * 0.5)}KB`
                   : `${Math.ceil(messages.length * 0.3)}KB`}
               </div>
@@ -174,5 +184,5 @@ export function ExportDialog({ messages, title, conversationDate }: ExportDialog
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

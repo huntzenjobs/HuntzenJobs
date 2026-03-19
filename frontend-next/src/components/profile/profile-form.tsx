@@ -1,123 +1,125 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { LogOut, Save, X, CheckCircle2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { LogOut, Save, X, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface ProfileFormProps {
-  userId: string
-  initialFullName?: string
-  email: string
-  emailVerified?: boolean
-  onSaveSuccess?: (newFullName: string) => void
+  userId: string;
+  initialFullName?: string;
+  email: string;
+  emailVerified?: boolean;
+  onSaveSuccess?: (newFullName: string) => void;
 }
 
 export function ProfileForm({
   userId,
-  initialFullName = '',
+  initialFullName = "",
   email,
   emailVerified = true,
   onSaveSuccess,
 }: ProfileFormProps) {
-  const [fullName, setFullName] = useState(initialFullName)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const [hasChanges, setHasChanges] = useState(false)
-  const router = useRouter()
+  const [fullName, setFullName] = useState(initialFullName);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const router = useRouter();
+  const t = useTranslations("profile.toasts");
 
   // Handle full name change
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value
-    setFullName(newValue)
-    setHasChanges(newValue !== initialFullName)
-  }
+    const newValue = e.target.value;
+    setFullName(newValue);
+    setHasChanges(newValue !== initialFullName);
+  };
 
   // Validate full name
   const validateFullName = (name: string): string | null => {
     if (!name || name.trim().length === 0) {
-      return 'Le nom complet est requis'
+      return "Le nom complet est requis";
     }
     if (name.trim().length < 2) {
-      return 'Le nom doit contenir au moins 2 caractères'
+      return "Le nom doit contenir au moins 2 caractères";
     }
     if (name.length > 100) {
-      return 'Le nom ne peut pas dépasser 100 caractères'
+      return "Le nom ne peut pas dépasser 100 caractères";
     }
-    return null
-  }
+    return null;
+  };
 
   // Handle save
   const handleSave = async () => {
     // Validate
-    const validationError = validateFullName(fullName)
+    const validationError = validateFullName(fullName);
     if (validationError) {
-      toast.error(validationError)
-      return
+      toast.error(validationError);
+      return;
     }
 
-    setIsSaving(true)
+    setIsSaving(true);
 
     try {
-      const supabase = createClient()
+      const supabase = createClient();
 
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           full_name: fullName.trim(),
           updated_at: new Date().toISOString(),
         })
-        .eq('id', userId)
+        .eq("id", userId);
 
       if (error) {
-        console.error('Profile update error:', error)
-        toast.error('Erreur lors de la mise à jour du profil')
-        return
+        console.error("Profile update error:", error);
+        toast.error(t("profileUpdateError"));
+        return;
       }
 
-      toast.success('Profil mis à jour avec succès')
-      setHasChanges(false)
+      toast.success(t("profileUpdateSuccess"));
+      setHasChanges(false);
 
       // Notify parent component
       if (onSaveSuccess) {
-        onSaveSuccess(fullName.trim())
+        onSaveSuccess(fullName.trim());
       }
     } catch (err) {
-      console.error('Unexpected error:', err)
-      toast.error('Une erreur inattendue est survenue')
+      console.error("Unexpected error:", err);
+      toast.error(t("unexpectedError"));
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   // Handle cancel
   const handleCancel = () => {
-    setFullName(initialFullName)
-    setHasChanges(false)
-  }
+    setFullName(initialFullName);
+    setHasChanges(false);
+  };
 
   // Handle logout
   const handleLogout = async () => {
-    setIsLoggingOut(true)
+    setIsLoggingOut(true);
 
     try {
-      const supabase = createClient()
-      await supabase.auth.signOut()
+      const supabase = createClient();
+      await supabase.auth.signOut();
 
-      toast.success('Déconnexion réussie')
-      router.push('/login')
-      router.refresh()
+      toast.success(t("logoutSuccess"));
+      router.push("/login");
+      router.refresh();
     } catch (err) {
-      console.error('Logout error:', err)
-      toast.error('Erreur lors de la déconnexion')
-      setIsLoggingOut(false)
+      console.error("Logout error:", err);
+      toast.error(t("logoutError"));
+      setIsLoggingOut(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -134,7 +136,8 @@ export function ProfileForm({
           className="max-w-md"
         />
         <p className="text-xs text-gray-500">
-          Votre nom sera affiché dans votre profil et visible par les recruteurs.
+          Votre nom sera affiché dans votre profil et visible par les
+          recruteurs.
         </p>
       </div>
 
@@ -158,7 +161,8 @@ export function ProfileForm({
           )}
         </div>
         <p className="text-xs text-gray-500">
-          Votre email ne peut pas être modifié. Contactez le support si nécessaire.
+          Votre email ne peut pas être modifié. Contactez le support si
+          nécessaire.
         </p>
       </div>
 
@@ -171,7 +175,7 @@ export function ProfileForm({
             className="gap-2"
           >
             <Save className="w-4 h-4" />
-            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+            {isSaving ? "Enregistrement..." : "Enregistrer"}
           </Button>
 
           {hasChanges && (
@@ -195,7 +199,7 @@ export function ProfileForm({
             className="gap-2 w-full sm:w-auto"
           >
             <LogOut className="w-4 h-4" />
-            {isLoggingOut ? 'Déconnexion...' : 'Se déconnecter'}
+            {isLoggingOut ? "Déconnexion..." : "Se déconnecter"}
           </Button>
         </div>
       </div>
@@ -204,10 +208,10 @@ export function ProfileForm({
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
         <p className="font-medium mb-1">💡 Astuce</p>
         <p>
-          Un profil complet améliore vos chances d'être repéré par les recruteurs.
-          Ajoutez votre nom complet et une photo professionnelle.
+          Un profil complet améliore vos chances d'être repéré par les
+          recruteurs. Ajoutez votre nom complet et une photo professionnelle.
         </p>
       </div>
     </div>
-  )
+  );
 }

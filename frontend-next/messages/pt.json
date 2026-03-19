@@ -473,6 +473,16 @@
         "description": "A solicitação demorou muito. Verifique sua conexão e tente novamente em breve."
       }
     },
+    "layout": {
+      "feature1Title": "Análise especializada de CV",
+      "feature1Desc": "Otimize o seu CV segundo os padrões ATS e do mercado",
+      "feature2Title": "Procura de emprego direcionada",
+      "feature2Desc": "Encontre as melhores oportunidades adequadas ao seu perfil",
+      "feature3Title": "Dados seguros",
+      "feature3Desc": "As suas informações estão protegidas e são confidenciais",
+      "feature4Title": "Resultados instantâneos",
+      "feature4Desc": "Análises rápidas e recomendações personalizadas"
+    },
     "errors": {
       "emailNotConfirmed": "Por favor confirme seu endereço de e-mail. Enviamos um e-mail de confirmação quando você se cadastrou. Verifique sua caixa de entrada (e spam).",
       "invalidCredentials": "E-mail ou senha inválidos",
@@ -775,6 +785,12 @@
         "title": "Pronto para impulsionar sua carreira?",
         "spots": "👥 5 consultas reservadas esta semana",
         "button": "Reservar agora (50€)"
+      },
+      "modal": {
+        "toastError": "Ocorreu um erro. Por favor, tente novamente.",
+        "messagePlaceholder": "Descreva a sua situação...",
+        "sectorPlaceholder": "Selecione",
+        "experiencePlaceholder": "Selecione"
       }
     },
     "documents": {
@@ -852,6 +868,23 @@
   },
   "profile": {
     "multilingualComingSoon": "O suporte multilíngue estará disponível em breve",
+    "settingsLanguagePlaceholder": "Selecionar um idioma",
+    "toasts": {
+      "linkCopied": "Link copiado!",
+      "profileUpdated": "Perfil atualizado!",
+      "profileSaved": "Perfil guardado!",
+      "profileSaveError": "Erro ao guardar o perfil.",
+      "profileDeleted": "Perfil eliminado.",
+      "settingsUpdateError": "Erro ao atualizar as definições",
+      "unexpectedError": "Ocorreu um erro inesperado",
+      "logoutSuccess": "Sessão terminada com sucesso",
+      "logoutError": "Erro ao terminar sessão",
+      "notifSaveError": "Erro ao guardar preferências",
+      "avatarUpdated": "Foto de perfil atualizada",
+      "avatarUploadError": "Ocorreu um erro",
+      "profileUpdateError": "Erro ao atualizar o perfil",
+      "profileUpdateSuccess": "Perfil atualizado com sucesso"
+    },
     "thankSubscription": "🎉 Obrigado por se inscrever!",
     "deleteAccountComingSoon": "A eliminação da conta estará disponível em breve (em conformidade com o RGPD)",
     "cancelSubscriptionComingSoon": "O cancelamento da assinatura estará disponível em breve",
@@ -868,7 +901,18 @@
   },
   "cv": {
     "inProgress": "Em progresso...",
-    "matchingJobOffer": "🎯 Correspondência de trabalho"
+    "matchingJobOffer": "🎯 Correspondência de trabalho",
+    "toasts": {
+      "pdfOnlyAccepted": "Apenas ficheiros PDF são aceites",
+      "historyLoadError": "Não foi possível carregar o histórico de análises",
+      "historyRefreshError": "Não foi possível atualizar o histórico",
+      "analysisLoadError": "Erro ao carregar a análise",
+      "pdfExportError": "Erro ao exportar PDF"
+    },
+    "placeholders": {
+      "pasteCvText": "Cole o conteúdo do seu CV aqui (mínimo 100 caracteres)...",
+      "pasteJobDescription": "Cole a descrição da vaga para obter uma pontuação de compatibilidade..."
+    }
   },
   "jobDetails": {
     "close": "Fechar",
@@ -900,6 +944,8 @@
     "insiderProfilesPlural": "{count} perfis"
   },
   "searchForm": {
+    "jobTitlePlaceholder": "Profissão ou cargo procurado",
+    "locationPlaceholder": "Cidade, departamento ou região (opcional)",
     "jobTitleRequired": "O trabalho é obrigatório",
     "countryRequired": "O país é obrigatório",
     "includeRemote": "Incluir trabalhos remotos",
@@ -1001,6 +1047,29 @@
     "relance3days": "Continuamos a avançar na sua carreira?",
     "relance7days": "Uma oportunidade pode estar à sua espera hoje."
   },
+  "coach": {
+    "export": {
+      "button": "Exportar",
+      "title": "Exportar conversa",
+      "description": "Escolha o formato de exportação para guardar esta conversa.",
+      "formatLabel": "Formato de exportação",
+      "pdfDescription": "Documento formatado com design HuntZen (recomendado)",
+      "markdownDescription": "Ficheiro de texto com formatação simples (.md)",
+      "previewTitle": "Pré-visualização da exportação",
+      "previewTitleLabel": "Título",
+      "previewMessagesLabel": "Mensagens",
+      "previewSizeLabel": "Tamanho estimado",
+      "cancel": "Cancelar",
+      "exporting": "A exportar...",
+      "exportButton": "Exportar",
+      "toasts": {
+        "pdfSuccess": "PDF gerado com sucesso!",
+        "markdownSuccess": "Markdown exportado com sucesso!",
+        "pdfError": "Falha ao gerar o PDF",
+        "markdownError": "Falha ao exportar Markdown"
+      }
+    }
+  },
   "coachFeedback": {
     "sofia": {
       "good": "O seu CV já é sólido. Ainda o podemos melhorar."
@@ -1008,6 +1077,16 @@
     "lucas": {
       "good": "A sua resposta é boa. Podemos torná-la ainda mais impactante."
     }
+  },
+  "landingPricing": {
+    "startFree": "Começar gratuitamente",
+    "choosePlan": "Escolher {name}",
+    "free": "Gratuito",
+    "perMonth": "/mês",
+    "mostPopular": "O mais popular"
+  },
+  "theme": {
+    "toggleAriaLabel": "Mudar o tema"
   },
   "ctaFinal": {
     "title": "Pronto para conseguir o seu próximo emprego?",
@@ -1132,6 +1211,11 @@
     "toasts": {
       "fillAllFields": "Please fill in all required fields.",
       "sendError": "An error occurred. Please try again or send an email directly."
+    },
+    "placeholders": {
+      "name": "João Silva",
+      "email": "joao@exemplo.com",
+      "message": "Descreva o seu pedido em detalhe..."
     }
   },
   "support": {
@@ -1141,6 +1225,13 @@
       "fileUploadError": "Error uploading file",
       "subjectTooShort": "Subject too short (min 5 characters)",
       "descriptionTooShort": "Description too short (min 20 characters)"
+    },
+    "placeholders": {
+      "subjectPlaceholder": "Descreva brevemente o seu pedido",
+      "descriptionPlaceholder": "Descreva em detalhe o seu problema ou questão..."
+    },
+    "widget": {
+      "minimize": "Minimizar"
     }
   },
   "jobs": {

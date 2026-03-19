@@ -187,7 +187,7 @@ export function SettingsSection({
 
         <Select value={language} onValueChange={setLanguage} disabled>
           <SelectTrigger id="language" className="max-w-xs">
-            <SelectValue placeholder="Sélectionner une langue" />
+            <SelectValue placeholder={t("settingsLanguagePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="fr">Français</SelectItem>

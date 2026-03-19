@@ -1,30 +1,31 @@
-'use client'
+"use client";
 
-import { useState, useRef } from 'react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Camera, Loader2, Upload } from 'lucide-react'
-import { toast } from 'sonner'
-import { changeAvatar, validateAvatarFile } from '@/lib/supabase/storage'
-import { cn } from '@/lib/utils'
-import { useAnnounceSuccess, useAnnounceError } from '@/hooks/use-announce'
+import { useState, useRef } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Camera, Loader2, Upload } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { changeAvatar, validateAvatarFile } from "@/lib/supabase/storage";
+import { cn } from "@/lib/utils";
+import { useAnnounceSuccess, useAnnounceError } from "@/hooks/use-announce";
 
 interface AvatarUploadProps {
-  userId: string
-  currentAvatarUrl?: string | null
-  userName?: string
-  userEmail?: string
-  onUploadSuccess?: (newUrl: string) => void
-  className?: string
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  userId: string;
+  currentAvatarUrl?: string | null;
+  userName?: string;
+  userEmail?: string;
+  onUploadSuccess?: (newUrl: string) => void;
+  className?: string;
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 const sizeClasses = {
-  sm: 'w-16 h-16',
-  md: 'w-24 h-24',
-  lg: 'w-32 h-32',
-  xl: 'w-40 h-40',
-}
+  sm: "w-16 h-16",
+  md: "w-24 h-24",
+  lg: "w-32 h-32",
+  xl: "w-40 h-40",
+};
 
 export function AvatarUpload({
   userId,
@@ -33,120 +34,129 @@ export function AvatarUpload({
   userEmail,
   onUploadSuccess,
   className,
-  size = 'xl',
+  size = "xl",
 }: AvatarUploadProps) {
-  const [isUploading, setIsUploading] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const uploadButtonRef = useRef<HTMLButtonElement>(null)
-  const announceSuccess = useAnnounceSuccess()
-  const announceError = useAnnounceError()
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadButtonRef = useRef<HTMLButtonElement>(null);
+  const announceSuccess = useAnnounceSuccess();
+  const announceError = useAnnounceError();
+  const t = useTranslations("profile.toasts");
 
   // Get initials for fallback
   const getInitials = () => {
     if (userName) {
-      const names = userName.split(' ')
+      const names = userName.split(" ");
       if (names.length >= 2) {
-        return `${names[0][0]}${names[1][0]}`.toUpperCase()
+        return `${names[0][0]}${names[1][0]}`.toUpperCase();
       }
-      return userName.substring(0, 2).toUpperCase()
+      return userName.substring(0, 2).toUpperCase();
     }
     if (userEmail) {
-      return userEmail.substring(0, 2).toUpperCase()
+      return userEmail.substring(0, 2).toUpperCase();
     }
-    return 'U'
-  }
+    return "U";
+  };
 
   // Handle file selection
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const file = event.target.files?.[0];
+    if (!file) return;
 
     // Validate file
-    const validationError = validateAvatarFile(file)
+    const validationError = validateAvatarFile(file);
     if (validationError) {
-      toast.error(validationError)
-      return
+      toast.error(validationError);
+      return;
     }
 
     // Show preview
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onloadend = () => {
-      setPreviewUrl(reader.result as string)
-      setSelectedFile(file)
-    }
-    reader.readAsDataURL(file)
-  }
+      setPreviewUrl(reader.result as string);
+      setSelectedFile(file);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Handle upload
   const handleUpload = async () => {
-    if (!selectedFile) return
+    if (!selectedFile) return;
 
-    setIsUploading(true)
+    setIsUploading(true);
 
     try {
       const { url, error } = await changeAvatar(
         selectedFile,
         userId,
-        currentAvatarUrl
-      )
+        currentAvatarUrl,
+      );
 
       if (error || !url) {
-        toast.error(error || 'Erreur lors de l\'upload')
-        announceError(error || 'Erreur lors de l\'upload')
-        return
+        toast.error(error || "Erreur lors de l'upload");
+        announceError(error || "Erreur lors de l'upload");
+        return;
       }
 
-      toast.success('Photo de profil mise à jour')
-      announceSuccess('Photo de profil mise à jour')
-      setPreviewUrl(null)
-      setSelectedFile(null)
+      toast.success(t("avatarUpdated"));
+      announceSuccess(t("avatarUpdated"));
+      setPreviewUrl(null);
+      setSelectedFile(null);
 
       // Notify parent component
       if (onUploadSuccess) {
-        onUploadSuccess(url)
+        onUploadSuccess(url);
       }
 
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+        fileInputRef.current.value = "";
       }
 
       // Return focus to upload button for keyboard users
       setTimeout(() => {
-        uploadButtonRef.current?.focus()
-      }, 100)
+        uploadButtonRef.current?.focus();
+      }, 100);
     } catch (err) {
-      console.error('Upload error:', err)
-      toast.error('Une erreur est survenue')
+      console.error("Upload error:", err);
+      toast.error(t("avatarUploadError"));
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   // Handle cancel
   const handleCancel = () => {
-    setPreviewUrl(null)
-    setSelectedFile(null)
+    setPreviewUrl(null);
+    setSelectedFile(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+      fileInputRef.current.value = "";
     }
-  }
+  };
 
   // Trigger file input click
   const triggerFileInput = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
-  const displayUrl = previewUrl || currentAvatarUrl
+  const displayUrl = previewUrl || currentAvatarUrl;
 
   return (
-    <div className={cn('flex flex-col items-center gap-4', className)}>
+    <div className={cn("flex flex-col items-center gap-4", className)}>
       {/* Avatar with hover overlay */}
       <div className="relative group">
-        <Avatar className={cn(sizeClasses[size], 'ring-2 ring-offset-2 ring-gray-200 group-hover:ring-huntzen-blue transition-all')}>
-          <AvatarImage src={displayUrl || undefined} alt={userName || 'Avatar'} />
+        <Avatar
+          className={cn(
+            sizeClasses[size],
+            "ring-2 ring-offset-2 ring-gray-200 group-hover:ring-huntzen-blue transition-all",
+          )}
+        >
+          <AvatarImage
+            src={displayUrl || undefined}
+            alt={userName || "Avatar"}
+          />
           <AvatarFallback className="bg-gradient-to-br from-huntzen-blue to-huntzen-turquoise text-white text-2xl font-semibold">
             {getInitials()}
           </AvatarFallback>
@@ -172,7 +182,10 @@ export function AvatarUpload({
             aria-live="polite"
             aria-label="Upload en cours"
           >
-            <Loader2 className="w-8 h-8 text-white animate-spin" aria-hidden="true" />
+            <Loader2
+              className="w-8 h-8 text-white animate-spin"
+              aria-hidden="true"
+            />
           </div>
         )}
 
@@ -229,9 +242,12 @@ export function AvatarUpload({
       )}
 
       {/* Help text + Screen reader instructions */}
-      <p id="avatar-instructions" className="text-xs text-gray-500 text-center max-w-[200px]">
+      <p
+        id="avatar-instructions"
+        className="text-xs text-gray-500 text-center max-w-[200px]"
+      >
         JPG, PNG ou WebP. Max 2 MB.
       </p>
     </div>
-  )
+  );
 }

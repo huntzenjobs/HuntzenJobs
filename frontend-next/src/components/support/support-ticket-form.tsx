@@ -174,7 +174,7 @@ export function SupportTicketForm() {
         <Input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="Décrivez brièvement votre demande"
+          placeholder={tSupport("placeholders.subjectPlaceholder")}
           maxLength={150}
           className="h-8 text-xs"
           required
@@ -186,7 +186,7 @@ export function SupportTicketForm() {
         <Textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Décrivez en détail votre problème ou question..."
+          placeholder={tSupport("placeholders.descriptionPlaceholder")}
           maxLength={2000}
           rows={4}
           className="text-xs resize-none"

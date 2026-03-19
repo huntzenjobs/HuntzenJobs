@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check, AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { usePricingPlans } from "@/hooks/use-pricing-data";
 
 const PLAN_COLORS: Record<string, string> = {
@@ -14,6 +15,7 @@ const PLAN_COLORS: Record<string, string> = {
 
 export function LandingPricingSection() {
   const { plans, isLoading } = usePricingPlans();
+  const t = useTranslations("landingPricing");
 
   if (isLoading) {
     return (
@@ -49,7 +51,7 @@ export function LandingPricingSection() {
                 className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-white text-xs font-bold rounded-full"
                 style={{ backgroundColor: color }}
               >
-                Le plus populaire
+                {t("mostPopular")}
               </div>
             )}
 
@@ -63,7 +65,7 @@ export function LandingPricingSection() {
                     className="text-4xl sm:text-5xl font-black"
                     style={{ color }}
                   >
-                    Gratuit
+                    {t("free")}
                   </span>
                 ) : (
                   <>
@@ -73,7 +75,9 @@ export function LandingPricingSection() {
                     >
                       {plan.price_monthly.toFixed(2).replace(".", ",")}€
                     </span>
-                    <span className="text-slate-400 text-xs">/mois</span>
+                    <span className="text-slate-400 text-xs">
+                      {t("perMonth")}
+                    </span>
                   </>
                 )}
               </div>
@@ -118,8 +122,8 @@ export function LandingPricingSection() {
               style={{ backgroundColor: color }}
             >
               {plan.name === "free"
-                ? "Commencer gratuitement"
-                : `Choisir ${plan.display_name}`}
+                ? t("startFree")
+                : t("choosePlan", { name: plan.display_name })}
             </Link>
           </motion.div>
         );

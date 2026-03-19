@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 import { useCVAnalysis } from "@/hooks/use-cv-analysis";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import type { FeatureType } from "@/hooks/use-freemium-limits";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 // ============================================
@@ -52,6 +53,7 @@ export function CVUploadAsync({
 }: CVUploadAsyncProps) {
   const { session, user } = useAuth();
   const router = useRouter();
+  const t = useTranslations("cv");
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState("");
@@ -196,7 +198,7 @@ export function CVUploadAsync({
     if (file && file.name.toLowerCase().endsWith(".pdf")) {
       setSelectedFile(file);
     } else {
-      toast.error("Seuls les fichiers PDF sont acceptés");
+      toast.error(t("toasts.pdfOnlyAccepted"));
     }
   };
 
@@ -284,7 +286,7 @@ export function CVUploadAsync({
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Collez la description du poste pour obtenir un score de compatibilité..."
+            placeholder={t("placeholders.pasteJobDescription")}
             className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -334,7 +336,7 @@ export function CVUploadAsync({
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Collez la description du poste pour obtenir un score de compatibilité..."
+            placeholder={t("placeholders.pasteJobDescription")}
             className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-1">

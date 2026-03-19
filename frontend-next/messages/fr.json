@@ -178,6 +178,13 @@
     "subtitle": "Une seule plateforme. Zéro outil manquant.",
     "badgeSoon": "Bientôt"
   },
+  "landingPricing": {
+    "startFree": "Commencer gratuitement",
+    "choosePlan": "Choisir {name}",
+    "free": "Gratuit",
+    "perMonth": "/mois",
+    "mostPopular": "Le plus populaire"
+  },
   "ctaFinal": {
     "title": "Prêt à décrocher ton prochain emploi ?",
     "subtitle": "Rejoins +100 000 candidats qui avancent avec HuntZen.",
@@ -399,6 +406,29 @@
     "relance3days": "On continue à avancer sur ta carrière ?",
     "relance7days": "Une opportunité pourrait t'attendre aujourd'hui."
   },
+  "coach": {
+    "export": {
+      "button": "Exporter",
+      "title": "Exporter la conversation",
+      "description": "Choisissez le format d'export pour sauvegarder cette conversation.",
+      "formatLabel": "Format d'export",
+      "pdfDescription": "Document formaté avec le design HuntZen (recommandé)",
+      "markdownDescription": "Fichier texte avec formatage simple (.md)",
+      "previewTitle": "Aperçu de l'export",
+      "previewTitleLabel": "Titre",
+      "previewMessagesLabel": "Messages",
+      "previewSizeLabel": "Taille estimée",
+      "cancel": "Annuler",
+      "exporting": "Export en cours...",
+      "exportButton": "Exporter",
+      "toasts": {
+        "pdfSuccess": "PDF généré avec succès !",
+        "markdownSuccess": "Markdown exporté avec succès !",
+        "pdfError": "Échec de la génération du PDF",
+        "markdownError": "Échec de l'export Markdown"
+      }
+    }
+  },
   "coachFeedback": {
     "sofia": {
       "good": "Ton CV est déjà solide. On peut encore l'améliorer."
@@ -613,6 +643,16 @@
       "expiredError": "Le lien de réinitialisation a expiré. Veuillez recommencer.",
       "showPassword": "Afficher le mot de passe",
       "hidePassword": "Masquer le mot de passe"
+    },
+    "layout": {
+      "feature1Title": "Analyse CV experte",
+      "feature1Desc": "Optimisez votre CV selon les standards ATS et du marché",
+      "feature2Title": "Recherche d'emploi ciblée",
+      "feature2Desc": "Trouvez les meilleures opportunités adaptées à votre profil",
+      "feature3Title": "Données sécurisées",
+      "feature3Desc": "Vos informations sont protégées et confidentielles",
+      "feature4Title": "Résultats instantanés",
+      "feature4Desc": "Analyses rapides et recommandations personnalisées"
     },
     "errors": {
       "emailNotConfirmed": "Veuillez confirmer votre adresse email. Nous vous avons envoyé un email de confirmation lors de votre inscription. Vérifiez votre boîte mail (et vos spams).",
@@ -917,6 +957,12 @@
         "title": "Prêt à booster ta carrière ?",
         "spots": "👥 5 consultations réservées cette semaine",
         "button": "Réserver maintenant (50€)"
+      },
+      "modal": {
+        "toastError": "Une erreur est survenue. Veuillez réessayer.",
+        "messagePlaceholder": "Décrivez votre situation...",
+        "sectorPlaceholder": "Sélectionnez",
+        "experiencePlaceholder": "Sélectionnez"
       }
     }
   },
@@ -992,6 +1038,11 @@
     "toasts": {
       "fillAllFields": "Merci de remplir tous les champs obligatoires.",
       "sendError": "Une erreur est survenue. Veuillez réessayer ou envoyer un email directement."
+    },
+    "placeholders": {
+      "name": "Jean Dupont",
+      "email": "jean@exemple.com",
+      "message": "Décrivez votre demande en détail..."
     }
   },
   "profile": {
@@ -1011,8 +1062,13 @@
       "unexpectedError": "Une erreur inattendue est survenue",
       "logoutSuccess": "Déconnexion réussie",
       "logoutError": "Erreur lors de la déconnexion",
-      "notifSaveError": "Erreur lors de la sauvegarde des préférences"
+      "notifSaveError": "Erreur lors de la sauvegarde des préférences",
+      "avatarUpdated": "Photo de profil mise à jour",
+      "avatarUploadError": "Une erreur est survenue",
+      "profileUpdateError": "Erreur lors de la mise à jour du profil",
+      "profileUpdateSuccess": "Profil mis à jour avec succès"
     },
+    "settingsLanguagePlaceholder": "Sélectionner une langue",
     "cancelDialog": {
       "title": "Annuler ton abonnement ?",
       "description": "Aucun prélèvement supplémentaire ne sera effectué. Vous conserverez l'accès à toutes vos fonctionnalités jusqu'à la fin de la période déjà payée, puis votre compte passera automatiquement au plan Gratuit.",
@@ -1024,7 +1080,18 @@
   },
   "cv": {
     "inProgress": "En cours...",
-    "matchingJobOffer": "🎯 Matching avec offre d'emploi"
+    "matchingJobOffer": "🎯 Matching avec offre d'emploi",
+    "toasts": {
+      "pdfOnlyAccepted": "Seuls les fichiers PDF sont acceptés",
+      "historyLoadError": "Impossible de charger l'historique des analyses",
+      "historyRefreshError": "Impossible de rafraîchir l'historique",
+      "analysisLoadError": "Erreur lors du chargement de l'analyse",
+      "pdfExportError": "Erreur lors de l'export PDF"
+    },
+    "placeholders": {
+      "pasteCvText": "Collez le contenu de votre CV ici (minimum 100 caractères)...",
+      "pasteJobDescription": "Collez la description du poste pour obtenir un score de compatibilité..."
+    }
   },
   "support": {
     "toasts": {
@@ -1033,6 +1100,13 @@
       "fileUploadError": "Erreur lors de l'upload du fichier",
       "subjectTooShort": "Sujet trop court (min 5 caractères)",
       "descriptionTooShort": "Description trop courte (min 20 caractères)"
+    },
+    "placeholders": {
+      "subjectPlaceholder": "Décrivez brièvement votre demande",
+      "descriptionPlaceholder": "Décrivez en détail votre problème ou question..."
+    },
+    "widget": {
+      "minimize": "Réduire"
     }
   },
   "jobs": {
@@ -1080,6 +1154,8 @@
     "insiderProfilesPlural": "{count} profils"
   },
   "searchForm": {
+    "jobTitlePlaceholder": "Métier ou poste recherché",
+    "locationPlaceholder": "Ville, département ou région (optionnel)",
     "jobTitleRequired": "Le métier est requis",
     "countryRequired": "Le pays est requis",
     "includeRemote": "Inclure jobs remote",
@@ -1329,6 +1405,9 @@
     },
     "cta": "Voir mes offres",
     "skip": "Passer pour l'instant"
+  },
+  "theme": {
+    "toggleAriaLabel": "Changer le thème"
   },
   "testimonials": {
     "title": "Témoignages HuntZen Jobs",
