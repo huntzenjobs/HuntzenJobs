@@ -1305,6 +1305,20 @@
     "ctaSubtitle": "Rejoignez HuntZen Jobs et accédez à +100 000 offres d'emploi",
     "ctaButton": "Commencer gratuitement"
   },
+  "onboarding": {
+    "title": "Bienvenue sur HuntZen !",
+    "subtitle": "Dis-nous ce que tu cherches pour personnaliser tes offres.",
+    "jobTitle": {
+      "label": "Quel poste tu cherches ?",
+      "placeholder": "Ex : Développeur React, Designer UX, Chef de projet..."
+    },
+    "location": {
+      "label": "Dans quelle ville ?",
+      "placeholder": "Ex : Paris, Lyon, Remote..."
+    },
+    "cta": "Voir mes offres",
+    "skip": "Passer pour l'instant"
+  },
   "testimonials": {
     "title": "Témoignages HuntZen Jobs",
     "subtitle": "Découvrez comment <strong>HuntZen Jobs</strong> a transformé la recherche d'emploi de +10 000 utilisateurs",

@@ -1070,6 +1070,20 @@
     "ctaSubtitle": "Join HuntZen Jobs and access +100,000 job listings",
     "ctaButton": "Get started for free"
   },
+  "onboarding": {
+    "title": "Welcome to HuntZen!",
+    "subtitle": "Tell us what you're looking for to personalize your job results.",
+    "jobTitle": {
+      "label": "What role are you looking for?",
+      "placeholder": "e.g. React Developer, UX Designer, Project Manager..."
+    },
+    "location": {
+      "label": "In which city?",
+      "placeholder": "e.g. London, Remote, New York..."
+    },
+    "cta": "Show my jobs",
+    "skip": "Skip for now"
+  },
   "testimonials": {
     "title": "HuntZen Jobs Testimonials",
     "subtitle": "Discover how <strong>HuntZen Jobs</strong> has transformed the job search for +10,000 users",

@@ -64,8 +64,10 @@ export async function GET(request: NextRequest) {
       }
 
       // OAuth / email confirmation flow: redirect to final destination
+      const isNewUser = !data.user.user_metadata?.onboarding_completed;
+      const defaultRedirect = isNewUser ? "/onboarding" : "/jobs";
       const finalRedirect =
-        redirectTo && redirectTo.startsWith("/") ? redirectTo : "/jobs";
+        redirectTo && redirectTo.startsWith("/") ? redirectTo : defaultRedirect;
 
       const response = NextResponse.redirect(`${origin}${finalRedirect}`);
 

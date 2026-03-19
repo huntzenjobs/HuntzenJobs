@@ -364,7 +364,9 @@ export function AuthProvider({
       // If session exists, email confirmation is disabled → user is already logged in
       // If session is null, email confirmation is required → show success modal
       if (data?.session) {
-        router.push("/jobs");
+        const isNewUser =
+          !data.session.user.user_metadata?.onboarding_completed;
+        router.push(isNewUser ? "/onboarding" : "/jobs");
       } else {
         router.push("/signup?success=true&email=" + encodeURIComponent(email));
       }
