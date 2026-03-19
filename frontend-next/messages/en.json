@@ -174,7 +174,14 @@
       "sessionExpired": "Session expired, please log in again",
       "upgraded": "✨ Subscription upgraded!",
       "scheduledChange": "📅 Change scheduled for the end of your current period."
-    }
+    },
+    "secure": "Secure payment",
+    "noCommitment": "No commitment",
+    "responseRate": "87% response rate",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "toggleBillingLabel": "Toggle billing period",
+    "frenchSupport": "French-speaking support"
   },
   "cta": {
     "startFree": "Start for free",
@@ -1117,6 +1124,101 @@
     },
     "step2": {
       "jobOfferPlaceholder": "Paste the full job description here (responsibilities, required skills, candidate profile...)..."
+    }
+  },
+  "candidatures": {
+    "title": "My Applications",
+    "subtitle": "Track the progress of all your applications",
+    "loginRequired": "Log in to see your applications",
+    "status": {
+      "all": "All statuses",
+      "applied": "Applied",
+      "viewed": "CV viewed",
+      "interview": "Interview",
+      "rejected": "Rejected",
+      "offer": "Offer received 🎉"
+    },
+    "stats": {
+      "total": "Total",
+      "pending": "Pending",
+      "interviews": "Interviews",
+      "offers": "Offers"
+    },
+    "date": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{count} days ago"
+    },
+    "empty": {
+      "noneYet": "No applications yet — start applying!",
+      "filtered": "No applications with this status",
+      "searchCta": "Browse job listings"
+    },
+    "actions": {
+      "viewOffer": "View offer",
+      "delete": "Delete"
+    }
+  },
+  "referral": {
+    "errorLoad": "Unable to load your referral data.",
+    "retry": "Try again",
+    "title": "HuntZen Boost",
+    "tagline": "Invite. Unlock. Progress.",
+    "subtitle": "Refer friends and unlock exclusive rewards.",
+    "link": {
+      "title": "Your referral link",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "whatsapp": "WhatsApp",
+      "whatsappMessage": "Join HuntZen and find your next job faster! {link}",
+      "linkedin": "LinkedIn"
+    },
+    "stats": {
+      "clicks": "Clicks",
+      "signups": "Sign-ups",
+      "validated": "Validated"
+    },
+    "sections": {
+      "progress": "Your progress",
+      "rewards": "Rewards",
+      "friends": "Your referrals"
+    }
+  },
+  "expat": {
+    "title": "Expat Guide",
+    "subtitle": "Salaries, cost of living and administrative steps by country",
+    "destination": "Destination",
+    "costOfLiving": {
+      "title": "Cost of living",
+      "rent": "1-bed rent (city centre)",
+      "transport": "Transport",
+      "food": "Food",
+      "index": "Cost of living index",
+      "baseCountry": "France = 100",
+      "perMonth": "/ month"
+    },
+    "salaries": {
+      "title": "Median gross annual salaries",
+      "domain": "Field",
+      "salary": "Salary",
+      "disclaimer": "* Indicative data. Salaries vary by experience, sector and city."
+    },
+    "admin": {
+      "title": "Administrative steps",
+      "officialSite": "Official site →",
+      "savedProgress": "Your progress is automatically saved in your browser."
+    },
+    "coach": {
+      "title": "Questions about your relocation?",
+      "subtitle": "Our AI coach can help you prepare your expat project in {country}.",
+      "cta": "Ask the Coach"
+    },
+    "domains": {
+      "tech": "Tech & IT",
+      "marketing": "Marketing",
+      "finance": "Finance",
+      "health": "Healthcare",
+      "sales": "Sales"
     }
   }
 }

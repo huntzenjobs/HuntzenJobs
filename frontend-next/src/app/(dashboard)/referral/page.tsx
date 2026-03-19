@@ -6,6 +6,7 @@ import { ReferralProgressBar } from "@/components/referral/referral-progress-bar
 import { ReferralTierCard } from "@/components/referral/referral-tier-card";
 import { ReferralFriendsList } from "@/components/referral/referral-friends-list";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface BoostStatus {
   referral_code: string;
@@ -36,6 +37,7 @@ interface BoostStatus {
 }
 
 export default function ReferralPage() {
+  const t = useTranslations("referral");
   const { session } = useAuth();
   const [status, setStatus] = useState<BoostStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,7 +75,7 @@ export default function ReferralPage() {
   const handleWhatsApp = () => {
     if (!status?.referral_link) return;
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(`Rejoins HuntZen et trouve ton prochain job plus vite ! ${status.referral_link}`)}`,
+      `https://wa.me/?text=${encodeURIComponent(t("link.whatsappMessage", { link: status.referral_link }))}`,
       "_blank",
     );
   };
@@ -90,14 +92,12 @@ export default function ReferralPage() {
   if (!status) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground mb-4">
-          Impossible de charger vos données de parrainage.
-        </p>
+        <p className="text-muted-foreground mb-4">{t("errorLoad")}</p>
         <button
           onClick={fetchStatus}
           className="text-sm text-blue-600 hover:underline"
         >
-          Réessayer
+          {t("retry")}
         </button>
       </div>
     );
@@ -109,17 +109,13 @@ export default function ReferralPage() {
         <div className="inline-flex p-3 rounded-full bg-blue-600/10 mb-3">
           <Gift className="w-6 h-6 text-blue-600" />
         </div>
-        <h1 className="text-2xl font-bold mb-1">HuntZen Boost</h1>
-        <p className="text-sm text-muted-foreground">
-          Invitez. Débloquez. Progressez.
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Parrainez des amis et débloquez des récompenses exclusives.
-        </p>
+        <h1 className="text-2xl font-bold mb-1">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("tagline")}</p>
+        <p className="text-xs text-muted-foreground mt-1">{t("subtitle")}</p>
       </div>
 
       <div className="rounded-xl border bg-card p-5">
-        <p className="text-sm font-semibold mb-3">Ton lien de parrainage</p>
+        <p className="text-sm font-semibold mb-3">{t("link.title")}</p>
         <div className="flex gap-2">
           <div className="flex-1 text-xs font-mono bg-muted rounded-lg px-3 py-2.5 truncate text-muted-foreground">
             {status?.referral_link}
@@ -138,14 +134,14 @@ export default function ReferralPage() {
             ) : (
               <Copy className="w-4 h-4" />
             )}
-            {copied ? "Copié !" : "Copier"}
+            {copied ? t("link.copied") : t("link.copy")}
           </button>
           <button
             onClick={handleWhatsApp}
             className="px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors flex items-center gap-1.5"
           >
             <Share2 className="w-4 h-4" />
-            WhatsApp
+            {t("link.whatsapp")}
           </button>
           <button
             onClick={() => {
@@ -161,14 +157,14 @@ export default function ReferralPage() {
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
             </svg>
-            LinkedIn
+            {t("link.linkedin")}
           </button>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-4">
           {[
-            { label: "Clics", value: status.total_clicks },
-            { label: "Inscrits", value: status.total_signups },
-            { label: "Validés", value: status.total_validated },
+            { label: t("stats.clicks"), value: status.total_clicks },
+            { label: t("stats.signups"), value: status.total_signups },
+            { label: t("stats.validated"), value: status.total_validated },
           ].map((s) => (
             <div
               key={s.label}
@@ -182,7 +178,7 @@ export default function ReferralPage() {
       </div>
 
       <div className="rounded-xl border bg-card p-5">
-        <p className="text-sm font-semibold mb-4">Ta progression</p>
+        <p className="text-sm font-semibold mb-4">{t("sections.progress")}</p>
         <ReferralProgressBar
           totalValidated={status.total_validated}
           currentTier={status.current_tier}
@@ -193,7 +189,7 @@ export default function ReferralPage() {
       </div>
 
       <div>
-        <p className="text-sm font-semibold mb-3">Récompenses</p>
+        <p className="text-sm font-semibold mb-3">{t("sections.rewards")}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {status.tiers.map((tier, i) => (
             <ReferralTierCard
@@ -208,7 +204,7 @@ export default function ReferralPage() {
       </div>
 
       <div className="rounded-xl border bg-card p-5">
-        <p className="text-sm font-semibold mb-4">Tes filleuls</p>
+        <p className="text-sm font-semibold mb-4">{t("sections.friends")}</p>
         <ReferralFriendsList friends={status.recent_referrals} />
       </div>
     </div>

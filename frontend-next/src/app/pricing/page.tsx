@@ -340,11 +340,11 @@ export default function PricingPage() {
             >
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-green-400" />
-                <span>Paiement sécurisé</span>
+                <span>{tPricing("secure")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-[#00D9FF]" />
-                <span>Sans engagement</span>
+                <span>{tPricing("noCommitment")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-purple-400" />
@@ -361,7 +361,7 @@ export default function PricingPage() {
               <span
                 className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === "monthly" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}
               >
-                Mensuel
+                {tPricing("monthly")}
               </span>
               <button
                 onClick={() =>
@@ -374,7 +374,7 @@ export default function PricingPage() {
                   backgroundColor:
                     billingPeriod === "yearly" ? "#00D9FF" : "#e5e7eb",
                 }}
-                aria-label="Toggle billing period"
+                aria-label={tPricing("toggleBillingLabel")}
               >
                 <span
                   className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300"
@@ -513,7 +513,7 @@ export default function PricingPage() {
                     )}
                     {plan.id !== "free" && billingPeriod === "monthly" && (
                       <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 font-medium">
-                        Sans engagement
+                        {tPricing("noCommitment")}
                       </p>
                     )}
                   </div>
@@ -795,11 +795,11 @@ export default function PricingPage() {
             >
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-[#00D9FF]" />
-                <span>Sans engagement</span>
+                <span>{tPricing("noCommitment")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-[#00D9FF]" />
-                <span>Support francophone</span>
+                <span>{tPricing("frenchSupport")}</span>
               </div>
             </motion.div>
           </div>

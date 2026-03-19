@@ -196,7 +196,14 @@
       "sessionExpired": "Session expirée, veuillez vous reconnecter",
       "upgraded": "✨ Abonnement mis à niveau !",
       "scheduledChange": "📅 Changement planifié pour la fin de votre période actuelle."
-    }
+    },
+    "secure": "Paiement sécurisé",
+    "noCommitment": "Sans engagement",
+    "responseRate": "87% de taux de réponse",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "toggleBillingLabel": "Basculer la période de facturation",
+    "frenchSupport": "Support francophone"
   },
   "cta": {
     "startFree": "Commencer gratuitement",
@@ -1117,6 +1124,101 @@
     },
     "step2": {
       "jobOfferPlaceholder": "Collez ici la description complète de l'offre d'emploi (missions, compétences requises, profil recherché...)..."
+    }
+  },
+  "candidatures": {
+    "title": "Mes Candidatures",
+    "subtitle": "Suis l'avancement de toutes tes candidatures",
+    "loginRequired": "Connecte-toi pour voir tes candidatures",
+    "status": {
+      "all": "Tous les statuts",
+      "applied": "Postulé",
+      "viewed": "CV consulté",
+      "interview": "Entretien",
+      "rejected": "Refusé",
+      "offer": "Offre reçue 🎉"
+    },
+    "stats": {
+      "total": "Total",
+      "pending": "En attente",
+      "interviews": "Entretiens",
+      "offers": "Offres"
+    },
+    "date": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "daysAgo": "Il y a {count} jours"
+    },
+    "empty": {
+      "noneYet": "Aucune candidature encore — commence à postuler !",
+      "filtered": "Aucune candidature avec ce statut",
+      "searchCta": "Chercher des offres"
+    },
+    "actions": {
+      "viewOffer": "Voir l'offre",
+      "delete": "Supprimer"
+    }
+  },
+  "referral": {
+    "errorLoad": "Impossible de charger vos données de parrainage.",
+    "retry": "Réessayer",
+    "title": "HuntZen Boost",
+    "tagline": "Invitez. Débloquez. Progressez.",
+    "subtitle": "Parrainez des amis et débloquez des récompenses exclusives.",
+    "link": {
+      "title": "Ton lien de parrainage",
+      "copy": "Copier",
+      "copied": "Copié !",
+      "whatsapp": "WhatsApp",
+      "whatsappMessage": "Rejoins HuntZen et trouve ton prochain job plus vite ! {link}",
+      "linkedin": "LinkedIn"
+    },
+    "stats": {
+      "clicks": "Clics",
+      "signups": "Inscrits",
+      "validated": "Validés"
+    },
+    "sections": {
+      "progress": "Ta progression",
+      "rewards": "Récompenses",
+      "friends": "Tes filleuls"
+    }
+  },
+  "expat": {
+    "title": "Guide Expatriation",
+    "subtitle": "Salaires, coût de la vie et démarches administratives par pays",
+    "destination": "Destination",
+    "costOfLiving": {
+      "title": "Niveau de vie",
+      "rent": "Loyer 1ch (centre-ville)",
+      "transport": "Transports",
+      "food": "Alimentation",
+      "index": "Indice coût de vie",
+      "baseCountry": "France = 100",
+      "perMonth": "/ mois"
+    },
+    "salaries": {
+      "title": "Salaires médians bruts annuels",
+      "domain": "Domaine",
+      "salary": "Salaire",
+      "disclaimer": "* Données indicatives. Les salaires varient selon l'expérience, le secteur et la ville."
+    },
+    "admin": {
+      "title": "Démarches administratives",
+      "officialSite": "Site officiel →",
+      "savedProgress": "Votre progression est sauvegardée automatiquement dans votre navigateur."
+    },
+    "coach": {
+      "title": "Des questions sur votre expatriation ?",
+      "subtitle": "Notre coach IA peut vous aider à préparer votre projet d'expatriation en {country}.",
+      "cta": "Demander au Coach"
+    },
+    "domains": {
+      "tech": "Tech & IT",
+      "marketing": "Marketing",
+      "finance": "Finance",
+      "health": "Santé",
+      "sales": "Commerce"
     }
   }
 }

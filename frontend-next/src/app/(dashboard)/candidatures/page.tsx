@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
+import { useTranslations } from "next-intl";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
@@ -50,53 +51,49 @@ interface Application {
 
 const STATUS_CONFIG = {
   applied: {
-    label: "Postulé",
     icon: Send,
     color: "bg-blue-50 text-blue-700 border-blue-200",
     dot: "bg-blue-500",
   },
   viewed: {
-    label: "CV consulté",
     icon: Eye,
     color: "bg-yellow-50 text-yellow-700 border-yellow-200",
     dot: "bg-yellow-500",
   },
   interview: {
-    label: "Entretien",
     icon: CheckCircle2,
     color: "bg-green-50 text-green-700 border-green-200",
     dot: "bg-green-500",
   },
   rejected: {
-    label: "Refusé",
     icon: XCircle,
     color: "bg-red-50 text-red-700 border-red-200",
     dot: "bg-red-400",
   },
   offer: {
-    label: "Offre reçue 🎉",
     icon: Trophy,
     color: "bg-amber-50 text-amber-700 border-amber-200",
     dot: "bg-amber-500",
   },
 };
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffDays = Math.floor(
-    (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (diffDays === 0) return "Aujourd'hui";
-  if (diffDays === 1) return "Hier";
-  if (diffDays < 7) return `Il y a ${diffDays} jours`;
-  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-}
-
 export default function CandidaturesPage() {
+  const t = useTranslations("candidatures");
   const auth = useOptionalAuth();
   const user = auth?.user ?? null;
   const { authenticatedFetch } = useAuthenticatedFetch();
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor(
+      (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    if (diffDays === 0) return t("date.today");
+    if (diffDays === 1) return t("date.yesterday");
+    if (diffDays < 7) return t("date.daysAgo", { count: diffDays });
+    return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  };
 
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,7 +162,7 @@ export default function CandidaturesPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
         <Send className="w-12 h-12 text-slate-300" />
         <h2 className="text-xl font-bold text-slate-700">
-          Connecte-toi pour voir tes candidatures
+          {t("loginRequired")}
         </h2>
       </div>
     );
@@ -182,28 +179,34 @@ export default function CandidaturesPage() {
         <div>
           <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2">
             <Send className="w-6 h-6 text-[#00D9FF]" />
-            Mes Candidatures
+            {t("title")}
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Suis l&apos;avancement de toutes tes candidatures
-          </p>
+          <p className="text-slate-500 text-sm mt-1">{t("subtitle")}</p>
         </div>
 
         {/* Stats */}
         <div className="flex gap-3 flex-wrap">
           {[
-            { label: "Total", value: stats.total, color: "text-slate-700" },
             {
-              label: "En attente",
+              label: t("stats.total"),
+              value: stats.total,
+              color: "text-slate-700",
+            },
+            {
+              label: t("stats.pending"),
               value: stats.pending,
               color: "text-blue-600",
             },
             {
-              label: "Entretiens",
+              label: t("stats.interviews"),
               value: stats.interview,
               color: "text-green-600",
             },
-            { label: "Offres", value: stats.offer, color: "text-amber-600" },
+            {
+              label: t("stats.offers"),
+              value: stats.offer,
+              color: "text-amber-600",
+            },
           ].map((s) => (
             <div
               key={s.label}
@@ -224,10 +227,10 @@ export default function CandidaturesPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
-            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+            <SelectItem value="all">{t("status.all")}</SelectItem>
+            {Object.entries(STATUS_CONFIG).map(([key]) => (
               <SelectItem key={key} value={key}>
-                {cfg.label}
+                {t(`status.${key}` as Parameters<typeof t>[0])}
               </SelectItem>
             ))}
           </SelectContent>
@@ -249,15 +252,15 @@ export default function CandidaturesPage() {
           <Send className="w-12 h-12 text-slate-200" />
           <p className="text-slate-500 font-medium">
             {applications.length === 0
-              ? "Aucune candidature encore — commence à postuler !"
-              : "Aucune candidature avec ce statut"}
+              ? t("empty.noneYet")
+              : t("empty.filtered")}
           </p>
           {applications.length === 0 && (
             <a
               href="/jobs"
               className="px-5 py-2.5 bg-[#00D9FF] text-white font-semibold rounded-xl text-sm hover:bg-[#00C4EA] transition-colors"
             >
-              Chercher des offres
+              {t("empty.searchCta")}
             </a>
           )}
         </div>
@@ -287,7 +290,7 @@ export default function CandidaturesPage() {
                       )}
                     >
                       <Icon className="w-3 h-3" />
-                      {cfg.label}
+                      {t(`status.${app.status}` as Parameters<typeof t>[0])}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 flex-wrap">
@@ -316,17 +319,14 @@ export default function CandidaturesPage() {
                   >
                     <SelectTrigger className="h-8 w-36 text-xs bg-slate-50 border-slate-200">
                       <div
-                        className={cn(
-                          "w-2 h-2 rounded-full mr-1.5",
-                          cfg.dot,
-                        )}
+                        className={cn("w-2 h-2 rounded-full mr-1.5", cfg.dot)}
                       />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(STATUS_CONFIG).map(([key, c]) => (
+                      {Object.entries(STATUS_CONFIG).map(([key]) => (
                         <SelectItem key={key} value={key} className="text-xs">
-                          {c.label}
+                          {t(`status.${key}` as Parameters<typeof t>[0])}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -337,7 +337,7 @@ export default function CandidaturesPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 text-slate-400 hover:text-[#00D9FF] transition-colors"
-                    title="Voir l'offre"
+                    title={t("actions.viewOffer")}
                   >
                     <ExternalLink className="w-4 h-4" />
                   </a>
@@ -345,7 +345,7 @@ export default function CandidaturesPage() {
                   <button
                     onClick={() => deleteApplication(app.id)}
                     className="p-2 text-slate-300 hover:text-red-400 transition-colors"
-                    title="Supprimer"
+                    title={t("actions.delete")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
