@@ -8,19 +8,29 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Target,
   Sparkles,
   TrendingUp,
-  Users,
-  Globe,
-  Award,
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function AboutPage() {
+  const t = useTranslations("about");
+
+  const vsItems = [
+    { titleKey: "vs_item1_title" as const, descKey: "vs_item1_desc" as const },
+    { titleKey: "vs_item2_title" as const, descKey: "vs_item2_desc" as const },
+    { titleKey: "vs_item3_title" as const, descKey: "vs_item3_desc" as const },
+    { titleKey: "vs_item4_title" as const, descKey: "vs_item4_desc" as const },
+    { titleKey: "vs_item5_title" as const, descKey: "vs_item5_desc" as const },
+    { titleKey: "vs_item6_title" as const, descKey: "vs_item6_desc" as const },
+  ];
+
+  const richStrong = (chunks: React.ReactNode) => <strong>{chunks}</strong>;
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Hero Section */}
@@ -33,12 +43,10 @@ export default function AboutPage() {
             className="max-w-4xl mx-auto text-center"
           >
             <h1 className="text-5xl md:text-6xl font-black mb-6">
-              HuntZen Jobs : Votre Allié Carrière N°1 en France
+              {t("hero_title")}
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 leading-relaxed">
-              Découvrez comment <strong>HuntZen Jobs</strong> révolutionne la
-              recherche d'emploi en France avec la puissance de l'IA et une
-              approche centrée sur le candidat.
+              {t.rich("hero_subtitle", { strong: richStrong })}
             </p>
           </motion.div>
         </div>
@@ -55,37 +63,13 @@ export default function AboutPage() {
               viewport={{ once: true }}
             >
               <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-8">
-                Qui est HuntZen ?
+                {t("who_title")}
               </h2>
 
               <div className="prose prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed space-y-6">
-                <p>
-                  <strong>HuntZen Jobs</strong> est la plateforme de recherche
-                  d'emploi nouvelle génération qui transforme la façon dont les
-                  candidats trouvent leur prochain emploi en France.{" "}
-                  <strong>HuntZen</strong> combine technologie de pointe,
-                  intelligence artificielle et expertise RH pour offrir une
-                  expérience de recherche d'emploi inégalée.
-                </p>
-
-                <p>
-                  Fondée en 2024, <strong>HuntZen Jobs</strong> est née d'une
-                  vision simple : rendre la recherche d'emploi plus efficace,
-                  plus humaine et plus accessible à tous. Avec{" "}
-                  <strong>HuntZen</strong>, nous croyons que chaque candidat
-                  mérite les meilleures opportunités et les outils les plus
-                  performants pour réussir sa carrière.
-                </p>
-
-                <p>
-                  Aujourd'hui, <strong>HuntZen Jobs</strong> agrège plus de 100
-                  000 offres d'emploi en France, couvrant tous les secteurs,
-                  tous les niveaux d'expérience et tous les types de contrats.
-                  La plateforme <strong>HuntZen</strong> analyse quotidiennement
-                  des milliers d'offres provenant des plus grands sites emploi
-                  pour vous offrir le catalogue le plus complet du marché
-                  français.
-                </p>
+                <p>{t.rich("who_p1", { strong: richStrong })}</p>
+                <p>{t.rich("who_p2", { strong: richStrong })}</p>
+                <p>{t.rich("who_p3", { strong: richStrong })}</p>
               </div>
             </motion.div>
           </div>
@@ -104,12 +88,10 @@ export default function AboutPage() {
               className="text-center mb-16"
             >
               <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-6">
-                Pourquoi choisir HuntZen Jobs ?
+                {t("why_title")}
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                <strong>HuntZen Jobs</strong> vous offre bien plus qu'une simple
-                liste d'offres d'emploi. Découvrez nos 3 piliers qui font de{" "}
-                <strong>HuntZen</strong> la plateforme N°1.
+                {t.rich("why_subtitle", { strong: richStrong })}
               </p>
             </motion.div>
 
@@ -126,14 +108,10 @@ export default function AboutPage() {
                   <Target className="w-8 h-8 text-[#00D9FF]" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  1. La plus grande base d'offres d'emploi
+                  {t("feature1_title")}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  <strong>HuntZen Jobs</strong> agrège +100 000 offres d'emploi
-                  en France depuis les plus grandes plateformes : Indeed,
-                  LinkedIn, Pôle Emploi, APEC et bien d'autres. Avec{" "}
-                  <strong>HuntZen</strong>, vous accédez à toutes les
-                  opportunités en un seul endroit.
+                  {t.rich("feature1_desc", { strong: richStrong })}
                 </p>
               </motion.div>
 
@@ -149,14 +127,10 @@ export default function AboutPage() {
                   <Sparkles className="w-8 h-8 text-[#00D9FF]" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  2. Analyse CV experte avec HuntZen
+                  {t("feature2_title")}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Notre technologie <strong>HuntZen</strong> analyse votre CV en
-                  profondeur et vous donne un score ATS précis. L'outil
-                  d'analyse CV <strong>HuntZen Jobs</strong> identifie les
-                  points faibles et vous fournit des recommandations concrètes
-                  pour améliorer vos chances de décrocher un entretien.
+                  {t.rich("feature2_desc", { strong: richStrong })}
                 </p>
               </motion.div>
 
@@ -172,14 +146,10 @@ export default function AboutPage() {
                   <TrendingUp className="w-8 h-8 text-[#00D9FF]" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  3. Coach IA HuntZen 24/7
+                  {t("feature3_title")}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  L'assistant carrière <strong>HuntZen</strong> vous accompagne
-                  à chaque étape : préparation d'entretien, négociation
-                  salariale, optimisation LinkedIn. Avec{" "}
-                  <strong>HuntZen Jobs</strong>, vous avez un coach
-                  professionnel disponible 24h/24.
+                  {t.rich("feature3_desc", { strong: richStrong })}
                 </p>
               </motion.div>
             </div>
@@ -198,36 +168,13 @@ export default function AboutPage() {
               viewport={{ once: true }}
             >
               <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-8">
-                L'histoire de HuntZen Jobs
+                {t("story_title")}
               </h2>
 
               <div className="prose prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed space-y-6">
-                <p>
-                  Fondée en 2024, <strong>HuntZen Jobs</strong> révolutionne le
-                  marché de la recherche d'emploi en France. L'équipe{" "}
-                  <strong>HuntZen</strong> a identifié un problème majeur : les
-                  candidats perdent des heures à consulter plusieurs sites
-                  emploi, à optimiser leur CV sans guidance, et à se préparer
-                  seuls aux entretiens.
-                </p>
-
-                <p>
-                  La vision de <strong>HuntZen Jobs</strong> ? Centraliser
-                  toutes les offres d'emploi, fournir des outils d'analyse
-                  professionnels et offrir un accompagnement personnalisé grâce
-                  à l'intelligence artificielle. En quelques mois,{" "}
-                  <strong>HuntZen</strong> est devenu la référence pour des
-                  milliers de candidats en France.
-                </p>
-
-                <p>
-                  Aujourd'hui, <strong>HuntZen Jobs</strong> compte plus de 50
-                  000 utilisateurs actifs qui utilisent quotidiennement la
-                  plateforme pour trouver leur prochain emploi. La communauté{" "}
-                  <strong>HuntZen</strong> grandit chaque jour, et notre mission
-                  reste la même : rendre la recherche d'emploi plus efficace et
-                  plus humaine.
-                </p>
+                <p>{t.rich("story_p1", { strong: richStrong })}</p>
+                <p>{t.rich("story_p2", { strong: richStrong })}</p>
+                <p>{t.rich("story_p3", { strong: richStrong })}</p>
               </div>
             </motion.div>
           </div>
@@ -244,64 +191,33 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-black mb-4">
-              HuntZen Jobs en chiffres
-            </h2>
-            <p className="text-xl text-gray-300">
-              Les résultats parlent d'eux-mêmes
-            </p>
+            <h2 className="text-4xl font-black mb-4">{t("stats_title")}</h2>
+            <p className="text-xl text-gray-300">{t("stats_subtitle")}</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="text-5xl font-black text-[#00D9FF] mb-2">
-                +100K
-              </div>
-              <div className="text-gray-300">Offres d'emploi</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="text-5xl font-black text-[#00D9FF] mb-2">
-                50K+
-              </div>
-              <div className="text-gray-300">Utilisateurs actifs</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="text-5xl font-black text-[#00D9FF] mb-2">87%</div>
-              <div className="text-gray-300">Taux de satisfaction</div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <div className="text-5xl font-black text-[#00D9FF] mb-2">
-                24/7
-              </div>
-              <div className="text-gray-300">Support disponible</div>
-            </motion.div>
+            {[
+              { value: "+100K", key: "stat_jobs" },
+              { value: "50K+", key: "stat_users" },
+              { value: "87%", key: "stat_satisfaction" },
+              { value: "24/7", key: "stat_support" },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.key}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <div className="text-5xl font-black text-[#00D9FF] mb-2">
+                  {stat.value}
+                </div>
+                <div className="text-gray-300">
+                  {t(stat.key as Parameters<typeof t>[0])}
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>
@@ -318,47 +234,15 @@ export default function AboutPage() {
               className="text-center mb-16"
             >
               <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-6">
-                HuntZen Jobs vs autres plateformes
+                {t("vs_title")}
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-300">
-                Découvrez pourquoi <strong>HuntZen Jobs</strong> surpasse
-                Indeed, LinkedIn et les autres
+                {t.rich("vs_subtitle", { strong: richStrong })}
               </p>
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                {
-                  title: "Agrégation complète",
-                  description:
-                    "HuntZen centralise TOUTES les offres (Indeed, LinkedIn, Pôle Emploi...)",
-                },
-                {
-                  title: "Analyse CV gratuite",
-                  description:
-                    "Score ATS précis inclus - payant sur les autres plateformes",
-                },
-                {
-                  title: "Coach IA 24/7",
-                  description:
-                    "Assistant carrière personnalisé - inexistant ailleurs",
-                },
-                {
-                  title: "Interface moderne",
-                  description:
-                    "UX intuitive et rapide - bien supérieure aux autres",
-                },
-                {
-                  title: "Matching intelligent",
-                  description:
-                    "Recommandations IA basées sur votre profil complet",
-                },
-                {
-                  title: "100% gratuit",
-                  description:
-                    "Toutes les fonctionnalités essentielles sans payer",
-                },
-              ].map((item, index) => (
+              {vsItems.map((item, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
@@ -370,10 +254,10 @@ export default function AboutPage() {
                   <CheckCircle2 className="w-6 h-6 text-[#00D9FF] flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-bold text-gray-900 dark:text-white mb-2">
-                      {item.title}
+                      {t(item.titleKey)}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300 text-sm">
-                      {item.description}
+                      {t(item.descKey)}
                     </p>
                   </div>
                 </motion.div>
@@ -394,12 +278,10 @@ export default function AboutPage() {
             className="max-w-4xl mx-auto text-center"
           >
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              Rejoignez HuntZen Jobs aujourd'hui
+              {t("cta_title")}
             </h2>
             <p className="text-xl mb-8 text-white/90">
-              Transformez votre recherche d'emploi avec la plateforme N°1 en
-              France. <strong>HuntZen Jobs</strong> est 100% gratuit et sans
-              engagement.
+              {t.rich("cta_subtitle", { strong: richStrong })}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -407,7 +289,7 @@ export default function AboutPage() {
                 href="/signup"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#00D9FF] font-bold rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all"
               >
-                Créer mon compte gratuit
+                {t("cta_signup")}
                 <ArrowRight className="w-5 h-5" />
               </Link>
 
@@ -415,14 +297,14 @@ export default function AboutPage() {
                 href="/jobs"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl border-2 border-white hover:bg-white/20 transition-all"
               >
-                Découvrir les offres
+                {t("cta_jobs")}
               </Link>
             </div>
 
             <p className="mt-8 text-white/80 text-sm">
-              Déjà membre ?{" "}
+              {t("cta_already")}{" "}
               <Link href="/login" className="underline font-semibold">
-                Se connecter
+                {t("cta_login")}
               </Link>
             </p>
           </motion.div>

@@ -12,6 +12,7 @@ import Link from "next/link";
 import { Testimonial } from "./testimonials-data";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
 import { LandingHeader } from "@/components/landing-header";
+import { useTranslations } from "next-intl";
 
 interface TestimonialsClientProps {
   testimonials: Testimonial[];
@@ -24,6 +25,9 @@ export function TestimonialsClient({
   averageRating,
   totalReviews,
 }: TestimonialsClientProps) {
+  const t = useTranslations("testimonials");
+  const richStrong = (chunks: React.ReactNode) => <strong>{chunks}</strong>;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
@@ -83,11 +87,10 @@ export function TestimonialsClient({
             className="max-w-4xl mx-auto text-center"
           >
             <h1 className="text-5xl md:text-6xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-[#00D9FF]">
-              Témoignages HuntZen Jobs
+              {t("title")}
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              Découvrez comment <strong>HuntZen Jobs</strong> a transformé la
-              recherche d'emploi de +10 000 utilisateurs
+              {t.rich("subtitle", { strong: richStrong })}
             </p>
 
             {/* Rating globale */}
@@ -101,12 +104,14 @@ export function TestimonialsClient({
                 <div className="text-5xl font-black text-[#00D9FF]">
                   {averageRating.toFixed(1)}
                 </div>
-                <div className="text-sm text-gray-300 mt-1">sur 5</div>
+                <div className="text-sm text-gray-300 mt-1">
+                  {t("ratingLabel")}
+                </div>
               </div>
               <div>
                 <div className="flex gap-1 mb-2">{renderStars(5)}</div>
                 <div className="text-sm text-gray-300">
-                  {totalReviews} avis vérifiés
+                  {t("verifiedReviews", { count: totalReviews })}
                 </div>
               </div>
             </motion.div>
@@ -128,7 +133,7 @@ export function TestimonialsClient({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
-                placeholder="Rechercher un témoignage..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -143,7 +148,7 @@ export function TestimonialsClient({
                 onChange={(e) => setSelectedTag(e.target.value || null)}
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">Tous les métiers</option>
+                <option value="">{t("allJobs")}</option>
                 {allTags.map((tag) => (
                   <option key={tag} value={tag}>
                     {tag}
@@ -164,9 +169,9 @@ export function TestimonialsClient({
                 }
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">Toutes les notes</option>
-                <option value="5">5 étoiles</option>
-                <option value="4">4 étoiles</option>
+                <option value="">{t("allRatings")}</option>
+                <option value="5">{t("stars5")}</option>
+                <option value="4">{t("stars4")}</option>
               </select>
             </div>
           </div>
@@ -197,7 +202,7 @@ export function TestimonialsClient({
                   onClick={() => setSelectedRating(null)}
                   className="inline-flex items-center gap-2 px-3 py-1 bg-[#00D9FF]/10 text-[#00D9FF] rounded-lg text-sm font-medium hover:bg-[#00D9FF]/20 transition-all"
                 >
-                  {selectedRating} étoiles
+                  {t("selectedRating", { rating: selectedRating })}
                   <span className="text-lg">×</span>
                 </button>
               )}
@@ -290,12 +295,14 @@ export function TestimonialsClient({
                   onClick={() => setDisplayCount((prev) => prev + 12)}
                   className="inline-flex items-center gap-2 px-8 py-4 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold rounded-xl shadow-lg hover:shadow-[#00D9FF]/50 transition-all"
                 >
-                  Voir plus de témoignages
+                  {t("loadMore")}
                   <ChevronDown className="w-5 h-5" />
                 </button>
                 <p className="text-gray-600 dark:text-gray-300 mt-4">
-                  {displayCount} sur {filteredTestimonials.length} témoignages
-                  affichés
+                  {t("displayCount", {
+                    displayed: displayCount,
+                    total: filteredTestimonials.length,
+                  })}
                 </p>
               </motion.div>
             )}
@@ -310,10 +317,10 @@ export function TestimonialsClient({
               <Search className="w-10 h-10 text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-              Aucun témoignage trouvé
+              {t("noResults")}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Essayez d'autres critères de recherche
+              {t("noResultsHint")}
             </p>
             <button
               onClick={() => {
@@ -323,7 +330,7 @@ export function TestimonialsClient({
               }}
               className="inline-flex items-center gap-2 px-6 py-3 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-semibold rounded-xl transition-all"
             >
-              Réinitialiser les filtres
+              {t("resetFilters")}
             </button>
           </motion.div>
         )}
@@ -339,25 +346,20 @@ export function TestimonialsClient({
             viewport={{ once: true }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h2 className="text-4xl font-black mb-6">
-              Rejoignez +10 000 utilisateurs satisfaits
-            </h2>
-            <p className="text-xl text-gray-300 mb-8">
-              Transformez votre recherche d'emploi avec HuntZen Jobs dès
-              maintenant
-            </p>
+            <h2 className="text-4xl font-black mb-6">{t("ctaTitle")}</h2>
+            <p className="text-xl text-gray-300 mb-8">{t("ctaSubtitle")}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/signup"
                 className="inline-block px-8 py-4 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold rounded-xl shadow-lg hover:shadow-[#00D9FF]/50 transition-all"
               >
-                Créer mon compte gratuitement
+                {t("ctaSignup")}
               </Link>
               <Link
                 href="/about"
                 className="inline-block px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-lg transition-all"
               >
-                En savoir plus sur HuntZen
+                {t("ctaAbout")}
               </Link>
             </div>
           </motion.div>

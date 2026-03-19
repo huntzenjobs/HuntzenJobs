@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
+import { useTranslations } from "next-intl";
 
 // Articles de blog (à terme, viendra d'une base de données ou CMS)
 const blogPosts = [
@@ -45,6 +46,9 @@ const blogPosts = [
 ];
 
 export default function BlogPage() {
+  const t = useTranslations("blog");
+  const richStrong = (chunks: React.ReactNode) => <strong>{chunks}</strong>;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <LandingHeader />
@@ -58,11 +62,10 @@ export default function BlogPage() {
             className="max-w-4xl mx-auto text-center"
           >
             <h1 className="text-5xl md:text-6xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-[#00D9FF]">
-              Blog HuntZen Jobs
+              {t("title")}
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed">
-              Guides, conseils et stratégies pour réussir votre recherche
-              d'emploi avec <strong>HuntZen Jobs</strong>
+              {t.rich("subtitle", { strong: richStrong })}
             </p>
           </motion.div>
         </div>
@@ -120,7 +123,7 @@ export default function BlogPage() {
                   href={`/blog/${post.slug}`}
                   className="inline-flex items-center gap-2 text-[#00D9FF] font-semibold hover:gap-3 transition-all group"
                 >
-                  Lire l'article
+                  {t("readMore")}
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
@@ -137,11 +140,9 @@ export default function BlogPage() {
         >
           <div className="inline-block bg-gradient-to-r from-[#00D9FF]/10 to-blue-500/10 dark:from-[#00D9FF]/20 dark:to-blue-500/20 rounded-2xl px-8 py-6 border border-[#00D9FF]/20 dark:border-[#00D9FF]/30">
             <p className="text-gray-700 dark:text-gray-300 font-semibold mb-2">
-              📚 Plus d'articles arrivent bientôt !
+              {t("comingSoon")}
             </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              Abonnez-vous pour ne rien manquer des conseils HuntZen Jobs
-            </p>
+            <p className="text-gray-600 dark:text-gray-400">{t("subscribe")}</p>
           </div>
         </motion.div>
       </div>
@@ -156,17 +157,13 @@ export default function BlogPage() {
             viewport={{ once: true }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h2 className="text-4xl font-black mb-6">
-              Prêt à transformer votre recherche d'emploi ?
-            </h2>
-            <p className="text-xl text-gray-300 mb-8">
-              Rejoignez HuntZen Jobs et accédez à +100 000 offres d'emploi
-            </p>
+            <h2 className="text-4xl font-black mb-6">{t("ctaTitle")}</h2>
+            <p className="text-xl text-gray-300 mb-8">{t("ctaSubtitle")}</p>
             <Link
               href="/signup"
               className="inline-block px-8 py-4 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold rounded-xl shadow-lg hover:shadow-[#00D9FF]/50 transition-all"
             >
-              Commencer gratuitement
+              {t("ctaButton")}
             </Link>
           </motion.div>
         </div>

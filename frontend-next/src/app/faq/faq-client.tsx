@@ -11,8 +11,10 @@ import Link from "next/link";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
 import { LandingHeader } from "@/components/landing-header";
 import { faqCategories } from "./faq-data";
+import { useTranslations } from "next-intl";
 
 export function FAQClient() {
+  const t = useTranslations("faq");
   const [openIndex, setOpenIndex] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -46,11 +48,12 @@ export function FAQClient() {
             className="max-w-4xl mx-auto text-center"
           >
             <h1 className="text-5xl md:text-6xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-[#00D9FF]">
-              Questions Fréquentes
+              {t("title")}
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              Tout ce que vous devez savoir sur <strong>HuntZen Jobs</strong>,
-              la plateforme N°1 de recherche d'emploi en France
+              {t.rich("subtitle", {
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </p>
 
             {/* Search bar */}
@@ -58,7 +61,7 @@ export function FAQClient() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
-                placeholder="Rechercher une question sur HuntZen Jobs..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 dark:border-white/30 rounded-2xl text-white placeholder-white/60 focus:outline-none focus:border-[#00D9FF] transition-all"
@@ -159,17 +162,17 @@ export function FAQClient() {
                 <Search className="w-10 h-10 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                Aucune question trouvée
+                {t("noResults")}
               </h3>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Essayez un autre mot-clé ou contactez notre support
+                {t("noResultsHint")}
               </p>
               <Link
                 href="#support"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-semibold rounded-xl transition-all"
               >
                 <MessageCircle className="w-5 h-5" />
-                Contactez le support
+                {t("contactSupport")}
               </Link>
             </motion.div>
           )}
@@ -189,24 +192,20 @@ export function FAQClient() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-[#00D9FF]/20 rounded-2xl mb-6">
               <MessageCircle className="w-8 h-8 text-[#00D9FF]" />
             </div>
-            <h2 className="text-4xl font-black mb-6">
-              Vous n'avez pas trouvé votre réponse ?
-            </h2>
-            <p className="text-xl text-gray-300 mb-8">
-              Notre équipe HuntZen Jobs est là pour vous aider 24/7
-            </p>
+            <h2 className="text-4xl font-black mb-6">{t("supportTitle")}</h2>
+            <p className="text-xl text-gray-300 mb-8">{t("supportSubtitle")}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="mailto:support@huntzenjobs.com"
                 className="inline-block px-8 py-4 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold rounded-xl shadow-lg hover:shadow-[#00D9FF]/50 transition-all"
               >
-                Contactez-nous par email
+                {t("contactEmail")}
               </a>
               <Link
                 href="/signup"
                 className="inline-block px-8 py-4 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-lg transition-all"
               >
-                Essayer HuntZen Jobs gratuitement
+                {t("tryFree")}
               </Link>
             </div>
           </motion.div>
