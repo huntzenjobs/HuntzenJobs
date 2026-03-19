@@ -58,9 +58,8 @@ export default function AboutPage() {
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
             >
               <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-8">
                 {t("who_title")}
@@ -82,9 +81,8 @@ export default function AboutPage() {
           <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
               className="text-center mb-16"
             >
               <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-6">
@@ -99,9 +97,8 @@ export default function AboutPage() {
               {/* Feature 1 */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
               >
                 <div className="w-16 h-16 bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 rounded-2xl flex items-center justify-center mb-6">
@@ -118,9 +115,8 @@ export default function AboutPage() {
               {/* Feature 2 */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
               >
                 <div className="w-16 h-16 bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 rounded-2xl flex items-center justify-center mb-6">
@@ -137,9 +133,8 @@ export default function AboutPage() {
               {/* Feature 3 */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all"
               >
                 <div className="w-16 h-16 bg-[#00D9FF]/10 dark:bg-[#00D9FF]/20 rounded-2xl flex items-center justify-center mb-6">
@@ -163,9 +158,8 @@ export default function AboutPage() {
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
             >
               <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-8">
                 {t("story_title")}
@@ -186,7 +180,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
             className="text-center mb-16"
@@ -205,9 +199,8 @@ export default function AboutPage() {
               <motion.div
                 key={stat.key}
                 initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
                 className="text-center"
               >
                 <div className="text-5xl font-black text-[#00D9FF] mb-2">
@@ -228,9 +221,8 @@ export default function AboutPage() {
           <div className="max-w-5xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
               className="text-center mb-16"
             >
               <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-6">
@@ -246,9 +238,8 @@ export default function AboutPage() {
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
                   className="flex items-start gap-4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 p-6 rounded-xl border border-gray-200 dark:border-gray-600"
                 >
                   <CheckCircle2 className="w-6 h-6 text-[#00D9FF] flex-shrink-0 mt-1" />
@@ -272,7 +263,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
             className="max-w-4xl mx-auto text-center"
