@@ -242,6 +242,7 @@ export function CVUploadAsyncWizard({
           }
         } catch (error) {
           console.error("Failed to load CV history:", error);
+          toast.error("Impossible de charger l'historique des analyses");
         }
       };
 
@@ -287,6 +288,7 @@ export function CVUploadAsyncWizard({
           }
         } catch (error) {
           console.error("Failed to reload CV history:", error);
+          toast.error("Impossible de rafraîchir l'historique");
         }
       };
 
@@ -608,6 +610,11 @@ export function CVUploadAsyncWizard({
       }
     } catch (err) {
       console.error("Analysis error:", err);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Erreur lors du lancement de l'analyse",
+      );
     }
   };
 
