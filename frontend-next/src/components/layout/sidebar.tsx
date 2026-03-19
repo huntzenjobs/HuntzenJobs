@@ -419,7 +419,7 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <>
       {/* Mobile header */}
-      <div className="mobile-header lg:hidden fixed top-0 left-0 right-0 z-[50] h-14 flex items-center justify-between px-4 bg-white border-b border-slate-200 shadow-sm">
+      <div className="mobile-header lg:hidden fixed top-0 left-0 right-0 z-[50] h-14 flex items-center justify-between px-4 bg-white border-b border-slate-200 shadow-sm pt-safe">
         <button
           className="hamburger-btn text-slate-700 p-2 hover:text-[#00D9FF] transition-colors rounded-lg hover:bg-slate-100"
           onClick={() => setIsMobileMenuOpen(true)}

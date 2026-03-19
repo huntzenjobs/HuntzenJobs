@@ -325,7 +325,7 @@ function DropdownMenu({
   user,
 }: DropdownMenuProps) {
   return (
-    <div className="absolute top-full left-0 mt-2 z-50 w-[480px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+    <div className="absolute top-full left-0 mt-2 z-50 w-[calc(100vw-2rem)] sm:w-[480px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="p-2 max-h-[400px] overflow-y-auto overflow-x-hidden">
         {assistants.map((assistant) => {
           const isSelected = assistant.id === selectedAssistant;

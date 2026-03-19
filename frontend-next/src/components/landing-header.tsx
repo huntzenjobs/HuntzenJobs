@@ -77,7 +77,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
           : "rgba(255, 255, 255, 0.1)",
       }}
       transition={{ duration: 0.3 }}
-      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b"
+      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b pt-safe"
     >
       <div className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         {/* Logo */}
@@ -247,7 +247,13 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
         {/* Auth Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Language Switcher */}
-          <LanguageSwitcher className={shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white hover:text-white"} />
+          <LanguageSwitcher
+            className={
+              shouldBeWhite
+                ? "text-gray-900 hover:text-black"
+                : "text-white hover:text-white"
+            }
+          />
 
           {/* Theme Toggle */}
           <ThemeToggle />

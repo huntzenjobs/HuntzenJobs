@@ -172,7 +172,7 @@ export default function UserDetailDrawer({
         if (!o) onClose();
       }}
     >
-      <SheetContent className="w-[520px] sm:max-w-[520px] overflow-y-auto">
+      <SheetContent className="w-full sm:w-[520px] sm:max-w-[520px] overflow-y-auto">
         <SheetHeader className="pb-4">
           <SheetTitle className="flex items-center justify-between">
             <span>Fiche utilisateur</span>

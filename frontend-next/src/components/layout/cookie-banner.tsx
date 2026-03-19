@@ -35,7 +35,7 @@ export function CookieBanner() {
       role="dialog"
       aria-label="Gestion des cookies"
       aria-modal="false"
-      className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6"
+      className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 pb-safe"
     >
       <div className="max-w-4xl mx-auto bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
         {/* Icon */}
@@ -46,9 +46,13 @@ export function CookieBanner() {
         {/* Text */}
         <div className="flex-1 text-sm text-gray-300 leading-relaxed">
           <p>
-            Nous utilisons des cookies pour améliorer votre expérience sur HuntZen Jobs.
-            Les cookies essentiels sont nécessaires au fonctionnement du site.{" "}
-            <Link href="/privacy" className="text-[#00D9FF] hover:underline font-medium">
+            Nous utilisons des cookies pour améliorer votre expérience sur
+            HuntZen Jobs. Les cookies essentiels sont nécessaires au
+            fonctionnement du site.{" "}
+            <Link
+              href="/privacy"
+              className="text-[#00D9FF] hover:underline font-medium"
+            >
               En savoir plus
             </Link>
           </p>

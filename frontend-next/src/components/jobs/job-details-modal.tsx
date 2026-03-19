@@ -625,7 +625,7 @@ export function JobDetailsModal({
 
             {/* Bannière confirmation candidature */}
             {showAppliedConfirm && !appliedConfirmed && (
-              <div className="sticky bottom-0 left-0 right-0 bg-blue-600 border-t-2 border-blue-700 p-4 shadow-xl z-10">
+              <div className="sticky bottom-0 left-0 right-0 bg-blue-600 border-t-2 border-blue-700 p-4 shadow-xl z-10 pb-safe">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-white font-bold text-base">
@@ -655,7 +655,7 @@ export function JobDetailsModal({
 
             {/* Bannière succès après confirmation */}
             {appliedConfirmed && (
-              <div className="sticky bottom-0 left-0 right-0 bg-green-600 border-t-2 border-green-700 p-4 shadow-xl z-10">
+              <div className="sticky bottom-0 left-0 right-0 bg-green-600 border-t-2 border-green-700 p-4 shadow-xl z-10 pb-safe">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">✅</span>
                   <div>
