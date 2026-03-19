@@ -105,8 +105,9 @@ export default function SalonsPage() {
 
       setEvents(result.events);
       setVisibleEventsCount(0); // Reset counter for progressive reveal
-    } catch (err: any) {
-      setError(err.message || t("errorText"));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : t("errorText");
+      setError(message);
     } finally {
       setLoading(false);
     }

@@ -171,8 +171,7 @@ export function Sidebar({ className }: SidebarProps) {
         router.push("/login");
         router.refresh();
       }
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch {
       // Still redirect on error
       router.push("/login");
       router.refresh();

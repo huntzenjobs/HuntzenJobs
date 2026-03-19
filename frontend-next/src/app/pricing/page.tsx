@@ -256,12 +256,13 @@ export default function PricingPage() {
         }
         window.location.href = data.checkout_url;
       }
-    } catch (error: any) {
-      console.error("Stripe checkout error:", error);
+    } catch (error: unknown) {
       toast.dismiss("stripe-redirect");
-      toast.error(
-        error.message || "Erreur lors de la création de la session de paiement",
-      );
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la création de la session de paiement";
+      toast.error(message);
     }
   };
 

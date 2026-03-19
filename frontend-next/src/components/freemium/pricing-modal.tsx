@@ -210,10 +210,11 @@ export function PricingModal() {
         // New subscription - redirect to Stripe Checkout
         window.location.href = data.checkout_url;
       }
-    } catch (error: any) {
-      console.error("Stripe checkout error:", error);
+    } catch (error: unknown) {
       toast.dismiss("stripe-redirect");
-      toast.error(error.message || tModal("toasts.paymentError"));
+      const message =
+        error instanceof Error ? error.message : tModal("toasts.paymentError");
+      toast.error(message);
     }
   };
 

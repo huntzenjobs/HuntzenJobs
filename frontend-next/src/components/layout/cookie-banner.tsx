@@ -78,9 +78,9 @@ export function CookieBanner() {
           <button
             onClick={handleDecline}
             aria-label="Fermer"
-            className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors shrink-0"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-300 transition-colors shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
       </div>

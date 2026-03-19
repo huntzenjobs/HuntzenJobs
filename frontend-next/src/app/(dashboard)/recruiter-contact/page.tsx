@@ -137,7 +137,7 @@ export default function RecruiterContactPage() {
       if (paymentResponse.checkout_url) {
         window.location.href = paymentResponse.checkout_url;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(t("form.error"));
     } finally {
       setIsSubmitting(false);
