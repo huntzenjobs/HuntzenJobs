@@ -22,7 +22,7 @@
     "tag": "Pour les candidats qui en ont assez de postuler dans le vide",
     "h1": "Trouver un job ne devrait pas être un parcours du combattant.",
     "h2": "Accédez aux offres qui vous correspondent, améliorez votre CV et obtenez plus d'entretiens — sans perdre des heures à chercher.",
-    "subtitle": "CV certifié ATS · 5 coachs carrière · Score de compatibilité · +6 plateformes d'offres",
+    "subtitle": "CV certifié ATS · 5 coachs carrière · Score de compatibilité · Contact recruteur",
     "ctaSearch": "Commencer ma recherche",
     "ctaDiscover": "Découvrir la méthode",
     "socialProof": "Déjà +100 000 candidats accompagnés"
@@ -118,7 +118,7 @@
       "badge": "RECHERCHE",
       "title": "Arrêtez de postuler à l'aveugle.",
       "description": "Concentrez-vous sur les offres où vous avez une vraie chance grâce à notre score de compatibilité. Résultat : moins de candidatures, plus d'entretiens.",
-      "bullet1": "Offres de +6 plateformes (France Travail, Indeed, LinkedIn...)",
+      "bullet1": "Offres agrégées depuis France Travail, Indeed, LinkedIn et plus",
       "bullet2": "Filtres avancés : salaire, télétravail, taille d'entreprise",
       "bullet3": "Score de compatibilité par offre",
       "bullet4": "Sauvegarde & suivi de tes candidatures",
@@ -298,7 +298,7 @@
       "starter": {
         "name": "RECHERCHE ACTIVE",
         "period": "/mois",
-        "cta": "Commencer avec Starter",
+        "cta": "Commencer avec Recherche Active",
         "features": [
           "Recherches d'offres illimitées",
           "Accès à toutes les offres d'emploi",
@@ -314,9 +314,9 @@
         ]
       },
       "essential": {
-        "name": "ESSENTIEL",
+        "name": "ACCÉLÉRATEUR",
         "period": "/mois",
-        "cta": "Commencer avec Essentiel",
+        "cta": "Commencer avec Accélérateur",
         "features": [
           "Recherches d'offres illimitées",
           "Accès à toutes les offres d'emploi",
@@ -324,34 +324,37 @@
           "Gestion de tes favoris",
           "Analyses de CV illimitées",
           "Score de compatibilité détaillé",
-          "Coaching personnalisé (30 min/jour)"
+          "Coaching personnalisé (30 min/jour)",
+          "Contact recruteur par email"
         ],
         "unavailable": [
           "Export PDF rapports"
         ]
       },
       "pro": {
-        "name": "ACCÉLÉRATEUR",
+        "name": "CARRIÈRE",
         "period": "/mois",
-        "cta": "Commencer avec Pro",
+        "cta": "Commencer avec Carrière",
         "features": [
-          "Toutes les fonctionnalités Essentiel",
+          "Toutes les fonctionnalités Accélérateur",
           "Coaching disponible 24/7 sans limite",
           "Export PDF professionnel",
           "Simulations d'entretien réalistes",
+          "Contact recruteur par email",
           "Feedback détaillé sur tes performances",
           "Support prioritaire par email"
         ],
         "unavailable": []
       },
       "premium": {
-        "name": "CARRIÈRE",
+        "name": "EXCELLENCE",
         "period": "/mois",
-        "cta": "Commencer avec Premium",
+        "cta": "Commencer avec Excellence",
         "features": [
-          "Toutes les fonctionnalités Pro",
+          "Toutes les fonctionnalités Carrière",
           "Historique illimité de tes analyses",
           "Conseils personnalisés ultra-ciblés",
+          "Contact recruteur par email",
           "Alertes email instantanées",
           "Historique complet coaching",
           "Accès anticipé nouvelles fonctionnalités",
@@ -380,13 +383,13 @@
     "plans": {
       "free": "Exploration",
       "starter": "Recherche Active",
-      "pro": "Accélérateur",
-      "premium": "Carrière"
+      "pro": "Carrière",
+      "premium": "Excellence"
     },
     "user": {
       "default": "Utilisateur"
     },
-    "upgradeCta": "Passer Premium",
+    "upgradeCta": "Passer Excellence",
     "footer": {
       "pricing": "Tarifs",
       "help": "Aide",
@@ -502,7 +505,7 @@
         ]
       },
       "starter": {
-        "name": "Starter",
+        "name": "Recherche Active",
         "tagline": "Recherche Active",
         "description": "Pour progresser rapidement dans votre recherche",
         "period": "/mois",
@@ -519,36 +522,36 @@
         ]
       },
       "pro": {
-        "name": "Pro",
+        "name": "Accélérateur",
         "tagline": "Accélérateur",
         "description": "Pour passer à la vitesse supérieure et être recruté",
         "period": "/mois",
         "featureNames": [
-          "Tout Starter inclus",
+          "Tout Recherche Active inclus",
           "Coach IA illimité",
           "Export PDF rapports CV",
           "Simulation entretien IA",
+          "Contact recruteur par email",
           "Support prioritaire",
           "Historique CV",
           "Conseils personnalisés",
-          "Alertes email",
-          "Historique sessions coach"
+          "Alertes email"
         ]
       },
       "premium": {
-        "name": "Premium",
+        "name": "Carrière",
         "tagline": "Carrière",
         "description": "Pour un accompagnement complet de A à Z",
         "period": "/mois",
         "featureNames": [
-          "Tout Pro inclus",
+          "Tout Accélérateur inclus",
           "Historique CV illimité",
           "Conseils personnalisés CV",
+          "Contact recruteur par email",
           "Alertes email nouvelles offres",
           "Historique sessions coach",
           "Accès beta nouvelles fonctions",
           "Support VIP",
-          "",
           ""
         ]
       }
