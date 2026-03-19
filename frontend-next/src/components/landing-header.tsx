@@ -246,18 +246,16 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
 
         {/* Auth Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Language Switcher — hidden on mobile, in hamburger menu */}
-          <div className="hidden md:block">
-            <LanguageSwitcher
-              className={
-                shouldBeWhite
-                  ? "text-gray-900 hover:text-black"
-                  : "text-white hover:text-white"
-              }
-            />
-          </div>
+          {/* Language Switcher — always visible (compact globe icon) */}
+          <LanguageSwitcher
+            className={
+              shouldBeWhite
+                ? "text-gray-900 hover:text-black"
+                : "text-white hover:text-white"
+            }
+          />
 
-          {/* Theme Toggle — hidden on mobile */}
+          {/* Theme Toggle — hidden on mobile to save space */}
           <div className="hidden md:block">
             <ThemeToggle />
           </div>
