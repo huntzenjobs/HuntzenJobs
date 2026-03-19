@@ -61,6 +61,33 @@ from src.models.schemas import CoachRequest, CoachResponse
 from pydantic import BaseModel, Field
 from structlog import get_logger
 
+
+def _get_user_cv_context(user_id: str) -> str:
+    """Récupère le dernier CV analysé de l'utilisateur pour enrichir le contexte coach."""
+    try:
+        supabase = get_supabase_client()
+        result = (
+            supabase.table("cv_analyses")
+            .select("cv_text, score, recommendations, created_at")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(1)
+            .maybe_single()
+            .execute()
+        )
+        if result.data and result.data.get("cv_text"):
+            cv_text = result.data["cv_text"][:2000]  # Limiter pour ne pas dépasser le context window
+            score = result.data.get("score", "N/A")
+            return (
+                f"\n\n[CONTEXTE CV DE L'UTILISATEUR — Score ATS: {score}/100]\n"
+                f"{cv_text}\n"
+                f"[FIN CONTEXTE CV]\n"
+            )
+    except Exception as e:
+        logger.warning(f"[coach] Failed to fetch CV context: {e}")
+    return ""
+
+
 # Pool ARQ (lazy init, réutilisé entre les requêtes)
 _arq_pool = None
 
@@ -181,10 +208,16 @@ async def coach_chat(
 
     # Mode synchrone
     history = get_session_history(data.session_id)
+
+    # Enrichir le message avec le contexte CV de l'utilisateur
+    user_id = current_user.get("id")
+    cv_context = _get_user_cv_context(user_id) if user_id else ""
+    enriched_message = f"{data.message}{cv_context}" if cv_context else data.message
+
     try:
         async with _groq_semaphore:
             result = await agent.run(
-                message=data.message,
+                message=enriched_message,
                 history=history,
                 language=data.language,
                 deep_analysis=True,
