@@ -1,7 +1,7 @@
 // Import Sentry configuration FIRST - must be before any other imports
 import "../../sentry.client.config";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SkipLink } from "@/components/ui/skip-link";
@@ -16,6 +16,13 @@ import { CookieBanner } from "@/components/layout/cookie-banner";
 
 // Metadata optimisées pour SEO 100/100
 export const metadata: Metadata = homeMetadata;
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#00D9FF",
+};
 
 export default async function RootLayout({
   children,
@@ -41,8 +48,6 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-title" content="HuntZen" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#00D9FF" />
-
         {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
 
