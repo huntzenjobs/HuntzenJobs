@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
+import { useTranslations } from "next-intl";
 import type { UserDocument } from "@/hooks/use-documents";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
@@ -73,7 +74,7 @@ interface DocumentEditDialogProps {
   onOpenChange: (open: boolean) => void;
   updateDocument: (
     id: string,
-    updates: { cv_pdf_url?: string; cv_data?: Record<string, unknown> }
+    updates: { cv_pdf_url?: string; cv_data?: Record<string, unknown> },
   ) => Promise<UserDocument | null>;
 }
 
@@ -84,6 +85,7 @@ export function DocumentEditDialog({
   updateDocument,
 }: DocumentEditDialogProps) {
   const { authenticatedFetch } = useAuthenticatedFetch();
+  const t = useTranslations("dashboard.documents.edit");
   const [state, setState] = useState<EditState | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,19 +101,15 @@ export function DocumentEditDialog({
     setState((prev) =>
       prev
         ? { ...prev, personal_info: { ...prev.personal_info, [field]: value } }
-        : prev
+        : prev,
     );
   };
 
-  const updateExp = (
-    index: number,
-    field: keyof Experience,
-    value: string
-  ) => {
+  const updateExp = (index: number, field: keyof Experience, value: string) => {
     setState((prev) => {
       if (!prev) return prev;
       const exps = prev.experiences.map((e, i) =>
-        i === index ? { ...e, [field]: value } : e
+        i === index ? { ...e, [field]: value } : e,
       );
       return { ...prev, experiences: exps };
     });
@@ -133,7 +131,7 @@ export function DocumentEditDialog({
               },
             ],
           }
-        : prev
+        : prev,
     );
   };
 
@@ -144,7 +142,7 @@ export function DocumentEditDialog({
             ...prev,
             experiences: prev.experiences.filter((_, i) => i !== index),
           }
-        : prev
+        : prev,
     );
   };
 
@@ -157,7 +155,10 @@ export function DocumentEditDialog({
       // Merge edits back into full cv_data
       const updatedCvData: Record<string, unknown> = {
         ...(document.cv_data ?? {}),
-        personal_info: { ...(document.cv_data?.personal_info ?? {}), ...state.personal_info },
+        personal_info: {
+          ...(document.cv_data?.personal_info ?? {}),
+          ...state.personal_info,
+        },
         summary: state.summary,
         experiences: state.experiences,
       };
@@ -173,7 +174,7 @@ export function DocumentEditDialog({
             template: "ats",
             language: document.language ?? "fr",
           }),
-        }
+        },
       );
       if (!pdfRes.ok) throw new Error("Échec de la génération du PDF");
       const pdfBlob = await pdfRes.blob();
@@ -196,8 +197,7 @@ export function DocumentEditDialog({
         .from("cvs-adaptes")
         .upload(cvPath, pdfBlob, { contentType: "application/pdf" });
 
-      if (uploadErr || !uploaded)
-        throw new Error("Échec de l'upload du PDF");
+      if (uploadErr || !uploaded) throw new Error("Échec de l'upload du PDF");
 
       const { data: signed } = await supabase.storage
         .from("cvs-adaptes")
@@ -213,7 +213,9 @@ export function DocumentEditDialog({
 
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde");
+      setError(
+        err instanceof Error ? err.message : "Erreur lors de la sauvegarde",
+      );
     } finally {
       setSaving(false);
     }
@@ -246,10 +248,14 @@ export function DocumentEditDialog({
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {/* Personal Info */}
           <section>
-            <h3 className="text-sm font-semibold mb-3">Informations personnelles</h3>
+            <h3 className="text-sm font-semibold mb-3">
+              Informations personnelles
+            </h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
-                <Label htmlFor="pi-name" className="text-xs">Nom complet</Label>
+                <Label htmlFor="pi-name" className="text-xs">
+                  Nom complet
+                </Label>
                 <Input
                   id="pi-name"
                   value={state.personal_info.name}
@@ -258,7 +264,9 @@ export function DocumentEditDialog({
                 />
               </div>
               <div>
-                <Label htmlFor="pi-email" className="text-xs">Email</Label>
+                <Label htmlFor="pi-email" className="text-xs">
+                  Email
+                </Label>
                 <Input
                   id="pi-email"
                   type="email"
@@ -268,7 +276,9 @@ export function DocumentEditDialog({
                 />
               </div>
               <div>
-                <Label htmlFor="pi-phone" className="text-xs">Téléphone</Label>
+                <Label htmlFor="pi-phone" className="text-xs">
+                  Téléphone
+                </Label>
                 <Input
                   id="pi-phone"
                   value={state.personal_info.phone}
@@ -277,7 +287,9 @@ export function DocumentEditDialog({
                 />
               </div>
               <div>
-                <Label htmlFor="pi-location" className="text-xs">Localisation</Label>
+                <Label htmlFor="pi-location" className="text-xs">
+                  Localisation
+                </Label>
                 <Input
                   id="pi-location"
                   value={state.personal_info.location}
@@ -286,7 +298,9 @@ export function DocumentEditDialog({
                 />
               </div>
               <div>
-                <Label htmlFor="pi-linkedin" className="text-xs">LinkedIn</Label>
+                <Label htmlFor="pi-linkedin" className="text-xs">
+                  LinkedIn
+                </Label>
                 <Input
                   id="pi-linkedin"
                   value={state.personal_info.linkedin ?? ""}
@@ -304,7 +318,7 @@ export function DocumentEditDialog({
               value={state.summary}
               onChange={(e) =>
                 setState((prev) =>
-                  prev ? { ...prev, summary: e.target.value } : prev
+                  prev ? { ...prev, summary: e.target.value } : prev,
                 )
               }
               rows={4}
@@ -322,7 +336,10 @@ export function DocumentEditDialog({
             </div>
             <div className="space-y-4">
               {state.experiences.map((exp, i) => (
-                <div key={i} className="border rounded-lg p-3 space-y-2 relative">
+                <div
+                  key={i}
+                  className="border rounded-lg p-3 space-y-2 relative"
+                >
                   <Button
                     variant="ghost"
                     size="icon"
@@ -358,7 +375,7 @@ export function DocumentEditDialog({
                           updateExp(i, "start_date", e.target.value)
                         }
                         className="mt-1"
-                        placeholder="Ex: 2022-01"
+                        placeholder={t("startDatePlaceholder")}
                       />
                     </div>
                     <div>
@@ -369,7 +386,7 @@ export function DocumentEditDialog({
                           updateExp(i, "end_date", e.target.value)
                         }
                         className="mt-1"
-                        placeholder="Ex: 2024-06 ou Présent"
+                        placeholder={t("endDatePlaceholder")}
                       />
                     </div>
                   </div>
@@ -395,7 +412,11 @@ export function DocumentEditDialog({
         )}
 
         <DialogFooter className="px-6 py-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
             Annuler
           </Button>
           <Button onClick={handleSave} disabled={saving}>

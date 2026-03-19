@@ -1763,7 +1763,7 @@ export default function JobsPage() {
                     )}
                   >
                     <ArrowUpDown className="w-4 h-4" />
-                    <SelectValue placeholder="Trier" />
+                    <SelectValue placeholder={t("sort.placeholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="relevance">Pertinence</SelectItem>
@@ -1957,7 +1957,7 @@ export default function JobsPage() {
                       </p>
                       <input
                         type="number"
-                        placeholder="ex: 35000"
+                        placeholder={t("salaryMinPlaceholder")}
                         value={quickFilters.salaryMin ?? ""}
                         onChange={(e) =>
                           setQuickFilters((prev) => ({

@@ -249,7 +249,7 @@ export function AdvancedFiltersModal({
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
                 <Command>
-                  <CommandInput placeholder="Rechercher une industrie..." />
+                  <CommandInput placeholder={t("searchIndustry")} />
                   <CommandEmpty>Aucune industrie trouvée.</CommandEmpty>
                   <CommandGroup className="max-h-64 overflow-auto">
                     {INDUSTRIES.map((industry) => (
@@ -303,7 +303,7 @@ export function AdvancedFiltersModal({
             <div className="flex gap-2">
               <Input
                 className="flex-1 min-w-0"
-                placeholder="Ex: React, Python, AWS..."
+                placeholder={t("keywordsPlaceholder")}
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -354,7 +354,7 @@ export function AdvancedFiltersModal({
             </div>
             <Select value={experienceLevel} onValueChange={setExperienceLevel}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un niveau..." />
+                <SelectValue placeholder={t("selectLevel")} />
               </SelectTrigger>
               <SelectContent>
                 {EXPERIENCE_LEVELS.map((level) => (
@@ -384,7 +384,7 @@ export function AdvancedFiltersModal({
                 <Input
                   id="salary-min"
                   type="number"
-                  placeholder="30 000"
+                  placeholder={t("salaryMinPlaceholder")}
                   value={salaryMin || ""}
                   onChange={(e) =>
                     setSalaryMin(
@@ -402,7 +402,7 @@ export function AdvancedFiltersModal({
                 <Input
                   id="salary-max"
                   type="number"
-                  placeholder="100 000"
+                  placeholder={t("salaryMaxPlaceholder")}
                   value={salaryMax || ""}
                   onChange={(e) =>
                     setSalaryMax(

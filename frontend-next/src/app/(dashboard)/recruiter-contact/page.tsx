@@ -339,7 +339,7 @@ export default function RecruiterContactPage() {
                   <Label htmlFor="fullName">{t("form.fullName")}</Label>
                   <Input
                     id="fullName"
-                    placeholder="Jean Dupont"
+                    placeholder={t("form.fullNamePlaceholder")}
                     value={formData.fullName}
                     onChange={(e) => handleChange("fullName", e.target.value)}
                     onBlur={() => handleBlur("fullName")}
@@ -361,7 +361,7 @@ export default function RecruiterContactPage() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="jean.dupont@example.com"
+                      placeholder={t("form.emailPlaceholder")}
                       className={`pl-10 border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.email && errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                       value={formData.email}
                       onChange={(e) => handleChange("email", e.target.value)}
@@ -382,7 +382,7 @@ export default function RecruiterContactPage() {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="+33 6 12 34 56 78"
+                      placeholder={t("form.phonePlaceholder")}
                       className={`pl-10 border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.phone && errors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                       value={formData.phone}
                       onChange={(e) => handleChange("phone", e.target.value)}

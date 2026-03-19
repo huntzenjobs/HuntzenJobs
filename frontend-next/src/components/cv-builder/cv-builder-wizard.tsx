@@ -12,8 +12,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Loader2, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 
-import type { CvData, PersonalInfo, Experience, Education, Skills } from "./types";
+import type {
+  CvData,
+  PersonalInfo,
+  Experience,
+  Education,
+  Skills,
+} from "./types";
 import { StepPersonalInfo } from "./steps/step-personal-info";
 import { StepSummary } from "./steps/step-summary";
 import { StepExperiences } from "./steps/step-experiences";
@@ -35,9 +42,9 @@ export interface CvBuilderWizardProps {
 
 const STEPS = [
   { label: "Infos perso.", short: "1" },
-  { label: "Résumé",      short: "2" },
+  { label: "Résumé", short: "2" },
   { label: "Expériences", short: "3" },
-  { label: "Formation",   short: "4" },
+  { label: "Formation", short: "4" },
   { label: "Compétences", short: "5" },
 ];
 
@@ -87,10 +94,11 @@ export function CvBuilderWizard({
   initialName = "Mon CV",
   onSave,
 }: CvBuilderWizardProps) {
+  const t = useTranslations("cvBuilder.wizard");
   const [step, setStep] = useState(0);
   const [profileName, setProfileName] = useState(initialName);
   const [formData, setFormData] = useState<CvData>(() =>
-    mergeInitial(initialData)
+    mergeInitial(initialData),
   );
   const [saving, setSaving] = useState(false);
 
@@ -124,8 +132,7 @@ export function CvBuilderWizard({
   const updateSkills = (skills: Skills) =>
     setFormData((d) => ({ ...d, skills }));
 
-  const canNext =
-    step === 0 ? isStep0Valid(formData) : true;
+  const canNext = step === 0 ? isStep0Valid(formData) : true;
 
   const handleSave = async () => {
     if (!isStep0Valid(formData)) return;
@@ -149,14 +156,17 @@ export function CvBuilderWizard({
 
         {/* Profile name (always visible) */}
         <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-          <Label htmlFor="profile-name" className="text-xs whitespace-nowrap text-gray-500">
+          <Label
+            htmlFor="profile-name"
+            className="text-xs whitespace-nowrap text-gray-500"
+          >
             Nom du profil :
           </Label>
           <Input
             id="profile-name"
             value={profileName}
             onChange={(e) => setProfileName(e.target.value)}
-            placeholder="Mon CV principal"
+            placeholder={t("profileNamePlaceholder")}
             className="h-7 text-sm border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-[#00D9FF]"
           />
         </div>
@@ -173,8 +183,8 @@ export function CvBuilderWizard({
                   i < step
                     ? "bg-[#00D9FF] text-gray-900 cursor-pointer"
                     : i === step
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-400"
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-400",
                 )}
               >
                 {i < step ? <Check className="h-3 w-3" /> : s.short}
@@ -182,7 +192,7 @@ export function CvBuilderWizard({
               <span
                 className={cn(
                   "text-xs hidden sm:block",
-                  i === step ? "text-gray-800 font-medium" : "text-gray-400"
+                  i === step ? "text-gray-800 font-medium" : "text-gray-400",
                 )}
               >
                 {s.label}
@@ -191,7 +201,7 @@ export function CvBuilderWizard({
                 <div
                   className={cn(
                     "flex-1 h-px w-4 mx-1",
-                    i < step ? "bg-[#00D9FF]" : "bg-gray-200"
+                    i < step ? "bg-[#00D9FF]" : "bg-gray-200",
                   )}
                 />
               )}

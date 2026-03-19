@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Briefcase, ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Experience } from "../types";
 
 interface Props {
@@ -25,8 +26,9 @@ const EMPTY_EXP: Experience = {
 };
 
 export function StepExperiences({ data, onChange }: Props) {
+  const t = useTranslations("cvBuilder.experiences");
   const [expandedIdx, setExpandedIdx] = useState<number | null>(
-    data.length === 0 ? null : 0
+    data.length === 0 ? null : 0,
   );
   const [showForm, setShowForm] = useState(data.length === 0);
   const [draft, setDraft] = useState<Experience>({ ...EMPTY_EXP });
@@ -59,9 +61,7 @@ export function StepExperiences({ data, onChange }: Props) {
             >
               <div
                 className="flex items-center justify-between p-3 cursor-pointer"
-                onClick={() =>
-                  setExpandedIdx(expandedIdx === idx ? null : idx)
-                }
+                onClick={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Briefcase className="h-4 w-4 text-gray-400 shrink-0" />
@@ -72,7 +72,11 @@ export function StepExperiences({ data, onChange }: Props) {
                     <p className="text-xs text-gray-500 truncate">
                       {exp.company}
                       {exp.start_date ? ` · ${exp.start_date}` : ""}
-                      {exp.current ? " — présent" : exp.end_date ? ` — ${exp.end_date}` : ""}
+                      {exp.current
+                        ? " — présent"
+                        : exp.end_date
+                          ? ` — ${exp.end_date}`
+                          : ""}
                     </p>
                   </div>
                 </div>
@@ -117,7 +121,7 @@ export function StepExperiences({ data, onChange }: Props) {
                 Intitulé du poste <span className="text-red-500">*</span>
               </Label>
               <Input
-                placeholder="Développeur Full-Stack"
+                placeholder={t("titlePlaceholder")}
                 value={draft.title}
                 onChange={(e) => updateField("title", e.target.value)}
                 className="h-8 text-sm"
@@ -128,7 +132,7 @@ export function StepExperiences({ data, onChange }: Props) {
                 Entreprise <span className="text-red-500">*</span>
               </Label>
               <Input
-                placeholder="Google"
+                placeholder={t("companyPlaceholder")}
                 value={draft.company}
                 onChange={(e) => updateField("company", e.target.value)}
                 className="h-8 text-sm"
@@ -137,7 +141,7 @@ export function StepExperiences({ data, onChange }: Props) {
             <div className="space-y-1">
               <Label className="text-xs">Date début</Label>
               <Input
-                placeholder="janv. 2022"
+                placeholder={t("startDatePlaceholder")}
                 value={draft.start_date}
                 onChange={(e) => updateField("start_date", e.target.value)}
                 className="h-8 text-sm"
@@ -146,7 +150,7 @@ export function StepExperiences({ data, onChange }: Props) {
             <div className="space-y-1">
               <Label className="text-xs">Date fin</Label>
               <Input
-                placeholder="déc. 2023"
+                placeholder={t("endDatePlaceholder")}
                 value={draft.end_date}
                 onChange={(e) => updateField("end_date", e.target.value)}
                 disabled={!!draft.current}
@@ -166,7 +170,7 @@ export function StepExperiences({ data, onChange }: Props) {
             <div className="ml-4 flex-1 space-y-1">
               <Label className="text-xs">Localisation</Label>
               <Input
-                placeholder="Paris, France"
+                placeholder={t("locationPlaceholder")}
                 value={draft.location ?? ""}
                 onChange={(e) => updateField("location", e.target.value)}
                 className="h-8 text-sm"
@@ -176,7 +180,7 @@ export function StepExperiences({ data, onChange }: Props) {
           <div className="space-y-1">
             <Label className="text-xs">Description</Label>
             <Textarea
-              placeholder="Développement et maintenance d'une application SaaS B2B utilisée par 500+ clients..."
+              placeholder={t("descriptionPlaceholder")}
               value={draft.description}
               onChange={(e) => updateField("description", e.target.value)}
               rows={3}

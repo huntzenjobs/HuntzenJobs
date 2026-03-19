@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, GraduationCap } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Education } from "../types";
 
 interface Props {
@@ -20,6 +21,7 @@ const EMPTY_EDU: Education = {
 };
 
 export function StepEducation({ data, onChange }: Props) {
+  const t = useTranslations("cvBuilder.education");
   const [showForm, setShowForm] = useState(data.length === 0);
   const [draft, setDraft] = useState<Education>({ ...EMPTY_EDU });
 
@@ -47,7 +49,9 @@ export function StepEducation({ data, onChange }: Props) {
             >
               <GraduationCap className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-gray-900">{edu.degree}</p>
+                <p className="font-medium text-sm text-gray-900">
+                  {edu.degree}
+                </p>
                 <p className="text-xs text-gray-500">
                   {edu.institution}
                   {edu.field ? ` · ${edu.field}` : ""}
@@ -69,14 +73,16 @@ export function StepEducation({ data, onChange }: Props) {
 
       {showForm ? (
         <div className="rounded-lg border border-[#00D9FF]/30 bg-[#00D9FF]/5 p-4 space-y-3">
-          <p className="font-medium text-sm text-gray-800">Nouvelle formation</p>
+          <p className="font-medium text-sm text-gray-800">
+            Nouvelle formation
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">
                 Diplôme <span className="text-red-500">*</span>
               </Label>
               <Input
-                placeholder="Master Informatique"
+                placeholder={t("degreePlaceholder")}
                 value={draft.degree}
                 onChange={(e) => updateField("degree", e.target.value)}
                 className="h-8 text-sm"
@@ -87,7 +93,7 @@ export function StepEducation({ data, onChange }: Props) {
                 Établissement <span className="text-red-500">*</span>
               </Label>
               <Input
-                placeholder="Université Paris-Saclay"
+                placeholder={t("institutionPlaceholder")}
                 value={draft.institution}
                 onChange={(e) => updateField("institution", e.target.value)}
                 className="h-8 text-sm"
@@ -96,7 +102,7 @@ export function StepEducation({ data, onChange }: Props) {
             <div className="space-y-1">
               <Label className="text-xs">Spécialité</Label>
               <Input
-                placeholder="Intelligence Artificielle"
+                placeholder={t("fieldPlaceholder")}
                 value={draft.field ?? ""}
                 onChange={(e) => updateField("field", e.target.value)}
                 className="h-8 text-sm"
@@ -105,7 +111,7 @@ export function StepEducation({ data, onChange }: Props) {
             <div className="space-y-1">
               <Label className="text-xs">Année d&apos;obtention</Label>
               <Input
-                placeholder="2022"
+                placeholder={t("yearPlaceholder")}
                 value={draft.year}
                 onChange={(e) => updateField("year", e.target.value)}
                 className="h-8 text-sm"

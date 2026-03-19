@@ -282,7 +282,7 @@ export default function SalonsPage() {
                         }
                       >
                         <SelectTrigger id="region">
-                          <SelectValue placeholder="Toutes les régions" />
+                          <SelectValue placeholder={t("filters.allRegions")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">
@@ -307,7 +307,7 @@ export default function SalonsPage() {
                         }
                       >
                         <SelectTrigger id="sector">
-                          <SelectValue placeholder="Tous les secteurs" />
+                          <SelectValue placeholder={t("filters.allSectors")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Tous les secteurs</SelectItem>
@@ -330,7 +330,7 @@ export default function SalonsPage() {
                         }
                       >
                         <SelectTrigger id="public">
-                          <SelectValue placeholder="Tous publics" />
+                          <SelectValue placeholder={t("filters.allPublics")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Tous publics</SelectItem>
@@ -355,7 +355,7 @@ export default function SalonsPage() {
                         }
                       >
                         <SelectTrigger id="type">
-                          <SelectValue placeholder="Tous types" />
+                          <SelectValue placeholder={t("filters.allTypes")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Tous types</SelectItem>
@@ -380,7 +380,7 @@ export default function SalonsPage() {
                         }
                       >
                         <SelectTrigger id="format">
-                          <SelectValue placeholder="Tous formats" />
+                          <SelectValue placeholder={t("filters.allFormats")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Tous formats</SelectItem>

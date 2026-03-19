@@ -189,7 +189,7 @@ export function SearchFormInline({
     if (!country.trim()) {
       newErrors.country = t("countryRequired");
     } else if (!isCountryValid) {
-      newErrors.country = "Veuillez sélectionner un pays dans la liste";
+      newErrors.country = t("selectCountryInList");
     }
 
     setErrors(newErrors);
@@ -299,7 +299,7 @@ export function SearchFormInline({
           {/* Country Autocomplete - DOIT ÊTRE AVANT LA VILLE */}
           <div className="flex-1 min-w-0">
             <AutocompleteInput
-              placeholder="Pays"
+              placeholder={t("countryPlaceholder")}
               value={country}
               onChange={handleCountryChange}
               onSearch={fetchCountries}
@@ -438,7 +438,7 @@ export function SearchFormInline({
 
         {/* Country Autocomplete - DOIT ÊTRE AVANT LA VILLE */}
         <AutocompleteInput
-          placeholder="Pays"
+          placeholder={t("countryPlaceholder")}
           value={country}
           onChange={handleCountryChange}
           onSearch={fetchCountries}

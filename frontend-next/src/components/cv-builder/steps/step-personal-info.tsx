@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslations } from "next-intl";
 import type { PersonalInfo } from "../types";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function StepPersonalInfo({ data, onChange }: Props) {
+  const t = useTranslations("cvBuilder.personalInfo");
   const field = (key: keyof PersonalInfo) => ({
     value: data[key] ?? "",
     onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -23,13 +25,17 @@ export function StepPersonalInfo({ data, onChange }: Props) {
           <Label htmlFor="name">
             Nom complet <span className="text-red-500">*</span>
           </Label>
-          <Input id="name" placeholder="Marie Dupont" {...field("name")} />
+          <Input
+            id="name"
+            placeholder={t("namePlaceholder")}
+            {...field("name")}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="title">Titre / Poste visé</Label>
           <Input
             id="title"
-            placeholder="Développeur Full-Stack"
+            placeholder={t("titlePlaceholder")}
             {...field("title")}
           />
         </div>
@@ -43,7 +49,7 @@ export function StepPersonalInfo({ data, onChange }: Props) {
           <Input
             id="email"
             type="email"
-            placeholder="marie@exemple.com"
+            placeholder={t("emailPlaceholder")}
             {...field("email")}
           />
         </div>
@@ -52,7 +58,7 @@ export function StepPersonalInfo({ data, onChange }: Props) {
           <Input
             id="phone"
             type="tel"
-            placeholder="+33 6 12 34 56 78"
+            placeholder={t("phonePlaceholder")}
             {...field("phone")}
           />
         </div>
@@ -61,13 +67,17 @@ export function StepPersonalInfo({ data, onChange }: Props) {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="location">Localisation</Label>
-          <Input id="location" placeholder="Paris, France" {...field("location")} />
+          <Input
+            id="location"
+            placeholder={t("locationPlaceholder")}
+            {...field("location")}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="linkedin">LinkedIn</Label>
           <Input
             id="linkedin"
-            placeholder="linkedin.com/in/marie-dupont"
+            placeholder={t("linkedinPlaceholder")}
             {...field("linkedin")}
           />
         </div>

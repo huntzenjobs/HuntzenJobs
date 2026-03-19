@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Skills, Language } from "../types";
 
 interface Props {
@@ -20,9 +21,16 @@ interface Props {
   onChange: (data: Skills) => void;
 }
 
-const LANGUAGE_LEVELS = ["Notions", "Intermédiaire", "Avancé", "Courant", "Natif"];
+const LANGUAGE_LEVELS = [
+  "Notions",
+  "Intermédiaire",
+  "Avancé",
+  "Courant",
+  "Natif",
+];
 
 export function StepSkills({ data, onChange }: Props) {
+  const t = useTranslations("cvBuilder.skills");
   const [techInput, setTechInput] = useState("");
   const [softInput, setSoftInput] = useState("");
   const [langName, setLangName] = useState("");
@@ -35,7 +43,7 @@ export function StepSkills({ data, onChange }: Props) {
   const addTag = (
     key: "technical" | "soft",
     value: string,
-    setter: (v: string) => void
+    setter: (v: string) => void,
   ) => {
     const trimmed = value.trim();
     if (!trimmed) return;
@@ -53,12 +61,15 @@ export function StepSkills({ data, onChange }: Props) {
   const addLanguage = () => {
     if (!langName || !langLevel) return;
     const existing = languages.find(
-      (l) => l.language.toLowerCase() === langName.trim().toLowerCase()
+      (l) => l.language.toLowerCase() === langName.trim().toLowerCase(),
     );
     if (!existing) {
       onChange({
         ...data,
-        languages: [...languages, { language: langName.trim(), level: langLevel }],
+        languages: [
+          ...languages,
+          { language: langName.trim(), level: langLevel },
+        ],
       });
     }
     setLangName("");
@@ -76,7 +87,7 @@ export function StepSkills({ data, onChange }: Props) {
     e: React.KeyboardEvent<HTMLInputElement>,
     key: "technical" | "soft",
     value: string,
-    setter: (v: string) => void
+    setter: (v: string) => void,
   ) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
@@ -91,10 +102,12 @@ export function StepSkills({ data, onChange }: Props) {
         <Label>Compétences techniques</Label>
         <div className="flex gap-2">
           <Input
-            placeholder="React, Python, SQL... (Entrée pour ajouter)"
+            placeholder={t("technicalPlaceholder")}
             value={techInput}
             onChange={(e) => setTechInput(e.target.value)}
-            onKeyDown={(e) => handleTagKeyDown(e, "technical", techInput, setTechInput)}
+            onKeyDown={(e) =>
+              handleTagKeyDown(e, "technical", techInput, setTechInput)
+            }
             className="text-sm"
           />
           <Button
@@ -132,10 +145,12 @@ export function StepSkills({ data, onChange }: Props) {
         <Label>Compétences comportementales</Label>
         <div className="flex gap-2">
           <Input
-            placeholder="Leadership, Travail en équipe... (Entrée pour ajouter)"
+            placeholder={t("softPlaceholder")}
             value={softInput}
             onChange={(e) => setSoftInput(e.target.value)}
-            onKeyDown={(e) => handleTagKeyDown(e, "soft", softInput, setSoftInput)}
+            onKeyDown={(e) =>
+              handleTagKeyDown(e, "soft", softInput, setSoftInput)
+            }
             className="text-sm"
           />
           <Button
@@ -173,14 +188,14 @@ export function StepSkills({ data, onChange }: Props) {
         <Label>Langues</Label>
         <div className="flex gap-2">
           <Input
-            placeholder="Français, Anglais..."
+            placeholder={t("languagePlaceholder")}
             value={langName}
             onChange={(e) => setLangName(e.target.value)}
             className="text-sm flex-1"
           />
           <Select value={langLevel} onValueChange={setLangLevel}>
             <SelectTrigger className="w-36 text-sm">
-              <SelectValue placeholder="Niveau" />
+              <SelectValue placeholder={t("levelPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {LANGUAGE_LEVELS.map((level) => (

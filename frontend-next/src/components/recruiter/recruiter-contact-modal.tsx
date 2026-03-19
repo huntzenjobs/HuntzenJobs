@@ -205,7 +205,7 @@ export function RecruiterContactModal({
                   </Label>
                   <Input
                     id="modal-fullName"
-                    placeholder="Jean Dupont"
+                    placeholder={t("fullNamePlaceholder")}
                     value={formData.fullName}
                     onChange={(e) => handleChange("fullName", e.target.value)}
                     required
@@ -222,7 +222,7 @@ export function RecruiterContactModal({
                     <Input
                       id="modal-email"
                       type="email"
-                      placeholder="jean.dupont@example.com"
+                      placeholder={t("emailPlaceholder")}
                       className="pl-10 h-10"
                       value={formData.email}
                       onChange={(e) => handleChange("email", e.target.value)}
@@ -240,7 +240,7 @@ export function RecruiterContactModal({
                     <Input
                       id="modal-phone"
                       type="tel"
-                      placeholder="+33 6 12 34 56 78"
+                      placeholder={t("phonePlaceholder")}
                       className="pl-10 h-10"
                       value={formData.phone}
                       onChange={(e) => handleChange("phone", e.target.value)}

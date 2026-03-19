@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslations } from "next-intl";
 
 interface Contact {
   name?: string;
@@ -26,6 +27,7 @@ export function RecruiterEmailFinder({
   companyDomain,
 }: RecruiterEmailFinderProps) {
   const { session } = useAuth();
+  const t = useTranslations("dashboard.recruiterContact.finder");
   const [company, setCompany] = useState(companyName);
   const [results, setResults] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
@@ -83,7 +85,7 @@ export function RecruiterEmailFinder({
         <Input
           value={company}
           onChange={(e) => setCompany(e.target.value)}
-          placeholder="Nom de l'entreprise"
+          placeholder={t("companyPlaceholder")}
           className="flex-1"
         />
         <Button onClick={handleSearch} disabled={loading || !company.trim()}>

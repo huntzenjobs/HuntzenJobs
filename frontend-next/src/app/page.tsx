@@ -31,8 +31,7 @@ const GRID_PATTERN =
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 } as const,
-  viewport: { once: true } as const,
+  animate: { opacity: 1, y: 0 } as const,
   transition: { duration: 0.5 },
 };
 
@@ -179,8 +178,7 @@ export default function HomePage() {
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
             className="flex flex-wrap items-center justify-center gap-3"
           >
@@ -200,7 +198,7 @@ export default function HomePage() {
               </span>
             ))}
             <span className="px-4 py-1.5 rounded-full bg-slate-200 border border-slate-300 text-slate-500 text-sm font-semibold italic">
-              et plus…
+              {tTrustBar("andMore")}
             </span>
           </motion.div>
         </div>
@@ -224,8 +222,7 @@ export default function HomePage() {
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="text-center px-4"
               >
@@ -251,8 +248,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-12 items-center mb-20 sm:mb-28">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               className="rounded-3xl overflow-hidden aspect-square border-2 border-slate-200 shadow-xl"
             >
@@ -266,8 +262,7 @@ export default function HomePage() {
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
               <span className="inline-block px-3 py-1 rounded-full bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold tracking-widest mb-4">
@@ -305,8 +300,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-12 items-center mb-20 sm:mb-28">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
               <span className="inline-block px-3 py-1 rounded-full bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold tracking-widest mb-4">
@@ -340,8 +334,7 @@ export default function HomePage() {
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               className="rounded-3xl overflow-hidden aspect-square border-2 border-slate-200 shadow-xl"
             >
@@ -359,8 +352,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               className="rounded-3xl overflow-hidden aspect-square border-2 border-slate-200 shadow-xl"
             >
@@ -374,8 +366,7 @@ export default function HomePage() {
             </motion.div>
             <motion.div
               initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
               <span className="inline-block px-3 py-1 rounded-full bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold tracking-widest mb-4">
@@ -388,20 +379,26 @@ export default function HomePage() {
                 {tFeatures("coaches.description")}
               </p>
               <ul className="space-y-3 mb-6">
-                {[
-                  { name: "Nova", desc: "Stratégie et plan de carrière" },
-                  { name: "Maria", desc: "Recherche d'emploi et candidatures" },
-                  { name: "Sofia", desc: "Optimisation et analyse de CV" },
-                  { name: "Lucas", desc: "Préparation aux entretiens" },
-                  { name: "David", desc: "Personal Branding et LinkedIn" },
-                ].map((c, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-700 text-sm">
-                      <strong>{c.name}</strong> · {c.desc}
-                    </span>
-                  </li>
-                ))}
+                {(["nova", "maria", "sofia", "lucas", "david"] as const).map(
+                  (key, i) => {
+                    const names = {
+                      nova: "Nova",
+                      maria: "Maria",
+                      sofia: "Sofia",
+                      lucas: "Lucas",
+                      david: "David",
+                    };
+                    return (
+                      <li key={i} className="flex items-start gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
+                        <span className="text-slate-700 text-sm">
+                          <strong>{names[key]}</strong> ·{" "}
+                          {tFeatures(`coaches.list.${key}`)}
+                        </span>
+                      </li>
+                    );
+                  },
+                )}
               </ul>
               <Link
                 href="/assistant"
@@ -426,8 +423,7 @@ export default function HomePage() {
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-slate-500 text-base"
             >
@@ -438,82 +434,25 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
             {(
               [
-                {
-                  icon: Search,
-                  name: "Recherche d'emplois",
-                  desc: "Agrégateur multi-plateformes mis à jour quotidiennement",
-                  badge: null,
-                },
-                {
-                  icon: FileText,
-                  name: "Analyse CV & Score ATS",
-                  desc: "Optimise ton CV pour passer tous les filtres automatiquement",
-                  badge: null,
-                },
-                {
-                  icon: UserCheck,
-                  name: "Nova — Coach Carrière",
-                  desc: "Stratégie, reconversion, plan d'action personnalisé",
-                  badge: null,
-                },
-                {
-                  icon: Briefcase,
-                  name: "Maria — Coach Emploi",
-                  desc: "Trouve les bonnes offres et postule efficacement",
-                  badge: null,
-                },
-                {
-                  icon: Award,
-                  name: "Sofia — Expert CV",
-                  desc: "CV percutant qui attire l'attention des recruteurs",
-                  badge: null,
-                },
-                {
-                  icon: Mic,
-                  name: "Lucas — Coach Entretien",
-                  desc: "Prépare les questions difficiles, gère le stress",
-                  badge: tFeaturesGrid("badgeSoon"),
-                },
-                {
-                  icon: Linkedin,
-                  name: "David — Personal Branding",
-                  desc: "Profil LinkedIn qui attire les recruteurs à toi",
-                  badge: null,
-                },
-                {
-                  icon: Calendar,
-                  name: "Salons & Forums",
-                  desc: "Événements emploi partout en France",
-                  badge: null,
-                },
-                {
-                  icon: Bookmark,
-                  name: "Offres sauvegardées",
-                  desc: "Retrouve et suis toutes tes candidatures favorites",
-                  badge: null,
-                },
+                { icon: Search, key: "jobSearch", badge: null },
+                { icon: FileText, key: "cvAnalysis", badge: null },
+                { icon: UserCheck, key: "nova", badge: null },
+                { icon: Briefcase, key: "maria", badge: null },
+                { icon: Award, key: "sofia", badge: null },
+                { icon: Mic, key: "lucas", badge: tFeaturesGrid("badgeSoon") },
+                { icon: Linkedin, key: "david", badge: null },
+                { icon: Calendar, key: "salons", badge: null },
+                { icon: Bookmark, key: "savedJobs", badge: null },
                 {
                   icon: UserCheck2,
-                  name: "Contact Recruteur",
-                  desc: "Session 1:1 avec un expert RH",
-                  badge: "50€",
+                  key: "recruiterContact",
+                  badge: tFeaturesGrid("recruiterBadge"),
                 },
-                {
-                  icon: FilePlus,
-                  name: "Génération Documents",
-                  desc: "CV + lettre de motivation adaptés à chaque offre",
-                  badge: null,
-                },
-                {
-                  icon: Globe,
-                  name: "Guide Expatriation",
-                  desc: "S'installer et travailler dans 15 pays",
-                  badge: null,
-                },
+                { icon: FilePlus, key: "documents", badge: null },
+                { icon: Globe, key: "expat", badge: null },
               ] as Array<{
                 icon: React.ElementType;
-                name: string;
-                desc: string;
+                key: string;
                 badge: string | null;
               }>
             ).map((item, i) => {
@@ -522,8 +461,7 @@ export default function HomePage() {
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45, delay: i * 0.04 }}
                   className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-[#00D9FF]/40 hover:shadow-lg transition-all"
                 >
@@ -538,10 +476,10 @@ export default function HomePage() {
                     )}
                   </div>
                   <h3 className="font-bold text-slate-900 text-sm mb-1">
-                    {item.name}
+                    {tFeaturesGrid(`items.${item.key}.name`)}
                   </h3>
                   <p className="text-slate-500 text-xs leading-relaxed">
-                    {item.desc}
+                    {tFeaturesGrid(`items.${item.key}.desc`)}
                   </p>
                 </motion.div>
               );
@@ -562,8 +500,7 @@ export default function HomePage() {
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-slate-500 text-base"
             >
@@ -591,8 +528,7 @@ export default function HomePage() {
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="text-center bg-slate-50 rounded-2xl p-8 border border-slate-200 hover:border-[#00D9FF]/30 hover:shadow-lg transition-all"
               >
@@ -628,8 +564,7 @@ export default function HomePage() {
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-slate-500 text-base max-w-2xl mx-auto"
             >
@@ -671,8 +606,7 @@ export default function HomePage() {
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-white/60 text-lg mb-10"
           >
@@ -680,8 +614,7 @@ export default function HomePage() {
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <Link

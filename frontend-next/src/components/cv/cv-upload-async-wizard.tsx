@@ -912,7 +912,7 @@ export function CVUploadAsyncWizard({
           <textarea
             value={wizardState.jobDescription}
             onChange={(e) => handleJobDescriptionChange(e.target.value)}
-            placeholder="Collez la description du poste ici..."
+            placeholder={t("placeholders.pasteJobDescriptionHere")}
             className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500">

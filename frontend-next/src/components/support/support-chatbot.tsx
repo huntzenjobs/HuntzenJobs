@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
+import { useTranslations } from "next-intl";
 import { useSupportChat, type SupportMessage } from "@/hooks/use-support";
 
 interface SupportChatbotProps {
@@ -33,6 +34,7 @@ const QUICK_CHIPS = [
 
 export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
   const { user } = useAuth();
+  const tSupport = useTranslations("support.placeholders");
   const { messages, isLoading, sendMessage } = useSupportChat();
   const [input, setInput] = useState("");
   const [faqEntries, setFaqEntries] = useState<FaqEntry[]>([]);
@@ -40,7 +42,10 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "vous";
+  const firstName =
+    user?.user_metadata?.full_name?.split(" ")[0] ||
+    user?.email?.split("@")[0] ||
+    "vous";
 
   // Load FAQ JSON and initialize Fuse
   useEffect(() => {
@@ -54,7 +59,7 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
             keys: ["keywords", "question"],
             threshold: 0.3,
             includeScore: true,
-          })
+          }),
         );
       })
       .catch(() => {});
@@ -72,9 +77,10 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
 
     // Fuzzy match FAQ first
     const faqResult = fuse?.search(q)[0];
-    const faqMatch = faqResult && faqResult.score !== undefined && faqResult.score < 0.3
-      ? faqResult.item
-      : null;
+    const faqMatch =
+      faqResult && faqResult.score !== undefined && faqResult.score < 0.3
+        ? faqResult.item
+        : null;
 
     await sendMessage(q, faqMatch ? { answer: faqMatch.answer } : null);
   };
@@ -95,11 +101,14 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
           <div className="space-y-3">
             <div className="bg-muted/50 rounded-xl p-3">
               <p className="text-sm">
-                👋 Bonjour <strong>{firstName}</strong> ! Comment puis-je vous aider ?
+                👋 Bonjour <strong>{firstName}</strong> ! Comment puis-je vous
+                aider ?
               </p>
             </div>
             <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground font-medium px-1">Questions fréquentes :</p>
+              <p className="text-xs text-muted-foreground font-medium px-1">
+                Questions fréquentes :
+              </p>
               {QUICK_CHIPS.map((chip) => (
                 <button
                   key={chip}
@@ -138,7 +147,7 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Posez votre question..."
+            placeholder={tSupport("chatbotQuestion")}
             maxLength={500}
             disabled={isLoading}
             className="flex-1 text-sm bg-muted/50 rounded-lg px-3 py-2 border border-border focus:outline-none focus:ring-1 focus:ring-huntzen-blue disabled:opacity-50"
@@ -173,18 +182,24 @@ function ChatMessage({
           "max-w-[85%] rounded-xl px-3 py-2 text-sm",
           isUser
             ? "bg-huntzen-blue text-white rounded-br-sm"
-            : "bg-muted/70 rounded-bl-sm"
+            : "bg-muted/70 rounded-bl-sm",
         )}
       >
         {!isUser && message.type && (
           <div className="mb-1">
             {message.type === "faq" && (
-              <Badge variant="outline" className="text-[10px] h-4 border-green-500 text-green-600">
+              <Badge
+                variant="outline"
+                className="text-[10px] h-4 border-green-500 text-green-600"
+              >
                 FAQ
               </Badge>
             )}
             {message.type === "ai" && (
-              <Badge variant="outline" className="text-[10px] h-4 border-blue-400 text-blue-500">
+              <Badge
+                variant="outline"
+                className="text-[10px] h-4 border-blue-400 text-blue-500"
+              >
                 IA
               </Badge>
             )}

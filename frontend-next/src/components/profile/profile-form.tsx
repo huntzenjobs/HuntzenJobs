@@ -32,6 +32,7 @@ export function ProfileForm({
   const [hasChanges, setHasChanges] = useState(false);
   const router = useRouter();
   const t = useTranslations("profile.toasts");
+  const tProfile = useTranslations("profile.placeholders");
 
   // Handle full name change
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,7 +132,7 @@ export function ProfileForm({
           type="text"
           value={fullName}
           onChange={handleNameChange}
-          placeholder="Votre nom complet"
+          placeholder={tProfile("fullName")}
           disabled={isSaving}
           className="max-w-md"
         />

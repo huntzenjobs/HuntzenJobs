@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCoachHistory, useDebounce } from "@/hooks/use-coach-history";
+import { useTranslations } from "next-intl";
 import { ConversationListItem } from "./conversation-list-item";
 import type { ConversationListFilters } from "@/types/coach-history";
 
@@ -39,6 +40,7 @@ export function HistorySidebar({
   onLoadConversation,
   currentConversationId,
 }: HistorySidebarProps) {
+  const t = useTranslations("coach.history");
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -141,7 +143,7 @@ export function HistorySidebar({
               <Input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Rechercher... (Cmd/Ctrl + K)"
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-10 border-2"
