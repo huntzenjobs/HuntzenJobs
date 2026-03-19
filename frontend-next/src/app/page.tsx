@@ -38,7 +38,6 @@ const fadeUp = {
 export default function HomePage() {
   const tHero = useTranslations("hero");
   const tTrustBar = useTranslations("trustBar");
-  const tHow = useTranslations("howItWorks");
   const tFeatures = useTranslations("features");
   const tFeaturesGrid = useTranslations("featuresGrid");
   const tStats = useTranslations("stats");
@@ -204,40 +203,92 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 3 — COMMENT ÇA MARCHE */}
-      <section id="how" className="py-16 sm:py-24 bg-white">
+      {/* SECTION 3 — CARROUSEL OUTILS */}
+      <section id="how" className="py-16 sm:py-24 bg-white overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6">
-          <motion.h2
-            {...fadeUp}
-            className="text-3xl sm:text-4xl font-bold text-slate-900 text-center mb-14"
-          >
-            {tHow("title")}
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto">
-            {[
-              { num: "①", title: tHow("step1Title"), desc: tHow("step1Desc") },
-              { num: "②", title: tHow("step2Title"), desc: tHow("step2Desc") },
-              { num: "③", title: tHow("step3Title"), desc: tHow("step3Desc") },
-            ].map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="text-center px-4"
-              >
-                <div className="text-5xl font-black text-[#00D9FF] mb-4">
-                  {step.num}
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">
-                  {step.title}
-                </h3>
-                <p className="text-slate-500 text-sm leading-relaxed">
-                  {step.desc}
-                </p>
-              </motion.div>
-            ))}
+          <div className="text-center mb-12">
+            <motion.h2
+              {...fadeUp}
+              className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3"
+            >
+              {tFeaturesGrid("title")}
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-slate-500 text-base"
+            >
+              {tFeaturesGrid("subtitle")}
+            </motion.p>
           </div>
+        </div>
+
+        {/* Carrousel auto-défilant — double bande pour boucle infinie */}
+        <div className="relative">
+          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+          <motion.div
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            className="flex gap-4 w-max"
+          >
+            {[...Array(2)].map((_, dupeIndex) =>
+              (
+                [
+                  { icon: Search, key: "jobSearch", badge: null },
+                  { icon: FileText, key: "cvAnalysis", badge: null },
+                  { icon: UserCheck, key: "nova", badge: null },
+                  { icon: Briefcase, key: "maria", badge: null },
+                  { icon: Award, key: "sofia", badge: null },
+                  {
+                    icon: Mic,
+                    key: "lucas",
+                    badge: tFeaturesGrid("badgeSoon"),
+                  },
+                  { icon: Linkedin, key: "david", badge: null },
+                  { icon: Calendar, key: "salons", badge: null },
+                  { icon: Bookmark, key: "savedJobs", badge: null },
+                  {
+                    icon: UserCheck2,
+                    key: "recruiterContact",
+                    badge: tFeaturesGrid("recruiterBadge"),
+                  },
+                  { icon: FilePlus, key: "documents", badge: null },
+                  { icon: Globe, key: "expat", badge: null },
+                ] as Array<{
+                  icon: React.ElementType;
+                  key: string;
+                  badge: string | null;
+                }>
+              ).map((item, i) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={`${dupeIndex}-${i}`}
+                    className="flex-shrink-0 w-64 bg-white border border-slate-200 rounded-2xl p-6 hover:border-[#00D9FF]/40 hover:shadow-lg transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-slate-600" />
+                      </div>
+                      {item.badge && (
+                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-semibold">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-bold text-slate-900 text-sm mb-1">
+                      {tFeaturesGrid(`items.${item.key}.name`)}
+                    </h3>
+                    <p className="text-slate-500 text-xs leading-relaxed">
+                      {tFeaturesGrid(`items.${item.key}.desc`)}
+                    </p>
+                  </div>
+                );
+              }),
+            )}
+          </motion.div>
         </div>
       </section>
 
@@ -411,82 +462,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 5 — GRILLE 12 FEATURES */}
-      <section className="py-16 sm:py-24 bg-slate-50">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <motion.h2
-              {...fadeUp}
-              className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3"
-            >
-              {tFeaturesGrid("title")}
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-slate-500 text-base"
-            >
-              {tFeaturesGrid("subtitle")}
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-            {(
-              [
-                { icon: Search, key: "jobSearch", badge: null },
-                { icon: FileText, key: "cvAnalysis", badge: null },
-                { icon: UserCheck, key: "nova", badge: null },
-                { icon: Briefcase, key: "maria", badge: null },
-                { icon: Award, key: "sofia", badge: null },
-                { icon: Mic, key: "lucas", badge: tFeaturesGrid("badgeSoon") },
-                { icon: Linkedin, key: "david", badge: null },
-                { icon: Calendar, key: "salons", badge: null },
-                { icon: Bookmark, key: "savedJobs", badge: null },
-                {
-                  icon: UserCheck2,
-                  key: "recruiterContact",
-                  badge: tFeaturesGrid("recruiterBadge"),
-                },
-                { icon: FilePlus, key: "documents", badge: null },
-                { icon: Globe, key: "expat", badge: null },
-              ] as Array<{
-                icon: React.ElementType;
-                key: string;
-                badge: string | null;
-              }>
-            ).map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, delay: i * 0.04 }}
-                  className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-[#00D9FF]/40 hover:shadow-lg transition-all"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-slate-600" />
-                    </div>
-                    {item.badge && (
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-semibold">
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-sm mb-1">
-                    {tFeaturesGrid(`items.${item.key}.name`)}
-                  </h3>
-                  <p className="text-slate-500 text-xs leading-relaxed">
-                    {tFeaturesGrid(`items.${item.key}.desc`)}
-                  </p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* Section 5 supprimée — fusionnée dans le carrousel Section 3 */}
 
       {/* SECTION 6 — STATS */}
       <section className="py-16 sm:py-20 bg-white">
