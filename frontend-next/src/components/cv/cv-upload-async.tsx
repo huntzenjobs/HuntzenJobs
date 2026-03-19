@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 import { useCVAnalysis } from "@/hooks/use-cv-analysis";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import type { FeatureType } from "@/hooks/use-freemium-limits";
+import { toast } from "sonner";
 
 // ============================================
 // TYPES
@@ -195,7 +196,7 @@ export function CVUploadAsync({
     if (file && file.name.toLowerCase().endsWith(".pdf")) {
       setSelectedFile(file);
     } else {
-      alert("Seuls les fichiers PDF sont acceptés");
+      toast.error("Seuls les fichiers PDF sont acceptés");
     }
   };
 

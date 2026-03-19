@@ -55,6 +55,7 @@ import { exportCVAnalysisToPDF } from "@/utils/export-cv-pdf";
 import type { FeatureType } from "@/hooks/use-freemium-limits";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 // ============================================
 // TYPES
@@ -428,7 +429,7 @@ export function CVUploadAsyncWizard({
     if (file && file.name.toLowerCase().endsWith(".pdf")) {
       setWizardState((prev) => ({ ...prev, file }));
     } else {
-      alert("Seuls les fichiers PDF sont acceptés");
+      toast.error("Seuls les fichiers PDF sont acceptés");
     }
   };
 
@@ -676,13 +677,13 @@ export function CVUploadAsyncWizard({
         });
         setShowHistory(false);
       } else {
-        alert(
+        toast.error(
           `Cette analyse n'est pas encore terminée (status: ${data.status})`,
         );
       }
     } catch (error) {
       console.error("Failed to load from history:", error);
-      alert("Erreur lors du chargement de l'analyse");
+      toast.error("Erreur lors du chargement de l'analyse");
     }
   };
 
@@ -1589,7 +1590,7 @@ export function CVUploadAsyncWizard({
                   try {
                     await exportCVAnalysisToPDF(displayResult);
                   } catch (error) {
-                    alert("Erreur lors de l'export PDF");
+                    toast.error("Erreur lors de l'export PDF");
                     console.error(error);
                   }
                 }}

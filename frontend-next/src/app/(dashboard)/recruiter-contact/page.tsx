@@ -36,6 +36,7 @@ import { huntzenApi } from "@/lib/api/huntzen-client";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useOptionalAuth } from "@/contexts/auth-context";
+import { toast } from "sonner";
 import { HeroSection } from "@/components/recruiter/hero-section";
 import { ProcessSteps } from "@/components/recruiter/process-steps";
 import { TestimonialsSection } from "@/components/recruiter/testimonials-section";
@@ -137,7 +138,7 @@ export default function RecruiterContactPage() {
         window.location.href = paymentResponse.checkout_url;
       }
     } catch (error: any) {
-      alert(t("form.error"));
+      toast.error(t("form.error"));
     } finally {
       setIsSubmitting(false);
     }
