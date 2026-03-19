@@ -1,9 +1,9 @@
-# Sprint C — Performance & SEO (42 → 100) — Design Spec
+# Sprint C — Performance & SEO (42 → 90) — Design Spec
 
 > Date : 2026-03-19
 > Scope : frontend-next/ uniquement
 > Score actuel : 42/100 (audit commercial 2026-03-18)
-> Score cible : 100/100
+> Score cible : 90/100
 > Référence audit : docs/audit/subagents/07-performance-seo.md
 
 ---
@@ -11,10 +11,20 @@
 ## Décisions d'architecture validées
 
 1. **Landing SSR** : Option A — garder framer-motion, extraire les sections animées en Client Components
-2. **Routing i18n** : Option B — FR sans préfixe (`/jobs`), autres langues avec préfixe (`/en/jobs`, `/es/jobs`, `/pt/jobs`)
-3. **hreflang** : Implémenté via `alternates.languages` dans les metadata (rendu possible par les URLs distinctes par langue)
-4. **Fonts** : Supprimer les `<link preload>` redondants, `next/font` suffit
-5. **Images** : Migrer les `backgroundImage: url(unsplash)` vers `next/image` avec `fill` + `object-cover`
+2. **~~Routing i18n~~** : REPORTÉ au Sprint D — risque trop élevé de régression sur l'auth Google OAuth et le middleware Supabase SSR. Les 8pts de hreflang ne justifient pas le risque de casser l'auth pour les users actuels.
+3. **Fonts** : Supprimer les `<link preload>` redondants + `@import Plus Jakarta Sans`, `next/font` suffit
+4. **Images** : Migrer les `backgroundImage: url(unsplash)` vers `next/image` avec `fill` + `object-cover`
+
+### Items du Sprint C (C4 exclu)
+- C1 — Landing SSR (+15pts)
+- C2 — Font cleanup (+10pts)
+- C3 — Metadata pages manquantes (+10pts) — metadata statiques FR (pas de routing locale)
+- C5 — Images next/image (+5pts)
+- C6 — Sitemap complet (+3pts) — sans variantes locale
+- C7 — JobPosting schema (+5pts)
+- C8 — Dynamic imports (+2pts)
+- C9 — Cleanup config (0pts)
+- **Total : +50pts → 92/100** (arrondi audit)
 
 ---
 
@@ -31,7 +41,7 @@ Convertir `page.tsx` en Server Component. Extraire les parties animées (framer-
 ### Architecture
 
 ```
-app/[locale]/page.tsx                    ← Server Component (getTranslations)
+app/page.tsx                             ← Server Component (getTranslations)
 components/landing/
 ├── hero-section.tsx                     ← "use client" (motion.*, glow orbs, CTA)
 ├── trust-bar.tsx                        ← "use client" (motion fadeUp)
@@ -46,7 +56,7 @@ components/landing/
 ### Pattern Server → Client
 
 ```tsx
-// app/[locale]/page.tsx (Server Component)
+// app/page.tsx (Server Component)
 import { getTranslations } from "next-intl/server"
 import { HeroSection } from "@/components/landing/hero-section"
 import { TrustBar } from "@/components/landing/trust-bar"
@@ -189,59 +199,49 @@ Supprimer les lignes 76-86 de `layout.tsx` :
 Les pages `/blog`, `/login`, `/signup`, `/forgot-password` n'ont aucun export `metadata`. Comme elles sont `"use client"`, on ne peut pas exporter de metadata depuis le `page.tsx`.
 
 ### Fix
-Créer un `layout.tsx` avec `generateMetadata()` (dynamique) pour chaque page concernée, afin de supporter les traductions par locale. Les helpers sont dans `lib/seo/metadata.ts`.
+Créer un `layout.tsx` avec export `metadata` statique pour chaque page concernée. Les metadata sont centralisées dans `lib/seo/metadata.ts` (pattern existant). Pas de `generateMetadata` dynamique puisque C4 (routing locale) est reporté.
 
-### Metadata dynamiques par locale
+### Nouvelles metadata dans lib/seo/metadata.ts
 
-Puisque C4 introduit le routing `[locale]`, les metadata doivent être traduites. On utilise `generateMetadata()` + `getTranslations` :
-
-```tsx
-// app/[locale]/blog/layout.tsx
-import type { Metadata } from "next"
-import { getTranslations } from "next-intl/server"
-import { localeAlternates } from "@/lib/seo/metadata"
-
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("seo.blog")
-  return {
-    title: t("title"),           // FR: "Blog", EN: "Blog"
-    description: t("description"), // FR: "Conseils et actualités...", EN: "Tips and news..."
-    openGraph: { title: t("title"), description: t("description") },
-    alternates: localeAlternates("/blog"),
-  }
+```ts
+export const blogMetadata: Metadata = {
+  title: "Blog",
+  description: "Conseils et actualités pour réussir votre recherche d'emploi — HuntZen Jobs",
+  openGraph: {
+    title: "Blog | HuntZen Jobs",
+    description: "Conseils et actualités pour réussir votre recherche d'emploi",
+  },
+  alternates: { canonical: `${SITE_URL}/blog` },
 }
-```
 
-Pour login et forgot-password (noindex) :
-```tsx
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("seo.login")
-  return {
-    title: t("title"),
-    description: t("description"),
-    robots: { index: false, follow: true },
-  }
+export const loginMetadata: Metadata = {
+  title: "Connexion",
+  description: "Connectez-vous à votre compte HuntZen Jobs",
+  robots: { index: false, follow: true },
 }
-```
 
-### Clés i18n à ajouter dans messages/fr.json et en.json
+export const signupMetadata: Metadata = {
+  title: "Inscription gratuite",
+  description: "Créez votre compte HuntZen Jobs gratuitement et boostez votre recherche d'emploi",
+  openGraph: {
+    title: "Inscription gratuite | HuntZen Jobs",
+    description: "Créez votre compte gratuitement",
+  },
+  alternates: { canonical: `${SITE_URL}/signup` },
+}
 
-```json
-{
-  "seo": {
-    "blog": { "title": "Blog", "description": "Conseils et actualités pour votre recherche d'emploi" },
-    "login": { "title": "Connexion", "description": "Connectez-vous à votre compte HuntZen Jobs" },
-    "signup": { "title": "Inscription gratuite", "description": "Créez votre compte HuntZen Jobs gratuitement" },
-    "forgotPassword": { "title": "Mot de passe oublié", "description": "Réinitialisez votre mot de passe" }
-  }
+export const forgotPasswordMetadata: Metadata = {
+  title: "Mot de passe oublié",
+  description: "Réinitialisez votre mot de passe HuntZen Jobs",
+  robots: { index: false, follow: true },
 }
 ```
 
 ### Fichiers créés
-- `app/[locale]/blog/layout.tsx` — generateMetadata avec i18n
-- `app/[locale]/login/layout.tsx` — generateMetadata (noindex)
-- `app/[locale]/signup/layout.tsx` — generateMetadata avec i18n
-- `app/[locale]/forgot-password/layout.tsx` — generateMetadata (noindex)
+- `app/blog/layout.tsx` — export blogMetadata
+- `app/login/layout.tsx` — export loginMetadata
+- `app/signup/layout.tsx` — export signupMetadata
+- `app/forgot-password/layout.tsx` — export forgotPasswordMetadata
 
 ### Décision : indexation
 - Blog et Signup : `index: true` (pages publiques utiles pour le SEO)
@@ -249,12 +249,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 ---
 
-## C4 — Routing i18n avec préfixes locale (+8pts)
+## ~~C4 — Routing i18n avec préfixes locale (+8pts)~~ — REPORTÉ AU SPRINT D
+
+> **Décision** : Reporté car risque élevé de régression sur l'auth Google OAuth et le middleware Supabase SSR.
+> Le design ci-dessous est conservé comme référence pour le Sprint D.
 
 ### Problème
 Aucun hreflang configuré malgré 4 langues. Google ne sait pas quelle version linguistique servir. Les URLs sont identiques quelle que soit la langue (détection par cookie).
 
-### Solution
+### Solution (Sprint D)
 Restructurer le routing avec `app/[locale]/` et `next-intl/routing` en mode `localePrefix: "as-needed"` (FR sans préfixe, EN/ES/PT avec préfixe).
 
 ### 1. Structure fichiers
@@ -594,24 +597,9 @@ images: {
 { url: `${SITE_URL}/signup`, changeFrequency: "yearly", priority: 0.5 },
 ```
 
-### Variantes de langue
+### Pas de variantes locale (C4 reporté)
 
-Pour chaque page publique, générer les variantes `/en/...`, `/es/...`, `/pt/...` :
-
-```ts
-import type { MetadataRoute } from "next"
-
-type ChangeFreq = MetadataRoute.Sitemap[number]["changeFrequency"]
-
-function withLocaleVariants(path: string, freq: ChangeFreq, priority: number): MetadataRoute.Sitemap {
-  return ["", "/en", "/es", "/pt"].map(prefix => ({
-    url: `${SITE_URL}${prefix}${path}`,
-    lastModified: new Date(),
-    changeFrequency: freq,
-    priority,
-  }))
-}
-```
+Pas de variantes `/en/...`, `/es/...`, `/pt/...` dans le sitemap pour l'instant — les URLs localisées n'existent pas encore. Sera ajouté quand le Sprint D (routing i18n) sera implémenté.
 
 ### Login non inclus
 `/login` et `/forgot-password` ont `robots: { index: false }` → pas dans le sitemap.
@@ -719,42 +707,47 @@ Supprimer `swcMinify: true` de `next.config.js` — deprecated depuis Next.js 14
 
 ## Ordre d'exécution recommandé
 
-1. **C4** — Routing i18n (fondation, tout le reste en dépend car les fichiers bougent dans `[locale]/`)
-2. **C1** — Landing SSR (dans le nouveau `[locale]/page.tsx`)
-3. **C2** — Font cleanup (quick fix dans layout.tsx)
-4. **C3** — Metadata pages manquantes
-5. **C5** — Images next/image
-6. **C6** — Sitemap complet (avec variantes locale)
-7. **C7** — JobPosting schema
-8. **C8** — Dynamic imports
-9. **C9** — Cleanup config
+1. **C1** — Landing SSR (le plus impactant, +15pts)
+2. **C2** — Font cleanup (quick fix dans layout.tsx, +10pts)
+3. **C5** — Images next/image (dans les Client Components créés par C1, +5pts)
+4. **C3** — Metadata pages manquantes (+10pts)
+5. **C6** — Sitemap complet (+3pts)
+6. **C7** — JobPosting schema (+5pts)
+7. **C8** — Dynamic imports (+2pts)
+8. **C9** — Cleanup config (0pts)
 
 ### Dépendances
-- C4 bloque C1, C3, C6 (les fichiers bougent)
-- C1 bloque C5 (l'image hero est dans la landing)
-- C4 bloque hreflang dans C3 (besoin des URLs locale)
-- Le reste est indépendant
+- C1 bloque C5 (les images Unsplash sont dans les composants landing extraits par C1)
+- C2 peut être fait en parallèle de C1
+- C3, C6, C7, C8, C9 sont tous indépendants entre eux et de C1
 
 ---
 
 ## Risques identifiés
 
-1. **C4 — Liens internes `<Link href="/jobs">`** : RISQUE ÉLEVÉ. Tous les liens existants utilisent `next/link` avec des chemins absolus. Avec `localePrefix: "as-needed"`, un utilisateur EN sur `/en/jobs` qui clique `<Link href="/signup">` sera redirigé vers `/signup` (FR) au lieu de `/en/signup`. **Mitigation** : Après la migration C4, faire un grep global et remplacer les `Link` de `next/link` par le `Link` de `@/i18n/routing` dans les composants qui apparaissent sur les pages localisées. Les composants landing (Client Components C1) sont prioritaires.
-2. **C4 — Middleware composition** : Combiner next-intl + Supabase SSR. Le pattern détaillé dans la spec (section 3) utilise `intlResponse` comme base pour les cookies Supabase. **Mitigation** : tester auth + locale detection ensemble, vérifier que les cookies Supabase sont bien propagés.
-3. **C4 — html lang** : Le root layout ne connaît pas la locale (elle est dans `[locale]`). **Mitigation** : utiliser un script dans `[locale]/layout.tsx` ou metadata htmlAttributes.
-4. **C1 — Landing SSR + style jsx global** : Le `<style jsx global>` de la landing (Plus Jakarta Sans + body font override) n'est pas compatible avec un Server Component. **Mitigation** : Migrée vers `next/font` (détaillé dans C1).
-5. **C1 — Flash hydration** : Les animations framer-motion pourraient avoir un flash avant hydration. **Mitigation** : les glow orbs ont `opacity: 0.1` → flash imperceptible.
-6. **C7 — JobPosting** : Les données d'offres viennent du backend API, pas de la DB directement. Le schema sera côté client (dans la page jobs qui est `"use client"`). Alternative : Server Component wrapper qui fetch et injecte le schema.
+1. **C1 — Landing SSR + style jsx global** : Le `<style jsx global>` de la landing (Plus Jakarta Sans + body font override) n'est pas compatible avec un Server Component. **Mitigation** : Migrée vers `next/font` (détaillé dans C1).
+2. **C1 — Flash hydration** : Les animations framer-motion pourraient avoir un flash avant hydration. **Mitigation** : les glow orbs ont `opacity: 0.1` → flash imperceptible.
+3. **C7 — JobPosting** : Les données d'offres viennent du backend API côté client. Le schema sera injecté dans la page jobs `"use client"`. Alternative : Server Component wrapper qui fetch et injecte le schema côté serveur.
+4. **C1 — Taille du refactoring** : La landing fait 646 lignes à découper en ~7 composants. Risque d'oublier un bout de logique. **Mitigation** : vérification visuelle avant/après avec `npm run dev`.
+
+## Item reporté — Sprint D (i18n routing)
+
+C4 (routing `[locale]` + hreflang) est reporté car :
+- Risque élevé de régression sur l'auth Google OAuth et le middleware Supabase SSR
+- Temps estimé 1-2 jours pour C4 seul
+- Les 8pts de hreflang ne justifient pas le risque
+- Sera traité dans un sprint dédié avec tests E2E sur tous les flows auth
 
 ---
 
 ## Tests
 
+- `npx tsc --noEmit` + `npm run lint` → zéro erreur après chaque item
 - Build production `npm run build` → zéro erreur
-- Lighthouse SEO score ≥ 95 sur landing
-- Vérifier que `/en/jobs`, `/es/jobs`, `/pt/jobs` redirigent correctement
-- Vérifier que `/jobs` reste en français (pas de préfixe)
-- Vérifier hreflang dans le `<head>` HTML (view source)
+- Lighthouse SEO score ≥ 90 sur la landing
+- View source sur la landing → le HTML contient les textes h1, h2, descriptions (pas vide)
 - Google Rich Results Test sur `/jobs` pour le schema JobPosting
-- Vérifier que le sitemap.xml contient toutes les variantes locale
-- `npx tsc --noEmit` + `npm run lint` → zéro erreur
+- Vérifier que le sitemap.xml contient about, blog, faq, temoignages, signup
+- Vérifier que les fonts ne chargent plus via Google Fonts externe (Network tab)
+- Vérifier les 4 images Unsplash → format WebP/AVIF dans le Network tab
+- `npm run test:frontend` → tous les tests existants passent (pas de régression)
