@@ -667,7 +667,13 @@
       "confirmDeleteTitle": "¿Eliminar esta oferta?",
       "confirmDeleteDescription": "Esta acción no se puede deshacer. La oferta será eliminada de tus guardados.",
       "confirmDeleteCancel": "Cancelar",
-      "confirmDeleteConfirm": "Eliminar"
+      "confirmDeleteConfirm": "Eliminar",
+      "pagination": {
+        "page": "Page {current} of {total}",
+        "previous": "Previous",
+        "next": "Next",
+        "count": "{count} saved jobs"
+      }
     },
     "error": {
       "title": "Oops, something went wrong",

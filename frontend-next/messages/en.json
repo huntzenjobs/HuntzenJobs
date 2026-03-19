@@ -746,7 +746,13 @@
       "confirmDeleteTitle": "Remove this job?",
       "confirmDeleteDescription": "This action cannot be undone. The job will be removed from your saved jobs.",
       "confirmDeleteCancel": "Cancel",
-      "confirmDeleteConfirm": "Remove"
+      "confirmDeleteConfirm": "Remove",
+      "pagination": {
+        "page": "Page {current} of {total}",
+        "previous": "Previous",
+        "next": "Next",
+        "count": "{count} saved jobs"
+      }
     },
     "error": {
       "title": "Oops, something went wrong",

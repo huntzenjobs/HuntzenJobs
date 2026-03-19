@@ -810,7 +810,13 @@
       "confirmDeleteTitle": "Supprimer cette offre ?",
       "confirmDeleteDescription": "Cette action est irréversible. L'offre sera retirée de tes sauvegardes.",
       "confirmDeleteCancel": "Annuler",
-      "confirmDeleteConfirm": "Supprimer"
+      "confirmDeleteConfirm": "Supprimer",
+      "pagination": {
+        "page": "Page {current} sur {total}",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "count": "{count} offres sauvegardées"
+      }
     },
     "error": {
       "title": "Oups, une erreur est survenue",

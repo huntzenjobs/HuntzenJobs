@@ -56,45 +56,53 @@ export default function SavedJobsPage() {
   const router = useRouter();
   const t = useTranslations("dashboard.savedJobs");
 
+  const PAGE_SIZE = 10;
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedJobForApply, setSelectedJobForApply] =
     useState<SavedJob | null>(null);
 
   const { documents, fetchDocuments } = useDocuments();
 
+  const fetchSavedJobs = useCallback(
+    async (page = 1) => {
+      if (!user?.id) return;
+      try {
+        const supabase = createClient();
+        const from = (page - 1) * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
+
+        const { data, error, count } = await supabase
+          .from("saved_jobs")
+          .select("*", { count: "exact" })
+          .eq("user_id", user.id)
+          .order("saved_at", { ascending: false })
+          .range(from, to);
+
+        if (error) throw error;
+
+        setSavedJobs(data || []);
+        setTotalCount(count || 0);
+      } catch (error) {
+        setSavedJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.id],
+  );
+
   useEffect(() => {
     if (user) {
-      fetchSavedJobs();
+      fetchSavedJobs(currentPage);
       fetchDocuments();
     } else {
       setLoading(false);
     }
-  }, [user, fetchDocuments]);
-
-  const fetchSavedJobs = async () => {
-    try {
-      const supabase = createClient();
-
-      const { data, error } = await supabase
-        .from("saved_jobs")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("saved_at", { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      setSavedJobs(data || []);
-    } catch (error) {
-      // Silently handle errors - table exists but may have RLS issues
-      setSavedJobs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, currentPage, fetchDocuments, fetchSavedJobs]);
 
   const handleRemoveSavedJob = async (jobId: string) => {
     try {
@@ -109,12 +117,15 @@ export default function SavedJobsPage() {
       if (error) throw error;
 
       setSavedJobs((prev) => prev.filter((job) => job.id !== jobId));
+      setTotalCount((prev) => Math.max(0, prev - 1));
       toast.success(t("deleted"));
     } catch (error) {
       console.error("Failed to remove saved job:", error);
       toast.error(t("deleteError"));
     }
   };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const filteredJobs = savedJobs.filter(
     (job) =>
@@ -185,7 +196,7 @@ export default function SavedJobsPage() {
             transition={{ delay: 0.4 }}
             className="text-sm text-[#00D9FF] font-medium mt-2"
           >
-            {t("savedCount", { count: savedJobs.length })}
+            {t("savedCount", { count: totalCount })}
           </motion.p>
         )}
       </motion.div>
@@ -421,6 +432,39 @@ export default function SavedJobsPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
+          <p className="text-sm text-slate-500">
+            {t("pagination.count", { count: totalCount })}
+          </p>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              {t("pagination.previous")}
+            </Button>
+            <span className="text-sm text-slate-600">
+              {t("pagination.page", {
+                current: currentPage,
+                total: totalPages,
+              })}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              {t("pagination.next")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Info Banner */}
       <AnimatePresence>
