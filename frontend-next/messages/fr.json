@@ -1408,7 +1408,12 @@
       "pasteCvText": "Collez le contenu de votre CV ici (minimum 100 caractères)...",
       "pasteJobDescription": "Collez la description du poste pour obtenir un score de compatibilité...",
       "pasteJobDescriptionHere": "Collez la description du poste ici..."
-    }
+    },
+    "atsScoreAsterisk": "* Ce score reflète la compatibilité ATS de votre CV. Un design volontairement simple améliore le passage des filtres automatiques.",
+    "atsConfirmTitle": "Générer un CV optimisé ATS",
+    "atsConfirmDescription": "Votre CV sera reformaté pour maximiser le passage des filtres automatiques. Le design sera volontairement épuré pour une compatibilité optimale.",
+    "atsConfirmCancel": "Annuler",
+    "atsConfirmGenerate": "Générer"
   },
   "support": {
     "toasts": {

@@ -5,10 +5,21 @@
 
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Target, GitCompare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AnalysisTypeCard } from "@/components/cv/analysis-type-card";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +80,8 @@ export function Step2AnalysisType({
   className,
 }: Step2AnalysisTypeProps) {
   const t = useTranslations("cvBuilder");
+  const tCv = useTranslations("cv");
+  const [showConfirm, setShowConfirm] = useState(false);
   const canProceed =
     analysisType !== null &&
     (analysisType === "global" || jobOffer.trim().length > 0);
@@ -149,7 +162,7 @@ export function Step2AnalysisType({
 
         <Button
           size="lg"
-          onClick={onNext}
+          onClick={() => setShowConfirm(true)}
           disabled={!canProceed}
           className="px-8"
         >
@@ -169,6 +182,29 @@ export function Step2AnalysisType({
           </svg>
         </Button>
       </div>
+
+      {/* Confirmation AlertDialog */}
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tCv("atsConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {tCv("atsConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCv("atsConfirmCancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowConfirm(false);
+                onNext();
+              }}
+            >
+              {tCv("atsConfirmGenerate")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

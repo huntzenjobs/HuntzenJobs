@@ -1331,7 +1331,12 @@
       "pasteCvText": "Paste your CV content here (minimum 100 characters)...",
       "pasteJobDescription": "Paste the job description to get a compatibility score...",
       "pasteJobDescriptionHere": "Paste the job description here..."
-    }
+    },
+    "atsScoreAsterisk": "* This score reflects your CV's ATS compatibility. A deliberately simple design improves passage through automated filters.",
+    "atsConfirmTitle": "Generate an ATS-optimized CV",
+    "atsConfirmDescription": "Your CV will be reformatted to maximize passage through automated filters. The design will be deliberately clean for optimal compatibility.",
+    "atsConfirmCancel": "Cancel",
+    "atsConfirmGenerate": "Generate"
   },
   "support": {
     "toasts": {

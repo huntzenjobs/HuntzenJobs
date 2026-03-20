@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Download,
   GitCompare,
@@ -133,6 +134,7 @@ export function Step3Results({
   className,
 }: Step3ResultsProps) {
   const router = useRouter();
+  const t = useTranslations("cv");
   const [showComparison, setShowComparison] = useState(false);
 
   // Loading state
@@ -162,6 +164,9 @@ export function Step3Results({
           <p className="text-sm text-gray-600 mt-4">
             Votre CV obtient un score de{" "}
             <span className="font-bold text-huntzen-blue">{result.score}%</span>
+          </p>
+          <p className="text-xs text-muted-foreground mt-2 max-w-xs text-center">
+            {t("atsScoreAsterisk")}
           </p>
         </div>
 
