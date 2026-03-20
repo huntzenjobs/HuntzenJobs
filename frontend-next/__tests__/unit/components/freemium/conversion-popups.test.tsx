@@ -5,6 +5,18 @@ import { ConversionPopup, POPUP_CONFIGS } from "@/components/freemium/conversion
 vi.mock("@/contexts/auth-context", () => ({
   useAuth: () => ({ session: { access_token: "tok" } }),
 }));
+
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+}));
+
+vi.mock("@/hooks/use-plans-config", () => ({
+  usePlansConfig: () => ({
+    getPlan: () => ({ display_name: "Starter", price_monthly: 9.99 }),
+    formatPrice: (n: number) => n.toFixed(2),
+  }),
+}));
+
 global.fetch = vi.fn().mockResolvedValue(
   new Response(JSON.stringify({ coupon_code: "TEST20", checkout_url: "/pricing?coupon=TEST20" }), { status: 200 })
 );
@@ -23,11 +35,11 @@ describe("POPUP_CONFIGS", () => {
     expect(ids.length).toBe(8);
   });
 
-  it("chaque popup a title, body, primaryCta, plan", () => {
+  it("chaque popup a titleKey, bodyKey, primaryCtaKey, plan", () => {
     for (const p of POPUP_CONFIGS) {
-      expect(p.title).toBeTruthy();
-      expect(p.body).toBeTruthy();
-      expect(p.primaryCta).toBeTruthy();
+      expect(p.titleKey).toBeTruthy();
+      expect(p.bodyKey).toBeTruthy();
+      expect(p.primaryCtaKey).toBeTruthy();
       expect(["starter", "pro"]).toContain(p.plan);
     }
   });
@@ -41,15 +53,15 @@ describe("ConversionPopup", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("affiche le titre du popup search_limit", () => {
+  it("affiche la cle de titre du popup search_limit", () => {
     render(<ConversionPopup popupId="search_limit" isOpen={true} onClose={vi.fn()} />);
-    expect(screen.getByText(/Tu as atteint ta limite/i)).toBeInTheDocument();
+    expect(screen.getByText("searchLimit.title")).toBeInTheDocument();
   });
 
   it("appelle onClose au click sur le bouton fermer", () => {
     const onClose = vi.fn();
     render(<ConversionPopup popupId="session_cut" isOpen={true} onClose={onClose} />);
-    fireEvent.click(screen.getByLabelText(/fermer/i));
+    fireEvent.click(screen.getByLabelText("close"));
     expect(onClose).toHaveBeenCalled();
   });
 });
