@@ -839,6 +839,16 @@ async def handle_payment_failed(invoice: Dict[str, Any]):
             if user_id:
                 await invalidate_user_quota_cache(user_id)
 
+                # Notification in-app (synchrone)
+                from src.services.notifications import create_notification
+                create_notification(
+                    supabase_client,
+                    user_id=user_id,
+                    type="payment_failed",
+                    title="Paiement échoué",
+                    body="Votre paiement a échoué. Veuillez mettre à jour votre moyen de paiement pour conserver votre abonnement.",
+                )
+
         logger.info(f"Subscription marked as past_due: {stripe_subscription_id}")
 
     except Exception as e:

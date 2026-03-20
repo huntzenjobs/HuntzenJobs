@@ -23,6 +23,7 @@ VALID_TYPES = {
     "win_back_7d",
     "support_ticket_received",
     "support_ticket_reply",
+    "payment_failed",
 }
 
 
