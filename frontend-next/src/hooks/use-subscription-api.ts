@@ -61,12 +61,46 @@ interface SubscriptionApiData {
 }
 
 const CACHE_KEY = "huntzen_subscription_cache";
-const CACHE_EXPIRY_KEY = "huntzen_subscription_cache_expiry";
-// Cache TTL: 5 min fallback (était 24h)
-// Invalidation principale = événements (webhooks, actions utilisateur)
-// TTL 5 min = filet de sécurité si événements ratés
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes (FALLBACK)
+// Persistent cache — no TTL expiry.
+// Data is saved permanently and used as fallback when API fails.
+// Background refresh every 5 min keeps data fresh.
 const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Load cached subscription data from localStorage (persistent, no TTL)
+ */
+function loadPersistentCache(): ApiResponse | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    return JSON.parse(cached);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save subscription data to localStorage (persistent, no TTL)
+ */
+function savePersistentCache(data: ApiResponse): void {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch {
+    // localStorage full or unavailable — silently ignore
+  }
+}
+
+/**
+ * Clear persistent cache (on logout)
+ */
+function clearPersistentCache(): void {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+  } catch {
+    // silently ignore
+  }
+}
 
 /**
  * Hook to fetch subscription data from backend API /api/auth/me
@@ -76,60 +110,31 @@ const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
  */
 export function useSubscriptionApi(): SubscriptionApiData {
   const { session, loading: authLoading } = useAuth();
-  const [data, setData] = useState<Omit<SubscriptionApiData, "refetch">>({
-    user: null,
-    subscription: null,
-    quotas: null,
-    feature_overrides: {},
-    plan_feature_flags: {},
-    isLoading: true,
-    error: null,
-    isFromCache: false,
+
+  // Pre-populate state from persistent cache so users see their last known plan immediately
+  const [data, setData] = useState<Omit<SubscriptionApiData, "refetch">>(() => {
+    const cached = loadPersistentCache();
+    return {
+      user: cached?.user ?? null,
+      subscription: cached?.subscription ?? null,
+      quotas: cached?.quotas ?? null,
+      feature_overrides: cached?.feature_overrides ?? {},
+      plan_feature_flags: cached?.plan_feature_flags ?? {},
+      isLoading: !cached, // If cache exists, no loading state
+      error: null,
+      isFromCache: !!cached,
+    };
   });
 
   // Use ref to avoid recreating interval on every render
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  /**
-   * Load cached data from localStorage
-   */
-  const loadCache = useCallback((): ApiResponse | null => {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      const expiry = localStorage.getItem(CACHE_EXPIRY_KEY);
-
-      if (!cached || !expiry) return null;
-
-      // Check if cache expired
-      const expiryTime = parseInt(expiry, 10);
-      if (Date.now() > expiryTime) {
-        // Cache expired, remove it
-        localStorage.removeItem(CACHE_KEY);
-        localStorage.removeItem(CACHE_EXPIRY_KEY);
-        return null;
-      }
-
-      return JSON.parse(cached);
-    } catch (error) {
-      console.error("[SubscriptionAPI] Error loading cache:", error);
-      return null;
+  // Clear persistent cache on logout
+  useEffect(() => {
+    if (!session) {
+      clearPersistentCache();
     }
-  }, []);
-
-  /**
-   * Save data to localStorage cache
-   */
-  const saveCache = useCallback((apiData: ApiResponse) => {
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(apiData));
-      localStorage.setItem(
-        CACHE_EXPIRY_KEY,
-        (Date.now() + CACHE_DURATION).toString(),
-      );
-    } catch (error) {
-      console.error("[SubscriptionAPI] Error saving cache:", error);
-    }
-  }, []);
+  }, [session]);
 
   /**
    * Fetch subscription data from backend API
@@ -148,9 +153,9 @@ export function useSubscriptionApi(): SubscriptionApiData {
         return;
       }
 
-      // If no session at all, try to use cache
+      // If no session at all, use persistent cache or reset
       if (!session?.access_token) {
-        const cachedData = loadCache();
+        const cachedData = loadPersistentCache();
         if (cachedData) {
           setData({
             user: cachedData.user,
@@ -206,11 +211,11 @@ export function useSubscriptionApi(): SubscriptionApiData {
           const newToken = await tokenRefreshService.getValidToken();
 
           if (!newToken) {
-            // Fallback to cache if available
-            const cachedData = loadCache();
+            // Fallback to persistent cache — never drop to "free"
+            const cachedData = loadPersistentCache();
             if (cachedData) {
               console.warn(
-                "[SubscriptionAPI] Using cached data as fallback after token refresh failed",
+                "[SubscriptionAPI] Using persistent cache after token refresh failed",
               );
               setData({
                 user: cachedData.user,
@@ -255,7 +260,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
             const retryData: ApiResponse = await retryResponse.json();
 
             if (retryData.success) {
-              saveCache(retryData);
+              savePersistentCache(retryData);
               setData({
                 user: retryData.user,
                 subscription: retryData.subscription,
@@ -282,8 +287,8 @@ export function useSubscriptionApi(): SubscriptionApiData {
         );
       }
 
-      // Save to cache
-      saveCache(apiData);
+      // Save to persistent cache
+      savePersistentCache(apiData);
 
       // Update state
       setData({
@@ -299,10 +304,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
     } catch (error) {
       console.error("[SubscriptionAPI] Fetch error:", error);
 
-      // Try to use cache as fallback
-      const cachedData = loadCache();
+      // Fallback to persistent cache — never drop to "free" on transient errors
+      const cachedData = loadPersistentCache();
       if (cachedData) {
-        console.warn("[SubscriptionAPI] Using cached data as fallback");
+        console.warn("[SubscriptionAPI] Using persistent cache as fallback");
         setData({
           user: cachedData.user,
           subscription: cachedData.subscription,
@@ -310,7 +315,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
           feature_overrides: cachedData.feature_overrides ?? {},
           plan_feature_flags: cachedData.plan_feature_flags ?? {},
           isLoading: false,
-          error: "Données en cache (mode hors ligne)",
+          error: null,
           isFromCache: true,
         });
       } else {
@@ -326,7 +331,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
         });
       }
     }
-  }, [session?.access_token, authLoading, loadCache, saveCache]);
+  }, [session?.access_token, authLoading]);
 
   // Initial fetch and auto-refresh setup
   useEffect(() => {
@@ -397,8 +402,7 @@ export function useSubscriptionSync() {
   useEffect(() => {
     const handleSubscriptionChange = () => {
       console.log("[SubscriptionSync] Subscription changed event detected");
-      localStorage.removeItem(CACHE_KEY);
-      localStorage.removeItem(CACHE_EXPIRY_KEY);
+      clearPersistentCache();
       refetchRef.current();
       console.log("[SubscriptionSync] Cache invalidated and refetch triggered");
     };
