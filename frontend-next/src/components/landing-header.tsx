@@ -38,7 +38,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close dropdowns when clicking outside
+  // Close dropdowns when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -54,8 +54,18 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
         setRessourcesOpen(false);
       }
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOutilsOpen(false);
+        setRessourcesOpen(false);
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   // Force white background on auth pages
@@ -119,6 +129,8 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                 setOutilsOpen(true);
                 setRessourcesOpen(false);
               }}
+              aria-haspopup="true"
+              aria-expanded={outilsOpen}
               className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
             >
               {t("tools")}
@@ -175,6 +187,8 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                 setRessourcesOpen(true);
                 setOutilsOpen(false);
               }}
+              aria-haspopup="true"
+              aria-expanded={ressourcesOpen}
               className={`flex items-center gap-1 text-base font-bold transition-colors pb-1 ${shouldBeWhite ? "text-gray-900 hover:text-black" : "text-white/90 hover:text-white"}`}
             >
               {t("resources")}

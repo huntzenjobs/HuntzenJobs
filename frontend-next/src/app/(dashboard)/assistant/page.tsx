@@ -481,6 +481,16 @@ export default function AssistantPage() {
           {isFreePlan && assistantMessagesLimit !== Infinity && (
             <button
               onClick={() => openPricingModal("assistant_messages_per_day")}
+              aria-label={t("messageCounter", {
+                remaining:
+                  assistantMessagesRemaining === Infinity
+                    ? "∞"
+                    : String(assistantMessagesRemaining),
+                total:
+                  assistantMessagesLimit === Infinity
+                    ? "∞"
+                    : String(assistantMessagesLimit),
+              })}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                 assistantMessagesRemaining <= 3
                   ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
@@ -772,6 +782,7 @@ export default function AssistantPage() {
                         onClick={() => setAttachedCV(null)}
                         className="ml-0.5 hover:text-green-900 shrink-0"
                         title={t("removeCV")}
+                        aria-label={t("removeCV")}
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -787,6 +798,7 @@ export default function AssistantPage() {
                     accept=".pdf"
                     className="hidden"
                     onChange={handleCVUpload}
+                    aria-label={t("attachCV")}
                   />
                   {/* Paperclip button */}
                   <Button
@@ -796,6 +808,7 @@ export default function AssistantPage() {
                     disabled={loading || isExtractingCV}
                     className="h-11 w-11 shrink-0 border-slate-300 text-slate-500 hover:text-[#00D9FF] hover:border-[#00D9FF]"
                     title={t("attachCV")}
+                    aria-label={t("attachCV")}
                   >
                     {isExtractingCV ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -808,6 +821,7 @@ export default function AssistantPage() {
                       value={input}
                       onChange={setInput}
                       placeholder={t("placeholder")}
+                      aria-label={t("chatInputLabel")}
                       disabled={loading}
                       minHeight={44}
                       maxHeight={120}
@@ -833,6 +847,7 @@ export default function AssistantPage() {
                     onClick={() => sendMessage(input)}
                     disabled={!input.trim() || loading}
                     size="lg"
+                    aria-label={t("sendMessage")}
                     className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white h-12 px-6 transition-all duration-300"
                   >
                     {loading ? (

@@ -204,7 +204,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 py-6 overflow-y-auto">
         <div className="px-4">
-          <span className="nav-section-label block text-white/40 text-[0.65rem] font-bold tracking-widest px-3 mb-4">
+          <span className="nav-section-label block text-white/60 text-[0.65rem] font-bold tracking-widest px-3 mb-4">
             {t("label")}
           </span>
 
@@ -338,7 +338,7 @@ export function Sidebar({ className }: SidebarProps) {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-white/50 truncate">{user.email}</p>
+                <p className="text-xs text-white/60 truncate">{user.email}</p>
               </div>
             </Link>
           </div>

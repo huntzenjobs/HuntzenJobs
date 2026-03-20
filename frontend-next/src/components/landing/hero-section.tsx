@@ -87,7 +87,7 @@ export function HeroSection({ texts }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-base sm:text-lg text-white/50 max-w-2xl mx-auto mb-10 px-4"
+          className="text-base sm:text-lg text-white/70 max-w-2xl mx-auto mb-10 px-4"
         >
           {texts.subtitle}
         </motion.p>
@@ -122,7 +122,7 @@ export function HeroSection({ texts }: HeroSectionProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.7 }}
-          className="text-white/40 text-sm"
+          className="text-white/60 text-sm"
         >
           {texts.socialProof}
         </motion.p>

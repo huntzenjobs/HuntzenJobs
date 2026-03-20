@@ -53,7 +53,7 @@ export function CtaFinalSection({ texts }: CtaFinalSectionProps) {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-white/60 text-lg mb-10"
+          className="text-white/70 text-lg mb-10"
         >
           {texts.subtitle}
         </motion.p>
@@ -64,7 +64,7 @@ export function CtaFinalSection({ texts }: CtaFinalSectionProps) {
         >
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-white bg-[#F97316] hover:bg-[#EA6C0A] transition-all shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-bold text-white bg-[#EA580C] hover:bg-[#C2410C] transition-all shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-0.5"
           >
             {texts.cta}
           </Link>

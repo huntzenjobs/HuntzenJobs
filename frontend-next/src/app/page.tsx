@@ -12,9 +12,18 @@ import { Footer } from "@/components/layout/footer";
 import { plusJakartaSans } from "@/lib/fonts";
 
 const CAROUSEL_KEYS = [
-  "jobSearch", "cvAnalysis", "nova", "maria", "sofia",
-  "lucas", "david", "salons", "savedJobs", "recruiterContact",
-  "documents", "expat",
+  "jobSearch",
+  "cvAnalysis",
+  "nova",
+  "maria",
+  "sofia",
+  "lucas",
+  "david",
+  "salons",
+  "savedJobs",
+  "recruiterContact",
+  "documents",
+  "expat",
 ] as const;
 
 export default async function HomePage() {
@@ -38,7 +47,9 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className={`min-h-screen bg-white ${plusJakartaSans.variable} font-[family-name:var(--font-plus-jakarta)]`}>
+    <main
+      className={`min-h-screen bg-white ${plusJakartaSans.variable} font-[family-name:var(--font-plus-jakarta)]`}
+    >
       <LandingHeader />
 
       <HeroSection
@@ -101,7 +112,13 @@ export default async function HomePage() {
             cta: tFeatures("coaches.cta"),
             list: (["nova", "maria", "sofia", "lucas", "david"] as const).map(
               (key) => ({
-                name: { nova: "Nova", maria: "Maria", sofia: "Sofia", lucas: "Lucas", david: "David" }[key],
+                name: {
+                  nova: "Nova",
+                  maria: "Maria",
+                  sofia: "Sofia",
+                  lucas: "Lucas",
+                  david: "David",
+                }[key],
                 desc: tFeatures(`coaches.list.${key}`),
               }),
             ),
@@ -115,8 +132,14 @@ export default async function HomePage() {
           subtitle: tStats("subtitle"),
           disclaimer: tStats("disclaimer"),
           stats: [
-            { value: tStats("candidates.value"), label: tStats("candidates.label") },
-            { value: tStats("responseRate.value"), label: tStats("responseRate.label") },
+            {
+              value: tStats("candidates.value"),
+              label: tStats("candidates.label"),
+            },
+            {
+              value: tStats("responseRate.value"),
+              label: tStats("responseRate.label"),
+            },
             { value: tStats("salary.value"), label: tStats("salary.label") },
           ],
         }}
@@ -139,6 +162,6 @@ export default async function HomePage() {
 
       <Footer />
       <ReferralTracker />
-    </div>
+    </main>
   );
 }
