@@ -40,6 +40,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { AdminUser } from "@/hooks/admin/use-admin-users";
+import type { AdminPlan, AdminActionExtra } from "@/types/admin";
 import ForcePlanDialog from "./force-plan-dialog";
 import SendEmailDialog from "./send-email-dialog";
 import { createClient } from "@/lib/supabase/client";
@@ -48,8 +49,12 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Props {
   user: AdminUser;
-  plans: any[];
-  onAction: (action: string, userId: string, extra?: any) => Promise<void>;
+  plans: AdminPlan[];
+  onAction: (
+    action: string,
+    userId: string,
+    extra?: AdminActionExtra,
+  ) => Promise<void>;
 }
 
 async function adminPost(path: string, body?: object) {
@@ -271,7 +276,7 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
     }
   };
 
-  const isBanned = (user as any).is_banned === true;
+  const isBanned = user.is_banned === true;
 
   return (
     <>

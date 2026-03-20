@@ -79,7 +79,7 @@ const STATUS_COLORS = {
 const PAYMENT_STATUS_COLORS = {
   pending: "bg-yellow-100 text-yellow-700",
   paid: "bg-green-100 text-green-700",
-  refunded: "bg-gray-100 text-gray-600",
+  refunded: "bg-muted text-muted-foreground",
   failed: "bg-red-100 text-red-700",
 };
 
@@ -193,35 +193,35 @@ export default function RecruiterRequestsAdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-500">Chargement des demandes...</p>
+          <p className="text-muted-foreground">Chargement des demandes...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-muted p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Demandes de Consultation Recruteur
           </h1>
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             Gérer et suivre toutes les demandes de consultation
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="bg-card border rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Total</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-muted-foreground text-sm">Total</p>
+                <p className="text-2xl font-bold text-foreground">
                   {requests.length}
                 </p>
               </div>
@@ -229,10 +229,10 @@ export default function RecruiterRequestsAdminPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="bg-card border rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Payées</p>
+                <p className="text-muted-foreground text-sm">Payées</p>
                 <p className="text-2xl font-bold text-green-600">
                   {requests.filter((r) => r.payment_status === "paid").length}
                 </p>
@@ -241,10 +241,10 @@ export default function RecruiterRequestsAdminPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="bg-card border rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">En attente</p>
+                <p className="text-muted-foreground text-sm">En attente</p>
                 <p className="text-2xl font-bold text-amber-600">
                   {
                     requests.filter(
@@ -257,10 +257,10 @@ export default function RecruiterRequestsAdminPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="bg-card border rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Complétées</p>
+                <p className="text-muted-foreground text-sm">Complétées</p>
                 <p className="text-2xl font-bold text-purple-600">
                   {requests.filter((r) => r.status === "completed").length}
                 </p>
@@ -271,18 +271,18 @@ export default function RecruiterRequestsAdminPage() {
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
+        <div className="bg-card border rounded-lg p-4 mb-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Rechercher par nom, email, secteur..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="w-full pl-10 pr-4 py-2 bg-card border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
@@ -294,7 +294,7 @@ export default function RecruiterRequestsAdminPage() {
                 onChange={(e) =>
                   setStatusFilter(e.target.value as RequestStatus | "all")
                 }
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-primary"
+                className="w-full px-4 py-2 bg-card border rounded-lg text-foreground focus:outline-none focus:border-primary"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="new">Nouveau</option>
@@ -312,7 +312,7 @@ export default function RecruiterRequestsAdminPage() {
                 onChange={(e) =>
                   setPaymentFilter(e.target.value as PaymentStatus | "all")
                 }
-                className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-primary"
+                className="w-full px-4 py-2 bg-card border rounded-lg text-foreground focus:outline-none focus:border-primary"
               >
                 <option value="all">Tous les paiements</option>
                 <option value="paid">Payé</option>
@@ -336,40 +336,40 @@ export default function RecruiterRequestsAdminPage() {
         </div>
 
         {/* Requests Table */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+        <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Date
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Candidat
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Contact
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Secteur
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Paiement
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Statut
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {filteredRequests.length === 0 ? (
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-4 py-8 text-center text-gray-400"
+                      className="px-4 py-8 text-center text-muted-foreground"
                     >
                       Aucune demande trouvée
                     </td>
@@ -378,37 +378,37 @@ export default function RecruiterRequestsAdminPage() {
                   filteredRequests.map((request) => (
                     <tr
                       key={request.id}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      className="hover:bg-muted cursor-pointer transition-colors"
                       onClick={() => setSelectedRequest(request)}
                     >
-                      <td className="px-4 py-3 text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
                         {formatDate(request.created_at)}
                       </td>
                       <td className="px-4 py-3">
                         <div>
-                          <p className="text-gray-900 font-medium">
+                          <p className="text-foreground font-medium">
                             {request.full_name}
                           </p>
-                          <p className="text-gray-400 text-xs">
+                          <p className="text-muted-foreground text-xs">
                             {request.experience_level}
                           </p>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Mail className="w-3 h-3" />
                             {request.email}
                           </div>
                           {request.phone && (
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Phone className="w-3 h-3" />
                               {request.phone}
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-4 py-3 text-sm text-foreground">
                         {request.sector}
                       </td>
                       <td className="px-4 py-3">
@@ -435,7 +435,7 @@ export default function RecruiterRequestsAdminPage() {
                               e.target.value as RequestStatus,
                             );
                           }}
-                          className="px-2 py-1 text-xs bg-white border border-gray-200 rounded text-gray-900 focus:outline-none focus:border-primary"
+                          className="px-2 py-1 text-xs bg-card border rounded text-foreground focus:outline-none focus:border-primary"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <option value="new">Nouveau</option>
@@ -456,15 +456,15 @@ export default function RecruiterRequestsAdminPage() {
         {/* Request Details Modal */}
         {selectedRequest && (
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white border border-gray-200 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="bg-card border rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-2xl font-bold text-foreground">
                     Détails de la demande
                   </h2>
                   <button
                     onClick={() => setSelectedRequest(null)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <XCircle className="w-6 h-6" />
                   </button>
@@ -473,15 +473,17 @@ export default function RecruiterRequestsAdminPage() {
                 <div className="space-y-6">
                   {/* Candidate Info */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    <h3 className="text-lg font-semibold text-foreground mb-3">
                       Informations candidat
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div className="bg-muted rounded-lg p-4 space-y-3">
                       <div className="flex items-center gap-3">
                         <User className="w-5 h-5 text-primary" />
                         <div>
-                          <p className="text-gray-500 text-sm">Nom complet</p>
-                          <p className="text-gray-900 font-medium">
+                          <p className="text-muted-foreground text-sm">
+                            Nom complet
+                          </p>
+                          <p className="text-foreground font-medium">
                             {selectedRequest.full_name}
                           </p>
                         </div>
@@ -489,8 +491,8 @@ export default function RecruiterRequestsAdminPage() {
                       <div className="flex items-center gap-3">
                         <Mail className="w-5 h-5 text-primary" />
                         <div>
-                          <p className="text-gray-500 text-sm">Email</p>
-                          <p className="text-gray-900 font-medium">
+                          <p className="text-muted-foreground text-sm">Email</p>
+                          <p className="text-foreground font-medium">
                             {selectedRequest.email}
                           </p>
                         </div>
@@ -499,8 +501,10 @@ export default function RecruiterRequestsAdminPage() {
                         <div className="flex items-center gap-3">
                           <Phone className="w-5 h-5 text-primary" />
                           <div>
-                            <p className="text-gray-500 text-sm">Téléphone</p>
-                            <p className="text-gray-900 font-medium">
+                            <p className="text-muted-foreground text-sm">
+                              Téléphone
+                            </p>
+                            <p className="text-foreground font-medium">
                               {selectedRequest.phone}
                             </p>
                           </div>
@@ -509,10 +513,10 @@ export default function RecruiterRequestsAdminPage() {
                       <div className="flex items-center gap-3">
                         <Briefcase className="w-5 h-5 text-primary" />
                         <div>
-                          <p className="text-gray-500 text-sm">
+                          <p className="text-muted-foreground text-sm">
                             Secteur / Expérience
                           </p>
-                          <p className="text-gray-900 font-medium">
+                          <p className="text-foreground font-medium">
                             {selectedRequest.sector} -{" "}
                             {selectedRequest.experience_level}
                           </p>
@@ -522,10 +526,10 @@ export default function RecruiterRequestsAdminPage() {
                         <div className="flex items-center gap-3">
                           <Calendar className="w-5 h-5 text-primary" />
                           <div>
-                            <p className="text-gray-500 text-sm">
+                            <p className="text-muted-foreground text-sm">
                               Date préférée
                             </p>
-                            <p className="text-gray-900 font-medium">
+                            <p className="text-foreground font-medium">
                               {formatDate(selectedRequest.preferred_date)}
                             </p>
                           </div>
@@ -536,11 +540,11 @@ export default function RecruiterRequestsAdminPage() {
 
                   {/* Message */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    <h3 className="text-lg font-semibold text-foreground mb-3">
                       Message du candidat
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-700 leading-relaxed">
+                    <div className="bg-muted rounded-lg p-4">
+                      <p className="text-foreground leading-relaxed">
                         {selectedRequest.message}
                       </p>
                     </div>
@@ -548,18 +552,20 @@ export default function RecruiterRequestsAdminPage() {
 
                   {/* Payment Info */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    <h3 className="text-lg font-semibold text-foreground mb-3">
                       Informations paiement
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                    <div className="bg-muted rounded-lg p-4 space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Montant</span>
-                        <span className="text-gray-900 font-bold">
+                        <span className="text-muted-foreground">Montant</span>
+                        <span className="text-foreground font-bold">
                           {formatAmount(selectedRequest.amount_cents)}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Statut paiement</span>
+                        <span className="text-muted-foreground">
+                          Statut paiement
+                        </span>
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded-full ${PAYMENT_STATUS_COLORS[selectedRequest.payment_status]}`}
                         >
@@ -568,10 +574,10 @@ export default function RecruiterRequestsAdminPage() {
                       </div>
                       {selectedRequest.payment_intent_id && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">
+                          <span className="text-muted-foreground">
                             Payment Intent ID
                           </span>
-                          <span className="text-gray-400 font-mono text-xs">
+                          <span className="text-muted-foreground font-mono text-xs">
                             {selectedRequest.payment_intent_id}
                           </span>
                         </div>
@@ -581,10 +587,10 @@ export default function RecruiterRequestsAdminPage() {
 
                   {/* Status */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    <h3 className="text-lg font-semibold text-foreground mb-3">
                       Statut de la demande
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-muted rounded-lg p-4">
                       <select
                         value={selectedRequest.status}
                         onChange={(e) =>
@@ -593,7 +599,7 @@ export default function RecruiterRequestsAdminPage() {
                             e.target.value as RequestStatus,
                           )
                         }
-                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-primary"
+                        className="w-full px-4 py-2 bg-card border rounded-lg text-foreground focus:outline-none focus:border-primary"
                       >
                         <option value="new">🆕 Nouveau</option>
                         <option value="assigned">👤 Assigné</option>

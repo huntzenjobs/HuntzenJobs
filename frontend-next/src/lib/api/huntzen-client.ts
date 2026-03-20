@@ -1,3 +1,13 @@
+import type { CvData } from "@/components/cv-builder/types";
+
+/** Context about a job passed to the interview simulator */
+export interface JobContext {
+  title?: string;
+  company?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
 // Resolved lazily inside fetch() to avoid crashing at module load time during
 // Next.js static generation (prerendering), where NEXT_PUBLIC_* vars may be absent.
 function getApiBaseUrl(): string {
@@ -480,7 +490,7 @@ class HuntzenApiClient {
   async sendCVAnalyzerMessage(
     message: string,
     sessionId: string,
-    cvData?: any,
+    cvData?: Partial<CvData>,
   ) {
     return this.fetch<{ success: boolean; response: string; agent: string }>(
       "/api/assistant/cv-analyzer",
@@ -499,7 +509,7 @@ class HuntzenApiClient {
   async sendCVAdapterMessage(
     message: string,
     sessionId: string,
-    cvData?: any,
+    cvData?: Partial<CvData>,
     jobDescription?: string,
   ) {
     return this.fetch<{ success: boolean; response: string; agent: string }>(
@@ -520,7 +530,7 @@ class HuntzenApiClient {
   async sendInterviewSimMessage(
     message: string,
     sessionId: string,
-    jobInfo?: any,
+    jobInfo?: JobContext,
   ) {
     return this.fetch<{ success: boolean; response: string; agent: string }>(
       "/api/assistant/interview-sim",

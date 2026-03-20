@@ -17,6 +17,7 @@ import { exportCVAnalysisToPDF } from "@/utils/export-cv-pdf";
 import type { CVAnalysisResult } from "@/hooks/use-cv-history";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
 import type { BreakdownItem } from "@/components/cv/score-breakdown-v2";
+import type { CvInfo } from "@/components/cv/cv-info-panel";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -33,9 +34,9 @@ interface WizardContainerProps {
     breakdown: BreakdownItem[];
     strengths: string[];
     weaknesses: string[];
-    suggestions: any[];
+    suggestions: (string | Suggestion)[];
     rawAnalysis?: string;
-    cv_info?: any;
+    cv_info?: CvInfo;
   }>;
   onOpenPricingModal: (feature: string) => void;
   hasFeatures: {
@@ -124,13 +125,22 @@ export function WizardContainer({
       // Transform suggestions
       const transformedSuggestions: Suggestion[] = (
         response.suggestions || []
-      ).map((suggestion: any) => ({
-        text:
-          typeof suggestion === "string" ? suggestion : suggestion.text || "",
-        impact: suggestion.impact || 5,
-        category: suggestion.category || "other",
-        actionable: suggestion.actionable !== false,
-      }));
+      ).map((suggestion: string | Suggestion): Suggestion => {
+        if (typeof suggestion === "string") {
+          return {
+            text: suggestion,
+            impact: 5,
+            category: "other",
+            actionable: true,
+          };
+        }
+        return {
+          text: suggestion.text || "",
+          impact: suggestion.impact || 5,
+          category: suggestion.category || "other",
+          actionable: suggestion.actionable !== false,
+        };
+      });
 
       // Create analysis data (without id and analyzedAt - saveAnalysis will add them)
       const analysisData = {

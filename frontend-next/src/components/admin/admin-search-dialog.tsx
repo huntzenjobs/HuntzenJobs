@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { Search, User, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import type { AdminSearchUser } from "@/types/admin";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -27,7 +28,7 @@ async function adminSearch(q: string) {
 export function AdminSearchDialog() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<AdminSearchUser[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -111,7 +112,7 @@ export function AdminSearchDialog() {
                 Tapez au moins 2 caractères pour rechercher
               </div>
             )}
-            {results.map((user: any) => (
+            {results.map((user: AdminSearchUser) => (
               <Command.Item
                 key={user.id}
                 value={user.email}

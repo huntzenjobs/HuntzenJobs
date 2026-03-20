@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 // TYPES
 // ============================================================================
 
-interface CVInfo {
+export interface CvInfo {
   // Legacy fields
   name?: string;
   email?: string;
@@ -39,7 +39,7 @@ interface CVInfo {
 }
 
 interface CVInfoPanelProps {
-  cvInfo: CVInfo;
+  cvInfo: CvInfo;
   className?: string;
 }
 

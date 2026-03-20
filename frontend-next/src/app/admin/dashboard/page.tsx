@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useAdminLive } from "@/hooks/admin/use-admin-live";
 import { toast } from "sonner";
+import type { SecurityEvent } from "@/types/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -57,6 +58,7 @@ interface Stats {
 }
 
 interface GrowthPoint {
+  [key: string]: string | number | null | undefined;
   date: string;
   new_signups: number;
   cumulative: number;
@@ -108,17 +110,19 @@ function KpiCard({
   );
 }
 
-function MiniBarChart({
+function MiniBarChart<
+  T extends Record<string, string | number | null | undefined>,
+>({
   data,
   maxVal,
   dateKey,
   valueKey,
   color = "bg-primary",
 }: {
-  data: any[];
+  data: T[];
   maxVal: number;
-  dateKey: string;
-  valueKey: string;
+  dateKey: keyof T & string;
+  valueKey: keyof T & string;
   color?: string;
 }) {
   if (!data.length)
@@ -127,14 +131,13 @@ function MiniBarChart({
         Aucune donnée
       </div>
     );
-  const max = maxVal || Math.max(...data.map((d) => d[valueKey]), 1);
+  const max =
+    maxVal || Math.max(...data.map((d) => Number(d[valueKey]) || 0), 1);
   return (
     <div className="flex items-end gap-0.5 h-16">
       {data.map((d, i) => {
-        const pct = Math.max(
-          (d[valueKey] / max) * 100,
-          d[valueKey] > 0 ? 4 : 0,
-        );
+        const val = Number(d[valueKey]) || 0;
+        const pct = Math.max((val / max) * 100, val > 0 ? 4 : 0);
         return (
           <div
             key={i}
@@ -144,12 +147,13 @@ function MiniBarChart({
               className={`w-full rounded-sm ${color} opacity-80 group-hover:opacity-100 transition-opacity`}
               style={{
                 height: `${pct}%`,
-                minHeight: d[valueKey] > 0 ? "3px" : "1px",
+                minHeight: val > 0 ? "3px" : "1px",
               }}
             />
             {/* tooltip on hover */}
             <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[10px] px-1.5 py-0.5 rounded shadow-md opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">
-              {d[dateKey]?.slice(5)}: <strong>{d[valueKey]}</strong>
+              {String(d[dateKey] ?? "").slice(5)}:{" "}
+              <strong>{d[valueKey]}</strong>
             </div>
           </div>
         );
@@ -211,7 +215,7 @@ export default function AdminDashboardPage() {
   const { presence, connected } = useAdminLive();
   const [stats, setStats] = useState<Stats | null>(null);
   const [growth, setGrowth] = useState<GrowthPoint[]>([]);
-  const [recentEvents, setRecentEvents] = useState<any[]>([]);
+  const [recentEvents, setRecentEvents] = useState<SecurityEvent[]>([]);
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -444,7 +448,7 @@ export default function AdminDashboardPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {recentEvents.slice(0, 6).map((e: any) => (
+                {recentEvents.slice(0, 6).map((e: SecurityEvent) => (
                   <div key={e.id} className="flex items-center gap-2 text-xs">
                     <Badge
                       variant={

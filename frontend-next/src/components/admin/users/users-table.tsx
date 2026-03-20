@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminUsers, type AdminUser } from "@/hooks/admin/use-admin-users";
+import type { AdminPlan, AdminActionExtra } from "@/types/admin";
 import UserActionsMenu from "./user-actions-menu";
 import UserDetailDrawer from "./user-detail-drawer";
 
@@ -61,7 +62,7 @@ export default function UsersTable() {
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<AdminPlan[]>([]);
   const [fetching, setFetching] = useState(false);
 
   const load = useCallback(async () => {
@@ -90,9 +91,14 @@ export default function UsersTable() {
       .catch(() => {});
   }, [fetchPlans]);
 
-  const handleAction = async (action: string, userId: string, extra?: any) => {
+  const handleAction = async (
+    action: string,
+    userId: string,
+    extra?: AdminActionExtra,
+  ) => {
     let success = false;
-    if (action === "suspend") success = await suspendUser(userId, extra);
+    if (action === "suspend")
+      success = await suspendUser(userId, extra as string);
     if (action === "reactivate") success = await reactivateUser(userId);
     if (action === "delete") success = await deleteUser(userId);
     if (action === "reset-password") await resetPassword(userId);
@@ -199,7 +205,7 @@ export default function UsersTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les plans</SelectItem>
-                {plans.map((p: any) => (
+                {plans.map((p: AdminPlan) => (
                   <SelectItem key={p.name} value={p.name}>
                     {p.display_name}
                   </SelectItem>

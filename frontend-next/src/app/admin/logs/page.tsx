@@ -26,6 +26,13 @@ import {
   ChevronRight,
   Activity,
 } from "lucide-react";
+import type {
+  PlatformEvent,
+  SecurityEvent,
+  WebhookFailure,
+  BannedIPEntry,
+  BlacklistedEmailEntry,
+} from "@/types/admin";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -85,7 +92,7 @@ function formatDate(iso: string) {
 // Onglet Activité plateforme (user_events)
 // ============================================================
 function PlatformEventsTab() {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<PlatformEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -328,7 +335,7 @@ function PlatformEventsTab() {
 // Onglet Événements sécurité
 // ============================================================
 function SecurityLogsTab() {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<SecurityEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [severity, setSeverity] = useState("");
@@ -524,7 +531,7 @@ function SecurityLogsTab() {
 // Onglet Webhooks Stripe
 // ============================================================
 function WebhookLogsTab() {
-  const [failures, setFailures] = useState<any[]>([]);
+  const [failures, setFailures] = useState<WebhookFailure[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -594,7 +601,7 @@ function WebhookLogsTab() {
         </div>
       ) : (
         <div className="space-y-2">
-          {failures.map((f: any) => (
+          {failures.map((f: WebhookFailure) => (
             <Card key={f.id} className="p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1 min-w-0">
@@ -675,8 +682,10 @@ function WebhookLogsTab() {
 // Onglet Sécurité IP
 // ============================================================
 function SecurityIPTab() {
-  const [bannedIPs, setBannedIPs] = useState<any[]>([]);
-  const [blacklistedEmails, setBlacklistedEmails] = useState<any[]>([]);
+  const [bannedIPs, setBannedIPs] = useState<BannedIPEntry[]>([]);
+  const [blacklistedEmails, setBlacklistedEmails] = useState<
+    BlacklistedEmailEntry[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [ipInput, setIPInput] = useState("");
   const [ipReason, setIPReason] = useState("");

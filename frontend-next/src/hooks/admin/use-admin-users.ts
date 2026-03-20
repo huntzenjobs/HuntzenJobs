@@ -3,6 +3,12 @@
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import type {
+  AdminSubscription,
+  SubscriptionHistoryEntry,
+  UsageQuotaEntry,
+  SecurityEvent,
+} from "@/types/admin";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -38,6 +44,7 @@ export interface AdminUser {
   full_name: string | null;
   status: "active" | "suspended" | "deleted";
   is_admin: boolean;
+  is_banned?: boolean;
   created_at: string;
   suspended_at: string | null;
   suspended_reason: string | null;
@@ -67,10 +74,10 @@ export interface UsersResponse {
 
 export interface UserDetail {
   profile: AdminUser;
-  subscription: any;
-  subscription_history: any[];
-  usage_30d: any[];
-  security_events: any[];
+  subscription: AdminSubscription | null;
+  subscription_history: SubscriptionHistoryEntry[];
+  usage_30d: UsageQuotaEntry[];
+  security_events: SecurityEvent[];
   last_login_at: string | null;
   stripe_customer_id: string | null;
   total_paid: number;

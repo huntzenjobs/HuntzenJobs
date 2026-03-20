@@ -37,13 +37,16 @@ import {
   Download,
   Pencil,
 } from "lucide-react";
-import { ApplyModal } from "@/components/jobs/apply-modal";
+import { ApplyModal, type ParsedCvData } from "@/components/jobs/apply-modal";
 import type { Job } from "@/lib/api/huntzen-client";
 import { useDocuments } from "@/hooks/use-documents";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
-import { useCVAnalysis } from "@/hooks/use-cv-analysis";
+import {
+  useCVAnalysis,
+  type CVAnalysisApiResult,
+} from "@/hooks/use-cv-analysis";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { CVHistoryDrawer } from "@/components/cv/cv-history-drawer";
 import { WizardSteps } from "@/components/cv/wizard-steps";
@@ -54,12 +57,25 @@ import { ProcessingSteps } from "@/components/cv/processing-steps";
 import { exportCVAnalysisToPDF } from "@/utils/export-cv-pdf";
 import { type FeatureType, PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
+import type { CvInfo } from "@/components/cv/cv-info-panel";
+import type { CVAnalysisResult } from "@/hooks/use-cv-history";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 // ============================================
 // TYPES
 // ============================================
+
+/** Shape of items returned by GET /api/cv-analysis/list */
+interface AnalysisListItem {
+  cv_id: string;
+  created_at: string;
+  score?: number;
+  strengths?: string[];
+  weaknesses?: string[];
+  suggestions?: Suggestion[];
+  cv_info?: CvInfo;
+}
 
 interface CVUploadAsyncWizardProps {
   canUse: (feature: FeatureType) => boolean;
@@ -89,7 +105,7 @@ interface AdaptResult {
   cvPdfBlob: Blob;
   lmPdfBlob: Blob | null;
   matchScore: number | null;
-  cvData: Record<string, unknown>;
+  cvData: ParsedCvData;
   lmData: Record<string, unknown> | null;
 }
 
@@ -140,9 +156,10 @@ export function CVUploadAsyncWizard({
   // ============================================
 
   // History from API (Supabase)
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<CVAnalysisResult[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [loadedHistoryResult, setLoadedHistoryResult] = useState<any>(null);
+  const [loadedHistoryResult, setLoadedHistoryResult] =
+    useState<CVAnalysisApiResult | null>(null);
 
   // Wizard state
   const [wizardState, setWizardState] = useState<WizardState>({
@@ -228,16 +245,18 @@ export function CVUploadAsyncWizard({
           if (response.ok) {
             const data = await response.json();
             // Map backend fields to CVAnalysisResult format
-            const parsedAnalyses = (data.analyses || []).map((item: any) => ({
-              ...item,
-              id: item.cv_id,
-              fileName: `Analyse du ${new Date(item.created_at).toLocaleDateString("fr-FR")}`,
-              analyzedAt: parseAnalysisDate(item.created_at),
-              score: item.score ?? 0,
-              strengths: item.strengths || [],
-              weaknesses: item.weaknesses || [],
-              suggestions: item.suggestions || [],
-            }));
+            const parsedAnalyses = (data.analyses || []).map(
+              (item: AnalysisListItem) => ({
+                ...item,
+                id: item.cv_id,
+                fileName: `Analyse du ${new Date(item.created_at).toLocaleDateString("fr-FR")}`,
+                analyzedAt: parseAnalysisDate(item.created_at),
+                score: item.score ?? 0,
+                strengths: item.strengths || [],
+                weaknesses: item.weaknesses || [],
+                suggestions: item.suggestions || [],
+              }),
+            );
             setHistory(parsedAnalyses);
           }
         } catch (error) {
@@ -274,16 +293,18 @@ export function CVUploadAsyncWizard({
           if (response.ok) {
             const data = await response.json();
             // Map backend fields to CVAnalysisResult format
-            const parsedAnalyses = (data.analyses || []).map((item: any) => ({
-              ...item,
-              id: item.cv_id,
-              fileName: `Analyse du ${new Date(item.created_at).toLocaleDateString("fr-FR")}`,
-              analyzedAt: parseAnalysisDate(item.created_at),
-              score: item.score ?? 0,
-              strengths: item.strengths || [],
-              weaknesses: item.weaknesses || [],
-              suggestions: item.suggestions || [],
-            }));
+            const parsedAnalyses = (data.analyses || []).map(
+              (item: AnalysisListItem) => ({
+                ...item,
+                id: item.cv_id,
+                fileName: `Analyse du ${new Date(item.created_at).toLocaleDateString("fr-FR")}`,
+                analyzedAt: parseAnalysisDate(item.created_at),
+                score: item.score ?? 0,
+                strengths: item.strengths || [],
+                weaknesses: item.weaknesses || [],
+                suggestions: item.suggestions || [],
+              }),
+            );
             setHistory(parsedAnalyses);
           }
         } catch (error) {
@@ -560,7 +581,7 @@ export function CVUploadAsyncWizard({
           cvPdfBlob,
           lmPdfBlob,
           matchScore: matchScore != null ? Math.round(matchScore * 100) : null,
-          cvData: cvData as Record<string, unknown>,
+          cvData: cvData as ParsedCvData,
           lmData,
         });
 
@@ -570,7 +591,7 @@ export function CVUploadAsyncWizard({
           company: "",
           matchScore:
             matchScore != null ? Math.round(matchScore * 100) : undefined,
-          cvData: cvData as Record<string, unknown>,
+          cvData: cvData as ParsedCvData,
           cvPdfBlob,
           lmPdfBlob: lmPdfBlob ?? undefined,
           language: adaptLang,
@@ -647,7 +668,7 @@ export function CVUploadAsyncWizard({
     setEditingLmData(null);
   };
 
-  const handleLoadFromHistory = async (analysis: any) => {
+  const handleLoadFromHistory = async (analysis: CVAnalysisResult) => {
     try {
       // Get token from Supabase (optional)
       const { createClient } = await import("@/lib/supabase/client");
@@ -663,7 +684,7 @@ export function CVUploadAsyncWizard({
 
       // Fetch full result from API
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/status/${analysis.cv_id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/status/${analysis.id}`,
         {
           headers,
         },
@@ -1387,9 +1408,12 @@ export function CVUploadAsyncWizard({
     }
 
     // Results (either from new analysis or loaded from history)
-    const displayResult = loadedHistoryResult || result;
+    const displayResult = loadedHistoryResult ?? result;
 
-    if ((status === "completed" && result) || loadedHistoryResult) {
+    if (
+      displayResult &&
+      ((status === "completed" && result) || loadedHistoryResult)
+    ) {
       const transformedSuggestions: Suggestion[] = (
         displayResult.improvements || []
       ).map((text: string) => ({
@@ -1600,7 +1624,13 @@ export function CVUploadAsyncWizard({
               <button
                 onClick={async () => {
                   try {
-                    await exportCVAnalysisToPDF(displayResult);
+                    // exportCVAnalysisToPDF expects CVAnalysisResult (history format)
+                    // but displayResult is CVAnalysisApiResult -- compatible at runtime
+                    await exportCVAnalysisToPDF(
+                      displayResult as unknown as Parameters<
+                        typeof exportCVAnalysisToPDF
+                      >[0],
+                    );
                   } catch (error) {
                     toast.error(t("toasts.pdfExportError"));
                     console.error(error);

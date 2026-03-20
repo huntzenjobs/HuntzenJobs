@@ -193,22 +193,28 @@ export function ChatMessage({
                   li: ({ children }) => (
                     <li className="text-gray-800">{children}</li>
                   ),
-                  code: ({ inline, children, ...props }: any) =>
-                    inline ? (
-                      <code
-                        className="px-1.5 py-0.5 bg-gray-100 text-violet-600 rounded text-xs font-mono"
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    ) : (
+                  code: ({
+                    children,
+                    className,
+                    ...props
+                  }: React.ComponentPropsWithoutRef<"code">) => {
+                    const isBlock = className?.startsWith("language-");
+                    return isBlock ? (
                       <code
                         className="block p-3 bg-gray-50 rounded-lg text-xs font-mono overflow-x-auto"
                         {...props}
                       >
                         {children}
                       </code>
-                    ),
+                    ) : (
+                      <code
+                        className="px-1.5 py-0.5 bg-gray-100 text-violet-600 rounded text-xs font-mono"
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    );
+                  },
                   strong: ({ children }) => (
                     <strong className="font-semibold text-gray-800">
                       {children}

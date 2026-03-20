@@ -74,7 +74,7 @@ interface ApplyModalProps {
   /** Pre-filled result to start in "results" step (e.g. from CV analysis wizard) */
   initialResult?: GenerationResult;
   /** Pre-filled cvData to enable editing without re-generating (e.g. from CV analysis wizard) */
-  initialCvData?: Record<string, unknown>;
+  initialCvData?: ParsedCvData;
   /** Initial step to start at (default: "upload") */
   initialStep?: Step;
   /** Pre-filled match score */
@@ -85,6 +85,46 @@ interface ApplyModalProps {
 
 type Step = "upload" | "generating" | "preview" | "results";
 type CvSource = "upload" | "profile";
+
+/** Shape of parsed CV data returned by the /adapt endpoint for preview/edit */
+export interface ParsedPersonalInfo {
+  name?: string;
+  title?: string;
+  phone?: string;
+  email?: string;
+  location?: string;
+  linkedin?: string;
+  github?: string;
+  [key: string]: string | undefined;
+}
+
+export interface ParsedExperience {
+  title?: string;
+  company?: string;
+  start_date?: string;
+  end_date?: string;
+  location?: string;
+  description?: string;
+  bullets?: string[];
+  [key: string]: string | string[] | undefined;
+}
+
+export interface ParsedEducation {
+  degree?: string;
+  school?: string;
+  year?: string;
+  details?: string;
+  [key: string]: string | undefined;
+}
+
+export interface ParsedCvData {
+  personal_info: ParsedPersonalInfo;
+  summary?: string;
+  experiences: ParsedExperience[];
+  education: ParsedEducation[];
+  skills: Record<string, string[] | string>;
+  [key: string]: unknown;
+}
 
 export interface GenerationResult {
   cvPdfBlob: Blob;
@@ -216,10 +256,9 @@ export function ApplyModal({
   const [queueWaitState, setQueueWaitState] =
     useState<QueueWaitingState | null>(null);
   const [markedApplied, setMarkedApplied] = useState(false);
-  const [pendingCvData, setPendingCvData] = useState<Record<
-    string,
-    unknown
-  > | null>(initialCvData ?? null);
+  const [pendingCvData, setPendingCvData] = useState<ParsedCvData | null>(
+    initialCvData ?? null,
+  );
   const [pendingMatchScore, setPendingMatchScore] = useState<
     number | undefined
   >(initialMatchScore);
@@ -399,8 +438,8 @@ export function ApplyModal({
           adaptData.estimated_wait_seconds ?? 30,
         );
       }
-      const cvData = adaptData.cv_data;
-      const matchScore = adaptData.match_score;
+      const cvData = adaptData.cv_data as ParsedCvData | undefined;
+      const matchScore = adaptData.match_score as number | undefined;
 
       if (!cvData) throw new Error("Impossible d'extraire les données du CV");
 
@@ -456,8 +495,8 @@ export function ApplyModal({
           adaptData.estimated_wait_seconds ?? 30,
         );
       }
-      const cvData = adaptData.cv_data;
-      const matchScore = adaptData.match_score;
+      const cvData = adaptData.cv_data as ParsedCvData | undefined;
+      const matchScore = adaptData.match_score as number | undefined;
 
       if (!cvData) throw new Error("Impossible d'adapter le profil");
 
@@ -477,7 +516,7 @@ export function ApplyModal({
   // ── Shared PDF generation + save ────────────────────────────────────────────
 
   const generatePdfsAndSave = async (
-    cvData: Record<string, unknown>,
+    cvData: ParsedCvData,
     matchScore?: number,
   ) => {
     setGeneratingLabel(t("processingStep2"));
@@ -566,7 +605,7 @@ export function ApplyModal({
 
   // ── Preview HTML fetch ─────────────────────────────────────────────────────
 
-  const fetchPreviewHtml = async (data: Record<string, unknown>) => {
+  const fetchPreviewHtml = async (data: ParsedCvData) => {
     setPreviewLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/cv-adapter/preview`, {
@@ -946,7 +985,7 @@ export function ApplyModal({
                               <input
                                 className="w-full border border-slate-200 rounded px-2 py-1 text-sm mt-0.5"
                                 value={
-                                  ((pendingCvData as any)?.personal_info?.[
+                                  (pendingCvData?.personal_info?.[
                                     key
                                   ] as string) ?? ""
                                 }
@@ -956,7 +995,7 @@ export function ApplyModal({
                                       ? {
                                           ...prev,
                                           personal_info: {
-                                            ...(prev.personal_info as any),
+                                            ...prev.personal_info,
                                             [key]: e.target.value,
                                           },
                                         }
@@ -978,9 +1017,7 @@ export function ApplyModal({
                       <AccordionContent>
                         <textarea
                           className="w-full border border-slate-200 rounded px-2 py-1 text-sm min-h-[80px] resize-y"
-                          value={
-                            ((pendingCvData as any)?.summary as string) ?? ""
-                          }
+                          value={pendingCvData?.summary ?? ""}
                           onChange={(e) =>
                             setPendingCvData((prev) =>
                               prev
@@ -993,160 +1030,25 @@ export function ApplyModal({
                     </AccordionItem>
 
                     {/* Experiences */}
-                    {Array.isArray((pendingCvData as any)?.experiences) && (
+                    {Array.isArray(pendingCvData?.experiences) && (
                       <AccordionItem value="experiences">
                         <AccordionTrigger className="text-sm font-medium py-2">
-                          Expériences (
-                          {(pendingCvData as any).experiences.length})
+                          Expériences ({pendingCvData.experiences.length})
                         </AccordionTrigger>
                         <AccordionContent>
                           <div className="space-y-3">
-                            {((pendingCvData as any).experiences as any[]).map(
-                              (exp, i) => (
-                                <div
-                                  key={i}
-                                  className="rounded border border-slate-100 p-2 space-y-2"
-                                >
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {(
-                                      [
-                                        { key: "title", label: "Poste" },
-                                        { key: "company", label: "Entreprise" },
-                                        { key: "start_date", label: "Début" },
-                                        { key: "end_date", label: "Fin" },
-                                      ] as { key: string; label: string }[]
-                                    ).map(({ key, label }) => (
-                                      <div key={key}>
-                                        <label className="text-xs text-slate-500">
-                                          {label}
-                                        </label>
-                                        <input
-                                          className="w-full border border-slate-200 rounded px-2 py-1 text-xs mt-0.5"
-                                          value={(exp[key] as string) ?? ""}
-                                          onChange={(e) =>
-                                            setPendingCvData((prev) => {
-                                              if (!prev) return prev;
-                                              const exps = [
-                                                ...(prev.experiences as any[]),
-                                              ];
-                                              exps[i] = {
-                                                ...exps[i],
-                                                [key]: e.target.value,
-                                              };
-                                              return {
-                                                ...prev,
-                                                experiences: exps,
-                                              };
-                                            })
-                                          }
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <div>
-                                    <label className="text-xs text-slate-500">
-                                      Points clés (une ligne par bullet)
-                                    </label>
-                                    <textarea
-                                      className="w-full border border-slate-200 rounded px-2 py-1 text-xs min-h-[60px] resize-y mt-0.5"
-                                      value={
-                                        Array.isArray(exp.bullets)
-                                          ? (exp.bullets as string[]).join("\n")
-                                          : ""
-                                      }
-                                      onChange={(e) =>
-                                        setPendingCvData((prev) => {
-                                          if (!prev) return prev;
-                                          const exps = [
-                                            ...(prev.experiences as any[]),
-                                          ];
-                                          exps[i] = {
-                                            ...exps[i],
-                                            bullets: e.target.value
-                                              .split("\n")
-                                              .filter(Boolean),
-                                          };
-                                          return { ...prev, experiences: exps };
-                                        })
-                                      }
-                                    />
-                                  </div>
-                                </div>
-                              ),
-                            )}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-
-                    {/* Skills */}
-                    {(pendingCvData as any)?.skills &&
-                      typeof (pendingCvData as any).skills === "object" && (
-                        <AccordionItem value="skills">
-                          <AccordionTrigger className="text-sm font-medium py-2">
-                            Compétences
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="space-y-2">
-                              {Object.entries(
-                                (pendingCvData as any).skills as Record<
-                                  string,
-                                  unknown
-                                >,
-                              ).map(([cat, vals]) => (
-                                <div key={cat}>
-                                  <label className="text-xs text-slate-500 capitalize">
-                                    {cat}
-                                  </label>
-                                  <textarea
-                                    className="w-full border border-slate-200 rounded px-2 py-1 text-xs min-h-[40px] resize-y mt-0.5"
-                                    value={
-                                      Array.isArray(vals)
-                                        ? (vals as string[]).join("\n")
-                                        : String(vals ?? "")
-                                    }
-                                    onChange={(e) =>
-                                      setPendingCvData((prev) => {
-                                        if (!prev) return prev;
-                                        return {
-                                          ...prev,
-                                          skills: {
-                                            ...(prev.skills as any),
-                                            [cat]: e.target.value
-                                              .split("\n")
-                                              .filter(Boolean),
-                                          },
-                                        };
-                                      })
-                                    }
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      )}
-
-                    {/* Education */}
-                    {Array.isArray((pendingCvData as any)?.education) && (
-                      <AccordionItem value="education">
-                        <AccordionTrigger className="text-sm font-medium py-2">
-                          Formation
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="space-y-3">
-                            {((pendingCvData as any).education as any[]).map(
-                              (edu, i) => (
-                                <div
-                                  key={i}
-                                  className="rounded border border-slate-100 p-2 space-y-2"
-                                >
+                            {pendingCvData.experiences.map((exp, i) => (
+                              <div
+                                key={i}
+                                className="rounded border border-slate-100 p-2 space-y-2"
+                              >
+                                <div className="grid grid-cols-2 gap-2">
                                   {(
                                     [
-                                      { key: "degree", label: "Diplôme" },
-                                      { key: "school", label: "École" },
-                                      { key: "year", label: "Année" },
-                                      { key: "details", label: "Détails" },
+                                      { key: "title", label: "Poste" },
+                                      { key: "company", label: "Entreprise" },
+                                      { key: "start_date", label: "Début" },
+                                      { key: "end_date", label: "Fin" },
                                     ] as { key: string; label: string }[]
                                   ).map(({ key, label }) => (
                                     <div key={key}>
@@ -1155,26 +1057,147 @@ export function ApplyModal({
                                       </label>
                                       <input
                                         className="w-full border border-slate-200 rounded px-2 py-1 text-xs mt-0.5"
-                                        value={(edu[key] as string) ?? ""}
+                                        value={(exp[key] as string) ?? ""}
                                         onChange={(e) =>
                                           setPendingCvData((prev) => {
                                             if (!prev) return prev;
-                                            const edus = [
-                                              ...(prev.education as any[]),
-                                            ];
-                                            edus[i] = {
-                                              ...edus[i],
+                                            const exps = [...prev.experiences];
+                                            exps[i] = {
+                                              ...exps[i],
                                               [key]: e.target.value,
                                             };
-                                            return { ...prev, education: edus };
+                                            return {
+                                              ...prev,
+                                              experiences: exps,
+                                            };
                                           })
                                         }
                                       />
                                     </div>
                                   ))}
                                 </div>
-                              ),
-                            )}
+                                <div>
+                                  <label className="text-xs text-slate-500">
+                                    Points clés (une ligne par bullet)
+                                  </label>
+                                  <textarea
+                                    className="w-full border border-slate-200 rounded px-2 py-1 text-xs min-h-[60px] resize-y mt-0.5"
+                                    value={
+                                      Array.isArray(exp.bullets)
+                                        ? (exp.bullets as string[]).join("\n")
+                                        : ""
+                                    }
+                                    onChange={(e) =>
+                                      setPendingCvData((prev) => {
+                                        if (!prev) return prev;
+                                        const exps = [...prev.experiences];
+                                        exps[i] = {
+                                          ...exps[i],
+                                          bullets: e.target.value
+                                            .split("\n")
+                                            .filter(Boolean),
+                                        };
+                                        return { ...prev, experiences: exps };
+                                      })
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    )}
+
+                    {/* Skills */}
+                    {pendingCvData?.skills &&
+                      typeof pendingCvData.skills === "object" && (
+                        <AccordionItem value="skills">
+                          <AccordionTrigger className="text-sm font-medium py-2">
+                            Compétences
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="space-y-2">
+                              {Object.entries(pendingCvData.skills).map(
+                                ([cat, vals]) => (
+                                  <div key={cat}>
+                                    <label className="text-xs text-slate-500 capitalize">
+                                      {cat}
+                                    </label>
+                                    <textarea
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-xs min-h-[40px] resize-y mt-0.5"
+                                      value={
+                                        Array.isArray(vals)
+                                          ? (vals as string[]).join("\n")
+                                          : String(vals ?? "")
+                                      }
+                                      onChange={(e) =>
+                                        setPendingCvData((prev) => {
+                                          if (!prev) return prev;
+                                          return {
+                                            ...prev,
+                                            skills: {
+                                              ...prev.skills,
+                                              [cat]: e.target.value
+                                                .split("\n")
+                                                .filter(Boolean),
+                                            },
+                                          };
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      )}
+
+                    {/* Education */}
+                    {Array.isArray(pendingCvData?.education) && (
+                      <AccordionItem value="education">
+                        <AccordionTrigger className="text-sm font-medium py-2">
+                          Formation
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-3">
+                            {pendingCvData.education.map((edu, i) => (
+                              <div
+                                key={i}
+                                className="rounded border border-slate-100 p-2 space-y-2"
+                              >
+                                {(
+                                  [
+                                    { key: "degree", label: "Diplôme" },
+                                    { key: "school", label: "École" },
+                                    { key: "year", label: "Année" },
+                                    { key: "details", label: "Détails" },
+                                  ] as { key: string; label: string }[]
+                                ).map(({ key, label }) => (
+                                  <div key={key}>
+                                    <label className="text-xs text-slate-500">
+                                      {label}
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded px-2 py-1 text-xs mt-0.5"
+                                      value={(edu[key] as string) ?? ""}
+                                      onChange={(e) =>
+                                        setPendingCvData((prev) => {
+                                          if (!prev) return prev;
+                                          const edus = [...prev.education];
+                                          edus[i] = {
+                                            ...edus[i],
+                                            [key]: e.target.value,
+                                          };
+                                          return { ...prev, education: edus };
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
                           </div>
                         </AccordionContent>
                       </AccordionItem>

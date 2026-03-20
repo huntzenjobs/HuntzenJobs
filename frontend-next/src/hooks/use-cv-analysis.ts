@@ -32,7 +32,7 @@ import { sendXpEvent } from "@/hooks/use-career-score";
 // TYPES
 // ============================================
 
-interface CVAnalysisResult {
+export interface CVAnalysisApiResult {
   ats_score: {
     overall_score: number;
     formatting_score: number;
@@ -52,6 +52,7 @@ interface CVAnalysisResult {
   job_match_score?: number;
   job_match_explanation?: string;
   suggested_job_titles?: string[];
+  cv_info?: Record<string, unknown>;
   analysis_language: "fr" | "en";
   processed_at: string;
   processing_time_seconds?: number;
@@ -60,7 +61,7 @@ interface CVAnalysisResult {
 interface CVAnalysisStatus {
   cv_id: string;
   status: "pending" | "processing" | "completed" | "failed";
-  result?: CVAnalysisResult;
+  result?: CVAnalysisApiResult;
   error?: string;
   created_at: string;
   completed_at?: string;
@@ -91,7 +92,7 @@ interface UseCVAnalysisReturn {
 
   // State
   status: CVAnalysisStatus["status"];
-  result: CVAnalysisResult | null;
+  result: CVAnalysisApiResult | null;
   error: string | null;
   isUploading: boolean;
   isPolling: boolean;
@@ -135,7 +136,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
   const [cvId, setCvId] = useState<string | null>(null);
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
   const [status, setStatus] = useState<CVAnalysisStatus["status"]>("pending");
-  const [result, setResult] = useState<CVAnalysisResult | null>(null);
+  const [result, setResult] = useState<CVAnalysisApiResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isPolling, setIsPolling] = useState(false);

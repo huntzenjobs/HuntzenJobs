@@ -16,6 +16,16 @@ import UserActionsMenu from "./user-actions-menu";
 import { RotateCcw, ExternalLink, Copy, Receipt, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import type {
+  AdminPlan,
+  AdminActionExtra,
+  UsageQuotaEntry,
+  SubscriptionHistoryEntry,
+  SecurityEvent,
+  PaymentEntry,
+  FeatureOverrideEntry,
+  UserEvent,
+} from "@/types/admin";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -42,8 +52,12 @@ interface Props {
   userId: string | null;
   open: boolean;
   onClose: () => void;
-  onAction: (action: string, userId: string, extra?: any) => Promise<void>;
-  plans: any[];
+  onAction: (
+    action: string,
+    userId: string,
+    extra?: AdminActionExtra,
+  ) => Promise<void>;
+  plans: AdminPlan[];
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -81,10 +95,10 @@ export default function UserDetailDrawer({
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [resettingUsage, setResettingUsage] = useState(false);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [features, setFeatures] = useState<any[]>([]);
+  const [payments, setPayments] = useState<PaymentEntry[]>([]);
+  const [features, setFeatures] = useState<FeatureOverrideEntry[]>([]);
   const [togglingFeature, setTogglingFeature] = useState<string | null>(null);
-  const [userEvents, setUserEvents] = useState<any[]>([]);
+  const [userEvents, setUserEvents] = useState<UserEvent[]>([]);
 
   const reload = useCallback(() => {
     if (!userId || !open) return;
@@ -340,7 +354,7 @@ export default function UserDetailDrawer({
                   </p>
                 ) : (
                   <div className="space-y-1 text-xs max-h-48 overflow-y-auto">
-                    {detail.usage_30d.map((u: any) => (
+                    {detail.usage_30d.map((u: UsageQuotaEntry) => (
                       <div
                         key={u.quota_date}
                         className="flex justify-between text-muted-foreground hover:text-foreground py-0.5"
@@ -374,29 +388,34 @@ export default function UserDetailDrawer({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1.5 text-xs">
-                  {detail.subscription_history.map((h: any) => {
-                    const planName =
-                      h.subscription_plans?.display_name || h.plan_id || "—";
-                    return (
-                      <div
-                        key={h.id}
-                        className="flex items-center justify-between text-muted-foreground"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[10px] h-4">
-                            {h.action_type || "changement"}
-                          </Badge>
-                          <span>{planName}</span>
-                          {h.subscription_plans?.price_monthly && (
-                            <span className="text-foreground/50">
-                              €{h.subscription_plans.price_monthly}/mois
-                            </span>
-                          )}
+                  {detail.subscription_history.map(
+                    (h: SubscriptionHistoryEntry) => {
+                      const planName =
+                        h.subscription_plans?.display_name || h.plan_id || "—";
+                      return (
+                        <div
+                          key={h.id}
+                          className="flex items-center justify-between text-muted-foreground"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] h-4"
+                            >
+                              {h.action_type || "changement"}
+                            </Badge>
+                            <span>{planName}</span>
+                            {h.subscription_plans?.price_monthly && (
+                              <span className="text-foreground/50">
+                                €{h.subscription_plans.price_monthly}/mois
+                              </span>
+                            )}
+                          </div>
+                          <span>{formatDate(h.created_at)}</span>
                         </div>
-                        <span>{formatDate(h.created_at)}</span>
-                      </div>
-                    );
-                  })}
+                      );
+                    },
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -410,7 +429,7 @@ export default function UserDetailDrawer({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 max-h-56 overflow-y-auto">
-                  {detail.security_events.map((e: any) => (
+                  {detail.security_events.map((e: SecurityEvent) => (
                     <div key={e.id} className="text-xs space-y-0.5">
                       <div className="flex items-center gap-2">
                         <span
@@ -446,7 +465,7 @@ export default function UserDetailDrawer({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1.5 text-xs max-h-48 overflow-y-auto">
-                  {payments.map((p: any) => (
+                  {payments.map((p: PaymentEntry) => (
                     <div
                       key={p.id}
                       className="flex items-center justify-between py-0.5"
@@ -496,7 +515,7 @@ export default function UserDetailDrawer({
                     Cliquez pour créer/modifier/supprimer les overrides (null =
                     droits du plan)
                   </p>
-                  {features.map((f: any) => (
+                  {features.map((f: FeatureOverrideEntry) => (
                     <div
                       key={f.name}
                       className="flex items-center justify-between py-0.5"
@@ -545,11 +564,11 @@ export default function UserDetailDrawer({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 max-h-64 overflow-y-auto">
-                  {userEvents.map((e: any) => (
+                  {userEvents.map((e: UserEvent) => (
                     <div key={e.id} className="text-xs space-y-0.5">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] ${SEVERITY_COLORS[e.severity] || "bg-gray-50 text-gray-700"}`}
+                          className={`px-1.5 py-0.5 rounded text-[10px] ${(e.severity && SEVERITY_COLORS[e.severity]) || "bg-gray-50 text-gray-700"}`}
                         >
                           {e.severity || "info"}
                         </span>

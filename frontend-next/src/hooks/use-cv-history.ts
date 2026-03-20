@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSubscription } from "@/contexts/subscription-context";
 import type { BreakdownItem } from "@/components/cv/score-breakdown-v2";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
+import type { CvInfo } from "@/components/cv/cv-info-panel";
 
 // ============================================================================
 // TYPES
@@ -25,7 +26,7 @@ export interface CVAnalysisResult {
   suggestions: Suggestion[];
   rawAnalysis?: string; // Optional raw analysis text
   error?: string; // Optional error message
-  cv_info?: any; // Optional CV info (name, email, phone, skills)
+  cv_info?: CvInfo; // Optional CV info (name, email, phone, skills)
   recommended_job_titles?: string[]; // Suggested job titles based on skills
 }
 
