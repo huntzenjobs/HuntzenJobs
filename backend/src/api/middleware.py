@@ -142,6 +142,26 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Inject security headers on all responses (SEC-05)."""
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        response = await call_next(request)
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault(
+            "Strict-Transport-Security",
+            "max-age=31536000; includeSubDomains",
+        )
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
+        response.headers.setdefault(
+            "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
+        )
+        return response
+
+
 class BanIPMiddleware(BaseHTTPMiddleware):
     """Bloque les IPs bannies via Redis (403)."""
 
@@ -189,6 +209,9 @@ def setup_middleware(app: FastAPI) -> None:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Security headers (SEC-05)
+    app.add_middleware(SecurityHeadersMiddleware)
 
     # IP ban check (avant le logging)
     app.add_middleware(BanIPMiddleware)

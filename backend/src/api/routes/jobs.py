@@ -10,6 +10,7 @@ from typing import List
 import httpx
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException, status, Query, Request, Header
+from pydantic import BaseModel, Field
 from typing import Optional
 
 from src.api.deps import ScoutAgentDep, get_user_id_from_token, get_supabase_client
@@ -446,31 +447,61 @@ async def get_job_description(request: Request):
         return {"success": False, "description": "", "final_url": None}
 
 
+class TrackViewRequest(BaseModel):
+    job_id: str = Field(..., min_length=1, max_length=500)
+
+
 @router.post("/track-view")
-async def track_job_view(request: Request):
+@limiter.limit("60/minute")
+async def track_job_view(
+    request: Request,
+    payload: TrackViewRequest,
+    authorization: Optional[str] = Header(None),
+):
     """
     Track job view for analytics and quota management.
-
-    Note: Currently a placeholder.
-    Full tracking implementation to be added in future sprint.
+    Auth optional: anonymous users can view jobs but are not quota-tracked.
+    Authenticated users get their job_view quota incremented.
     """
-    try:
-        body = await request.json()
-        job_id = body.get("job_id", "")
+    user_id = get_user_id_from_token(authorization)
 
-        # TODO: Implement actual tracking logic (store in DB, check quotas, etc.)
-        # For now, return success to prevent frontend errors
+    if not user_id:
+        return {
+            "success": True,
+            "tracked": False,
+            "remaining": None,
+            "message": "Anonymous view, no quota tracking",
+        }
+
+    try:
+        supabase = get_supabase_client()
+
+        # Increment job_view usage
+        supabase.rpc("increment_usage", {
+            "p_user_id": user_id,
+            "p_feature": "job_view",
+            "p_amount": 1,
+        }).execute()
+
+        # Get updated quota status
+        quota_result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        remaining = None
+        for row in (quota_result.data or []):
+            if row.get("feature") == "job_view":
+                remaining = row.get("quota_remaining")
+                break
+
         return {
             "success": True,
             "tracked": True,
-            "remaining": 999,  # Placeholder - unlimited for now
-            "message": "View tracking not yet implemented"
+            "remaining": remaining,
         }
     except Exception as e:
+        logger.warning(f"[track-view] Failed for user {user_id}: {e}")
         return {
-            "success": False,
+            "success": True,
             "tracked": False,
-            "error": str(e)
+            "remaining": None,
         }
 
 
