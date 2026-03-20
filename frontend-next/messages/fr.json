@@ -589,6 +589,32 @@
       }
     }
   },
+  "usageModal": {
+    "title": "Mon Utilisation",
+    "planTitle": "Plan {planName}",
+    "freeSubtitle": "Découvrez HuntZen gratuitement",
+    "activeSubtitle": "Abonnement actif",
+    "activeBadge": "Actif",
+    "upgradeCta": "Passer à un plan payant",
+    "progressTitle": "Ta progression",
+    "dailyUsageTitle": "Utilisation du jour",
+    "resetAtMidnight": "Réinitialisation à minuit",
+    "cvAnalysis": "Analyses CV",
+    "assistantMessages": "Messages Assistant",
+    "jobSearches": "Recherches d'emploi",
+    "unlockTitle": "Débloquez tout le potentiel de HuntZen",
+    "unlockDescription": "Passez à un plan payant pour des analyses illimitées, plus de messages coaching, et des fonctionnalités exclusives.",
+    "seePlans": "Voir les plans disponibles",
+    "tipLabel": "Bon à savoir :",
+    "tipText": "Vos quotas se réinitialisent automatiquement chaque jour à minuit. Passez à un plan supérieur pour augmenter vos limites.",
+    "quota": {
+      "usedSingular": "{used}{unit} utilisé",
+      "usedPlural": "{used}{unit} utilisés",
+      "outOf": "sur {limit}{unit}",
+      "unlimited": "Utilisation illimitée",
+      "reached": "Quota atteint pour aujourd'hui"
+    }
+  },
   "upgradeBanner": {
     "minimal": {
       "text": "Passez Carrière pour débloquer toutes les fonctionnalités",
@@ -1152,7 +1178,48 @@
       "description": "Tu es maintenant sur le plan {plan}.",
       "ctaUpgrade": "Voir les offres",
       "ctaContinue": "Continuer"
-    }
+    },
+    "features": {
+      "has_advanced_filters": "Filtres avancés",
+      "has_favorites": "Favoris illimités",
+      "has_email_alerts": "Alertes email",
+      "has_visual_score": "Score visuel CV",
+      "has_pdf_export": "Export PDF",
+      "has_cv_history": "Historique CV",
+      "has_interview_sim": "Simulation d'entretien",
+      "has_personalized_advice": "Conseils personnalisés",
+      "has_coach_history": "Historique Coach"
+    },
+    "paymentFailed": "Paiement en échec",
+    "paymentFailedDesc": "Votre dernier paiement a échoué. Mettez à jour votre moyen de paiement pour conserver votre accès{until}.",
+    "paymentFailedUntil": " jusqu'au {date}",
+    "openingPortal": "Ouverture...",
+    "updateCard": "Mettre à jour ma carte",
+    "active": "Actif",
+    "endsOn": "Fin le {date}",
+    "cancellationScheduled": "Annulation prévue",
+    "upgradeTo": "Passer à {plan}",
+    "featuresIncluded": "Fonctionnalités incluses",
+    "cvAnalysesUnlimited": "Analyses CV illimitées",
+    "cvAnalysesPerDay": "{count} analyse(s) CV par jour",
+    "assistantMessagesUnlimited": "Messages Assistant illimités",
+    "assistantMessagesPerDay": "{count} messages Assistant par jour",
+    "jobSearchesUnlimited": "Recherches d'emploi illimitées",
+    "jobSearchesPerDay": "{count} recherches d'emploi par jour",
+    "dailyUsage": "Utilisation du jour",
+    "cvAnalysesLabel": "Analyses CV",
+    "assistantMessagesLabel": "Messages Assistant",
+    "jobSearchesLabel": "Recherches d'emploi",
+    "unlockPotential": "Débloquez tout le potentiel de HuntZen",
+    "unlockPotentialDesc": "Passez à un plan payant pour des analyses illimitées, plus de messages coaching, et des fonctionnalités exclusives.",
+    "viewPlans": "Voir les plans",
+    "viewPlansAriaLabel": "Voir tous les plans d'abonnement disponibles",
+    "changePlan": "Changer de plan",
+    "changePlanAriaLabel": "Changer de plan d'abonnement",
+    "upgradeAriaLabel": "Passer au plan {plan}",
+    "portalError": "Erreur",
+    "reactivationError": "Erreur lors de la réactivation",
+    "cancellationError": "Erreur lors de l'annulation"
   },
   "contact": {
     "toasts": {
@@ -1199,6 +1266,48 @@
       "confirm": "Confirmer l'annulation",
       "successTitle": "Annulation confirmée",
       "successDescription": "Votre plan {plan} restera actif jusqu'à la fin de la période en cours, sans aucun nouveau prélèvement. Vous passerez ensuite au plan Gratuit."
+    },
+    "pageTitle": "Mon Profil",
+    "pageDescription": "Gérez vos informations personnelles, votre abonnement et vos préférences",
+    "tabs": {
+      "profile": "Profil",
+      "subscription": "Abonnement",
+      "settings": "Paramètres",
+      "notifications": "Notifications",
+      "progression": "Progression",
+      "referral": "Parrainage"
+    },
+    "subscriptionSection": {
+      "title": "Votre abonnement",
+      "description": "Consultez votre plan actuel, votre utilisation quotidienne et gérez votre abonnement"
+    },
+    "settingsSection": {
+      "title": "Paramètres",
+      "description": "Personnalisez votre expérience HuntZen avec vos préférences"
+    },
+    "progressionSection": {
+      "title": "Progression",
+      "description": "Suivez votre Career Score et vos points d'expérience"
+    },
+    "alerts": {
+      "paymentFailed": "Paiement en échec",
+      "cancellationScheduled": "Annulation programmée"
+    },
+    "help": {
+      "title": "Besoin d'aide ?",
+      "description": "Notre équipe support est là pour vous aider. N'hésitez pas à nous contacter si vous avez des questions sur votre compte ou votre abonnement.",
+      "helpCenter": "Centre d'aide"
+    },
+    "referral": {
+      "title": "Parrainez vos proches",
+      "description": "Partagez votre lien. Quand un ami souscrit, vous gagnez des jours offerts.",
+      "yourLink": "Votre lien de parrainage",
+      "code": "Code :",
+      "clicks": "Clics",
+      "signups": "Inscriptions",
+      "conversions": "Conversions",
+      "howItWorks": "Comment ça marche ?",
+      "howItWorksDescription": "Quand un ami souscrit via votre lien, vous recevez automatiquement des jours offerts."
     }
   },
   "cv": {
@@ -1609,5 +1718,54 @@
     "ctaSubtitle": "Transformez votre recherche d'emploi avec HuntZen Jobs dès maintenant",
     "ctaSignup": "Créer mon compte gratuitement",
     "ctaAbout": "En savoir plus sur HuntZen"
+  },
+  "popups": {
+    "close": "Fermer",
+    "couponLabel": "Code :",
+    "planLabel": "Plan",
+    "currencyPerMonth": "\u20ac/mois",
+    "searchLimit": {
+      "title": "Tu as atteint ta limite de recherches aujourd\u2019hui",
+      "body": "Passe \u00e0 Starter pour des recherches illimit\u00e9es et trouve ton prochain job plus vite.",
+      "primaryCta": "D\u00e9bloquer les recherches",
+      "secondaryCta": "Parrainer un ami"
+    },
+    "cvScore": {
+      "title": "Ton CV peut faire beaucoup mieux",
+      "body": "Acc\u00e8de aux conseils d\u00e9taill\u00e9s de Sofia pour booster ton score ATS et d\u00e9crocher plus d\u2019entretiens.",
+      "primaryCta": "Activer l\u2019analyse compl\u00e8te"
+    },
+    "sessionCut": {
+      "title": "Ta session coach est termin\u00e9e",
+      "body": "Continue avec Nova, Maria ou Lucas sans limite. Ton prochain job est \u00e0 port\u00e9e de main.",
+      "primaryCta": "Continuer avec le Coach"
+    },
+    "interviewScore": {
+      "title": "Tu veux aller plus loin avec Lucas ?",
+      "body": "Simule autant d\u2019entretiens que tu veux et re\u00e7ois des retours approfondis \u00e0 chaque session.",
+      "primaryCta": "Activer la simulation compl\u00e8te"
+    },
+    "momentum": {
+      "title": "Tu es en plein \u00e9lan \u2014 profite de -20\u00a0% aujourd\u2019hui",
+      "body": "Tu recherches activement. Voici une offre exclusive valable 24\u00a0h pour toi.",
+      "primaryCta": "Choisir mon plan avec -20\u00a0%"
+    },
+    "antiChurn": {
+      "title": "Reste et \u00e9conomise -30\u00a0% pendant 3 mois",
+      "body": "Avant de partir, voici une offre exclusive : -30\u00a0% sur ton abonnement pendant 3 mois.",
+      "primaryCta": "Garder mon avantage",
+      "secondaryCta": "Annuler quand m\u00eame"
+    },
+    "inactive7d": {
+      "title": "7 jours Acc\u00e9l\u00e9rateur offerts, on t\u2019a r\u00e9serv\u00e9 ta place",
+      "body": "Tu nous manques ! Reviens et profite de 7 jours gratuits pour reprendre ta recherche.",
+      "primaryCta": "Activer mes 7 jours gratuits",
+      "priceOverride": "0\u20ac pendant 7 jours"
+    },
+    "pricingHover": {
+      "title": "67\u00a0% de nos abonn\u00e9s choisissent Acc\u00e9l\u00e9rateur",
+      "body": "Ils trouvent un job en moyenne 3x plus vite. Rejoins-les aujourd\u2019hui.",
+      "primaryCta": "Choisir Acc\u00e9l\u00e9rateur maintenant"
+    }
   }
 }

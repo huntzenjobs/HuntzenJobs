@@ -1544,5 +1544,54 @@
       "health": "Healthcare",
       "sales": "Sales"
     }
+  },
+  "popups": {
+    "close": "Fechar",
+    "couponLabel": "C\u00f3digo:",
+    "planLabel": "Plano",
+    "currencyPerMonth": "\u20ac/m\u00eas",
+    "searchLimit": {
+      "title": "Atingiste o teu limite de pesquisas de hoje",
+      "body": "Passa para o Starter para pesquisas ilimitadas e encontra o teu pr\u00f3ximo emprego mais r\u00e1pido.",
+      "primaryCta": "Desbloquear pesquisas",
+      "secondaryCta": "Recomendar um amigo"
+    },
+    "cvScore": {
+      "title": "O teu CV pode melhorar muito",
+      "body": "Acede aos conselhos detalhados da Sofia para melhorar a tua pontua\u00e7\u00e3o ATS e conseguir mais entrevistas.",
+      "primaryCta": "Ativar an\u00e1lise completa"
+    },
+    "sessionCut": {
+      "title": "A tua sess\u00e3o de coaching terminou",
+      "body": "Continua com a Nova, a Maria ou o Lucas sem limites. O teu pr\u00f3ximo emprego est\u00e1 ao teu alcance.",
+      "primaryCta": "Continuar com o Coach"
+    },
+    "interviewScore": {
+      "title": "Queres ir mais longe com o Lucas?",
+      "body": "Simula tantas entrevistas quantas quiseres e recebe feedback detalhado em cada sess\u00e3o.",
+      "primaryCta": "Ativar simula\u00e7\u00e3o completa"
+    },
+    "momentum": {
+      "title": "Est\u00e1s em grande forma \u2014 aproveita -20\u00a0% hoje",
+      "body": "Est\u00e1s a procurar ativamente. Aqui tens uma oferta exclusiva v\u00e1lida por 24\u00a0h s\u00f3 para ti.",
+      "primaryCta": "Escolher o meu plano com -20\u00a0%"
+    },
+    "antiChurn": {
+      "title": "Fica e poupa -30\u00a0% durante 3 meses",
+      "body": "Antes de ires, aqui tens uma oferta exclusiva: -30\u00a0% na tua subscri\u00e7\u00e3o durante 3 meses.",
+      "primaryCta": "Manter a minha vantagem",
+      "secondaryCta": "Cancelar mesmo assim"
+    },
+    "inactive7d": {
+      "title": "7 dias de Acelerador gr\u00e1tis, o teu lugar est\u00e1 reservado",
+      "body": "Temos saudades tuas! Volta e aproveita 7 dias gr\u00e1tis para retomar a tua pesquisa.",
+      "primaryCta": "Ativar os meus 7 dias gr\u00e1tis",
+      "priceOverride": "0\u20ac durante 7 dias"
+    },
+    "pricingHover": {
+      "title": "67\u00a0% dos nossos subscritores escolhem o Acelerador",
+      "body": "Encontram emprego em m\u00e9dia 3 vezes mais r\u00e1pido. Junta-te a eles hoje.",
+      "primaryCta": "Escolher Acelerador agora"
+    }
   }
 }

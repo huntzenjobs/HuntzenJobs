@@ -1544,5 +1544,54 @@
       "health": "Healthcare",
       "sales": "Sales"
     }
+  },
+  "popups": {
+    "close": "Cerrar",
+    "couponLabel": "C\u00f3digo:",
+    "planLabel": "Plan",
+    "currencyPerMonth": "\u20ac/mes",
+    "searchLimit": {
+      "title": "Has alcanzado tu l\u00edmite de b\u00fasquedas de hoy",
+      "body": "Pasa a Starter para b\u00fasquedas ilimitadas y encuentra tu pr\u00f3ximo empleo m\u00e1s r\u00e1pido.",
+      "primaryCta": "Desbloquear b\u00fasquedas",
+      "secondaryCta": "Recomendar a un amigo"
+    },
+    "cvScore": {
+      "title": "Tu CV puede mejorar mucho",
+      "body": "Accede a los consejos detallados de Sofia para mejorar tu puntuaci\u00f3n ATS y conseguir m\u00e1s entrevistas.",
+      "primaryCta": "Activar an\u00e1lisis completo"
+    },
+    "sessionCut": {
+      "title": "Tu sesi\u00f3n de coaching ha terminado",
+      "body": "Contin\u00faa con Nova, Maria o Lucas sin l\u00edmite. Tu pr\u00f3ximo empleo est\u00e1 a tu alcance.",
+      "primaryCta": "Continuar con el Coach"
+    },
+    "interviewScore": {
+      "title": "\u00bfQuieres ir m\u00e1s lejos con Lucas?",
+      "body": "Simula tantas entrevistas como quieras y recibe feedback detallado en cada sesi\u00f3n.",
+      "primaryCta": "Activar simulaci\u00f3n completa"
+    },
+    "momentum": {
+      "title": "Est\u00e1s en racha \u2014 aprovecha el -20\u00a0% hoy",
+      "body": "Est\u00e1s buscando activamente. Aqu\u00ed tienes una oferta exclusiva v\u00e1lida 24\u00a0h solo para ti.",
+      "primaryCta": "Elegir mi plan con -20\u00a0%"
+    },
+    "antiChurn": {
+      "title": "Qu\u00e9date y ahorra -30\u00a0% durante 3 meses",
+      "body": "Antes de irte, aqu\u00ed tienes una oferta exclusiva: -30\u00a0% en tu suscripci\u00f3n durante 3 meses.",
+      "primaryCta": "Mantener mi ventaja",
+      "secondaryCta": "Cancelar de todas formas"
+    },
+    "inactive7d": {
+      "title": "7 d\u00edas de Acelerador gratis, tu plaza est\u00e1 reservada",
+      "body": "\u00a1Te echamos de menos! Vuelve y disfruta de 7 d\u00edas gratis para retomar tu b\u00fasqueda.",
+      "primaryCta": "Activar mis 7 d\u00edas gratis",
+      "priceOverride": "0\u20ac durante 7 d\u00edas"
+    },
+    "pricingHover": {
+      "title": "El 67\u00a0% de nuestros suscriptores eligen Acelerador",
+      "body": "Encuentran empleo en promedio 3 veces m\u00e1s r\u00e1pido. \u00danete a ellos hoy.",
+      "primaryCta": "Elegir Acelerador ahora"
+    }
   }
 }

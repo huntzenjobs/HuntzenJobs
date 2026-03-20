@@ -42,18 +42,18 @@ const PLAN_VISUAL: Record<string, { color: string; icon: React.ReactNode }> = {
   premium: { color: "bg-amber-500", icon: <Crown className="w-4 h-4" /> },
 };
 
-// Feature labels in French
-const FEATURE_LABELS: Record<string, string> = {
-  has_advanced_filters: "Filtres avancés",
-  has_favorites: "Favoris illimités",
-  has_email_alerts: "Alertes email",
-  has_visual_score: "Score visuel CV",
-  has_pdf_export: "Export PDF",
-  has_cv_history: "Historique CV",
-  has_interview_sim: "Simulation d'entretien",
-  has_personalized_advice: "Conseils personnalisés",
-  has_coach_history: "Historique Coach",
-};
+// Feature keys — labels come from tSub("features.<key>")
+const FEATURE_KEYS = [
+  "has_advanced_filters",
+  "has_favorites",
+  "has_email_alerts",
+  "has_visual_score",
+  "has_pdf_export",
+  "has_cv_history",
+  "has_interview_sim",
+  "has_personalized_advice",
+  "has_coach_history",
+] as const;
 
 export function SubscriptionCard() {
   const { plan, planName, isFreePlan, isPaidPlan, openPricingModal, limits } =
@@ -107,7 +107,7 @@ export function SubscriptionCard() {
         },
       );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || "Erreur");
+      if (!response.ok) throw new Error(data.detail || tSub("portalError"));
       window.location.href = data.portal_url;
     } catch (err) {
       console.error("Portal error:", err);
@@ -128,13 +128,11 @@ export function SubscriptionCard() {
   })();
 
   // Get list of features (boolean flags)
-  const features = Object.entries(planLimits)
-    .filter(([key]) => key.startsWith("has_"))
-    .map(([key, value]) => ({
-      key,
-      label: FEATURE_LABELS[key] || key,
-      enabled: value as boolean,
-    }));
+  const features = FEATURE_KEYS.map((key) => ({
+    key,
+    label: tSub(`features.${key}`),
+    enabled: (planLimits[key] as boolean) ?? false,
+  }));
 
   // Get next plan for upgrade
   const getNextPlan = () => {
@@ -160,7 +158,7 @@ export function SubscriptionCard() {
       );
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.detail || "Erreur lors de la réactivation");
+        throw new Error(err.detail || tSub("reactivationError"));
       }
       window.location.reload();
     } catch (err) {
@@ -203,7 +201,7 @@ export function SubscriptionCard() {
       );
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.detail || "Erreur lors de l'annulation");
+        throw new Error(err.detail || tSub("cancellationError"));
       }
       const data = await response.json();
       setCancelSuccess(data.plan_name || plan);
@@ -234,12 +232,14 @@ export function SubscriptionCard() {
             <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
             <div className="flex-1 space-y-2">
               <p className="text-sm font-semibold text-red-800">
-                Paiement en échec
+                {tSub("paymentFailed")}
               </p>
               <p className="text-xs text-red-700">
-                Votre dernier paiement a échoué. Mettez à jour votre moyen de
-                paiement pour conserver votre accès
-                {formattedPeriodEnd ? ` jusqu'au ${formattedPeriodEnd}` : ""}.
+                {tSub("paymentFailedDesc", {
+                  until: formattedPeriodEnd
+                    ? tSub("paymentFailedUntil", { date: formattedPeriodEnd })
+                    : "",
+                })}
               </p>
               <Button
                 size="sm"
@@ -247,7 +247,7 @@ export function SubscriptionCard() {
                 disabled={isOpeningPortal}
                 className="bg-red-600 hover:bg-red-700 text-white h-8 text-xs"
               >
-                {isOpeningPortal ? "Ouverture..." : "Mettre à jour ma carte"}
+                {isOpeningPortal ? tSub("openingPortal") : tSub("updateCard")}
               </Button>
             </div>
           </div>
@@ -298,7 +298,7 @@ export function SubscriptionCard() {
                   className="gap-1 text-green-600 border-green-600"
                 >
                   <Check className="w-3 h-3" />
-                  Actif
+                  {tSub("active")}
                 </Badge>
               )}
               {isPaidPlan && cancelAtPeriodEnd && (
@@ -308,8 +308,8 @@ export function SubscriptionCard() {
                 >
                   <Clock className="w-3 h-3" />
                   {formattedPeriodEnd
-                    ? `Fin le ${formattedPeriodEnd}`
-                    : "Annulation prévue"}
+                    ? tSub("endsOn", { date: formattedPeriodEnd })
+                    : tSub("cancellationScheduled")}
                 </Badge>
               )}
               {isPastDue && (
@@ -318,7 +318,7 @@ export function SubscriptionCard() {
                   className="gap-1 text-red-600 border-red-400"
                 >
                   <AlertTriangle className="w-3 h-3" />
-                  Paiement en échec
+                  {tSub("paymentFailed")}
                 </Badge>
               )}
             </div>
@@ -335,10 +335,14 @@ export function SubscriptionCard() {
               onClick={() => openPricingModal()}
               size="sm"
               className="gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
-              aria-label={`Passer au plan ${getPlan(nextPlan)?.display_name ?? nextPlan}`}
+              aria-label={tSub("upgradeAriaLabel", {
+                plan: getPlan(nextPlan)?.display_name ?? nextPlan,
+              })}
             >
               <TrendingUp className="w-4 h-4" aria-hidden="true" />
-              Passer à {getPlan(nextPlan)?.display_name ?? nextPlan}
+              {tSub("upgradeTo", {
+                plan: getPlan(nextPlan)?.display_name ?? nextPlan,
+              })}
             </Button>
           )}
         </div>
@@ -348,7 +352,7 @@ export function SubscriptionCard() {
         {/* Features List */}
         <div className="space-y-3">
           <h3 className="font-semibold text-sm text-gray-700">
-            Fonctionnalités incluses
+            {tSub("featuresIncluded")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {features.map(({ key, label, enabled }) => (
@@ -381,24 +385,30 @@ export function SubscriptionCard() {
               <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
               <span>
                 {limits.cv_analyses_per_day === Infinity
-                  ? "Analyses CV illimitées"
-                  : `${limits.cv_analyses_per_day} analyse(s) CV par jour`}
+                  ? tSub("cvAnalysesUnlimited")
+                  : tSub("cvAnalysesPerDay", {
+                      count: limits.cv_analyses_per_day,
+                    })}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
               <span>
                 {limits.assistant_messages_per_day === Infinity
-                  ? "Messages Assistant illimités"
-                  : `${limits.assistant_messages_per_day} messages Assistant par jour`}
+                  ? tSub("assistantMessagesUnlimited")
+                  : tSub("assistantMessagesPerDay", {
+                      count: limits.assistant_messages_per_day,
+                    })}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
               <span>
                 {limits.job_searches_per_day === Infinity
-                  ? "Recherches d'emploi illimitées"
-                  : `${limits.job_searches_per_day} recherches d'emploi par jour`}
+                  ? tSub("jobSearchesUnlimited")
+                  : tSub("jobSearchesPerDay", {
+                      count: limits.job_searches_per_day,
+                    })}
               </span>
             </div>
           </div>
@@ -409,19 +419,21 @@ export function SubscriptionCard() {
         {/* Usage Quotas */}
         <div className="space-y-4">
           <h3 className="font-semibold text-sm text-gray-700">
-            Utilisation du jour
+            {tSub("dailyUsage")}
           </h3>
 
           {/* CV Analysis */}
           <div className="space-y-1">
-            <p className="text-xs text-gray-500 font-medium">Analyses CV</p>
+            <p className="text-xs text-gray-500 font-medium">
+              {tSub("cvAnalysesLabel")}
+            </p>
             <UsageCounter feature="cv_analysis" showIcon={false} />
           </div>
 
           {/* Assistant Messages */}
           <div className="space-y-1">
             <p className="text-xs text-gray-500 font-medium">
-              Messages Assistant
+              {tSub("assistantMessagesLabel")}
             </p>
             <UsageCounter feature="assistant_messages" showIcon={false} />
           </div>
@@ -429,7 +441,7 @@ export function SubscriptionCard() {
           {/* Job Searches */}
           <div className="space-y-1">
             <p className="text-xs text-gray-500 font-medium">
-              Recherches d'emploi
+              {tSub("jobSearchesLabel")}
             </p>
             <UsageCounter feature="job_search" showIcon={false} />
           </div>
@@ -447,20 +459,19 @@ export function SubscriptionCard() {
                 />
                 <div className="space-y-1">
                   <p className="font-semibold text-violet-900">
-                    Débloquez tout le potentiel de HuntZen
+                    {tSub("unlockPotential")}
                   </p>
                   <p className="text-sm text-violet-700">
-                    Passez à un plan payant pour des analyses illimitées, plus
-                    de temps de coaching, et des fonctionnalités exclusives.
+                    {tSub("unlockPotentialDesc")}
                   </p>
                 </div>
               </div>
               <Button
                 onClick={() => openPricingModal()}
                 className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
-                aria-label="Voir tous les plans d'abonnement disponibles"
+                aria-label={tSub("viewPlansAriaLabel")}
               >
-                Voir les plans
+                {tSub("viewPlans")}
               </Button>
             </div>
           </>
@@ -475,9 +486,9 @@ export function SubscriptionCard() {
                 variant="outline"
                 className="sm:flex-1"
                 onClick={() => openPricingModal()}
-                aria-label="Changer de plan d'abonnement"
+                aria-label={tSub("changePlanAriaLabel")}
               >
-                Changer de plan
+                {tSub("changePlan")}
               </Button>
               {cancelAtPeriodEnd ? (
                 <Button

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -9,13 +10,13 @@ import { usePlansConfig } from "@/hooks/use-plans-config";
 export interface PopupConfig {
   id: string;
   trigger: string;
-  title: string;
-  body: string;
-  primaryCta: string;
-  secondaryCta?: string;
+  titleKey: string;
+  bodyKey: string;
+  primaryCtaKey: string;
+  secondaryCtaKey?: string;
   plan: "starter" | "pro";
   discountPercent?: number;
-  priceOverride?: string;
+  priceOverrideKey?: string;
   couponTrigger?: string;
 }
 
@@ -23,42 +24,42 @@ export const POPUP_CONFIGS: PopupConfig[] = [
   {
     id: "search_limit",
     trigger: "search_limit",
-    title: "Tu as atteint ta limite de recherches aujourd'hui",
-    body: "Passe à Starter pour des recherches illimitées et trouve ton prochain job plus vite.",
-    primaryCta: "Débloquer les recherches",
-    secondaryCta: "Parrainer un ami",
+    titleKey: "searchLimit.title",
+    bodyKey: "searchLimit.body",
+    primaryCtaKey: "searchLimit.primaryCta",
+    secondaryCtaKey: "searchLimit.secondaryCta",
     plan: "starter",
   },
   {
     id: "cv_score",
     trigger: "cv_score",
-    title: "Ton CV peut faire beaucoup mieux",
-    body: "Accède aux conseils détaillés de Sofia pour booster ton score ATS et décrocher plus d'entretiens.",
-    primaryCta: "Activer l'analyse complète",
+    titleKey: "cvScore.title",
+    bodyKey: "cvScore.body",
+    primaryCtaKey: "cvScore.primaryCta",
     plan: "starter",
   },
   {
     id: "session_cut",
     trigger: "session_cut",
-    title: "Ta session coach est terminée",
-    body: "Continue avec Nova, Maria ou Lucas sans limite. Ton prochain job est à portée de main.",
-    primaryCta: "Continuer avec le Coach",
+    titleKey: "sessionCut.title",
+    bodyKey: "sessionCut.body",
+    primaryCtaKey: "sessionCut.primaryCta",
     plan: "starter",
   },
   {
     id: "interview_score",
     trigger: "interview_score",
-    title: "Tu veux aller plus loin avec Lucas ?",
-    body: "Simule autant d'entretiens que tu veux et reçois des retours approfondis à chaque session.",
-    primaryCta: "Activer la simulation complète",
+    titleKey: "interviewScore.title",
+    bodyKey: "interviewScore.body",
+    primaryCtaKey: "interviewScore.primaryCta",
     plan: "pro",
   },
   {
     id: "momentum",
     trigger: "momentum",
-    title: "Tu es en plein élan — profite de -20% aujourd'hui",
-    body: "Tu recherches activement. Voici une offre exclusive valable 24h pour toi.",
-    primaryCta: "Choisir mon plan avec -20%",
+    titleKey: "momentum.title",
+    bodyKey: "momentum.body",
+    primaryCtaKey: "momentum.primaryCta",
     plan: "starter",
     discountPercent: 0.2,
     couponTrigger: "momentum",
@@ -66,10 +67,10 @@ export const POPUP_CONFIGS: PopupConfig[] = [
   {
     id: "anti_churn",
     trigger: "anti_churn",
-    title: "Reste et économise -30% pendant 3 mois",
-    body: "Avant de partir, voici une offre exclusive : -30% sur ton abonnement pendant 3 mois.",
-    primaryCta: "Garder mon avantage",
-    secondaryCta: "Annuler quand même",
+    titleKey: "antiChurn.title",
+    bodyKey: "antiChurn.body",
+    primaryCtaKey: "antiChurn.primaryCta",
+    secondaryCtaKey: "antiChurn.secondaryCta",
     plan: "pro",
     discountPercent: 0.3,
     couponTrigger: "anti_churn",
@@ -77,19 +78,19 @@ export const POPUP_CONFIGS: PopupConfig[] = [
   {
     id: "inactive_7d",
     trigger: "inactive_7d",
-    title: "7 jours Accélérateur offerts, on t'a réservé ta place",
-    body: "Tu nous manques ! Reviens et profite de 7 jours gratuits pour reprendre ta recherche.",
-    primaryCta: "Activer mes 7 jours gratuits",
+    titleKey: "inactive7d.title",
+    bodyKey: "inactive7d.body",
+    primaryCtaKey: "inactive7d.primaryCta",
     plan: "pro",
-    priceOverride: "0€ pendant 7 jours",
+    priceOverrideKey: "inactive7d.priceOverride",
     couponTrigger: "win_back_7d",
   },
   {
     id: "pricing_hover",
     trigger: "pricing_hover",
-    title: "67% de nos abonnés choisissent Accélérateur",
-    body: "Ils trouvent un job en moyenne 3x plus vite. Rejoins-les aujourd'hui.",
-    primaryCta: "Choisir Accélérateur maintenant",
+    titleKey: "pricingHover.title",
+    bodyKey: "pricingHover.body",
+    primaryCtaKey: "pricingHover.primaryCta",
     plan: "pro",
   },
 ];
@@ -110,6 +111,7 @@ export function ConversionPopup({
   onSecondaryAction,
 }: ConversionPopupProps) {
   const { session } = useAuth();
+  const t = useTranslations("popups");
   const config = POPUP_CONFIGS.find((p) => p.id === popupId);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -155,14 +157,14 @@ export function ConversionPopup({
   if (!isOpen || !config) return null;
 
   const computedPrice = (() => {
-    if (config.priceOverride) return config.priceOverride;
+    if (config.priceOverrideKey) return t(config.priceOverrideKey);
     const planData = getPlan(config.plan);
     if (!planData) return "";
     const base = planData.price_monthly;
     const discounted = config.discountPercent
       ? base * (1 - config.discountPercent)
       : base;
-    return `${formatPrice(discounted)}€/mois`;
+    return `${formatPrice(discounted)}${t("currencyPerMonth")}`;
   })();
 
   const planColors = {
@@ -185,28 +187,30 @@ export function ConversionPopup({
         <div className="p-6">
           <button
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t("close")}
             className="absolute top-4 right-4 p-1 rounded hover:bg-accent transition-colors"
           >
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
           <h3 className="text-base font-bold leading-snug pr-6 mb-2">
-            {config.title}
+            {t(config.titleKey)}
           </h3>
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-            {config.body}
+            {t(config.bodyKey)}
           </p>
           {couponCode && (
             <div className="mb-4 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs">
-              <span className="text-amber-700 font-medium">Code : </span>
+              <span className="text-amber-700 font-medium">
+                {t("couponLabel")}{" "}
+              </span>
               <span className="font-mono font-bold text-amber-800">
                 {couponCode}
               </span>
             </div>
           )}
           <p className="text-xs text-muted-foreground mb-4">
-            Plan {getPlan(config.plan)?.display_name ?? config.plan}
-            {computedPrice ? ` · ` : ""}
+            {t("planLabel")} {getPlan(config.plan)?.display_name ?? config.plan}
+            {computedPrice ? " · " : ""}
             <strong>{computedPrice}</strong>
           </p>
           <button
@@ -225,9 +229,9 @@ export function ConversionPopup({
               colors.btn,
             )}
           >
-            {config.primaryCta}
+            {t(config.primaryCtaKey)}
           </button>
-          {config.secondaryCta && (
+          {config.secondaryCtaKey && (
             <button
               onClick={() => {
                 onSecondaryAction?.();
@@ -235,7 +239,7 @@ export function ConversionPopup({
               }}
               className="w-full mt-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {config.secondaryCta}
+              {t(config.secondaryCtaKey)}
             </button>
           )}
         </div>

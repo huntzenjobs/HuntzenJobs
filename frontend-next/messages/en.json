@@ -512,6 +512,32 @@
       }
     }
   },
+  "usageModal": {
+    "title": "My Usage",
+    "planTitle": "Plan {planName}",
+    "freeSubtitle": "Discover HuntZen for free",
+    "activeSubtitle": "Active subscription",
+    "activeBadge": "Active",
+    "upgradeCta": "Upgrade to a paid plan",
+    "progressTitle": "Your progress",
+    "dailyUsageTitle": "Today's usage",
+    "resetAtMidnight": "Resets at midnight",
+    "cvAnalysis": "CV Analyses",
+    "assistantMessages": "Assistant Messages",
+    "jobSearches": "Job Searches",
+    "unlockTitle": "Unlock HuntZen's full potential",
+    "unlockDescription": "Upgrade to a paid plan for unlimited analyses, more coaching messages, and exclusive features.",
+    "seePlans": "See available plans",
+    "tipLabel": "Good to know:",
+    "tipText": "Your quotas reset automatically every day at midnight. Upgrade to a higher plan to increase your limits.",
+    "quota": {
+      "usedSingular": "{used}{unit} used",
+      "usedPlural": "{used}{unit} used",
+      "outOf": "out of {limit}{unit}",
+      "unlimited": "Unlimited usage",
+      "reached": "Quota reached for today"
+    }
+  },
   "upgradeBanner": {
     "minimal": {
       "text": "Go Premium to unlock all features",
@@ -1075,7 +1101,48 @@
       "description": "You are now on the {plan} plan.",
       "ctaUpgrade": "View plans",
       "ctaContinue": "Continue"
-    }
+    },
+    "features": {
+      "has_advanced_filters": "Advanced filters",
+      "has_favorites": "Unlimited favorites",
+      "has_email_alerts": "Email alerts",
+      "has_visual_score": "Visual CV score",
+      "has_pdf_export": "PDF export",
+      "has_cv_history": "CV history",
+      "has_interview_sim": "Interview simulation",
+      "has_personalized_advice": "Personalized advice",
+      "has_coach_history": "Coach history"
+    },
+    "paymentFailed": "Payment failed",
+    "paymentFailedDesc": "Your last payment failed. Update your payment method to keep your access{until}.",
+    "paymentFailedUntil": " until {date}",
+    "openingPortal": "Opening...",
+    "updateCard": "Update my card",
+    "active": "Active",
+    "endsOn": "Ends on {date}",
+    "cancellationScheduled": "Cancellation scheduled",
+    "upgradeTo": "Upgrade to {plan}",
+    "featuresIncluded": "Features included",
+    "cvAnalysesUnlimited": "Unlimited CV analyses",
+    "cvAnalysesPerDay": "{count} CV analysis per day",
+    "assistantMessagesUnlimited": "Unlimited Assistant messages",
+    "assistantMessagesPerDay": "{count} Assistant messages per day",
+    "jobSearchesUnlimited": "Unlimited job searches",
+    "jobSearchesPerDay": "{count} job searches per day",
+    "dailyUsage": "Today's usage",
+    "cvAnalysesLabel": "CV Analyses",
+    "assistantMessagesLabel": "Assistant Messages",
+    "jobSearchesLabel": "Job Searches",
+    "unlockPotential": "Unlock HuntZen's full potential",
+    "unlockPotentialDesc": "Upgrade to a paid plan for unlimited analyses, more coaching messages, and exclusive features.",
+    "viewPlans": "View plans",
+    "viewPlansAriaLabel": "View all available subscription plans",
+    "changePlan": "Change plan",
+    "changePlanAriaLabel": "Change subscription plan",
+    "upgradeAriaLabel": "Upgrade to {plan} plan",
+    "portalError": "Error",
+    "reactivationError": "Error during reactivation",
+    "cancellationError": "Error during cancellation"
   },
   "contact": {
     "toasts": {
@@ -1122,6 +1189,48 @@
     },
     "placeholders": {
       "fullName": "Your full name"
+    },
+    "pageTitle": "My Profile",
+    "pageDescription": "Manage your personal information, subscription, and preferences",
+    "tabs": {
+      "profile": "Profile",
+      "subscription": "Subscription",
+      "settings": "Settings",
+      "notifications": "Notifications",
+      "progression": "Progression",
+      "referral": "Referral"
+    },
+    "subscriptionSection": {
+      "title": "Your subscription",
+      "description": "View your current plan, daily usage, and manage your subscription"
+    },
+    "settingsSection": {
+      "title": "Settings",
+      "description": "Customize your HuntZen experience with your preferences"
+    },
+    "progressionSection": {
+      "title": "Progression",
+      "description": "Track your Career Score and experience points"
+    },
+    "alerts": {
+      "paymentFailed": "Payment failed",
+      "cancellationScheduled": "Cancellation scheduled"
+    },
+    "help": {
+      "title": "Need help?",
+      "description": "Our support team is here to help. Feel free to contact us if you have questions about your account or subscription.",
+      "helpCenter": "Help Center"
+    },
+    "referral": {
+      "title": "Refer your friends",
+      "description": "Share your link. When a friend subscribes, you earn free days.",
+      "yourLink": "Your referral link",
+      "code": "Code:",
+      "clicks": "Clicks",
+      "signups": "Sign-ups",
+      "conversions": "Conversions",
+      "howItWorks": "How does it work?",
+      "howItWorksDescription": "When a friend subscribes through your link, you automatically receive free days."
     }
   },
   "cv": {
@@ -1666,5 +1775,54 @@
     "ctaSubtitle": "Transform your job search with HuntZen Jobs today",
     "ctaSignup": "Create my free account",
     "ctaAbout": "Learn more about HuntZen"
+  },
+  "popups": {
+    "close": "Close",
+    "couponLabel": "Code:",
+    "planLabel": "Plan",
+    "currencyPerMonth": "\u20ac/month",
+    "searchLimit": {
+      "title": "You\u2019ve reached your daily search limit",
+      "body": "Upgrade to Starter for unlimited searches and find your next job faster.",
+      "primaryCta": "Unlock searches",
+      "secondaryCta": "Refer a friend"
+    },
+    "cvScore": {
+      "title": "Your CV can do much better",
+      "body": "Get detailed advice from Sofia to boost your ATS score and land more interviews.",
+      "primaryCta": "Activate full analysis"
+    },
+    "sessionCut": {
+      "title": "Your coaching session has ended",
+      "body": "Continue with Nova, Maria or Lucas with no limits. Your next job is within reach.",
+      "primaryCta": "Continue with the Coach"
+    },
+    "interviewScore": {
+      "title": "Want to go further with Lucas?",
+      "body": "Simulate as many interviews as you want and receive in-depth feedback after each session.",
+      "primaryCta": "Activate full simulation"
+    },
+    "momentum": {
+      "title": "You\u2019re on a roll \u2014 enjoy -20% today",
+      "body": "You\u2019re actively searching. Here\u2019s an exclusive offer valid for 24\u00a0h just for you.",
+      "primaryCta": "Choose my plan with -20%"
+    },
+    "antiChurn": {
+      "title": "Stay and save -30% for 3 months",
+      "body": "Before you go, here\u2019s an exclusive offer: -30% on your subscription for 3 months.",
+      "primaryCta": "Keep my advantage",
+      "secondaryCta": "Cancel anyway"
+    },
+    "inactive7d": {
+      "title": "7 free Accelerator days \u2014 your spot is reserved",
+      "body": "We miss you! Come back and enjoy 7 free days to restart your search.",
+      "primaryCta": "Activate my 7 free days",
+      "priceOverride": "\u20ac0 for 7 days"
+    },
+    "pricingHover": {
+      "title": "67% of our subscribers choose Accelerator",
+      "body": "They find a job on average 3x faster. Join them today.",
+      "primaryCta": "Choose Accelerator now"
+    }
   }
 }

@@ -27,6 +27,7 @@ import {
 import { CareerScoreCard } from "@/components/career-score/career-score-card";
 import { cn } from "@/lib/utils";
 import { usePlansConfig } from "@/hooks/use-plans-config";
+import { useTranslations } from "next-intl";
 
 interface UsageModalProps {
   isOpen: boolean;
@@ -67,6 +68,7 @@ interface QuotaCardProps {
   limit: number;
   unit?: string;
   color: string;
+  t: (key: string, values?: Record<string, string | number>) => string;
 }
 
 function QuotaCard({
@@ -76,6 +78,7 @@ function QuotaCard({
   limit,
   unit = "",
   color,
+  t,
 }: QuotaCardProps) {
   const isUnlimited = limit === Infinity;
   const percentage = isUnlimited ? 0 : Math.min((used / limit) * 100, 100);
@@ -116,27 +119,23 @@ function QuotaCard({
           />
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span>
-              {used}
-              {unit} utilisé{used > 1 ? "s" : ""}
+              {used > 1
+                ? t("quota.usedPlural", { used, unit })
+                : t("quota.usedSingular", { used, unit })}
             </span>
-            <span>
-              sur {limit}
-              {unit}
-            </span>
+            <span>{t("quota.outOf", { limit, unit })}</span>
           </div>
         </>
       )}
 
       {isUnlimited && (
         <p className="text-xs text-green-600 font-medium">
-          ✨ Utilisation illimitée
+          {t("quota.unlimited")}
         </p>
       )}
 
       {!isUnlimited && remaining === 0 && (
-        <p className="text-xs text-red-600 font-medium">
-          ⚠️ Quota atteint pour aujourd'hui
-        </p>
+        <p className="text-xs text-red-600 font-medium">{t("quota.reached")}</p>
       )}
     </div>
   );
@@ -153,6 +152,8 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
     refreshQuotas,
     isLoaded,
   } = useSubscription();
+
+  const t = useTranslations("usageModal");
 
   // Refetch live quotas every time the modal opens
   const prevOpenRef = useRef(false);
@@ -182,7 +183,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold">
-              Mon Utilisation
+              {t("title")}
             </DialogTitle>
             {!isLoaded && (
               <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -212,16 +213,18 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">
-                    Plan {planData?.display_name ?? plan}
+                    {t("planTitle", {
+                      planName: planData?.display_name ?? plan,
+                    })}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {isFreePlan
-                      ? "Découvrez HuntZen gratuitement"
-                      : "Abonnement actif"}
+                    {isFreePlan ? t("freeSubtitle") : t("activeSubtitle")}
                   </p>
                 </div>
               </div>
-              {!isFreePlan && <Badge className="bg-green-500">Actif</Badge>}
+              {!isFreePlan && (
+                <Badge className="bg-green-500">{t("activeBadge")}</Badge>
+              )}
             </div>
 
             {isFreePlan && (
@@ -230,7 +233,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 className="w-full mt-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Passer à un plan payant
+                {t("upgradeCta")}
               </Button>
             )}
           </div>
@@ -240,7 +243,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
           {/* Career Score */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
-              Ta progression
+              {t("progressTitle")}
             </h3>
             <CareerScoreCard />
           </div>
@@ -251,41 +254,44 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
-                Utilisation du jour
+                {t("dailyUsageTitle")}
               </h3>
               <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <Clock className="w-3.5 h-3.5" />
-                <span>Réinitialisation à minuit</span>
+                <span>{t("resetAtMidnight")}</span>
               </div>
             </div>
 
             <div className="grid gap-4">
               {/* CV Analysis */}
               <QuotaCard
-                title="Analyses CV"
+                title={t("cvAnalysis")}
                 icon={<FileText className="w-4 h-4 text-white" />}
                 used={usage?.cvAnalysesToday || 0}
                 limit={limits.cv_analyses_per_day}
                 color="bg-blue-500"
+                t={t}
               />
 
               {/* Assistant Messages */}
               <QuotaCard
-                title="Messages Assistant"
+                title={t("assistantMessages")}
                 icon={<MessageSquare className="w-4 h-4 text-white" />}
                 used={assistantMessagesUsed}
                 limit={assistantMessagesLimit}
                 unit=" msg"
                 color="bg-violet-500"
+                t={t}
               />
 
               {/* Job Searches */}
               <QuotaCard
-                title="Recherches d'emploi"
+                title={t("jobSearches")}
                 icon={<Briefcase className="w-4 h-4 text-white" />}
                 used={usage?.searchesToday || 0}
                 limit={limits.job_searches_per_day}
                 color="bg-green-500"
+                t={t}
               />
             </div>
           </div>
@@ -299,11 +305,10 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                   <Crown className="w-6 h-6 text-violet-600 shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <h4 className="font-semibold text-violet-900">
-                      Débloquez tout le potentiel de HuntZen
+                      {t("unlockTitle")}
                     </h4>
                     <p className="text-sm text-violet-700">
-                      Passez à un plan payant pour des analyses illimitées, plus
-                      de temps de coaching, et des fonctionnalités exclusives.
+                      {t("unlockDescription")}
                     </p>
                   </div>
                 </div>
@@ -311,7 +316,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                   onClick={handleUpgrade}
                   className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
                 >
-                  Voir les plans disponibles
+                  {t("seePlans")}
                 </Button>
               </div>
             </>
@@ -320,9 +325,8 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
           {/* Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-900">
-              <span className="font-semibold">💡 Bon à savoir :</span> Vos
-              quotas se réinitialisent automatiquement chaque jour à minuit.
-              Passez à un plan supérieur pour augmenter vos limites.
+              <span className="font-semibold">{t("tipLabel")}</span>{" "}
+              {t("tipText")}
             </p>
           </div>
         </div>

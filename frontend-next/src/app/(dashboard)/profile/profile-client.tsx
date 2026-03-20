@@ -109,17 +109,14 @@ function ReferralWidget({
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-black mb-2">
-          Parrainez vos proches
+          {tProfile("referral.title")}
         </h2>
-        <p className="text-gray-600">
-          Partagez votre lien. Quand un ami souscrit, vous gagnez des jours
-          offerts.
-        </p>
+        <p className="text-gray-600">{tProfile("referral.description")}</p>
       </div>
       <Card className="border-2 border-[#00D9FF]/30 bg-[#00D9FF]/5">
         <CardContent className="pt-6 space-y-3">
           <p className="text-xs text-gray-500 font-medium">
-            Votre lien de parrainage
+            {tProfile("referral.yourLink")}
           </p>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-white border rounded-lg px-3 py-2 text-sm font-mono text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -138,20 +135,25 @@ function ReferralWidget({
             </Button>
           </div>
           <p className="text-xs text-gray-400">
-            Code : <span className="font-mono font-semibold">{code}</span>
+            {tProfile("referral.code")}{" "}
+            <span className="font-mono font-semibold">{code}</span>
           </p>
         </CardContent>
       </Card>
       <div className="grid grid-cols-3 gap-4">
         {[
           {
-            label: "Clics",
+            label: tProfile("referral.clicks"),
             value: stats.total_clicks,
             icon: MousePointerClick,
           },
-          { label: "Inscriptions", value: stats.total_signups, icon: Gift },
           {
-            label: "Conversions",
+            label: tProfile("referral.signups"),
+            value: stats.total_signups,
+            icon: Gift,
+          },
+          {
+            label: tProfile("referral.conversions"),
             value: stats.total_conversions,
             icon: TrendingUp,
           },
@@ -166,8 +168,8 @@ function ReferralWidget({
         ))}
       </div>
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-        <strong>Comment ça marche ?</strong> Quand un ami souscrit via votre
-        lien, vous recevez automatiquement des jours offerts.
+        <strong>{tProfile("referral.howItWorks")}</strong>{" "}
+        {tProfile("referral.howItWorksDescription")}
       </div>
     </div>
   );
@@ -210,11 +212,12 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
           >
             <UserCircle className="w-7 h-7 text-white" />
           </motion.div>
-          <h1 className="text-4xl font-black text-black">Mon Profil</h1>
+          <h1 className="text-4xl font-black text-black">
+            {tProfile("pageTitle")}
+          </h1>
         </div>
         <p className="text-base text-gray-700 leading-relaxed">
-          Gérez vos informations personnelles, votre abonnement et vos
-          préférences
+          {tProfile("pageDescription")}
         </p>
       </motion.div>
 
@@ -232,19 +235,21 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <User className="w-4 h-4 mr-2" />
-              Profil
+              {tProfile("tabs.profile")}
             </TabsTrigger>
             <TabsTrigger
               value="subscription"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <CreditCard className="w-4 h-4 mr-2" />
-              Abonnement
+              {tProfile("tabs.subscription")}
               {hasSubscriptionAlert && (
                 <span
                   className={`ml-2 inline-flex h-2 w-2 rounded-full ${isPastDue ? "bg-red-500" : "bg-amber-400"}`}
                   aria-label={
-                    isPastDue ? "Paiement en échec" : "Annulation programmée"
+                    isPastDue
+                      ? tProfile("alerts.paymentFailed")
+                      : tProfile("alerts.cancellationScheduled")
                   }
                 />
               )}
@@ -254,28 +259,28 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <Settings className="w-4 h-4 mr-2" />
-              Paramètres
+              {tProfile("tabs.settings")}
             </TabsTrigger>
             <TabsTrigger
               value="notifications"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <Bell className="w-4 h-4 mr-2" />
-              Notifications
+              {tProfile("tabs.notifications")}
             </TabsTrigger>
             <TabsTrigger
               value="progression"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <TrendingUp className="w-4 h-4 mr-2" />
-              Progression
+              {tProfile("tabs.progression")}
             </TabsTrigger>
             <TabsTrigger
               value="referral"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
             >
               <Gift className="w-4 h-4 mr-2" />
-              Parrainage
+              {tProfile("tabs.referral")}
             </TabsTrigger>
           </TabsList>
 
@@ -322,11 +327,10 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             >
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-black mb-2">
-                  Votre abonnement
+                  {tProfile("subscriptionSection.title")}
                 </h2>
                 <p className="text-gray-600">
-                  Consultez votre plan actuel, votre utilisation quotidienne et
-                  gérez votre abonnement
+                  {tProfile("subscriptionSection.description")}
                 </p>
               </div>
 
@@ -345,10 +349,10 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             >
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-black mb-2">
-                  Paramètres
+                  {tProfile("settingsSection.title")}
                 </h2>
                 <p className="text-gray-600">
-                  Personnalisez votre expérience HuntZen avec vos préférences
+                  {tProfile("settingsSection.description")}
                 </p>
               </div>
 
@@ -383,10 +387,10 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             >
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-black mb-2">
-                  Progression
+                  {tProfile("progressionSection.title")}
                 </h2>
                 <p className="text-gray-600">
-                  Suivez votre Career Score et vos points d&apos;expérience
+                  {tProfile("progressionSection.description")}
                 </p>
               </div>
               <CareerScoreCard />
@@ -413,11 +417,9 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
         transition={{ delay: 0.4 }}
         className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/30 rounded-2xl p-6"
       >
-        <h3 className="font-bold text-black mb-2">Besoin d'aide ?</h3>
+        <h3 className="font-bold text-black mb-2">{tProfile("help.title")}</h3>
         <p className="text-gray-700 text-sm mb-4">
-          Notre équipe support est là pour vous aider. N'hésitez pas à nous
-          contacter si vous avez des questions sur votre compte ou votre
-          abonnement.
+          {tProfile("help.description")}
         </p>
         <div className="flex gap-3">
           <a
@@ -426,12 +428,12 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
           >
             support@huntzen.com
           </a>
-          <span className="text-gray-400">•</span>
+          <span className="text-gray-400">&bull;</span>
           <a
             href="/help"
             className="text-sm text-[#00D9FF] hover:text-black hover:underline font-medium transition-colors"
           >
-            Centre d'aide
+            {tProfile("help.helpCenter")}
           </a>
         </div>
       </motion.div>
