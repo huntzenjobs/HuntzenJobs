@@ -4,20 +4,21 @@ API Middleware
 Custom middleware for logging, CORS, rate limiting.
 """
 
-import time
+import base64
+import json as _json
 import logging
-from typing import Callable
+import time
+from collections.abc import Callable
 
 import sentry_sdk
-
 from fastapi import FastAPI, Request, Response
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from fastapi.middleware.gzip import GZipMiddleware
+from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.config.settings import settings
 
@@ -70,7 +71,7 @@ def get_limiter() -> Limiter:
     redis_url = settings.redis_url
     if redis_url and redis_url.startswith("redis://"):
         try:
-            logger.info(f"✅ Initializing distributed rate limiting with Railway Redis")
+            logger.info("✅ Initializing distributed rate limiting with Railway Redis")
             return Limiter(
                 key_func=get_remote_address,
                 storage_uri=redis_url,
@@ -97,10 +98,10 @@ limiter = get_limiter()
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Log all incoming requests."""
-    
+
     # Paths to ignore in logs (external polling, health checks, etc.)
     IGNORED_PATHS = {"/api/sms/stats", "/api/sms/responses", "/health", "/favicon.ico"}
-    
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
 
@@ -110,7 +111,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             if auth_header.startswith("Bearer "):
                 token = auth_header[7:]
                 # Décoder le JWT sans vérification de signature (payload public)
-                import base64, json as _json
                 parts = token.split(".")
                 if len(parts) == 3:
                     padded = parts[1] + "=" * (-len(parts[1]) % 4)
@@ -124,10 +124,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         # Process request
         response = await call_next(request)
-        
+
         # Calculate duration
         duration_ms = int((time.time() - start_time) * 1000)
-        
+
         # Skip logging for ignored paths
         if request.url.path not in self.IGNORED_PATHS:
             logger.info(
@@ -135,10 +135,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 f"- {response.status_code} "
                 f"({duration_ms}ms)"
             )
-        
+
         # Add timing header
         response.headers["X-Response-Time"] = f"{duration_ms}ms"
-        
+
         return response
 
 

@@ -5,17 +5,16 @@ Endpoints for AI-powered job searching.
 """
 
 import logging
-from typing import List
+import re
 
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, HTTPException, status, Query, Request, Header
+from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
-from typing import Optional
 
-from src.api.deps import ScoutAgentDep, get_user_id_from_token, get_supabase_client
+from src.api.deps import ScoutAgentDep, get_supabase_client, get_user_id_from_token
 from src.api.middleware import limiter
-from src.models.schemas import JobSearchRequest, JobSearchResponse, SearchMetadata, Job
+from src.models.schemas import Job, JobSearchRequest, JobSearchResponse, SearchMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -63,15 +62,29 @@ def _increment_job_search_quota(user_id: str) -> None:
         logger.warning(f"[quota] job_search increment failed for {user_id}: {e}")
 
 
+def _extract_salary(job: dict) -> tuple:
+    """Extract min/max salary from job (returns None if not available)."""
+    salary_str = job.get('salary', '')
+    if not salary_str:
+        return None, None
+    numbers = re.findall(r'\d+', salary_str.replace(' ', '').replace(',', ''))
+    if len(numbers) >= 2:
+        return int(numbers[0]), int(numbers[1])
+    elif len(numbers) == 1:
+        val = int(numbers[0])
+        return val, val
+    return None, None
+
+
 def apply_advanced_filters(
-    jobs: List[dict],
+    jobs: list[dict],
     industries: str = "",
     keywords: str = "",
     experience_level: str = "",
-    salary_min: int = None,
-    salary_max: int = None,
+    salary_min: int | None = None,
+    salary_max: int | None = None,
     company_size: str = "",
-) -> List[dict]:
+) -> list[dict]:
     """
     Filter jobs based on advanced criteria (Premium feature).
 
@@ -128,28 +141,12 @@ def apply_advanced_filters(
 
     # Filter by salary range (if salary information is available)
     if salary_min is not None or salary_max is not None:
-        def extract_salary(job: dict) -> tuple:
-            """Extract min/max salary from job (returns None if not available)."""
-            salary_str = job.get('salary', '')
-            if not salary_str:
-                return None, None
-            # Simple heuristic: extract numbers from salary string
-            # This is a basic implementation - improve based on actual data format
-            import re
-            numbers = re.findall(r'\d+', salary_str.replace(' ', '').replace(',', ''))
-            if len(numbers) >= 2:
-                return int(numbers[0]), int(numbers[1])
-            elif len(numbers) == 1:
-                val = int(numbers[0])
-                return val, val
-            return None, None
-
         filtered = [
             job for job in filtered
             if (lambda s_min, s_max: (
                 (salary_min is None or s_max is None or s_max >= salary_min) and
                 (salary_max is None or s_min is None or s_min <= salary_max)
-            ))(*extract_salary(job))
+            ))(*_extract_salary(job))
         ]
 
     # Filter by company size (heuristic based on company name/description)
@@ -179,7 +176,7 @@ async def search_jobs(
     request: Request,  # Required for rate limiting
     data: JobSearchRequest,
     agent: ScoutAgentDep,
-    authorization: Optional[str] = Header(default=None),
+    authorization: str | None = Header(default=None),
 ):
     """
     Search for jobs across multiple providers.
@@ -206,13 +203,13 @@ async def search_jobs(
         include_remote=data.include_remote,
         include_insights=True,
     )
-    
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "Search failed"),
         )
-    
+
     # Convert to response model
     jobs = [
         Job(
@@ -230,9 +227,9 @@ async def search_jobs(
         )
         for j in result.get("jobs", [])
     ]
-    
+
     metadata = result.get("metadata", {})
-    
+
     response = JobSearchResponse(
         success=True,
         jobs=jobs,
@@ -273,7 +270,7 @@ async def search_jobs_get(
     salary_min: int = Query(default=None, ge=0, description="Minimum salary (annual)"),
     salary_max: int = Query(default=None, ge=0, description="Maximum salary (annual)"),
     company_size: str = Query(default="", description="Company size: startup, scaleup, enterprise"),
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Search for jobs (GET endpoint for simple queries).
@@ -317,7 +314,7 @@ async def analyze_query(
     request: Request,
     agent: ScoutAgentDep,
     query: str,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Analyze a natural language job search query.
@@ -345,7 +342,7 @@ async def get_market_insights(
     agent: ScoutAgentDep,
     job_title: str = Query(..., description="Job title"),
     country: str = Query(default="us", description="Country code"),
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Get job market insights for a role.
@@ -456,7 +453,7 @@ class TrackViewRequest(BaseModel):
 async def track_job_view(
     request: Request,
     payload: TrackViewRequest,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Track job view for analytics and quota management.
@@ -511,7 +508,7 @@ async def track_job_view(
 
 @router.post("/find-recruiter")
 @limiter.limit("5/minute")
-async def find_recruiter(request: Request, authorization: Optional[str] = Header(None)):
+async def find_recruiter(request: Request, authorization: str | None = Header(None)):
     """
     Find the recruiter / decision-maker behind a job posting.
 
