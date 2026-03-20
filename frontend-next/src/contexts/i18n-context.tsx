@@ -57,6 +57,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
       setLocaleState(newLocale);
       setCookie(LOCALE_COOKIE_NAME, newLocale, 365); // 1 year expiry
+      setCookie("LOCALE_MANUAL", "1", 365); // Flag: user chose manually, don't override with geo
 
       // router.refresh() re-exécute le Server Component (layout.tsx → getLocale())
       // sans détruire l'état React côté client. Plus fluide que window.location.reload().

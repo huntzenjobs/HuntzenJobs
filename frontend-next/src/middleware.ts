@@ -124,13 +124,14 @@ export async function middleware(request: NextRequest) {
   // Language Detection (IP-based with fallbacks)
   // ============================================================================
 
-  // Check if locale already set (user preference takes priority)
-  const existingLocaleCookie = request.cookies.get("NEXT_LOCALE");
+  // Locale detection: always follow IP unless user manually chose a language
+  const manualLocale = request.cookies.get("LOCALE_MANUAL");
 
-  if (!existingLocaleCookie) {
+  if (!manualLocale) {
+    // Auto-detect from IP on every request (follows VPN/travel changes)
     let detectedLocale = DEFAULT_LOCALE;
 
-    // Priority 1: Vercel geo headers (works in production on Vercel Edge)
+    // Vercel geo headers (works in production on Vercel Edge)
     // x-vercel-ip-country is the reliable header — request.geo is deprecated
     const countryCode =
       request.headers.get("x-vercel-ip-country") || request.geo?.country;
@@ -140,13 +141,14 @@ export async function middleware(request: NextRequest) {
     }
     // No Accept-Language fallback — default stays "fr" for French-first platform
 
-    // Set locale cookie (7 days — auto-re-detect weekly, avoids stale wrong locale)
+    // Set/update locale cookie based on current IP
     supabaseResponse.cookies.set("NEXT_LOCALE", detectedLocale, {
       path: "/",
       maxAge: 7 * 24 * 60 * 60, // 7 days
       sameSite: "lax",
     });
   }
+  // If LOCALE_MANUAL is set, user chose manually via the language selector → don't override
 
   // Store referral code from ?ref=CODE in cookie (30 days)
   const refCode = request.nextUrl.searchParams.get("ref");
