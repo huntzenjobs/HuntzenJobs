@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { CheckCircle2, Lock, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -6,11 +7,12 @@ interface Tier { friends: number; reward_type: string; label: string; days?: num
 interface ReferralTierCardProps { tier: Tier; index: number; isUnlocked: boolean; isCurrent: boolean; }
 
 export function ReferralTierCard({ tier, index, isUnlocked, isCurrent }: ReferralTierCardProps) {
+  const t = useTranslations("referral.tier");
   return (
     <div className={cn("rounded-xl border p-4 transition-all", isUnlocked && "border-teal-400/40 bg-teal-50/30", isCurrent && "ring-2 ring-teal-400", !isUnlocked && "opacity-60")}>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs text-muted-foreground mb-1">Palier {index + 1} — {tier.friends} ami{tier.friends > 1 ? "s" : ""}</p>
+          <p className="text-xs text-muted-foreground mb-1">{t("label", { index: index + 1, count: tier.friends })}</p>
           <p className="text-sm font-semibold">{tier.label}</p>
         </div>
         <div className="flex-shrink-0 mt-0.5">
@@ -18,7 +20,7 @@ export function ReferralTierCard({ tier, index, isUnlocked, isCurrent }: Referra
         </div>
       </div>
       <p className="mt-2 text-xs font-medium">
-        {isUnlocked ? <span className="text-teal-600">Atteint</span> : isCurrent ? <span className="text-amber-500">En cours</span> : <span className="text-muted-foreground">Verrouillé</span>}
+        {isUnlocked ? <span className="text-teal-600">{t("reached")}</span> : isCurrent ? <span className="text-amber-500">{t("inProgress")}</span> : <span className="text-muted-foreground">{t("locked")}</span>}
       </p>
     </div>
   );

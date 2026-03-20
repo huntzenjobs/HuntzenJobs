@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface Tier { friends: number; label: string; }
@@ -11,13 +12,14 @@ interface ReferralProgressBarProps {
 }
 
 export function ReferralProgressBar({ totalValidated, nextTier, friendsToNext, tiers }: ReferralProgressBarProps) {
+  const t = useTranslations("referral.progress");
   const maxFriends = tiers[tiers.length - 1]?.friends ?? 10;
   const progress = Math.min(100, (totalValidated / maxFriends) * 100);
   return (
     <div className="space-y-3">
       <div className="flex justify-between text-xs text-muted-foreground">
-        {tiers.map((t) => (
-          <span key={t.friends} className={cn("font-medium", totalValidated >= t.friends && "text-teal-500")}>{t.friends}</span>
+        {tiers.map((tier) => (
+          <span key={tier.friends} className={cn("font-medium", totalValidated >= tier.friends && "text-teal-500")}>{tier.friends}</span>
         ))}
       </div>
       <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -25,10 +27,10 @@ export function ReferralProgressBar({ totalValidated, nextTier, friendsToNext, t
       </div>
       {nextTier !== null && friendsToNext > 0 && (
         <p className="text-xs text-muted-foreground text-center">
-          Encore <span className="font-semibold text-foreground">{friendsToNext} ami{friendsToNext > 1 ? "s" : ""}</span> pour débloquer {tiers[nextTier]?.label}
+          {t("remaining", { count: friendsToNext, label: tiers[nextTier]?.label })}
         </p>
       )}
-      {friendsToNext === 0 && <p className="text-xs text-green-600 font-medium text-center">Tous les paliers débloqués !</p>}
+      {friendsToNext === 0 && <p className="text-xs text-green-600 font-medium text-center">{t("allUnlocked")}</p>}
     </div>
   );
 }

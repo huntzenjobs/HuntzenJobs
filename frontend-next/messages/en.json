@@ -1714,6 +1714,27 @@
       "progress": "Your progress",
       "rewards": "Rewards",
       "friends": "Your referrals"
+    },
+    "progress": {
+      "remaining": "{count, plural, one {# more friend} other {# more friends}} to unlock {label}",
+      "allUnlocked": "All tiers unlocked!"
+    },
+    "tier": {
+      "label": "Tier {index} - {count, plural, one {# friend} other {# friends}}",
+      "reached": "Reached",
+      "inProgress": "In progress",
+      "locked": "Locked"
+    },
+    "friends": {
+      "emptyTitle": "No referred friends yet",
+      "emptySubtitle": "Share your link to get started",
+      "validated": "Validated friend",
+      "registered": "Registered friend",
+      "badgeValidated": "Validated",
+      "badgeRegistered": "Registered",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{count}d ago"
     }
   },
   "expat": {

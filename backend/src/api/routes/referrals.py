@@ -9,11 +9,13 @@ POST /api/referrals/register        — link a newly created user to a referral 
 
 import logging
 import os
-from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from src.api.deps import get_supabase_client, CurrentUserDep
+from src.api.deps import CurrentUserDep, get_supabase_client
+from src.api.middleware import limiter
 from src.services.notifications import create_notification
 from src.services.referrals import _apply_free_days, _apply_quota_bonus, _apply_stripe_coupon
 
@@ -65,25 +67,33 @@ class TrackClickRequest(BaseModel):
 
 
 @router.post("/track-click")
-async def track_click(body: TrackClickRequest):
+@limiter.limit("10/minute")
+async def track_click(request: Request, body: TrackClickRequest):
     """Increment click counter for a referral code (called by frontend on landing)."""
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    ref_res = supabase.table("referrals") \
-        .select("id, total_clicks") \
-        .eq("referral_code", body.code) \
-        .eq("is_active", True) \
-        .maybe_single() \
-        .execute()
+        ref_res = supabase.table("referrals") \
+            .select("id, total_clicks") \
+            .eq("referral_code", body.code) \
+            .eq("is_active", True) \
+            .maybe_single() \
+            .execute()
 
-    if not ref_res.data:
-        return {"ok": False}
+        if not ref_res.data:
+            return {"ok": False, "error": "invalid_code"}
 
-    supabase.table("referrals").update({
-        "total_clicks": ref_res.data["total_clicks"] + 1,
-    }).eq("id", ref_res.data["id"]).execute()
+        # Optimistic locking : update seulement si total_clicks n'a pas changé
+        old_clicks = ref_res.data["total_clicks"]
+        supabase.table("referrals").update({
+            "total_clicks": old_clicks + 1,
+        }).eq("id", ref_res.data["id"]).eq("total_clicks", old_clicks).execute()
 
-    return {"ok": True}
+        return {"ok": True}
+
+    except Exception as e:
+        logger.error(f"[REFERRAL] track_click error: {e}")
+        return {"ok": False, "error": "internal_error"}
 
 
 # ---------------------------------------------------------------------------
@@ -96,47 +106,178 @@ class RegisterReferralRequest(BaseModel):
 
 
 @router.post("/register")
-async def register_referral(body: RegisterReferralRequest):
+@limiter.limit("10/minute")
+async def register_referral(request: Request, body: RegisterReferralRequest):
     """
     Link a newly authenticated user to a referral code.
     Idempotent: UNIQUE constraint on referred_user_id prevents double registration.
     """
-    supabase = get_supabase_client()
-
-    ref_res = supabase.table("referrals") \
-        .select("id, referrer_id, total_signups") \
-        .eq("referral_code", body.code) \
-        .eq("is_active", True) \
-        .maybe_single() \
-        .execute()
-
-    if not ref_res.data:
-        logger.warning(f"[REFERRAL] Unknown code: {body.code}")
-        return {"ok": False, "reason": "invalid_code"}
-
-    ref = ref_res.data
-
-    if ref["referrer_id"] == body.new_user_id:
-        return {"ok": False, "reason": "self_referral"}
-
     try:
-        supabase.table("referral_signups").insert({
-            "referral_id": ref["id"],
-            "referred_user_id": body.new_user_id,
-        }).execute()
+        supabase = get_supabase_client()
 
-        supabase.table("referrals").update({
-            "total_signups": ref["total_signups"] + 1,
-        }).eq("id", ref["id"]).execute()
+        ref_res = supabase.table("referrals") \
+            .select("id, referrer_id, total_signups") \
+            .eq("referral_code", body.code) \
+            .eq("is_active", True) \
+            .maybe_single() \
+            .execute()
 
-        logger.info(f"[REFERRAL] User {body.new_user_id} registered via code {body.code}")
-        return {"ok": True}
+        if not ref_res.data:
+            logger.warning(f"[REFERRAL] Unknown code: {body.code}")
+            return {"ok": False, "error": "invalid_code"}
+
+        ref = ref_res.data
+
+        if ref["referrer_id"] == body.new_user_id:
+            return {"ok": False, "error": "self_referral"}
+
+        try:
+            supabase.table("referral_signups").insert({
+                "referral_id": ref["id"],
+                "referred_user_id": body.new_user_id,
+            }).execute()
+
+            # Optimistic locking : update seulement si total_signups n'a pas changé
+            old_signups = ref["total_signups"]
+            supabase.table("referrals").update({
+                "total_signups": old_signups + 1,
+            }).eq("id", ref["id"]).eq("total_signups", old_signups).execute()
+
+            # Auto-apply tier reward si un nouveau palier est atteint
+            new_signups = old_signups + 1
+            await _auto_apply_tier_rewards(supabase, ref["referrer_id"], new_signups)
+
+            logger.info(f"[REFERRAL] User {body.new_user_id} registered via code {body.code}")
+            return {"ok": True}
+
+        except Exception as e:
+            if "duplicate" in str(e).lower() or "unique" in str(e).lower():
+                return {"ok": True, "note": "already_registered"}
+            logger.error(f"[REFERRAL] register_referral insert error: {e}")
+            return {"ok": False, "error": "registration_failed"}
 
     except Exception as e:
-        if "duplicate" in str(e).lower() or "unique" in str(e).lower():
-            return {"ok": True, "note": "already_registered"}
         logger.error(f"[REFERRAL] register_referral error: {e}")
-        raise HTTPException(status_code=500, detail="Registration failed")
+        return {"ok": False, "error": "internal_error"}
+
+
+# ---------------------------------------------------------------------------
+# Helper: auto-apply tier rewards when a threshold is reached
+# ---------------------------------------------------------------------------
+
+async def _auto_apply_tier_rewards(supabase, referrer_id: str, total_signups: int) -> None:
+    """
+    Vérifie si total_signups atteint un nouveau palier et applique
+    automatiquement la récompense correspondante.
+    """
+    try:
+        config_res = (
+            supabase.table("referral_config")
+            .select("tiers")
+            .eq("id", 1)
+            .maybe_single()
+            .execute()
+        )
+        tiers = (config_res.data or {}).get("tiers") or []
+        if not tiers:
+            return
+
+        # Trouver les paliers atteints avec exactement total_signups
+        for tier_index, tier in enumerate(tiers):
+            if tier.get("friends", 0) != total_signups:
+                continue
+
+            # Vérifier si ce palier a déjà été récompensé (idempotence)
+            try:
+                existing = (
+                    supabase.table("referral_rewards")
+                    .select("id, reward_value, applied")
+                    .eq("referrer_id", referrer_id)
+                    .execute()
+                )
+                already_applied = False
+                for row in (existing.data or []):
+                    rv = row.get("reward_value") or {}
+                    if rv.get("tier_index") == tier_index and row.get("applied"):
+                        already_applied = True
+                        break
+                if already_applied:
+                    continue
+            except Exception:
+                pass
+
+            # Récupérer un signup_id pour la FK
+            ref_res = (
+                supabase.table("referrals")
+                .select("id")
+                .eq("referrer_id", referrer_id)
+                .eq("is_active", True)
+                .limit(1)
+                .execute()
+            )
+            referral_id = ref_res.data[0]["id"] if ref_res.data else None
+            if not referral_id:
+                continue
+
+            signup_res = (
+                supabase.table("referral_signups")
+                .select("id")
+                .eq("referral_id", referral_id)
+                .order("signed_up_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            signup_id = signup_res.data[0]["id"] if signup_res.data else None
+            if not signup_id:
+                continue
+
+            # Insérer la récompense (applied=False)
+            reward_res = supabase.table("referral_rewards").insert({
+                "referral_signup_id": signup_id,
+                "referrer_id": referrer_id,
+                "reward_type": tier.get("reward_type", "quota_bonus"),
+                "reward_value": {**tier, "tier_index": tier_index},
+                "applied": False,
+            }).execute()
+            reward_id = reward_res.data[0]["id"] if reward_res.data else None
+
+            # Appliquer la récompense
+            reward_type_str = tier.get("reward_type", "quota_bonus")
+            try:
+                if reward_type_str == "free_days":
+                    success = await _apply_free_days(supabase, referrer_id, tier)
+                elif reward_type_str == "quota_bonus":
+                    success = await _apply_quota_bonus(supabase, referrer_id, tier)
+                elif reward_type_str == "stripe_coupon":
+                    success = await _apply_stripe_coupon(supabase, referrer_id, tier, reward_id)
+                else:
+                    success = False
+            except Exception as e:
+                logger.error(f"[REFERRAL] auto tier reward error for {referrer_id}: {e}")
+                success = False
+
+            if success and reward_id:
+                supabase.table("referral_rewards").update({
+                    "applied": True,
+                    "applied_at": datetime.now(UTC).isoformat(),
+                }).eq("id", reward_id).execute()
+
+                # Notification
+                create_notification(
+                    supabase,
+                    referrer_id,
+                    "referral_bonus",
+                    f"Niveau Ambassadeur atteint — {tier.get('label', '')}",
+                    f"Félicitations ! Tu as atteint le palier {tier_index + 1}. Ta récompense : {tier.get('label', '')}.",
+                    {"tier_index": tier_index, "tier": tier},
+                )
+                logger.info(f"[REFERRAL] Auto-applied tier {tier_index} reward for {referrer_id}")
+            elif reward_id:
+                supabase.table("referral_rewards").delete().eq("id", reward_id).execute()
+                logger.warning(f"[REFERRAL] Auto tier {tier_index} reward failed for {referrer_id}, record cleaned up")
+
+    except Exception as e:
+        logger.error(f"[REFERRAL] _auto_apply_tier_rewards error for {referrer_id}: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -214,16 +355,16 @@ async def get_boost_status(current_user: CurrentUserDep):
         try:
             signups_res = (
                 supabase.table("referral_signups")
-                .select("referred_user_id, created_at, converted_to_paid_at")
+                .select("referred_user_id, signed_up_at, converted_to_paid_at")
                 .eq("referral_id", referral_id)
-                .order("created_at", desc=True)
+                .order("signed_up_at", desc=True)
                 .limit(10)
                 .execute()
             )
             for s in (signups_res.data or []):
                 recent_referrals.append({
                     "status": "validated" if s.get("converted_to_paid_at") else "registered",
-                    "created_at": s.get("created_at"),
+                    "signed_up_at": s.get("signed_up_at"),
                 })
         except Exception as e:
             logger.warning(f"[REFERRAL] signups query error for {user_id}: {e}")
@@ -315,7 +456,7 @@ async def apply_tier_reward(body: ApplyTierRewardRequest, current_user: CurrentU
                 supabase.table("referral_signups")
                 .select("id")
                 .eq("referral_id", referral_id)
-                .order("created_at", desc=True)
+                .order("signed_up_at", desc=True)
                 .limit(1)
                 .execute()
             )
@@ -338,7 +479,7 @@ async def apply_tier_reward(body: ApplyTierRewardRequest, current_user: CurrentU
         raise
     except Exception as e:
         logger.error(f"[REFERRAL] apply_tier_reward insert failed for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to record tier reward")
+        raise HTTPException(status_code=500, detail="Failed to record tier reward") from e
 
     # Appliquer réellement la récompense selon le type
     reward_type_str = tier.get("reward_type", "quota_bonus")
@@ -359,7 +500,7 @@ async def apply_tier_reward(body: ApplyTierRewardRequest, current_user: CurrentU
     if success and reward_id:
         supabase.table("referral_rewards").update({
             "applied": True,
-            "applied_at": datetime.now(timezone.utc).isoformat(),
+            "applied_at": datetime.now(UTC).isoformat(),
         }).eq("id", reward_id).execute()
     elif reward_id:
         supabase.table("referral_rewards").delete().eq("id", reward_id).execute()

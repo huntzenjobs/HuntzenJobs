@@ -193,7 +193,13 @@ export async function middleware(request: NextRequest) {
   // Routes protegees - rediriger vers login si non authentifie
   // Note: /jobs, /cv-analysis, /assistant sont maintenant accessibles sans compte (freemium)
   // /admin is protected here (auth check), is_admin check is in the admin layout (Server Component)
-  const protectedRoutes = ["/dashboard", "/profile", "/saved-jobs", "/admin"];
+  const protectedRoutes = [
+    "/dashboard",
+    "/profile",
+    "/saved-jobs",
+    "/admin",
+    "/referral",
+  ];
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route),
   );

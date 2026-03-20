@@ -1654,6 +1654,27 @@
       "progress": "Ta progression",
       "rewards": "Récompenses",
       "friends": "Tes filleuls"
+    },
+    "progress": {
+      "remaining": "Encore {count, plural, one {# ami} other {# amis}} pour débloquer {label}",
+      "allUnlocked": "Tous les paliers débloqués !"
+    },
+    "tier": {
+      "label": "Palier {index} - {count, plural, one {# ami} other {# amis}}",
+      "reached": "Atteint",
+      "inProgress": "En cours",
+      "locked": "Verrouillé"
+    },
+    "friends": {
+      "emptyTitle": "Aucun ami parrainé pour l'instant",
+      "emptySubtitle": "Partage ton lien pour commencer",
+      "validated": "Ami validé",
+      "registered": "Ami inscrit",
+      "badgeValidated": "Validé",
+      "badgeRegistered": "Inscrit",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "daysAgo": "Il y a {count}j"
     }
   },
   "expat": {
