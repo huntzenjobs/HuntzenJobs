@@ -15,6 +15,8 @@ export interface PlanConfig {
   price_yearly: number | null;
   features: string[];
   features_excluded: string[];
+  limits: Record<string, number> | null;
+  feature_flags: Record<string, boolean> | null;
   sort_order: number;
 }
 
@@ -100,5 +102,24 @@ export function usePlansConfig() {
     return price.toFixed(2).replace(".", ",");
   }, []);
 
-  return { plans, getPlan, isLoading, formatPrice };
+  const getPlanLimits = useCallback(
+    (name: string): Record<string, number> | null =>
+      plans.find((p) => p.name === name)?.limits ?? null,
+    [plans],
+  );
+
+  const getPlanFeatureFlags = useCallback(
+    (name: string): Record<string, boolean> | null =>
+      plans.find((p) => p.name === name)?.feature_flags ?? null,
+    [plans],
+  );
+
+  return {
+    plans,
+    getPlan,
+    getPlanLimits,
+    getPlanFeatureFlags,
+    isLoading,
+    formatPrice,
+  };
 }
