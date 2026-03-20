@@ -196,8 +196,10 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                       : "bg-black/95 border-white/10"
                   }`}
                 >
-                  <Link
-                    href="/blog"
+                  <a
+                    href="https://press.huntzen.space/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => setRessourcesOpen(false)}
                     className={`block px-4 py-3 text-sm font-semibold transition-colors ${
                       shouldBeWhite
@@ -206,7 +208,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
                     }`}
                   >
                     {t("resourcesItems.blog")}
-                  </Link>
+                  </a>
                   <Link
                     href="/faq"
                     onClick={() => setRessourcesOpen(false)}
@@ -365,13 +367,15 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
               >
                 {t("resources")}
               </p>
-              <Link
-                href="/blog"
+              <a
+                href="https://press.huntzen.space/"
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block text-sm font-semibold transition-colors py-2 pl-3 ${shouldBeWhite ? "text-gray-800 hover:text-[#00D9FF]" : "text-white/80 hover:text-[#00D9FF]"}`}
               >
                 {t("resourcesItems.blog")}
-              </Link>
+              </a>
               <Link
                 href="/faq"
                 onClick={() => setMobileMenuOpen(false)}

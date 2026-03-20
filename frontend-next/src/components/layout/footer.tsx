@@ -13,7 +13,7 @@ const PRODUCT_LINKS = [
 
 const RESOURCE_LINKS = [
   { href: "/faq", key: "faq" },
-  { href: "/blog", key: "blog" },
+  { href: "https://press.huntzen.space/", key: "blog", external: true },
   { href: "/temoignages", key: "testimonials" },
   { href: "/about", key: "about" },
 ] as const;
@@ -73,7 +73,9 @@ export function Footer() {
 
           {/* Produit */}
           <div>
-            <h3 className="font-semibold text-sm mb-4">{t("sections.product")}</h3>
+            <h3 className="font-semibold text-sm mb-4">
+              {t("sections.product")}
+            </h3>
             <ul className="space-y-2">
               {PRODUCT_LINKS.map(({ href, key }) => (
                 <li key={href}>
@@ -90,16 +92,29 @@ export function Footer() {
 
           {/* Ressources */}
           <div>
-            <h3 className="font-semibold text-sm mb-4">{t("sections.resources")}</h3>
+            <h3 className="font-semibold text-sm mb-4">
+              {t("sections.resources")}
+            </h3>
             <ul className="space-y-2">
-              {RESOURCE_LINKS.map(({ href, key }) => (
+              {RESOURCE_LINKS.map(({ href, key, ...rest }) => (
                 <li key={href}>
-                  <Link
-                    href={href}
-                    className="text-white/60 text-sm hover:text-white transition-colors"
-                  >
-                    {t(`links.${key}`)}
-                  </Link>
+                  {"external" in rest ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white/60 text-sm hover:text-white transition-colors"
+                    >
+                      {t(`links.${key}`)}
+                    </a>
+                  ) : (
+                    <Link
+                      href={href}
+                      className="text-white/60 text-sm hover:text-white transition-colors"
+                    >
+                      {t(`links.${key}`)}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -107,7 +122,9 @@ export function Footer() {
 
           {/* Légal */}
           <div>
-            <h3 className="font-semibold text-sm mb-4">{t("sections.legal")}</h3>
+            <h3 className="font-semibold text-sm mb-4">
+              {t("sections.legal")}
+            </h3>
             <ul className="space-y-2">
               {LEGAL_LINKS.map(({ href, key }) => (
                 <li key={href}>

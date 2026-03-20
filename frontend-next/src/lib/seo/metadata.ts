@@ -591,18 +591,6 @@ export function generateLocationMetadata(
   };
 }
 
-export const blogMetadata: Metadata = {
-  title: "Blog",
-  description:
-    "Conseils, actualités et guides pour réussir votre recherche d'emploi — HuntZen Jobs",
-  openGraph: {
-    title: "Blog | HuntZen Jobs",
-    description: "Conseils et actualités pour réussir votre recherche d'emploi",
-    url: `${SITE_URL}/blog`,
-  },
-  alternates: { canonical: `${SITE_URL}/blog` },
-};
-
 export const loginMetadata: Metadata = {
   title: "Connexion",
   description: "Connectez-vous à votre compte HuntZen Jobs",
