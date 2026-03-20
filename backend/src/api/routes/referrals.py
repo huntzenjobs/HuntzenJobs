@@ -50,8 +50,10 @@ async def get_my_code(current_user: CurrentUserDep):
 
     stats = stats_res.data[0] if stats_res.data else {}
 
+    referral_code = code_res.data
     return {
-        "code": code_res.data,
+        "code": referral_code,
+        "referral_link": f"{APP_URL}/?ref={referral_code}",
         "total_clicks": stats.get("total_clicks", 0),
         "total_signups": stats.get("total_signups", 0),
         "total_conversions": stats.get("total_conversions", 0),

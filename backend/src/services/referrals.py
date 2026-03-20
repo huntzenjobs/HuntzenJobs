@@ -83,7 +83,8 @@ async def apply_referral_reward(
 async def _apply_free_days(supabase_client, referrer_id: str, reward_value: dict) -> bool:
     """Extend the referrer's active subscription by N days."""
     try:
-        days = int(reward_value.get("days", 7))
+        # Support both old format {"days": 7} and new format {"reward_value": 7}
+        days = int(reward_value.get("days") or reward_value.get("reward_value") or 7)
 
         sub_res = supabase_client.table("user_subscriptions") \
             .select("id, current_period_end") \

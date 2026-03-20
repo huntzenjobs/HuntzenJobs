@@ -1333,6 +1333,7 @@ class ReferralConfigUpdate(BaseModel):
     conversion_reward_type: Optional[str] = None
     conversion_reward_value: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
+    tiers: Optional[list[Dict[str, Any]]] = None
 
 
 @router.patch("/referrals/config")

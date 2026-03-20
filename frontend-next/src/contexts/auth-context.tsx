@@ -146,11 +146,15 @@ export function AuthProvider({
           }
 
           // Register referral if a code cookie is present (fire-and-forget)
+          // Only call register on the FIRST sign-in to avoid duplicate calls
           if (session?.user) {
+            const alreadyRegistered = localStorage.getItem(
+              "huntzen_referral_registered",
+            );
             const refCookie = document.cookie
               .split("; ")
               .find((r) => r.startsWith("huntzen_referral_code="));
-            if (refCookie) {
+            if (refCookie && !alreadyRegistered) {
               const refCode = refCookie.split("=")[1];
               const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
               fetch(`${backendUrl}/api/referrals/register`, {
@@ -165,6 +169,7 @@ export function AuthProvider({
                   if (res.ok) {
                     document.cookie =
                       "huntzen_referral_code=; path=/; max-age=0";
+                    localStorage.setItem("huntzen_referral_registered", "1");
                   }
                 })
                 .catch(() => {});
