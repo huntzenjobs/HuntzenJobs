@@ -1012,7 +1012,13 @@
     "cancelScheduledUntilFallback": " until the end of the billing period",
     "reactivate": "Reactivate my subscription",
     "reactivating": "Reactivating...",
-    "unknownError": "Unknown error"
+    "unknownError": "Unknown error",
+    "planChanged": {
+      "title": "Your subscription has changed",
+      "description": "You are now on the {plan} plan.",
+      "ctaUpgrade": "View plans",
+      "ctaContinue": "Continue"
+    }
   },
   "contact": {
     "toasts": {

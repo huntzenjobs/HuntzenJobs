@@ -20,6 +20,7 @@ import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { SubscriptionChangedModal } from "@/components/freemium/subscription-changed-modal";
 
 type PlanLimits = (typeof PLAN_LIMITS)[PlanType];
 
@@ -91,6 +92,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   );
   const [hasShownInconsistencyWarning, setHasShownInconsistencyWarning] =
     useState(false);
+  const [showPlanChangedModal, setShowPlanChangedModal] = useState(false);
 
   // Stable ref for refetch — prevents re-triggering inconsistency check when refetch changes reference
   const apiRefetchRef = useRef<(() => Promise<void>) | undefined>(undefined);
@@ -232,6 +234,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     return () =>
       window.removeEventListener("token-expired", handleTokenExpired);
   }, []);
+
+  // Listen for subscription-downgraded event (403 interceptor)
+  useEffect(() => {
+    const handler = () => {
+      setShowPlanChangedModal(true);
+      apiData.refetch();
+    };
+    window.addEventListener("subscription-downgraded", handler);
+    return () => window.removeEventListener("subscription-downgraded", handler);
+  }, [apiData.refetch]);
 
   // Build limits from API quotas (source of truth)
   const limitsFromApi: PlanLimits = useMemo(() => {
@@ -458,6 +470,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   return (
     <SubscriptionContext.Provider value={value}>
       {children}
+      <SubscriptionChangedModal
+        open={showPlanChangedModal}
+        onClose={() => setShowPlanChangedModal(false)}
+        onUpgrade={() => {
+          setShowPlanChangedModal(false);
+          openPricingModal();
+        }}
+        currentPlan={plan}
+      />
     </SubscriptionContext.Provider>
   );
 }

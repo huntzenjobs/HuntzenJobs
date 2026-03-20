@@ -1089,7 +1089,13 @@
     "cancelScheduledUntilFallback": " jusqu'à la fin de la période",
     "reactivate": "Réactiver mon abonnement",
     "reactivating": "Réactivation...",
-    "unknownError": "Erreur inconnue"
+    "unknownError": "Erreur inconnue",
+    "planChanged": {
+      "title": "Ton abonnement a changé",
+      "description": "Tu es maintenant sur le plan {plan}.",
+      "ctaUpgrade": "Voir les offres",
+      "ctaContinue": "Continuer"
+    }
   },
   "contact": {
     "toasts": {

@@ -276,6 +276,12 @@ export function useSubscriptionApi(): SubscriptionApiData {
           }
         }
 
+        // Handle 403 - Subscription downgraded or plan changed
+        if (response.status === 403) {
+          clearPersistentCache();
+          window.dispatchEvent(new CustomEvent("subscription-downgraded"));
+        }
+
         throw new Error(`Erreur ${response.status}: ${response.statusText}`);
       }
 
