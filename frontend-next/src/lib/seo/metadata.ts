@@ -337,9 +337,10 @@ export const assistantMetadata: Metadata = {
  * Metadata pour la page Pricing
  */
 export const pricingMetadata: Metadata = {
-  title: "Tarifs & Abonnements - Plans Gratuit, Essentiel, Pro | HuntZen",
+  title:
+    "Tarifs & Abonnements - Plans Gratuit, Starter, Pro, Premium | HuntZen",
   description:
-    "Plans tarifaires HuntZen : Gratuit (3 recherches/jour), Essentiel 8.90€/mois, Pro 13.90€/mois, Premium 19.90€/mois. Analyse CV illimitée, coaching 24/7, sans engagement.",
+    "Plans adaptés à chaque étape de votre recherche d'emploi. De l'exploration gratuite à l'accompagnement complet. Analyse CV, coaching 24/7, sans engagement.",
   keywords: [
     "tarifs huntzen",
     "prix",
@@ -356,13 +357,13 @@ export const pricingMetadata: Metadata = {
   openGraph: {
     title: "Tarifs & Abonnements HuntZen Jobs",
     description:
-      "Plans de 0€ à 19.90€/mois. Analyse CV illimitée, coaching 24/7, sans engagement.",
+      "Plans adaptés à chaque étape de votre recherche d'emploi. Analyse CV, coaching 24/7, sans engagement.",
     url: `${SITE_URL}/pricing`,
     images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     title: "Tarifs HuntZen Jobs",
-    description: "Plans de 0€ à 19.90€/mois. Sans engagement.",
+    description: "Plans adaptés à votre recherche d'emploi. Sans engagement.",
     images: [DEFAULT_OG_IMAGE],
   },
   alternates: {

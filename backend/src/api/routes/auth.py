@@ -194,12 +194,11 @@ async def get_current_user_info(
                 }
             except Exception as e:
                 logger.error(f"Failed to fetch plan prices: {e}")
-                # Fallback to hardcoded prices (safety)
-                plan_prices = {"free": 0, "starter": 8.90, "pro": 13.90, "premium": 19.90}
+                plan_prices = {}
             subscription_data = {
                 "plan_name": sub.get("plan_name", "free"),
                 "plan_display_name": sub.get("plan_display_name", "Free"),
-                "price_monthly": plan_prices.get(sub.get("plan_name", "free"), 0),
+                "price_monthly": plan_prices.get(sub.get("plan_name", "free")),
                 "status": sub.get("subscription_status", "active"),
                 "current_period_end": sub.get("current_period_end"),
                 "cancel_at_period_end": sub.get("cancel_at_period_end", False),

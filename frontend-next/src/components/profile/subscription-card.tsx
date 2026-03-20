@@ -34,40 +34,12 @@ import { useTranslations } from "next-intl";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
 import { usePlansConfig } from "@/hooks/use-plans-config";
 
-// Plan configuration - Prices synced with database (subscription_plans table)
-const PLAN_CONFIG = {
-  free: {
-    name: "Gratuit",
-    price: "0€",
-    period: "",
-    color: "bg-gray-500",
-    icon: null,
-    description: "Découvrez les fonctionnalités de base",
-  },
-  starter: {
-    name: "Starter",
-    price: "8,90€",
-    period: "/mois",
-    color: "bg-blue-500",
-    icon: <Sparkles className="w-4 h-4" />,
-    description: "Idéal pour une recherche active",
-  },
-  pro: {
-    name: "Pro",
-    price: "13,90€",
-    period: "/mois",
-    color: "bg-violet-500",
-    icon: <Zap className="w-4 h-4" />,
-    description: "Pour les professionnels exigeants",
-  },
-  premium: {
-    name: "Premium",
-    price: "19,90€",
-    period: "/mois",
-    color: "bg-amber-500",
-    icon: <Crown className="w-4 h-4" />,
-    description: "L'expérience ultime",
-  },
+// Plan visual config — prices and names come from usePlansConfig() (DB)
+const PLAN_VISUAL: Record<string, { color: string; icon: React.ReactNode }> = {
+  free: { color: "bg-gray-500", icon: null },
+  starter: { color: "bg-blue-500", icon: <Sparkles className="w-4 h-4" /> },
+  pro: { color: "bg-violet-500", icon: <Zap className="w-4 h-4" /> },
+  premium: { color: "bg-amber-500", icon: <Crown className="w-4 h-4" /> },
 };
 
 // Feature labels in French
@@ -144,9 +116,10 @@ export function SubscriptionCard() {
     }
   };
 
-  const planConfig = PLAN_CONFIG[plan];
+  const planVisual = PLAN_VISUAL[plan] ?? PLAN_VISUAL.free;
   const planLimits = PLAN_LIMITS[plan]; // used only for feature flags (has_*)
   const { getPlan, formatPrice } = usePlansConfig();
+  const planData = getPlan(plan);
 
   const dynamicPrice = (() => {
     const p = getPlan(plan);
@@ -290,7 +263,7 @@ export function SubscriptionCard() {
               </p>
               <p className="text-xs text-amber-700">
                 {tSub("cancelScheduledDesc", {
-                  plan: getPlan(plan)?.display_name ?? planConfig.name,
+                  plan: planData?.display_name ?? plan,
                   until: formattedPeriodEnd
                     ? tSub("cancelScheduledUntil", { date: formattedPeriodEnd })
                     : tSub("cancelScheduledUntilFallback"),
@@ -315,9 +288,9 @@ export function SubscriptionCard() {
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Badge className={cn("gap-1", planConfig.color)}>
-                {planConfig.icon}
-                {getPlan(plan)?.display_name ?? planConfig.name}
+              <Badge className={cn("gap-1", planVisual.color)}>
+                {planVisual.icon}
+                {planData?.display_name ?? plan}
               </Badge>
               {isPaidPlan && !cancelAtPeriodEnd && !isPastDue && (
                 <Badge
@@ -352,7 +325,7 @@ export function SubscriptionCard() {
             <div>
               <p className="text-2xl font-bold">{dynamicPrice}</p>
               <p className="text-sm text-gray-600">
-                {getPlan(plan)?.description ?? planConfig.description}
+                {planData?.description ?? ""}
               </p>
             </div>
           </div>
@@ -362,10 +335,10 @@ export function SubscriptionCard() {
               onClick={() => openPricingModal()}
               size="sm"
               className="gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
-              aria-label={`Passer au plan ${PLAN_CONFIG[nextPlan].name} pour ${PLAN_CONFIG[nextPlan].price}${PLAN_CONFIG[nextPlan].period}`}
+              aria-label={`Passer au plan ${getPlan(nextPlan)?.display_name ?? nextPlan}`}
             >
               <TrendingUp className="w-4 h-4" aria-hidden="true" />
-              Passer à {PLAN_CONFIG[nextPlan].name}
+              Passer à {getPlan(nextPlan)?.display_name ?? nextPlan}
             </Button>
           )}
         </div>

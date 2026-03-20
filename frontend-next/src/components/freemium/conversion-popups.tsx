@@ -205,7 +205,7 @@ export function ConversionPopup({
             </div>
           )}
           <p className="text-xs text-muted-foreground mb-4">
-            Plan {config.plan === "starter" ? "Starter" : "Pro"}
+            Plan {getPlan(config.plan)?.display_name ?? config.plan}
             {computedPrice ? ` — ` : ""}
             <strong>{computedPrice}</strong>
           </p>

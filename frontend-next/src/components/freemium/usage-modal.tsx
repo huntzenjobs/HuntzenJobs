@@ -33,27 +33,27 @@ interface UsageModalProps {
   onClose: () => void;
 }
 
-const PLAN_CONFIG = {
+// Visual-only config — names come from usePlansConfig() (DB)
+const PLAN_VISUAL: Record<
+  string,
+  { icon: React.ReactNode; color: string; bgGradient: string }
+> = {
   free: {
-    name: "Gratuit",
     icon: <Gift className="w-5 h-5" />,
     color: "bg-gray-500",
     bgGradient: "from-gray-400 to-gray-500",
   },
   starter: {
-    name: "Starter",
     icon: <Sparkles className="w-5 h-5" />,
     color: "bg-blue-500",
     bgGradient: "from-blue-500 to-blue-600",
   },
   pro: {
-    name: "Pro",
     icon: <Zap className="w-5 h-5" />,
     color: "bg-violet-500",
     bgGradient: "from-violet-500 to-purple-600",
   },
   premium: {
-    name: "Premium",
     icon: <Crown className="w-5 h-5" />,
     color: "bg-amber-500",
     bgGradient: "from-amber-500 to-orange-500",
@@ -163,8 +163,9 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
     prevOpenRef.current = isOpen;
   }, [isOpen, refreshQuotas]);
 
-  const planConfig = PLAN_CONFIG[plan];
+  const planVisual = PLAN_VISUAL[plan] ?? PLAN_VISUAL.free;
   const { getPlan } = usePlansConfig();
+  const planData = getPlan(plan);
 
   const handleUpgrade = () => {
     onClose();
@@ -204,14 +205,14 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 <div
                   className={cn(
                     "p-2.5 rounded-lg bg-gradient-to-br text-white",
-                    planConfig.bgGradient,
+                    planVisual.bgGradient,
                   )}
                 >
-                  {planConfig.icon}
+                  {planVisual.icon}
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">
-                    Plan {getPlan(plan)?.display_name ?? planConfig.name}
+                    Plan {planData?.display_name ?? plan}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {isFreePlan
