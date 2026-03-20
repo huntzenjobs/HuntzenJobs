@@ -859,7 +859,7 @@ export default function AssistantPage() {
                 </p>
                 <p className="text-sm text-slate-700 mb-3">
                   {t("timeExpiredDesc", {
-                    minutes: assistantMessagesLimit,
+                    count: assistantMessagesLimit,
                   })}
                 </p>
                 <Button

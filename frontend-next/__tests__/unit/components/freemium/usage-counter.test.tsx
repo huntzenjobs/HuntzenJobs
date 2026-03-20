@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import {
   UsageCounter,
-  CoachTimer,
   UsageSummary,
 } from "@/components/freemium/usage-counter";
 
@@ -127,70 +126,6 @@ describe("UsageCounter Component", () => {
       render(<UsageCounter feature="job_search" className="custom-class" />);
       const container = screen.getByText(/recherches/i).closest("div");
       expect(container?.parentElement).toHaveClass("custom-class");
-    });
-  });
-});
-
-describe("CoachTimer Component", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSubscriptionContext.assistantMessagesRemaining = 10;
-    mockSubscriptionContext.assistantMessagesLimit = 10;
-  });
-
-  describe("Rendering", () => {
-    it("renders message counter display", () => {
-      render(<CoachTimer />);
-      expect(screen.getByText(/10 msg/)).toBeInTheDocument();
-    });
-
-    it("renders with different remaining values", () => {
-      mockSubscriptionContext.assistantMessagesRemaining = 5;
-      render(<CoachTimer />);
-      expect(screen.getByText(/5 msg/)).toBeInTheDocument();
-    });
-  });
-
-  describe("Sizes", () => {
-    it("renders in small size", () => {
-      render(<CoachTimer size="sm" />);
-      expect(screen.getByText(/10 msg/)).toHaveClass("font-mono");
-    });
-
-    it("renders in medium size", () => {
-      render(<CoachTimer size="md" />);
-      expect(screen.getByText(/10 msg/)).toHaveClass("font-medium");
-    });
-
-    it("renders in large size", () => {
-      render(<CoachTimer size="lg" />);
-      expect(screen.getByText(/10 msg/)).toBeInTheDocument();
-    });
-  });
-
-  describe("Color based on messages remaining", () => {
-    it("shows green when more than 50% messages remaining", () => {
-      mockSubscriptionContext.assistantMessagesRemaining = 8; // 8/10 = 80%
-      mockSubscriptionContext.assistantMessagesLimit = 10;
-      render(<CoachTimer />);
-      const display = screen.getByText(/8 msg/);
-      expect(display).toHaveClass("text-green-600");
-    });
-
-    it("shows orange when 20-50% messages remaining", () => {
-      mockSubscriptionContext.assistantMessagesRemaining = 3; // 3/10 = 30%
-      mockSubscriptionContext.assistantMessagesLimit = 10;
-      render(<CoachTimer />);
-      const display = screen.getByText(/3 msg/);
-      expect(display).toHaveClass("text-orange-600");
-    });
-
-    it("shows red when less than 20% messages remaining", () => {
-      mockSubscriptionContext.assistantMessagesRemaining = 1; // 1/10 = 10%
-      mockSubscriptionContext.assistantMessagesLimit = 10;
-      render(<CoachTimer />);
-      const display = screen.getByText(/1 msg/);
-      expect(display).toHaveClass("text-red-600");
     });
   });
 });

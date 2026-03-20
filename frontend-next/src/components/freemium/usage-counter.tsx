@@ -152,59 +152,6 @@ export function UsageCounter({
   );
 }
 
-interface CoachTimerProps {
-  className?: string;
-  size?: "sm" | "md" | "lg";
-}
-
-export function CoachTimer({ className = "", size = "md" }: CoachTimerProps) {
-  const { assistantMessagesRemaining, assistantMessagesLimit } =
-    useSubscription();
-
-  const remaining =
-    assistantMessagesRemaining === Infinity
-      ? Infinity
-      : assistantMessagesRemaining;
-  const max =
-    assistantMessagesLimit === Infinity ? Infinity : assistantMessagesLimit;
-  const percentage =
-    max === Infinity ? 100 : Math.min(100, (remaining / max) * 100);
-
-  const formatMessages = (value: number) => {
-    if (value === Infinity) return "Illimité";
-    return `${value} msg`;
-  };
-
-  const getColor = () => {
-    if (max === Infinity) return "text-green-600";
-    if (percentage > 50) return "text-green-600";
-    if (percentage > 20) return "text-orange-600";
-    return "text-red-600";
-  };
-
-  const sizeClasses = {
-    sm: "text-sm",
-    md: "text-base",
-    lg: "text-lg",
-  };
-
-  return (
-    <div
-      className={`flex items-center gap-2 ${sizeClasses[size]} ${className}`}
-    >
-      <Clock
-        className={`${
-          size === "sm" ? "w-4 h-4" : size === "lg" ? "w-6 h-6" : "w-5 h-5"
-        } ${getColor()}`}
-        aria-hidden="true"
-      />
-      <span className={`font-mono font-medium ${getColor()}`}>
-        {formatMessages(remaining)}
-      </span>
-    </div>
-  );
-}
-
 interface UsageSummaryProps {
   className?: string;
 }
