@@ -140,20 +140,22 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   // Map API data to interface (distinguish loading/error/no-subscription states)
   const plan: PlanType = (() => {
-    // During loading, use localStorage fallback to prevent UI flicker
-    if (apiData.isLoading) return freemium.plan;
-
-    // On error, log warning and fallback (user should see error state elsewhere)
-    if (apiData.error) {
-      console.error(
-        "[Subscription] API error, check authentication:",
-        apiData.error,
-      );
-      return freemium.plan;
+    // 1. API data available (fresh fetch OR persistent cache loaded) → source of truth
+    if (apiData.subscription?.plan_name) {
+      return apiData.subscription.plan_name;
     }
 
-    // No subscription data = new user or free user, default to 'free'
-    return apiData.subscription?.plan_name || "free";
+    // 2. No session → visitor not logged in → free is legitimate
+    if (!auth?.session) return "free";
+
+    // 3. Authenticated, API loading, no data yet → new user → "free"
+    if (apiData.isLoading) return "free";
+
+    // 4. API error → use freemium state (localStorage usage tracking)
+    if (apiData.error) return freemium.plan;
+
+    // 5. API responded but no subscription data → free user
+    return "free";
   })();
   // plan_display_name vient directement de /api/auth/me (champ subscription)
   const planName = apiData.subscription?.plan_display_name || plan;
