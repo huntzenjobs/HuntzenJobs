@@ -1,152 +1,157 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { CheckCircle2, Sparkles, ArrowRight, Loader2, XCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useAuth } from '@/contexts/auth-context'
-import { useTranslations } from 'next-intl'
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  CheckCircle2,
+  Sparkles,
+  ArrowRight,
+  Loader2,
+  XCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context";
+import { useTranslations } from "next-intl";
 
-type VerificationStatus = 'polling' | 'success' | 'timeout' | 'error'
+type VerificationStatus = "polling" | "success" | "timeout" | "error";
 
 export default function PaymentSuccessPage() {
-  const t = useTranslations("payment.success")
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const { session } = useAuth()
+  const t = useTranslations("payment.success");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { session } = useAuth();
 
-  const [status, setStatus] = useState<VerificationStatus>('polling')
-  const [message, setMessage] = useState(t('verifying'))
-  const [pollingAttempts, setPollingAttempts] = useState(0)
+  const [status, setStatus] = useState<VerificationStatus>("polling");
+  const [message, setMessage] = useState(t("verifying"));
+  const [pollingAttempts, setPollingAttempts] = useState(0);
 
   useEffect(() => {
-    const sessionId = searchParams.get('session_id')
+    const sessionId = searchParams.get("session_id");
 
     if (!sessionId) {
-      setStatus('error')
-      setMessage(t('invalidSession'))
-      return
+      setStatus("error");
+      setMessage(t("invalidSession"));
+      return;
     }
 
     if (!session?.access_token) {
-      setMessage(t('waitingAuth'))
-      return
+      setMessage(t("waitingAuth"));
+      return;
     }
 
     // Polling avec retry intelligent au lieu de wait fixe 2s
-    const MAX_ATTEMPTS = 20
-    const POLL_INTERVAL = 1000 // 1 seconde
+    const MAX_ATTEMPTS = 20;
+    const POLL_INTERVAL = 1000; // 1 seconde
 
-    let currentAttempt = 0
-    let pollingInterval: NodeJS.Timeout
+    let currentAttempt = 0;
+    let pollingInterval: NodeJS.Timeout;
 
     const checkSubscriptionStatus = async () => {
       try {
-        currentAttempt++
-        setPollingAttempts(currentAttempt)
-        setMessage(t('verifyingAttempt', { attempt: currentAttempt, max: MAX_ATTEMPTS }))
+        currentAttempt++;
+        setPollingAttempts(currentAttempt);
+        setMessage(
+          t("verifyingAttempt", { attempt: currentAttempt, max: MAX_ATTEMPTS }),
+        );
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/current`,
           {
             headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        )
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json()
-        const planName = data.subscription?.plan_name
+        const data = await response.json();
+        const planName = data.subscription?.plan_name;
 
-        if (planName && planName !== 'free') {
-          console.log(`[PaymentSuccess] Upgrade détecté vers plan: ${planName}`)
-
-          if (pollingInterval) clearInterval(pollingInterval)
+        if (planName && planName !== "free") {
+          if (pollingInterval) clearInterval(pollingInterval);
 
           await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/sync-cache`,
             {
-              method: 'POST',
+              method: "POST",
               headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          )
+                Authorization: `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+            },
+          );
 
-          localStorage.removeItem('huntzen_subscription_cache')
-          localStorage.removeItem('huntzen_subscription_cache_expiry')
-          window.dispatchEvent(new CustomEvent('subscription-changed'))
+          localStorage.removeItem("huntzen_subscription_cache");
+          localStorage.removeItem("huntzen_subscription_cache_expiry");
+          window.dispatchEvent(new CustomEvent("subscription-changed"));
 
-          setStatus('success')
-          setMessage(t('verifying'))
+          setStatus("success");
+          setMessage(t("verifying"));
 
           setTimeout(() => {
-            router.push('/profile')
-          }, 3000)
+            router.push("/profile");
+          }, 3000);
 
-          return true
+          return true;
         }
 
         if (currentAttempt >= MAX_ATTEMPTS) {
-          console.warn('[PaymentSuccess] Timeout atteint, fallback vers sync')
+          console.warn("[PaymentSuccess] Timeout atteint, fallback vers sync");
 
-          if (pollingInterval) clearInterval(pollingInterval)
+          if (pollingInterval) clearInterval(pollingInterval);
 
           await fetch(
             `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/sync-cache`,
             {
-              method: 'POST',
+              method: "POST",
               headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          )
+                Authorization: `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+            },
+          );
 
-          window.dispatchEvent(new CustomEvent('subscription-changed'))
+          window.dispatchEvent(new CustomEvent("subscription-changed"));
 
-          setStatus('timeout')
-          setMessage(t('timeoutMessage'))
+          setStatus("timeout");
+          setMessage(t("timeoutMessage"));
 
           setTimeout(() => {
-            router.push('/profile')
-          }, 5000)
+            router.push("/profile");
+          }, 5000);
 
-          return false
+          return false;
         }
 
-        return false
-
+        return false;
       } catch (error) {
-        console.error('[PaymentSuccess] Polling error:', error)
+        console.error("[PaymentSuccess] Polling error:", error);
 
         if (currentAttempt >= MAX_ATTEMPTS) {
-          if (pollingInterval) clearInterval(pollingInterval)
-          setStatus('error')
-          setMessage(t('errorMessage'))
+          if (pollingInterval) clearInterval(pollingInterval);
+          setStatus("error");
+          setMessage(t("errorMessage"));
         }
 
-        return false
+        return false;
       }
-    }
+    };
 
-    checkSubscriptionStatus()
-    pollingInterval = setInterval(checkSubscriptionStatus, POLL_INTERVAL)
+    checkSubscriptionStatus();
+    pollingInterval = setInterval(checkSubscriptionStatus, POLL_INTERVAL);
 
     return () => {
-      if (pollingInterval) clearInterval(pollingInterval)
-    }
-  }, [searchParams, router, session?.access_token])
+      if (pollingInterval) clearInterval(pollingInterval);
+    };
+  }, [searchParams, router, session?.access_token]);
 
   // Polling state
-  if (status === 'polling') {
+  if (status === "polling") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-violet-50/30 flex items-center justify-center p-4">
         <div className="text-center max-w-md">
@@ -162,59 +167,66 @@ export default function PaymentSuccessPage() {
           )}
         </div>
       </div>
-    )
+    );
   }
 
   // Timeout state
-  if (status === 'timeout') {
+  if (status === "timeout") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/30 to-yellow-50/30 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 text-center">
           <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Loader2 className="w-10 h-10 text-orange-600 animate-spin" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{t("processingTitle")}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {t("processingTitle")}
+          </h1>
           <p className="text-gray-600 mb-4">{message}</p>
           <p className="text-sm text-gray-500 mb-8">
             {t("processingSubtitle")}
           </p>
           <Button
-            onClick={() => router.push('/profile')}
+            onClick={() => router.push("/profile")}
             className="w-full h-12 text-lg font-semibold"
           >
             {t("goToProfile")}
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   // Error state
-  if (status === 'error') {
+  if (status === "error") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-red-50/30 to-orange-50/30 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 text-center">
           <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <XCircle className="w-10 h-10 text-red-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{t("errorTitle")}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {t("errorTitle")}
+          </h1>
           <p className="text-gray-600 mb-8">{message}</p>
           <div className="space-y-3">
             <Button
-              onClick={() => router.push('/profile')}
+              onClick={() => router.push("/profile")}
               className="w-full h-12 text-lg font-semibold"
             >
               {t("viewProfile")}
             </Button>
             <Link href="/pricing">
-              <Button variant="outline" className="w-full h-12 text-lg font-semibold">
+              <Button
+                variant="outline"
+                className="w-full h-12 text-lg font-semibold"
+              >
                 {t("backToPricing")}
               </Button>
             </Link>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Success state
@@ -276,25 +288,29 @@ export default function PaymentSuccessPage() {
                 </Button>
               </Link>
               <Link href="/profile" className="flex-1">
-                <Button variant="outline" className="w-full h-14 text-lg font-semibold border-2 hover:bg-gray-50">
+                <Button
+                  variant="outline"
+                  className="w-full h-14 text-lg font-semibold border-2 hover:bg-gray-50"
+                >
                   {t("viewMyProfile")}
                 </Button>
               </Link>
             </div>
 
-            <p className="text-sm text-gray-500 mt-8">
-              {t("emailSent")}
-            </p>
+            <p className="text-sm text-gray-500 mt-8">{t("emailSent")}</p>
           </div>
         </div>
 
         <p className="text-center text-sm text-gray-600 mt-6">
-          {t("question")}{' '}
-          <Link href="/help" className="text-violet-600 hover:text-violet-700 font-medium underline">
+          {t("question")}{" "}
+          <Link
+            href="/help"
+            className="text-violet-600 hover:text-violet-700 font-medium underline"
+          >
             {t("contactSupport")}
           </Link>
         </p>
       </div>
     </div>
-  )
+  );
 }

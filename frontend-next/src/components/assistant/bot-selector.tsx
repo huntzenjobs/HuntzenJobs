@@ -25,6 +25,7 @@ import { getAllAssistants, getAssistantConfig } from "@/config/assistants";
 import { AssistantType } from "@/types/assistant";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useOptionalAuth } from "@/contexts/auth-context";
+import type { User } from "@supabase/supabase-js";
 
 interface BotSelectorProps {
   /** Classes CSS additionnelles */
@@ -314,7 +315,7 @@ interface DropdownMenuProps {
   selectedAssistant: AssistantType;
   onSelect: (type: AssistantType) => void;
   isFreePlan: boolean;
-  user: any;
+  user: User | null;
 }
 
 function DropdownMenu({

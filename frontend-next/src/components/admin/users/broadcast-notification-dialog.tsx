@@ -44,7 +44,9 @@ const NOTIF_TYPES = [
 
 async function adminFetch(path: string, options?: RequestInit) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const token = session?.access_token;
   if (!token) throw new Error("Non authentifié");
   const res = await fetch(`${BACKEND_URL}${path}`, {
@@ -78,12 +80,14 @@ export default function BroadcastNotificationDialog() {
         method: "POST",
         body: JSON.stringify({ segment, type, title, body }),
       });
-      toast.success(`Notification envoyée à ${data.sent} / ${data.total} utilisateurs`);
+      toast.success(
+        `Notification envoyée à ${data.sent} / ${data.total} utilisateurs`,
+      );
       setOpen(false);
       setTitle("");
       setBody("");
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de l'envoi");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors de l'envoi");
     } finally {
       setLoading(false);
     }
@@ -154,10 +158,17 @@ export default function BroadcastNotificationDialog() {
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
               Annuler
             </Button>
-            <Button onClick={handleSend} disabled={loading || !title.trim() || !body.trim()}>
+            <Button
+              onClick={handleSend}
+              disabled={loading || !title.trim() || !body.trim()}
+            >
               {loading ? "Envoi..." : "Envoyer"}
             </Button>
           </div>

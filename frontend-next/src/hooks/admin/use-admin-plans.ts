@@ -76,8 +76,10 @@ export function useAdminPlans() {
         toast.success("Limites mises à jour");
         window.dispatchEvent(new Event("subscription-changed"));
         return true;
-      } catch (e: any) {
-        toast.error(e.message || "Erreur lors de la mise à jour");
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Erreur lors de la mise à jour",
+        );
         return false;
       } finally {
         setLoading(false);
@@ -104,8 +106,10 @@ export function useAdminPlans() {
         toast.success("Fonctionnalités mises à jour");
         window.dispatchEvent(new Event("subscription-changed"));
         return true;
-      } catch (e: any) {
-        toast.error(e.message || "Erreur lors de la mise à jour");
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Erreur lors de la mise à jour",
+        );
         return false;
       } finally {
         setLoading(false);
@@ -128,8 +132,12 @@ export function useAdminPlans() {
         toast.success("Prix affiché mis à jour");
         window.dispatchEvent(new Event("subscription-changed"));
         return true;
-      } catch (e: any) {
-        toast.error(e.message || "Erreur lors de la mise à jour du prix");
+      } catch (e) {
+        toast.error(
+          e instanceof Error
+            ? e.message
+            : "Erreur lors de la mise à jour du prix",
+        );
         return false;
       } finally {
         setLoading(false);
@@ -152,8 +160,12 @@ export function useAdminPlans() {
         toast.success("Wording mis à jour");
         window.dispatchEvent(new Event("subscription-changed"));
         return true;
-      } catch (e: any) {
-        toast.error(e.message || "Erreur lors de la mise à jour du wording");
+      } catch (e) {
+        toast.error(
+          e instanceof Error
+            ? e.message
+            : "Erreur lors de la mise à jour du wording",
+        );
         return false;
       } finally {
         setLoading(false);
@@ -180,8 +192,8 @@ export function useAdminPlans() {
         );
         toast.success(`Nouveau prix Stripe créé : ${result.new_price_id}`);
         return result;
-      } catch (e: any) {
-        toast.error(e.message || "Erreur Stripe");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Erreur Stripe");
         return null;
       } finally {
         setLoading(false);

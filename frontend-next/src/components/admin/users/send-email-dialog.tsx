@@ -98,8 +98,8 @@ export default function SendEmailDialog(props: Props) {
       setSubject("");
       setBody("");
       props.onClose();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de l'envoi");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors de l'envoi");
     } finally {
       setSending(false);
     }

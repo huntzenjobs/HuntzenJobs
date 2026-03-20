@@ -133,12 +133,13 @@ function SignupForm() {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
-    } catch (err: any) {
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : String(err);
       console.error("[SIGNUP] Error:", err);
 
       if (
-        err.message?.includes("prend trop de temps") ||
-        err.message?.includes("timeout")
+        errMessage?.includes("prend trop de temps") ||
+        errMessage?.includes("timeout")
       ) {
         setIsTimeout(true);
       }

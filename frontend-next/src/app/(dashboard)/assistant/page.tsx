@@ -306,11 +306,11 @@ export default function AssistantPage() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error: any) {
+    } catch (error) {
       const errorMessage: ChatMessageType = {
         id: uuidv4(),
         role: "assistant",
-        content: error?.message || t("cvUploadError"),
+        content: error instanceof Error ? error.message : t("cvUploadError"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);

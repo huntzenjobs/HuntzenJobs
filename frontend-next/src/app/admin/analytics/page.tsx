@@ -72,7 +72,7 @@ function KpiCard({
   title: string;
   value: string;
   subtitle?: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <Card>

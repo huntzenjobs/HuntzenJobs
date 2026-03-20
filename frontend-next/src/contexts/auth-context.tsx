@@ -232,16 +232,17 @@ export function AuthProvider({
       });
 
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : String(err);
       devError("Google sign in error:", err);
-      setError(err.message || "Failed to sign in with Google");
+      setError(errMessage || "Failed to sign in with Google");
       setLoading(false);
 
       // Log OAuth failure (non-blocking)
       logSecurityEvent({
         eventType: "auth.oauth_failed",
         severity: "warning",
-        metadata: { provider: "google", error: err.message },
+        metadata: { provider: "google", error: errMessage },
       }).catch((logErr) => {
         devError("Failed to log OAuth failure (non-critical):", logErr);
       });
@@ -284,25 +285,26 @@ export function AuthProvider({
 
       // Reset loading après navigation initiale
       setTimeout(() => setLoading(false), 100);
-    } catch (err: any) {
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : String(err);
       devError("Email sign in error:", err);
 
       // Détection d'email non confirmé
       const isEmailNotConfirmed =
-        err.message?.toLowerCase().includes("email not confirmed") ||
-        err.message?.toLowerCase().includes("user not confirmed") ||
-        err.message?.toLowerCase().includes("confirm your email");
+        errMessage?.toLowerCase().includes("email not confirmed") ||
+        errMessage?.toLowerCase().includes("user not confirmed") ||
+        errMessage?.toLowerCase().includes("confirm your email");
 
       if (isEmailNotConfirmed) {
         setError(tErr("emailNotConfirmed"));
       } else {
-        setError(err.message || tErr("invalidCredentials"));
+        setError(errMessage || tErr("invalidCredentials"));
       }
 
       setLoading(false);
 
       // Log failed login (non-blocking)
-      logLoginFailed(email, err.message).catch((logErr) => {
+      logLoginFailed(email, errMessage).catch((logErr) => {
         devError("Failed to log login failure (non-critical):", logErr);
       });
 
@@ -375,11 +377,12 @@ export function AuthProvider({
       } else {
         router.push("/signup?success=true&email=" + encodeURIComponent(email));
       }
-    } catch (err: any) {
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : String(err);
       devError("Sign up error:", err);
 
       // Message d'erreur plus clair pour timeout
-      const errorMessage = err.message || tErr("signupFailed");
+      const errorMessage = errMessage || tErr("signupFailed");
 
       setError(errorMessage);
       setLoading(false);
@@ -409,9 +412,10 @@ export function AuthProvider({
         },
       });
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : String(err);
       devError("Resend confirmation error:", err);
-      setError(err.message || tErr("resendConfirmationFailed"));
+      setError(errMessage || tErr("resendConfirmationFailed"));
       throw err;
     }
   };
@@ -438,7 +442,7 @@ export function AuthProvider({
         // Session might already be expired (AbortError)
         devWarn("Sign out warning (continuing anyway):", error);
       }
-    } catch (err: any) {
+    } catch (err) {
       // Catch any exception (AbortError, network issues, etc.)
       devWarn("Sign out exception (continuing anyway):", err);
     } finally {

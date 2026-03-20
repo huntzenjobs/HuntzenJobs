@@ -157,8 +157,6 @@ export function JobDetailsModal({
           data.remaining !== undefined &&
           data.remaining >= 0
         ) {
-          console.log(`Job view tracked. Remaining views: ${data.remaining}`);
-
           // Warn user when approaching limit (2 views left)
           if (data.remaining <= 2 && data.remaining > 0) {
             console.warn(
@@ -392,7 +390,7 @@ export function JobDetailsModal({
                   )}
 
                   {/* Recruiter Info (if available) */}
-                  {(job as any).recruiter_name && (
+                  {job.recruiter_name && (
                     <div className="border-t border-gray-200 pt-6">
                       <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                         <Users className="h-6 w-6 text-blue-600" />
@@ -400,27 +398,27 @@ export function JobDetailsModal({
                       </h3>
                       <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
                         <p className="font-semibold text-gray-900 mb-3 text-lg">
-                          {(job as any).recruiter_name}
+                          {job.recruiter_name}
                         </p>
-                        {(job as any).recruiter_email && (
+                        {job.recruiter_email && (
                           <p className="text-sm text-gray-600 mb-2">
                             <span className="font-semibold">Email:</span>{" "}
                             <a
-                              href={`mailto:${(job as any).recruiter_email}`}
+                              href={`mailto:${job.recruiter_email}`}
                               className="text-blue-600 hover:underline"
                             >
-                              {(job as any).recruiter_email}
+                              {job.recruiter_email}
                             </a>
                           </p>
                         )}
-                        {(job as any).recruiter_phone && (
+                        {job.recruiter_phone && (
                           <p className="text-sm text-gray-600">
                             <span className="font-semibold">Téléphone:</span>{" "}
                             <a
-                              href={`tel:${(job as any).recruiter_phone}`}
+                              href={`tel:${job.recruiter_phone}`}
                               className="text-blue-600 hover:underline"
                             >
-                              {(job as any).recruiter_phone}
+                              {job.recruiter_phone}
                             </a>
                           </p>
                         )}

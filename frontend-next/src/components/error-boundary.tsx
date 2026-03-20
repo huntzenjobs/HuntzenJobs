@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * Error Boundary Component
@@ -6,33 +6,39 @@
  * Integrates with Sentry for error tracking
  */
 
-import { Component, ReactNode } from 'react'
-import * as Sentry from '@sentry/nextjs'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Component, ReactNode } from "react";
+import * as Sentry from "@sentry/nextjs";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface Props {
-  children: ReactNode
-  fallback?: ReactNode
+  children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
-  hasError: boolean
-  error: Error | null
+  hasError: boolean;
+  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
-    super(props)
-    this.state = { hasError: false, error: null }
+    super(props);
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log to Sentry
     Sentry.captureException(error, {
       contexts: {
@@ -40,23 +46,23 @@ export class ErrorBoundary extends Component<Props, State> {
           componentStack: errorInfo.componentStack,
         },
       },
-    })
+    });
 
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error Boundary caught error:', error, errorInfo)
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error Boundary caught error:", error, errorInfo);
     }
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null })
-  }
+    this.setState({ hasError: false, error: null });
+  };
 
   render() {
     if (this.state.hasError) {
       // Use custom fallback if provided
       if (this.props.fallback) {
-        return this.props.fallback
+        return this.props.fallback;
       }
 
       // Default fallback UI
@@ -69,11 +75,12 @@ export class ErrorBoundary extends Component<Props, State> {
                 <CardTitle>Oups, une erreur s'est produite</CardTitle>
               </div>
               <CardDescription>
-                Nous avons rencontré un problème inattendu. Notre équipe a été notifiée.
+                Nous avons rencontré un problème inattendu. Notre équipe a été
+                notifiée.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {process.env.NODE_ENV === "development" && this.state.error && (
                 <div className="bg-muted p-3 rounded-md">
                   <p className="text-sm font-mono text-muted-foreground">
                     {this.state.error.message}
@@ -87,7 +94,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => (window.location.href = '/')}
+                  onClick={() => (window.location.href = "/")}
                   className="flex-1"
                 >
                   Retour à l'accueil
@@ -96,10 +103,10 @@ export class ErrorBoundary extends Component<Props, State> {
             </CardContent>
           </Card>
         </div>
-      )
+      );
     }
 
-    return this.props.children
+    return this.props.children;
   }
 }
 
@@ -108,13 +115,13 @@ export class ErrorBoundary extends Component<Props, State> {
  */
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  fallback?: ReactNode
+  fallback?: ReactNode,
 ) {
   return function WithErrorBoundary(props: P) {
     return (
       <ErrorBoundary fallback={fallback}>
         <Component {...props} />
       </ErrorBoundary>
-    )
-  }
+    );
+  };
 }

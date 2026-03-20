@@ -115,8 +115,10 @@ export function useAdminUsers() {
       });
       toast.success("Utilisateur suspendu");
       return true;
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la suspension");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors de la suspension",
+      );
       return false;
     } finally {
       setLoading(false);
@@ -131,8 +133,10 @@ export function useAdminUsers() {
       });
       toast.success("Utilisateur réactivé");
       return true;
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la réactivation");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors de la réactivation",
+      );
       return false;
     } finally {
       setLoading(false);
@@ -148,8 +152,10 @@ export function useAdminUsers() {
       });
       toast.success("Utilisateur supprimé");
       return true;
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la suppression");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors de la suppression",
+      );
       return false;
     } finally {
       setLoading(false);
@@ -168,8 +174,10 @@ export function useAdminUsers() {
       );
       toast.success("Email de réinitialisation envoyé");
       return result;
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la réinitialisation");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors de la réinitialisation",
+      );
       return null;
     } finally {
       setLoading(false);
@@ -185,8 +193,10 @@ export function useAdminUsers() {
       });
       toast.success("Plan modifié");
       return true;
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors du changement de plan");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors du changement de plan",
+      );
       return false;
     } finally {
       setLoading(false);
@@ -205,8 +215,10 @@ export function useAdminUsers() {
       });
       toast.success("Usage remis à zéro pour aujourd'hui");
       return true;
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors du reset usage");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors du reset usage",
+      );
       return false;
     } finally {
       setLoading(false);

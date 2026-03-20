@@ -47,6 +47,9 @@ export interface Job {
   url_is_direct?: boolean;
   description_truncated?: boolean;
   contract_type?: string;
+  recruiter_name?: string;
+  recruiter_email?: string;
+  recruiter_phone?: string;
 }
 
 export interface SavedJob {
@@ -346,9 +349,9 @@ class HuntzenApiClient {
         status = await this.fetch<typeof status>(`/api/queue/status/${jobId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-      } catch (e: any) {
+      } catch (e) {
         // Job expiré (TTL 1h dépassé) → erreur claire
-        if (e.message?.includes("404")) {
+        if (e instanceof Error && e.message?.includes("404")) {
           throw new Error(
             "Ce traitement a expiré. Merci de renvoyer votre message.",
           );

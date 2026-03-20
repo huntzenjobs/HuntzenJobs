@@ -188,8 +188,8 @@ export default function AdminStressPage() {
         body: JSON.stringify(payload),
       });
       setCurrentRunId(d.run_id);
-    } catch (e: any) {
-      alert(`Erreur : ${e.message}`);
+    } catch (e) {
+      alert(`Erreur : ${e instanceof Error ? e.message : String(e)}`);
     }
     setLaunching(false);
   }

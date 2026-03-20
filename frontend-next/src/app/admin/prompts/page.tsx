@@ -79,7 +79,12 @@ export default function PromptsPage() {
 
   const selectPrompt = async (name: string) => {
     if (dirty && selected) {
-      if (!confirm("Des modifications non sauvegardées seront perdues. Continuer ?")) return;
+      if (
+        !confirm(
+          "Des modifications non sauvegardées seront perdues. Continuer ?",
+        )
+      )
+        return;
     }
     setLoadingDetail(true);
     try {
@@ -106,8 +111,10 @@ export default function PromptsPage() {
       setDirty(false);
       // Rafraîchir la liste pour updated_at
       await loadList();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la sauvegarde");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors de la sauvegarde",
+      );
     } finally {
       setSaving(false);
     }

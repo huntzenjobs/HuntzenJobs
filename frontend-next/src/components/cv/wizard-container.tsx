@@ -153,12 +153,15 @@ export function WizardContainer({
         loading: false,
         result: savedAnalysis,
       }));
-    } catch (error: any) {
+    } catch (error) {
       console.error("Analysis error:", error);
       setWizardState((prev) => ({
         ...prev,
         loading: false,
-        error: error.message || "Une erreur est survenue lors de l'analyse",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Une erreur est survenue lors de l'analyse",
       }));
     }
   };

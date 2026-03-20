@@ -95,7 +95,7 @@ export function RecruiterContactModal({
       if (paymentResponse.checkout_url) {
         window.location.href = paymentResponse.checkout_url;
       }
-    } catch (error: any) {
+    } catch (error) {
       toast.error(t("toastError"));
     } finally {
       setIsSubmitting(false);

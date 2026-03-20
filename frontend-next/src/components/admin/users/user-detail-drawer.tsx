@@ -152,8 +152,8 @@ export default function UserDetailDrawer({
         `/api/admin/users/${userId}/feature-overrides`,
       );
       setFeatures(d.features || []);
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     } finally {
       setTogglingFeature(null);
     }

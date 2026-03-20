@@ -263,11 +263,6 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
             }
 
             sendXpEvent(session?.access_token ?? "", "cv_analysis");
-
-            console.log("✅ CV analysis completed", {
-              cv_id: cvAnalysisId,
-              processing_time: data.processing_time_seconds,
-            });
           }
 
           // Handle failure
@@ -357,13 +352,6 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
         }
         formData.append("language", finalLanguage);
 
-        console.log("🚀 Uploading CV:", {
-          filename: file.name,
-          size: file.size,
-          hasJobDescription: !!jobDescription,
-          authenticated: !!session?.access_token,
-        });
-
         // Upload to backend with automatic token refresh on 401
         const response = await authenticatedFetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/async`,
@@ -398,8 +386,6 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
         if (!data.success) {
           throw new Error(data.message || "Upload failed");
         }
-
-        console.log("✅ Upload successful, starting polling:", data.cv_id);
 
         // Store cv_id and start polling
         setCvId(data.cv_id);
@@ -469,12 +455,6 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
         }
         formData.append("language", finalLanguage);
 
-        console.log("🚀 Uploading CV text:", {
-          textLength: cvText.length,
-          hasJobDescription: !!jobDescription,
-          authenticated: !!session?.access_token,
-        });
-
         // Upload to backend with automatic token refresh on 401
         const response = await authenticatedFetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/async`,
@@ -509,8 +489,6 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
         if (!data.success) {
           throw new Error(data.message || "Upload failed");
         }
-
-        console.log("✅ Text upload successful, starting polling:", data.cv_id);
 
         // Store cv_id and start polling
         setCvId(data.cv_id);

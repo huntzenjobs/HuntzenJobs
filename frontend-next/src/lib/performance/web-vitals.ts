@@ -44,21 +44,7 @@ export const WEB_VITALS_THRESHOLDS = {
 function sendToAnalytics(metric: Metric) {
   // En production, envoyer à votre service d'analytics
   // (Vercel Analytics, Google Analytics, etc.)
-  if (process.env.NODE_ENV === "production") {
-    // Exemple: Vercel Analytics (déjà intégré via @vercel/analytics)
-    // ou custom endpoint
-    // fetch('/api/analytics', {
-    //   method: 'POST',
-    //   body: JSON.stringify(metric),
-    // });
-
-    console.log(`[Web Vitals] ${metric.name}:`, {
-      value: metric.value,
-      rating: metric.rating,
-      delta: metric.delta,
-    });
-  } else {
-    // En dev, logger dans la console
+  if (process.env.NODE_ENV === "development") {
     console.log(`[Web Vitals] ${metric.name}:`, {
       value: metric.value,
       rating: metric.rating,

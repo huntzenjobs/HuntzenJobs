@@ -169,8 +169,8 @@ export default function CouponsPage() {
         max_redemptions: "",
       });
       load();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur création");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur création");
     } finally {
       setCreating(false);
     }
@@ -185,8 +185,8 @@ export default function CouponsPage() {
       toast.success("Coupon supprimé");
       setDeleteTarget(null);
       load();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur suppression");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur suppression");
     }
   };
 
@@ -205,7 +205,7 @@ export default function CouponsPage() {
       const token = session?.access_token;
       const profilesRes = await fetch(
         `${BACKEND_URL}/api/admin/users?search=${encodeURIComponent(applyEmail)}&per_page=1`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const profiles = await profilesRes.json();
       const user = profiles.users?.[0];
@@ -221,8 +221,8 @@ export default function CouponsPage() {
       setApplyOpen(false);
       setApplyEmail("");
       setApplyCouponId("");
-    } catch (e: any) {
-      toast.error(e.message || "Erreur application");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur application");
     } finally {
       setApplying(false);
     }
@@ -241,7 +241,11 @@ export default function CouponsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setApplyOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setApplyOpen(true)}
+          >
             <Gift className="h-4 w-4 mr-2" />
             Appliquer à un user
           </Button>
@@ -366,7 +370,9 @@ export default function CouponsPage() {
               <Input
                 placeholder="Ex : BETA50, WELCOME20"
                 value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -399,7 +405,7 @@ export default function CouponsPage() {
                     setForm((f) =>
                       form.type === "percent"
                         ? { ...f, percent_off: e.target.value }
-                        : { ...f, amount_off: e.target.value }
+                        : { ...f, amount_off: e.target.value },
                     )
                   }
                 />
@@ -410,9 +416,7 @@ export default function CouponsPage() {
                 <Label>Durée</Label>
                 <Select
                   value={form.duration}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, duration: v }))
-                  }
+                  onValueChange={(v) => setForm((f) => ({ ...f, duration: v }))}
                 >
                   <SelectTrigger>
                     <SelectValue />

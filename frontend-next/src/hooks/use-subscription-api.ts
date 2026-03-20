@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { tokenRefreshService } from "@/lib/auth/token-refresh-service";
 
+const isDev = process.env.NODE_ENV === "development";
+
 // Types from backend API response
 interface UserData {
   id: string;
@@ -142,7 +144,8 @@ export function useSubscriptionApi(): SubscriptionApiData {
   const fetchSubscription = useCallback(async () => {
     // CRITICAL FIX: Wait for auth to finish loading before checking session
     if (authLoading) {
-      console.log("[SubscriptionAPI] Waiting for auth to finish loading...");
+      if (isDev)
+        console.log("[SubscriptionAPI] Waiting for auth to finish loading...");
       return;
     }
 
@@ -243,7 +246,8 @@ export function useSubscriptionApi(): SubscriptionApiData {
             return;
           }
 
-          console.log("[SubscriptionAPI] Got new token, retrying request...");
+          if (isDev)
+            console.log("[SubscriptionAPI] Got new token, retrying request...");
 
           // Retry with new token
           const retryResponse = await fetch(
@@ -343,7 +347,8 @@ export function useSubscriptionApi(): SubscriptionApiData {
   useEffect(() => {
     // Wait for auth to finish loading
     if (authLoading) {
-      console.log("[SubscriptionAPI] Auth still loading, waiting...");
+      if (isDev)
+        console.log("[SubscriptionAPI] Auth still loading, waiting...");
       return;
     }
 
@@ -354,7 +359,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
     // Only if we have a session
     if (session?.access_token) {
       intervalRef.current = setInterval(() => {
-        console.log("[SubscriptionAPI] Auto-refresh triggered");
+        if (isDev) console.log("[SubscriptionAPI] Auto-refresh triggered");
         fetchSubscription();
       }, REFRESH_INTERVAL);
     }
@@ -407,10 +412,14 @@ export function useSubscriptionSync() {
   // Register listener ONCE — never re-registers even if refetch changes
   useEffect(() => {
     const handleSubscriptionChange = () => {
-      console.log("[SubscriptionSync] Subscription changed event detected");
+      if (isDev)
+        console.log("[SubscriptionSync] Subscription changed event detected");
       clearPersistentCache();
       refetchRef.current();
-      console.log("[SubscriptionSync] Cache invalidated and refetch triggered");
+      if (isDev)
+        console.log(
+          "[SubscriptionSync] Cache invalidated and refetch triggered",
+        );
     };
 
     window.addEventListener("subscription-changed", handleSubscriptionChange);

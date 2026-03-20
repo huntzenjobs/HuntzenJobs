@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes d'inactivité
 const REFRESH_BEFORE_EXPIRY = 5 * 60 * 1000; // Rafraîchir 5 min avant expiration
+const isDev = process.env.NODE_ENV === "development";
 
 export function useAutoRefreshSession() {
   const supabase = createClient();
@@ -24,7 +25,8 @@ export function useAutoRefreshSession() {
       clearTimeout(inactivityTimer);
 
       inactivityTimer = setTimeout(async () => {
-        console.log("[Auth] Déconnexion automatique après inactivité");
+        if (isDev)
+          console.log("[Auth] Déconnexion automatique après inactivité");
         await supabase.auth.signOut();
         redirectToLogin("inactivity");
       }, INACTIVITY_TIMEOUT);
@@ -49,25 +51,27 @@ export function useAutoRefreshSession() {
           const timeUntilRefresh = expiresAt - now - REFRESH_BEFORE_EXPIRY;
 
           if (timeUntilRefresh > 0) {
-            console.log(
-              `[Auth] Token rafraîchissement programmé dans ${Math.round(timeUntilRefresh / 1000 / 60)} minutes`,
-            );
+            if (isDev)
+              console.log(
+                `[Auth] Token rafraîchissement programmé dans ${Math.round(timeUntilRefresh / 1000 / 60)} minutes`,
+              );
 
             refreshTimer = setTimeout(async () => {
-              console.log("[Auth] Rafraîchissement du token...");
+              if (isDev) console.log("[Auth] Rafraîchissement du token...");
               const { error } = await supabase.auth.refreshSession();
 
               if (error) {
                 console.error("[Auth] Erreur lors du rafraîchissement:", error);
                 redirectToLogin("token_expired");
               } else {
-                console.log("[Auth] Token rafraîchi avec succès");
+                if (isDev) console.log("[Auth] Token rafraîchi avec succès");
                 setupRefreshTimer(); // Re-planifier le prochain refresh
               }
             }, timeUntilRefresh);
           } else {
             // Token déjà expiré ou sur le point d'expirer
-            console.log("[Auth] Token expiré, rafraîchissement immédiat...");
+            if (isDev)
+              console.log("[Auth] Token expiré, rafraîchissement immédiat...");
             const { error } = await supabase.auth.refreshSession();
 
             if (error) {
@@ -125,10 +129,11 @@ export function useAutoRefreshSession() {
       }
 
       // 3 tentatives échouées → session vraiment expirée
-      console.log(
-        "[Auth] Session expirée après 3 tentatives:",
-        lastError?.message,
-      );
+      if (isDev)
+        console.log(
+          "[Auth] Session expirée après 3 tentatives:",
+          lastError?.message,
+        );
       redirectToLogin("session_expired");
     };
 

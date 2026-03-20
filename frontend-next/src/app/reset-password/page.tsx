@@ -69,8 +69,10 @@ export default function ResetPasswordPage() {
       setSuccess(true);
       // Auto-redirect to login after 2s
       setTimeout(() => router.push("/login"), 2000);
-    } catch (err: any) {
-      setError(err.message || "Failed to update password");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update password",
+      );
     } finally {
       setLoading(false);
     }
@@ -160,7 +162,9 @@ export default function ResetPasswordPage() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                aria-label={
+                  showPassword ? t("hidePassword") : t("showPassword")
+                }
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />

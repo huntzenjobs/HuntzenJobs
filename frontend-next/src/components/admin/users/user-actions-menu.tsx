@@ -117,8 +117,10 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       const data = await res.json();
       window.open(data.magic_link, "_blank");
       toast.warning(`Connexion en tant que ${data.target_email}`);
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors de l'impersonation");
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erreur lors de l'impersonation",
+      );
     }
   };
 
@@ -146,8 +148,8 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       setBanOpen(false);
       setBanReason("");
       await onAction("reactivate", user.id); // refresh
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors du ban");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors du ban");
     } finally {
       setActing(false);
     }
@@ -159,8 +161,8 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       await adminPost(`/api/admin/users/${user.id}/unban`);
       toast.success(`${user.email} débanni`);
       await onAction("reactivate", user.id); // refresh
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors du unban");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors du unban");
     } finally {
       setActing(false);
     }
@@ -171,8 +173,8 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
     try {
       await adminPost(`/api/admin/users/${user.id}/force-signout`);
       toast.success(`Sessions révoquées pour ${user.email}`);
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     }
   };
 
@@ -200,8 +202,8 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       toast.success(`Email mis à jour : ${newEmail}`);
       setChangeEmailOpen(false);
       setNewEmail("");
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     } finally {
       setActing(false);
     }
@@ -220,8 +222,8 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       setGrantDaysOpen(false);
       setGrantDays("7");
       setGrantReason("");
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     } finally {
       setActing(false);
     }
@@ -245,8 +247,8 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       setLimitCV("");
       setLimitCoach("");
       setLimitJobs("");
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     } finally {
       setActing(false);
     }
@@ -262,8 +264,8 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       toast.success("Note ajoutée");
       setNoteOpen(false);
       setNoteContent("");
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     } finally {
       setActing(false);
     }

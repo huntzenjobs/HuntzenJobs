@@ -87,8 +87,8 @@ export function useAdminReferrals() {
         });
         toast.success("Configuration mise à jour");
         return true;
-      } catch (e: any) {
-        toast.error(`Erreur : ${e.message}`);
+      } catch (e) {
+        toast.error(`Erreur : ${e instanceof Error ? e.message : String(e)}`);
         return false;
       }
     },
@@ -107,8 +107,8 @@ export function useAdminReferrals() {
         if (data.ok) toast.success("Récompense accordée");
         else toast.error("Échec de la récompense");
         return data.ok;
-      } catch (e: any) {
-        toast.error(`Erreur : ${e.message}`);
+      } catch (e) {
+        toast.error(`Erreur : ${e instanceof Error ? e.message : String(e)}`);
         return false;
       }
     },

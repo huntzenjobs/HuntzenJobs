@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Trash2, Plus, Pencil, Check, X } from "lucide-react";
+import { toast } from "sonner";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -31,34 +32,18 @@ interface Suggestion {
 
 type SuggestionsMap = Record<string, Suggestion[]>;
 
-function Toast({ message, type }: { message: string; type: "success" | "error" }) {
-  return (
-    <div
-      className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium text-white transition-all ${
-        type === "success" ? "bg-green-600" : "bg-red-600"
-      }`}
-    >
-      {message}
-    </div>
-  );
-}
-
 export default function SuggestionsAdminPage() {
   const [suggestions, setSuggestions] = useState<SuggestionsMap>({});
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [newText, setNewText] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
 
-  const showToast = (message: string, type: "success" | "error" = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
   const getToken = async () => {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     return session?.access_token || "";
   };
 
@@ -72,7 +57,7 @@ export default function SuggestionsAdminPage() {
       const data = await res.json();
       setSuggestions(data.suggestions || {});
     } catch {
-      showToast("Impossible de charger les suggestions", "error");
+      toast.error("Impossible de charger les suggestions");
     } finally {
       setLoading(false);
     }
@@ -98,9 +83,9 @@ export default function SuggestionsAdminPage() {
       if (!res.ok) throw new Error();
       setNewText((prev) => ({ ...prev, [assistantId]: "" }));
       await fetchSuggestions();
-      showToast("Suggestion ajoutée");
+      toast.success("Suggestion ajoutée");
     } catch {
-      showToast("Erreur lors de l'ajout", "error");
+      toast.error("Erreur lors de l'ajout");
     }
   };
 
@@ -117,9 +102,9 @@ export default function SuggestionsAdminPage() {
       });
       if (!res.ok) throw new Error();
       await fetchSuggestions();
-      showToast(isActive ? "Suggestion activée" : "Suggestion désactivée");
+      toast.success(isActive ? "Suggestion activée" : "Suggestion désactivée");
     } catch {
-      showToast("Erreur lors de la mise à jour", "error");
+      toast.error("Erreur lors de la mise à jour");
     }
   };
 
@@ -139,9 +124,9 @@ export default function SuggestionsAdminPage() {
       if (!res.ok) throw new Error();
       setEditingId(null);
       await fetchSuggestions();
-      showToast("Suggestion modifiée");
+      toast.success("Suggestion modifiée");
     } catch {
-      showToast("Erreur lors de la modification", "error");
+      toast.error("Erreur lors de la modification");
     }
   };
 
@@ -155,9 +140,9 @@ export default function SuggestionsAdminPage() {
       });
       if (!res.ok) throw new Error();
       await fetchSuggestions();
-      showToast("Suggestion supprimée");
+      toast.success("Suggestion supprimée");
     } catch {
-      showToast("Erreur lors de la suppression", "error");
+      toast.error("Erreur lors de la suppression");
     }
   };
 
@@ -174,7 +159,8 @@ export default function SuggestionsAdminPage() {
       <div>
         <h1 className="text-2xl font-bold">Suggestions assistants</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Gérez les questions exemples affichées sur l'écran d'accueil de chaque coach.
+          Gérez les questions exemples affichées sur l'écran d'accueil de chaque
+          coach.
         </p>
       </div>
 
@@ -195,12 +181,16 @@ export default function SuggestionsAdminPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center justify-between">
                     <span>{assistant.label}</span>
-                    <Badge variant="outline">{items.length} suggestion(s)</Badge>
+                    <Badge variant="outline">
+                      {items.length} suggestion(s)
+                    </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {items.length === 0 && (
-                    <p className="text-sm text-muted-foreground italic">Aucune suggestion.</p>
+                    <p className="text-sm text-muted-foreground italic">
+                      Aucune suggestion.
+                    </p>
                   )}
 
                   {items.map((s) => (
@@ -286,7 +276,10 @@ export default function SuggestionsAdminPage() {
                       placeholder="Nouvelle suggestion…"
                       value={newText[assistant.id] || ""}
                       onChange={(e) =>
-                        setNewText((prev) => ({ ...prev, [assistant.id]: e.target.value }))
+                        setNewText((prev) => ({
+                          ...prev,
+                          [assistant.id]: e.target.value,
+                        }))
                       }
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleAdd(assistant.id);
@@ -308,8 +301,6 @@ export default function SuggestionsAdminPage() {
           );
         })}
       </Tabs>
-
-      {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
 }

@@ -569,8 +569,8 @@ function WebhookLogsTab() {
       );
       toast.success(`Webhook rejoué : ${data.event_type}`);
       load();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur lors du retry");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors du retry");
     }
   };
 
@@ -714,8 +714,8 @@ function SecurityIPTab() {
       setIPInput("");
       setIPReason("");
       load();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     }
   };
 
@@ -742,8 +742,8 @@ function SecurityIPTab() {
       setEmailInput("");
       setEmailReason("");
       load();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     }
   };
 
