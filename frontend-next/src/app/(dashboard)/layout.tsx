@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/sidebar";
 import { NavigationLoader } from "@/components/layout/navigation-loader";
@@ -43,17 +44,17 @@ export default async function DashboardLayout({
           <footer className="border-t py-3 px-4 text-center">
             <p className="text-xs text-muted-foreground">
               &copy; {new Date().getFullYear()} HuntZen &middot;{" "}
-              <a href="/privacy" className="hover:underline">
+              <Link href="/privacy" className="hover:underline">
                 Confidentialité
-              </a>
+              </Link>
               {" · "}
-              <a href="/terms" className="hover:underline">
+              <Link href="/terms" className="hover:underline">
                 CGU
-              </a>
+              </Link>
               {" · "}
-              <a href="/contact" className="hover:underline">
+              <Link href="/contact" className="hover:underline">
                 Contact
-              </a>
+              </Link>
             </p>
           </footer>
         </main>

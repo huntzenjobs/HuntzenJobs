@@ -6,6 +6,7 @@ Main router combining all route modules.
 
 from fastapi import APIRouter
 
+from src.api.routes.account import router as account_router
 from src.api.routes.admin import router as admin_router
 from src.api.routes.admin_cleanup import router as admin_cleanup_router
 from src.api.routes.applications import router as applications_router
@@ -80,3 +81,4 @@ router.include_router(stress_router, prefix="/api/admin/stress", tags=["Stress T
 router.include_router(suggestions_router, prefix="/api/assistant", tags=["Assistant Suggestions"])
 router.include_router(public_plans_router, prefix="/api/public", tags=["Public Plans"])
 router.include_router(contact_router, prefix="/api/contact", tags=["Contact"])
+router.include_router(account_router, prefix="/api/account", tags=["Account"])
