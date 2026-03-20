@@ -21,7 +21,7 @@
   "hero": {
     "tag": "Para los candidatos cansados de postularse sin respuesta",
     "h1": "Encontrar trabajo no debería ser una carrera de obstáculos.",
-    "h2": "Accede a las ofertas que te corresponden, mejora tu CV y consigue más entrevistas — sin perder horas buscando.",
+    "h2": "Accede a las ofertas que te corresponden, mejora tu CV y consigue más entrevistas sin perder horas buscando.",
     "subtitle": "CV certificado ATS · 5 coaches de carrera · Score de compatibilidad · +6 plataformas de empleo",
     "ctaSearch": "Comenzar mi búsqueda",
     "ctaDiscover": "Descubrir el método",
@@ -36,7 +36,7 @@
       "jobSearch": {
         "category": "Búsqueda",
         "title": "Agregador de ofertas inteligente",
-        "description": "Todas las oportunidades relevantes en un solo lugar — sin perder horas buscando."
+        "description": "Todas las oportunidades relevantes en un solo lugar. Sin perder horas buscando."
       },
       "compatibility": {
         "category": "Búsqueda",
@@ -134,7 +134,7 @@
     "coaches": {
       "badge": "COACHES DE CARRERA",
       "title": "Cinco expertos en tu bolsillo.",
-      "description": "Nova, Maria, Sofia, Lucas y David — cada uno especializado en un área. Disponibles 24/7, sin cita previa.",
+      "description": "Nova, Maria, Sofia, Lucas y David, cada uno especializado en un área. Disponibles 24/7, sin cita previa.",
       "cta": "Hablar con un coach →",
       "list": {
         "nova": "Estrategia y plan de carrera",
@@ -1018,8 +1018,8 @@
     "insiderTitle": "Contactos internos en {company}",
     "insiderSubtitle": "Encuentra personas reales para contactar en LinkedIn y maximizar tus posibilidades",
     "insiderWhyTitle": "¿Por qué contactar a un insider?",
-    "insiderWhyColleague": "Futuro compañero — infórmate sobre el ambiente real y el puesto",
-    "insiderWhyRecruiter": "Reclutador interno — envía tu CV directamente, sin pasar por el formulario",
+    "insiderWhyColleague": "Futuro compañero: infórmate sobre el ambiente real y el puesto",
+    "insiderWhyRecruiter": "Reclutador interno: envía tu CV directamente, sin pasar por el formulario",
     "insiderWhyStats": "Una recomendación interna multiplica por 5 tus posibilidades de ser convocado",
     "insiderSearchButton": "Buscar contactos en LinkedIn (5–8s)",
     "insiderSearching": "Buscando perfiles…",
@@ -1125,7 +1125,7 @@
     "step2Title": "Descubre las ofertas que te corresponden",
     "step2Desc": "Filtra, guarda y aplica a las mejores con un clic",
     "step3Title": "Prepárate con las herramientas adecuadas",
-    "step3Desc": "Coaches de carrera, simulación de entrevistas, generación de documentos — todo está aquí"
+    "step3Desc": "Coaches de carrera, simulación de entrevistas, generación de documentos: todo está aquí"
   },
   "featuresGrid": {
     "title": "Todo lo que necesitas para tener éxito",
@@ -1141,23 +1141,23 @@
         "desc": "Optimiza tu CV para pasar todos los filtros automáticamente"
       },
       "nova": {
-        "name": "Nova — Coach Carrera",
+        "name": "Nova · Coach Carrera",
         "desc": "Estrategia, reconversión, plan de acción personalizado"
       },
       "maria": {
-        "name": "Maria — Coach Empleo",
+        "name": "Maria · Coach Empleo",
         "desc": "Encuentra las buenas ofertas y postula eficazmente"
       },
       "sofia": {
-        "name": "Sofia — Experta CV",
+        "name": "Sofia · Experta CV",
         "desc": "CV impactante que atrae a los reclutadores"
       },
       "lucas": {
-        "name": "Lucas — Coach Entrevista",
+        "name": "Lucas · Coach Entrevista",
         "desc": "Prepara las preguntas difíciles, gestiona el estrés"
       },
       "david": {
-        "name": "David — Personal Branding",
+        "name": "David · Personal Branding",
         "desc": "Perfil LinkedIn que atrae a los reclutadores"
       },
       "salons": {
@@ -1249,7 +1249,7 @@
   "ctaFinal": {
     "title": "¿Listo para conseguir tu próximo empleo?",
     "subtitle": "Únete a miles de candidatos que avanzan con HuntZen.",
-    "cta": "Empezar gratis — sin compromiso"
+    "cta": "Empezar gratis, sin compromiso"
   },
   "about": {
     "hero_title": "HuntZen Jobs: Your #1 Career Ally in France",
@@ -1474,7 +1474,7 @@
       "daysAgo": "{count} days ago"
     },
     "empty": {
-      "noneYet": "No applications yet — start applying!",
+      "noneYet": "No applications yet. Start applying!",
       "filtered": "No applications with this status",
       "searchCta": "Browse job listings"
     },

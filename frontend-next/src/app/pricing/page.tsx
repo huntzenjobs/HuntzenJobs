@@ -10,22 +10,12 @@ import {
   Sparkles,
   Zap,
   Crown,
-  ArrowLeft,
   Rocket,
   Star,
   TrendingUp,
-  Users,
   Shield,
   Gift,
-  User,
   ChevronDown,
-  Search,
-  FileText,
-  MessageSquare,
-  Calendar,
-  Target,
-  Briefcase,
-  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOptionalAuth } from "@/contexts/auth-context";
@@ -51,65 +41,7 @@ const PLAN_COLORS: Record<string, string> = {
   amber: "#F97316",
 };
 
-const testimonials = [
-  {
-    name: "Marie L.",
-    role: "Chef de projet",
-    content:
-      "J'ai trouvé mon poste actuel en 3 semaines. L'analyse CV et les simulations d'entretien m'ont vraiment aidée.",
-    rating: 5,
-    plan: "Pro",
-  },
-  {
-    name: "Thomas D.",
-    role: "Développeur Full Stack",
-    content:
-      "Le coaching personnel est exceptionnel. Il m'a aidé à optimiser mon CV et mes candidatures. Le plan Premium vaut le coup !",
-    rating: 5,
-    plan: "Premium",
-  },
-  {
-    name: "Sophie M.",
-    role: "Responsable Marketing",
-    content:
-      "Les alertes instantanées m'ont permis de postuler en premier sur des offres qui correspondaient à mon profil.",
-    rating: 5,
-    plan: "Premium",
-  },
-];
-
-const faqs = [
-  {
-    question: "Puis-je changer de plan à tout moment ?",
-    answer:
-      "Absolument ! Vous pouvez upgrader ou downgrader votre abonnement à tout moment depuis votre tableau de bord. Le changement prend effet immédiatement.",
-  },
-  {
-    question: "Y a-t-il un engagement de durée ?",
-    answer:
-      "Non, aucun engagement ! Tous nos abonnements sont mensuels et sans engagement. Vous êtes libre d'annuler à tout moment.",
-  },
-  {
-    question: "Quelle est votre politique de remboursement ?",
-    answer:
-      "Nous offrons une garantie satisfait ou remboursé de 14 jours sur tous nos plans. Si vous n'êtes pas satisfait, contactez notre support et nous vous rembourserons.",
-  },
-  {
-    question: "Les prix incluent-ils la TVA ?",
-    answer:
-      "Oui, tous les prix affichés sont TTC (Toutes Taxes Comprises). Aucun frais supplémentaire ne sera ajouté lors du paiement.",
-  },
-  {
-    question: "Quels moyens de paiement acceptez-vous ?",
-    answer:
-      "Nous acceptons toutes les cartes bancaires principales (Visa, Mastercard, American Express) via notre partenaire sécurisé Stripe.",
-  },
-  {
-    question: "Puis-je essayer avant de m'engager ?",
-    answer:
-      "Oui ! Notre plan gratuit vous permet de découvrir HuntZen sans carte bancaire. Aucune carte requise pour commencer.",
-  },
-];
+// Testimonials and FAQs are now in i18n files (pricing namespace)
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
@@ -120,6 +52,7 @@ export default function PricingPage() {
   const user = auth?.user;
   const subscription = useOptionalSubscription();
   const tPricing = useTranslations("pricing");
+  const tFooter = useTranslations("footer");
   const router = useRouter();
   const {
     plans: dbPlans,
@@ -307,7 +240,7 @@ export default function PricingPage() {
             >
               <Star className="w-4 h-4 text-[#00D9FF]" />
               <span className="text-sm font-medium text-white">
-                +100 000 candidats accompagnés
+                {tPricing("socialProof")}
               </span>
             </motion.div>
 
@@ -317,9 +250,11 @@ export default function PricingPage() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl sm:text-5xl md:text-6xl font-black text-white mb-6"
             >
-              Choisissez votre plan
+              {tPricing("heroTitle")}
               <br />
-              <span className="text-[#00D9FF]">et décrochez votre job</span>
+              <span className="text-[#00D9FF]">
+                {tPricing("heroHighlight")}
+              </span>
             </motion.h1>
 
             <motion.p
@@ -328,8 +263,7 @@ export default function PricingPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-8"
             >
-              Des outils puissants pour optimiser votre recherche, préparer vos
-              entretiens et trouver l&apos;emploi qui vous correspond
+              {tPricing("heroDescription")}
             </motion.p>
 
             {/* Trust indicators */}
@@ -390,7 +324,7 @@ export default function PricingPage() {
               <span
                 className={`text-base sm:text-lg font-semibold transition-colors ${billingPeriod === "yearly" ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}
               >
-                Annuel
+                {tPricing("yearly")}
               </span>
               {billingPeriod === "yearly" && (
                 <motion.span
@@ -437,7 +371,7 @@ export default function PricingPage() {
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
                       <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 rounded-full bg-[#00D9FF] text-white text-xs sm:text-sm font-bold shadow-lg">
                         <Sparkles className="w-4 h-4" />
-                        {plan.tagline}
+                        {tPricing("mostPopular")}
                       </span>
                     </div>
                   )}
@@ -470,28 +404,23 @@ export default function PricingPage() {
                     {plan.id !== "free" && billingPeriod === "yearly" && (
                       <div className="mb-2">
                         <span className="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                          -
-                          {
-                            getSavings(
+                          {tPricing("savingsLabel", {
+                            percentage: getSavings(
                               plan.priceMonthlyRaw,
                               plan.priceYearlyRaw,
-                            ).percentage
-                          }
-                          % soit{" "}
-                          {
-                            getSavings(
+                            ).percentage,
+                            amount: getSavings(
                               plan.priceMonthlyRaw,
                               plan.priceYearlyRaw,
-                            ).amount
-                          }
-                          €/an
+                            ).amount,
+                          })}
                         </span>
                       </div>
                     )}
                     <div className="flex items-baseline justify-center gap-1">
                       {plan.id === "free" ? (
                         <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">
-                          Gratuit
+                          {tPricing("free")}
                         </span>
                       ) : (
                         <>
@@ -502,14 +431,14 @@ export default function PricingPage() {
                             €
                           </span>
                           <span className="text-lg text-gray-600 dark:text-gray-300 font-semibold">
-                            /mois
+                            {tPricing("perMonth")}
                           </span>
                         </>
                       )}
                     </div>
                     {plan.id !== "free" && billingPeriod === "yearly" && (
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {plan.priceYearly}€ facturé annuellement
+                        {tPricing("billedYearly", { price: plan.priceYearly })}
                       </p>
                     )}
                     {plan.id !== "free" && billingPeriod === "monthly" && (
@@ -593,7 +522,7 @@ export default function PricingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
-              {testimonials.map((testimonial, index) => (
+              {[0, 1, 2].map((index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -602,7 +531,7 @@ export default function PricingPage() {
                   className="bg-white dark:bg-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
                 >
                   <div className="flex gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
+                    {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
                         className="w-5 h-5 text-yellow-400 fill-yellow-400"
@@ -610,19 +539,19 @@ export default function PricingPage() {
                     ))}
                   </div>
                   <p className="text-gray-700 dark:text-gray-200 mb-4 leading-relaxed">
-                    &ldquo;{testimonial.content}&rdquo;
+                    &ldquo;{tPricing(`testimonials.${index}.content`)}&rdquo;
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-bold text-gray-900 dark:text-white">
-                        {testimonial.name}
+                        {tPricing(`testimonials.${index}.name`)}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {testimonial.role}
+                        {tPricing(`testimonials.${index}.role`)}
                       </p>
                     </div>
                     <span className="px-3 py-1 bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold rounded-full">
-                      {testimonial.plan}
+                      {tPricing(`testimonials.${index}.plan`)}
                     </span>
                   </div>
                 </motion.div>
@@ -653,7 +582,7 @@ export default function PricingPage() {
             </div>
 
             <div className="max-w-3xl mx-auto space-y-4">
-              {faqs.map((faq, index) => (
+              {[0, 1, 2, 3, 4, 5].map((index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -668,7 +597,7 @@ export default function PricingPage() {
                     className="w-full px-6 py-5 flex items-center justify-between text-left"
                   >
                     <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white pr-4">
-                      {faq.question}
+                      {tPricing(`faqs.${index}.question`)}
                     </h3>
                     <ChevronDown
                       className={`w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0 transition-transform ${
@@ -684,7 +613,7 @@ export default function PricingPage() {
                       className="px-6 pb-5"
                     >
                       <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                        {faq.answer}
+                        {tPricing(`faqs.${index}.answer`)}
                       </p>
                     </motion.div>
                   )}
@@ -771,7 +700,7 @@ export default function PricingPage() {
                   variant="outline"
                   className="border-2 border-white text-white hover:bg-white/10 h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-semibold rounded-xl backdrop-blur-sm w-full sm:w-auto"
                 >
-                  En savoir plus
+                  {tPricing("learnMore")}
                 </Button>
               </Link>
             </motion.div>
@@ -803,33 +732,33 @@ export default function PricingPage() {
                 <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
               </div>
               <p className="text-white/60 text-xs sm:text-sm text-center md:text-right max-w-md">
-                Votre allié carrière pour transformer votre recherche
-                d&apos;emploi en succès.
+                {tFooter("tagline")}
               </p>
             </div>
             <hr className="border-white/10 mb-8" />
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
               <p>
-                &copy; {new Date().getFullYear()} HuntZen. Tous droits réservés.
+                &copy; {new Date().getFullYear()} HuntZen.{" "}
+                {tFooter("copyright")}
               </p>
               <div className="flex items-center gap-4 sm:gap-6">
                 <Link
                   href="/privacy"
                   className="hover:text-[#00D9FF] transition-colors"
                 >
-                  Politique de confidentialité
+                  {tFooter("privacy")}
                 </Link>
                 <Link
                   href="/terms"
                   className="hover:text-[#00D9FF] transition-colors"
                 >
-                  Conditions générales
+                  {tFooter("terms")}
                 </Link>
                 <Link
                   href="mailto:contact@huntzenjobs.co"
                   className="hover:text-[#00D9FF] transition-colors"
                 >
-                  Contact
+                  {tFooter("contact")}
                 </Link>
               </div>
             </div>

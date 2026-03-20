@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Zap } from "lucide-react";
+import { Save, Zap, Pencil, ToggleRight } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -14,6 +14,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +112,8 @@ export default function PlanCardEditor({
   const [stripePriceOpen, setStripePriceOpen] = useState<
     "monthly" | "yearly" | null
   >(null);
+  const [featuresModalOpen, setFeaturesModalOpen] = useState(false);
+  const [flagsModalOpen, setFlagsModalOpen] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
 
   const toggleFeature = (key: string) => {
@@ -265,40 +275,36 @@ export default function PlanCardEditor({
               </Button>
             </div>
 
-            {/* — Section 2: Feature flags — */}
-            <div className="space-y-2 lg:px-6">
+            {/* — Section 2: Feature flags (bouton → modal) — */}
+            <div className="space-y-3 lg:px-6">
               <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Feature Flags
               </span>
-              <div className="space-y-1.5 mt-2">
-                {FEATURE_FLAGS.map(({ key, label }) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between py-0.5"
-                  >
-                    <Label
-                      className="text-xs font-normal cursor-pointer"
-                      htmlFor={`${plan.id}-${key}`}
+              <p className="text-xs text-muted-foreground">
+                {features.length} / {FEATURE_FLAGS.length} activées
+              </p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {features.map((key) => {
+                  const flag = FEATURE_FLAGS.find((f) => f.key === key);
+                  return (
+                    <Badge
+                      key={key}
+                      variant="secondary"
+                      className="text-[10px]"
                     >
-                      {label}
-                    </Label>
-                    <Switch
-                      id={`${plan.id}-${key}`}
-                      checked={features.includes(key)}
-                      onCheckedChange={() => toggleFeature(key)}
-                    />
-                  </div>
-                ))}
+                      {flag?.label ?? key}
+                    </Badge>
+                  );
+                })}
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={handleSaveFeatures}
-                disabled={saving === "features"}
-                className="w-full mt-3"
+                onClick={() => setFlagsModalOpen(true)}
+                className="w-full mt-2"
               >
-                <Save className="h-3.5 w-3.5 mr-1.5" />
-                {saving === "features" ? "Sauvegarde..." : "Sauvegarder"}
+                <ToggleRight className="h-3.5 w-3.5 mr-1.5" />
+                Modifier les flags
               </Button>
             </div>
 
@@ -394,61 +400,25 @@ export default function PlanCardEditor({
               </Button>
             </div>
 
-            {/* — Section 5: Features texte — */}
+            {/* — Section 5: Features texte (bouton → modal) — */}
             <div className="space-y-3 lg:px-6">
               <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Features texte
               </span>
-              <div className="space-y-2 mt-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">✓ Incluses (une par ligne)</Label>
-                  <Textarea
-                    className="text-xs min-h-[80px] font-mono"
-                    value={featuresText}
-                    onChange={(e) => setFeaturesText(e.target.value)}
-                    placeholder="Recherches illimitées&#10;Filtres avancés"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">✗ Exclues (une par ligne)</Label>
-                  <Textarea
-                    className="text-xs min-h-[60px] font-mono"
-                    value={featuresExcludedText}
-                    onChange={(e) => setFeaturesExcludedText(e.target.value)}
-                    placeholder="Export PDF&#10;Simulation entretien"
-                  />
-                </div>
-              </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={saving === "featuresText"}
-                    className="w-full"
-                  >
-                    <Save className="h-3.5 w-3.5 mr-1.5" />
-                    {saving === "featuresText"
-                      ? "Sauvegarde..."
-                      : "Sauvegarder les features"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmer la sauvegarde</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Les features texte du plan {plan.display_name} seront
-                      remplacées. Cette action écrasera les listes existantes.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSaveFeaturesText}>
-                      Confirmer
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <p className="text-xs text-muted-foreground">
+                {featuresText.split("\n").filter(Boolean).length} incluses ·{" "}
+                {featuresExcludedText.split("\n").filter(Boolean).length}{" "}
+                exclues
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setFeaturesModalOpen(true)}
+                className="w-full mt-2"
+              >
+                <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                Modifier le wording
+              </Button>
             </div>
 
             {/* — Section 6: Stripe Price IDs (plans payants uniquement) — */}
@@ -493,6 +463,136 @@ export default function PlanCardEditor({
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal Feature Flags */}
+      <Dialog open={flagsModalOpen} onOpenChange={setFlagsModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Feature Flags · {plan.display_name}</DialogTitle>
+            <DialogDescription>
+              Activez ou désactivez les fonctionnalités de ce plan. Les
+              changements sont immédiats après sauvegarde.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-4">
+            {FEATURE_FLAGS.map(({ key, label }) => (
+              <div
+                key={key}
+                className="flex items-center justify-between rounded-lg border px-3 py-2.5 hover:bg-accent/50 transition-colors"
+              >
+                <Label
+                  className="text-sm font-normal cursor-pointer flex-1"
+                  htmlFor={`modal-${plan.id}-${key}`}
+                >
+                  {label}
+                </Label>
+                <Switch
+                  id={`modal-${plan.id}-${key}`}
+                  checked={features.includes(key)}
+                  onCheckedChange={() => toggleFeature(key)}
+                />
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFlagsModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={async () => {
+                await handleSaveFeatures();
+                setFlagsModalOpen(false);
+              }}
+              disabled={saving === "features"}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {saving === "features" ? "Sauvegarde..." : "Sauvegarder"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Features Wording */}
+      <Dialog open={featuresModalOpen} onOpenChange={setFeaturesModalOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Features Wording · {plan.display_name}</DialogTitle>
+            <DialogDescription>
+              Modifiez les textes affichés sur les pages pricing et accueil. Une
+              feature par ligne.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Incluses (affichées avec ✓)
+              </Label>
+              <Textarea
+                className="text-sm min-h-[160px] font-mono leading-relaxed"
+                value={featuresText}
+                onChange={(e) => setFeaturesText(e.target.value)}
+                placeholder={
+                  "Recherches illimitées\nFiltres avancés\nCoach IA illimité 24/7"
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                {featuresText.split("\n").filter(Boolean).length} feature(s)
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Exclues (affichées grisées avec ✗)
+              </Label>
+              <Textarea
+                className="text-sm min-h-[100px] font-mono leading-relaxed"
+                value={featuresExcludedText}
+                onChange={(e) => setFeaturesExcludedText(e.target.value)}
+                placeholder={"Export PDF\nSimulation entretien"}
+              />
+              <p className="text-xs text-muted-foreground">
+                {featuresExcludedText.split("\n").filter(Boolean).length}{" "}
+                feature(s)
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setFeaturesModalOpen(false)}
+            >
+              Annuler
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button disabled={saving === "featuresText"}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving === "featuresText" ? "Sauvegarde..." : "Sauvegarder"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmer la sauvegarde</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Les features texte du plan {plan.display_name} seront
+                    remplacées. Cette action écrasera les listes existantes.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      await handleSaveFeaturesText();
+                      setFeaturesModalOpen(false);
+                    }}
+                  >
+                    Confirmer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {stripePriceOpen && (
         <StripePriceDialog

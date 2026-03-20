@@ -21,7 +21,7 @@
   "hero": {
     "tag": "Pour les candidats qui en ont assez de postuler dans le vide",
     "h1": "Trouver un job ne devrait pas être un parcours du combattant.",
-    "h2": "Accédez aux offres qui vous correspondent, améliorez votre CV et obtenez plus d'entretiens — sans perdre des heures à chercher.",
+    "h2": "Accédez aux offres qui vous correspondent, améliorez votre CV et obtenez plus d'entretiens sans perdre des heures à chercher.",
     "subtitle": "CV certifié ATS · 5 coachs carrière · Score de compatibilité · Contact recruteur",
     "ctaSearch": "Commencer ma recherche",
     "ctaDiscover": "Découvrir la méthode",
@@ -38,7 +38,7 @@
     "step2Title": "Découvre les offres qui te correspondent",
     "step2Desc": "Filtre, sauvegarde et postule aux meilleures en un clic",
     "step3Title": "Prépare-toi avec les bons outils",
-    "step3Desc": "Coachs carrière, simulation d'entretien, génération de documents — tout est là"
+    "step3Desc": "Coachs carrière, simulation d'entretien, génération de documents : tout est là"
   },
   "tools": {
     "badge": "Tous nos outils",
@@ -143,7 +143,7 @@
     "coaches": {
       "badge": "COACHS CARRIÈRE",
       "title": "Cinq experts carrière dans ta poche.",
-      "description": "Nova, Maria, Sofia, Lucas et David — chacun spécialisé dans un domaine. Disponibles 24h/24, sans rendez-vous.",
+      "description": "Nova, Maria, Sofia, Lucas et David, chacun spécialisé dans un domaine. Disponibles 24h/24, sans rendez-vous.",
       "cta": "Parler à un coach →",
       "list": {
         "nova": "Stratégie et plan de carrière",
@@ -188,11 +188,11 @@
     "items": {
       "jobSearch": { "name": "Recherche d'emplois", "desc": "Agrégateur multi-plateformes mis à jour quotidiennement" },
       "cvAnalysis": { "name": "Analyse CV & Score ATS", "desc": "Optimise ton CV pour passer tous les filtres automatiquement" },
-      "nova": { "name": "Nova — Coach Carrière", "desc": "Stratégie, reconversion, plan d'action personnalisé" },
-      "maria": { "name": "Maria — Coach Emploi", "desc": "Trouve les bonnes offres et postule efficacement" },
-      "sofia": { "name": "Sofia — Expert CV", "desc": "CV percutant qui attire l'attention des recruteurs" },
-      "lucas": { "name": "Lucas — Coach Entretien", "desc": "Prépare les questions difficiles, gère le stress" },
-      "david": { "name": "David — Personal Branding", "desc": "Profil LinkedIn qui attire les recruteurs à toi" },
+      "nova": { "name": "Nova · Coach Carrière", "desc": "Stratégie, reconversion, plan d'action personnalisé" },
+      "maria": { "name": "Maria · Coach Emploi", "desc": "Trouve les bonnes offres et postule efficacement" },
+      "sofia": { "name": "Sofia · Expert CV", "desc": "CV percutant qui attire l'attention des recruteurs" },
+      "lucas": { "name": "Lucas · Coach Entretien", "desc": "Prépare les questions difficiles, gère le stress" },
+      "david": { "name": "David · Personal Branding", "desc": "Profil LinkedIn qui attire les recruteurs à toi" },
       "salons": { "name": "Salons & Forums", "desc": "Événements emploi partout en France" },
       "savedJobs": { "name": "Offres sauvegardées", "desc": "Retrouve et suis toutes tes candidatures favorites" },
       "recruiterContact": { "name": "Contact Recruteur", "desc": "Session 1:1 avec un expert RH" },
@@ -211,7 +211,7 @@
   "ctaFinal": {
     "title": "Prêt à décrocher ton prochain emploi ?",
     "subtitle": "Rejoins des milliers de candidats qui avancent avec HuntZen.",
-    "cta": "Commencer gratuitement — c'est sans engagement"
+    "cta": "Commencer gratuitement, c'est sans engagement"
   },
   "pricing": {
     "title": "Choisissez l'accompagnement adapté à votre besoin",
@@ -243,7 +243,63 @@
     "faqContact": "Contactez notre support",
     "ctaTitle": "Prêt à décrocher votre prochain job ?",
     "ctaSubtitle": "Rejoignez +100 000 candidats qui utilisent HuntZen pour trouver leur emploi idéal. Commencez gratuitement, aucune carte bancaire requise.",
-    "ctaButton": "Commencer gratuitement"
+    "ctaButton": "Commencer gratuitement",
+    "mostPopular": "Le plus populaire",
+    "socialProof": "+100 000 candidats accompagnés",
+    "heroTitle": "Choisissez votre plan",
+    "heroHighlight": "et décrochez votre job",
+    "heroDescription": "Des outils puissants pour optimiser votre recherche, préparer vos entretiens et trouver l'emploi qui vous correspond",
+    "free": "Gratuit",
+    "perMonth": "/mois",
+    "billedYearly": "{price}€ facturé annuellement",
+    "savingsLabel": "-{percentage}% soit {amount}€/an",
+    "learnMore": "En savoir plus",
+    "testimonials": [
+      {
+        "name": "Marie L.",
+        "role": "Chef de projet",
+        "content": "J'ai trouvé mon poste actuel en 3 semaines. L'analyse CV et les simulations d'entretien m'ont vraiment aidée.",
+        "plan": "Accélérateur"
+      },
+      {
+        "name": "Thomas D.",
+        "role": "Développeur Full Stack",
+        "content": "Le coaching personnel est exceptionnel. Il m'a aidé à optimiser mon CV et mes candidatures.",
+        "plan": "Carrière"
+      },
+      {
+        "name": "Sophie M.",
+        "role": "Responsable Marketing",
+        "content": "Les alertes instantanées m'ont permis de postuler en premier sur des offres qui correspondaient à mon profil.",
+        "plan": "Carrière"
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Puis-je changer de plan à tout moment ?",
+        "answer": "Absolument ! Vous pouvez upgrader ou downgrader votre abonnement à tout moment depuis votre tableau de bord. Le changement prend effet immédiatement."
+      },
+      {
+        "question": "Y a-t-il un engagement de durée ?",
+        "answer": "Non, aucun engagement ! Tous nos abonnements sont mensuels et sans engagement. Vous êtes libre d'annuler à tout moment."
+      },
+      {
+        "question": "Quelle est votre politique de remboursement ?",
+        "answer": "Nous offrons une garantie satisfait ou remboursé de 14 jours sur tous nos plans. Si vous n'êtes pas satisfait, contactez notre support et nous vous rembourserons."
+      },
+      {
+        "question": "Les prix incluent-ils la TVA ?",
+        "answer": "Oui, tous les prix affichés sont TTC (Toutes Taxes Comprises). Aucun frais supplémentaire ne sera ajouté lors du paiement."
+      },
+      {
+        "question": "Quels moyens de paiement acceptez-vous ?",
+        "answer": "Nous acceptons toutes les cartes bancaires principales (Visa, Mastercard, American Express) via notre partenaire sécurisé Stripe."
+      },
+      {
+        "question": "Puis-je essayer avant de m'engager ?",
+        "answer": "Oui ! Notre plan gratuit vous permet de découvrir HuntZen sans carte bancaire. Aucune carte requise pour commencer."
+      }
+    ]
   },
   "cta": {
     "startFree": "Commencer gratuitement",
@@ -1215,8 +1271,8 @@
     "insiderTitle": "Contacts internes chez {company}",
     "insiderSubtitle": "Trouve de vraies personnes à contacter sur LinkedIn pour maximiser tes chances",
     "insiderWhyTitle": "Pourquoi contacter un insider ?",
-    "insiderWhyColleague": "Futur collègue — renseigne-toi sur l'ambiance et le poste réel",
-    "insiderWhyRecruiter": "Recruteur interne — envoie ton CV directement, sans passer par le formulaire",
+    "insiderWhyColleague": "Futur collègue : renseigne-toi sur l'ambiance et le poste réel",
+    "insiderWhyRecruiter": "Recruteur interne : envoie ton CV directement, sans passer par le formulaire",
     "insiderWhyStats": "Une recommandation interne multiplie par 5 tes chances d'être convoqué",
     "insiderSearchButton": "Trouver des contacts LinkedIn (5–8s)",
     "insiderSearching": "Recherche des profils en cours…",
@@ -1377,7 +1433,7 @@
       "daysAgo": "Il y a {count} jours"
     },
     "empty": {
-      "noneYet": "Aucune candidature encore — commence à postuler !",
+      "noneYet": "Aucune candidature encore. Commence à postuler !",
       "filtered": "Aucune candidature avec ce statut",
       "searchCta": "Chercher des offres"
     },

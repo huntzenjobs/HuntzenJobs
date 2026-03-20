@@ -77,9 +77,9 @@ export const POPUP_CONFIGS: PopupConfig[] = [
   {
     id: "inactive_7d",
     trigger: "inactive_7d",
-    title: "7 jours Pro offerts — on t'a réservé ta place",
-    body: "Tu nous manques ! Reviens et profite de 7 jours Pro gratuits pour reprendre ta recherche.",
-    primaryCta: "Activer mes 7 jours Pro",
+    title: "7 jours Accélérateur offerts, on t'a réservé ta place",
+    body: "Tu nous manques ! Reviens et profite de 7 jours gratuits pour reprendre ta recherche.",
+    primaryCta: "Activer mes 7 jours gratuits",
     plan: "pro",
     priceOverride: "0€ pendant 7 jours",
     couponTrigger: "win_back_7d",
@@ -87,9 +87,9 @@ export const POPUP_CONFIGS: PopupConfig[] = [
   {
     id: "pricing_hover",
     trigger: "pricing_hover",
-    title: "67% de nos abonnés choisissent Pro",
+    title: "67% de nos abonnés choisissent Accélérateur",
     body: "Ils trouvent un job en moyenne 3x plus vite. Rejoins-les aujourd'hui.",
-    primaryCta: "Choisir Pro maintenant",
+    primaryCta: "Choisir Accélérateur maintenant",
     plan: "pro",
   },
 ];
@@ -206,7 +206,7 @@ export function ConversionPopup({
           )}
           <p className="text-xs text-muted-foreground mb-4">
             Plan {getPlan(config.plan)?.display_name ?? config.plan}
-            {computedPrice ? ` — ` : ""}
+            {computedPrice ? ` · ` : ""}
             <strong>{computedPrice}</strong>
           </p>
           <button

@@ -21,7 +21,7 @@
   "hero": {
     "tag": "For candidates tired of applying into the void",
     "h1": "Finding a job shouldn't feel like an obstacle course.",
-    "h2": "Access matching opportunities, improve your CV and get more interviews — without wasting hours searching.",
+    "h2": "Access matching opportunities, improve your CV and get more interviews without wasting hours searching.",
     "subtitle": "ATS-certified CV · 5 career coaches · Compatibility score · 6+ job platforms",
     "ctaSearch": "Start my search",
     "ctaDiscover": "Discover the method",
@@ -36,7 +36,7 @@
       "jobSearch": {
         "category": "Search",
         "title": "Smart job aggregator",
-        "description": "All relevant opportunities in one place — no more hours wasted searching."
+        "description": "All relevant opportunities in one place. No more hours wasted searching."
       },
       "compatibility": {
         "category": "Search",
@@ -130,7 +130,7 @@
     "coaches": {
       "badge": "CAREER COACHES",
       "title": "Five career experts in your pocket.",
-      "description": "Nova, Maria, Sofia, Lucas and David — each specialized in a domain. Available 24/7, no appointment needed.",
+      "description": "Nova, Maria, Sofia, Lucas and David, each specialized in a domain. Available 24/7, no appointment needed.",
       "cta": "Talk to a coach →",
       "list": {
         "nova": "Strategy and career planning",
@@ -198,7 +198,63 @@
     "faqContact": "Contact our support",
     "ctaTitle": "Ready to land your next job?",
     "ctaSubtitle": "Join 100,000+ candidates using HuntZen to find their ideal job. Start for free, no credit card required.",
-    "ctaButton": "Start for free"
+    "ctaButton": "Start for free",
+    "mostPopular": "Most popular",
+    "socialProof": "100,000+ candidates supported",
+    "heroTitle": "Choose your plan",
+    "heroHighlight": "and land your dream job",
+    "heroDescription": "Powerful tools to optimize your search, prepare your interviews and find the job that fits you",
+    "free": "Free",
+    "perMonth": "/month",
+    "billedYearly": "{price}€ billed yearly",
+    "savingsLabel": "-{percentage}% save {amount}€/year",
+    "learnMore": "Learn more",
+    "testimonials": [
+      {
+        "name": "Marie L.",
+        "role": "Project Manager",
+        "content": "I found my current position in 3 weeks. The CV analysis and interview simulations really helped me.",
+        "plan": "Accelerator"
+      },
+      {
+        "name": "Thomas D.",
+        "role": "Full Stack Developer",
+        "content": "The personal coaching is exceptional. It helped me optimize my CV and applications.",
+        "plan": "Career"
+      },
+      {
+        "name": "Sophie M.",
+        "role": "Marketing Manager",
+        "content": "The instant alerts allowed me to apply first for jobs that matched my profile.",
+        "plan": "Career"
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Can I change plans at any time?",
+        "answer": "Absolutely! You can upgrade or downgrade your subscription at any time from your dashboard. The change takes effect immediately."
+      },
+      {
+        "question": "Is there a commitment period?",
+        "answer": "No commitment at all! All our subscriptions are monthly with no commitment. You are free to cancel at any time."
+      },
+      {
+        "question": "What is your refund policy?",
+        "answer": "We offer a 14-day money-back guarantee on all our plans. If you're not satisfied, contact our support and we'll refund you."
+      },
+      {
+        "question": "Do prices include VAT?",
+        "answer": "Yes, all displayed prices include VAT. No additional charges will be added at checkout."
+      },
+      {
+        "question": "What payment methods do you accept?",
+        "answer": "We accept all major credit cards (Visa, Mastercard, American Express) through our secure partner Stripe."
+      },
+      {
+        "question": "Can I try before committing?",
+        "answer": "Yes! Our free plan lets you discover HuntZen without a credit card. No card required to get started."
+      }
+    ]
   },
   "cta": {
     "startFree": "Start for free",
@@ -1138,8 +1194,8 @@
     "insiderTitle": "Internal contacts at {company}",
     "insiderSubtitle": "Find real people to contact on LinkedIn to maximize your chances",
     "insiderWhyTitle": "Why contact an insider?",
-    "insiderWhyColleague": "Future colleague — learn about the real work culture and position",
-    "insiderWhyRecruiter": "Internal recruiter — send your CV directly, without going through the form",
+    "insiderWhyColleague": "Future colleague: learn about the real work culture and position",
+    "insiderWhyRecruiter": "Internal recruiter: send your CV directly, without going through the form",
     "insiderWhyStats": "An internal referral multiplies your chances of being interviewed by 5",
     "insiderSearchButton": "Find LinkedIn contacts (5–8s)",
     "insiderSearching": "Searching for profiles…",
@@ -1245,7 +1301,7 @@
     "step2Title": "Discover matching jobs",
     "step2Desc": "Filter, save and apply to the best ones in one click",
     "step3Title": "Prepare with the right tools",
-    "step3Desc": "Career coaches, interview simulation, document generation — everything is here"
+    "step3Desc": "Career coaches, interview simulation, document generation: everything is here"
   },
   "featuresGrid": {
     "title": "Everything you need to succeed",
@@ -1261,23 +1317,23 @@
         "desc": "Optimize your CV to pass all filters automatically"
       },
       "nova": {
-        "name": "Nova — Career Coach",
+        "name": "Nova · Career Coach",
         "desc": "Strategy, career change, personalized action plan"
       },
       "maria": {
-        "name": "Maria — Job Coach",
+        "name": "Maria · Job Coach",
         "desc": "Find the right jobs and apply effectively"
       },
       "sofia": {
-        "name": "Sofia — CV Expert",
+        "name": "Sofia · CV Expert",
         "desc": "Compelling CV that catches recruiters' attention"
       },
       "lucas": {
-        "name": "Lucas — Interview Coach",
+        "name": "Lucas · Interview Coach",
         "desc": "Prepare for tough questions, manage stress"
       },
       "david": {
-        "name": "David — Personal Branding",
+        "name": "David · Personal Branding",
         "desc": "LinkedIn profile that attracts recruiters to you"
       },
       "salons": {
@@ -1369,7 +1425,7 @@
   "ctaFinal": {
     "title": "Ready to land your next job?",
     "subtitle": "Join thousands of candidates moving forward with HuntZen.",
-    "cta": "Start for free — no commitment"
+    "cta": "Start for free, no commitment"
   },
   "cvBuilder": {
     "step1": {
@@ -1437,7 +1493,7 @@
       "daysAgo": "{count} days ago"
     },
     "empty": {
-      "noneYet": "No applications yet — start applying!",
+      "noneYet": "No applications yet. Start applying!",
       "filtered": "No applications with this status",
       "searchCta": "Browse job listings"
     },
