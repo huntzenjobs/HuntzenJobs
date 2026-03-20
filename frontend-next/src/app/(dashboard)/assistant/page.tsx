@@ -310,9 +310,7 @@ export default function AssistantPage() {
       const errorMessage: ChatMessageType = {
         id: uuidv4(),
         role: "assistant",
-        content:
-          error?.message ||
-          "Erreur lors de l'analyse du CV. Vérifiez que le fichier est un PDF valide.",
+        content: error?.message || t("cvUploadError"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -385,7 +383,10 @@ export default function AssistantPage() {
     const systemMessage: ChatMessageType = {
       id: `system-change-${Date.now()}`,
       role: "assistant",
-      content: `Vous parlez maintenant avec **${newConfig.personaName ?? newConfig.shortName}** — ${newConfig.description}`,
+      content: t("switchSystemMessage", {
+        name: newConfig.personaName ?? newConfig.shortName,
+        description: newConfig.description,
+      }),
       isSystem: true,
       timestamp: new Date(),
     };
@@ -568,19 +569,21 @@ export default function AssistantPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Changer d&apos;assistant ?</DialogTitle>
+            <DialogTitle>{t("switchDialogTitle")}</DialogTitle>
             <DialogDescription>
               {hasFeature("has_coach_history")
-                ? `Votre conversation avec ${ASSISTANTS_CONFIG[selectedAssistant]?.name} sera sauvegardée dans votre historique avant d'ouvrir un nouveau chat.`
-                : `Votre conversation sera perdue — l'historique n'est pas disponible avec votre plan actuel.`}
+                ? t("switchDialogDescHistory", {
+                    name: ASSISTANTS_CONFIG[selectedAssistant]?.name,
+                  })
+                : t("switchDialogDescNoHistory")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleCancelSwitch}>
-              Annuler
+              {t("cancel")}
             </Button>
             <Button onClick={handleConfirmSwitch}>
-              Changer d&apos;assistant
+              {t("switchAssistant")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -768,7 +771,7 @@ export default function AssistantPage() {
                       <button
                         onClick={() => setAttachedCV(null)}
                         className="ml-0.5 hover:text-green-900 shrink-0"
-                        title="Retirer le CV"
+                        title={t("removeCV")}
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -792,7 +795,7 @@ export default function AssistantPage() {
                     onClick={() => cvFileInputRef.current?.click()}
                     disabled={loading || isExtractingCV}
                     className="h-11 w-11 shrink-0 border-slate-300 text-slate-500 hover:text-[#00D9FF] hover:border-[#00D9FF]"
-                    title="Joindre votre CV (PDF)"
+                    title={t("attachCV")}
                   >
                     {isExtractingCV ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

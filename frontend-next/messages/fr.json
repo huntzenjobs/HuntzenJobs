@@ -447,6 +447,10 @@
       "cancel": "Annuler",
       "confirm": "Se déconnecter"
     },
+    "badges": {
+      "new": "Nouveau",
+      "recruiterPrice": "50€"
+    },
     "aria": {
       "close": "Fermer le menu de navigation",
       "open": "Ouvrir le menu de navigation",
@@ -524,7 +528,18 @@
       "upgraded": "✨ Abonnement mis à niveau ! Vérification en cours...",
       "scheduled": "📅 Changement planifié ! Ton nouveau plan sera actif à la fin de la période actuelle.",
       "sessionExpired": "Ta session a expiré. Reconnecte-toi.",
-      "paymentError": "Erreur lors de la création de la session de paiement"
+      "paymentError": "Erreur lors de la création de la session de paiement",
+      "annualToMonthlyBlocked": "Changement annuel vers mensuel impossible. Votre abonnement annuel court jusqu'au {date}. Vous pourrez passer en mensuel à cette date.",
+      "annualToMonthlyBlockedGeneric": "Vous avez un abonnement annuel en cours. Le changement vers mensuel sera possible à la fin de la période."
+    },
+    "billing": {
+      "monthly": "Mensuel",
+      "yearly": "Annuel",
+      "saveBadge": "Économisez ~2 mois",
+      "toggleLabel": "Basculer la période de facturation",
+      "perYear": "/an",
+      "perMonth": "/mois",
+      "yearlyEquivalent": "soit {price}€/mois"
     },
     "plans": {
       "free": {
@@ -613,6 +628,28 @@
       "outOf": "sur {limit}{unit}",
       "unlimited": "Utilisation illimitée",
       "reached": "Quota atteint pour aujourd'hui"
+    }
+  },
+  "usageCounter": {
+    "dailyUsage": "Utilisation du jour",
+    "features": {
+      "jobSearch": {
+        "label": "recherches"
+      },
+      "jobView": {
+        "label": "offres"
+      },
+      "cvAnalysis": {
+        "label": "analyses"
+      },
+      "assistantMessages": {
+        "label": "messages"
+      },
+      "unlimited": "illimitées",
+      "unlimitedShort": "Illimité"
+    },
+    "aria": {
+      "remaining": "{label} : {remaining} restant(e)s sur {max}"
     }
   },
   "upgradeBanner": {
@@ -850,7 +887,41 @@
         "companyAsc": "Entreprise A→Z"
       },
       "perPage": "Offres par page",
-      "salaryMinPlaceholder": "ex: 35000"
+      "salaryMinPlaceholder": "ex: 35000",
+      "relativeDate": {
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "daysAgo": "Il y a {count} jours",
+        "weeksAgo_one": "Il y a {count} semaine",
+        "weeksAgo_other": "Il y a {count} semaines",
+        "monthsAgo": "Il y a {count} mois"
+      },
+      "countryNotFound": "Pays introuvable - essayez depuis la liste",
+      "refreshTitle": "Actualiser les résultats depuis le serveur",
+      "alternanceToggle": "Alternance",
+      "filterButton": "Filtrer",
+      "filterResults": "Filtrer les résultats",
+      "resetFilters": "Réinitialiser ({count})",
+      "filterSource": "Source",
+      "filterContractType": "Type de contrat",
+      "filterPostDate": "Date de publication",
+      "filterDateToday": "Aujourd'hui",
+      "filterDate3Days": "3 jours",
+      "filterDate7Days": "7 jours",
+      "filterDate30Days": "30 jours",
+      "filterSalaryMin": "Salaire min (EUR/an)",
+      "filterDirectOnly": "Liens directs uniquement",
+      "filteredCount_one": "{count} offre affichée",
+      "filteredCount_other": "{count} offres affichées",
+      "filteredCountTotal": " sur {total} total",
+      "badgeApplied": "Postulé",
+      "badgeViewed": "Déjà ouvert",
+      "viaAggregator": "Via agrégateur",
+      "findRecruiters": "Trouver les recruteurs",
+      "betaTag": "BÊTA",
+      "applyConfirmToast": "As-tu postulé chez {company} ?",
+      "applyConfirmYes": "Oui, postulé !",
+      "applyConfirmNo": "Non"
     },
     "cvAnalysis": {
       "title": "Analyse de CV",
@@ -881,7 +952,16 @@
       "quickActionCV": "Améliorer mon CV",
       "quickActionJobs": "Trouver des offres",
       "quickActionInterview": "Préparer mon entretien",
-      "quickActionCareer": "Définir mon objectif carrière"
+      "quickActionCareer": "Définir mon objectif carrière",
+      "switchSystemMessage": "Vous parlez maintenant avec **{name}**. {description}",
+      "switchDialogTitle": "Changer d'assistant ?",
+      "switchDialogDescHistory": "Votre conversation avec {name} sera sauvegardée dans votre historique avant d'ouvrir un nouveau chat.",
+      "switchDialogDescNoHistory": "Votre conversation sera perdue, l'historique n'est pas disponible avec votre plan actuel.",
+      "cancel": "Annuler",
+      "switchAssistant": "Changer d'assistant",
+      "cvUploadError": "Erreur lors de l'analyse du CV. Vérifiez que le fichier est un PDF valide.",
+      "removeCV": "Retirer le CV",
+      "attachCV": "Joindre votre CV (PDF)"
     },
     "salons": {
       "title": "Salons & Forums",

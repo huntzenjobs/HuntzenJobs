@@ -146,20 +146,29 @@ const stripHtmlForPreview = (html: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-function formatRelativeDate(dateStr: string): string {
+function formatRelativeDate(
+  dateStr: string,
+  t: (key: string, values?: Record<string, number>) => string,
+): string {
   try {
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return "Aujourd'hui";
-    if (diffDays === 1) return "Hier";
-    if (diffDays < 7) return `Il y a ${diffDays} jours`;
-    if (diffDays < 30)
-      return `Il y a ${Math.floor(diffDays / 7)} semaine${Math.floor(diffDays / 7) > 1 ? "s" : ""}`;
-    if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`;
-    return date.toLocaleDateString("fr-FR");
+    if (diffDays === 0) return t("relativeDate.today");
+    if (diffDays === 1) return t("relativeDate.yesterday");
+    if (diffDays < 7) return t("relativeDate.daysAgo", { count: diffDays });
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return t(
+        weeks > 1 ? "relativeDate.weeksAgo_other" : "relativeDate.weeksAgo_one",
+        { count: weeks },
+      );
+    }
+    if (diffDays < 365)
+      return t("relativeDate.monthsAgo", { count: Math.floor(diffDays / 30) });
+    return date.toLocaleDateString();
   } catch {
     return dateStr;
   }
@@ -542,7 +551,7 @@ export default function JobsPage() {
       setCountrySearch(match.name);
       setCountryError("");
     } else {
-      setCountryError("Pays introuvable — essayez depuis la liste");
+      setCountryError(t("countryNotFound"));
     }
   };
 
@@ -629,7 +638,7 @@ export default function JobsPage() {
     ],
     queryFn: async () => {
       if (!jobSearchParams?.query.trim() || !jobSearchParams?.country) {
-        throw new Error("Veuillez remplir le titre du poste et le pays");
+        throw new Error(t("error.fillRequired"));
       }
 
       const data = await huntzenApi.searchJobs({
@@ -758,7 +767,7 @@ export default function JobsPage() {
     retry: false, // Don't retry on failure — avoids 409 retry loop on duplicate saves
     mutationFn: async (job: Job) => {
       if (!auth?.user?.id) {
-        throw new Error("Vous devez être connecté pour sauvegarder des offres");
+        throw new Error(t("toast.mustLoginSave"));
       }
       const supabase = createClient();
       const { error } = await supabase.from("saved_jobs").insert({
@@ -1701,7 +1710,7 @@ export default function JobsPage() {
                   }}
                   disabled={searchQuery.isFetching}
                   className="ml-4 gap-2 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400"
-                  title="Actualiser les résultats depuis le serveur"
+                  title={t("refreshTitle")}
                 >
                   <RefreshCw
                     className={cn(
@@ -1729,7 +1738,7 @@ export default function JobsPage() {
                       : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
                   )}
                 >
-                  🎓 Alternance
+                  🎓 {t("alternanceToggle")}
                 </button>
                 {/* Quick filter toggle button */}
                 <Button
@@ -1743,7 +1752,7 @@ export default function JobsPage() {
                   )}
                 >
                   <SlidersHorizontal className="w-4 h-4" />
-                  <span className="hidden sm:inline">Filtrer</span>
+                  <span className="hidden sm:inline">{t("filterButton")}</span>
                   {activeQuickFiltersCount > 0 && (
                     <span className="ml-1 bg-[#00D9FF] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {activeQuickFiltersCount}
@@ -1766,12 +1775,24 @@ export default function JobsPage() {
                     <SelectValue placeholder={t("sort.placeholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="relevance">Pertinence</SelectItem>
-                    <SelectItem value="date_desc">Plus récent</SelectItem>
-                    <SelectItem value="date_asc">Plus ancien</SelectItem>
-                    <SelectItem value="salary_desc">Salaire (↓)</SelectItem>
-                    <SelectItem value="salary_asc">Salaire (↑)</SelectItem>
-                    <SelectItem value="company_asc">Entreprise A→Z</SelectItem>
+                    <SelectItem value="relevance">
+                      {t("sort.relevance")}
+                    </SelectItem>
+                    <SelectItem value="date_desc">
+                      {t("sort.dateDesc")}
+                    </SelectItem>
+                    <SelectItem value="date_asc">
+                      {t("sort.dateAsc")}
+                    </SelectItem>
+                    <SelectItem value="salary_desc">
+                      {t("sort.salaryDesc")}
+                    </SelectItem>
+                    <SelectItem value="salary_asc">
+                      {t("sort.salaryAsc")}
+                    </SelectItem>
+                    <SelectItem value="company_asc">
+                      {t("sort.companyAsc")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1779,7 +1800,7 @@ export default function JobsPage() {
                 {/* Page size selector */}
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-slate-600">
-                    Offres par page
+                    {t("perPage")}
                   </span>
                   <Select
                     value={String(pageSize)}
@@ -1830,7 +1851,7 @@ export default function JobsPage() {
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-700">
-                    Filtrer les résultats
+                    {t("filterResults")}
                   </h3>
                   {activeQuickFiltersCount > 0 && (
                     <button
@@ -1846,7 +1867,7 @@ export default function JobsPage() {
                       className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
                     >
                       <X className="h-3 w-3" />
-                      Réinitialiser ({activeQuickFiltersCount})
+                      {t("resetFilters", { count: activeQuickFiltersCount })}
                     </button>
                   )}
                 </div>
@@ -1856,7 +1877,7 @@ export default function JobsPage() {
                   {availableSources.length > 1 && (
                     <div>
                       <p className="text-xs font-semibold text-slate-600 mb-2">
-                        Source
+                        {t("filterSource")}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {availableSources.map((source) => (
@@ -1888,7 +1909,7 @@ export default function JobsPage() {
                   {availableContractTypes.length > 0 && (
                     <div>
                       <p className="text-xs font-semibold text-slate-600 mb-2">
-                        Type de contrat
+                        {t("filterContractType")}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {availableContractTypes.map((ct) => (
@@ -1919,14 +1940,14 @@ export default function JobsPage() {
                   {/* Date filter */}
                   <div>
                     <p className="text-xs font-semibold text-slate-600 mb-2">
-                      Date de publication
+                      {t("filterPostDate")}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {[
-                        { label: "Aujourd'hui", days: 1 },
-                        { label: "3 jours", days: 3 },
-                        { label: "7 jours", days: 7 },
-                        { label: "30 jours", days: 30 },
+                        { label: t("filterDateToday"), days: 1 },
+                        { label: t("filterDate3Days"), days: 3 },
+                        { label: t("filterDate7Days"), days: 7 },
+                        { label: t("filterDate30Days"), days: 30 },
                       ].map(({ label, days }) => (
                         <button
                           key={days}
@@ -1953,7 +1974,7 @@ export default function JobsPage() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs font-semibold text-slate-600 mb-2">
-                        Salaire min (€/an)
+                        {t("filterSalaryMin")}
                       </p>
                       <input
                         type="number"
@@ -1983,7 +2004,7 @@ export default function JobsPage() {
                         className="rounded border-slate-300 text-[#00D9FF] focus:ring-[#00D9FF]"
                       />
                       <span className="text-xs text-slate-600">
-                        Liens directs uniquement
+                        {t("filterDirectOnly")}
                       </span>
                     </label>
                   </div>
@@ -1991,11 +2012,16 @@ export default function JobsPage() {
 
                 {/* Results count */}
                 <p className="text-xs text-slate-500 border-t border-slate-100 pt-2">
-                  {quickFilteredJobs.length} offre
-                  {quickFilteredJobs.length !== 1 ? "s" : ""} affichée
-                  {quickFilteredJobs.length !== 1 ? "s" : ""}
+                  {t(
+                    quickFilteredJobs.length !== 1
+                      ? "filteredCount_other"
+                      : "filteredCount_one",
+                    { count: quickFilteredJobs.length },
+                  )}
                   {activeQuickFiltersCount > 0 &&
-                    ` sur ${filteredProgressiveJobs.length} total`}
+                    t("filteredCountTotal", {
+                      total: filteredProgressiveJobs.length,
+                    })}
                 </p>
               </motion.div>
             )}
@@ -2031,13 +2057,13 @@ export default function JobsPage() {
                             {appliedJobIds.has(job.id) && (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
                                 <CheckCircle2 className="h-3 w-3" />
-                                Postulé
+                                {t("badgeApplied")}
                               </span>
                             )}
                             {viewedJobIds.has(job.id) &&
                               !appliedJobIds.has(job.id) && (
                                 <span className="text-xs text-slate-400 font-medium">
-                                  Déjà ouvert
+                                  {t("badgeViewed")}
                                 </span>
                               )}
                           </div>
@@ -2154,7 +2180,7 @@ export default function JobsPage() {
                       {job.url_is_direct === false && (
                         <span className="text-xs text-slate-400 flex items-center gap-1">
                           <ExternalLink className="h-3 w-3" />
-                          Via agrégateur
+                          {t("viaAggregator")}
                         </span>
                       )}
 
@@ -2162,7 +2188,7 @@ export default function JobsPage() {
                       {job.posted_date && (
                         <p className="text-xs text-slate-400 flex items-center justify-end gap-1 mt-1">
                           <Clock className="h-3 w-3" />
-                          {formatRelativeDate(job.posted_date)}
+                          {formatRelativeDate(job.posted_date, t)}
                         </p>
                       )}
 
@@ -2183,15 +2209,15 @@ export default function JobsPage() {
                         <SheetTrigger asChild>
                           <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                             <UserSearch className="w-3.5 h-3.5" />
-                            Trouver les recruteurs
+                            {t("findRecruiters")}
                             <span className="px-1 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-semibold rounded">
-                              BÊTA
+                              {t("betaTag")}
                             </span>
                           </button>
                         </SheetTrigger>
                         <SheetContent>
                           <SheetHeader>
-                            <SheetTitle>Trouver les recruteurs</SheetTitle>
+                            <SheetTitle>{t("findRecruiters")}</SheetTitle>
                           </SheetHeader>
                           <div className="mt-4">
                             <RecruiterEmailFinder
@@ -2400,11 +2426,11 @@ export default function JobsPage() {
         }}
         onApplyPending={(pendingJob) => {
           // Modal fermée avant la popup → toast Sonner avec confirmation
-          toast(`As-tu postulé chez ${pendingJob.company} ?`, {
+          toast(t("applyConfirmToast", { company: pendingJob.company || "" }), {
             description: pendingJob.title,
             duration: 12000,
             action: {
-              label: "✓ Oui, postulé !",
+              label: `✓ ${t("applyConfirmYes")}`,
               onClick: () => {
                 setAppliedJobIds((prev) => {
                   const next = new Set(prev).add(pendingJob.id);
@@ -2418,7 +2444,7 @@ export default function JobsPage() {
                 });
               },
             },
-            cancel: { label: "Non", onClick: () => {} },
+            cancel: { label: t("applyConfirmNo"), onClick: () => {} },
           });
         }}
       />

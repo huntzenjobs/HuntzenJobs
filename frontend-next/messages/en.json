@@ -415,6 +415,10 @@
       "cancel": "Cancel",
       "confirm": "Log out"
     },
+    "badges": {
+      "new": "New",
+      "recruiterPrice": "€50"
+    },
     "aria": {
       "close": "Close navigation menu",
       "open": "Open navigation menu",
@@ -439,7 +443,18 @@
       "upgraded": "✨ Subscription upgraded! Verifying...",
       "scheduled": "📅 Change scheduled! Your new plan will be active at the end of the current period.",
       "sessionExpired": "Your session has expired. Please log in again.",
-      "paymentError": "Error creating payment session"
+      "paymentError": "Error creating payment session",
+      "annualToMonthlyBlocked": "Annual to monthly change not possible. Your annual subscription runs until {date}. You can switch to monthly at that date.",
+      "annualToMonthlyBlockedGeneric": "You have an active annual subscription. The change to monthly will be possible at the end of the period."
+    },
+    "billing": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "saveBadge": "Save ~2 months",
+      "toggleLabel": "Toggle billing period",
+      "perYear": "/year",
+      "perMonth": "/month",
+      "yearlyEquivalent": "i.e. {price}€/month"
     },
     "plans": {
       "free": {
@@ -536,6 +551,28 @@
       "outOf": "out of {limit}{unit}",
       "unlimited": "Unlimited usage",
       "reached": "Quota reached for today"
+    }
+  },
+  "usageCounter": {
+    "dailyUsage": "Today's usage",
+    "features": {
+      "jobSearch": {
+        "label": "searches"
+      },
+      "jobView": {
+        "label": "offers"
+      },
+      "cvAnalysis": {
+        "label": "analyses"
+      },
+      "assistantMessages": {
+        "label": "messages"
+      },
+      "unlimited": "unlimited",
+      "unlimitedShort": "Unlimited"
+    },
+    "aria": {
+      "remaining": "{label}: {remaining} remaining out of {max}"
     }
   },
   "upgradeBanner": {
@@ -773,7 +810,41 @@
         "companyAsc": "Company A→Z"
       },
       "perPage": "Jobs per page",
-      "salaryMinPlaceholder": "e.g.: 35000"
+      "salaryMinPlaceholder": "e.g.: 35000",
+      "relativeDate": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{count} days ago",
+        "weeksAgo_one": "{count} week ago",
+        "weeksAgo_other": "{count} weeks ago",
+        "monthsAgo": "{count} months ago"
+      },
+      "countryNotFound": "Country not found - try from the list",
+      "refreshTitle": "Refresh results from server",
+      "alternanceToggle": "Apprenticeship",
+      "filterButton": "Filter",
+      "filterResults": "Filter results",
+      "resetFilters": "Reset ({count})",
+      "filterSource": "Source",
+      "filterContractType": "Contract type",
+      "filterPostDate": "Posted date",
+      "filterDateToday": "Today",
+      "filterDate3Days": "3 days",
+      "filterDate7Days": "7 days",
+      "filterDate30Days": "30 days",
+      "filterSalaryMin": "Min salary (EUR/yr)",
+      "filterDirectOnly": "Direct links only",
+      "filteredCount_one": "{count} offer displayed",
+      "filteredCount_other": "{count} offers displayed",
+      "filteredCountTotal": " out of {total} total",
+      "badgeApplied": "Applied",
+      "badgeViewed": "Already viewed",
+      "viaAggregator": "Via aggregator",
+      "findRecruiters": "Find recruiters",
+      "betaTag": "BETA",
+      "applyConfirmToast": "Did you apply at {company}?",
+      "applyConfirmYes": "Yes, applied!",
+      "applyConfirmNo": "No"
     },
     "cvAnalysis": {
       "title": "CV Analysis",
@@ -804,7 +875,16 @@
       "quickActionCV": "Improve my CV",
       "quickActionJobs": "Find job offers",
       "quickActionInterview": "Prepare for my interview",
-      "quickActionCareer": "Define my career goal"
+      "quickActionCareer": "Define my career goal",
+      "switchSystemMessage": "You are now talking with **{name}**. {description}",
+      "switchDialogTitle": "Switch assistant?",
+      "switchDialogDescHistory": "Your conversation with {name} will be saved to your history before opening a new chat.",
+      "switchDialogDescNoHistory": "Your conversation will be lost, history is not available with your current plan.",
+      "cancel": "Cancel",
+      "switchAssistant": "Switch assistant",
+      "cvUploadError": "Error analyzing the CV. Please make sure the file is a valid PDF.",
+      "removeCV": "Remove CV",
+      "attachCV": "Attach your CV (PDF)"
     },
     "salons": {
       "title": "Job Fairs & Forums",

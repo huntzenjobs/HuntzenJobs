@@ -106,7 +106,7 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/candidatures",
       icon: Send,
       premium: false,
-      badge: isCandidaturesNew ? "Nouveau" : undefined,
+      badge: isCandidaturesNew ? t("badges.new") : undefined,
     },
     {
       name: t("nav.expat"),
@@ -125,7 +125,7 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/recruiter-contact",
       icon: Users,
       premium: false,
-      badge: "50€",
+      badge: t("badges.recruiterPrice"),
     },
     {
       name: t("nav.documents"),

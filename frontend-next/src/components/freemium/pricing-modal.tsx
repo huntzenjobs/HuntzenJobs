@@ -179,8 +179,8 @@ export function PricingModal() {
             : null;
           throw new Error(
             formattedDate
-              ? `Changement annuel → mensuel impossible. Votre abonnement annuel court jusqu'au ${formattedDate}. Vous pourrez passer en mensuel à cette date.`
-              : "Vous avez un abonnement annuel en cours. Le changement vers mensuel sera possible à la fin de la période.",
+              ? tModal("toasts.annualToMonthlyBlocked", { date: formattedDate })
+              : tModal("toasts.annualToMonthlyBlockedGeneric"),
           );
         }
         throw new Error(detail);
@@ -238,7 +238,7 @@ export function PricingModal() {
             <span
               className={`text-sm font-medium ${billingPeriod === "monthly" ? "text-gray-900" : "text-gray-400"}`}
             >
-              Mensuel
+              {tModal("billing.monthly")}
             </span>
             <button
               onClick={() =>
@@ -249,7 +249,7 @@ export function PricingModal() {
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
                 billingPeriod === "yearly" ? "bg-violet-600" : "bg-gray-300"
               }`}
-              aria-label="Toggle billing period"
+              aria-label={tModal("billing.toggleLabel")}
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -260,11 +260,11 @@ export function PricingModal() {
             <span
               className={`text-sm font-medium ${billingPeriod === "yearly" ? "text-gray-900" : "text-gray-400"}`}
             >
-              Annuel
+              {tModal("billing.yearly")}
             </span>
             {billingPeriod === "yearly" && (
               <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                Économisez ~2 mois
+                {tModal("billing.saveBadge")}
               </Badge>
             )}
           </div>
@@ -316,18 +316,20 @@ export function PricingModal() {
                           €
                         </span>
                         <span className="text-base text-gray-600">
-                          {billingPeriod === "yearly" ? "/an" : plan.period}
+                          {billingPeriod === "yearly"
+                            ? tModal("billing.perYear")
+                            : plan.period}
                         </span>
                       </>
                     )}
                   </div>
                   {billingPeriod === "yearly" && plan.id !== "free" && (
                     <p className="text-xs text-green-600 mt-1">
-                      soit{" "}
-                      {(plan.priceYearlyValue / 12)
-                        .toFixed(2)
-                        .replace(".", ",")}
-                      €/mois
+                      {tModal("billing.yearlyEquivalent", {
+                        price: (plan.priceYearlyValue / 12)
+                          .toFixed(2)
+                          .replace(".", ","),
+                      })}
                     </p>
                   )}
                 </div>
@@ -487,7 +489,9 @@ export function PricingCards({
                     <span className="text-5xl font-bold">
                       {formatPrice(p.price_monthly)}€
                     </span>
-                    <span className="text-xl text-muted-foreground">/mois</span>
+                    <span className="text-xl text-muted-foreground">
+                      {tModal("billing.perMonth")}
+                    </span>
                   </>
                 )}
               </div>

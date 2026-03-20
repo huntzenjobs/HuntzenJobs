@@ -319,6 +319,10 @@
       "cancel": "Cancelar",
       "confirm": "Sair"
     },
+    "badges": {
+      "new": "Novo",
+      "recruiterPrice": "50€"
+    },
     "aria": {
       "close": "Fechar o menu de navegação",
       "open": "Abrir o menu de navegação",
@@ -343,7 +347,18 @@
       "upgraded": "✨ Assinatura atualizada! Verificando...",
       "scheduled": "📅 Mudança agendada! Seu novo plano ficará ativo no final do período atual.",
       "sessionExpired": "Sua sessão expirou. Por favor, faça login novamente.",
-      "paymentError": "Erro ao criar sessão de pagamento"
+      "paymentError": "Erro ao criar sessão de pagamento",
+      "annualToMonthlyBlocked": "Mudança de anual para mensal não possível. Sua assinatura anual vai até {date}. Você poderá mudar para mensal nessa data.",
+      "annualToMonthlyBlockedGeneric": "Você tem uma assinatura anual ativa. A mudança para mensal será possível no final do período."
+    },
+    "billing": {
+      "monthly": "Mensal",
+      "yearly": "Anual",
+      "saveBadge": "Economize ~2 meses",
+      "toggleLabel": "Alternar período de cobrança",
+      "perYear": "/ano",
+      "perMonth": "/mês",
+      "yearlyEquivalent": "ou seja {price}€/mês"
     },
     "plans": {
       "free": {
@@ -414,6 +429,28 @@
           ""
         ]
       }
+    }
+  },
+  "usageCounter": {
+    "dailyUsage": "Uso do dia",
+    "features": {
+      "jobSearch": {
+        "label": "buscas"
+      },
+      "jobView": {
+        "label": "vagas"
+      },
+      "cvAnalysis": {
+        "label": "análises"
+      },
+      "assistantMessages": {
+        "label": "mensagens"
+      },
+      "unlimited": "ilimitadas",
+      "unlimitedShort": "Ilimitado"
+    },
+    "aria": {
+      "remaining": "{label}: {remaining} restantes de {max}"
     }
   },
   "upgradeBanner": {

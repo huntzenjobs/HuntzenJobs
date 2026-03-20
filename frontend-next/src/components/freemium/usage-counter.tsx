@@ -3,6 +3,7 @@
 import { useSubscription } from "@/contexts/subscription-context";
 import { FeatureType } from "@/hooks/use-freemium-limits";
 import { Search, FileText, Clock, Eye } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface UsageCounterProps {
   feature: FeatureType;
@@ -12,42 +13,49 @@ interface UsageCounterProps {
   compact?: boolean;
 }
 
-const featureConfig: Record<
-  FeatureType,
-  {
-    icon: React.ReactNode;
-    label: string;
-    maxLabel: (max: number) => string;
-    formatValue: (value: number, max: number) => string;
-  }
-> = {
+interface FeatureConfig {
+  icon: React.ReactNode;
+  labelKey: string;
+  maxLabel: (max: number, t: (key: string) => string) => string;
+  formatValue: (
+    value: number,
+    max: number,
+    t: (key: string) => string,
+  ) => string;
+}
+
+const featureConfig: Record<FeatureType, FeatureConfig> = {
   job_search: {
     icon: <Search className="w-4 h-4" aria-hidden="true" />,
-    label: "recherches",
-    maxLabel: (max) => (max === Infinity ? "illimitees" : `/${max}`),
-    formatValue: (value, max) =>
-      max === Infinity ? "Illimite" : `${value}/${max}`,
+    labelKey: "features.jobSearch.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}`,
+    formatValue: (value, max, t) =>
+      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
   },
   job_view: {
     icon: <Eye className="w-4 h-4" aria-hidden="true" />,
-    label: "offres",
-    maxLabel: (max) => (max === Infinity ? "illimitees" : `/${max}`),
-    formatValue: (value, max) =>
-      max === Infinity ? "Illimite" : `${value}/${max}`,
+    labelKey: "features.jobView.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}`,
+    formatValue: (value, max, t) =>
+      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
   },
   cv_analysis: {
     icon: <FileText className="w-4 h-4" aria-hidden="true" />,
-    label: "analyses",
-    maxLabel: (max) => (max === Infinity ? "illimitees" : `/${max}`),
-    formatValue: (value, max) =>
-      max === Infinity ? "Illimite" : `${value}/${max}`,
+    labelKey: "features.cvAnalysis.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}`,
+    formatValue: (value, max, t) =>
+      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
   },
   assistant_messages: {
     icon: <Clock className="w-4 h-4" aria-hidden="true" />,
-    label: "messages",
-    maxLabel: (max) => (max === Infinity ? "illimités" : `/${max}`),
-    formatValue: (value, max) =>
-      max === Infinity ? "Illimité" : `${value}/${max}`,
+    labelKey: "features.assistantMessages.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}`,
+    formatValue: (value, max, t) =>
+      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
   },
 };
 
@@ -59,6 +67,7 @@ export function UsageCounter({
   compact = false,
 }: UsageCounterProps) {
   const { getRemaining, limits, isFreePlan } = useSubscription();
+  const tUsage = useTranslations("usageCounter");
 
   const remaining = getRemaining(feature);
   const config = featureConfig[feature];
@@ -114,7 +123,7 @@ export function UsageCounter({
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getColor()} ${className}`}
       >
         {showIcon && config.icon}
-        {config.formatValue(used, max)}
+        {config.formatValue(used, max, tUsage)}
       </span>
     );
   }
@@ -125,9 +134,9 @@ export function UsageCounter({
         <span className="flex items-center gap-1.5 text-white/90">
           {showIcon && config.icon}
           <span>
-            {`${remaining} ${config.label}`}
+            {`${remaining} ${tUsage(config.labelKey)}`}
             <span className="text-xs ml-1 text-white/60">
-              {config.maxLabel(max)}
+              {config.maxLabel(max, tUsage)}
             </span>
           </span>
         </span>
@@ -140,7 +149,11 @@ export function UsageCounter({
           aria-valuemin={0}
           aria-valuemax={max}
           aria-valuenow={remaining}
-          aria-label={`${config.label}: ${remaining} restant(e)s sur ${max}`}
+          aria-label={tUsage("aria.remaining", {
+            label: tUsage(config.labelKey),
+            remaining: String(remaining),
+            max: String(max),
+          })}
         >
           <div
             className={`h-full transition-all duration-300 ${getBarColor()}`}
@@ -158,6 +171,7 @@ interface UsageSummaryProps {
 
 export function UsageSummary({ className = "" }: UsageSummaryProps) {
   const { plan, isFreePlan } = useSubscription();
+  const tUsage = useTranslations("usageCounter");
 
   if (!isFreePlan) {
     return null;
@@ -166,7 +180,7 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
   return (
     <div className={className}>
       <h4 className="text-sm font-semibold mb-3 text-white/90">
-        Utilisation du jour
+        {tUsage("dailyUsage")}
       </h4>
       <div className="space-y-3">
         <UsageCounter feature="job_search" showBar />
