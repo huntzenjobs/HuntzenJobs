@@ -1041,3 +1041,102 @@ def send_support_ticket_reply(
     except Exception as e:
         logger.error(f"Failed to send support reply for ticket {ticket_id}: {e}")
         return False
+
+
+# ---------------------------------------------------------------------------
+# Contact form emails
+# ---------------------------------------------------------------------------
+
+
+def send_contact_confirmation(to_email: str, full_name: str) -> bool:
+    """Send a short acknowledgement to the person who submitted the contact form."""
+    try:
+        frontend_url = settings.get_primary_frontend_url()
+        name = full_name or "there"
+
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#0D1F3C,#1a3a6b);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">Message bien recu !</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>Bonjour {name},</p>
+                    <p>Nous avons bien recu votre message et notre equipe vous repondra sous 48h en semaine.</p>
+                    <p>Merci de votre confiance !</p>
+                    <div style="text-align:center;margin-top:24px;">
+                        <a href="{frontend_url}" style="display:inline-block;background:linear-gradient(135deg,#00D9FF,#0EA5E9);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            Retour sur HuntZen
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    &copy; 2026 HuntZen
+                </p>
+            </div>
+        </body></html>
+        """
+
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [to_email],
+            "subject": "Nous avons bien recu votre message - HuntZen",
+            "html": html_content,
+        })
+        logger.info(f"Contact confirmation sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send contact confirmation to {to_email}: {e}")
+        return False
+
+
+def send_contact_admin_notification(
+    full_name: str,
+    email: str,
+    reason: str,
+    message: str,
+) -> bool:
+    """Notify admin of a new contact form submission."""
+    try:
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8">
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #0EA5E9, #2563EB); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+            .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }}
+            .info-box {{ background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #0EA5E9; }}
+            .info-item {{ margin: 8px 0; }}
+            .label {{ font-weight: bold; color: #555; }}
+            .message-box {{ background: white; border-radius: 8px; padding: 20px; margin: 15px 0; border: 1px solid #e5e7eb; white-space: pre-wrap; }}
+        </style></head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>Nouveau message de contact</h2>
+                </div>
+                <div class="content">
+                    <div class="info-box">
+                        <div class="info-item"><span class="label">Nom :</span> {full_name}</div>
+                        <div class="info-item"><span class="label">Email :</span> <a href="mailto:{email}">{email}</a></div>
+                        <div class="info-item"><span class="label">Motif :</span> {reason}</div>
+                    </div>
+                    <h3>Message</h3>
+                    <div class="message-box">{message}</div>
+                </div>
+            </div>
+        </body></html>
+        """
+
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": ["contact@huntzenjobs.co"],
+            "subject": f"[Contact] {full_name} - {reason}",
+            "html": html_content,
+        })
+        logger.info(f"Contact admin notification sent for {email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send contact admin notification for {email}: {e}")
+        return False

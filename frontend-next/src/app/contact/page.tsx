@@ -38,8 +38,20 @@ export default function ContactPage() {
     }
     setLoading(true);
     try {
-      // Envoi via l'email de contact (mailto fallback — intégration backend à connecter)
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/contact`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            reason: form.reason,
+            message: form.message,
+          }),
+        },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSent(true);
     } catch {
       toast.error(t("toasts.sendError"));

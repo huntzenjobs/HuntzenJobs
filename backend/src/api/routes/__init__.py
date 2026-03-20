@@ -6,39 +6,40 @@ Main router combining all route modules.
 
 from fastapi import APIRouter
 
-from src.api.routes.coach import router as coach_router
+from src.api.routes.admin import router as admin_router
+from src.api.routes.admin_cleanup import router as admin_cleanup_router
+from src.api.routes.applications import router as applications_router
 from src.api.routes.assistant import router as assistant_router
-from src.api.routes.jobs import router as jobs_router
-from src.api.routes.cv_adapter import router as cv_adapter_router
-from src.api.routes.events import router as events_router
-from src.api.routes.pages import router as pages_router
-from src.api.routes.recruiter import router as recruiter_router
-from src.api.routes.static_data import router as static_data_router
 from src.api.routes.auth import router as auth_router
-from src.api.routes.saved_jobs import router as saved_jobs_router
+from src.api.routes.branding import router as branding_router
+from src.api.routes.career_score import router as career_score_router
+from src.api.routes.coach import router as coach_router
+from src.api.routes.contact import router as contact_router
+from src.api.routes.coupons import router as coupons_router
+from src.api.routes.cron import router as cron_router
+from src.api.routes.cv_adapter import router as cv_adapter_router
 from src.api.routes.cv_analysis import router as cv_analysis_router
+from src.api.routes.documents import router as documents_router
+from src.api.routes.events import router as events_router
+from src.api.routes.health import router as health_router
+from src.api.routes.insider_finder import router as insider_finder_router
+from src.api.routes.jobs import router as jobs_router
+from src.api.routes.notifications import router as notifications_router
+from src.api.routes.pages import router as pages_router
+from src.api.routes.presence import banner_router, presence_router, tracking_router
+from src.api.routes.public_plans import router as public_plans_router
+from src.api.routes.queue import router as queue_router
+from src.api.routes.recruiter import router as recruiter_router
+from src.api.routes.recruiter_finder import router as recruiter_finder_router
+from src.api.routes.referrals import router as referrals_router
+from src.api.routes.saved_jobs import router as saved_jobs_router
+from src.api.routes.static_data import router as static_data_router
+from src.api.routes.stats import router as stats_router
+from src.api.routes.stress import router as stress_router
 from src.api.routes.stripe import router as stripe_router
 from src.api.routes.subscription import router as subscription_router
-from src.api.routes.health import router as health_router
-from src.api.routes.admin_cleanup import router as admin_cleanup_router
-from src.api.routes.admin import router as admin_router
-from src.api.routes.branding import router as branding_router
-from src.api.routes.insider_finder import router as insider_finder_router
-from src.api.routes.recruiter_finder import router as recruiter_finder_router
-from src.api.routes.documents import router as documents_router
-from src.api.routes.referrals import router as referrals_router
-from src.api.routes.applications import router as applications_router
-from src.api.routes.notifications import router as notifications_router
-from src.api.routes.career_score import router as career_score_router
-from src.api.routes.coupons import router as coupons_router
-from src.api.routes.stats import router as stats_router
-from src.api.routes.cron import router as cron_router
-from src.api.routes.support import router as support_router
-from src.api.routes.queue import router as queue_router
-from src.api.routes.presence import presence_router, tracking_router, banner_router
-from src.api.routes.stress import router as stress_router
 from src.api.routes.suggestions import router as suggestions_router
-from src.api.routes.public_plans import router as public_plans_router
+from src.api.routes.support import router as support_router
 
 router = APIRouter()
 
@@ -78,3 +79,4 @@ router.include_router(banner_router, tags=["Banner & Maintenance"])
 router.include_router(stress_router, prefix="/api/admin/stress", tags=["Stress Testing"])
 router.include_router(suggestions_router, prefix="/api/assistant", tags=["Assistant Suggestions"])
 router.include_router(public_plans_router, prefix="/api/public", tags=["Public Plans"])
+router.include_router(contact_router, prefix="/api/contact", tags=["Contact"])
