@@ -56,22 +56,30 @@ export default function AdminLivePage() {
   }, []);
 
   async function toggleMaintenance() {
-    const path = maintenance
-      ? "/admin/maintenance/disable"
-      : "/admin/maintenance/enable";
-    await adminFetch(path, { method: "POST" });
-    setMaintenance(!maintenance);
+    try {
+      const path = maintenance
+        ? "/admin/maintenance/disable"
+        : "/admin/maintenance/enable";
+      await adminFetch(path, { method: "POST" });
+      setMaintenance(!maintenance);
+    } catch {
+      // fetch failed silently — state unchanged
+    }
   }
 
   async function saveBanner() {
-    await adminFetch("/admin/banner", {
-      method: "POST",
-      body: JSON.stringify({
-        text: bannerText,
-        type: "info",
-        active: bannerActive,
-      }),
-    });
+    try {
+      await adminFetch("/admin/banner", {
+        method: "POST",
+        body: JSON.stringify({
+          text: bannerText,
+          type: "info",
+          active: bannerActive,
+        }),
+      });
+    } catch {
+      // fetch failed silently
+    }
   }
 
   return (

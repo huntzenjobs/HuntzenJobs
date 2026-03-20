@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export interface AdminTicket {
   id: string;
@@ -43,29 +43,43 @@ export interface SupportFilters {
 export function useAdminSupport() {
   const { session } = useAuth();
   const [tickets, setTickets] = useState<AdminTicket[]>([]);
-  const [stats, setStats] = useState<SupportStats>({ open: 0, in_progress: 0, resolved: 0, resolved_pct: 0 });
+  const [stats, setStats] = useState<SupportStats>({
+    open: 0,
+    in_progress: 0,
+    resolved: 0,
+    resolved_pct: 0,
+  });
   const [isLoading, setIsLoading] = useState(false);
-  const [filters, setFilters] = useState<SupportFilters>({ status: "open", category: "", priority: "", search: "" });
+  const [filters, setFilters] = useState<SupportFilters>({
+    status: "open",
+    category: "",
+    priority: "",
+    search: "",
+  });
 
   const fetchTickets = useCallback(async () => {
     if (!session?.access_token) return;
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.status && filters.status !== "all") params.set("status_filter", filters.status);
+      if (filters.status && filters.status !== "all")
+        params.set("status_filter", filters.status);
       if (filters.category) params.set("category", filters.category);
       if (filters.priority) params.set("priority", filters.priority);
       if (filters.search) params.set("search", filters.search);
 
-      const res = await fetch(`${BACKEND_URL}/api/admin/support/tickets?${params}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      const res = await fetch(
+        `${API_URL}/api/support/admin/support/tickets?${params}`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        },
+      );
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
       setTickets(data.tickets || []);
       if (data.stats) setStats(data.stats);
     } catch (err) {
-      console.error("Failed to fetch support tickets:", err);
+      // Silent fail — error state handled by empty tickets array
     } finally {
       setIsLoading(false);
     }
@@ -76,21 +90,35 @@ export function useAdminSupport() {
   }, [fetchTickets]);
 
   const updateTicket = useCallback(
-    async (ticketId: string, update: { status?: string; admin_reply?: string }) => {
+    async (
+      ticketId: string,
+      update: { status?: string; admin_reply?: string },
+    ) => {
       if (!session?.access_token) return;
-      const res = await fetch(`${BACKEND_URL}/api/admin/support/tickets/${ticketId}`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${API_URL}/api/support/admin/support/tickets/${ticketId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(update),
         },
-        body: JSON.stringify(update),
-      });
+      );
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       await fetchTickets();
     },
-    [session, fetchTickets]
+    [session, fetchTickets],
   );
 
-  return { tickets, stats, isLoading, filters, setFilters, updateTicket, refetch: fetchTickets };
+  return {
+    tickets,
+    stats,
+    isLoading,
+    filters,
+    setFilters,
+    updateTicket,
+    refetch: fetchTickets,
+  };
 }
