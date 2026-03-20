@@ -10,13 +10,24 @@ import { ChevronDown, Search, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
 import { LandingHeader } from "@/components/landing-header";
-import { faqCategories } from "./faq-data";
+import { buildFaqCategories } from "./faq-data";
 import { useTranslations } from "next-intl";
+import { usePlansConfig } from "@/hooks/use-plans-config";
+import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 
 export function FAQClient() {
   const t = useTranslations("faq");
+  const { getPlan, formatPrice } = usePlansConfig();
   const [openIndex, setOpenIndex] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const proPlan = getPlan("pro");
+  const proPrice = proPlan
+    ? `${formatPrice(proPlan.price_monthly)}€/mois`
+    : "...";
+  const freeCvLimit = PLAN_LIMITS.free.cv_analyses_per_day;
+
+  const faqCategories = buildFaqCategories({ proPrice, freeCvLimit });
 
   // Filtrer les questions selon la recherche
   const filteredCategories = faqCategories

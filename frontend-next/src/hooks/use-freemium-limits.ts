@@ -13,10 +13,29 @@ export type FeatureType =
   | "cv_analysis"
   | "assistant_messages";
 
-// Limits per plan - Synced with Supabase subscription_plans table
-// These are FALLBACK values when API is unavailable
-// Real limits are fetched from /api/auth/me endpoint
-export const PLAN_LIMITS = {
+// ── Plan limits — Dynamic from Supabase via /api/public/plans ──────────────
+// PLAN_LIMITS is a Proxy that reads from the API cache (localStorage).
+// If the cache is empty (first visit, API down), it falls back to HARDCODED_DEFAULTS.
+// Admin changes in Supabase propagate here without code changes.
+
+interface PlanLimitValues {
+  job_searches_per_day: number;
+  jobs_visible: number;
+  cv_analyses_per_day: number;
+  assistant_messages_per_day: number;
+  has_advanced_filters: boolean;
+  has_favorites: boolean;
+  has_email_alerts: boolean;
+  has_visual_score: boolean;
+  has_pdf_export: boolean;
+  has_cv_history: boolean;
+  has_interview_sim: boolean;
+  has_personalized_advice: boolean;
+  has_coach_history: boolean;
+}
+
+// Hardcoded defaults — last resort if API cache is empty
+const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
   free: {
     job_searches_per_day: 3,
     jobs_visible: 10,
@@ -33,9 +52,9 @@ export const PLAN_LIMITS = {
     has_coach_history: false,
   },
   starter: {
-    job_searches_per_day: Infinity, // -1 in DB = unlimited
+    job_searches_per_day: Infinity,
     jobs_visible: Infinity,
-    cv_analyses_per_day: 5, // CORRECTED: was Infinity, should be 5
+    cv_analyses_per_day: 5,
     assistant_messages_per_day: 100,
     has_advanced_filters: true,
     has_favorites: true,
@@ -48,9 +67,9 @@ export const PLAN_LIMITS = {
     has_coach_history: false,
   },
   pro: {
-    job_searches_per_day: Infinity, // -1 in DB = unlimited
+    job_searches_per_day: Infinity,
     jobs_visible: Infinity,
-    cv_analyses_per_day: 20, // CORRECTED: was Infinity, should be 20
+    cv_analyses_per_day: 20,
     assistant_messages_per_day: Infinity,
     has_advanced_filters: true,
     has_favorites: true,
@@ -63,9 +82,9 @@ export const PLAN_LIMITS = {
     has_coach_history: false,
   },
   premium: {
-    job_searches_per_day: Infinity, // -1 in DB = unlimited
+    job_searches_per_day: Infinity,
     jobs_visible: Infinity,
-    cv_analyses_per_day: Infinity, // -1 in DB = unlimited
+    cv_analyses_per_day: Infinity,
     assistant_messages_per_day: Infinity,
     has_advanced_filters: true,
     has_favorites: true,
@@ -77,7 +96,117 @@ export const PLAN_LIMITS = {
     has_personalized_advice: true,
     has_coach_history: true,
   },
-} as const;
+};
+
+/**
+ * Build plan limits from API data (limits JSONB + feature_flags JSONB).
+ * Converts -1 (DB unlimited) to Infinity (JS unlimited).
+ * Falls back to hardcoded defaults for missing fields.
+ */
+function buildLimitsFromApi(
+  planName: PlanType,
+  apiLimits: Record<string, number> | null,
+  apiFlags: Record<string, boolean> | null,
+): PlanLimitValues {
+  const defaults = HARDCODED_DEFAULTS[planName];
+  if (!apiLimits && !apiFlags) return defaults;
+
+  const num = (key: string, fallback: number): number => {
+    const val = apiLimits?.[key];
+    if (val === undefined || val === null) return fallback;
+    return val === -1 ? Infinity : val;
+  };
+
+  const flag = (key: string, fallback: boolean): boolean => {
+    return apiFlags?.[key] ?? fallback;
+  };
+
+  return {
+    job_searches_per_day: num("job_searches", defaults.job_searches_per_day),
+    jobs_visible: num("jobs_visible", defaults.jobs_visible),
+    cv_analyses_per_day: num("cv_analyses", defaults.cv_analyses_per_day),
+    assistant_messages_per_day: num(
+      "assistant_messages",
+      defaults.assistant_messages_per_day,
+    ),
+    has_advanced_filters: flag(
+      "advanced_filters",
+      defaults.has_advanced_filters,
+    ),
+    has_favorites: flag("favorites", defaults.has_favorites),
+    has_email_alerts: flag("email_alerts", defaults.has_email_alerts),
+    has_visual_score: flag("visual_score", defaults.has_visual_score),
+    has_pdf_export: flag("pdf_export", defaults.has_pdf_export),
+    has_cv_history: flag("cv_history", defaults.has_cv_history),
+    has_interview_sim: flag("interview_sim", defaults.has_interview_sim),
+    has_personalized_advice: flag(
+      "personalized_advice",
+      defaults.has_personalized_advice,
+    ),
+    has_coach_history: flag("coach_history", defaults.has_coach_history),
+  };
+}
+
+/**
+ * Try to load plans from the localStorage cache written by usePlansConfig().
+ * Returns null if no cache exists.
+ */
+function loadApiPlansCache(): Record<PlanType, PlanLimitValues> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("plans_config_cache");
+    if (!raw) return null;
+    const { data } = JSON.parse(raw);
+    if (!Array.isArray(data)) return null;
+
+    const result = {} as Record<PlanType, PlanLimitValues>;
+    for (const plan of data) {
+      if (
+        plan.name &&
+        ["free", "starter", "pro", "premium"].includes(plan.name)
+      ) {
+        result[plan.name as PlanType] = buildLimitsFromApi(
+          plan.name as PlanType,
+          plan.limits,
+          plan.feature_flags,
+        );
+      }
+    }
+
+    // Only return if all 4 plans are present
+    if (result.free && result.starter && result.pro && result.premium) {
+      return result;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
+/**
+ * PLAN_LIMITS — Proxy that reads from API cache, falls back to hardcoded defaults.
+ *
+ * Usage unchanged: PLAN_LIMITS["free"].cv_analyses_per_day
+ * Type unchanged: typeof PLAN_LIMITS is Record<PlanType, PlanLimitValues>
+ *
+ * When usePlansConfig() fetches /api/public/plans and writes to localStorage,
+ * subsequent reads of PLAN_LIMITS will return the API values automatically.
+ */
+export const PLAN_LIMITS: Record<PlanType, PlanLimitValues> = new Proxy(
+  HARDCODED_DEFAULTS,
+  {
+    get(target, prop: string) {
+      if (!["free", "starter", "pro", "premium"].includes(prop)) {
+        return Reflect.get(target, prop);
+      }
+      const apiCache = loadApiPlansCache();
+      if (apiCache && apiCache[prop as PlanType]) {
+        return apiCache[prop as PlanType];
+      }
+      return target[prop as PlanType];
+    },
+  },
+);
 
 interface UsageLimits {
   searchesToday: number;

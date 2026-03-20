@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
+import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 
 interface Contact {
   name?: string;
@@ -55,7 +56,7 @@ export function RecruiterEmailFinder({
       );
       if (res.status === 429) {
         setError(
-          "Quota atteint (3 recherches/jour en version gratuite). Passez à Pro pour un accès illimité.",
+          t("quotaReached", { count: PLAN_LIMITS.free.job_searches_per_day }),
         );
         return;
       }

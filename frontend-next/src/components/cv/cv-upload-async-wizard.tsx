@@ -52,7 +52,7 @@ import { CVInfoPanel } from "@/components/cv/cv-info-panel";
 import { ScoreRing } from "@/components/cv/score-ring";
 import { ProcessingSteps } from "@/components/cv/processing-steps";
 import { exportCVAnalysisToPDF } from "@/utils/export-cv-pdf";
-import type { FeatureType } from "@/hooks/use-freemium-limits";
+import { type FeatureType, PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -334,7 +334,12 @@ export function CVUploadAsyncWizard({
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <span>
-                  <strong>1 analyse CV gratuite</strong> par jour
+                  <strong>
+                    {t("freeAnalysisBenefit", {
+                      count: PLAN_LIMITS.free.cv_analyses_per_day,
+                    })}
+                  </strong>{" "}
+                  {t("freeAnalysisBenefitSuffix")}
                 </span>
               </li>
               <li className="flex items-center gap-3">

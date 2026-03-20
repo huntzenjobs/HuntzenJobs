@@ -863,7 +863,8 @@
         "phonePlaceholder": "+33 6 12 34 56 78"
       },
       "finder": {
-        "companyPlaceholder": "Company name"
+        "companyPlaceholder": "Company name",
+        "quotaReached": "Cota atingida ({count} pesquisas/dia no plano gratuito). Mude para Pro para acesso ilimitado."
       }
     },
     "documents": {
@@ -982,6 +983,10 @@
   "cv": {
     "inProgress": "Em progresso...",
     "matchingJobOffer": "🎯 Correspondência de trabalho",
+    "freeAnalysesPerDay": "{count} análise(s) de CV grátis por dia",
+    "freeSignupBenefits": "O que você ganha gratuitamente:",
+    "freeAnalysisBenefit": "{count} análise(s) de CV grátis",
+    "freeAnalysisBenefitSuffix": "por dia",
     "toasts": {
       "pdfOnlyAccepted": "Apenas ficheiros PDF são aceites",
       "historyLoadError": "Não foi possível carregar o histórico de análises",

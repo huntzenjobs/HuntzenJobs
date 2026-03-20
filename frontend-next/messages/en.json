@@ -916,7 +916,8 @@
         "phonePlaceholder": "+33 6 12 34 56 78"
       },
       "finder": {
-        "companyPlaceholder": "Company name"
+        "companyPlaceholder": "Company name",
+        "quotaReached": "Quota reached ({count} searches/day on free plan). Upgrade to Pro for unlimited access."
       }
     },
     "documents": {
@@ -1070,6 +1071,10 @@
   "cv": {
     "inProgress": "In progress",
     "matchingJobOffer": "Job 🎯 Matching",
+    "freeAnalysesPerDay": "{count} free CV analysis per day",
+    "freeSignupBenefits": "What you get for free:",
+    "freeAnalysisBenefit": "{count} free CV analysis",
+    "freeAnalysisBenefitSuffix": "per day",
     "toasts": {
       "pdfOnlyAccepted": "Only PDF files are accepted",
       "historyLoadError": "Unable to load analysis history",
