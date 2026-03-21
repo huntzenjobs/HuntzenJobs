@@ -156,9 +156,32 @@ class JobScoutAgent(BaseAgent):
         start_time = time.time()
 
         try:
+            # Step 0: Build effective query (fallback to contract_type if no job_title)
+            effective_title = job_title.strip()
+            if not effective_title and contract_type:
+                # Map contract types to search-friendly queries
+                contract_query_map = {
+                    "cdi": "CDI",
+                    "cdd": "CDD",
+                    "cdi_partial": "CDI temps partiel",
+                    "cdd_partial": "CDD temps partiel",
+                    "freelance": "freelance",
+                    "internship": "stage",
+                    "alternance": "alternance",
+                    "apprentissage": "apprentissage",
+                    "remote": "remote",
+                    "permanent": "emploi",
+                    "contract": "contrat",
+                }
+                effective_title = contract_query_map.get(contract_type, contract_type)
+                logger.info(f"[{self.name}] No job_title, using contract_type as query: '{effective_title}'")
+            elif not effective_title:
+                effective_title = "emploi"
+                logger.info(f"[{self.name}] No job_title or contract_type, using fallback: 'emploi'")
+
             # Step 1: Refine query with sub-agent
-            refined = await self._refine_query(job_title)
-            search_query = refined.get("corrected_query", job_title)
+            refined = await self._refine_query(effective_title)
+            search_query = refined.get("corrected_query", effective_title)
 
             logger.info(f"[{self.name}] Searching: '{search_query}' in {country_code}")
 

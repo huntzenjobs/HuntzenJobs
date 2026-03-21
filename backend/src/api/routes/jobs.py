@@ -192,6 +192,13 @@ async def search_jobs(
     - Deduplicate and rank results
     - Provide market insights
     """
+    # Validate: at least job_title or contract_type must be provided
+    if not data.job_title.strip() and not data.contract_type:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="job_title ou contract_type requis",
+        )
+
     # ✅ CHECK QUOTA AVANT RECHERCHE
     user_id = get_user_id_from_token(authorization)
     if user_id:
@@ -336,7 +343,7 @@ async def search_jobs(
 async def search_jobs_get(
     request: Request,
     agent: ScoutAgentDep,
-    q: str = Query(..., description="Job title to search", min_length=2),
+    q: str = Query(default="", description="Job title to search (optional if contract is set)"),
     country: str = Query(default="us", description="Country code"),
     city: str = Query(default="", description="City"),
     contract: str = Query(default="", description="Contract type"),
@@ -356,6 +363,13 @@ async def search_jobs_get(
     Search for jobs (GET endpoint for simple queries).
     Authenticated users are subject to their plan quota.
     """
+    # Validate: at least q or contract must be provided
+    if not q.strip() and not contract:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="q ou contract requis",
+        )
+
     user_id = get_user_id_from_token(authorization)
     if user_id:
         _check_job_search_quota(user_id)

@@ -624,6 +624,9 @@ export default function JobsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Effective contract type: prefer pre-search filter from SearchParams, fallback to page-level
+  const effectiveContractType = jobSearchParams?.contractType || contractType;
+
   // Search query with intelligent caching
   const searchQuery = useQuery({
     queryKey: [
@@ -631,13 +634,16 @@ export default function JobsPage() {
       jobSearchParams?.query,
       jobSearchParams?.country,
       jobSearchParams?.location,
-      // jobSearchParams?.radiusKm, // Désactivé
       jobSearchParams?.includeRemote,
-      contractType,
+      effectiveContractType,
       advancedFilters,
     ],
     queryFn: async () => {
-      if (!jobSearchParams?.query.trim() || !jobSearchParams?.country) {
+      if (!jobSearchParams?.country) {
+        throw new Error(t("error.fillRequired"));
+      }
+      // query OR contractType must be provided
+      if (!jobSearchParams?.query.trim() && !effectiveContractType) {
         throw new Error(t("error.fillRequired"));
       }
 
@@ -645,8 +651,7 @@ export default function JobsPage() {
         job_title: jobSearchParams.query,
         country_code: jobSearchParams.country,
         city: jobSearchParams.location,
-        contract_type: contractType,
-        // radiusKm: jobSearchParams.radiusKm, // Désactivé
+        contract_type: effectiveContractType,
         includeRemote: jobSearchParams.includeRemote,
         // Advanced filters (Premium feature)
         industries: advancedFilters.industries?.join(","),
@@ -659,9 +664,9 @@ export default function JobsPage() {
 
       return data;
     },
-    enabled: !!jobSearchParams, // Simplified: no need for shouldSearch flag
-    staleTime: 1000 * 60 * 5, // 5 minutes - results stay fresh
-    gcTime: 1000 * 60 * 15, // 15 minutes - keep in cache for reuse
+    enabled: !!jobSearchParams,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 15,
     retry: 1,
   });
 
@@ -1905,37 +1910,38 @@ export default function JobsPage() {
                     </div>
                   )}
 
-                  {/* Contract type filter */}
-                  {availableContractTypes.length > 0 && (
-                    <div>
-                      <p className="text-xs font-semibold text-slate-600 mb-2">
-                        {t("filterContractType")}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {availableContractTypes.map((ct) => (
-                          <button
-                            key={ct}
-                            onClick={() =>
-                              setQuickFilters((prev) => ({
-                                ...prev,
-                                contractTypes: prev.contractTypes.includes(ct)
-                                  ? prev.contractTypes.filter((c) => c !== ct)
-                                  : [...prev.contractTypes, ct],
-                              }))
-                            }
-                            className={cn(
-                              "text-xs px-2 py-1 rounded-full border transition-colors",
-                              quickFilters.contractTypes.includes(ct)
-                                ? "bg-[#00D9FF] text-white border-[#00D9FF]"
-                                : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
-                            )}
-                          >
-                            {ct}
-                          </button>
-                        ))}
+                  {/* Contract type filter — hidden if pre-search contract type is active */}
+                  {availableContractTypes.length > 0 &&
+                    !effectiveContractType && (
+                      <div>
+                        <p className="text-xs font-semibold text-slate-600 mb-2">
+                          {t("filterContractType")}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {availableContractTypes.map((ct) => (
+                            <button
+                              key={ct}
+                              onClick={() =>
+                                setQuickFilters((prev) => ({
+                                  ...prev,
+                                  contractTypes: prev.contractTypes.includes(ct)
+                                    ? prev.contractTypes.filter((c) => c !== ct)
+                                    : [...prev.contractTypes, ct],
+                                }))
+                              }
+                              className={cn(
+                                "text-xs px-2 py-1 rounded-full border transition-colors",
+                                quickFilters.contractTypes.includes(ct)
+                                  ? "bg-[#00D9FF] text-white border-[#00D9FF]"
+                                  : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
+                              )}
+                            >
+                              {t(`contractType_${ct}`, { defaultMessage: ct })}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* Date filter */}
                   <div>

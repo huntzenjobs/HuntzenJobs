@@ -52,20 +52,29 @@ const BACKEND_URL =
 // HELPERS
 // ============================================================================
 
-function formatRelativeDate(dateStr: string): string {
+function formatRelativeDate(
+  dateStr: string,
+  t: (key: string, values?: Record<string, number>) => string,
+): string {
   try {
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return "Aujourd'hui";
-    if (diffDays === 1) return "Hier";
-    if (diffDays < 7) return `Il y a ${diffDays} jours`;
-    if (diffDays < 30)
-      return `Il y a ${Math.floor(diffDays / 7)} semaine${Math.floor(diffDays / 7) > 1 ? "s" : ""}`;
-    if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`;
-    return date.toLocaleDateString("fr-FR");
+    if (diffDays === 0) return t("relativeDate.today");
+    if (diffDays === 1) return t("relativeDate.yesterday");
+    if (diffDays < 7) return t("relativeDate.daysAgo", { count: diffDays });
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return t(
+        weeks > 1 ? "relativeDate.weeksAgo_other" : "relativeDate.weeksAgo_one",
+        { count: weeks },
+      );
+    }
+    if (diffDays < 365)
+      return t("relativeDate.monthsAgo", { count: Math.floor(diffDays / 30) });
+    return date.toLocaleDateString();
   } catch {
     return dateStr;
   }
@@ -478,7 +487,7 @@ export function JobDetailsModal({
                         <span className="font-semibold">{t("postedDate")}</span>
                       </div>
                       <p className="text-gray-900 font-medium">
-                        {formatRelativeDate(job.posted_date)}
+                        {formatRelativeDate(job.posted_date, t)}
                       </p>
                     </div>
                   )}
@@ -488,9 +497,11 @@ export function JobDetailsModal({
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <Briefcase className="h-5 w-5" />
-                        <span className="font-semibold">Contrat</span>
+                        <span className="font-semibold">
+                          {t("contractLabel")}
+                        </span>
                       </div>
-                      <p className="text-gray-900 font-medium">
+                      <p className="text-gray-900 font-medium capitalize">
                         {job.contract_type}
                       </p>
                     </div>
@@ -547,7 +558,7 @@ export function JobDetailsModal({
                       }
                     >
                       {job.url_is_direct || isNowDirect
-                        ? "Postuler directement"
+                        ? t("applyDirect")
                         : t("viewOffer")}
                       <ExternalLink className="ml-2 h-4 w-4" />
                     </span>

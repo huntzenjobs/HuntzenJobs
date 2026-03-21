@@ -61,11 +61,12 @@ class CoachResponse(BaseResponse):
 
 class JobSearchRequest(BaseModel):
     """Request model for job search."""
-    job_title: str = Field(..., min_length=2, max_length=200, description="Job title to search")
+    job_title: str = Field(default="", max_length=200, description="Job title to search (optional if contract_type is set)")
     country_code: str = Field(default="us", min_length=2, max_length=3)
     city: str = Field(default="", max_length=100)
     contract_type: Literal[
-        "", "cdi", "cdd", "freelance", "internship", "remote",
+        "", "cdi", "cdd", "cdi_partial", "cdd_partial",
+        "freelance", "internship", "remote",
         "permanent", "contract", "alternance", "apprentissage"
     ] = ""
     salary_min: int | None = Field(default=None, ge=0)
