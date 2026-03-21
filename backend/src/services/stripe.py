@@ -701,6 +701,7 @@ async def handle_checkout_completed(session: dict[str, Any]):
             subject=f"Nouvelle conversion — {plan_name}",
             body=f"User {user_id} vient de passer au plan {plan_name}.\nStripe sub: {stripe_subscription_id}",
             severity="info",
+            category="new_subscription",
         )
 
         # Trigger referral conversion reward (fire-and-forget)
@@ -867,6 +868,7 @@ async def handle_subscription_deleted(subscription: dict[str, Any]):
                     subject="Résiliation abonnement",
                     body=f"User {user_id} a annulé.\nStripe sub: {stripe_subscription_id}",
                     severity="warning",
+                    category="cancellation",
                 )
 
         logger.info(f"Subscription cancelled: {stripe_subscription_id}")
@@ -928,6 +930,7 @@ async def handle_payment_failed(invoice: dict[str, Any]):
                     ),
                     severity="error",
                     skip_throttle=True,
+                    category="payment_failed",
                 )
 
         logger.info(f"Subscription marked as past_due: {stripe_subscription_id}")
@@ -965,6 +968,7 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                 ),
                 severity="info",
                 skip_throttle=True,
+                category="payment_received",
             )
             logger.info(f"[WEBHOOK] Invoice paid: {amount} {currency} from {customer_email} ({reason_label})")
 

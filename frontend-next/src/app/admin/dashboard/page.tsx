@@ -199,6 +199,12 @@ const QUICK_LINKS = [
     icon: Briefcase,
     desc: "Demandes recruteurs",
   },
+  {
+    href: "/admin/notifications",
+    label: "Notifications",
+    icon: Activity,
+    desc: "Alertes email admin",
+  },
 ];
 
 interface HealthService {

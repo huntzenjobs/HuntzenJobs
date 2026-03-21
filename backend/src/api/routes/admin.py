@@ -3051,3 +3051,51 @@ async def admin_delete_suggestion(
     supabase.table("assistant_suggestions").delete().eq("id", suggestion_id).execute()
     _log_admin_action(supabase, admin["id"], "admin.suggestion_deleted", None, {"suggestion_id": suggestion_id})
     return {"success": True}
+
+
+# ============================================================================
+# ADMIN NOTIFICATION PREFERENCES
+# ============================================================================
+
+@router.get("/alert-preferences")
+async def get_admin_alert_preferences(admin: AdminUserDep) -> dict[str, Any]:
+    """Get admin email alert preferences (which notifications are enabled/disabled)."""
+    from src.services.admin_alerts import ALERT_CATEGORIES, get_alert_preferences
+
+    prefs = await get_alert_preferences()
+    categories = []
+    for key, config in ALERT_CATEGORIES.items():
+        categories.append({
+            "key": key,
+            "label": config["label"],
+            "description": config["description"],
+            "enabled": prefs.get(key, config["default"]),
+        })
+    return {"categories": categories}
+
+
+class AlertPreferencesUpdate(BaseModel):
+    preferences: dict[str, bool]
+
+
+@router.put("/alert-preferences")
+async def update_admin_alert_preferences(
+    body: AlertPreferencesUpdate,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Update admin email alert preferences."""
+    from src.services.admin_alerts import ALERT_CATEGORIES, set_alert_preferences
+
+    # Validate keys
+    valid_keys = set(ALERT_CATEGORIES.keys())
+    for key in body.preferences:
+        if key not in valid_keys:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid alert category: {key}. Valid: {', '.join(sorted(valid_keys))}",
+            ) from None
+
+    prefs = await set_alert_preferences(body.preferences)
+    supabase = get_supabase_client()
+    _log_admin_action(supabase, admin["id"], "admin.alert_preferences_updated", None, body.preferences)
+    return {"success": True, "preferences": prefs}
