@@ -7,7 +7,6 @@ LANGUAGE sql
 SECURITY DEFINER
 AS $$
   UPDATE referrals
-  SET total_conversions = total_conversions + 1,
-      updated_at = now()
+  SET total_conversions = total_conversions + 1
   WHERE id = p_referral_id;
 $$;
