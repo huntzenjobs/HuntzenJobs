@@ -1,4 +1,9 @@
 {
+  "notFound": {
+    "title": "404",
+    "description": "The page you are looking for does not exist or has been moved.",
+    "backHome": "Back to home"
+  },
   "nav": {
     "jobs": "Job Search",
     "salons": "Job Fairs & Forums",
@@ -1860,6 +1865,12 @@
     "actions": {
       "viewOffer": "View offer",
       "delete": "Delete"
+    },
+    "confirmDelete": {
+      "title": "Delete this application?",
+      "description": "This action is irreversible. The application will be removed from your tracking.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
     }
   },
   "referral": {

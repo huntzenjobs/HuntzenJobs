@@ -84,10 +84,9 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_SENTRY_DSN) {
 
     // Filter out sensitive information
     beforeSend(event, hint) {
-      // Don't send events in development (unless you want to test)
+      // Don't send events in development
       if (process.env.NODE_ENV === "development") {
-        console.log("[Sentry] Event would be sent:", event);
-        // return null // TEMPORARILY COMMENTED for testing - UNCOMMENT after tests
+        return null;
       }
 
       // Remove sensitive data from URLs
@@ -143,8 +142,11 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_SENTRY_DSN) {
     },
   });
 
-  // Log initialization
-  console.log("[Sentry] Client initialized with browser-only integrations");
-} else {
+  if (process.env.NODE_ENV === "development") {
+    // eslint-disable-next-line no-console
+    console.log("[Sentry] Client initialized with browser-only integrations");
+  }
+} else if (process.env.NODE_ENV === "development") {
+  // eslint-disable-next-line no-console
   console.warn("[Sentry] DSN not configured - error tracking disabled");
 }

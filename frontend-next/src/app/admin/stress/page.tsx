@@ -19,6 +19,7 @@ import {
   RotateCcw,
   History,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   ResponsiveContainer,
   LineChart,
@@ -189,7 +190,7 @@ export default function AdminStressPage() {
       });
       setCurrentRunId(d.run_id);
     } catch (e) {
-      alert(`Erreur : ${e instanceof Error ? e.message : String(e)}`);
+      toast.error(`Erreur : ${e instanceof Error ? e.message : String(e)}`);
     }
     setLaunching(false);
   }

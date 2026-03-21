@@ -136,6 +136,7 @@ export function TestimonialsClient({
                 placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label={t("searchPlaceholder")}
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -146,6 +147,7 @@ export function TestimonialsClient({
               <select
                 value={selectedTag || ""}
                 onChange={(e) => setSelectedTag(e.target.value || null)}
+                aria-label={t("allJobs")}
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">{t("allJobs")}</option>
@@ -167,6 +169,7 @@ export function TestimonialsClient({
                     e.target.value ? parseInt(e.target.value) : null,
                   )
                 }
+                aria-label={t("allRatings")}
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:border-[#00D9FF] transition-all appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">{t("allRatings")}</option>

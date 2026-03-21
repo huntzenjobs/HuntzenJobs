@@ -233,6 +233,7 @@ export function Sidebar({ className }: SidebarProps) {
                     }
                     setIsMobileMenuOpen(false);
                   }}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all relative group",
                     isActive
@@ -258,7 +259,7 @@ export function Sidebar({ className }: SidebarProps) {
                       "w-5 h-5 transition-all",
                       isActive
                         ? "text-[#00D9FF]"
-                        : "text-white/50 group-hover:text-[#00D9FF]",
+                        : "text-white/70 group-hover:text-[#00D9FF]",
                     )}
                   />
                   <span className="nav-label flex-1">{item.name}</span>
@@ -283,7 +284,7 @@ export function Sidebar({ className }: SidebarProps) {
               }}
               className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-white/70 hover:bg-white/8 hover:text-white w-full group"
             >
-              <Activity className="w-5 h-5 text-white/50 group-hover:text-[#00D9FF] transition-colors" />
+              <Activity className="w-5 h-5 text-white/70 group-hover:text-[#00D9FF] transition-colors" />
               <span className="nav-label flex-1 text-left">
                 {t("nav.myUsage")}
               </span>
@@ -348,7 +349,7 @@ export function Sidebar({ className }: SidebarProps) {
               href="/login"
               className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-white/70 hover:bg-white/8 hover:text-white w-full group"
             >
-              <LogIn className="w-5 h-5 text-white/50 group-hover:text-[#00D9FF] transition-colors" />
+              <LogIn className="w-5 h-5 text-white/70 group-hover:text-[#00D9FF] transition-colors" />
               <span className="nav-label flex-1 text-left">
                 {t("footer.login")}
               </span>

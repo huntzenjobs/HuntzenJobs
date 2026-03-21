@@ -515,13 +515,13 @@ export function CVUploadAsync({
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => (window.location.href = "/signup")}
+                onClick={() => router.push("/signup")}
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
               >
                 Créer un compte gratuit
               </button>
               <button
-                onClick={() => (window.location.href = "/pricing")}
+                onClick={() => router.push("/pricing")}
                 className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-orange-500 transition-all"
               >
                 Voir les plans payants

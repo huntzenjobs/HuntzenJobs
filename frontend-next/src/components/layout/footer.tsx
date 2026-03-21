@@ -45,7 +45,7 @@ export function Footer() {
                 href="https://linkedin.com/company/huntzenjobs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/50 hover:text-white transition-colors"
+                className="text-white/70 hover:text-white transition-colors"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-4 h-4" />
@@ -54,7 +54,7 @@ export function Footer() {
                 href="https://twitter.com/huntzenjobs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/50 hover:text-white transition-colors"
+                className="text-white/70 hover:text-white transition-colors"
                 aria-label="Twitter / X"
               >
                 <Twitter className="w-4 h-4" />
@@ -63,7 +63,7 @@ export function Footer() {
                 href="https://instagram.com/huntzenjobs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/50 hover:text-white transition-colors"
+                className="text-white/70 hover:text-white transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="w-4 h-4" />

@@ -35,16 +35,10 @@ export default async function LegalPage() {
             <div className="w-12 h-12 bg-[#00D9FF]/20 rounded-xl flex items-center justify-center">
               <Scale className="w-6 h-6 text-[#00D9FF]" />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black">
-              {t("title")}
-            </h1>
+            <h1 className="text-4xl sm:text-5xl font-black">{t("title")}</h1>
           </div>
-          <p className="text-xl text-white/80">
-            {t("subtitle")}
-          </p>
-          <p className="mt-3 text-sm text-white/50">
-            {t("lastUpdated")}
-          </p>
+          <p className="text-xl text-white/80">{t("subtitle")}</p>
+          <p className="mt-3 text-sm text-white/70">{t("lastUpdated")}</p>
         </div>
       </div>
 
@@ -75,20 +69,43 @@ export default async function LegalPage() {
           </h2>
           <div className="prose prose-gray max-w-none">
             {/* Static i18n content with trusted <strong> tags from translation files */}
-            <p className="text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: t("editor.intro") }} />
+            <p
+              className="text-gray-600 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: t("editor.intro") }}
+            />
             <div className="mt-4 p-6 bg-gray-50 rounded-xl border border-gray-200 space-y-2 text-gray-700">
-              <p><strong>{t("editor.companyName")}</strong> {t("editor.companyNameValue")}</p>
-              <p><strong>{t("editor.legalForm")}</strong> {t("editor.legalFormValue")}</p>
-              <p><strong>{t("editor.capital")}</strong> {t("editor.capitalValue")}</p>
-              <p><strong>{t("editor.address")}</strong> {t("editor.addressValue")}</p>
-              <p><strong>{t("editor.nipc")}</strong> {t("editor.nipcValue")}</p>
+              <p>
+                <strong>{t("editor.companyName")}</strong>{" "}
+                {t("editor.companyNameValue")}
+              </p>
+              <p>
+                <strong>{t("editor.legalForm")}</strong>{" "}
+                {t("editor.legalFormValue")}
+              </p>
+              <p>
+                <strong>{t("editor.capital")}</strong>{" "}
+                {t("editor.capitalValue")}
+              </p>
+              <p>
+                <strong>{t("editor.address")}</strong>{" "}
+                {t("editor.addressValue")}
+              </p>
+              <p>
+                <strong>{t("editor.nipc")}</strong> {t("editor.nipcValue")}
+              </p>
               <p>
                 <strong>{t("editor.email")}</strong>{" "}
-                <a href={`mailto:${t("editor.emailValue")}`} className="text-[#00D9FF] hover:underline">
+                <a
+                  href={`mailto:${t("editor.emailValue")}`}
+                  className="text-[#00D9FF] hover:underline"
+                >
                   {t("editor.emailValue")}
                 </a>
               </p>
-              <p><strong>{t("editor.director")}</strong> {t("editor.directorValue")}</p>
+              <p>
+                <strong>{t("editor.director")}</strong>{" "}
+                {t("editor.directorValue")}
+              </p>
             </div>
           </div>
         </section>
@@ -102,31 +119,58 @@ export default async function LegalPage() {
             <p>{t("hosting.intro")}</p>
             <div className="p-6 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
               <div>
-                <p className="font-semibold text-gray-800">{t("hosting.frontendLabel")}</p>
-                <p><strong>{t("hosting.frontendProvider")}</strong></p>
+                <p className="font-semibold text-gray-800">
+                  {t("hosting.frontendLabel")}
+                </p>
+                <p>
+                  <strong>{t("hosting.frontendProvider")}</strong>
+                </p>
                 <p>{t("hosting.frontendAddress")}</p>
                 <p>
-                  <a href={`https://${t("hosting.frontendUrl")}`} target="_blank" rel="noopener noreferrer" className="text-[#00D9FF] hover:underline">
+                  <a
+                    href={`https://${t("hosting.frontendUrl")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#00D9FF] hover:underline"
+                  >
                     {t("hosting.frontendUrl")}
                   </a>
                 </p>
               </div>
               <div className="border-t border-gray-200 pt-4">
-                <p className="font-semibold text-gray-800">{t("hosting.backendLabel")}</p>
-                <p><strong>{t("hosting.backendProvider")}</strong></p>
+                <p className="font-semibold text-gray-800">
+                  {t("hosting.backendLabel")}
+                </p>
+                <p>
+                  <strong>{t("hosting.backendProvider")}</strong>
+                </p>
                 <p>{t("hosting.backendAddress")}</p>
                 <p>
-                  <a href={`https://${t("hosting.backendUrl")}`} target="_blank" rel="noopener noreferrer" className="text-[#00D9FF] hover:underline">
+                  <a
+                    href={`https://${t("hosting.backendUrl")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#00D9FF] hover:underline"
+                  >
                     {t("hosting.backendUrl")}
                   </a>
                 </p>
               </div>
               <div className="border-t border-gray-200 pt-4">
-                <p className="font-semibold text-gray-800">{t("hosting.databaseLabel")}</p>
-                <p><strong>{t("hosting.databaseProvider")}</strong></p>
+                <p className="font-semibold text-gray-800">
+                  {t("hosting.databaseLabel")}
+                </p>
+                <p>
+                  <strong>{t("hosting.databaseProvider")}</strong>
+                </p>
                 <p>{t("hosting.databaseAddress")}</p>
                 <p>
-                  <a href={`https://${t("hosting.databaseUrl")}`} target="_blank" rel="noopener noreferrer" className="text-[#00D9FF] hover:underline">
+                  <a
+                    href={`https://${t("hosting.databaseUrl")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#00D9FF] hover:underline"
+                  >
                     {t("hosting.databaseUrl")}
                   </a>
                 </p>
@@ -165,14 +209,20 @@ export default async function LegalPage() {
           <div className="prose prose-gray max-w-none space-y-4 text-gray-600">
             <p>
               {t("personalData.content1")}{" "}
-              <Link href="/privacy" className="text-[#00D9FF] hover:underline font-medium">
+              <Link
+                href="/privacy"
+                className="text-[#00D9FF] hover:underline font-medium"
+              >
                 {t("personalData.privacyLink")}
               </Link>
               {t("personalData.content2")}
             </p>
             <p>
               {t("personalData.content3")}{" "}
-              <a href={`mailto:${t("personalData.privacyEmail")}`} className="text-[#00D9FF] hover:underline">
+              <a
+                href={`mailto:${t("personalData.privacyEmail")}`}
+                className="text-[#00D9FF] hover:underline"
+              >
                 {t("personalData.privacyEmail")}
               </a>
               .
@@ -201,13 +251,19 @@ export default async function LegalPage() {
             <div className="p-6 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
               <p>
                 <strong>{t("contactSection.emailLabel")}</strong>{" "}
-                <a href={`mailto:${t("contactSection.emailValue")}`} className="text-[#00D9FF] hover:underline">
+                <a
+                  href={`mailto:${t("contactSection.emailValue")}`}
+                  className="text-[#00D9FF] hover:underline"
+                >
                   {t("contactSection.emailValue")}
                 </a>
               </p>
               <p>
                 <strong>{t("contactSection.formLabel")}</strong>{" "}
-                <Link href="/contact" className="text-[#00D9FF] hover:underline">
+                <Link
+                  href="/contact"
+                  className="text-[#00D9FF] hover:underline"
+                >
                   {t("contactSection.formValue")}
                 </Link>
               </p>

@@ -26,6 +26,18 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
 import { DocumentEditDialog } from "@/components/documents/document-edit-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import Link from "next/link";
 
 type Filter = "all" | "cv-only" | "cv-lm";
 
@@ -106,6 +118,7 @@ export default function DocumentsPage() {
   return (
     <>
       <div className="p-6 max-w-3xl mx-auto space-y-8">
+        <h1 className="sr-only">Mes documents</h1>
         {/* ── Section Profils CV ── */}
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -316,14 +329,35 @@ function ProfileCard({
           <Pencil className="h-3.5 w-3.5 mr-1.5" />
           Modifier
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-gray-300 hover:text-red-500 hover:bg-red-50"
-          onClick={onDelete}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-300 hover:text-red-500 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer ce profil CV ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est irréversible. Le profil sera définitivement
+                supprimé.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
@@ -347,7 +381,7 @@ function EmptyState({
       <p className="text-xs text-gray-400 mb-4">{t("emptyStateSubtitle")}</p>
       {!hasDocuments && (
         <Button variant="outline" size="sm" asChild>
-          <a href="/jobs">Parcourir les offres</a>
+          <Link href="/jobs">Parcourir les offres</Link>
         </Button>
       )}
     </div>
@@ -449,15 +483,36 @@ function DocumentCard({
             <Pencil className="h-4 w-4" />
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-gray-300 hover:text-red-500 hover:bg-red-50"
-          onClick={onDelete}
-          title={t("deleteButton")}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-300 hover:text-red-500 hover:bg-red-50"
+              title={t("deleteButton")}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer ce document ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est irréversible. Le document sera définitivement
+                supprimé.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

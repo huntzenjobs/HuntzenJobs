@@ -148,6 +148,7 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={tSupport("chatbotQuestion")}
+            aria-label={tSupport("chatbotQuestion")}
             maxLength={500}
             disabled={isLoading}
             className="flex-1 text-sm bg-muted/50 rounded-lg px-3 py-2 border border-border focus:outline-none focus:ring-1 focus:ring-huntzen-blue disabled:opacity-50"

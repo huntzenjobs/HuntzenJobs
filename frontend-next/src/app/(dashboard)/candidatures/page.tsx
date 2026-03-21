@@ -27,9 +27,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
@@ -256,12 +268,12 @@ export default function CandidaturesPage() {
               : t("empty.filtered")}
           </p>
           {applications.length === 0 && (
-            <a
+            <Link
               href="/jobs"
               className="px-5 py-2.5 bg-[#00D9FF] text-white font-semibold rounded-xl text-sm hover:bg-[#00C4EA] transition-colors"
             >
               {t("empty.searchCta")}
-            </a>
+            </Link>
           )}
         </div>
       ) : (
@@ -342,13 +354,37 @@ export default function CandidaturesPage() {
                     <ExternalLink className="w-4 h-4" />
                   </a>
 
-                  <button
-                    onClick={() => deleteApplication(app.id)}
-                    className="p-2 text-slate-300 hover:text-red-400 transition-colors"
-                    title={t("actions.delete")}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="p-2 text-slate-300 hover:text-red-400 transition-colors"
+                        title={t("actions.delete")}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {t("confirmDelete.title")}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("confirmDelete.description")}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>
+                          {t("confirmDelete.cancel")}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteApplication(app.id)}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          {t("confirmDelete.confirm")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </motion.div>
             );

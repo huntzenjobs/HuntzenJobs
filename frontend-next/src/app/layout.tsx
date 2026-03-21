@@ -81,7 +81,9 @@ export default async function RootLayout({
         <SiteBanner />
         <SkipLink />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers initialUser={user}>{children}</Providers>
+          <Providers initialUser={user}>
+            <div id="main-content">{children}</div>
+          </Providers>
           <CookieBanner />
         </NextIntlClientProvider>
       </body>

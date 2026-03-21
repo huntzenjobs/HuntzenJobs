@@ -290,9 +290,11 @@ export const shouldEnableForUser = (
 export const logFeatureFlags = (): void => {
   if (!featureFlags.enableDebugMode) return;
 
-  console.group("🚩 Feature Flags");
-  console.table(featureFlags);
-  console.groupEnd();
+  if (process.env.NODE_ENV === "development") {
+    console.group("Feature Flags");
+    console.table(featureFlags);
+    console.groupEnd();
+  }
 };
 
 /**
@@ -304,21 +306,23 @@ export const logRolloutConfig = (userId: string): void => {
 
   const phase = getCurrentPhase();
 
-  console.group(`📊 Rollout Configuration (Phase: ${phase})`);
-  console.log("User ID:", userId);
-  console.log(
-    "Jobs V2:",
-    shouldEnableForUser(userId, "jobsV2") ? "✅ Enabled" : "❌ Disabled",
-  );
-  console.log(
-    "Coach V2:",
-    shouldEnableForUser(userId, "coachV2") ? "✅ Enabled" : "❌ Disabled",
-  );
-  console.log(
-    "CV Analysis V2:",
-    shouldEnableForUser(userId, "cvAnalysisV2") ? "✅ Enabled" : "❌ Disabled",
-  );
-  console.groupEnd();
+  if (process.env.NODE_ENV === "development") {
+    console.group(`Rollout Configuration (Phase: ${phase})`);
+    console.log("User ID:", userId);
+    console.log(
+      "Jobs V2:",
+      shouldEnableForUser(userId, "jobsV2") ? "Enabled" : "Disabled",
+    );
+    console.log(
+      "Coach V2:",
+      shouldEnableForUser(userId, "coachV2") ? "Enabled" : "Disabled",
+    );
+    console.log(
+      "CV Analysis V2:",
+      shouldEnableForUser(userId, "cvAnalysisV2") ? "Enabled" : "Disabled",
+    );
+    console.groupEnd();
+  }
 };
 
 // ============================================================================

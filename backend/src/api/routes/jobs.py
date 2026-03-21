@@ -4,6 +4,8 @@ Job Search API Routes
 Endpoints for AI-powered job searching.
 """
 
+import hashlib
+import json
 import logging
 import re
 
@@ -15,8 +17,11 @@ from pydantic import BaseModel, Field
 from src.api.deps import ScoutAgentDep, get_supabase_client, get_user_id_from_token
 from src.api.middleware import limiter
 from src.models.schemas import Job, JobSearchRequest, JobSearchResponse, SearchMetadata
+from src.utils.cache import get_redis
 
 logger = logging.getLogger(__name__)
+
+JOBS_CACHE_TTL = 7200  # 2 hours
 
 router = APIRouter()
 
@@ -192,6 +197,68 @@ async def search_jobs(
     if user_id:
         _check_job_search_quota(user_id)
 
+    # ── Cache Redis : clé basée sur les paramètres de recherche ──
+    cache_key_data = json.dumps({
+        "job_title": data.job_title,
+        "country_code": data.country_code,
+        "city": data.city,
+        "contract_type": data.contract_type,
+        "max_results": data.max_results,
+        "max_days": data.max_days,
+        "radius_km": data.radius_km,
+        "include_remote": data.include_remote,
+    }, sort_keys=True, default=str)
+    cache_key = f"jobs:search:{hashlib.md5(cache_key_data.encode()).hexdigest()}"
+
+    redis = await get_redis()
+    cached_jobs = None
+    if redis:
+        try:
+            raw = await redis.get(cache_key)
+            if raw:
+                import orjson
+                cached_jobs = orjson.loads(raw)
+                logger.debug(f"Cache HIT for job search: {cache_key[:40]}")
+        except Exception as e:
+            logger.warning(f"[cache] job search GET error: {e}")
+
+    if cached_jobs is not None:
+        # Cache hit : on utilise les offres cachées, mais on regénère les insights
+        jobs = [
+            Job(
+                id=j.get("id", ""),
+                title=j.get("title", ""),
+                company=j.get("company", ""),
+                location=j.get("location", ""),
+                description=j.get("description"),
+                url=j.get("url"),
+                salary=j.get("salary"),
+                contract_type=j.get("contract_type"),
+                source=j.get("source", "unknown"),
+                posted_date=j.get("posted_date"),
+                score=j.get("score", 0.5),
+            )
+            for j in cached_jobs.get("jobs", [])
+        ]
+        metadata = cached_jobs.get("metadata", {})
+        response = JobSearchResponse(
+            success=True,
+            jobs=jobs,
+            metadata=SearchMetadata(
+                original_query=metadata.get("original_query", data.job_title),
+                refined_query=metadata.get("refined_query"),
+                total_raw=metadata.get("total_raw", 0),
+                total_deduplicated=metadata.get("total_deduplicated", len(jobs)),
+                sources_used=metadata.get("sources_used", []),
+                search_time_ms=metadata.get("search_time_ms", 0),
+            ),
+            ai_insights=None,
+        )
+        if user_id:
+            _increment_job_search_quota(user_id)
+        return response
+
+    # ── Cache MISS : exécuter la recherche ──
     result = await agent.run(
         job_title=data.job_title,
         country_code=data.country_code,
@@ -209,6 +276,19 @@ async def search_jobs(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "Search failed"),
         )
+
+    # Stocker en cache les offres (pas les insights IA)
+    if redis and result.get("jobs"):
+        try:
+            import orjson
+            cache_payload = orjson.dumps({
+                "jobs": result.get("jobs", []),
+                "metadata": result.get("metadata", {}),
+            }, option=orjson.OPT_NON_STR_KEYS).decode()
+            await redis.setex(cache_key, JOBS_CACHE_TTL, cache_payload)
+            logger.debug(f"Cached job search results: {cache_key[:40]} (TTL: {JOBS_CACHE_TTL}s)")
+        except Exception as e:
+            logger.warning(f"[cache] job search SET error: {e}")
 
     # Convert to response model
     jobs = [

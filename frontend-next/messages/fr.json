@@ -1,4 +1,9 @@
 {
+  "notFound": {
+    "title": "404",
+    "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
+    "backHome": "Retour à l'accueil"
+  },
   "nav": {
     "jobs": "Recherche d'emploi",
     "salons": "Salons & Forums",
@@ -1847,6 +1852,12 @@
     "actions": {
       "viewOffer": "Voir l'offre",
       "delete": "Supprimer"
+    },
+    "confirmDelete": {
+      "title": "Supprimer cette candidature ?",
+      "description": "Cette action est irréversible. La candidature sera supprimée de votre suivi.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
     }
   },
   "referral": {

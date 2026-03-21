@@ -244,6 +244,92 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "footer": "If you have further questions, feel free to open a new ticket from your HuntZen account.",
         },
     },
+    "payment_confirmation": {
+        "fr": {
+            "subject": "Paiement confirme - HuntZen",
+            "header": "Paiement confirme !",
+            "greeting": "Bonjour",
+            "intro": "Votre paiement a ete traite avec succes.",
+            "plan_label": "Plan :",
+            "amount_label": "Montant :",
+            "date_label": "Date :",
+            "cta": "Acceder a mon espace",
+            "footer": "Merci de votre confiance !",
+        },
+        "en": {
+            "subject": "Payment confirmed - HuntZen",
+            "header": "Payment confirmed!",
+            "greeting": "Hello",
+            "intro": "Your payment has been processed successfully.",
+            "plan_label": "Plan:",
+            "amount_label": "Amount:",
+            "date_label": "Date:",
+            "cta": "Go to my dashboard",
+            "footer": "Thank you for your trust!",
+        },
+    },
+    "payment_failed": {
+        "fr": {
+            "subject": "Paiement echoue - Action requise - HuntZen",
+            "header": "Paiement echoue",
+            "greeting": "Bonjour",
+            "intro": "Votre dernier paiement n'a pas pu etre traite.",
+            "action": "Pour conserver votre abonnement, veuillez mettre a jour votre moyen de paiement.",
+            "cta": "Mettre a jour mon paiement",
+            "footer": "Si vous avez des questions, contactez-nous a",
+        },
+        "en": {
+            "subject": "Payment failed - Action required - HuntZen",
+            "header": "Payment failed",
+            "greeting": "Hello",
+            "intro": "Your latest payment could not be processed.",
+            "action": "To keep your subscription, please update your payment method.",
+            "cta": "Update my payment",
+            "footer": "If you have any questions, contact us at",
+        },
+    },
+    "contact_confirmation": {
+        "fr": {
+            "subject": "Nous avons bien recu votre message - HuntZen",
+            "header": "Message bien recu !",
+            "greeting": "Bonjour",
+            "body": "Nous avons bien recu votre message et notre equipe vous repondra sous 48h en semaine.",
+            "thanks": "Merci de votre confiance !",
+            "cta": "Retour sur HuntZen",
+        },
+        "en": {
+            "subject": "We received your message - HuntZen",
+            "header": "Message received!",
+            "greeting": "Hello",
+            "body": "We have received your message and our team will respond within 48 hours on business days.",
+            "thanks": "Thank you for your trust!",
+            "cta": "Back to HuntZen",
+        },
+    },
+    "subscription_cancelled": {
+        "fr": {
+            "subject": "Confirmation d'annulation - HuntZen",
+            "header": "Abonnement annule",
+            "greeting": "Bonjour",
+            "intro": "Votre annulation a bien ete prise en compte.",
+            "plan_label": "Plan :",
+            "end_date_label": "Acces jusqu'au :",
+            "note": "Vous conservez l'acces a toutes les fonctionnalites de votre plan jusqu'a cette date.",
+            "cta": "Retour sur HuntZen",
+            "footer": "Vous pouvez vous reabonner a tout moment depuis votre espace.",
+        },
+        "en": {
+            "subject": "Cancellation confirmed - HuntZen",
+            "header": "Subscription cancelled",
+            "greeting": "Hello",
+            "intro": "Your cancellation has been confirmed.",
+            "plan_label": "Plan:",
+            "end_date_label": "Access until:",
+            "note": "You will keep access to all features of your plan until this date.",
+            "cta": "Back to HuntZen",
+            "footer": "You can resubscribe at any time from your dashboard.",
+        },
+    },
 }
 
 
@@ -800,6 +886,160 @@ def send_application_status_change(
         return False
 
 
+def send_payment_confirmation_email(
+    user_email: str,
+    plan_name: str,
+    amount: str,
+    language: str = "fr",
+) -> bool:
+    """Send payment confirmation email after successful Stripe checkout."""
+    try:
+        lang = _lang(language)
+        tr = _T["payment_confirmation"][lang]
+        frontend_url = settings.get_primary_frontend_url()
+        today = datetime.now().strftime("%d/%m/%Y")
+
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#16a34a,#15803d);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">{tr["header"]}</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>{tr["greeting"]},</p>
+                    <p>{tr["intro"]}</p>
+                    <div style="background:white;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #16a34a;">
+                        <p style="margin:6px 0;"><strong>{tr["plan_label"]}</strong> {plan_name}</p>
+                        <p style="margin:6px 0;"><strong>{tr["amount_label"]}</strong> {amount}</p>
+                        <p style="margin:6px 0;"><strong>{tr["date_label"]}</strong> {today}</p>
+                    </div>
+                    <p>{tr["footer"]}</p>
+                    <div style="text-align:center;margin-top:20px;">
+                        <a href="{frontend_url}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            {tr["cta"]}
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    &copy; 2026 HuntZen
+                </p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [user_email],
+            "subject": tr["subject"],
+            "html": html_content,
+        })
+        logger.info(f"Payment confirmation email sent to {user_email} (plan={plan_name})")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send payment confirmation to {user_email}: {e}")
+        return False
+
+
+def send_payment_failed_email(
+    user_email: str,
+    language: str = "fr",
+) -> bool:
+    """Send payment failure alert email."""
+    try:
+        lang = _lang(language)
+        tr = _T["payment_failed"][lang]
+        frontend_url = settings.get_primary_frontend_url()
+
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">{tr["header"]}</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>{tr["greeting"]},</p>
+                    <p>{tr["intro"]}</p>
+                    <p>{tr["action"]}</p>
+                    <div style="text-align:center;margin-top:20px;">
+                        <a href="{frontend_url}/profile" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#991b1b);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            {tr["cta"]}
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    {tr["footer"]} <a href="mailto:contact@huntzenjobs.com" style="color:#94a3b8;">contact@huntzenjobs.com</a>
+                    <br/>&copy; 2026 HuntZen
+                </p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [user_email],
+            "subject": tr["subject"],
+            "html": html_content,
+        })
+        logger.info(f"Payment failed email sent to {user_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send payment failed email to {user_email}: {e}")
+        return False
+
+
+def send_subscription_cancelled_email(
+    user_email: str,
+    plan_name: str,
+    end_date: str,
+    language: str = "fr",
+) -> bool:
+    """Send subscription cancellation confirmation email."""
+    try:
+        lang = _lang(language)
+        tr = _T["subscription_cancelled"][lang]
+        frontend_url = settings.get_primary_frontend_url()
+
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#6b7280,#4b5563);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">{tr["header"]}</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>{tr["greeting"]},</p>
+                    <p>{tr["intro"]}</p>
+                    <div style="background:white;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #6b7280;">
+                        <p style="margin:6px 0;"><strong>{tr["plan_label"]}</strong> {plan_name}</p>
+                        <p style="margin:6px 0;"><strong>{tr["end_date_label"]}</strong> {end_date}</p>
+                    </div>
+                    <p style="background:#fef3c7;padding:12px;border-radius:6px;">{tr["note"]}</p>
+                    <div style="text-align:center;margin-top:20px;">
+                        <a href="{frontend_url}" style="display:inline-block;background:linear-gradient(135deg,#00D9FF,#0EA5E9);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            {tr["cta"]}
+                        </a>
+                    </div>
+                    <p style="color:#64748b;font-size:13px;margin-top:16px;">{tr["footer"]}</p>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
+                    &copy; 2026 HuntZen
+                </p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [user_email],
+            "subject": tr["subject"],
+            "html": html_content,
+        })
+        logger.info(f"Subscription cancelled email sent to {user_email} (plan={plan_name})")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send cancellation email to {user_email}: {e}")
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Admin-only email functions (no language param — always FR)
 # ---------------------------------------------------------------------------
@@ -1048,9 +1288,11 @@ def send_support_ticket_reply(
 # ---------------------------------------------------------------------------
 
 
-def send_contact_confirmation(to_email: str, full_name: str) -> bool:
+def send_contact_confirmation(to_email: str, full_name: str, language: str = "fr") -> bool:
     """Send a short acknowledgement to the person who submitted the contact form."""
     try:
+        lang = _lang(language)
+        tr = _T["contact_confirmation"][lang]
         frontend_url = settings.get_primary_frontend_url()
         name = full_name or "there"
 
@@ -1059,15 +1301,15 @@ def send_contact_confirmation(to_email: str, full_name: str) -> bool:
         <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
             <div style="max-width:600px;margin:0 auto;padding:20px;">
                 <div style="background:linear-gradient(135deg,#0D1F3C,#1a3a6b);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
-                    <h1 style="color:white;margin:0;font-size:22px;">Message bien recu !</h1>
+                    <h1 style="color:white;margin:0;font-size:22px;">{tr["header"]}</h1>
                 </div>
                 <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
-                    <p>Bonjour {name},</p>
-                    <p>Nous avons bien recu votre message et notre equipe vous repondra sous 48h en semaine.</p>
-                    <p>Merci de votre confiance !</p>
+                    <p>{tr["greeting"]} {name},</p>
+                    <p>{tr["body"]}</p>
+                    <p>{tr["thanks"]}</p>
                     <div style="text-align:center;margin-top:24px;">
                         <a href="{frontend_url}" style="display:inline-block;background:linear-gradient(135deg,#00D9FF,#0EA5E9);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
-                            Retour sur HuntZen
+                            {tr["cta"]}
                         </a>
                     </div>
                 </div>
@@ -1081,7 +1323,7 @@ def send_contact_confirmation(to_email: str, full_name: str) -> bool:
         resend.Emails.send({
             "from": settings.from_email,
             "to": [to_email],
-            "subject": "Nous avons bien recu votre message - HuntZen",
+            "subject": tr["subject"],
             "html": html_content,
         })
         logger.info(f"Contact confirmation sent to {to_email}")

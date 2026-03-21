@@ -628,7 +628,7 @@ export default function AssistantPage() {
             )}
           </AnimatePresence>
 
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="p-6 space-y-4" aria-live="polite">
             {/* Welcome screen - Always visible but compact when there are messages */}
             {showWelcome ? (
               <motion.div

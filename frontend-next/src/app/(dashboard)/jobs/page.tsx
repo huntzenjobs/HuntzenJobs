@@ -2027,6 +2027,7 @@ export default function JobsPage() {
             )}
 
             <div
+              aria-live="polite"
               className={`grid gap-6 auto-rows-fr ${
                 featureFlags.useJobsV2
                   ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"

@@ -174,7 +174,7 @@ export function BotSelector({
               <Crown className="w-4 h-4 text-amber-400" />
             )}
           </div>
-          <p className="text-xs text-white/50 truncate">
+          <p className="text-xs text-white/70 truncate">
             {currentConfig.description}
           </p>
         </div>
@@ -182,7 +182,7 @@ export function BotSelector({
         {/* Flèche dropdown */}
         <ChevronDown
           className={cn(
-            "w-5 h-5 text-white/50 transition-transform shrink-0",
+            "w-5 h-5 text-white/70 transition-transform shrink-0",
             isOpen && "rotate-180",
           )}
         />

@@ -736,7 +736,7 @@ export default function PricingPage() {
               </p>
             </div>
             <hr className="border-white/10 mb-8" />
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-xs sm:text-sm">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/70 text-xs sm:text-sm">
               <p>
                 &copy; {new Date().getFullYear()} HuntZen.{" "}
                 {tFooter("copyright")}

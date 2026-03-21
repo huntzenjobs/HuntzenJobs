@@ -88,9 +88,9 @@ export default function ContactPage() {
               <div className="w-10 h-10 bg-[#00D9FF]/10 rounded-xl flex items-center justify-center mb-4">
                 <Mail className="w-5 h-5 text-[#00D9FF]" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">
+              <h2 className="font-bold text-gray-900 mb-2">
                 {t("directEmail")}
-              </h3>
+              </h2>
               <p className="text-sm text-gray-600 mb-3">{t("urgentRequest")}</p>
               <a
                 href="mailto:support@huntzenjobs.com"
@@ -104,9 +104,9 @@ export default function ContactPage() {
               <div className="w-10 h-10 bg-[#00D9FF]/10 rounded-xl flex items-center justify-center mb-4">
                 <Clock className="w-5 h-5 text-[#00D9FF]" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">
+              <h2 className="font-bold text-gray-900 mb-2">
                 {t("responseTime")}
-              </h3>
+              </h2>
               <p className="text-sm text-gray-600">
                 {t("responseDescription")}
               </p>
@@ -114,9 +114,9 @@ export default function ContactPage() {
             </div>
 
             <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-3">
+              <h2 className="font-bold text-gray-900 mb-3">
                 {t("usefulLinks")}
-              </h3>
+              </h2>
               <div className="space-y-2">
                 {[
                   { href: "/faq", label: t("linkFaq") },

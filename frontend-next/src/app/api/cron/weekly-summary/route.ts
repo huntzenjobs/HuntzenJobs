@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const CRON_SECRET = process.env.CRON_SECRET || "";
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -33,17 +34,33 @@ export async function GET(request: Request) {
       try {
         await fetch(`${BACKEND_URL}/api/notifications/send-weekly-summary`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${CRON_SECRET}`,
+          },
           body: JSON.stringify({ user_id: pref.user_id }),
         });
         sent++;
-      } catch {}
+      } catch (error) {
+        console.error(
+          "[Cron] weekly-summary: failed for user",
+          pref.user_id,
+          error,
+        );
+      }
     }
 
     console.log(`[Cron] weekly-summary: sent to ${sent} users`);
-    return NextResponse.json({ success: true, sent, timestamp: new Date().toISOString() });
+    return NextResponse.json({
+      success: true,
+      sent,
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
     console.error("[Cron] weekly-summary error:", error);
-    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: String(error) },
+      { status: 500 },
+    );
   }
 }

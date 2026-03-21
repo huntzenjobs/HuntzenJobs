@@ -21,11 +21,10 @@ from datetime import datetime, timezone
 from structlog import get_logger
 from fastapi import HTTPException
 from supabase import create_client, Client
-
-logger = get_logger(__name__)
-
 from src.services.user_events import log_event
 from src.services.admin_alerts import send_admin_alert
+
+logger = get_logger(__name__)
 
 async def invalidate_user_quota_cache(user_id: str) -> bool:
     """Invalidate Redis auth_me cache for a user so /api/auth/me returns fresh data."""
@@ -39,12 +38,23 @@ async def invalidate_user_quota_cache(user_id: str) -> bool:
         logger.warning(f"[cache] invalidate_user_quota_cache failed for {user_id}: {e}")
     return False
 
-# Import email service for recruiter confirmations
+# Import email service for recruiter confirmations and payment emails
 try:
-    from src.services.email import send_recruiter_request_confirmation
+    from src.services.email import (
+        send_recruiter_request_confirmation,
+        send_payment_confirmation_email,
+        send_payment_failed_email,
+        send_subscription_cancelled_email,
+    )
 except ImportError:
-    logger.warning("Could not import send_recruiter_request_confirmation - email notifications disabled")
+    logger.warning("Could not import email functions - email notifications disabled")
     def send_recruiter_request_confirmation(*args, **kwargs):
+        logger.warning("Email notification skipped (service not available)")
+    def send_payment_confirmation_email(*args, **kwargs):
+        logger.warning("Email notification skipped (service not available)")
+    def send_payment_failed_email(*args, **kwargs):
+        logger.warning("Email notification skipped (service not available)")
+    def send_subscription_cancelled_email(*args, **kwargs):
         logger.warning("Email notification skipped (service not available)")
 
 # ============================================
@@ -649,15 +659,28 @@ async def handle_checkout_completed(session: Dict[str, Any]):
             logger.info(f"Subscription created for user {user_id}: {plan_name}")
 
 
-        # Tracking événement paiement
+        # Email de confirmation de paiement
         amount_str = ""
         try:
-            import stripe as stripe_lib
-            sub = stripe_lib.Subscription.retrieve(stripe_subscription_id)
-            amount_cents = sub["items"]["data"][0]["price"].get("unit_amount", 0)
+            amount_cents = stripe_subscription["items"]["data"][0]["price"].get("unit_amount", 0)
             amount_str = f" ({amount_cents // 100}€/mois)" if amount_cents else ""
-        except Exception:
-            pass
+            if amount_cents:
+                user_email = session.get("customer_email") or ""
+                if not user_email:
+                    try:
+                        cust = stripe.Customer.retrieve(stripe_customer_id)
+                        user_email = cust.get("email", "")
+                    except Exception:
+                        pass
+                if user_email:
+                    amount_display = f"{amount_cents / 100:.2f} EUR"
+                    send_payment_confirmation_email(
+                        user_email=user_email,
+                        plan_name=plan_name,
+                        amount=amount_display,
+                    )
+        except Exception as email_err:
+            logger.warning(f"[WEBHOOK] Payment confirmation email failed (non-fatal): {email_err}")
         log_event(
             supabase_client,
             event_name="subscription_created",
@@ -739,6 +762,7 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
         }
 
         # Resolve plan_id from the new price ID (handles upgrades/downgrades via Subscription.modify)
+        price_row = None
         try:
             price_row = supabase_client.table("stripe_prices")\
                 .select("plan_id")\
@@ -766,6 +790,36 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
         if user_subscription.data:
             user_id = user_subscription.data["user_id"]
             await invalidate_user_quota_cache(user_id)
+
+            # Email d'annulation si cancel_at_period_end vient de passer a True
+            if subscription.get("cancel_at_period_end", False):
+                try:
+                    customer_id = subscription.get("customer")
+                    if customer_id:
+                        cust = stripe.Customer.retrieve(customer_id)
+                        user_email = cust.get("email", "")
+                        if user_email:
+                            # Resoudre le nom du plan
+                            plan_display = "Pro"
+                            if price_row and price_row.data and price_row.data.get("plan_id"):
+                                plan_row = supabase_client.table("subscription_plans") \
+                                    .select("display_name") \
+                                    .eq("id", price_row.data["plan_id"]) \
+                                    .maybe_single() \
+                                    .execute()
+                                if plan_row.data:
+                                    plan_display = plan_row.data.get("display_name", plan_display)
+                            period_end = subscription.get("current_period_end", 0)
+                            end_date = datetime.fromtimestamp(
+                                period_end, tz=timezone.utc
+                            ).strftime("%d/%m/%Y") if period_end else ""
+                            send_subscription_cancelled_email(
+                                user_email=user_email,
+                                plan_name=plan_display,
+                                end_date=end_date,
+                            )
+                except Exception as email_err:
+                    logger.warning(f"[WEBHOOK] Cancellation email error (non-fatal): {email_err}")
 
         logger.info(f"Subscription updated: {stripe_subscription_id}")
 
@@ -848,6 +902,17 @@ async def handle_payment_failed(invoice: Dict[str, Any]):
                     title="Paiement échoué",
                     body="Votre paiement a échoué. Veuillez mettre à jour votre moyen de paiement pour conserver votre abonnement.",
                 )
+
+                # Email de paiement echoue
+                try:
+                    customer_id = invoice.get("customer")
+                    if customer_id:
+                        cust = stripe.Customer.retrieve(customer_id)
+                        user_email = cust.get("email", "")
+                        if user_email:
+                            send_payment_failed_email(user_email=user_email)
+                except Exception as email_err:
+                    logger.warning(f"[WEBHOOK] Payment failed email error (non-fatal): {email_err}")
 
         logger.info(f"Subscription marked as past_due: {stripe_subscription_id}")
 
