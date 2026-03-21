@@ -1,11 +1,13 @@
 "use client";
 
 import Script from "next/script";
+import { useTranslations } from "next-intl";
 import { buildFaqCategories } from "./faq-data";
 import { usePlansConfig } from "@/hooks/use-plans-config";
 import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 
 export function FAQSchema() {
+  const tData = useTranslations("faqData");
   const { getPlan, formatPrice } = usePlansConfig();
 
   const proPlan = getPlan("pro");
@@ -14,7 +16,7 @@ export function FAQSchema() {
     : "...";
   const freeCvLimit = PLAN_LIMITS.free.cv_analyses_per_day;
 
-  const faqCategories = buildFaqCategories({ proPrice, freeCvLimit });
+  const faqCategories = buildFaqCategories({ proPrice, freeCvLimit }, tData);
 
   const mainEntity = [];
   for (const category of faqCategories) {

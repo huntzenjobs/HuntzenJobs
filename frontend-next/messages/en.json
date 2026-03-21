@@ -1536,6 +1536,7 @@
     "companyUnspecified": "Company not specified.",
     "jobDescription": "Position Description",
     "keyInfo": "Key Information",
+    "contractLabel": "Contract",
     "salary": "Remuneration",
     "company": "Company",
     "location": "Location",
@@ -1543,8 +1544,17 @@
     "findRecruiter": "Find Recruiter",
     "generateDocuments": "Generate adapted CVs + letters",
     "notAvailable": "Not specified",
+    "applyDirect": "Apply directly",
     "viewOffer": "View Offering",
     "truncatedDescription": "Click \"View offer\" to access the full job description.",
+    "relativeDate": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{count} days ago",
+      "weeksAgo_one": "{count} week ago",
+      "weeksAgo_other": "{count} weeks ago",
+      "monthsAgo": "{count} months ago"
+    },
     "findInternalContact": "Find an internal contact",
     "insiderTitle": "Internal contacts at {company}",
     "insiderSubtitle": "Find real people to contact on LinkedIn to maximize your chances",
@@ -2509,5 +2519,69 @@
     "privacy": "Privacy",
     "terms": "Terms",
     "contact": "Contact"
+  },
+  "faqData": {
+    "categories": {
+      "general": {
+        "title": "HuntZen Jobs - General",
+        "q1": "What is HuntZen Jobs?",
+        "a1": "HuntZen Jobs is an innovative job search assistance platform in France. HuntZen combines artificial intelligence, ATS CV analysis, and personalized coaching to help you find the ideal job. With thousands of job listings updated daily, HuntZen Jobs transforms your job search into a real success.",
+        "q2": "How does HuntZen Jobs work?",
+        "a2": "HuntZen Jobs uses AI to match your profile with the best job offers. Upload your CV to HuntZen, our algorithm analyzes your profile and skills, then suggests perfectly suited job offers. HuntZen Jobs also optimizes your CV for recruiters' ATS systems.",
+        "q3": "Is HuntZen Jobs free?",
+        "a3": "Yes! HuntZen Jobs offers a free plan with {freeCvLimit} CV analysis/analyses per day and access to job listings. To unlock all HuntZen features (unlimited CV analyses, personalized coaching, custom job alerts), upgrade to the HuntZen Jobs Pro plan for just {proPrice}.",
+        "q4": "Why choose HuntZen Jobs over Indeed or LinkedIn?",
+        "a4": "Unlike Indeed or LinkedIn, HuntZen Jobs offers you a personalized coach, a professional ATS CV analysis, and intelligent matching. HuntZen doesn't just list offers: we support you from A to Z. The majority of our HuntZen Jobs users receive more responses than with Indeed or LinkedIn."
+      },
+      "cvAts": {
+        "title": "CV Analysis & ATS",
+        "q1": "How does HuntZen Jobs CV analysis work?",
+        "a1": "HuntZen Jobs CV analysis scans your CV with the same ATS technology used by recruiters. HuntZen detects missing keywords, formatting errors, and gives you an ATS score. Then, HuntZen provides precise recommendations to improve your CV and pass ATS filters.",
+        "q2": "What is an ATS score on HuntZen Jobs?",
+        "a2": "The HuntZen Jobs ATS score measures the compatibility of your CV with recruiters' automatic sorting systems. A HuntZen score above 80% guarantees that your CV will be read by a human. HuntZen analyzes format, keywords, structure and readability to calculate this score.",
+        "q3": "How many CV analyses can I do with HuntZen Jobs?",
+        "a3": "With the free HuntZen Jobs plan, you get {freeCvLimit} CV analysis/analyses per day. With the HuntZen Pro plan, CV analyses are unlimited. HuntZen Pro also lets you compare multiple versions of your CV and track your ATS score progression.",
+        "q4": "Does HuntZen Jobs keep my CV confidential?",
+        "a4": "Absolutely! HuntZen Jobs respects the confidentiality of your data. Your CV is stored securely and encrypted. HuntZen NEVER shares your CV without your explicit authorization. You have full control over the visibility of your profile on HuntZen Jobs."
+      },
+      "jobSearch": {
+        "title": "Job Search",
+        "q1": "How many job offers does HuntZen Jobs provide?",
+        "a1": "HuntZen Jobs aggregates thousands of job offers in France, updated daily. HuntZen compiles offers from all major platforms (Indeed, LinkedIn, Welcome to the Jungle, etc.) and filters them to show you only the most relevant ones based on your profile.",
+        "q2": "How does HuntZen Jobs find the right job offers for me?",
+        "a2": "HuntZen Jobs uses a matching algorithm that analyzes your CV, skills, experience and preferences. Then, HuntZen compares this data with available job offers to suggest the best opportunities every day. HuntZen matching improves over time.",
+        "q3": "Can I apply directly through HuntZen Jobs?",
+        "a3": "HuntZen Jobs redirects you to the job listing website to apply directly. For each offer on HuntZen, you access the original application link. Before applying, HuntZen helps you optimize your CV and prepare your application to maximize your chances.",
+        "q4": "Does HuntZen Jobs offer job alerts?",
+        "a4": "Yes! With HuntZen Jobs Pro, you receive personalized job alerts by email. HuntZen notifies you as soon as a new offer matches your profile. Set your criteria (industry, location, salary) and let HuntZen analyze new offers for you."
+      },
+      "assistant": {
+        "title": "Career Assistant",
+        "q1": "What is the HuntZen Jobs Career Assistant?",
+        "a1": "The HuntZen Jobs Career Assistant is a personalized coach accessible from your dashboard. HuntZen helps you prepare for interviews, write cover letters, optimize your CV, and build your job search strategy. It's like having a dedicated career consultant on HuntZen.",
+        "q2": "How does HuntZen Jobs help me prepare for interviews?",
+        "a2": "HuntZen Jobs analyzes the job listing and your profile to generate personalized interview questions. HuntZen also provides sample answers, behavioral tips, and interview simulations. With HuntZen, you arrive prepared and confident for your interview.",
+        "q3": "Can HuntZen Jobs write my cover letter?",
+        "a3": "Yes! HuntZen Jobs generates personalized cover letters in seconds. Give HuntZen the job listing and your CV: your coach writes a professional, convincing, and tailored letter. You can then customize the text generated by HuntZen."
+      },
+      "pricing": {
+        "title": "Pricing & Subscription",
+        "q1": "How much does HuntZen Jobs cost?",
+        "a1": "HuntZen Jobs offers 2 plans: Free (0€/month) with {freeCvLimit} CV analysis/analyses per day and access to listings, and Pro ({proPrice}) with unlimited CV analyses, personal coach, job alerts, and personalized support. You can upgrade to Pro at any time from your account.",
+        "q2": "How do I cancel my HuntZen Jobs subscription?",
+        "a2": "You can cancel your HuntZen Jobs subscription at any time from your account. Go to Settings > Subscription > Cancel. No hidden fees: with HuntZen, you only pay until the end of your period. Your HuntZen Pro access remains active until expiration.",
+        "q3": "Can I get a refund if HuntZen Jobs doesn't suit me?",
+        "a3": "If you're not satisfied with your HuntZen Jobs subscription, contact our support at support@huntzenjobs.com. Each request is reviewed individually. You can also cancel your subscription at any time to stop being charged at the next billing date."
+      },
+      "support": {
+        "title": "Support & Help",
+        "q1": "How do I contact HuntZen Jobs support?",
+        "a1": "HuntZen Jobs support is available by email at support@huntzenjobs.com. Our HuntZen team responds within 48 hours on weekdays. For Pro users, HuntZen offers priority support.",
+        "q2": "Does HuntZen Jobs offer video tutorials?",
+        "a2": "HuntZen Jobs provides user guides directly in the interface. For any questions, our support team is available by email at support@huntzenjobs.com.",
+        "q3": "Can I use HuntZen Jobs on mobile?",
+        "a3": "Yes! HuntZen Jobs is 100% responsive and works perfectly on mobile and tablet through your browser. Access all features from your smartphone: job search, CV analysis, and personalized coaching."
+      }
+    }
   }
 }

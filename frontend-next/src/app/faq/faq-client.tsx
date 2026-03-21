@@ -17,6 +17,7 @@ import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 
 export function FAQClient() {
   const t = useTranslations("faq");
+  const tData = useTranslations("faqData");
   const { getPlan, formatPrice } = usePlansConfig();
   const [openIndex, setOpenIndex] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,7 +28,7 @@ export function FAQClient() {
     : "...";
   const freeCvLimit = PLAN_LIMITS.free.cv_analyses_per_day;
 
-  const faqCategories = buildFaqCategories({ proPrice, freeCvLimit });
+  const faqCategories = buildFaqCategories({ proPrice, freeCvLimit }, tData);
 
   // Filtrer les questions selon la recherche
   const filteredCategories = faqCategories

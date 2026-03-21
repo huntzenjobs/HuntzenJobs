@@ -5,14 +5,23 @@
  * Interface interactive avec filtres et animations
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Star, Search, Filter, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { Testimonial } from "./testimonials-data";
+import {
+  Testimonial,
+  testimonials as testimonialsFr,
+} from "./testimonials-data";
+import { testimonialsEn } from "./testimonials-data.en";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
 import { LandingHeader } from "@/components/landing-header";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+
+const testimonialsByLocale: Record<string, Testimonial[]> = {
+  fr: testimonialsFr,
+  en: testimonialsEn,
+};
 
 interface TestimonialsClientProps {
   testimonials: Testimonial[];
@@ -21,12 +30,18 @@ interface TestimonialsClientProps {
 }
 
 export function TestimonialsClient({
-  testimonials,
   averageRating,
   totalReviews,
 }: TestimonialsClientProps) {
   const t = useTranslations("testimonials");
+  const locale = useLocale();
   const richStrong = (chunks: React.ReactNode) => <strong>{chunks}</strong>;
+
+  // Sélectionner les témoignages selon la locale (fallback FR)
+  const localizedTestimonials = useMemo(
+    () => testimonialsByLocale[locale] ?? testimonialsFr,
+    [locale],
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -35,11 +50,11 @@ export function TestimonialsClient({
 
   // Extraire tous les tags uniques
   const allTags = Array.from(
-    new Set(testimonials.flatMap((t) => t.tags)),
+    new Set(localizedTestimonials.flatMap((item) => item.tags)),
   ).sort();
 
   // Filtrer les témoignages
-  const filteredTestimonials = testimonials.filter((testimonial) => {
+  const filteredTestimonials = localizedTestimonials.filter((testimonial) => {
     const matchesSearch =
       testimonial.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       testimonial.role.toLowerCase().includes(searchQuery.toLowerCase()) ||

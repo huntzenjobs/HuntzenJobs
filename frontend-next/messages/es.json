@@ -629,7 +629,21 @@
       "feature3Title": "Datos seguros",
       "feature3Desc": "Su información está protegida y es confidencial",
       "feature4Title": "Resultados instantáneos",
-      "feature4Desc": "Análisis rápidos y recomendaciones personalizadas"
+      "feature4Desc": "Análisis rápidos y recomendaciones personalizadas",
+      "heroTitle": "Tu carrera se merece lo mejor",
+      "heroSubtitle": "Únete a miles de candidatos que han transformado su búsqueda de empleo con HuntZen.",
+      "statCandidates": "Candidatos acompañados",
+      "statResponseRate": "Tasa de respuesta",
+      "statSupport": "Soporte",
+      "testimonial1Text": "¡He encontrado mi trabajo soñado en 3 semanas gracias a HuntZen!",
+      "testimonial1Author": "Sarah M.",
+      "testimonial1Role": "Desarrolladora Full-Stack",
+      "testimonial2Text": "El análisis de CV me ayudó a pasar los filtros ATS por primera vez.",
+      "testimonial2Author": "Thomas L.",
+      "testimonial2Role": "Jefe de proyecto",
+      "testimonial3Text": "Interfaz intuitiva y resultados impresionantes.",
+      "testimonial3Author": "Marie K.",
+      "testimonial3Role": "UX Designer"
     },
     "errors": {
       "emailNotConfirmed": "Por favor confirme su dirección de correo. Le enviamos un correo de confirmación al registrarse. Revise su bandeja de entrada (y spam).",
@@ -783,7 +797,16 @@
       "filterResults": "Filter results",
       "resetFilters": "Reset ({count})",
       "filterSource": "Source",
-      "filterContractType": "Contract type",
+      "filterContractType": "Tipo de contrato",
+      "contractType_cdi": "Indefinido (CDI)",
+      "contractType_cdd": "Temporal (CDD)",
+      "contractType_freelance": "Freelance",
+      "contractType_internship": "Prácticas",
+      "contractType_remote": "Remoto",
+      "contractType_permanent": "Permanente",
+      "contractType_contract": "Contrato",
+      "contractType_alternance": "Alternancia",
+      "contractType_apprentissage": "Aprendizaje",
       "filterPostDate": "Posted date",
       "filterDateToday": "Today",
       "filterDate3Days": "3 days",
@@ -1307,6 +1330,7 @@
     "companyUnspecified": "Empresa no especificada",
     "jobDescription": "Descripción del puesto",
     "keyInfo": "Información clave",
+    "contractLabel": "Contrato",
     "salary": "Remuneración",
     "company": "Empresas",
     "location": "Localización",
@@ -1314,8 +1338,17 @@
     "findRecruiter": "Encontrar al reclutador",
     "generateDocuments": "Generar CV + carta adaptados",
     "notAvailable": "No especificado",
-    "viewOffer": "Ver la oferta ..",
+    "applyDirect": "Postular directamente",
+    "viewOffer": "Ver la oferta",
     "truncatedDescription": "Haz clic en \"Ver la oferta\" para acceder a la descripción completa.",
+    "relativeDate": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "daysAgo": "Hace {count} días",
+      "weeksAgo_one": "Hace {count} semana",
+      "weeksAgo_other": "Hace {count} semanas",
+      "monthsAgo": "Hace {count} meses"
+    },
     "findInternalContact": "Encontrar un contacto interno",
     "insiderTitle": "Contactos internos en {company}",
     "insiderSubtitle": "Encuentra personas reales para contactar en LinkedIn y maximizar tus posibilidades",
@@ -1334,9 +1367,23 @@
   "searchForm": {
     "jobTitlePlaceholder": "Profesión o puesto buscado",
     "locationPlaceholder": "Ciudad, departamento o región (opcional)",
-    "jobTitleRequired": "Se requiere la profesión",
+    "jobTitleRequired": "Ingrese un puesto o seleccione un tipo de contrato",
     "countryRequired": "Se requiere el país",
-    "includeRemote": "Incluir jobs remote",
+    "includeRemote": "Incluir empleos remotos",
+    "contractTypeLabel": "Tipo de contrato",
+    "contractType_cdi": "Indefinido (CDI)",
+    "contractType_cdd": "Temporal (CDD)",
+    "contractType_cdi_partial": "Indefinido a tiempo parcial",
+    "contractType_cdd_partial": "Temporal a tiempo parcial",
+    "contractType_alternance": "Formación en alternancia",
+    "contractType_apprentissage": "Aprendizaje",
+    "contractType_freelance": "Freelance",
+    "contractType_internship": "Prácticas",
+    "contractType_remote": "Remoto",
+    "contractType_permanent": "Permanente",
+    "contractType_contract": "Contrato",
+    "jobTitleOptional": "Puesto (opcional con filtros)",
+    "searchingLabel": "Buscando...",
     "searchRadius": " Radio de búsqueda",
     "radiusKm": "{RADIUS} km",
     "searchesRemaining": "{count} búsqueda(es) restante(s) hoy",
@@ -1347,8 +1394,8 @@
     "noCountryFound": "No se ha encontrado ningún país",
     "noCityFound": "No se ha encontrado ninguna ciudad",
     "selectCountryFirst": "Primero selecciona un país",
-    "countryPlaceholder": "Country",
-    "selectCountryInList": "Please select a country from the list"
+    "countryPlaceholder": "País",
+    "selectCountryInList": "Seleccione un país de la lista"
   },
   "advancedFilters": {
     "title": "Filtros avanzados",
@@ -2472,5 +2519,69 @@
     "title": "404",
     "description": "La página que busca no existe o ha sido movida.",
     "backHome": "Volver al inicio"
+  },
+  "faqData": {
+    "categories": {
+      "general": {
+        "title": "HuntZen Jobs - General",
+        "q1": "¿Qué es HuntZen Jobs?",
+        "a1": "HuntZen Jobs es una innovadora plataforma de ayuda a la búsqueda de empleo en Francia. HuntZen combina inteligencia artificial, análisis de currículum ATS y coaching personalizado para ayudarte a encontrar el trabajo ideal. Con miles de ofertas de empleo actualizadas diariamente, HuntZen Jobs convierte tu búsqueda de empleo en un verdadero éxito.",
+        "q2": "¿Cómo funciona HuntZen Jobs?",
+        "a2": "HuntZen Jobs utiliza la IA para emparejar tu perfil con las mejores ofertas de empleo. Sube tu CV a HuntZen, nuestro algoritmo analiza tu perfil y tus habilidades, y luego te ofrece ofertas de trabajo perfectamente adaptadas. HuntZen Jobs también optimiza tu CV para los sistemas ATS de los reclutadores.",
+        "q3": "¿HuntZen Jobs es gratis?",
+        "a3": "¡Sí! HuntZen Jobs ofrece un plan gratuito con {freeCvLimit} análisis(s) CV por día y acceso a las ofertas de empleo. Para desbloquear todas las funciones de HuntZen (análisis de CV ilimitados, coaching personalizado, alertas de empleo personalizadas), cambie al plan Pro de HuntZen Jobs a solo {proPrice}.",
+        "q4": "¿Por qué elegir HuntZen Jobs en lugar de Indeed o LinkedIn?",
+        "a4": "A diferencia de Indeed o LinkedIn, HuntZen Jobs te ofrece un coach personalizado, análisis de currículum ATS profesional y emparejamiento inteligente. HuntZen no solo enumera ofertas: te acompañamos de la A a la Z. La mayoría de nuestros usuarios de HuntZen Jobs reciben más respuestas que con Indeed o LinkedIn."
+      },
+      "cvAts": {
+        "title": "Análisis CV & ATS",
+        "q1": "¿Cómo funciona el análisis de CV de HuntZen Jobs?",
+        "a1": "El análisis de CV de HuntZen Jobs escanea tu CV con la misma tecnología ATS que los reclutadores. HuntZen detecta las palabras clave que faltan, los errores de formato y te da una puntuación ATS. A continuación, HuntZen te proporciona recomendaciones precisas para mejorar tu CV y pasar los filtros ATS.",
+        "q2": "¿Qué es una puntuación ATS en HuntZen Jobs?",
+        "a2": "La puntuación ATS de HuntZen Jobs mide la compatibilidad de su CV con los sistemas de clasificación automática de los reclutadores. Una puntuación de HuntZen superior al 80% garantiza que su CV será leído por un humano. HuntZen analiza formato, palabras clave, estructura y legibilidad para calcular esta puntuación.",
+        "q3": "¿Cuántos análisis de CV puedo hacer con HuntZen Jobs?",
+        "a3": "Con el plan gratuito HuntZen Jobs, tienes derecho a {freeCvLimit} análisis(s) de CV por día. Con el plan Pro HuntZen, los análisis de CV son ilimitados. HuntZen Pro también le permite comparar varias versiones de su CV y seguir la evolución de su puntuación ATS.",
+        "q4": "¿HuntZen Jobs mantiene mi CV confidencial?",
+        "a4": "¡Por supuesto! HuntZen Jobs respeta la confidencialidad de sus datos. Su CV se almacena de forma segura y cifrada. HuntZen NUNCA comparte su CV sin su permiso explícito. Tienes el control total de la visibilidad de tu perfil en HuntZen Jobs."
+      },
+      "jobSearch": {
+        "title": "Shell para negocios",
+        "q1": "¿Cuántas ofertas de trabajo ofrece HuntZen Jobs?",
+        "a1": "HuntZen Jobs agrega miles de ofertas de empleo en Francia, actualizadas diariamente. HuntZen recopila las ofertas de todas las principales plataformas (Indeed, LinkedIn, Welcome to the Jungle, etc.) y las filtra para ofrecerte solo las más relevantes según tu perfil.",
+        "q2": "¿Cómo HuntZen Jobs encuentra las ofertas de empleo que me corresponden?",
+        "a2": "HuntZen Jobs utiliza un algoritmo de emparejamiento que analiza tu currículum, tus habilidades, tu experiencia y tus preferencias. A continuación, HuntZen compara estos datos con las ofertas de empleo disponibles para ofrecerte las mejores oportunidades cada día. El emparejamiento de HuntZen mejora a medida que avanza.",
+        "q3": "¿Puedo aplicar directamente a través de HuntZen Jobs?",
+        "a3": "HuntZen Jobs te redirige al sitio web de la oferta de empleo para aplicar directamente. Para cada oferta en HuntZen, accede al enlace de solicitud original. Antes de presentar tu candidatura, HuntZen te ayuda a optimizar tu currículum y a preparar tu candidatura para maximizar tus posibilidades.",
+        "q4": "¿HuntZen Jobs ofrece alertas de empleo?",
+        "a4": "¡Sí! Con HuntZen Jobs Pro, recibirá alertas de empleo personalizadas por correo electrónico. HuntZen te avisa cuando una nueva oferta coincide con tu perfil. Configura tus criterios (sector, ubicación, salario) y deja que HuntZen analice las nuevas ofertas por ti."
+      },
+      "assistant": {
+        "title": "Asistente de carrera",
+        "q1": "¿Qué es el Asistente de Carrera de HuntZen Jobs?",
+        "a1": "El Asistente de Carrera de HuntZen Jobs es un coach personalizado al que puedes acceder desde tu panel de control. HuntZen te ayuda a preparar tus entrevistas, redactar cartas de presentación, optimizar tu currículum y construir tu estrategia de búsqueda de empleo. Es como tener un consultor de carrera dedicado en HuntZen.",
+        "q2": "¿Cómo me ayuda HuntZen Jobs a preparar mis entrevistas?",
+        "a2": "HuntZen Jobs analiza la oferta de trabajo y tu perfil para generar preguntas de entrevista personalizadas. HuntZen también le proporciona respuestas típicas, consejos de comportamiento y simulaciones de entrevistas. Con HuntZen, llegas preparado(a) y seguro(a) en el mantenimiento.",
+        "q3": "¿Puede HuntZen Jobs escribir mi carta de presentación?",
+        "a3": "¡Sí! HuntZen Jobs genera cartas de presentación personalizadas en cuestión de segundos. Dale a HuntZen la oferta de trabajo y tu CV: tu entrenador redacta una carta profesional, convincente y adaptada. A continuación, puede personalizar el texto generado por HuntZen."
+      },
+      "pricing": {
+        "title": "Tarifas & Suscripción",
+        "q1": "¿Cuánto cuesta HuntZen Jobs?",
+        "a1": "HuntZen Jobs ofrece 2 planes: Gratis (0€/mes) con {freeCvLimit} análisis CV/día y acceso a ofertas, y Pro ({proPrice}) con análisis CV ilimitados, coach personal, alertas de empleo y acompañamiento personalizado. Puedes actualizar al plan Pro en cualquier momento desde tu cuenta.",
+        "q2": "¿Cómo cancelo mi suscripción a HuntZen Jobs?",
+        "a2": "Puedes cancelar tu suscripción a HuntZen Jobs en cualquier momento desde tu cuenta. Vaya a Configuración > Suscripción > Cancelar. Sin cargos ocultos: con HuntZen solo pagas hasta el final de tu periodo. Su acceso a HuntZen Pro permanecerá activo hasta que caduque.",
+        "q3": "¿Puedo obtener un reembolso si HuntZen Jobs no me conviene?",
+        "a3": "Si no está satisfecho con su suscripción a HuntZen Jobs, póngase en contacto con nuestro soporte en support@huntzenjobs.com. Cada solicitud se estudia individualmente. También puede cancelar su suscripción en cualquier momento para que no se le cobre en la próxima fecha de vencimiento."
+      },
+      "support": {
+        "title": "Soporte & Ayuda",
+        "q1": "¿Cómo puedo contactar con el soporte de HuntZen Jobs?",
+        "a1": "El soporte de HuntZen Jobs está disponible por correo electrónico en support@huntzenjobs.com. Nuestros equipos de HuntZen responden en menos de 48 horas entre semana. Para los usuarios Pro, HuntZen ofrece soporte prioritario.",
+        "q2": "¿HuntZen Jobs ofrece tutoriales en vídeo?",
+        "a2": "HuntZen Jobs proporciona guías de usuario directamente en la interfaz. Para cualquier pregunta, nuestro equipo de soporte está disponible por correo electrónico a support@huntzenjobs.com.",
+        "q3": "¿Puedo usar HuntZen Jobs en el móvil?",
+        "a3": "¡Sí! HuntZen Jobs es 100% adaptable y funciona perfectamente en dispositivos móviles y tabletas a través de su navegador. Accede a todas las funciones desde tu smartphone: búsqueda de empleo, análisis de CV y coaching personalizado."
+      }
+    }
   }
 }
