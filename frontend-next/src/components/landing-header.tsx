@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { Menu, X, User, ChevronDown } from "lucide-react";
 import { AdaptiveLogo } from "@/components/ui/adaptive-logo";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   LanguageSwitcher,
   LanguageSwitcherCompact,
@@ -271,10 +270,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             }
           />
 
-          {/* Theme Toggle — hidden on mobile to save space */}
-          <div className="hidden md:block">
-            <ThemeToggle />
-          </div>
+          {/* Theme Toggle — désactivé (dark mode non prêt) */}
 
           {user ? (
             <Link href="/jobs">

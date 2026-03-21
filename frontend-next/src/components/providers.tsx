@@ -44,6 +44,7 @@ export function Providers({
               <ThemeProvider
                 attribute="class"
                 defaultTheme="light"
+                forcedTheme="light"
                 enableSystem={false}
                 disableTransitionOnChange
               >
