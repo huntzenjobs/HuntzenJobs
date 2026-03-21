@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import SiteBanner from "@/components/layout/site-banner";
 import { CookieBanner } from "@/components/layout/cookie-banner";
+import { createClient } from "@/lib/supabase/server";
 
 // Metadata optimisées pour SEO 100/100
 export const metadata: Metadata = homeMetadata;
@@ -28,9 +29,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // NOTE: getUser() a été déplacé dans (dashboard)/layout.tsx pour ne pas
-  // forcer cache-control: private sur les pages publiques (landing, pricing, etc.).
-  // Le AuthProvider côté client fonctionne sans initialUser (fetch via getSession).
+  // Fetch user server-side to avoid hydration mismatch (React #418/#422)
+  // This is needed because AuthProvider renders differently with/without user
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const locale = await getLocale();
   const messages = await getMessages();
@@ -93,7 +97,7 @@ export default async function RootLayout({
         <SiteBanner />
         <SkipLink />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers>
+          <Providers initialUser={user}>
             <div id="main-content">{children}</div>
           </Providers>
           <CookieBanner />
