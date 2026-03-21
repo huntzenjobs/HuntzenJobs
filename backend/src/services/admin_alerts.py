@@ -40,7 +40,7 @@ ALERT_CATEGORIES = {
     "new_user": {
         "label": "Nouvel utilisateur",
         "description": "Email quand un nouvel utilisateur s'inscrit",
-        "default": False,
+        "default": True,
     },
     "new_contact": {
         "label": "Nouveau message contact",
@@ -60,7 +60,7 @@ ALERT_CATEGORIES = {
     "cv_analysis_completed": {
         "label": "Analyse CV terminee",
         "description": "Email quand une analyse CV est terminee (Modal Labs callback)",
-        "default": False,
+        "default": True,
     },
     "error": {
         "label": "Erreurs critiques",
