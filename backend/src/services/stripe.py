@@ -473,6 +473,8 @@ async def handle_stripe_webhook(
             await handle_subscription_deleted(event["data"]["object"])
         elif event_type == "invoice.payment_failed":
             await handle_payment_failed(event["data"]["object"])
+        elif event_type == "invoice.paid":
+            await handle_invoice_paid(event["data"]["object"])
         else:
             logger.info(f"[WEBHOOK] Unhandled webhook event: {event_type}")
 
@@ -916,11 +918,58 @@ async def handle_payment_failed(invoice: dict[str, Any]):
                 except Exception as email_err:
                     logger.warning(f"[WEBHOOK] Payment failed email error (non-fatal): {email_err}")
 
+                # Alerte admin paiement echoue
+                await send_admin_alert(
+                    subject=f"Paiement echoue — {invoice.get('customer_email', 'inconnu')}",
+                    body=(
+                        f"Client: {invoice.get('customer_email', 'inconnu')}\n"
+                        f"Montant: {invoice.get('amount_due', 0) / 100:.2f} EUR\n"
+                        f"Stripe sub: {stripe_subscription_id}"
+                    ),
+                    severity="error",
+                    skip_throttle=True,
+                )
+
         logger.info(f"Subscription marked as past_due: {stripe_subscription_id}")
 
     except Exception as e:
         logger.error(f"Failed to update subscription status: {e}")
         raise
+
+
+async def handle_invoice_paid(invoice: dict[str, Any]):
+    """Handle successful invoice payment — notify admin for every payment received."""
+    try:
+        amount = invoice.get("amount_paid", 0) / 100  # cents to euros
+        currency = (invoice.get("currency") or "eur").upper()
+        customer_email = invoice.get("customer_email", "inconnu")
+        billing_reason = invoice.get("billing_reason", "unknown")
+        subscription_id = invoice.get("subscription", "N/A")
+
+        # Only notify for subscription payments (not one-time)
+        if billing_reason in ("subscription_create", "subscription_cycle", "subscription_update"):
+            reason_label = {
+                "subscription_create": "Nouvel abonnement",
+                "subscription_cycle": "Renouvellement",
+                "subscription_update": "Changement de plan",
+            }.get(billing_reason, billing_reason)
+
+            await send_admin_alert(
+                subject=f"Paiement recu — {amount:.2f} {currency}",
+                body=(
+                    f"Type: {reason_label}\n"
+                    f"Montant: {amount:.2f} {currency}\n"
+                    f"Client: {customer_email}\n"
+                    f"Stripe sub: {subscription_id}\n"
+                    f"Invoice ID: {invoice.get('id', 'N/A')}"
+                ),
+                severity="info",
+                skip_throttle=True,
+            )
+            logger.info(f"[WEBHOOK] Invoice paid: {amount} {currency} from {customer_email} ({reason_label})")
+
+    except Exception as e:
+        logger.warning(f"[WEBHOOK] handle_invoice_paid non-fatal error: {e}")
 
 
 async def handle_recruiter_checkout(session: dict[str, Any]):
