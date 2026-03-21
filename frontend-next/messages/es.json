@@ -1937,6 +1937,12 @@
     "actions": {
       "viewOffer": "View offer",
       "delete": "Delete"
+    },
+    "confirmDelete": {
+      "title": "¿Eliminar esta candidatura?",
+      "description": "Esta acción es irreversible. La candidatura será eliminada de su seguimiento.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
     }
   },
   "referral": {
@@ -2461,5 +2467,10 @@
       "terms": "Terms of Service",
       "contact": "Contact"
     }
+  },
+  "notFound": {
+    "title": "404",
+    "description": "La página que busca no existe o ha sido movida.",
+    "backHome": "Volver al inicio"
   }
 }
