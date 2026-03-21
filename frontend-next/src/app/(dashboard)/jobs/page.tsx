@@ -626,6 +626,9 @@ export default function JobsPage() {
 
   // Effective contract type: prefer pre-search filter from SearchParams, fallback to page-level
   const effectiveContractType = jobSearchParams?.contractType || contractType;
+  const effectiveContractTypes = jobSearchParams?.contractTypes;
+  const effectiveWorkDays = jobSearchParams?.workDays;
+  const effectiveWorkSchedule = jobSearchParams?.workSchedule;
 
   // Search query with intelligent caching
   const searchQuery = useQuery({
@@ -636,14 +639,20 @@ export default function JobsPage() {
       jobSearchParams?.location,
       jobSearchParams?.includeRemote,
       effectiveContractType,
+      effectiveContractTypes,
+      effectiveWorkDays,
+      effectiveWorkSchedule,
       advancedFilters,
     ],
     queryFn: async () => {
       if (!jobSearchParams?.country) {
         throw new Error(t("error.fillRequired"));
       }
-      // query OR contractType must be provided
-      if (!jobSearchParams?.query.trim() && !effectiveContractType) {
+      // query OR contractType(s) must be provided
+      const hasContracts =
+        effectiveContractType ||
+        (effectiveContractTypes && effectiveContractTypes.length > 0);
+      if (!jobSearchParams?.query.trim() && !hasContracts) {
         throw new Error(t("error.fillRequired"));
       }
 
@@ -652,6 +661,9 @@ export default function JobsPage() {
         country_code: jobSearchParams.country,
         city: jobSearchParams.location,
         contract_type: effectiveContractType,
+        contract_types: effectiveContractTypes,
+        work_days: effectiveWorkDays,
+        work_schedule: effectiveWorkSchedule,
         includeRemote: jobSearchParams.includeRemote,
         // Advanced filters (Premium feature)
         industries: advancedFilters.industries?.join(","),

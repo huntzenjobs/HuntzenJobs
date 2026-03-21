@@ -74,12 +74,27 @@ class JobSearchRequest(BaseModel):
     max_days: int = Field(default=7, ge=1, le=30, description="Max days since posting (1-30)")
     radius_km: int | None = Field(default=None, ge=1, le=100, description="Search radius in kilometers around city (1-100)")
     include_remote: bool = Field(default=True, description="Include remote jobs in search results")
+    contract_types: list[str] = Field(
+        default_factory=list,
+        description="Multi-select contract types: cdi, cdd, freelance, internship, alternance, apprentissage, interim, stage, cdi_partial, cdd_partial",
+    )
+    work_schedule: list[str] = Field(
+        default_factory=list,
+        description="Work schedule filter: matin, journee, soir, nuit, temps_plein",
+    )
+    work_days: list[str] = Field(
+        default_factory=list,
+        description="Work days filter: semaine, weekend",
+    )
 
     model_config = {"json_schema_extra": {"example": {
         "job_title": "Data Engineer",
         "country_code": "us",
         "city": "New York",
         "contract_type": "permanent",
+        "contract_types": ["cdi", "cdd"],
+        "work_schedule": ["journee"],
+        "work_days": ["semaine"],
         "max_results": 100,
         "max_days": 7,
         "radius_km": 50

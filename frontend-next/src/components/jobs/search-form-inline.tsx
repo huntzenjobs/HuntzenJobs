@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Search, MapPin, Globe } from "lucide-react";
+import { Search, MapPin, Globe, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   AutocompleteInput,
   type AutocompleteOption,
@@ -60,8 +66,22 @@ const CONTRACT_TYPE_OPTIONS = [
   { value: "cdd_partial", key: "contractType_cdd_partial" },
   { value: "alternance", key: "contractType_alternance" },
   { value: "apprentissage", key: "contractType_apprentissage" },
-  { value: "freelance", key: "contractType_freelance" },
   { value: "internship", key: "contractType_internship" },
+  { value: "interim", key: "contractType_interim" },
+  { value: "freelance", key: "contractType_freelance" },
+] as const;
+
+const WORK_DAYS_OPTIONS = [
+  { value: "weekdays", key: "workDays_weekdays" },
+  { value: "weekend", key: "workDays_weekend" },
+] as const;
+
+const WORK_SCHEDULE_OPTIONS = [
+  { value: "morning", key: "workSchedule_morning" },
+  { value: "daytime", key: "workSchedule_daytime" },
+  { value: "evening", key: "workSchedule_evening" },
+  { value: "night", key: "workSchedule_night" },
+  { value: "fulltime", key: "workSchedule_fulltime" },
 ] as const;
 
 /**
@@ -90,6 +110,9 @@ export interface SearchParams {
   location: string;
   country: string;
   contractType?: string;
+  contractTypes?: string[];
+  workDays?: string[];
+  workSchedule?: string[];
   includeRemote?: boolean;
 }
 
@@ -104,7 +127,11 @@ export function SearchFormInline({
   const [country, setCountry] = useState("");
   const [selectedCountryName, setSelectedCountryName] = useState("");
   const [isCountryValid, setIsCountryValid] = useState(false);
-  const [contractType, setContractType] = useState("");
+  const [selectedContracts, setSelectedContracts] = useState<string[]>([]);
+  const [selectedWorkDays, setSelectedWorkDays] = useState<string[]>([]);
+  const [selectedWorkSchedule, setSelectedWorkSchedule] = useState<string[]>(
+    [],
+  );
   const [includeRemote, setIncludeRemote] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -188,16 +215,27 @@ export function SearchFormInline({
     }
   };
 
-  // Toggle contract type (single select, click again to deselect)
-  const handleContractTypeToggle = (value: string) => {
-    setContractType((prev) => (prev === value ? "" : value));
-  };
+  // Toggle a value in a multi-select array
+  const toggleArrayValue = useCallback(
+    (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
+      setter((prev) =>
+        prev.includes(value)
+          ? prev.filter((v) => v !== value)
+          : [...prev, value],
+      );
+    },
+    [],
+  );
 
-  // Validation: query OR contractType required, country always required
+  // Keep backward-compatible single contractType for API
+  const contractType =
+    selectedContracts.length === 1 ? selectedContracts[0] : "";
+
+  // Validation: query OR contractType(s) required, country always required
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!query.trim() && !contractType) {
+    if (!query.trim() && selectedContracts.length === 0) {
       newErrors.query = t("jobTitleRequired");
     }
 
@@ -229,6 +267,11 @@ export function SearchFormInline({
       location: location.trim(),
       country: country.trim(),
       contractType,
+      contractTypes:
+        selectedContracts.length > 0 ? selectedContracts : undefined,
+      workDays: selectedWorkDays.length > 0 ? selectedWorkDays : undefined,
+      workSchedule:
+        selectedWorkSchedule.length > 0 ? selectedWorkSchedule : undefined,
       includeRemote,
     });
 
@@ -244,10 +287,10 @@ export function SearchFormInline({
 
   // Clear errors when user types or selects filters
   useEffect(() => {
-    if (query.trim() || contractType) {
+    if (query.trim() || selectedContracts.length > 0) {
       setErrors((prev) => ({ ...prev, query: "" }));
     }
-  }, [query, contractType]);
+  }, [query, selectedContracts]);
 
   useEffect(() => {
     if (country.trim()) {
@@ -255,32 +298,96 @@ export function SearchFormInline({
     }
   }, [country]);
 
-  // ─── Contract type chips (shared between desktop and mobile) ──────────────
+  // ─── Multi-select filter popover (shared helper) ─────────────────────────
 
-  const contractTypeChips = (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold text-gray-500">
-        {t("contractTypeLabel")}
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {CONTRACT_TYPE_OPTIONS.map(({ value, key }) => (
+  const renderFilterPopover = (
+    label: string,
+    options: ReadonlyArray<{ value: string; key: string }>,
+    selected: string[],
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    allLabel: string,
+    selectedLabel: string,
+  ) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled || isLoading}
+          className={cn(
+            "justify-between gap-2 text-xs font-medium h-9",
+            selected.length > 0
+              ? "border-huntzen-blue text-huntzen-blue"
+              : "text-gray-600",
+          )}
+        >
+          {selected.length === 0
+            ? label
+            : `${selected.length} ${selectedLabel}`}
+          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-64 p-3 max-h-64 overflow-y-auto"
+      >
+        <p className="text-xs font-semibold text-gray-500 mb-2">{label}</p>
+        <div className="space-y-1.5">
+          {options.map(({ value, key }) => (
+            <label
+              key={value}
+              className="flex items-center gap-2 py-1 px-1 rounded-md hover:bg-gray-50 cursor-pointer"
+            >
+              <Checkbox
+                checked={selected.includes(value)}
+                onCheckedChange={() => toggleArrayValue(setter, value)}
+                disabled={disabled || isLoading}
+              />
+              <span className="text-sm text-gray-700">{t(key)}</span>
+            </label>
+          ))}
+        </div>
+        {selected.length > 0 && (
           <button
-            key={value}
             type="button"
-            onClick={() => handleContractTypeToggle(value)}
-            disabled={disabled || isLoading}
-            className={cn(
-              "text-xs px-3 py-1.5 rounded-full border transition-colors font-medium",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              contractType === value
-                ? "bg-huntzen-blue text-white border-huntzen-blue"
-                : "bg-white text-gray-600 border-gray-200 hover:border-huntzen-blue hover:text-huntzen-blue",
-            )}
+            onClick={() => setter([])}
+            className="mt-2 text-xs text-huntzen-blue hover:underline w-full text-center"
           >
-            {t(key)}
+            {allLabel}
           </button>
-        ))}
-      </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+
+  // ─── Filter row (shared between desktop and mobile) ─────────────────────
+
+  const filterRow = (
+    <div className="flex flex-wrap gap-2 items-center">
+      {renderFilterPopover(
+        t("contractTypesLabel"),
+        CONTRACT_TYPE_OPTIONS,
+        selectedContracts,
+        setSelectedContracts,
+        t("allContracts"),
+        t("selectedCount"),
+      )}
+      {renderFilterPopover(
+        t("workDaysLabel"),
+        WORK_DAYS_OPTIONS,
+        selectedWorkDays,
+        setSelectedWorkDays,
+        t("allDays"),
+        t("selectedCount"),
+      )}
+      {renderFilterPopover(
+        t("workScheduleLabel"),
+        WORK_SCHEDULE_OPTIONS,
+        selectedWorkSchedule,
+        setSelectedWorkSchedule,
+        t("allSchedules"),
+        t("selectedCount"),
+      )}
     </div>
   );
 
@@ -300,7 +407,11 @@ export function SearchFormInline({
               <input
                 id="query-inline"
                 type="text"
-                placeholder={contractType ? t("jobTitleOptional") : t("jobTitlePlaceholder")}
+                placeholder={
+                  selectedContracts.length > 0
+                    ? t("jobTitleOptional")
+                    : t("jobTitlePlaceholder")
+                }
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 disabled={disabled || isLoading}
@@ -380,7 +491,7 @@ export function SearchFormInline({
         </div>
 
         {/* Contract Type Filter Chips */}
-        {contractTypeChips}
+        {filterRow}
 
         {/* Options Row: Remote Checkbox */}
         <div className="flex items-center gap-4 pt-3 mt-3 border-t border-gray-100">
@@ -415,7 +526,11 @@ export function SearchFormInline({
             <input
               id="query-mobile"
               type="text"
-              placeholder={contractType ? t("jobTitleOptional") : t("jobTitlePlaceholder")}
+              placeholder={
+                selectedContracts.length > 0
+                  ? t("jobTitleOptional")
+                  : t("jobTitlePlaceholder")
+              }
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={disabled || isLoading}
@@ -476,7 +591,7 @@ export function SearchFormInline({
         />
 
         {/* Contract Type Filter Chips */}
-        {contractTypeChips}
+        {filterRow}
 
         {/* Include Remote Jobs Checkbox */}
         <div className="flex items-center gap-3 px-4 py-3">

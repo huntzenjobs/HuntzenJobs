@@ -89,6 +89,9 @@ def apply_advanced_filters(
     salary_min: int | None = None,
     salary_max: int | None = None,
     company_size: str = "",
+    contract_types: list[str] | None = None,
+    work_schedule: list[str] | None = None,
+    work_days: list[str] | None = None,
 ) -> list[dict]:
     """
     Filter jobs based on advanced criteria (Premium feature).
@@ -172,6 +175,82 @@ def apply_advanced_filters(
                 )
             ]
 
+    # Filter by multiple contract types (heuristic on text)
+    if contract_types:
+        contract_keywords: dict[str, list[str]] = {
+            "cdi": ["cdi", "permanent", "indéterminée", "indefinite", "unbefristet"],
+            "cdd": ["cdd", "déterminée", "fixed-term", "temporary contract", "befristet"],
+            "freelance": ["freelance", "indépendant", "independent", "consultant", "mission libre"],
+            "internship": ["stage", "intern", "internship", "stagiaire"],
+            "alternance": ["alternance", "apprenticeship", "work-study", "contrat pro"],
+            "apprentissage": ["apprentissage", "apprentice", "apprenti"],
+            "interim": ["intérim", "interim", "travail temporaire", "temp work"],
+            "stage": ["stage", "intern", "internship", "stagiaire"],
+            "cdi_partial": ["temps partiel", "part-time", "mi-temps", "cdi partiel"],
+            "cdd_partial": ["temps partiel", "part-time", "cdd partiel"],
+        }
+        selected_kws: list[str] = []
+        for ct in contract_types:
+            selected_kws.extend(contract_keywords.get(ct.lower().strip(), []))
+        if selected_kws:
+            filtered = [
+                job for job in filtered
+                if any(
+                    kw in job.get('contract_type', '').lower()
+                    or kw in job.get('title', '').lower()
+                    or kw in job.get('description', '').lower()
+                    for kw in selected_kws
+                )
+            ]
+
+    # Filter by work schedule (heuristic on text)
+    if work_schedule:
+        schedule_keywords: dict[str, list[str]] = {
+            "matin": ["matin", "morning", "6h", "7h", "8h", "tôt", "early shift"],
+            "journee": ["journée", "day shift", "9h-17h", "bureau", "office hours", "horaires de bureau"],
+            "soir": ["soir", "evening", "soirée", "18h", "19h", "20h", "evening shift"],
+            "nuit": ["nuit", "night", "nocturne", "3x8", "2x8", "night shift"],
+            "temps_plein": ["temps plein", "full-time", "full time", "35h", "39h", "temps complet"],
+        }
+        sched_kws: list[str] = []
+        for s in work_schedule:
+            sched_kws.extend(schedule_keywords.get(s.lower().strip(), []))
+        if sched_kws:
+            filtered = [
+                job for job in filtered
+                if any(
+                    kw in job.get('title', '').lower()
+                    or kw in job.get('description', '').lower()
+                    for kw in sched_kws
+                )
+            ]
+
+    # Filter by work days (heuristic on text)
+    if work_days:
+        days_keywords: dict[str, list[str]] = {
+            "semaine": [
+                "lundi", "mardi", "mercredi", "jeudi", "vendredi",
+                "monday", "tuesday", "wednesday", "thursday", "friday",
+                "weekday", "en semaine", "du lundi au vendredi",
+            ],
+            "weekend": [
+                "samedi", "dimanche", "weekend", "week-end",
+                "saturday", "sunday", "le week-end",
+            ],
+        }
+        days_kws: list[str] = []
+        for d in work_days:
+            days_kws.extend(days_keywords.get(d.lower().strip(), []))
+        if days_kws:
+            filtered = [
+                job for job in filtered
+                if any(
+                    kw in job.get('title', '').lower()
+                    or kw in job.get('description', '').lower()
+                    for kw in days_kws
+                )
+            ]
+
     return filtered
 
 
@@ -192,24 +271,32 @@ async def search_jobs(
     - Deduplicate and rank results
     - Provide market insights
     """
+    # If contract_types provided but not contract_type, use first as provider filter
+    effective_contract_type = data.contract_type
+    if not effective_contract_type and data.contract_types:
+        effective_contract_type = data.contract_types[0]
+
     # Validate: at least job_title or contract_type must be provided
-    if not data.job_title.strip() and not data.contract_type:
+    if not data.job_title.strip() and not effective_contract_type:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="job_title ou contract_type requis",
         )
+
+    # Determine if post-processing filters are needed
+    has_post_filters = bool(data.contract_types or data.work_schedule or data.work_days)
 
     # ✅ CHECK QUOTA AVANT RECHERCHE
     user_id = get_user_id_from_token(authorization)
     if user_id:
         _check_job_search_quota(user_id)
 
-    # ── Cache Redis : clé basée sur les paramètres de recherche ──
+    # ── Cache Redis : cle basee sur les parametres de recherche ──
     cache_key_data = json.dumps({
         "job_title": data.job_title,
         "country_code": data.country_code,
         "city": data.city,
-        "contract_type": data.contract_type,
+        "contract_type": effective_contract_type,
         "max_results": data.max_results,
         "max_days": data.max_days,
         "radius_km": data.radius_km,
@@ -248,6 +335,20 @@ async def search_jobs(
             for j in cached_jobs.get("jobs", [])
         ]
         metadata = cached_jobs.get("metadata", {})
+
+        # Apply post-processing filters on cached results
+        if has_post_filters:
+            jobs_dicts = [j.model_dump() for j in jobs]
+            jobs_dicts = apply_advanced_filters(
+                jobs=jobs_dicts,
+                contract_types=data.contract_types or None,
+                work_schedule=data.work_schedule or None,
+                work_days=data.work_days or None,
+            )
+            jobs = [
+                Job(**j) for j in jobs_dicts
+            ]
+
         response = JobSearchResponse(
             success=True,
             jobs=jobs,
@@ -265,12 +366,12 @@ async def search_jobs(
             _increment_job_search_quota(user_id)
         return response
 
-    # ── Cache MISS : exécuter la recherche ──
+    # ── Cache MISS : executer la recherche ──
     result = await agent.run(
         job_title=data.job_title,
         country_code=data.country_code,
         city=data.city,
-        contract_type=data.contract_type,
+        contract_type=effective_contract_type,
         max_results=data.max_results,
         max_days=data.max_days,
         radius_km=data.radius_km,
@@ -317,6 +418,17 @@ async def search_jobs(
 
     metadata = result.get("metadata", {})
 
+    # Apply post-processing filters on fresh results
+    if has_post_filters:
+        jobs_dicts = [j.model_dump() for j in jobs]
+        jobs_dicts = apply_advanced_filters(
+            jobs=jobs_dicts,
+            contract_types=data.contract_types or None,
+            work_schedule=data.work_schedule or None,
+            work_days=data.work_days or None,
+        )
+        jobs = [Job(**j) for j in jobs_dicts]
+
     response = JobSearchResponse(
         success=True,
         jobs=jobs,
@@ -331,7 +443,7 @@ async def search_jobs(
         ai_insights=str(result.get("insights", "")) if result.get("insights") else None,
     )
 
-    # ✅ INCRÉMENTER QUOTA APRÈS SUCCÈS
+    # Incrementer quota apres succes
     if user_id:
         _increment_job_search_quota(user_id)
 
@@ -357,14 +469,28 @@ async def search_jobs_get(
     salary_min: int = Query(default=None, ge=0, description="Minimum salary (annual)"),
     salary_max: int = Query(default=None, ge=0, description="Maximum salary (annual)"),
     company_size: str = Query(default="", description="Company size: startup, scaleup, enterprise"),
+    # New filters: comma-separated values
+    contract_types: str = Query(default="", description="Comma-separated contract types: cdi,cdd,freelance,internship,alternance,apprentissage,interim,stage,cdi_partial,cdd_partial"),
+    work_schedule: str = Query(default="", description="Comma-separated work schedules: matin,journee,soir,nuit,temps_plein"),
+    work_days: str = Query(default="", description="Comma-separated work days: semaine,weekend"),
     authorization: str | None = Header(None),
 ):
     """
     Search for jobs (GET endpoint for simple queries).
     Authenticated users are subject to their plan quota.
     """
+    # Parse CSV params into lists
+    contract_types_list = [ct.strip() for ct in contract_types.split(",") if ct.strip()] if contract_types else []
+    work_schedule_list = [ws.strip() for ws in work_schedule.split(",") if ws.strip()] if work_schedule else []
+    work_days_list = [wd.strip() for wd in work_days.split(",") if wd.strip()] if work_days else []
+
+    # If contract_types provided but not contract, use first as provider filter
+    effective_contract = contract
+    if not effective_contract and contract_types_list:
+        effective_contract = contract_types_list[0]
+
     # Validate: at least q or contract must be provided
-    if not q.strip() and not contract:
+    if not q.strip() and not effective_contract:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="q ou contract requis",
@@ -377,14 +503,18 @@ async def search_jobs_get(
         job_title=q,
         country_code=country,
         city=city,
-        contract_type=contract,
+        contract_type=effective_contract,
         max_results=limit,
         radius_km=radius,
         include_remote=include_remote,
     )
 
     # Apply advanced filters if any are provided (Premium feature)
-    if any([industries, keywords, experience_level, salary_min, salary_max, company_size]):
+    has_filters = any([
+        industries, keywords, experience_level, salary_min, salary_max, company_size,
+        contract_types_list, work_schedule_list, work_days_list,
+    ])
+    if has_filters:
         jobs = result.get('jobs', [])
         filtered_jobs = apply_advanced_filters(
             jobs=jobs,
@@ -394,6 +524,9 @@ async def search_jobs_get(
             salary_min=salary_min,
             salary_max=salary_max,
             company_size=company_size,
+            contract_types=contract_types_list or None,
+            work_schedule=work_schedule_list or None,
+            work_days=work_days_list or None,
         )
         result['jobs'] = filtered_jobs
         result['metadata']['total_filtered'] = len(filtered_jobs)

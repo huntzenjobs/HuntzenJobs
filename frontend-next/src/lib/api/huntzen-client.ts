@@ -199,6 +199,9 @@ class HuntzenApiClient {
     country_code: string;
     city?: string;
     contract_type?: string;
+    contract_types?: string[];
+    work_days?: string[];
+    work_schedule?: string[];
     radiusKm?: number;
     includeRemote?: boolean;
     // Advanced filters (Premium feature)
@@ -216,6 +219,12 @@ class HuntzenApiClient {
     if (params.city) queryParams.append("city", params.city);
     if (params.contract_type)
       queryParams.append("contract", params.contract_type);
+    if (params.contract_types && params.contract_types.length > 0)
+      queryParams.append("contract_types", params.contract_types.join(","));
+    if (params.work_days && params.work_days.length > 0)
+      queryParams.append("work_days", params.work_days.join(","));
+    if (params.work_schedule && params.work_schedule.length > 0)
+      queryParams.append("work_schedule", params.work_schedule.join(","));
     if (params.radiusKm !== undefined)
       queryParams.append("radius", params.radiusKm.toString());
     if (params.includeRemote !== undefined)

@@ -175,9 +175,49 @@ async def get_contract_types():
             {"id": "cdd", "label": "CDD", "label_en": "Fixed-term Contract"},
             {"id": "stage", "label": "Stage", "label_en": "Internship"},
             {"id": "alternance", "label": "Alternance", "label_en": "Work-study"},
+            {"id": "apprentissage", "label": "Apprentissage", "label_en": "Apprenticeship"},
             {"id": "freelance", "label": "Freelance", "label_en": "Freelance"},
-            {"id": "interim", "label": "Intérim", "label_en": "Temporary"},
+            {"id": "interim", "label": "Interim", "label_en": "Temporary"},
+            {"id": "cdi_partial", "label": "CDI temps partiel", "label_en": "Part-time Permanent"},
+            {"id": "cdd_partial", "label": "CDD temps partiel", "label_en": "Part-time Fixed-term"},
             {"id": "contrat_pro", "label": "Contrat pro", "label_en": "Professional Contract"},
             {"id": "vie", "label": "VIE", "label_en": "International Volunteer"},
+        ]
+    }
+
+
+@router.get("/api/work-schedules")
+async def get_work_schedules():
+    """
+    Get list of available work schedules.
+
+    Returns:
+        List of work schedule objects with id, label (FR), and label_en (EN)
+    """
+    return {
+        "success": True,
+        "data": [
+            {"id": "temps_plein", "label": "Temps plein", "label_en": "Full-time"},
+            {"id": "matin", "label": "Matin", "label_en": "Morning"},
+            {"id": "journee", "label": "Journee", "label_en": "Day shift"},
+            {"id": "soir", "label": "Soir", "label_en": "Evening"},
+            {"id": "nuit", "label": "Nuit", "label_en": "Night shift"},
+        ]
+    }
+
+
+@router.get("/api/work-days")
+async def get_work_days():
+    """
+    Get list of available work day options.
+
+    Returns:
+        List of work day objects with id, label (FR), and label_en (EN)
+    """
+    return {
+        "success": True,
+        "data": [
+            {"id": "semaine", "label": "En semaine", "label_en": "Weekdays"},
+            {"id": "weekend", "label": "Week-end", "label_en": "Weekend"},
         ]
     }

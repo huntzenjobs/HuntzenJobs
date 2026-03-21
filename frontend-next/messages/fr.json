@@ -1758,7 +1758,22 @@
     "noCityFound": "Aucune ville trouvée",
     "selectCountryFirst": "Sélectionnez d'abord un pays",
     "countryPlaceholder": "Pays",
-    "selectCountryInList": "Veuillez sélectionner un pays dans la liste"
+    "selectCountryInList": "Veuillez sélectionner un pays dans la liste",
+    "contractTypesLabel": "Types de contrat",
+    "allContracts": "Tous les contrats",
+    "selectedCount": "selectionne(s)",
+    "contractType_interim": "Interim",
+    "workDaysLabel": "Jours de travail",
+    "workDays_weekdays": "Semaine (lun-ven)",
+    "workDays_weekend": "Weekend (sam-dim)",
+    "allDays": "Tous les jours",
+    "workScheduleLabel": "Horaires",
+    "workSchedule_morning": "Matin (6h-12h)",
+    "workSchedule_daytime": "Journee (9h-17h)",
+    "workSchedule_evening": "Soir (17h-22h)",
+    "workSchedule_night": "Nuit (22h-6h)",
+    "workSchedule_fulltime": "Temps plein",
+    "allSchedules": "Tous les horaires"
   },
   "advancedFilters": {
     "title": "Filtres avancés",
