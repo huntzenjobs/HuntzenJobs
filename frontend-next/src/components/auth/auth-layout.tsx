@@ -16,23 +16,7 @@ const featureIcons = [
   <Zap key="zap" className="w-5 h-5" />,
 ];
 
-const testimonials = [
-  {
-    text: "J'ai trouvé mon emploi de rêve en 3 semaines grâce à HuntZen !",
-    author: "Sarah M.",
-    role: "Développeuse Full-Stack",
-  },
-  {
-    text: "L'analyse CV m'a aidé à passer les filtres ATS pour la première fois.",
-    author: "Thomas L.",
-    role: "Chef de Projet",
-  },
-  {
-    text: "Interface intuitive et résultats impressionnants.",
-    author: "Marie K.",
-    role: "UX Designer",
-  },
-];
+// Testimonials now loaded from i18n
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   const t = useTranslations("auth.layout");
@@ -125,12 +109,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <h2 className="text-4xl font-black mb-4">
-                Votre carrière mérite le meilleur
-              </h2>
+              <h2 className="text-4xl font-black mb-4">{t("heroTitle")}</h2>
               <p className="text-white/80 text-lg mb-12 leading-relaxed">
-                Rejoignez des milliers de candidats qui ont transformé leur
-                recherche d'emploi avec HuntZen.
+                {t("heroSubtitle")}
               </p>
 
               {/* Features */}
@@ -168,16 +149,20 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                     +100K
                   </div>
                   <div className="text-sm text-white/70">
-                    Candidats accompagnés
+                    {t("statCandidates")}
                   </div>
                 </div>
                 <div>
                   <div className="text-3xl font-black text-[#00D9FF]">87%</div>
-                  <div className="text-sm text-white/70">Taux de réponse</div>
+                  <div className="text-sm text-white/70">
+                    {t("statResponseRate")}
+                  </div>
                 </div>
                 <div>
                   <div className="text-3xl font-black text-[#00D9FF]">24/7</div>
-                  <div className="text-sm text-white/70">Support</div>
+                  <div className="text-sm text-white/70">
+                    {t("statSupport")}
+                  </div>
                 </div>
               </motion.div>
 
@@ -200,16 +185,16 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                   ))}
                 </div>
                 <p className="text-white mb-4 italic leading-relaxed">
-                  &ldquo;{testimonials[0].text}&rdquo;
+                  &ldquo;{t("testimonial1Text")}&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#00D9FF]/20 flex items-center justify-center text-sm font-bold text-[#00D9FF]">
-                    {testimonials[0].author[0]}
+                    {t("testimonial1Author").charAt(0)}
                   </div>
                   <div>
-                    <div className="font-bold">{testimonials[0].author}</div>
+                    <div className="font-bold">{t("testimonial1Author")}</div>
                     <div className="text-sm text-white/70">
-                      {testimonials[0].role}
+                      {t("testimonial1Role")}
                     </div>
                   </div>
                 </div>
