@@ -755,7 +755,7 @@ export default function PricingPage() {
                   {tFooter("terms")}
                 </Link>
                 <Link
-                  href="mailto:contact@huntzenjobs.co"
+                  href="mailto:contact@huntzenjobs.com"
                   className="hover:text-[#00D9FF] transition-colors"
                 >
                   {tFooter("contact")}

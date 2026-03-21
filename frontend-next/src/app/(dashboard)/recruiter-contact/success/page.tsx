@@ -49,10 +49,10 @@ export default function RecruiterContactSuccessPage() {
           Nous ne pouvons pas confirmer votre paiement. Si vous avez été
           débité, contactez-nous à{" "}
           <a
-            href="mailto:contact@huntzenjobs.co"
+            href="mailto:contact@huntzenjobs.com"
             className="text-[#00D9FF] underline"
           >
-            contact@huntzenjobs.co
+            contact@huntzenjobs.com
           </a>
         </p>
         <Button asChild>

@@ -385,7 +385,7 @@ export function Sidebar({ className }: SidebarProps) {
         </Link>
 
         <Link
-          href="mailto:contact@huntzenjobs.co"
+          href="mailto:contact@huntzenjobs.com"
           className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/8 hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <HelpCircle className="w-4 h-4 group-hover:text-[#00D9FF] transition-colors" />

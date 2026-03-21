@@ -512,7 +512,7 @@ export default function TermsPage() {
               <ul className="space-y-2 text-sm text-white/70">
                 <li>+351 21 111 9967</li>
                 <li>+33 (1) 84 19 26 61</li>
-                <li>contact@huntzenjobs.co</li>
+                <li>contact@huntzenjobs.com</li>
               </ul>
             </div>
           </div>
