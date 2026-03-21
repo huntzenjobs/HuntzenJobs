@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 
 interface Props {
   children: ReactNode;
@@ -26,6 +27,53 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+}
+
+/** Functional component that renders the error UI with i18n support */
+function ErrorFallbackContent({
+  error,
+  onReset,
+}: {
+  error: Error | null;
+  onReset: () => void;
+}) {
+  const t = useTranslations("errorBoundary");
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <Card className="max-w-lg w-full">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-6 w-6 text-destructive" />
+            <CardTitle>{t("title")}</CardTitle>
+          </div>
+          <CardDescription>{t("description")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {process.env.NODE_ENV === "development" && error && (
+            <div className="bg-muted p-3 rounded-md">
+              <p className="text-sm font-mono text-muted-foreground">
+                {error.message}
+              </p>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button onClick={onReset} className="flex-1">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              {t("retry")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => (window.location.href = "/")}
+              className="flex-1"
+            >
+              {t("backHome")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -65,44 +113,12 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      // Default fallback UI
+      // Default fallback UI with i18n support via functional component
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-          <Card className="max-w-lg w-full">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-6 w-6 text-destructive" />
-                <CardTitle>Oups, une erreur s'est produite</CardTitle>
-              </div>
-              <CardDescription>
-                Nous avons rencontré un problème inattendu. Notre équipe a été
-                notifiée.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {process.env.NODE_ENV === "development" && this.state.error && (
-                <div className="bg-muted p-3 rounded-md">
-                  <p className="text-sm font-mono text-muted-foreground">
-                    {this.state.error.message}
-                  </p>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Button onClick={this.handleReset} className="flex-1">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Réessayer
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => (window.location.href = "/")}
-                  className="flex-1"
-                >
-                  Retour à l'accueil
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <ErrorFallbackContent
+          error={this.state.error}
+          onReset={this.handleReset}
+        />
       );
     }
 
@@ -114,13 +130,13 @@ export class ErrorBoundary extends Component<Props, State> {
  * Hook-based Error Boundary wrapper for functional components
  */
 export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
+  WrappedComponent: React.ComponentType<P>,
   fallback?: ReactNode,
 ) {
   return function WithErrorBoundary(props: P) {
     return (
       <ErrorBoundary fallback={fallback}>
-        <Component {...props} />
+        <WrappedComponent {...props} />
       </ErrorBoundary>
     );
   };

@@ -3,32 +3,39 @@
  * Sections: Score Breakdown, Strengths/Weaknesses, Suggestions
  */
 
-'use client'
+"use client";
 
-import { TrendingUp, TrendingDown, Lightbulb } from 'lucide-react'
+import { TrendingUp, TrendingDown, Lightbulb } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion'
-import { Badge } from '@/components/ui/badge'
-import { ScoreBreakdownV2, type BreakdownItem } from '@/components/cv/score-breakdown-v2'
-import { ActionableSuggestions, type Suggestion } from '@/components/cv/actionable-suggestions'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import {
+  ScoreBreakdownV2,
+  type BreakdownItem,
+} from "@/components/cv/score-breakdown-v2";
+import {
+  ActionableSuggestions,
+  type Suggestion,
+} from "@/components/cv/actionable-suggestions";
+import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface ResultsAccordionProps {
-  breakdown: BreakdownItem[]
-  strengths: string[]
-  weaknesses: string[]
-  suggestions: Suggestion[]
-  rawAnalysis?: string
-  currentScore: number
-  className?: string
+  breakdown: BreakdownItem[];
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: Suggestion[];
+  rawAnalysis?: string;
+  currentScore: number;
+  className?: string;
 }
 
 // ============================================================================
@@ -37,19 +44,23 @@ interface ResultsAccordionProps {
 
 function StrengthsWeaknessesGrid({
   strengths,
-  weaknesses
+  weaknesses,
 }: {
-  strengths: string[]
-  weaknesses: string[]
+  strengths: string[];
+  weaknesses: string[];
 }) {
+  const t = useTranslations("cv.results");
   return (
     <div className="grid md:grid-cols-2 gap-6">
       {/* Strengths */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-green-600" />
-          <h4 className="font-semibold text-gray-900">Points forts</h4>
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          <h4 className="font-semibold text-gray-900">{t("strengths")}</h4>
+          <Badge
+            variant="outline"
+            className="bg-green-50 text-green-700 border-green-200"
+          >
             {strengths.length}
           </Badge>
         </div>
@@ -70,8 +81,11 @@ function StrengthsWeaknessesGrid({
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <TrendingDown className="h-5 w-5 text-orange-600" />
-          <h4 className="font-semibold text-gray-900">Points à améliorer</h4>
-          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+          <h4 className="font-semibold text-gray-900">{t("weaknesses")}</h4>
+          <Badge
+            variant="outline"
+            className="bg-orange-50 text-orange-700 border-orange-200"
+          >
             {weaknesses.length}
           </Badge>
         </div>
@@ -88,7 +102,7 @@ function StrengthsWeaknessesGrid({
         </ul>
       </div>
     </div>
-  )
+  );
 }
 
 // ============================================================================
@@ -101,13 +115,14 @@ export function ResultsAccordion({
   weaknesses,
   suggestions,
   currentScore,
-  className
+  className,
 }: ResultsAccordionProps) {
+  const t = useTranslations("cv.results");
   return (
     <Accordion
       type="multiple"
-      defaultValue={['breakdown', 'strengths-weaknesses', 'suggestions']}
-      className={cn('space-y-3', className)}
+      defaultValue={["breakdown", "strengths-weaknesses", "suggestions"]}
+      className={cn("space-y-3", className)}
     >
       {/* Section 1: Score Breakdown */}
       <AccordionItem
@@ -131,7 +146,9 @@ export function ResultsAccordion({
                 />
               </svg>
             </div>
-            <span className="text-lg font-semibold text-gray-900">Détails du score</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {t("scoreDetails")}
+            </span>
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-6 py-4 border-t-2">
@@ -161,14 +178,21 @@ export function ResultsAccordion({
                 />
               </svg>
             </div>
-            <span className="text-lg font-semibold text-gray-900">Points forts & Points faibles</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {t("strengthsAndWeaknesses")}
+            </span>
             <Badge variant="outline" className="ml-auto">
-              {strengths.length + weaknesses.length} éléments
+              {t("elementsCount", {
+                count: strengths.length + weaknesses.length,
+              })}
             </Badge>
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-6 py-4 border-t-2">
-          <StrengthsWeaknessesGrid strengths={strengths} weaknesses={weaknesses} />
+          <StrengthsWeaknessesGrid
+            strengths={strengths}
+            weaknesses={weaknesses}
+          />
         </AccordionContent>
       </AccordionItem>
 
@@ -182,16 +206,21 @@ export function ResultsAccordion({
             <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
               <Lightbulb className="h-4 w-4 text-amber-600" />
             </div>
-            <span className="text-lg font-semibold text-gray-900">Suggestions d'amélioration</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {t("suggestionsTitle")}
+            </span>
             <Badge variant="outline" className="ml-auto">
-              {suggestions.length} actions
+              {t("actionsCount", { count: suggestions.length })}
             </Badge>
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-6 py-4 border-t-2">
-          <ActionableSuggestions suggestions={suggestions} currentScore={currentScore} />
+          <ActionableSuggestions
+            suggestions={suggestions}
+            currentScore={currentScore}
+          />
         </AccordionContent>
       </AccordionItem>
     </Accordion>
-  )
+  );
 }

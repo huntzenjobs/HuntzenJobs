@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lock, Sparkles, MapPin, Building } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useSubscription } from "@/contexts/subscription-context";
 
 interface BlurredJobCardProps {
@@ -12,6 +13,7 @@ interface BlurredJobCardProps {
 
 export function BlurredJobCard({ index, className = "" }: BlurredJobCardProps) {
   const { openPricingModal } = useSubscription();
+  const t = useTranslations("jobs.blurred");
 
   // Generate fake content for visual appeal
   const fakeTitle = [
@@ -48,7 +50,9 @@ export function BlurredJobCard({ index, className = "" }: BlurredJobCardProps) {
                 {fakeCompany}
               </div>
             </div>
-            <div className="px-2 py-1 rounded bg-gray-100 text-xs">Source</div>
+            <div className="px-2 py-1 rounded bg-gray-100 text-xs">
+              {t("source")}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -73,16 +77,14 @@ export function BlurredJobCard({ index, className = "" }: BlurredJobCardProps) {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-3 shadow-lg shadow-violet-200 animate-pulse">
             <Lock className="w-6 h-6 text-white" />
           </div>
-          <p className="font-semibold text-gray-800 mb-1">Offre verrouillee</p>
-          <p className="text-sm text-gray-600 mb-3">
-            Passez Premium pour voir cette offre
-          </p>
+          <p className="font-semibold text-gray-800 mb-1">{t("lockedOffer")}</p>
+          <p className="text-sm text-gray-600 mb-3">{t("upgradeToPremium")}</p>
           <Button
             size="sm"
             className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md"
           >
             <Sparkles className="w-4 h-4 mr-1" />
-            Debloquer
+            {t("unlock")}
           </Button>
         </div>
       </div>
@@ -107,6 +109,7 @@ export function JobsLimitReached({
   className = "",
 }: JobsLimitReachedProps) {
   const { openPricingModal } = useSubscription();
+  const t = useTranslations("jobs.blurred");
   const hiddenJobs = totalJobs - visibleJobs;
 
   return (
@@ -117,12 +120,10 @@ export function JobsLimitReached({
         <Lock className="w-8 h-8 text-white" />
       </div>
       <h3 className="text-base md:text-xl font-bold mb-2">
-        +{hiddenJobs} offres supplementaires
+        {t("additionalOffers", { count: hiddenJobs })}
       </h3>
       <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-        Vous avez atteint la limite de {visibleJobs} offres visibles. Passez
-        Premium pour acceder a toutes les offres et ne manquer aucune
-        opportunite.
+        {t("limitReached", { visible: visibleJobs })}
       </p>
       <Button
         size="lg"
@@ -130,7 +131,7 @@ export function JobsLimitReached({
         className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg"
       >
         <Sparkles className="w-5 h-5 mr-2" />
-        Voir toutes les offres
+        {t("seeAllOffers")}
       </Button>
     </div>
   );

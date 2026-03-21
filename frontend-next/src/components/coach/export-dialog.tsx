@@ -94,22 +94,20 @@ export function ExportDialog({
           className="gap-2 border-2 border-gray-200 hover:border-huntzen-blue hover:bg-huntzen-blue/5"
         >
           <FileDown className="w-4 h-4" />
-          Exporter
+          {t("button")}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Exporter la conversation</DialogTitle>
-          <DialogDescription>
-            Choisissez le format d'export pour sauvegarder cette conversation.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* Format Selection */}
           <div className="space-y-2">
-            <Label>Format d'export</Label>
+            <Label>{t("formatLabel")}</Label>
             <RadioGroup
               value={format}
               onValueChange={(value) => setFormat(value as "pdf" | "markdown")}
@@ -119,7 +117,7 @@ export function ExportDialog({
                 <Label htmlFor="pdf" className="flex-1 cursor-pointer">
                   <div className="font-medium">PDF</div>
                   <div className="text-xs text-gray-500">
-                    Document formaté avec le design HuntZen (recommandé)
+                    {t("pdfDescription")}
                   </div>
                 </Label>
               </div>
@@ -129,7 +127,7 @@ export function ExportDialog({
                 <Label htmlFor="markdown" className="flex-1 cursor-pointer">
                   <div className="font-medium">Markdown</div>
                   <div className="text-xs text-gray-500">
-                    Fichier texte avec formatage simple (.md)
+                    {t("markdownDescription")}
                   </div>
                 </Label>
               </div>
@@ -139,7 +137,7 @@ export function ExportDialog({
           {/* Preview Info */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
             <div className="font-medium text-gray-700 mb-1">
-              Aperçu de l'export
+              {t("previewTitle")}
             </div>
             <div className="text-gray-600 space-y-1">
               <div>📄 Titre: {metadata.title}</div>
@@ -161,7 +159,7 @@ export function ExportDialog({
             onClick={() => setIsOpen(false)}
             disabled={isExporting}
           >
-            Annuler
+            {t("cancel")}
           </Button>
           <Button
             type="button"
@@ -172,12 +170,12 @@ export function ExportDialog({
             {isExporting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Export en cours...
+                {t("exporting")}
               </>
             ) : (
               <>
                 <FileDown className="w-4 h-4 mr-2" />
-                Exporter
+                {t("exportButton")}
               </>
             )}
           </Button>

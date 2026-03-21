@@ -68,7 +68,7 @@ export function SupportWidget({
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-huntzen-blue/10 to-huntzen-turquoise/10 rounded-t-xl max-sm:rounded-none">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="font-semibold text-sm">Support HuntZen</span>
+          <span className="font-semibold text-sm">{t("title")}</span>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -80,7 +80,7 @@ export function SupportWidget({
           </button>
           <button
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t("close")}
             className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
           >
             <X className="w-4 h-4" />
@@ -99,13 +99,13 @@ export function SupportWidget({
             value="chatbot"
             className="flex-1 rounded-none py-2.5 text-sm data-[state=active]:border-b-2 data-[state=active]:border-huntzen-blue data-[state=active]:bg-background"
           >
-            💬 Aide & FAQ
+            {t("tabFaq")}
           </TabsTrigger>
           <TabsTrigger
             value="ticket"
             className="flex-1 rounded-none py-2.5 text-sm data-[state=active]:border-b-2 data-[state=active]:border-huntzen-blue data-[state=active]:bg-background"
           >
-            🎫 Ticket Support
+            {t("tabTicket")}
           </TabsTrigger>
         </TabsList>
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { X, Cookie } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const CONSENT_KEY = "huntzen_cookie_consent";
 
@@ -11,6 +12,7 @@ type ConsentStatus = "accepted" | "declined" | null;
 
 export function CookieBanner() {
   const [status, setStatus] = useState<ConsentStatus | "loading">("loading");
+  const t = useTranslations("cookies");
 
   useEffect(() => {
     const stored = localStorage.getItem(CONSENT_KEY) as ConsentStatus | null;
@@ -27,13 +29,13 @@ export function CookieBanner() {
     setStatus("declined");
   };
 
-  // Cacher si déjà répondu ou en cours de chargement
+  // Cacher si deja repondu ou en cours de chargement
   if (status !== null) return null;
 
   return (
     <div
       role="dialog"
-      aria-label="Gestion des cookies"
+      aria-label={t("ariaLabel")}
       aria-modal="false"
       className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 pb-safe"
     >
@@ -46,14 +48,12 @@ export function CookieBanner() {
         {/* Text */}
         <div className="flex-1 text-sm text-gray-300 leading-relaxed">
           <p>
-            Nous utilisons des cookies pour améliorer votre expérience sur
-            HuntZen Jobs. Les cookies essentiels sont nécessaires au
-            fonctionnement du site.{" "}
+            {t("message")}{" "}
             <Link
               href="/privacy"
               className="text-[#00D9FF] hover:underline font-medium"
             >
-              En savoir plus
+              {t("learnMore")}
             </Link>
           </p>
         </div>
@@ -66,18 +66,18 @@ export function CookieBanner() {
             onClick={handleDecline}
             className="flex-1 sm:flex-none border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
           >
-            Refuser
+            {t("decline")}
           </Button>
           <Button
             size="sm"
             onClick={handleAccept}
             className="flex-1 sm:flex-none bg-[#00D9FF] text-black font-semibold hover:bg-[#00D9FF]/90"
           >
-            Accepter
+            {t("accept")}
           </Button>
           <button
             onClick={handleDecline}
-            aria-label="Fermer"
+            aria-label={t("close")}
             className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-300 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />

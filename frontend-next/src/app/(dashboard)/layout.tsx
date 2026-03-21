@@ -8,6 +8,7 @@ import { PricingModal } from "@/components/freemium/pricing-modal";
 import { UpgradeBanner } from "@/components/freemium/upgrade-banner";
 import { SupportBubble } from "@/components/support/support-bubble";
 import { PresenceTracker } from "@/components/layout/presence-tracker";
+import { getTranslations } from "next-intl/server";
 import DashboardLoading from "./loading";
 
 export default async function DashboardLayout({
@@ -15,6 +16,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = await getTranslations("dashboardFooter");
+
   return (
     <SubscriptionProvider>
       <div className="dashboard-force-light min-h-screen bg-white">
@@ -45,15 +48,15 @@ export default async function DashboardLayout({
             <p className="text-xs text-muted-foreground">
               &copy; {new Date().getFullYear()} HuntZen &middot;{" "}
               <Link href="/privacy" className="hover:underline">
-                Confidentialité
+                {t("privacy")}
               </Link>
               {" · "}
               <Link href="/terms" className="hover:underline">
-                CGU
+                {t("terms")}
               </Link>
               {" · "}
               <Link href="/contact" className="hover:underline">
-                Contact
+                {t("contact")}
               </Link>
             </p>
           </footer>

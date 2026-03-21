@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { X, Bell, Briefcase, TrendingUp, Gift, Tag } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   useNotifications,
@@ -39,12 +40,15 @@ const TYPE_CONFIG: Record<
   },
 };
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const h = Math.floor(diff / 3_600_000);
-  if (h < 1) return "À l'instant";
-  if (h < 24) return `Il y a ${h}h`;
-  return `Il y a ${Math.floor(h / 24)}j`;
+function useTimeAgo() {
+  const t = useTranslations("notifications");
+  return (iso: string): string => {
+    const diff = Date.now() - new Date(iso).getTime();
+    const h = Math.floor(diff / 3_600_000);
+    if (h < 1) return t("timeJustNow");
+    if (h < 24) return t("timeHoursAgo", { h });
+    return t("timeDaysAgo", { d: Math.floor(h / 24) });
+  };
 }
 
 interface NotificationCenterProps {
@@ -58,6 +62,9 @@ export function NotificationCenter({
 }: NotificationCenterProps) {
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
+  const t = useTranslations("notifications");
+  const tA11y = useTranslations("a11y");
+  const timeAgo = useTimeAgo();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -71,13 +78,13 @@ export function NotificationCenter({
   if (!isOpen) return null;
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Centre de notifications">
+    <div role="dialog" aria-modal="true" aria-label={t("centerAriaLabel")}>
       <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
       <div className="fixed right-0 top-0 bottom-0 w-full sm:w-80 bg-background border-l shadow-xl z-50 flex flex-col">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4" />
-            <span className="font-semibold text-sm">Notifications</span>
+            <span className="font-semibold text-sm">{t("title")}</span>
             {unreadCount > 0 && (
               <span className="text-xs bg-red-100 text-red-600 rounded-full px-1.5">
                 {unreadCount}
@@ -90,12 +97,12 @@ export function NotificationCenter({
                 onClick={markAllAsRead}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Tout lire
+                {t("markAllRead")}
               </button>
             )}
             <button
               onClick={onClose}
-              aria-label="Fermer"
+              aria-label={tA11y("close")}
               className="p-1 rounded hover:bg-accent transition-colors"
             >
               <X className="w-4 h-4" />
@@ -106,7 +113,7 @@ export function NotificationCenter({
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <Bell className="w-8 h-8 mb-2 opacity-30" />
-              <p className="text-sm">Aucune notification</p>
+              <p className="text-sm">{t("empty")}</p>
             </div>
           ) : (
             notifications.map((n) => {

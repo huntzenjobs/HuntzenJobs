@@ -119,7 +119,13 @@
         "Evaluación detallada de tus competencias técnicas y personales",
         "Recomendaciones de formaciones certificadas dirigidas",
         "Puntuación de empleabilidad actualizada en tiempo real"
-      ]
+      ],
+      "badge": "RESUME & ATS",
+      "bullet1": "ATS score out of 100 with detailed analysis",
+      "bullet2": "Personalized recommendations per section",
+      "bullet3": "ATS-certified professional PDF export",
+      "bullet4": "Jobs recommended based on your profile",
+      "cta": "Analyze my resume →"
     },
     "matching": {
       "title": "Matching inteligente y búsqueda dirigida",
@@ -177,7 +183,78 @@
     "faqContact": "Contact our support",
     "ctaTitle": "Ready to land your next job?",
     "ctaSubtitle": "Join thousands of candidates using HuntZen to find their ideal job. Start for free, no credit card required.",
-    "ctaButton": "Start for free"
+    "ctaButton": "Start for free",
+    "toasts": {
+      "alreadyOnPlan": "You are already on this plan",
+      "mustBeLoggedIn": "You must be logged in to subscribe to a plan",
+      "redirecting": "Redirecting to payment...",
+      "sessionExpired": "Session expired, please log in again",
+      "upgraded": "✨ Subscription upgraded!",
+      "scheduledChange": "📅 Change scheduled for the end of your current period."
+    },
+    "secure": "Secure payment",
+    "noCommitment": "No commitment",
+    "responseRate": "87% response rate",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "toggleBillingLabel": "Toggle billing period",
+    "frenchSupport": "French-speaking support",
+    "mostPopular": "Most popular",
+    "socialProof": "Thousands of candidates supported",
+    "heroTitle": "Choose your plan",
+    "heroHighlight": "and land your dream job",
+    "heroDescription": "Powerful tools to optimize your search, prepare your interviews and find the job that fits you",
+    "free": "Free",
+    "perMonth": "/month",
+    "billedYearly": "{price}€ billed yearly",
+    "savingsLabel": "-{percentage}% save {amount}€/year",
+    "learnMore": "Learn more",
+    "testimonials": [
+      {
+        "name": "Marie L.",
+        "role": "Project Manager",
+        "content": "I found my current position in 3 weeks. The CV analysis and interview simulations really helped me.",
+        "plan": "Accelerator"
+      },
+      {
+        "name": "Thomas D.",
+        "role": "Full Stack Developer",
+        "content": "The personal coaching is exceptional. It helped me optimize my CV and applications.",
+        "plan": "Career"
+      },
+      {
+        "name": "Sophie M.",
+        "role": "Marketing Manager",
+        "content": "The instant alerts allowed me to apply first for jobs that matched my profile.",
+        "plan": "Career"
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Can I change plans at any time?",
+        "answer": "Absolutely! You can upgrade or downgrade your subscription at any time from your dashboard. The change takes effect immediately."
+      },
+      {
+        "question": "Is there a commitment period?",
+        "answer": "No commitment at all! All our subscriptions are monthly with no commitment. You are free to cancel at any time."
+      },
+      {
+        "question": "What is your refund policy?",
+        "answer": "We offer a 14-day money-back guarantee on all our plans. If you're not satisfied, contact our support and we'll refund you."
+      },
+      {
+        "question": "Do prices include VAT?",
+        "answer": "Yes, all displayed prices include VAT. No additional charges will be added at checkout."
+      },
+      {
+        "question": "What payment methods do you accept?",
+        "answer": "We accept all major credit cards (Visa, Mastercard, American Express) through our secure partner Stripe."
+      },
+      {
+        "question": "Can I try before committing?",
+        "answer": "Yes! Our free plan lets you discover HuntZen without a credit card. No card required to get started."
+      }
+    ]
   },
   "cta": {
     "startFree": "Comenzar gratis",
@@ -188,7 +265,26 @@
     "copyright": "Todos los derechos reservados.",
     "privacy": "Política de privacidad",
     "terms": "Términos de servicio",
-    "contact": "Contacto"
+    "contact": "Contacto",
+    "sections": {
+      "product": "Product",
+      "resources": "Resources",
+      "legal": "Legal"
+    },
+    "links": {
+      "cvAnalysis": "Resume Analysis",
+      "jobSearch": "Job Search",
+      "coach": "AI Coach",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "blog": "Blog",
+      "testimonials": "Testimonials",
+      "about": "About",
+      "legalNotice": "Legal Notice"
+    },
+    "social": {
+      "follow": "Follow us"
+    }
   },
   "pricingPlans": {
     "popular": "POPULAR",
@@ -226,23 +322,6 @@
         "unavailable": [
           "Exportación PDF de informes",
           "Simulación de entrevista"
-        ]
-      },
-      "essential": {
-        "name": "ESENCIAL",
-        "period": "/mes",
-        "cta": "Comenzar con Esencial",
-        "features": [
-          "Búsquedas ilimitadas",
-          "Acceso a todas las ofertas",
-          "Filtros avanzados (salario, remoto, fecha)",
-          "Gestión de favoritos",
-          "Análisis de CV ilimitados",
-          "Puntuación de compatibilidad detallada",
-          "Coaching personalizado (30 min/día)"
-        ],
-        "unavailable": [
-          "Exportación PDF de informes"
         ]
       },
       "pro": {
@@ -688,7 +767,41 @@
         "companyAsc": "Company A→Z"
       },
       "perPage": "Jobs per page",
-      "salaryMinPlaceholder": "e.g.: 35000"
+      "salaryMinPlaceholder": "e.g.: 35000",
+      "relativeDate": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{count} days ago",
+        "weeksAgo_one": "{count} week ago",
+        "weeksAgo_other": "{count} weeks ago",
+        "monthsAgo": "{count} months ago"
+      },
+      "countryNotFound": "Country not found - try from the list",
+      "refreshTitle": "Refresh results from server",
+      "alternanceToggle": "Apprenticeship",
+      "filterButton": "Filter",
+      "filterResults": "Filter results",
+      "resetFilters": "Reset ({count})",
+      "filterSource": "Source",
+      "filterContractType": "Contract type",
+      "filterPostDate": "Posted date",
+      "filterDateToday": "Today",
+      "filterDate3Days": "3 days",
+      "filterDate7Days": "7 days",
+      "filterDate30Days": "30 days",
+      "filterSalaryMin": "Min salary (EUR/yr)",
+      "filterDirectOnly": "Direct links only",
+      "filteredCount_one": "{count} offer displayed",
+      "filteredCount_other": "{count} offers displayed",
+      "filteredCountTotal": " out of {total} total",
+      "badgeApplied": "Applied",
+      "badgeViewed": "Already viewed",
+      "viaAggregator": "Via aggregator",
+      "findRecruiters": "Find recruiters",
+      "betaTag": "BETA",
+      "applyConfirmToast": "Did you apply at {company}?",
+      "applyConfirmYes": "Yes, applied!",
+      "applyConfirmNo": "No"
     },
     "cvAnalysis": {
       "title": "Análisis de CV",
@@ -715,7 +828,23 @@
       "attachCV": "Adjuntar su CV (PDF)",
       "sendMessage": "Enviar mensaje",
       "chatInputLabel": "Su mensaje",
-      "messageCounter": "Mensajes restantes: {remaining} de {total}"
+      "messageCounter": "Mensajes restantes: {remaining} de {total}",
+      "welcomeTeamWithName": "Hi {name}! Your career team is here to help.",
+      "welcomeTeam": "Your career team is here to help.",
+      "welcomeSubtitle": "We'll find your next job together.",
+      "welcomeChoose": "Choose where you want to start.",
+      "welcomeFooter": "5 coaches available 24/7",
+      "quickActionCV": "Improve my CV",
+      "quickActionJobs": "Find job offers",
+      "quickActionInterview": "Prepare for my interview",
+      "quickActionCareer": "Define my career goal",
+      "switchSystemMessage": "You are now talking with **{name}**. {description}",
+      "switchDialogTitle": "Switch assistant?",
+      "switchDialogDescHistory": "Your conversation with {name} will be saved to your history before opening a new chat.",
+      "switchDialogDescNoHistory": "Your conversation will be lost, history is not available with your current plan.",
+      "cancel": "Cancel",
+      "switchAssistant": "Switch assistant",
+      "cvUploadError": "Error analyzing the CV. Please make sure the file is a valid PDF."
     },
     "salons": {
       "title": "Ferias y Foros de Empleo",
@@ -767,7 +896,11 @@
         "virtual": "Virtual",
         "hybrid": "Hybrid",
         "companies": "{count} companies"
-      }
+      },
+      "keyMessage1": "Discover key events for your career.",
+      "keyMessage2": "Expand your network and find new opportunities.",
+      "ctaExplore": "Explore events",
+      "ctaJoin": "Join an event"
     },
     "savedJobs": {
       "title": "Ofertas Guardadas",
@@ -925,7 +1058,31 @@
       "generatedOn": "Generado el",
       "edit": {
         "startDatePlaceholder": "E.g.: 2022-01",
-        "endDatePlaceholder": "E.g.: 2024-06 or Present"
+        "endDatePlaceholder": "E.g.: 2024-06 or Present",
+        "title": "Edit CV",
+        "editTitle": "Edit - {jobTitle} @ {company}",
+        "noDataAvailable": "CV data not available for editing.",
+        "personalInfo": "Personal information",
+        "fullName": "Full name",
+        "email": "Email",
+        "phone": "Phone",
+        "location": "Location",
+        "linkedin": "LinkedIn",
+        "professionalSummary": "Professional summary",
+        "experiences": "Experiences",
+        "addExperience": "Add",
+        "position": "Position",
+        "company": "Company",
+        "startDate": "Start",
+        "endDate": "End",
+        "description": "Description",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save",
+        "pdfGenerationError": "Failed to generate PDF",
+        "sessionExpired": "Session expired",
+        "uploadError": "Failed to upload PDF",
+        "saveError": "Error while saving"
       }
     }
   },
@@ -1036,6 +1193,48 @@
     },
     "placeholders": {
       "fullName": "Your full name"
+    },
+    "pageTitle": "My Profile",
+    "pageDescription": "Manage your personal information, subscription, and preferences",
+    "tabs": {
+      "profile": "Profile",
+      "subscription": "Subscription",
+      "settings": "Settings",
+      "notifications": "Notifications",
+      "progression": "Progression",
+      "referral": "Referral"
+    },
+    "subscriptionSection": {
+      "title": "Your subscription",
+      "description": "View your current plan, daily usage, and manage your subscription"
+    },
+    "settingsSection": {
+      "title": "Settings",
+      "description": "Customize your HuntZen experience with your preferences"
+    },
+    "progressionSection": {
+      "title": "Progression",
+      "description": "Track your Career Score and experience points"
+    },
+    "alerts": {
+      "paymentFailed": "Payment failed",
+      "cancellationScheduled": "Cancellation scheduled"
+    },
+    "help": {
+      "title": "Need help?",
+      "description": "Our support team is here to help. Feel free to contact us if you have questions about your account or subscription.",
+      "helpCenter": "Help Center"
+    },
+    "referral": {
+      "title": "Refer your friends",
+      "description": "Share your link. When a friend subscribes, you earn free days.",
+      "yourLink": "Your referral link",
+      "code": "Code:",
+      "clicks": "Clicks",
+      "signups": "Sign-ups",
+      "conversions": "Conversions",
+      "howItWorks": "How does it work?",
+      "howItWorksDescription": "When a friend subscribes through your link, you automatically receive free days."
     }
   },
   "cv": {
@@ -1056,6 +1255,51 @@
       "pasteCvText": "Pegue el contenido de su CV aquí (mínimo 100 caracteres)...",
       "pasteJobDescription": "Pegue la descripción del puesto para obtener una puntuación de compatibilidad...",
       "pasteJobDescriptionHere": "Paste the job description here..."
+    },
+    "atsScoreAsterisk": "* This score reflects your CV's ATS compatibility. A deliberately simple design improves passage through automated filters.",
+    "atsConfirmTitle": "Generate an ATS-optimized CV",
+    "atsConfirmDescription": "Your CV will be reformatted to maximize passage through automated filters. The design will be deliberately clean for optimal compatibility.",
+    "atsConfirmCancel": "Cancel",
+    "atsConfirmGenerate": "Generate",
+    "results": {
+      "scoreDetails": "Score details",
+      "strengthsAndWeaknesses": "Strengths & Weaknesses",
+      "elementsCount": "{count} elements",
+      "strengths": "Strengths",
+      "weaknesses": "Areas for improvement",
+      "suggestionsTitle": "Improvement suggestions",
+      "actionsCount": "{count} actions"
+    },
+    "comparison": {
+      "needTwoAnalyses": "You need at least 2 analyses to use the comparison",
+      "compareTwoVersions": "Compare two versions",
+      "selectTwoAnalyses": "Select 2 analyses to see your improvements",
+      "invalidSelections": "Invalid selections",
+      "retry": "Retry",
+      "comparison": "Comparison",
+      "changeSelection": "Change selection",
+      "version1": "Version 1",
+      "version2": "Version 2",
+      "improvementsDetected": "Improvements detected",
+      "newStrengths": "New strengths added",
+      "resolvedWeaknesses": "Weaknesses resolved",
+      "noModification": "No modification",
+      "noSignificantImprovement": "No significant improvement detected between these two versions"
+    },
+    "suggestions": {
+      "noSuggestions": "No suggestions available",
+      "progression": "Progress",
+      "completedCount": "{completed}/{total} improvements completed",
+      "potentialScore": "Potential score",
+      "possiblePoints": "+{points} possible points",
+      "moreInfo": "View more information",
+      "categories": {
+        "skills": "Skills",
+        "experience": "Experience",
+        "education": "Education",
+        "formatting": "Formatting",
+        "other": "Other"
+      }
     }
   },
   "jobDetails": {
@@ -1284,6 +1528,33 @@
     },
     "history": {
       "searchPlaceholder": "Search... (Cmd/Ctrl + K)"
+    },
+    "conversations": {
+      "removeFavorite": "Remove from favorites",
+      "addFavorite": "Add to favorites",
+      "deleteConversation": "Delete conversation",
+      "deleteTitle": "Delete conversation?",
+      "deleteDescription": "This action is irreversible. The conversation \"{title}\" will be permanently deleted.",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "questions": {
+      "title": "Quick Questions",
+      "openQuestions": "Open quick questions",
+      "shuffleQuestions": "Shuffle questions",
+      "collapsePanel": "Collapse panel",
+      "description": "Click a question to use it as a starting point",
+      "verticalLabel": "Questions",
+      "tip": "Tip:",
+      "tipText": "Customize these questions to your situation",
+      "defaultQuestions": {
+        "q1": "How to structure my CV for a senior position?",
+        "q2": "What questions to ask at the end of an interview?",
+        "q3": "How to negotiate a salary raise?",
+        "q4": "What skills to develop for career growth?",
+        "q5": "How to highlight a career change?",
+        "q6": "How to answer \"Tell me about yourself\"?"
+      }
     }
   },
   "coachFeedback": {
@@ -1302,7 +1573,13 @@
     "mostPopular": "El más popular"
   },
   "theme": {
-    "toggleAriaLabel": "Cambiar el tema"
+    "toggleAriaLabel": "Cambiar el tema",
+    "appearance": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
   },
   "ctaFinal": {
     "title": "¿Listo para conseguir tu próximo empleo?",
@@ -1421,7 +1698,61 @@
       "sessionExpired": "Session expired",
       "sessionExpiredDesc": "Your session has expired. Please log in again.",
       "sessionExpiredAction": "Reconnect"
-    }
+    },
+    "cancelScheduled": "Cancellation scheduled",
+    "cancelScheduledDesc": "Your {plan} subscription will remain active{until}, then switch to the Free plan.",
+    "cancelScheduledUntil": " until {date}",
+    "cancelScheduledUntilFallback": " until the end of the billing period",
+    "reactivate": "Reactivate my subscription",
+    "reactivating": "Reactivating...",
+    "unknownError": "Unknown error",
+    "planChanged": {
+      "title": "Your subscription has changed",
+      "description": "You are now on the {plan} plan.",
+      "ctaUpgrade": "View plans",
+      "ctaContinue": "Continue"
+    },
+    "features": {
+      "has_advanced_filters": "Advanced filters",
+      "has_favorites": "Unlimited favorites",
+      "has_email_alerts": "Email alerts",
+      "has_visual_score": "Visual CV score",
+      "has_pdf_export": "PDF export",
+      "has_cv_history": "CV history",
+      "has_interview_sim": "Interview simulation",
+      "has_personalized_advice": "Personalized advice",
+      "has_coach_history": "Coach history"
+    },
+    "paymentFailed": "Payment failed",
+    "paymentFailedDesc": "Your last payment failed. Update your payment method to keep your access{until}.",
+    "paymentFailedUntil": " until {date}",
+    "openingPortal": "Opening...",
+    "updateCard": "Update my card",
+    "active": "Active",
+    "endsOn": "Ends on {date}",
+    "cancellationScheduled": "Cancellation scheduled",
+    "upgradeTo": "Upgrade to {plan}",
+    "featuresIncluded": "Features included",
+    "cvAnalysesUnlimited": "Unlimited CV analyses",
+    "cvAnalysesPerDay": "{count} CV analysis per day",
+    "assistantMessagesUnlimited": "Unlimited Assistant messages",
+    "assistantMessagesPerDay": "{count} Assistant messages per day",
+    "jobSearchesUnlimited": "Unlimited job searches",
+    "jobSearchesPerDay": "{count} job searches per day",
+    "dailyUsage": "Today's usage",
+    "cvAnalysesLabel": "CV Analyses",
+    "assistantMessagesLabel": "Assistant Messages",
+    "jobSearchesLabel": "Job Searches",
+    "unlockPotential": "Unlock HuntZen's full potential",
+    "unlockPotentialDesc": "Upgrade to a paid plan for unlimited analyses, more coaching messages, and exclusive features.",
+    "viewPlans": "View plans",
+    "viewPlansAriaLabel": "View all available subscription plans",
+    "changePlan": "Change plan",
+    "changePlanAriaLabel": "Change subscription plan",
+    "upgradeAriaLabel": "Upgrade to {plan} plan",
+    "portalError": "Error",
+    "reactivationError": "Error during reactivation",
+    "cancellationError": "Error during cancellation"
   },
   "contact": {
     "toasts": {
@@ -1432,7 +1763,43 @@
       "name": "Juan García",
       "email": "juan@ejemplo.com",
       "message": "Describa su solicitud en detalle..."
-    }
+    },
+    "heroTitle": "Contact us",
+    "heroDescription": "A question, an issue, a suggestion? Our team responds within 48 hours on weekdays.",
+    "directEmail": "Direct email",
+    "urgentRequest": "For any urgent request:",
+    "responseTime": "Response time",
+    "responseDescription": "Our team responds within <strong>48 hours on weekdays</strong> (Monday to Friday).",
+    "proPriority": "Pro users benefit from priority support.",
+    "usefulLinks": "Useful links",
+    "linkFaq": "FAQ",
+    "linkPrivacy": "Privacy policy",
+    "linkLegal": "Legal notice",
+    "linkTerms": "Terms of use",
+    "messageSentTitle": "Message sent!",
+    "messageSentDescription": "Thank you for your message. Our team will respond within 48 hours on weekdays.",
+    "sendAnother": "Send another message",
+    "formTitle": "Send us a message",
+    "requiredFields": "All fields marked * are required.",
+    "labelFullName": "Full name *",
+    "labelEmail": "Email address *",
+    "labelReason": "Reason for contact",
+    "selectReason": "Select a reason",
+    "reasons": {
+      "support": "Technical issue",
+      "billing": "Billing / subscription",
+      "account": "My account",
+      "feature": "Feature suggestion",
+      "legal": "Legal / GDPR question",
+      "other": "Other"
+    },
+    "labelMessage": "Message *",
+    "emailHint": "You can also email us directly at",
+    "sending": "Sending...",
+    "sendMessage": "Send message",
+    "footerPrivacy": "Privacy policy",
+    "footerTerms": "Terms of use",
+    "footerLegal": "Legal notice"
   },
   "support": {
     "toasts": {
@@ -1448,7 +1815,11 @@
       "chatbotQuestion": "Ask your question..."
     },
     "widget": {
-      "minimize": "Minimizar"
+      "minimize": "Minimizar",
+      "title": "HuntZen Support",
+      "tabFaq": "Help & FAQ",
+      "tabTicket": "Support Ticket",
+      "close": "Close"
     }
   },
   "jobs": {
@@ -1464,6 +1835,33 @@
       "emailCopied": "Email copied!",
       "contactsLoadError": "Unable to retrieve contacts. Try again later.",
       "applicationSaveError": "Unable to save application. Try again."
+    },
+    "blurred": {
+      "source": "Source",
+      "lockedOffer": "Locked offer",
+      "upgradeToPremium": "Upgrade to Premium to view this offer",
+      "unlock": "Unlock",
+      "additionalOffers": "+{count} more offers",
+      "limitReached": "You have reached the limit of {visible} visible offers. Upgrade to Premium to access all offers and never miss an opportunity.",
+      "seeAllOffers": "See all offers"
+    },
+    "placeholder": {
+      "popularSearches": "Trending searches right now",
+      "jobsAggregated": "Aggregated job offers",
+      "updatedBadge": "Updated 24/7",
+      "partnerSources": "Partner job sources",
+      "partnerBadge": "LinkedIn, Indeed, APEC...",
+      "maxUpdateDelay": "Maximum update delay",
+      "dailyOffersBadge": "New offers daily",
+      "searchTips": "Tips for an effective search",
+      "tipSpecificTitle": "Be specific",
+      "tipSpecificDesc": "Use precise keywords like \"React\" instead of \"developer\"",
+      "tipAreaTitle": "Broaden your area",
+      "tipAreaDesc": "Leave the city empty to search across all of France",
+      "tipFiltersTitle": "Use filters",
+      "tipFiltersDesc": "Contract type and country to refine your results",
+      "tipRegularTitle": "Come back regularly",
+      "tipRegularDesc": "Our results are updated every 24 hours"
     }
   },
   "cvBuilder": {
@@ -1564,6 +1962,27 @@
       "progress": "Your progress",
       "rewards": "Rewards",
       "friends": "Your referrals"
+    },
+    "progress": {
+      "remaining": "{count, plural, one {# more friend} other {# more friends}} to unlock {label}",
+      "allUnlocked": "All tiers unlocked!"
+    },
+    "tier": {
+      "label": "Tier {index} - {count, plural, one {# friend} other {# friends}}",
+      "reached": "Reached",
+      "inProgress": "In progress",
+      "locked": "Locked"
+    },
+    "friends": {
+      "emptyTitle": "No referred friends yet",
+      "emptySubtitle": "Share your link to get started",
+      "validated": "Validated friend",
+      "registered": "Registered friend",
+      "badgeValidated": "Validated",
+      "badgeRegistered": "Registered",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{count}d ago"
     }
   },
   "expat": {
@@ -1605,51 +2024,442 @@
   },
   "popups": {
     "close": "Cerrar",
-    "couponLabel": "C\u00f3digo:",
+    "couponLabel": "Código:",
     "planLabel": "Plan",
-    "currencyPerMonth": "\u20ac/mes",
+    "currencyPerMonth": "€/mes",
     "searchLimit": {
-      "title": "Has alcanzado tu l\u00edmite de b\u00fasquedas de hoy",
-      "body": "Pasa a Starter para b\u00fasquedas ilimitadas y encuentra tu pr\u00f3ximo empleo m\u00e1s r\u00e1pido.",
-      "primaryCta": "Desbloquear b\u00fasquedas",
+      "title": "Has alcanzado tu límite de búsquedas de hoy",
+      "body": "Pasa a Starter para búsquedas ilimitadas y encuentra tu próximo empleo más rápido.",
+      "primaryCta": "Desbloquear búsquedas",
       "secondaryCta": "Recomendar a un amigo"
     },
     "cvScore": {
       "title": "Tu CV puede mejorar mucho",
-      "body": "Accede a los consejos detallados de Sofia para mejorar tu puntuaci\u00f3n ATS y conseguir m\u00e1s entrevistas.",
-      "primaryCta": "Activar an\u00e1lisis completo"
+      "body": "Accede a los consejos detallados de Sofia para mejorar tu puntuación ATS y conseguir más entrevistas.",
+      "primaryCta": "Activar análisis completo"
     },
     "sessionCut": {
-      "title": "Tu sesi\u00f3n de coaching ha terminado",
-      "body": "Contin\u00faa con Nova, Maria o Lucas sin l\u00edmite. Tu pr\u00f3ximo empleo est\u00e1 a tu alcance.",
+      "title": "Tu sesión de coaching ha terminado",
+      "body": "Continúa con Nova, Maria o Lucas sin límite. Tu próximo empleo está a tu alcance.",
       "primaryCta": "Continuar con el Coach"
     },
     "interviewScore": {
-      "title": "\u00bfQuieres ir m\u00e1s lejos con Lucas?",
-      "body": "Simula tantas entrevistas como quieras y recibe feedback detallado en cada sesi\u00f3n.",
-      "primaryCta": "Activar simulaci\u00f3n completa"
+      "title": "¿Quieres ir más lejos con Lucas?",
+      "body": "Simula tantas entrevistas como quieras y recibe feedback detallado en cada sesión.",
+      "primaryCta": "Activar simulación completa"
     },
     "momentum": {
-      "title": "Est\u00e1s en racha \u2014 aprovecha el -20\u00a0% hoy",
-      "body": "Est\u00e1s buscando activamente. Aqu\u00ed tienes una oferta exclusiva v\u00e1lida 24\u00a0h solo para ti.",
-      "primaryCta": "Elegir mi plan con -20\u00a0%"
+      "title": "Estás en racha — aprovecha el -20 % hoy",
+      "body": "Estás buscando activamente. Aquí tienes una oferta exclusiva válida 24 h solo para ti.",
+      "primaryCta": "Elegir mi plan con -20 %"
     },
     "antiChurn": {
-      "title": "Qu\u00e9date y ahorra -30\u00a0% durante 3 meses",
-      "body": "Antes de irte, aqu\u00ed tienes una oferta exclusiva: -30\u00a0% en tu suscripci\u00f3n durante 3 meses.",
+      "title": "Quédate y ahorra -30 % durante 3 meses",
+      "body": "Antes de irte, aquí tienes una oferta exclusiva: -30 % en tu suscripción durante 3 meses.",
       "primaryCta": "Mantener mi ventaja",
       "secondaryCta": "Cancelar de todas formas"
     },
     "inactive7d": {
-      "title": "7 d\u00edas de Acelerador gratis, tu plaza est\u00e1 reservada",
-      "body": "\u00a1Te echamos de menos! Vuelve y disfruta de 7 d\u00edas gratis para retomar tu b\u00fasqueda.",
-      "primaryCta": "Activar mis 7 d\u00edas gratis",
-      "priceOverride": "0\u20ac durante 7 d\u00edas"
+      "title": "7 días de Acelerador gratis, tu plaza está reservada",
+      "body": "¡Te echamos de menos! Vuelve y disfruta de 7 días gratis para retomar tu búsqueda.",
+      "primaryCta": "Activar mis 7 días gratis",
+      "priceOverride": "0€ durante 7 días"
     },
     "pricingHover": {
-      "title": "El 67\u00a0% de nuestros suscriptores eligen Acelerador",
-      "body": "Encuentran empleo en promedio 3 veces m\u00e1s r\u00e1pido. \u00danete a ellos hoy.",
+      "title": "El 67 % de nuestros suscriptores eligen Acelerador",
+      "body": "Encuentran empleo en promedio 3 veces más rápido. Únete a ellos hoy.",
       "primaryCta": "Elegir Acelerador ahora"
+    }
+  },
+  "cookies": {
+    "message": "Usamos cookies para mejorar su experiencia en HuntZen Jobs. Las cookies esenciales son necesarias para el funcionamiento del sitio.",
+    "learnMore": "Más información",
+    "decline": "Rechazar",
+    "accept": "Aceptar",
+    "close": "Cerrar",
+    "ariaLabel": "Gestión de cookies"
+  },
+  "errorBoundary": {
+    "title": "Ups, algo salió mal",
+    "description": "Encontramos un problema inesperado. Nuestro equipo ha sido notificado.",
+    "retry": "Reintentar",
+    "backHome": "Volver al inicio"
+  },
+  "dashboardFooter": {
+    "privacy": "Privacidad",
+    "terms": "Términos",
+    "contact": "Contacto"
+  },
+  "usageModal": {
+    "title": "My Usage",
+    "planTitle": "Plan {planName}",
+    "freeSubtitle": "Discover HuntZen for free",
+    "activeSubtitle": "Active subscription",
+    "activeBadge": "Active",
+    "upgradeCta": "Upgrade to a paid plan",
+    "progressTitle": "Your progress",
+    "dailyUsageTitle": "Today's usage",
+    "resetAtMidnight": "Resets at midnight",
+    "cvAnalysis": "CV Analyses",
+    "assistantMessages": "Assistant Messages",
+    "jobSearches": "Job Searches",
+    "unlockTitle": "Unlock HuntZen's full potential",
+    "unlockDescription": "Upgrade to a paid plan for unlimited analyses, more coaching messages, and exclusive features.",
+    "seePlans": "See available plans",
+    "tipLabel": "Good to know:",
+    "tipText": "Your quotas reset automatically every day at midnight. Upgrade to a higher plan to increase your limits.",
+    "quota": {
+      "usedSingular": "{used}{unit} used",
+      "usedPlural": "{used}{unit} used",
+      "outOf": "out of {limit}{unit}",
+      "unlimited": "Unlimited usage",
+      "reached": "Quota reached for today"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications",
+    "timeJustNow": "Just now",
+    "timeHoursAgo": "{h}h ago",
+    "timeDaysAgo": "{d}d ago",
+    "centerAriaLabel": "Notification center"
+  },
+  "careerScore": {
+    "title": "Career Score",
+    "activity": "Activity",
+    "ai": "AI",
+    "xp": "XP",
+    "profileAttractive": "Your profile is becoming really attractive to recruiters."
+  },
+  "seo": {
+    "links": {
+      "discoverFeatures": "Discover all HuntZen Jobs features",
+      "homeAnchor": "HuntZen Jobs",
+      "jobsAnchor": "HuntZen job offers",
+      "cvAnalysisAnchor": "HuntZen Jobs CV analysis",
+      "assistantAnchor": "HuntZen career coach",
+      "pricingAnchor": "HuntZen Jobs pricing",
+      "aboutAnchor": "About HuntZen",
+      "faqAnchor": "HuntZen Jobs FAQ",
+      "testimonialsAnchor": "HuntZen Jobs testimonials",
+      "salonsAnchor": "HuntZen job fairs",
+      "footerDescription": "<strong>HuntZen Jobs</strong> is your ally for job searching in France. Whether you are looking for <jobsLink>job offers</jobsLink>, an <cvLink>ATS CV analysis</cvLink>, or <coachLink>personalized career coaching</coachLink>, <strong>HuntZen</strong> supports you in your professional success.",
+      "ctaDefaultTitle": "Transform your job search with HuntZen Jobs",
+      "ctaDefaultDescription": "Join thousands of candidates who found their ideal job with HuntZen Jobs",
+      "ctaStartFree": "Start for free",
+      "ctaLearnMore": "Learn more",
+      "ctaReviews": "HuntZen Jobs reviews",
+      "ctaTransparentPricing": "Transparent pricing",
+      "ctaFrequentQuestions": "Frequently asked questions"
+    }
+  },
+  "a11y": {
+    "close": "Close",
+    "clear": "Clear",
+    "recalculate": "Recalculate",
+    "notifications": "Notifications"
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "subtitle": "The rules governing the use of our platform and services.",
+    "lastUpdated": "Last updated:",
+    "lastUpdatedDate": "January 2026",
+    "quickLinks": {
+      "profiles": "User profiles",
+      "services": "Service description",
+      "pricing": "Pricing and payment",
+      "responsibilities": "Responsibilities"
+    },
+    "whoWeAre": {
+      "title": "About us",
+      "intro": "We are <strong>HUNTZEN, Unipessoal Lda.</strong>, a Portuguese limited company (Sociedade Unipessoal por Quotas) with a share capital of 15,000.00 euros, registered at <strong>Rua dos Lusíadas 5 5b, 1300-365 Lisbon, Portugal</strong>, with tax identification number <strong>516481320</strong> (hereinafter \"HUNTZEN\", \"we\", \"our\") and these are the General Terms and Conditions of Sale and Use (GTCSU) of HUNTZEN.",
+      "thanks": "Thank you for taking a few minutes to read our GTCSU for the Website <strong>https://huntzenjobs.com</strong> (hereinafter the \"Website\"), published by HUNTZEN.",
+      "important": "These GTCSU contain important information for you as a user of our Website and purchaser of our services, and apply to all services used or purchased on our Website.",
+      "contactIntro": "If you have any questions about these GTCSU, you can contact us by mail at Rua dos Lusíadas 5 5b, 1300-365 Lisbon, Portugal, by email at <strong>contact@huntzenjobs.co</strong> or by phone:",
+      "phonePT": "Phone PT: +351 21 111 9967",
+      "phoneFR": "Phone FR: +33 (0)1 84 19 26 61"
+    },
+    "applicability": {
+      "title": "Applicability of the GTCSU",
+      "content1": "The use of this Website, any related subdomains and all related services, products, offers and services, are expressly subject to your acceptance of these GTCSU. By using our Website or taking advantage of any of our services, the User (\"Client\", \"Recruiter\" or \"Candidate\") automatically accepts and complies with, without reservation or exception, these GTCSU, including future modifications announced by publication on our Website or otherwise notified.",
+      "content2": "HUNTZEN reserves the right to modify the GTCSU at any time and without notice. The modified GTCSU shall apply as soon as they are made accessible, without any further formality being required.",
+      "warning": "If the User does not approve or disagree with these GTCSU, they may not use or access the Website, or make use of HUNTZEN's services.",
+      "warningLabel": "Important:"
+    },
+    "intellectualProperty": {
+      "title": "Intellectual property",
+      "content1": "All content published on the Website (including logos, trademarks, copyrights, etc.) is the exclusive intellectual property of HUNTZEN and, without the express authorization of HUNTZEN, may not be distributed, modified or used in any way.",
+      "content2": "Any reproduction, distribution, commercialization or transformation of content that has not been expressly authorized by its owners constitutes a violation of intellectual and industrial property rights protected by law and may give rise to administrative, civil or criminal proceedings in the event of a violation of such rights.",
+      "content3": "Access to and use of the Website and services does not transfer any ownership whatsoever."
+    },
+    "siteContent": {
+      "title": "Website content",
+      "content1": "On the Website, the User has the option to subscribe to HUNTZEN's Services. The User can access a description of the essential features of the services based on their profile (Client, Recruiter, Candidate) and the concept behind their development.",
+      "content2": "These services are available in Portuguese, French and English."
+    },
+    "userProfiles": {
+      "title": "User Profiles",
+      "intro": "The use of the Website and services differ depending on the User's profile:",
+      "clientTitle": "Client",
+      "clientDesc": "Any private or public legal entity, registered on the Website, posting a job advertisement to receive applications from Recruiter or Candidate accounts.",
+      "recruiterTitle": "Recruiter",
+      "recruiterDesc": "Any natural or legal person, registered on the Website, recruitment professional, wishing to present Candidates to Companies that have posted a Job on the Website. Only persons with either recruitment experience or recruitment training may be Recruiters (and therefore claim the Bonus).",
+      "candidateTitle": "Candidate",
+      "candidateDesc": "Any natural person who has been recommended by a Recruiter and has agreed to be potentially contacted by the Client."
+    },
+    "servicesDescription": {
+      "title": "Service Description",
+      "clientTitle": "For the Client",
+      "clientDesc": "HUNTZEN allows, through its Website, the Client to register, publish offers, modify them and communicate with Recruiters via a dedicated platform, and organize their recruitments.",
+      "recruiterTitle": "For the Recruiter",
+      "recruiterDesc": "HUNTZEN allows, through its Website, the Recruiter to register, process CVs received and send CVs matching offers posted by Clients. In addition, Recruiters may receive bonuses when they have participated in a Client's recruitment.",
+      "candidateTitle": "For the Candidate",
+      "candidateDesc": "HUNTZEN allows, through its Website, the Candidate to register, submit a CV and organize through the dedicated platform, and receive bonuses if the submitted CV leads to a recruitment within 6 months."
+    },
+    "serviceAccess": {
+      "title": "Access to the Service",
+      "content1": "HUNTZEN endeavours to provide access to the site 24 hours a day, 7 days a week, except in cases of force majeure or events beyond its control, and subject to possible breakdowns and maintenance necessary for the proper functioning of the Website and services.",
+      "content2": "Consequently, HUNTZEN cannot guarantee the availability of the site and/or services, the reliability of transmissions and performance in terms of response time or quality.",
+      "content3": "HUNTZEN shall not be held liable in the event of inability to access the site and/or use of the services."
+    },
+    "registration": {
+      "title": "Registration",
+      "content1": "Any legal entity or public body, duly represented, as well as any natural person who is of legal age and has legal capacity, is authorized to register on the Website. Registration is essential to access the Service.",
+      "content2": "Upon completion of registration, a username (i.e. email address or first and last name) and password must be chosen by the Client, Recruiter and/or Candidate. The username and password are entirely confidential and personal and must never be disclosed to third parties.",
+      "warning": "The Client, Recruiter and/or Candidate guarantee that the information provided at the time of registration is accurate and corresponds to reality.",
+      "content3": "For security and data protection purposes, HUNTZEN will delete accounts of Clients, Recruiters and/or Candidates that are inactive, or without credit or debit, for a period of one year."
+    },
+    "pricingSection": {
+      "title": "Pricing and payment terms",
+      "content1": "All prices indicated by HUNTZEN on the Website and in other written documents issued by HUNTZEN are exclusive of VAT, which will be added at the legal rate on the date of issuance of the corresponding invoice. All invoices are payable in euros.",
+      "content2": "HUNTZEN reserves the right to modify prices at any time without notice.",
+      "financialConditions": "Financial conditions by profile:",
+      "clientTitle": "For the Client",
+      "clientBullet1": "Invoices must be paid according to the conditions set out in the contracts signed between HUNTZEN and the Client",
+      "clientBullet2": "Payment must be made by bank transfer",
+      "recruiterTitle": "For the Recruiter",
+      "recruiterBullet1": "The Recruiter will receive <strong>70%</strong> of what the Client has paid to HUNTZEN for the completed recruitment",
+      "recruiterBullet2": "The recruitment of a Candidate whose CV was obtained via the HUNTZEN Website entitles a reduced bonus of <strong>20%</strong>",
+      "recruiterBullet3": "Payment will be made by bank transfer once the trial period has been validated",
+      "candidateTitle": "For the Candidate",
+      "candidateBullet1": "When a CV leads to a recruitment by a Client, HUNTZEN pays the Candidate <strong>50%</strong> of what the Client paid",
+      "candidateBullet2": "Payment will be made by bank transfer once the trial period has been validated"
+    },
+    "obligations": {
+      "title": "Obligations and responsibilities",
+      "huntzenTitle": "Obligations of HUNTZEN",
+      "huntzenContent1": "HUNTZEN undertakes to use all necessary means to ensure the best possible provision of the Service.",
+      "huntzenContent2": "In order to preserve the quality of the Website, HUNTZEN reserves the right to refuse a Client, an advertisement, a Recruiter or a Candidate at its sole discretion.",
+      "huntzenContent3": "In the event of non-compliance with the GTCSU by a User, HUNTZEN may unilaterally and without delay terminate the registration of any Client, Recruiter or Candidate, by simple electronic notification.",
+      "clientTitle": "Obligations of the Client",
+      "clientBullet1": "Obligation to notify HUNTZEN of interviews with Candidates with feedback",
+      "clientBullet2": "Obligation to notify HUNTZEN of any completed recruitment",
+      "recruiterTitle": "Obligations of the Recruiter",
+      "recruiterBullet1": "Obligation to notify HUNTZEN when a Candidate has been recruited",
+      "recruiterBullet2": "Obligation to send CVs with a report corresponding to the Client's search",
+      "candidateTitle": "Obligations of the Candidate",
+      "candidateBullet1": "Obligation to notify HUNTZEN when there has been a recruitment or interview",
+      "candidateBullet2": "Obligation to send a CV that corresponds to the job description"
+    },
+    "liability": {
+      "title": "Exclusion of liability",
+      "content1": "To the fullest extent permitted by law, any liability of HUNTZEN or its affiliated companies is excluded in the event of loss or any other damage suffered by the User on the basis of or in connection with the conclusion of a service contract and use of the services offered on the HUNTZEN Website.",
+      "content2": "The Client, Recruiter or Candidate accepts that use of the services offered by HUNTZEN is at their own risk.",
+      "warning": "Delays, poor performance or total or partial non-performance of services in the event of force majeure cannot give rise to compensation."
+    },
+    "applicableLaw": {
+      "title": "Applicable law and jurisdiction",
+      "content1": "The relationship between HUNTZEN and the User under these GTCSU is subject to Portuguese substantive law, unless the mandatory rules of the law of the User's country of residence apply.",
+      "content2": "In the event of difficulties in interpreting or performing the GTCSU, the User and HUNTZEN shall endeavour to settle their dispute amicably within thirty (30) calendar days.",
+      "content3": "Any judicial or arbitral dispute arising from the contractual relationship between HUNTZEN and the User under these GTCSU shall be submitted to the Portuguese courts."
+    },
+    "contact": {
+      "title": "Contact",
+      "content1": "The Website is operated by HUNTZEN, Unipessoal Lda., with registered office at Rua dos Lusíadas 5 5b, 1300-365 Lisbon, Portugal.",
+      "content2": "If you have any questions about the Website and its content, please contact our customer service:",
+      "phone": "Phone: +351 21 111 9967 or +33 (1) 84 19 26 61",
+      "email": "Email: contact@huntzenjobs.co"
+    },
+    "footerLinks": {
+      "home": "Home",
+      "pricing": "Pricing",
+      "privacy": "Privacy Policy",
+      "tagline": "A platform created by a recruiter and an entrepreneur.",
+      "importantLinks": "Important links",
+      "contact": "Contact",
+      "copyright": "Copyright © {year} All rights reserved HuntZen."
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "Your privacy is our priority. Find out how we protect and use your data.",
+    "lastUpdated": "Last updated:",
+    "lastUpdatedDate": "January 2026",
+    "quickLinks": {
+      "dataCollection": "Data collection",
+      "rights": "Your rights",
+      "security": "Security"
+    },
+    "intro": "This Privacy Policy governs the processing of personal data of users (hereinafter \"User\" or \"Users\"), collected in the context of using the website <strong>https://huntzenjobs.com</strong> (hereinafter the \"Website\"), by <strong>HUNTZEN, Unipessoal Lda.</strong>, a Portuguese limited company (Sociedade Unipessoal por Quotas) with a share capital of 15,000.00 euros, registered at Rua dos Lusíadas 5 5b, 1300-365 Lisbon, Portugal, with tax identification number 516481320 (hereinafter \"HUNTZEN\"), as the entity responsible for data processing.",
+    "dataCollection": {
+      "title": "Collection and processing of personal data",
+      "content1": "Accessing and browsing the Website does not automatically require the User to provide personal data.",
+      "content2": "However, the use of certain features of the Website requires the User to provide personal data. Indeed, Users' personal data is collected and processed in order to deliver the services offered.",
+      "content3": "The collected data enables us to:",
+      "bullet1": "Create and manage the user account",
+      "bullet2": "Inform each stakeholder about a given recruitment",
+      "bullet3": "Trigger invoicing for clients and invoice requests for consultants",
+      "bullet4": "Provide support and assistance in their processes on the Website",
+      "bullet5": "Answer any questions the User may have"
+    },
+    "userRights": {
+      "title": "User rights",
+      "content1": "In accordance with applicable legislation, the User may request, at any time, access to their personal data as well as their rectification, erasure, restriction of processing, data portability or object to their processing.",
+      "content2": "The User may also obtain confirmation that their personal data is being processed, and may request a copy of the data being processed.",
+      "content3": "The law also guarantees the User the right to withdraw consent to data processing for the stated purposes, without however invalidating the processing carried out up to that date based on previously given consent.",
+      "contactTitle": "To exercise your rights, contact us:",
+      "contactEmail": "Email: contact@huntzenjobs.co",
+      "contactAddress": "Address: Rua dos Lusíadas 5 5b, 1300-365 Lisbon, Portugal"
+    },
+    "dataRetention": {
+      "title": "Retention of personal data",
+      "content1": "Personal data collected is processed in accordance with applicable legislation.",
+      "content2": "Personal data will be retained according to its purpose and in accordance with the retention period provided by applicable law. When there is no specific legal requirement, data will be stored and retained for an appropriate period and for the purposes for which it was collected, unless the User decides to exercise, within the limits of the law, the right to withdraw consent."
+    },
+    "dataSharing": {
+      "title": "When is data shared with other entities?",
+      "content1": "HUNTZEN may transmit personal data:",
+      "bullet1": "When using third parties to provide certain services, where the provision of these services may require access by such entities to personal data. Any subcontractor of HUNTZEN will process your personal data on behalf of HUNTZEN, under the strict obligation to follow its instructions and in accordance with the subcontracting agreement concluded with said subcontractors.",
+      "bullet2": "To third parties, if it considers that such data transmissions are necessary or appropriate (i) under the law, (ii) by virtue of legal obligations/court orders, (iii) decisions of supervisory authorities or (iv) to respond to requests from public or governmental authorities."
+    },
+    "security": {
+      "title": "Security",
+      "content1": "HUNTZEN does everything in its power to protect Users' personal data from unauthorized access. To this end, it uses security systems, rules and other procedures to ensure the protection of personal data, as well as to prevent unauthorized access to data or its misuse, disclosure, loss or destruction.",
+      "content2": "However, Users are responsible for ensuring that the devices and equipment used to access the Website are duly protected against malware, computer viruses and worms."
+    },
+    "cookiesSection": {
+      "title": "Cookies",
+      "whatIsTitle": "What is a cookie?",
+      "whatIsContent": "Cookies are small files or devices placed on Users' computers that allow the storage, retrieval, updating and processing of data relating to transactions carried out on the Website. These cookies are placed on Users' hard drives and not on the Website.",
+      "firstVisit": "On the first visit to the Website, Users are asked to accept or decline the use of certain categories of cookies.",
+      "ownCookies": "The Website uses HUNTZEN's own cookies and third-party cookies that allow anonymous usage analysis and measurement to ensure that the Website is functioning correctly and to improve our services.",
+      "controlTitle": "Control of cookie use",
+      "controlContent": "If the User wishes to delete cookies that are already installed on their device, they can do so from their browser. To find out how to proceed, simply consult the browser's help section, where the steps to follow are provided."
+    },
+    "internationalTransfers": {
+      "title": "International data transfers",
+      "content1": "HUNTZEN may transfer personal data to third countries (outside the European Union or the European Economic Area), within the scope of the purposes set out in this policy, for which there is no adequacy decision by the European Commission.",
+      "content2": "In this case, HUNTZEN undertakes to take appropriate security measures to ensure the confidentiality and protection of personal data, in accordance with applicable data protection legislation.",
+      "content3": "The User may request information about these transfers by contacting contact@huntzenjobs.co."
+    },
+    "complaints": {
+      "title": "Complaints",
+      "content1": "Without prejudice to any other administrative or judicial remedy, the User has the right to lodge a complaint with the competent supervisory authority in accordance with the law, when they consider that the processing of their data by HUNTZEN violates the applicable legal regime."
+    },
+    "questions": {
+      "title": "Questions and suggestions",
+      "content1": "The User may contact HUNTZEN regarding any questions about the processing of their personal data and the exercise of the rights granted by applicable legislation:",
+      "phone": "Phone: +351 21 111 9967 or +33 (1) 84 19 26 61",
+      "email": "Email: contact@huntzenjobs.co",
+      "address": "Address: Rua dos Lusíadas 5 5b, 1300-365 Lisbon, Portugal"
+    },
+    "policyChanges": {
+      "title": "Changes to the Privacy Policy",
+      "content1": "HUNTZEN reserves the right to modify these data processing conditions at any time. Such modifications will take effect as soon as they are made available on the Website, without any further formality being required."
+    },
+    "footerLinks": {
+      "home": "Home",
+      "pricing": "Pricing",
+      "terms": "Terms of Service",
+      "tagline": "A platform created by a recruiter and an entrepreneur.",
+      "importantLinks": "Important links",
+      "contact": "Contact",
+      "copyright": "Copyright © {year} All rights reserved HuntZen."
+    }
+  },
+  "legal": {
+    "title": "Legal Notice",
+    "subtitle": "Legal information regarding the publisher and hosting of huntzenjobs.com.",
+    "lastUpdated": "Last updated: March 2026",
+    "quickLinks": {
+      "editor": "Publisher",
+      "hosting": "Hosting",
+      "intellectualProperty": "Intellectual property",
+      "liability": "Limitation of liability",
+      "personalData": "Personal data",
+      "cookies": "Cookies",
+      "contact": "Contact"
+    },
+    "editor": {
+      "title": "1. Website publisher",
+      "intro": "The website <strong>huntzenjobs.com</strong> is published by:",
+      "companyName": "Company name:",
+      "companyNameValue": "HUNTZEN, Unipessoal Lda.",
+      "legalForm": "Legal form:",
+      "legalFormValue": "Sociedade Unipessoal por Quotas",
+      "capital": "Share capital:",
+      "capitalValue": "15,000 EUR",
+      "address": "Registered office:",
+      "addressValue": "Rua dos Lusiadas 5 5b, 1300-365 Lisbon, Portugal",
+      "nipc": "Tax ID:",
+      "nipcValue": "516481320",
+      "email": "Email:",
+      "emailValue": "contact@huntzenjobs.com",
+      "director": "Publication director:",
+      "directorValue": "Wissem Jegham"
+    },
+    "hosting": {
+      "title": "2. Hosting",
+      "intro": "The website is hosted by the following providers:",
+      "frontendLabel": "Frontend (user interface)",
+      "frontendProvider": "Vercel Inc.",
+      "frontendAddress": "440 N Barranca Ave #4133, Covina, CA 91723, United States",
+      "frontendUrl": "vercel.com",
+      "backendLabel": "Backend (API)",
+      "backendProvider": "Railway Corp.",
+      "backendAddress": "548 Market St PMB 68957, San Francisco, CA 94104, United States",
+      "backendUrl": "railway.app",
+      "databaseLabel": "Database",
+      "databaseProvider": "Supabase Inc.",
+      "databaseAddress": "970 Toa Payoh North #07-04, Singapore 318992",
+      "databaseUrl": "supabase.com"
+    },
+    "intellectualProperty": {
+      "title": "3. Intellectual property",
+      "content1": "All content on the huntzenjobs.com website (text, images, logos, icons, source code, user interface) is the exclusive property of HUNTZEN, Unipessoal Lda. or its partners and is protected by French and international intellectual property laws.",
+      "content2": "Any reproduction, representation, modification, publication or adaptation of all or part of the elements of the website, by any means or process, is prohibited without the prior written authorization of HUNTZEN, Unipessoal Lda.."
+    },
+    "liability": {
+      "title": "4. Limitation of liability",
+      "content1": "HUNTZEN, Unipessoal Lda. endeavours to ensure the accuracy and currency of information published on the website. HUNTZEN, Unipessoal Lda. shall not be held liable for errors or omissions in published information, nor for direct or indirect damages resulting from the use of the website.",
+      "content2": "Job offers displayed on HuntZen Jobs are aggregated from third-party sources. HUNTZEN, Unipessoal Lda. cannot guarantee the accuracy, completeness or availability of these offers and disclaims all liability regarding their content."
+    },
+    "personalData": {
+      "title": "5. Personal data",
+      "content1": "The collection and processing of personal data is governed by our",
+      "privacyLink": "Privacy Policy",
+      "content2": ", in accordance with the General Data Protection Regulation (GDPR - Regulation EU 2016/679).",
+      "content3": "To exercise your rights (access, rectification, erasure, portability), contact us at",
+      "privacyEmail": "privacy@huntzenjobs.com"
+    },
+    "cookiesSection": {
+      "title": "6. Cookies",
+      "content1": "The huntzenjobs.com website uses technical cookies necessary for its operation (authentication, user preferences) and analytical cookies to improve the user experience.",
+      "content2": "In accordance with GDPR regulations and CNIL recommendations, your consent is obtained before placing any non-essential cookie. You can change your preferences at any time from the consent banner."
+    },
+    "contactSection": {
+      "title": "7. Contact",
+      "intro": "For any question regarding these legal notices:",
+      "emailLabel": "Email:",
+      "emailValue": "contact@huntzenjobs.com",
+      "formLabel": "Contact form:",
+      "formValue": "huntzenjobs.com/contact"
+    },
+    "footerLinks": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "contact": "Contact"
     }
   }
 }

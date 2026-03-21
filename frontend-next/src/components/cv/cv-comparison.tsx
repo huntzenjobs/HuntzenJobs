@@ -3,24 +3,34 @@
  * Features: side-by-side comparison, improvements detection, delta visualization
  */
 
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { TrendingUp, TrendingDown, Plus, Check, ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { ScoreRing } from '@/components/cv/score-ring'
-import { ScoreBreakdownV2, type BreakdownItem } from '@/components/cv/score-breakdown-v2'
-import type { CVAnalysisResult } from '@/hooks/use-cv-history'
-import { cn } from '@/lib/utils'
+import { useState } from "react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  Check,
+  ArrowRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScoreRing } from "@/components/cv/score-ring";
+import {
+  ScoreBreakdownV2,
+  type BreakdownItem,
+} from "@/components/cv/score-breakdown-v2";
+import type { CVAnalysisResult } from "@/hooks/use-cv-history";
+import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface CVComparisonProps {
-  analyses: CVAnalysisResult[]
-  className?: string
+  analyses: CVAnalysisResult[];
+  className?: string;
 }
 
 // ============================================================================
@@ -28,31 +38,41 @@ interface CVComparisonProps {
 // ============================================================================
 
 function getNewStrengths(v1: CVAnalysisResult, v2: CVAnalysisResult): string[] {
-  return (v2.strengths || []).filter((strength) => !(v1.strengths || []).includes(strength))
+  return (v2.strengths || []).filter(
+    (strength) => !(v1.strengths || []).includes(strength),
+  );
 }
 
-function getResolvedWeaknesses(v1: CVAnalysisResult, v2: CVAnalysisResult): string[] {
-  return (v1.weaknesses || []).filter((weakness) => !(v2.weaknesses || []).includes(weakness))
+function getResolvedWeaknesses(
+  v1: CVAnalysisResult,
+  v2: CVAnalysisResult,
+): string[] {
+  return (v1.weaknesses || []).filter(
+    (weakness) => !(v2.weaknesses || []).includes(weakness),
+  );
 }
 
-function calculateScoreDelta(v1: CVAnalysisResult, v2: CVAnalysisResult): number {
-  return v2.score - v1.score
+function calculateScoreDelta(
+  v1: CVAnalysisResult,
+  v2: CVAnalysisResult,
+): number {
+  return v2.score - v1.score;
 }
 
 function getBreakdownDeltas(
   breakdown1: BreakdownItem[],
-  breakdown2: BreakdownItem[]
+  breakdown2: BreakdownItem[],
 ): Record<string, number> {
-  const deltas: Record<string, number> = {}
+  const deltas: Record<string, number> = {};
 
   breakdown2.forEach((item2) => {
-    const item1 = breakdown1.find((i) => i.label === item2.label)
+    const item1 = breakdown1.find((i) => i.label === item2.label);
     if (item1) {
-      deltas[item2.label] = item2.value - item1.value
+      deltas[item2.label] = item2.value - item1.value;
     }
-  })
+  });
 
-  return deltas
+  return deltas;
 }
 
 // ============================================================================
@@ -64,16 +84,17 @@ function ImprovementsList({
   items,
   icon,
 }: {
-  label: string
-  items: string[]
-  icon: React.ReactNode
+  label: string;
+  items: string[];
+  icon: React.ReactNode;
 }) {
+  const t = useTranslations("cv.comparison");
   if (items.length === 0) {
     return (
       <div className="text-sm text-gray-500 text-center py-4">
-        Aucune modification
+        {t("noModification")}
       </div>
-    )
+    );
   }
 
   return (
@@ -84,28 +105,31 @@ function ImprovementsList({
       </h4>
       <ul className="space-y-2">
         {items.map((item, idx) => (
-          <li key={idx} className="text-sm text-gray-700 flex items-start gap-2">
+          <li
+            key={idx}
+            className="text-sm text-gray-700 flex items-start gap-2"
+          >
             <span className="text-green-600 flex-shrink-0 mt-0.5">•</span>
             <span>{item}</span>
           </li>
         ))}
       </ul>
     </div>
-  )
+  );
 }
 
 function BreakdownComparison({
   breakdown,
   deltas,
 }: {
-  breakdown: BreakdownItem[]
-  deltas?: Record<string, number>
+  breakdown: BreakdownItem[];
+  deltas?: Record<string, number>;
 }) {
   return (
     <div className="space-y-3">
       {breakdown.map((item) => {
-        const delta = deltas?.[item.label] || 0
-        const percentage = (item.value / item.max) * 100
+        const delta = deltas?.[item.label] || 0;
+        const percentage = (item.value / item.max) * 100;
 
         return (
           <div key={item.label} className="space-y-1">
@@ -119,13 +143,13 @@ function BreakdownComparison({
                   <Badge
                     variant="outline"
                     className={cn(
-                      'text-xs',
+                      "text-xs",
                       delta > 0
-                        ? 'bg-green-50 text-green-700 border-green-200'
-                        : 'bg-red-50 text-red-700 border-red-200'
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : "bg-red-50 text-red-700 border-red-200",
                     )}
                   >
-                    {delta > 0 ? '+' : ''}
+                    {delta > 0 ? "+" : ""}
                     {delta}
                   </Badge>
                 )}
@@ -138,10 +162,10 @@ function BreakdownComparison({
               />
             </div>
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 // ============================================================================
@@ -149,30 +173,27 @@ function BreakdownComparison({
 // ============================================================================
 
 export function CVComparison({ analyses, className }: CVComparisonProps) {
-  const [selectedIds, setSelectedIds] = useState<[string, string] | null>(null)
+  const t = useTranslations("cv.comparison");
+  const [selectedIds, setSelectedIds] = useState<[string, string] | null>(null);
 
   // If not enough analyses or no selection yet
   if (analyses.length < 2) {
     return (
-      <div className={cn('text-center py-12', className)}>
-        <p className="text-sm text-gray-500 mb-4">
-          Vous devez avoir au moins 2 analyses pour utiliser la comparaison
-        </p>
+      <div className={cn("text-center py-12", className)}>
+        <p className="text-sm text-gray-500 mb-4">{t("needTwoAnalyses")}</p>
       </div>
-    )
+    );
   }
 
   // Selection UI
   if (!selectedIds) {
     return (
-      <div className={cn('space-y-6', className)}>
+      <div className={cn("space-y-6", className)}>
         <div className="text-center mb-8">
           <h3 className="text-xl font-bold text-gray-900 mb-2">
-            Comparer deux versions
+            {t("compareTwoVersions")}
           </h3>
-          <p className="text-sm text-gray-600">
-            Sélectionnez 2 analyses pour voir vos améliorations
-          </p>
+          <p className="text-sm text-gray-600">{t("selectTwoAnalyses")}</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
@@ -184,13 +205,13 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
               onClick={() => {
                 if (!selectedIds) {
                   // First selection
-                  setSelectedIds([analysis.id, ''] as [string, string])
-                } else if (selectedIds[1] === '') {
+                  setSelectedIds([analysis.id, ""] as [string, string]);
+                } else if (selectedIds[1] === "") {
                   // Second selection
-                  setSelectedIds([selectedIds[0], analysis.id])
+                  setSelectedIds([selectedIds[0], analysis.id]);
                 } else {
                   // Reset and start over
-                  setSelectedIds([analysis.id, ''] as [string, string])
+                  setSelectedIds([analysis.id, ""] as [string, string]);
                 }
               }}
             >
@@ -203,51 +224,51 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
                 </Badge>
               </div>
               <span className="text-xs text-gray-500">
-                {new Date(analysis.analyzedAt).toLocaleDateString('fr-FR')}
+                {new Date(analysis.analyzedAt).toLocaleDateString("fr-FR")}
               </span>
             </Button>
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   // Get selected analyses
-  const v1 = analyses.find((a) => a.id === selectedIds[0])
-  const v2 = analyses.find((a) => a.id === selectedIds[1])
+  const v1 = analyses.find((a) => a.id === selectedIds[0]);
+  const v2 = analyses.find((a) => a.id === selectedIds[1]);
 
   if (!v1 || !v2) {
     return (
-      <div className={cn('text-center py-12', className)}>
-        <p className="text-sm text-gray-500">Sélections invalides</p>
+      <div className={cn("text-center py-12", className)}>
+        <p className="text-sm text-gray-500">{t("invalidSelections")}</p>
         <Button
           variant="outline"
           onClick={() => setSelectedIds(null)}
           className="mt-4"
         >
-          Réessayer
+          {t("retry")}
         </Button>
       </div>
-    )
+    );
   }
 
   // Calculate improvements
-  const scoreDelta = calculateScoreDelta(v1, v2)
-  const newStrengths = getNewStrengths(v1, v2)
-  const resolvedWeaknesses = getResolvedWeaknesses(v1, v2)
-  const breakdownDeltas = getBreakdownDeltas(v1.breakdown, v2.breakdown)
+  const scoreDelta = calculateScoreDelta(v1, v2);
+  const newStrengths = getNewStrengths(v1, v2);
+  const resolvedWeaknesses = getResolvedWeaknesses(v1, v2);
+  const breakdownDeltas = getBreakdownDeltas(v1.breakdown, v2.breakdown);
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn("space-y-6", className)}>
       {/* Header with reset button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-gray-900">Comparaison</h3>
+        <h3 className="text-xl font-bold text-gray-900">{t("comparison")}</h3>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setSelectedIds(null)}
         >
-          Changer la sélection
+          {t("changeSelection")}
         </Button>
       </div>
 
@@ -256,7 +277,7 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
         <div className="flex items-center justify-center gap-8">
           <div className="text-center">
             <div className="text-3xl font-bold text-gray-900">{v1.score}%</div>
-            <div className="text-xs text-gray-600 mt-1">Version 1</div>
+            <div className="text-xs text-gray-600 mt-1">{t("version1")}</div>
           </div>
 
           <div className="flex flex-col items-center">
@@ -265,10 +286,10 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
               <Badge
                 variant="outline"
                 className={cn(
-                  'text-base font-bold',
+                  "text-base font-bold",
                   scoreDelta > 0
-                    ? 'bg-green-100 text-green-700 border-green-300'
-                    : 'bg-red-100 text-red-700 border-red-300'
+                    ? "bg-green-100 text-green-700 border-green-300"
+                    : "bg-red-100 text-red-700 border-red-300",
                 )}
               >
                 {scoreDelta > 0 ? (
@@ -276,7 +297,7 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
                 ) : (
                   <TrendingDown className="h-4 w-4 mr-1" />
                 )}
-                {scoreDelta > 0 ? '+' : ''}
+                {scoreDelta > 0 ? "+" : ""}
                 {scoreDelta}
               </Badge>
             )}
@@ -284,7 +305,7 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
 
           <div className="text-center">
             <div className="text-3xl font-bold text-gray-900">{v2.score}%</div>
-            <div className="text-xs text-gray-600 mt-1">Version 2</div>
+            <div className="text-xs text-gray-600 mt-1">{t("version2")}</div>
           </div>
         </div>
       </div>
@@ -293,7 +314,7 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="border rounded-xl p-6 bg-white">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-900">Version 1</h4>
+            <h4 className="font-semibold text-gray-900">{t("version1")}</h4>
             <ScoreRing score={v1.score} size={60} animationDuration={0} />
           </div>
           <BreakdownComparison breakdown={v1.breakdown} />
@@ -301,10 +322,13 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
 
         <div className="border rounded-xl p-6 bg-white">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-gray-900">Version 2</h4>
+            <h4 className="font-semibold text-gray-900">{t("version2")}</h4>
             <ScoreRing score={v2.score} size={60} animationDuration={0} />
           </div>
-          <BreakdownComparison breakdown={v2.breakdown} deltas={breakdownDeltas} />
+          <BreakdownComparison
+            breakdown={v2.breakdown}
+            deltas={breakdownDeltas}
+          />
         </div>
       </div>
 
@@ -312,17 +336,17 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
       <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-green-600" />
-          Améliorations détectées
+          {t("improvementsDetected")}
         </h3>
 
         <div className="grid md:grid-cols-2 gap-6">
           <ImprovementsList
-            label="Points forts ajoutés"
+            label={t("newStrengths")}
             items={newStrengths}
             icon={<Plus className="h-4 w-4 text-green-600" />}
           />
           <ImprovementsList
-            label="Faiblesses corrigées"
+            label={t("resolvedWeaknesses")}
             items={resolvedWeaknesses}
             icon={<Check className="h-4 w-4 text-blue-600" />}
           />
@@ -330,10 +354,10 @@ export function CVComparison({ analyses, className }: CVComparisonProps) {
 
         {newStrengths.length === 0 && resolvedWeaknesses.length === 0 && (
           <p className="text-sm text-gray-600 text-center">
-            Aucune amélioration significative détectée entre ces deux versions
+            {t("noSignificantImprovement")}
           </p>
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -10,14 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
-const contactReasons = [
-  { value: "support", label: "Problème technique" },
-  { value: "billing", label: "Facturation / abonnement" },
-  { value: "account", label: "Mon compte" },
-  { value: "feature", label: "Suggestion de fonctionnalité" },
-  { value: "legal", label: "Question légale / RGPD" },
-  { value: "other", label: "Autre" },
-];
+const CONTACT_REASON_KEYS = [
+  "support",
+  "billing",
+  "account",
+  "feature",
+  "legal",
+  "other",
+] as const;
 
 export default function ContactPage() {
   const t = useTranslations("contact");
@@ -71,12 +71,11 @@ export default function ContactPage() {
             <div className="w-12 h-12 bg-[#00D9FF]/20 rounded-xl flex items-center justify-center">
               <MessageSquare className="w-6 h-6 text-[#00D9FF]" />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black">Nous contacter</h1>
+            <h1 className="text-4xl sm:text-5xl font-black">
+              {t("heroTitle")}
+            </h1>
           </div>
-          <p className="text-xl text-white/80">
-            Une question, un problème, une suggestion ? Notre équipe vous répond
-            sous 48h en semaine.
-          </p>
+          <p className="text-xl text-white/80">{t("heroDescription")}</p>
         </div>
       </div>
 
@@ -89,10 +88,10 @@ export default function ContactPage() {
               <div className="w-10 h-10 bg-[#00D9FF]/10 rounded-xl flex items-center justify-center mb-4">
                 <Mail className="w-5 h-5 text-[#00D9FF]" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Email direct</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Pour toute demande urgente :
-              </p>
+              <h3 className="font-bold text-gray-900 mb-2">
+                {t("directEmail")}
+              </h3>
+              <p className="text-sm text-gray-600 mb-3">{t("urgentRequest")}</p>
               <a
                 href="mailto:support@huntzenjobs.com"
                 className="text-[#00D9FF] font-medium hover:underline text-sm"
@@ -105,24 +104,25 @@ export default function ContactPage() {
               <div className="w-10 h-10 bg-[#00D9FF]/10 rounded-xl flex items-center justify-center mb-4">
                 <Clock className="w-5 h-5 text-[#00D9FF]" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Temps de réponse</h3>
+              <h3 className="font-bold text-gray-900 mb-2">
+                {t("responseTime")}
+              </h3>
               <p className="text-sm text-gray-600">
-                Notre équipe répond sous <strong>48h en semaine</strong> (lundi
-                – vendredi).
+                {t("responseDescription")}
               </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Les utilisateurs Pro bénéficient d&apos;un support prioritaire.
-              </p>
+              <p className="text-sm text-gray-500 mt-2">{t("proPriority")}</p>
             </div>
 
             <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-3">Liens utiles</h3>
+              <h3 className="font-bold text-gray-900 mb-3">
+                {t("usefulLinks")}
+              </h3>
               <div className="space-y-2">
                 {[
-                  { href: "/faq", label: "FAQ" },
-                  { href: "/privacy", label: "Politique de confidentialité" },
-                  { href: "/legal", label: "Mentions légales" },
-                  { href: "/terms", label: "Conditions d'utilisation" },
+                  { href: "/faq", label: t("linkFaq") },
+                  { href: "/privacy", label: t("linkPrivacy") },
+                  { href: "/legal", label: t("linkLegal") },
+                  { href: "/terms", label: t("linkTerms") },
                 ].map((link) => (
                   <Link
                     key={link.href}
@@ -145,11 +145,10 @@ export default function ContactPage() {
                   <Mail className="w-8 h-8 text-green-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                  Message envoyé !
+                  {t("messageSentTitle")}
                 </h2>
                 <p className="text-gray-600 max-w-sm">
-                  Merci pour votre message. Notre équipe vous répondra dans les
-                  48h en semaine.
+                  {t("messageSentDescription")}
                 </p>
                 <Button
                   className="mt-8"
@@ -159,18 +158,16 @@ export default function ContactPage() {
                     setForm({ name: "", email: "", reason: "", message: "" });
                   }}
                 >
-                  Envoyer un autre message
+                  {t("sendAnother")}
                 </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    Envoyez-nous un message
+                    {t("formTitle")}
                   </h2>
-                  <p className="text-gray-500 text-sm">
-                    Tous les champs marqués * sont obligatoires.
-                  </p>
+                  <p className="text-gray-500 text-sm">{t("requiredFields")}</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -179,7 +176,7 @@ export default function ContactPage() {
                       htmlFor="name"
                       className="text-sm font-medium text-gray-700"
                     >
-                      Nom complet *
+                      {t("labelFullName")}
                     </label>
                     <Input
                       id="name"
@@ -197,7 +194,7 @@ export default function ContactPage() {
                       htmlFor="email"
                       className="text-sm font-medium text-gray-700"
                     >
-                      Adresse email *
+                      {t("labelEmail")}
                     </label>
                     <Input
                       id="email"
@@ -217,7 +214,7 @@ export default function ContactPage() {
                     htmlFor="reason"
                     className="text-sm font-medium text-gray-700"
                   >
-                    Motif de contact
+                    {t("labelReason")}
                   </label>
                   <select
                     id="reason"
@@ -227,10 +224,10 @@ export default function ContactPage() {
                     }
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
-                    <option value="">Sélectionner un motif</option>
-                    {contactReasons.map((r) => (
-                      <option key={r.value} value={r.value}>
-                        {r.label}
+                    <option value="">{t("selectReason")}</option>
+                    {CONTACT_REASON_KEYS.map((key) => (
+                      <option key={key} value={key}>
+                        {t(`reasons.${key}`)}
                       </option>
                     ))}
                   </select>
@@ -241,7 +238,7 @@ export default function ContactPage() {
                     htmlFor="message"
                     className="text-sm font-medium text-gray-700"
                   >
-                    Message *
+                    {t("labelMessage")}
                   </label>
                   <Textarea
                     id="message"
@@ -258,7 +255,7 @@ export default function ContactPage() {
                 <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
                   <Mail className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                   <p className="text-sm text-blue-700">
-                    Vous pouvez aussi nous écrire directement à{" "}
+                    {t("emailHint")}{" "}
                     <a
                       href="mailto:support@huntzenjobs.com"
                       className="font-medium hover:underline"
@@ -273,7 +270,7 @@ export default function ContactPage() {
                   disabled={loading}
                   className="w-full bg-[#00D9FF] text-black font-semibold hover:bg-[#00D9FF]/90"
                 >
-                  {loading ? "Envoi en cours..." : "Envoyer le message"}
+                  {loading ? t("sending") : t("sendMessage")}
                 </Button>
               </form>
             )}
@@ -286,13 +283,13 @@ export default function ContactPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-wrap gap-4 text-sm text-gray-500">
             <Link href="/privacy" className="hover:text-[#00D9FF]">
-              Politique de confidentialité
+              {t("footerPrivacy")}
             </Link>
             <Link href="/terms" className="hover:text-[#00D9FF]">
-              Conditions d&apos;utilisation
+              {t("footerTerms")}
             </Link>
             <Link href="/legal" className="hover:text-[#00D9FF]">
-              Mentions légales
+              {t("footerLegal")}
             </Link>
           </div>
         </div>

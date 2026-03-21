@@ -59,7 +59,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         className="w-48 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
       >
         <DropdownMenuLabel className="text-gray-900 dark:text-gray-100">
-          Apparence
+          {t("appearance")}
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
         <DropdownMenuItem
@@ -72,7 +72,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           `}
         >
           <Sun className="mr-2 h-4 w-4" />
-          <span>Clair</span>
+          <span>{t("light")}</span>
           {theme === "light" && (
             <span className="ml-auto text-[#00D9FF]">✓</span>
           )}
@@ -87,7 +87,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           `}
         >
           <Moon className="mr-2 h-4 w-4" />
-          <span>Sombre</span>
+          <span>{t("dark")}</span>
           {theme === "dark" && (
             <span className="ml-auto text-[#00D9FF]">✓</span>
           )}
@@ -102,7 +102,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           `}
         >
           <Monitor className="mr-2 h-4 w-4" />
-          <span>Système</span>
+          <span>{t("system")}</span>
           {theme === "system" && (
             <span className="ml-auto text-[#00D9FF]">✓</span>
           )}
@@ -117,6 +117,7 @@ export function ThemeToggle({ className }: { className?: string }) {
  */
 export function ThemeToggleSimple({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
+  const t = useTranslations("theme");
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
@@ -135,7 +136,9 @@ export function ThemeToggleSimple({ className }: { className?: string }) {
         transition-all duration-300
         ${className}
       `}
-      aria-label={`Passer en mode ${resolvedTheme === "dark" ? "clair" : "sombre"}`}
+      aria-label={
+        resolvedTheme === "dark" ? t("switchToLight") : t("switchToDark")
+      }
     >
       <motion.div
         className="flex items-center justify-center"

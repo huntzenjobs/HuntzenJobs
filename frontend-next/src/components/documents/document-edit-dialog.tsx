@@ -176,7 +176,7 @@ export function DocumentEditDialog({
           }),
         },
       );
-      if (!pdfRes.ok) throw new Error("Échec de la génération du PDF");
+      if (!pdfRes.ok) throw new Error(t("pdfGenerationError"));
       const pdfBlob = await pdfRes.blob();
 
       // 2. Upload to Supabase Storage
@@ -184,7 +184,7 @@ export function DocumentEditDialog({
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) throw new Error("Session expirée");
+      if (!session) throw new Error(t("sessionExpired"));
 
       const userId = session.user.id;
       const companySlug = document.company
@@ -197,7 +197,7 @@ export function DocumentEditDialog({
         .from("cvs-adaptes")
         .upload(cvPath, pdfBlob, { contentType: "application/pdf" });
 
-      if (uploadErr || !uploaded) throw new Error("Échec de l'upload du PDF");
+      if (uploadErr || !uploaded) throw new Error(t("uploadError"));
 
       const { data: signed } = await supabase.storage
         .from("cvs-adaptes")
@@ -213,9 +213,7 @@ export function DocumentEditDialog({
 
       onOpenChange(false);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erreur lors de la sauvegarde",
-      );
+      setError(err instanceof Error ? err.message : t("saveError"));
     } finally {
       setSaving(false);
     }
@@ -226,10 +224,10 @@ export function DocumentEditDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Modifier le CV</DialogTitle>
+            <DialogTitle>{t("title")}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground py-4">
-            Données CV non disponibles pour l&apos;édition.
+            {t("noDataAvailable")}
           </p>
         </DialogContent>
       </Dialog>
@@ -241,20 +239,21 @@ export function DocumentEditDialog({
       <DialogContent className="max-w-2xl h-[90vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="text-base">
-            Modifier — {document.job_title} @ {document.company}
+            {t("editTitle", {
+              jobTitle: document.job_title,
+              company: document.company,
+            })}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {/* Personal Info */}
           <section>
-            <h3 className="text-sm font-semibold mb-3">
-              Informations personnelles
-            </h3>
+            <h3 className="text-sm font-semibold mb-3">{t("personalInfo")}</h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <Label htmlFor="pi-name" className="text-xs">
-                  Nom complet
+                  {t("fullName")}
                 </Label>
                 <Input
                   id="pi-name"
@@ -265,7 +264,7 @@ export function DocumentEditDialog({
               </div>
               <div>
                 <Label htmlFor="pi-email" className="text-xs">
-                  Email
+                  {t("email")}
                 </Label>
                 <Input
                   id="pi-email"
@@ -277,7 +276,7 @@ export function DocumentEditDialog({
               </div>
               <div>
                 <Label htmlFor="pi-phone" className="text-xs">
-                  Téléphone
+                  {t("phone")}
                 </Label>
                 <Input
                   id="pi-phone"
@@ -288,7 +287,7 @@ export function DocumentEditDialog({
               </div>
               <div>
                 <Label htmlFor="pi-location" className="text-xs">
-                  Localisation
+                  {t("location")}
                 </Label>
                 <Input
                   id="pi-location"
@@ -313,7 +312,9 @@ export function DocumentEditDialog({
 
           {/* Summary */}
           <section>
-            <h3 className="text-sm font-semibold mb-3">Résumé professionnel</h3>
+            <h3 className="text-sm font-semibold mb-3">
+              {t("professionalSummary")}
+            </h3>
             <Textarea
               value={state.summary}
               onChange={(e) =>
@@ -328,10 +329,10 @@ export function DocumentEditDialog({
           {/* Experiences */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold">Expériences</h3>
+              <h3 className="text-sm font-semibold">{t("experiences")}</h3>
               <Button variant="outline" size="sm" onClick={addExp}>
                 <Plus className="size-3 mr-1" />
-                Ajouter
+                {t("addExperience")}
               </Button>
             </div>
             <div className="space-y-4">
@@ -350,7 +351,7 @@ export function DocumentEditDialog({
                   </Button>
                   <div className="grid grid-cols-2 gap-2 pr-8">
                     <div>
-                      <Label className="text-xs">Poste</Label>
+                      <Label className="text-xs">{t("position")}</Label>
                       <Input
                         value={exp.title}
                         onChange={(e) => updateExp(i, "title", e.target.value)}
@@ -358,7 +359,7 @@ export function DocumentEditDialog({
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Entreprise</Label>
+                      <Label className="text-xs">{t("company")}</Label>
                       <Input
                         value={exp.company}
                         onChange={(e) =>
@@ -368,7 +369,7 @@ export function DocumentEditDialog({
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Début</Label>
+                      <Label className="text-xs">{t("startDate")}</Label>
                       <Input
                         value={exp.start_date}
                         onChange={(e) =>
@@ -379,7 +380,7 @@ export function DocumentEditDialog({
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Fin</Label>
+                      <Label className="text-xs">{t("endDate")}</Label>
                       <Input
                         value={exp.end_date}
                         onChange={(e) =>
@@ -391,7 +392,7 @@ export function DocumentEditDialog({
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Description</Label>
+                    <Label className="text-xs">{t("description")}</Label>
                     <Textarea
                       value={exp.description}
                       onChange={(e) =>
@@ -417,11 +418,11 @@ export function DocumentEditDialog({
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
-            Annuler
+            {t("cancel")}
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="size-4 mr-2 animate-spin" />}
-            {saving ? "Enregistrement…" : "Enregistrer"}
+            {saving ? t("saving") : t("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

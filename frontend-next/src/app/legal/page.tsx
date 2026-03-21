@@ -2,25 +2,28 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { Scale, ChevronRight } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Mentions légales | HuntZen Jobs",
+  title: "Mentions l\u00e9gales | HuntZen Jobs",
   description:
-    "Mentions légales de HuntZen Jobs — éditeur, hébergeur, propriété intellectuelle et conditions d'utilisation.",
+    "Mentions l\u00e9gales de HuntZen Jobs -- \u00e9diteur, h\u00e9bergeur, propri\u00e9t\u00e9 intellectuelle et conditions d'utilisation.",
   robots: { index: true, follow: true },
 };
 
-const sections = [
-  { id: "editeur", label: "Éditeur" },
-  { id: "hebergement", label: "Hébergement" },
-  { id: "propriete", label: "Propriété intellectuelle" },
-  { id: "responsabilite", label: "Limitation de responsabilité" },
-  { id: "donnees", label: "Données personnelles" },
-  { id: "cookies", label: "Cookies" },
-  { id: "contact", label: "Contact" },
-];
+export default async function LegalPage() {
+  const t = await getTranslations("legal");
 
-export default function LegalPage() {
+  const sections = [
+    { id: "editeur", label: t("quickLinks.editor") },
+    { id: "hebergement", label: t("quickLinks.hosting") },
+    { id: "propriete", label: t("quickLinks.intellectualProperty") },
+    { id: "responsabilite", label: t("quickLinks.liability") },
+    { id: "donnees", label: t("quickLinks.personalData") },
+    { id: "cookies", label: t("quickLinks.cookies") },
+    { id: "contact", label: t("quickLinks.contact") },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       <LandingHeader />
@@ -33,15 +36,14 @@ export default function LegalPage() {
               <Scale className="w-6 h-6 text-[#00D9FF]" />
             </div>
             <h1 className="text-4xl sm:text-5xl font-black">
-              Mentions légales
+              {t("title")}
             </h1>
           </div>
           <p className="text-xl text-white/80">
-            Informations légales relatives à l&apos;éditeur et à
-            l&apos;hébergement du site huntzenjobs.com.
+            {t("subtitle")}
           </p>
           <p className="mt-3 text-sm text-white/50">
-            Dernière mise à jour : mars 2026
+            {t("lastUpdated")}
           </p>
         </div>
       </div>
@@ -66,109 +68,66 @@ export default function LegalPage() {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12">
-        {/* Éditeur */}
+        {/* Editeur */}
         <section id="editeur">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
-            1. Éditeur du site
+            {t("editor.title")}
           </h2>
           <div className="prose prose-gray max-w-none">
-            <p className="text-gray-600 leading-relaxed">
-              Le site <strong>huntzenjobs.com</strong> est édité par :
-            </p>
+            {/* Static i18n content with trusted <strong> tags from translation files */}
+            <p className="text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: t("editor.intro") }} />
             <div className="mt-4 p-6 bg-gray-50 rounded-xl border border-gray-200 space-y-2 text-gray-700">
+              <p><strong>{t("editor.companyName")}</strong> {t("editor.companyNameValue")}</p>
+              <p><strong>{t("editor.legalForm")}</strong> {t("editor.legalFormValue")}</p>
+              <p><strong>{t("editor.capital")}</strong> {t("editor.capitalValue")}</p>
+              <p><strong>{t("editor.address")}</strong> {t("editor.addressValue")}</p>
+              <p><strong>{t("editor.nipc")}</strong> {t("editor.nipcValue")}</p>
               <p>
-                <strong>Raison sociale :</strong> HUNTZEN, Unipessoal Lda.
-              </p>
-              <p>
-                <strong>Forme juridique :</strong> Sociedade Unipessoal por
-                Quotas
-              </p>
-              <p>
-                <strong>Capital social :</strong> 15 000 EUR
-              </p>
-              <p>
-                <strong>Siège social :</strong> Rua dos Lusiadas 5 5b, 1300-365
-                Lisboa, Portugal
-              </p>
-              <p>
-                <strong>NIPC :</strong> 516481320
-              </p>
-              <p>
-                <strong>Email :</strong>{" "}
-                <a
-                  href="mailto:contact@huntzenjobs.com"
-                  className="text-[#00D9FF] hover:underline"
-                >
-                  contact@huntzenjobs.com
+                <strong>{t("editor.email")}</strong>{" "}
+                <a href={`mailto:${t("editor.emailValue")}`} className="text-[#00D9FF] hover:underline">
+                  {t("editor.emailValue")}
                 </a>
               </p>
-              <p>
-                <strong>Directeur de publication :</strong> Wissem Jegham
-              </p>
+              <p><strong>{t("editor.director")}</strong> {t("editor.directorValue")}</p>
             </div>
           </div>
         </section>
 
-        {/* Hébergement */}
+        {/* Hebergement */}
         <section id="hebergement">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
-            2. Hébergement
+            {t("hosting.title")}
           </h2>
           <div className="prose prose-gray max-w-none space-y-4 text-gray-600">
-            <p>Le site est hébergé par les prestataires suivants :</p>
+            <p>{t("hosting.intro")}</p>
             <div className="p-6 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
               <div>
-                <p className="font-semibold text-gray-800">
-                  Frontend (interface utilisateur)
-                </p>
+                <p className="font-semibold text-gray-800">{t("hosting.frontendLabel")}</p>
+                <p><strong>{t("hosting.frontendProvider")}</strong></p>
+                <p>{t("hosting.frontendAddress")}</p>
                 <p>
-                  <strong>Vercel Inc.</strong>
-                </p>
-                <p>440 N Barranca Ave #4133, Covina, CA 91723, États-Unis</p>
-                <p>
-                  <a
-                    href="https://vercel.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#00D9FF] hover:underline"
-                  >
-                    vercel.com
+                  <a href={`https://${t("hosting.frontendUrl")}`} target="_blank" rel="noopener noreferrer" className="text-[#00D9FF] hover:underline">
+                    {t("hosting.frontendUrl")}
                   </a>
                 </p>
               </div>
               <div className="border-t border-gray-200 pt-4">
-                <p className="font-semibold text-gray-800">Backend (API)</p>
+                <p className="font-semibold text-gray-800">{t("hosting.backendLabel")}</p>
+                <p><strong>{t("hosting.backendProvider")}</strong></p>
+                <p>{t("hosting.backendAddress")}</p>
                 <p>
-                  <strong>Railway Corp.</strong>
-                </p>
-                <p>
-                  548 Market St PMB 68957, San Francisco, CA 94104, États-Unis
-                </p>
-                <p>
-                  <a
-                    href="https://railway.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#00D9FF] hover:underline"
-                  >
-                    railway.app
+                  <a href={`https://${t("hosting.backendUrl")}`} target="_blank" rel="noopener noreferrer" className="text-[#00D9FF] hover:underline">
+                    {t("hosting.backendUrl")}
                   </a>
                 </p>
               </div>
               <div className="border-t border-gray-200 pt-4">
-                <p className="font-semibold text-gray-800">Base de données</p>
+                <p className="font-semibold text-gray-800">{t("hosting.databaseLabel")}</p>
+                <p><strong>{t("hosting.databaseProvider")}</strong></p>
+                <p>{t("hosting.databaseAddress")}</p>
                 <p>
-                  <strong>Supabase Inc.</strong>
-                </p>
-                <p>970 Toa Payoh North #07-04, Singapore 318992</p>
-                <p>
-                  <a
-                    href="https://supabase.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#00D9FF] hover:underline"
-                  >
-                    supabase.com
+                  <a href={`https://${t("hosting.databaseUrl")}`} target="_blank" rel="noopener noreferrer" className="text-[#00D9FF] hover:underline">
+                    {t("hosting.databaseUrl")}
                   </a>
                 </p>
               </div>
@@ -176,78 +135,45 @@ export default function LegalPage() {
           </div>
         </section>
 
-        {/* Propriété intellectuelle */}
+        {/* Propriete intellectuelle */}
         <section id="propriete">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
-            3. Propriété intellectuelle
+            {t("intellectualProperty.title")}
           </h2>
           <div className="prose prose-gray max-w-none space-y-4 text-gray-600">
-            <p>
-              L&apos;ensemble du contenu du site huntzenjobs.com (textes,
-              images, logos, icônes, code source, interface utilisateur) est la
-              propriété exclusive de HUNTZEN, Unipessoal Lda. ou de ses
-              partenaires et est protégé par les lois françaises et
-              internationales relatives à la propriété intellectuelle.
-            </p>
-            <p>
-              Toute reproduction, représentation, modification, publication ou
-              adaptation de tout ou partie des éléments du site, quel que soit
-              le moyen ou le procédé utilisé, est interdite sans
-              l&apos;autorisation écrite préalable de HUNTZEN, Unipessoal Lda..
-            </p>
+            <p>{t("intellectualProperty.content1")}</p>
+            <p>{t("intellectualProperty.content2")}</p>
           </div>
         </section>
 
-        {/* Limitation de responsabilité */}
+        {/* Limitation de responsabilite */}
         <section id="responsabilite">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
-            4. Limitation de responsabilité
+            {t("liability.title")}
           </h2>
           <div className="prose prose-gray max-w-none space-y-4 text-gray-600">
-            <p>
-              HUNTZEN, Unipessoal Lda. s&apos;efforce d&apos;assurer
-              l&apos;exactitude et la mise à jour des informations diffusées sur
-              le site. HUNTZEN, Unipessoal Lda. ne saurait être tenue
-              responsable des erreurs ou omissions dans les informations
-              publiées, ni des dommages directs ou indirects pouvant résulter de
-              l&apos;utilisation du site.
-            </p>
-            <p>
-              Les offres d&apos;emploi affichées sur HuntZen Jobs sont agrégées
-              depuis des sources tierces. HUNTZEN, Unipessoal Lda. ne peut
-              garantir l&apos;exactitude, l&apos;exhaustivité ou la
-              disponibilité de ces offres et décline toute responsabilité
-              concernant leur contenu.
-            </p>
+            <p>{t("liability.content1")}</p>
+            <p>{t("liability.content2")}</p>
           </div>
         </section>
 
-        {/* Données personnelles */}
+        {/* Donnees personnelles */}
         <section id="donnees">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
-            5. Données personnelles
+            {t("personalData.title")}
           </h2>
           <div className="prose prose-gray max-w-none space-y-4 text-gray-600">
             <p>
-              La collecte et le traitement des données personnelles sont régis
-              par notre{" "}
-              <Link
-                href="/privacy"
-                className="text-[#00D9FF] hover:underline font-medium"
-              >
-                Politique de confidentialité
+              {t("personalData.content1")}{" "}
+              <Link href="/privacy" className="text-[#00D9FF] hover:underline font-medium">
+                {t("personalData.privacyLink")}
               </Link>
-              , conformément au Règlement Général sur la Protection des Données
-              (RGPD — Règlement UE 2016/679).
+              {t("personalData.content2")}
             </p>
             <p>
-              Pour exercer vos droits (accès, rectification, effacement,
-              portabilité), contactez-nous à{" "}
-              <a
-                href="mailto:privacy@huntzenjobs.com"
-                className="text-[#00D9FF] hover:underline"
-              >
-                privacy@huntzenjobs.com
+              {t("personalData.content3")}{" "}
+              <a href={`mailto:${t("personalData.privacyEmail")}`} className="text-[#00D9FF] hover:underline">
+                {t("personalData.privacyEmail")}
               </a>
               .
             </p>
@@ -257,48 +183,32 @@ export default function LegalPage() {
         {/* Cookies */}
         <section id="cookies">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
-            6. Cookies
+            {t("cookiesSection.title")}
           </h2>
           <div className="prose prose-gray max-w-none space-y-4 text-gray-600">
-            <p>
-              Le site huntzenjobs.com utilise des cookies techniques nécessaires
-              à son fonctionnement (authentification, préférences utilisateur)
-              et des cookies analytiques pour améliorer l&apos;expérience
-              utilisateur.
-            </p>
-            <p>
-              Conformément à la réglementation RGPD et aux recommandations de la
-              CNIL, votre consentement est recueilli avant le dépôt de tout
-              cookie non essentiel. Vous pouvez modifier vos préférences à tout
-              moment depuis le bandeau de consentement.
-            </p>
+            <p>{t("cookiesSection.content1")}</p>
+            <p>{t("cookiesSection.content2")}</p>
           </div>
         </section>
 
         {/* Contact */}
         <section id="contact">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
-            7. Contact
+            {t("contactSection.title")}
           </h2>
           <div className="prose prose-gray max-w-none space-y-4 text-gray-600">
-            <p>Pour toute question relative aux présentes mentions légales :</p>
+            <p>{t("contactSection.intro")}</p>
             <div className="p-6 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
               <p>
-                <strong>Email :</strong>{" "}
-                <a
-                  href="mailto:contact@huntzenjobs.com"
-                  className="text-[#00D9FF] hover:underline"
-                >
-                  contact@huntzenjobs.com
+                <strong>{t("contactSection.emailLabel")}</strong>{" "}
+                <a href={`mailto:${t("contactSection.emailValue")}`} className="text-[#00D9FF] hover:underline">
+                  {t("contactSection.emailValue")}
                 </a>
               </p>
               <p>
-                <strong>Formulaire de contact :</strong>{" "}
-                <Link
-                  href="/contact"
-                  className="text-[#00D9FF] hover:underline"
-                >
-                  huntzenjobs.com/contact
+                <strong>{t("contactSection.formLabel")}</strong>{" "}
+                <Link href="/contact" className="text-[#00D9FF] hover:underline">
+                  {t("contactSection.formValue")}
                 </Link>
               </p>
             </div>
@@ -311,13 +221,13 @@ export default function LegalPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-wrap gap-4 text-sm text-gray-500">
             <Link href="/privacy" className="hover:text-[#00D9FF]">
-              Politique de confidentialité
+              {t("footerLinks.privacy")}
             </Link>
             <Link href="/terms" className="hover:text-[#00D9FF]">
-              Conditions d&apos;utilisation
+              {t("footerLinks.terms")}
             </Link>
             <Link href="/contact" className="hover:text-[#00D9FF]">
-              Contact
+              {t("footerLinks.contact")}
             </Link>
           </div>
         </div>
