@@ -129,8 +129,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 Votre carrière mérite le meilleur
               </h2>
               <p className="text-white/80 text-lg mb-12 leading-relaxed">
-                Rejoignez +100 000 candidats qui ont transformé leur recherche
-                d'emploi avec HuntZen.
+                Rejoignez des milliers de candidats qui ont transformé leur
+                recherche d'emploi avec HuntZen.
               </p>
 
               {/* Features */}

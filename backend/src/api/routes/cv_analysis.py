@@ -20,6 +20,7 @@ import os
 from supabase import create_client, Client
 from structlog import get_logger
 
+from src.api.middleware import limiter
 from src.modal_integration import (
     process_cv_async,
     get_cv_analysis_status,
@@ -123,7 +124,9 @@ async def increment_user_cv_quota(user_id: str) -> bool:
 
 
 @router.post("/async")
+@limiter.limit("10/minute")
 async def analyze_cv_async(
+    request: Request,
     file: Optional[UploadFile] = File(None),
     cv_text: Optional[str] = Form(None),
     job_description: Optional[str] = Form(None),
@@ -176,6 +179,38 @@ async def analyze_cv_async(
             status_code=400,
             detail="Please provide either a file or cv_text parameter"
         )
+
+    # ── File validation (extension, size, MIME type) ───────────────────────
+    if file:
+        ALLOWED_EXTENSIONS = (".pdf", ".doc", ".docx")
+        ALLOWED_MIME_TYPES = (
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+        filename = file.filename or ""
+        if not filename.lower().endswith(ALLOWED_EXTENSIONS):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Type de fichier non supporté. Extensions acceptées : {', '.join(ALLOWED_EXTENSIONS)}",
+            )
+
+        if file.content_type and file.content_type not in ALLOWED_MIME_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Type MIME non supporté : {file.content_type}. Acceptés : PDF, DOC, DOCX",
+            )
+
+        # Read file to check size, then reset position for downstream processing
+        file_bytes = await file.read()
+        if len(file_bytes) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Fichier trop volumineux ({len(file_bytes) / 1024 / 1024:.1f}MB, max 10MB)",
+            )
+        await file.seek(0)
 
     # ✅ CHECK QUOTA BEFORE PROCESSING — blocks if daily limit exceeded
     check_cv_analysis_quota(user_id)

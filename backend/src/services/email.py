@@ -1131,7 +1131,7 @@ def send_contact_admin_notification(
 
         resend.Emails.send({
             "from": settings.from_email,
-            "to": ["contact@huntzenjobs.co"],
+            "to": ["contact@huntzenjobs.com"],
             "subject": f"[Contact] {full_name} - {reason}",
             "html": html_content,
         })

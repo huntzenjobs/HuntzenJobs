@@ -59,7 +59,10 @@ async def get_saved_jobs(authorization: Optional[str] = Header(None)):
     user_id = get_user_id_from_header(authorization)
 
     if not user_id:
-        return {"success": True, "jobs": []}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token manquant ou invalide",
+        )
 
     try:
         supabase = get_supabase_client()

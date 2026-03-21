@@ -17,7 +17,7 @@ export function OrganizationSchema() {
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     description:
-      "Plateforme N°1 de recherche d'emploi en France - HuntZen Jobs. +100 000 offres, analyse CV ATS, coaching IA personnalisé.",
+      "Plateforme d'aide à la recherche d'emploi en France - HuntZen Jobs. Des milliers d'offres, analyse CV ATS, coaching IA personnalisé.",
     sameAs: [
       "https://www.linkedin.com/company/huntzenjobs",
       "https://twitter.com/huntzenjobs",

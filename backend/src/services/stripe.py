@@ -692,10 +692,10 @@ async def handle_checkout_completed(session: Dict[str, Any]):
                     "converted_to_paid_at": datetime.now(timezone.utc).isoformat(),
                     "converted_plan": plan_name,
                 }).eq("id", signup["id"]).execute()
-                conv_count = supabase_client.table("referrals").select("total_conversions") \
-                    .eq("id", signup["referral_id"]).single().execute().data["total_conversions"]
-                supabase_client.table("referrals").update({"total_conversions": conv_count + 1}) \
-                    .eq("id", signup["referral_id"]).execute()
+                supabase_client.rpc(
+                    "increment_referral_conversions",
+                    {"p_referral_id": str(signup["referral_id"])}
+                ).execute()
                 await apply_referral_reward(
                     supabase_client,
                     referral_signup_id=signup["id"],

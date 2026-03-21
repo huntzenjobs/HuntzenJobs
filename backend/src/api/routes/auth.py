@@ -23,22 +23,11 @@ settings = get_settings()
 
 @router.get("/api/auth/test-debug")
 async def test_debug():
-    """Test endpoint to verify deployment."""
-    import subprocess
-    try:
-        # Get current git commit hash dynamically
-        commit_hash = subprocess.check_output(
-            ['git', 'rev-parse', '--short', 'HEAD'],
-            cwd='/app',  # Railway app directory
-            stderr=subprocess.DEVNULL
-        ).decode('ascii').strip()
-    except:
-        commit_hash = "unknown"
-
+    """Test endpoint to verify deployment. Returns minimal info only."""
+    import os
     return {
         "status": "ok",
-        "message": "Debug logs deployed successfully",
-        "commit": commit_hash
+        "version": os.getenv("APP_VERSION", settings.app_version),
     }
 
 

@@ -19,7 +19,9 @@ router = APIRouter()
 
 
 @router.post("/create-checkout-session")
+@limiter.limit("5/minute")
 async def create_stripe_checkout(
+    request: Request,
     plan_name: str = Form(...),
     billing_period: str = Form("monthly"),
     current_user: dict = Depends(get_current_user)
@@ -116,7 +118,9 @@ async def stripe_webhook(
 
 
 @router.post("/cancel-subscription")
+@limiter.limit("3/minute")
 async def cancel_subscription(
+    request: Request,
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -246,7 +250,9 @@ async def reactivate_subscription(
 
 
 @router.post("/create-portal-session")
+@limiter.limit("5/minute")
 async def create_portal_session(
+    request: Request,
     current_user: dict = Depends(get_current_user)
 ):
     """

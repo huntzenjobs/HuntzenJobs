@@ -25,7 +25,7 @@
     "subtitle": "CV certificado ATS · 5 coaches de carrera · Score de compatibilidad · +6 plataformas de empleo",
     "ctaSearch": "Comenzar mi búsqueda",
     "ctaDiscover": "Descubrir el método",
-    "socialProof": "Ya más de 100.000 candidatos acompañados"
+    "socialProof": "Miles de candidatos ya acompañados"
   },
   "tools": {
     "badge": "Todas nuestras herramientas",
@@ -149,8 +149,8 @@
     "title": "Resultados medibles",
     "subtitle": "Candidatos avanzan con HuntZen cada día",
     "candidates": {
-      "value": "+ 100 000",
-      "label": "Candidatos acompañados cada día"
+      "value": "Miles",
+      "label": "De candidatos acompañados cada día"
     },
     "responseRate": {
       "value": "87%",
@@ -176,7 +176,7 @@
     "faqMore": "Have more questions?",
     "faqContact": "Contact our support",
     "ctaTitle": "Ready to land your next job?",
-    "ctaSubtitle": "Join 100,000+ candidates using HuntZen to find their ideal job. Start for free, no credit card required.",
+    "ctaSubtitle": "Join thousands of candidates using HuntZen to find their ideal job. Start for free, no credit card required.",
     "ctaButton": "Start for free"
   },
   "cta": {
@@ -1310,16 +1310,16 @@
     "cta": "Empezar gratis, sin compromiso"
   },
   "about": {
-    "hero_title": "HuntZen Jobs: Your #1 Career Ally in France",
+    "hero_title": "HuntZen Jobs: Your Career Ally in France",
     "hero_subtitle": "Discover how <strong>HuntZen Jobs</strong> is revolutionizing job searching in France with the power of AI and a candidate-centered approach.",
     "who_title": "Who is HuntZen?",
     "who_p1": "<strong>HuntZen Jobs</strong> is the next-generation job search platform that transforms the way candidates find their next job in France. <strong>HuntZen</strong> combines cutting-edge technology, artificial intelligence and HR expertise to deliver an unrivaled job search experience.",
     "who_p2": "Founded in 2024, <strong>HuntZen Jobs</strong> was born from a simple vision: to make job searching more efficient, more human, and more accessible to all. With <strong>HuntZen</strong>, we believe every candidate deserves the best opportunities and the most powerful tools to succeed in their career.",
-    "who_p3": "Today, <strong>HuntZen Jobs</strong> aggregates over 100,000 job listings in France, covering all sectors, all experience levels and all contract types. The <strong>HuntZen</strong> platform analyzes thousands of listings daily from the largest job sites to offer you the most complete catalog on the French market.",
+    "who_p3": "Today, <strong>HuntZen Jobs</strong> aggregates thousands of job listings in France, covering all sectors, all experience levels and all contract types. The <strong>HuntZen</strong> platform analyzes thousands of listings daily from the largest job sites to offer you a comprehensive catalog on the French market.",
     "why_title": "Why choose HuntZen Jobs?",
-    "why_subtitle": "<strong>HuntZen Jobs</strong> offers you much more than a simple list of job listings. Discover our 3 pillars that make <strong>HuntZen</strong> the #1 platform.",
+    "why_subtitle": "<strong>HuntZen Jobs</strong> offers you much more than a simple list of job listings. Discover our 3 pillars that make <strong>HuntZen</strong> your best career ally.",
     "feature1_title": "1. The largest job listing database",
-    "feature1_desc": "<strong>HuntZen Jobs</strong> aggregates +100,000 job listings in France from the largest platforms: Indeed, LinkedIn, Pôle Emploi, APEC and many others. With <strong>HuntZen</strong>, you access all opportunities in one place.",
+    "feature1_desc": "<strong>HuntZen Jobs</strong> aggregates thousands of job listings in France from the largest platforms: Indeed, LinkedIn, Pôle Emploi, APEC and many others. With <strong>HuntZen</strong>, you access all opportunities in one place.",
     "feature2_title": "2. Expert CV Analysis with HuntZen",
     "feature2_desc": "Our <strong>HuntZen</strong> technology analyzes your CV in depth and gives you a precise ATS score. The <strong>HuntZen Jobs</strong> CV analysis tool identifies weaknesses and provides concrete recommendations to improve your chances of landing an interview.",
     "feature3_title": "3. HuntZen AI Coach 24/7",
@@ -1349,7 +1349,7 @@
     "vs_item6_title": "100% free",
     "vs_item6_desc": "All essential features without paying",
     "cta_title": "Join HuntZen Jobs today",
-    "cta_subtitle": "Transform your job search with the #1 platform in France. <strong>HuntZen Jobs</strong> is 100% free and commitment-free.",
+    "cta_subtitle": "Transform your job search with HuntZen. <strong>HuntZen Jobs</strong> is 100% free and commitment-free.",
     "cta_signup": "Create my free account",
     "cta_jobs": "Browse listings",
     "cta_already": "Already a member?",
@@ -1357,7 +1357,7 @@
   },
   "faq": {
     "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about <strong>HuntZen Jobs</strong>, the #1 job search platform in France",
+    "subtitle": "Everything you need to know about <strong>HuntZen Jobs</strong>, your job search ally in France",
     "searchPlaceholder": "Search a question about HuntZen Jobs...",
     "noResults": "No questions found",
     "noResultsHint": "Try another keyword or contact our support",
@@ -1374,7 +1374,7 @@
     "comingSoon": "📚 More articles coming soon!",
     "subscribe": "Subscribe to never miss HuntZen Jobs tips",
     "ctaTitle": "Ready to transform your job search?",
-    "ctaSubtitle": "Join HuntZen Jobs and access +100,000 job listings",
+    "ctaSubtitle": "Join HuntZen Jobs and access thousands of job listings",
     "ctaButton": "Get started for free"
   },
   "onboarding": {

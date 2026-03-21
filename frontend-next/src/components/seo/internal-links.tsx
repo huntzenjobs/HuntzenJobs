@@ -85,7 +85,7 @@ export function InternalLinksFooter() {
           </div>
 
           <p className="text-gray-600 text-sm text-center mt-8 leading-relaxed">
-            <strong>HuntZen Jobs</strong> est la plateforme N°1 de recherche
+            <strong>HuntZen Jobs</strong> est votre allié pour la recherche
             d'emploi en France. Que vous cherchiez des{" "}
             <Link href="/jobs" className="text-[#00D9FF] hover:underline">
               offres d'emploi
@@ -165,7 +165,7 @@ interface CTALinksProps {
 
 export function CTAWithLinks({
   title = "Transformez votre recherche d'emploi avec HuntZen Jobs",
-  description = "Rejoignez +100 000 candidats qui ont trouvé leur emploi idéal grâce à HuntZen Jobs",
+  description = "Rejoignez des milliers de candidats qui ont trouvé leur emploi idéal grâce à HuntZen Jobs",
   primaryLink = "/signup",
   primaryText = "Commencer gratuitement",
 }: CTALinksProps) {

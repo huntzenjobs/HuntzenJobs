@@ -91,9 +91,9 @@ export const defaultMetadata: Metadata = {
 export const homeMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title:
-    "HuntZen Jobs - N°1 Recherche Emploi, CV, Coaching Carrière | huntzenjobs.com",
+    "HuntZen Jobs - Recherche Emploi, CV, Coaching Carrière | huntzenjobs.com",
   description:
-    "HuntZen Jobs : Plateforme N°1 pour votre recherche d'emploi en France. +100 000 offres, analyse CV ATS, coaching IA 24/7. Rejoignez huntzenjobs.com dès maintenant ! ⭐⭐⭐⭐⭐",
+    "HuntZen Jobs : votre allié pour la recherche d'emploi en France. Des milliers d'offres actualisées, analyse CV ATS, coaching IA 24/7. Rejoignez huntzenjobs.com dès maintenant !",
   keywords: [
     "recherche emploi",
     "offre emploi",
@@ -120,7 +120,7 @@ export const homeMetadata: Metadata = {
     title:
       "Recherche d'Emploi, CV, Salons | HuntZen Jobs - Votre Allié Carrière",
     description:
-      "Trouvez votre emploi idéal parmi +100 000 offres. Analyse CV ATS, coaching carrière, salons emploi, alternance. Plateforme gratuite de recherche d'emploi en France.",
+      "Trouvez votre emploi idéal parmi des milliers d'offres actualisées. Analyse CV ATS, coaching carrière, salons emploi, alternance. Plateforme gratuite de recherche d'emploi en France.",
     url: SITE_URL,
     images: [DEFAULT_OG_IMAGE],
   },
@@ -129,7 +129,7 @@ export const homeMetadata: Metadata = {
     title:
       "Recherche d'Emploi, CV, Salons | HuntZen Jobs - Votre Allié Carrière",
     description:
-      "Trouvez votre emploi idéal parmi +100 000 offres. Analyse CV ATS, coaching carrière, salons emploi, alternance.",
+      "Trouvez votre emploi idéal parmi des milliers d'offres actualisées. Analyse CV ATS, coaching carrière, salons emploi, alternance.",
     images: [DEFAULT_OG_IMAGE],
     creator: "@huntzen",
   },
@@ -155,7 +155,7 @@ export const homeMetadata: Metadata = {
 export const jobsMetadata: Metadata = {
   title: "Offres d'Emploi en France - CDI, CDD, Alternance, Stage | HuntZen",
   description:
-    "Découvrez +100 000 offres d'emploi en CDI, CDD, alternance et stage. Filtres avancés (salaire, télétravail, ville). Agrégateur d'offres de +20 sites emploi.",
+    "Découvrez des milliers d'offres d'emploi en CDI, CDD, alternance et stage. Filtres avancés (salaire, télétravail, ville). Agrégateur d'offres de +20 sites emploi.",
   keywords: [
     "offre emploi",
     "offres d'emploi",
@@ -179,14 +179,14 @@ export const jobsMetadata: Metadata = {
   openGraph: {
     title: "Offres d'Emploi en France - CDI, CDD, Alternance, Stage",
     description:
-      "Découvrez +100 000 offres d'emploi en France. Filtres avancés, matching intelligent, alertes personnalisées.",
+      "Découvrez des milliers d'offres d'emploi en France. Filtres avancés, matching intelligent, alertes personnalisées.",
     url: `${SITE_URL}/jobs`,
     images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     title: "Offres d'Emploi en France - CDI, CDD, Alternance, Stage",
     description:
-      "Découvrez +100 000 offres d'emploi. Filtres avancés, matching intelligent.",
+      "Découvrez des milliers d'offres d'emploi. Filtres avancés, matching intelligent.",
     images: [DEFAULT_OG_IMAGE],
   },
   alternates: {
@@ -407,9 +407,9 @@ export const privacyMetadata: Metadata = {
  * Metadata pour la page À Propos (CRITIQUE pour SEO)
  */
 export const aboutMetadata: Metadata = {
-  title: "À Propos HuntZen Jobs - Plateforme N°1 Recherche Emploi France",
+  title: "À Propos HuntZen Jobs - Votre Allié Recherche Emploi France",
   description:
-    "Découvrez HuntZen Jobs, la plateforme N°1 de recherche d'emploi en France. +100 000 offres, analyse CV ATS, coaching IA. Histoire, mission et valeurs de HuntZen.",
+    "Découvrez HuntZen Jobs, votre allié pour la recherche d'emploi en France. Des milliers d'offres, analyse CV ATS, coaching IA. Histoire, mission et valeurs de HuntZen.",
   keywords: [
     "huntzenjobs",
     "huntzen jobs",
@@ -425,7 +425,7 @@ export const aboutMetadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     siteName: SITE_NAME,
-    title: "À Propos HuntZen Jobs - Plateforme N°1 Recherche Emploi",
+    title: "À Propos HuntZen Jobs - Votre Allié Recherche Emploi",
     description:
       "Découvrez HuntZen Jobs : +100K offres, analyse CV, coaching IA 24/7. La révolution de la recherche d'emploi en France.",
     url: `${SITE_URL}/about`,
@@ -433,7 +433,7 @@ export const aboutMetadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "À Propos HuntZen Jobs - Plateforme N°1",
+    title: "À Propos HuntZen Jobs - Votre Allié Carrière",
     description:
       "La plateforme qui révolutionne la recherche d'emploi en France.",
     images: [DEFAULT_OG_IMAGE],
@@ -489,7 +489,7 @@ export const faqMetadata: Metadata = {
     card: "summary_large_image",
     title: "FAQ HuntZen Jobs",
     description:
-      "Questions fréquentes sur la plateforme N°1 de recherche d'emploi.",
+      "Questions fréquentes sur la plateforme d'aide à la recherche d'emploi.",
     images: [DEFAULT_OG_IMAGE],
     creator: "@huntzen",
   },
@@ -515,7 +515,7 @@ export const faqMetadata: Metadata = {
 export const testimonialsMetadata: Metadata = {
   title: "Témoignages HuntZen Jobs - Avis Utilisateurs & Success Stories",
   description:
-    "Découvrez les témoignages de +10 000 utilisateurs HuntZen Jobs. Avis vérifiés, success stories, retours d'expérience sur la plateforme N°1 de recherche d'emploi en France.",
+    "Découvrez les témoignages d'utilisateurs HuntZen Jobs. Avis vérifiés, success stories, retours d'expérience sur la plateforme d'aide à la recherche d'emploi en France.",
   keywords: [
     "avis huntzen jobs",
     "témoignages huntzen",

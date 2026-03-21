@@ -20,7 +20,7 @@ export function buildFaqCategories(params: FaqParams) {
       questions: [
         {
           q: "Qu'est-ce que HuntZen Jobs ?",
-          a: "HuntZen Jobs est la plateforme N°1 de recherche d'emploi en France. HuntZen combine intelligence artificielle, analyse CV ATS, et coaching personnalisé pour vous aider à trouver l'emploi idéal. Avec +100 000 offres d'emploi actualisées quotidiennement, HuntZen Jobs transforme votre recherche d'emploi en véritable succès.",
+          a: "HuntZen Jobs est une plateforme innovante d'aide à la recherche d'emploi en France. HuntZen combine intelligence artificielle, analyse CV ATS, et coaching personnalisé pour vous aider à trouver l'emploi idéal. Avec des milliers d'offres d'emploi actualisées quotidiennement, HuntZen Jobs transforme votre recherche d'emploi en véritable succès.",
         },
         {
           q: "Comment fonctionne HuntZen Jobs ?",
@@ -62,7 +62,7 @@ export function buildFaqCategories(params: FaqParams) {
       questions: [
         {
           q: "Combien d'offres d'emploi HuntZen Jobs propose-t-il ?",
-          a: "HuntZen Jobs agrège +100 000 offres d'emploi en France, mises à jour quotidiennement. HuntZen compile les offres de toutes les grandes plateformes (Indeed, LinkedIn, Welcome to the Jungle, etc.) et les filtre pour vous proposer uniquement les plus pertinentes selon votre profil.",
+          a: "HuntZen Jobs agrège des milliers d'offres d'emploi en France, mises à jour quotidiennement. HuntZen compile les offres de toutes les grandes plateformes (Indeed, LinkedIn, Welcome to the Jungle, etc.) et les filtre pour vous proposer uniquement les plus pertinentes selon votre profil.",
         },
         {
           q: "Comment HuntZen Jobs trouve les offres d'emploi qui me correspondent ?",
@@ -70,7 +70,7 @@ export function buildFaqCategories(params: FaqParams) {
         },
         {
           q: "Puis-je postuler directement via HuntZen Jobs ?",
-          a: "Oui ! HuntZen Jobs vous permet de postuler en 1 clic avec votre CV optimisé. Pour chaque offre sur HuntZen, nous pré-remplissons votre candidature avec vos informations. Vous validez et envoyez. HuntZen facilite et accélère vos candidatures pour maximiser vos chances.",
+          a: "HuntZen Jobs vous redirige vers le site de l'offre d'emploi pour postuler directement. Pour chaque offre sur HuntZen, vous accédez au lien de candidature original. Avant de postuler, HuntZen vous aide à optimiser votre CV et à préparer votre candidature pour maximiser vos chances.",
         },
         {
           q: "HuntZen Jobs propose-t-il des alertes emploi ?",
@@ -100,15 +100,15 @@ export function buildFaqCategories(params: FaqParams) {
       questions: [
         {
           q: "Combien coûte HuntZen Jobs ?",
-          a: `HuntZen Jobs propose 2 plans : Gratuit (0€/mois) avec ${freeCvLimit} analyse(s) CV/jour et accès aux offres, et Pro (${proPrice}) avec analyses CV illimitées, coach personnel, alertes emploi, et accompagnement personnalisé. HuntZen Jobs offre aussi 7 jours d'essai gratuit du plan Pro.`,
+          a: `HuntZen Jobs propose 2 plans : Gratuit (0€/mois) avec ${freeCvLimit} analyse(s) CV/jour et accès aux offres, et Pro (${proPrice}) avec analyses CV illimitées, coach personnel, alertes emploi, et accompagnement personnalisé. Vous pouvez passer au plan Pro à tout moment depuis votre compte.`,
         },
         {
           q: "Comment annuler mon abonnement HuntZen Jobs ?",
           a: "Vous pouvez annuler votre abonnement HuntZen Jobs à tout moment depuis votre compte. Allez dans Paramètres > Abonnement > Annuler. Aucun frais caché : avec HuntZen, vous payez uniquement jusqu'à la fin de votre période. Votre accès HuntZen Pro reste actif jusqu'à expiration.",
         },
         {
-          q: "HuntZen Jobs propose-t-il une garantie satisfait ou remboursé ?",
-          a: "Oui ! HuntZen Jobs offre une garantie 14 jours satisfait ou remboursé. Si HuntZen ne vous convient pas, contactez-nous et nous vous remboursons intégralement. Nous sommes convaincus que HuntZen transformera votre recherche d'emploi.",
+          q: "Puis-je obtenir un remboursement si HuntZen Jobs ne me convient pas ?",
+          a: "Si vous n'êtes pas satisfait de votre abonnement HuntZen Jobs, contactez notre support à support@huntzenjobs.com. Chaque demande est étudiée individuellement. Vous pouvez aussi annuler votre abonnement à tout moment pour ne plus être facturé à la prochaine échéance.",
         },
       ],
     },
