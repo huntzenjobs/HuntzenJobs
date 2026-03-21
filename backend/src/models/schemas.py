@@ -5,10 +5,9 @@ Request/Response models with validation.
 """
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field, HttpUrl
-
+from pydantic import BaseModel, Field
 
 # ------------------------------------------------------------------------------
 # Common Models
@@ -30,7 +29,7 @@ class CoachRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000, description="User message")
     session_id: str = Field(..., pattern=r"^[a-f0-9-]{36}$", description="Session UUID")
     language: Literal["fr", "en", "es", "pt"] = Field(default="fr")
-    
+
     model_config = {"json_schema_extra": {"example": {
         "message": "How can I improve my CV for a Data Engineer position?",
         "session_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -42,8 +41,8 @@ class TrainingRecommendation(BaseModel):
     """Training/certification recommendation."""
     name: str
     platform: str
-    url: Optional[str] = None
-    duration: Optional[str] = None
+    url: str | None = None
+    duration: str | None = None
     level: Literal["beginner", "intermediate", "advanced"] = "intermediate"
     reason: str
 
@@ -69,10 +68,10 @@ class JobSearchRequest(BaseModel):
         "", "cdi", "cdd", "freelance", "internship", "remote",
         "permanent", "contract", "alternance", "apprentissage"
     ] = ""
-    salary_min: Optional[int] = Field(default=None, ge=0)
+    salary_min: int | None = Field(default=None, ge=0)
     max_results: int = Field(default=100, ge=5, le=200)
     max_days: int = Field(default=7, ge=1, le=30, description="Max days since posting (1-30)")
-    radius_km: Optional[int] = Field(default=None, ge=1, le=100, description="Search radius in kilometers around city (1-100)")
+    radius_km: int | None = Field(default=None, ge=1, le=100, description="Search radius in kilometers around city (1-100)")
     include_remote: bool = Field(default=True, description="Include remote jobs in search results")
 
     model_config = {"json_schema_extra": {"example": {
@@ -92,12 +91,12 @@ class Job(BaseModel):
     title: str
     company: str
     location: str
-    description: Optional[str] = None
-    url: Optional[str] = None
-    salary: Optional[str] = None
-    contract_type: Optional[str] = None
+    description: str | None = None
+    url: str | None = None
+    salary: str | None = None
+    contract_type: str | None = None
     source: str
-    posted_date: Optional[str] = None
+    posted_date: str | None = None
     score: float = Field(default=0.0, ge=0.0, le=1.0, description="Relevance score")
     url_is_direct: bool = False  # True = URL goes directly to employer, not an aggregator
     description_truncated: bool = False
@@ -106,7 +105,7 @@ class Job(BaseModel):
 class SearchMetadata(BaseModel):
     """Metadata about the search."""
     original_query: str
-    refined_query: Optional[str] = None
+    refined_query: str | None = None
     total_raw: int
     total_deduplicated: int
     sources_used: list[str]
@@ -117,7 +116,7 @@ class JobSearchResponse(BaseResponse):
     """Response model for job search."""
     jobs: list[Job] = Field(default_factory=list)
     metadata: SearchMetadata
-    ai_insights: Optional[str] = None
+    ai_insights: str | None = None
 
 
 # ------------------------------------------------------------------------------
@@ -127,9 +126,9 @@ class JobSearchResponse(BaseResponse):
 class CVAnalysisRequest(BaseModel):
     """Request model for CV analysis."""
     cv_text: str = Field(..., min_length=100, max_length=50000)
-    job_description: Optional[str] = Field(default=None, max_length=10000)
+    job_description: str | None = Field(default=None, max_length=10000)
     language: Literal["fr", "en"] = "en"
-    
+
     model_config = {"json_schema_extra": {"example": {
         "cv_text": "John Doe - Data Engineer...",
         "job_description": "We are looking for a Senior Data Engineer...",
@@ -155,7 +154,7 @@ class CVAnalysisResponse(BaseResponse):
     missing_skills: list[str] = Field(default_factory=list)
     improvement_suggestions: list[str] = Field(default_factory=list)
     training_recommendations: list[TrainingRecommendation] = Field(default_factory=list)
-    job_match_score: Optional[int] = Field(default=None, ge=0, le=100)
+    job_match_score: int | None = Field(default=None, ge=0, le=100)
     verdict: str = ""
 
 
@@ -170,9 +169,9 @@ class Event(BaseModel):
     date: str
     location: str
     format: Literal["physical", "virtual", "hybrid"]
-    sector: Optional[str] = None
-    url: Optional[str] = None
-    description: Optional[str] = None
+    sector: str | None = None
+    url: str | None = None
+    description: str | None = None
 
 
 class EventSearchRequest(BaseModel):

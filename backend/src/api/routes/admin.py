@@ -5,8 +5,8 @@ Complete admin API for user management, plan editing, analytics, and logs.
 All endpoints require is_admin = TRUE in profiles table.
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import stripe as stripe_lib
 from fastapi import APIRouter, HTTPException, Query, status
@@ -62,9 +62,9 @@ class GrantDaysRequest(BaseModel):
     reason: str = ""
 
 class SetCustomLimitsRequest(BaseModel):
-    cv_analyses_daily: Optional[int] = None
-    coach_seconds_daily: Optional[int] = None
-    job_searches_daily: Optional[int] = None
+    cv_analyses_daily: int | None = None
+    coach_seconds_daily: int | None = None
+    job_searches_daily: int | None = None
 
 class UpdateEmailRequest(BaseModel):
     new_email: str
@@ -88,8 +88,8 @@ def _log_admin_action(
     supabase,
     admin_id: str,
     event_type: str,
-    target_user_id: Optional[str] = None,
-    event_data: Optional[dict] = None,
+    target_user_id: str | None = None,
+    event_data: dict | None = None,
 ):
     """Log an admin action to security_events. Best-effort, never raises."""
     try:
@@ -116,10 +116,10 @@ async def list_users(
     admin: AdminUserDep,
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=25, ge=1, le=100),
-    search: Optional[str] = Query(default=None),
-    plan: Optional[str] = Query(default=None),
-    user_status: Optional[str] = Query(default=None, alias="status"),
-) -> Dict[str, Any]:
+    search: str | None = Query(default=None),
+    plan: str | None = Query(default=None),
+    user_status: str | None = Query(default=None, alias="status"),
+) -> dict[str, Any]:
     """
     List all users with pagination, search, and filters.
     Returns profile + active plan + today's usage for each user.
@@ -152,7 +152,7 @@ async def list_users(
         user_ids = [u["id"] for u in result.data]
 
         # Subscriptions séparées (FK user_subscriptions.plan_id → subscription_plans fonctionne)
-        subs_map: Dict[str, Any] = {}
+        subs_map: dict[str, Any] = {}
         if user_ids:
             subs_result = supabase.table("user_subscriptions").select(
                 "id, user_id, status, current_period_end, "
@@ -164,8 +164,8 @@ async def list_users(
                     subs_map[uid] = s
 
         # Usage du jour
-        today = datetime.now(timezone.utc).date().isoformat()
-        usage_map: Dict[str, Any] = {}
+        today = datetime.now(UTC).date().isoformat()
+        usage_map: dict[str, Any] = {}
         if user_ids:
             usage_result = supabase.table("usage_quotas").select(
                 "user_id, cv_analyses_used, coach_seconds_used, job_searches_used"
@@ -206,7 +206,7 @@ async def list_users(
 async def get_user_detail(
     user_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Full user detail: profile, subscription history, usage last 30 days, last 50 security events.
     """
@@ -230,7 +230,7 @@ async def get_user_detail(
         ).eq("user_id", user_id).order("created_at", desc=True).limit(10).execute()
 
         # Usage last 30 days (all 30 days)
-        thirty_days_ago = (datetime.now(timezone.utc) - timedelta(days=30)).date().isoformat()
+        thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).date().isoformat()
         usage = supabase.table("usage_quotas").select("*").eq(
             "user_id", user_id
         ).gte("quota_date", thirty_days_ago).order("quota_date", desc=True).execute()
@@ -253,7 +253,7 @@ async def get_user_detail(
         all_subs = supabase.table("user_subscriptions").select(
             "created_at, canceled_at, subscription_plans(price_monthly)"
         ).eq("user_id", user_id).in_("status", ["active", "canceled"]).execute()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         total_paid = 0.0
         for s in (all_subs.data or []):
             plan_price = (s.get("subscription_plans") or {}).get("price_monthly", 0)
@@ -289,14 +289,14 @@ async def suspend_user(
     user_id: str,
     body: SuspendUserRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Suspend a user account. They will be blocked from accessing the app."""
     supabase = get_supabase_client()
 
     try:
         result = supabase.table("profiles").update({
             "status": "suspended",
-            "suspended_at": datetime.now(timezone.utc).isoformat(),
+            "suspended_at": datetime.now(UTC).isoformat(),
             "suspended_reason": body.reason,
         }).eq("id", user_id).execute()
 
@@ -321,7 +321,7 @@ async def suspend_user(
 async def reactivate_user(
     user_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Reactivate a suspended user."""
     supabase = get_supabase_client()
 
@@ -351,7 +351,7 @@ async def reactivate_user(
 async def reset_user_password(
     user_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Send a password recovery email to the user via Supabase auth.admin.
     Returns the magic link (for admin copy-paste if needed).
@@ -400,7 +400,7 @@ async def delete_user(
     user_id: str,
     body: DeleteUserRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Delete a user account. Requires body: {"confirm": true}.
     Soft-deletes the profile then hard-deletes the auth user.
@@ -439,7 +439,7 @@ async def force_plan_change(
     user_id: str,
     body: ForcePlanRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Force a user onto a specific plan. Updates DB only — does NOT touch Stripe.
     The next Stripe webhook will reconcile if needed.
@@ -458,11 +458,11 @@ async def force_plan_change(
         # Cancel any existing active subscriptions in DB
         supabase.table("user_subscriptions").update({
             "status": "canceled",
-            "canceled_at": datetime.now(timezone.utc).isoformat(),
+            "canceled_at": datetime.now(UTC).isoformat(),
         }).eq("user_id", user_id).eq("status", "active").execute()
 
         # Create new subscription entry
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         result = supabase.table("user_subscriptions").insert({
             "user_id": user_id,
             "plan_id": body.plan_id,
@@ -498,7 +498,7 @@ async def force_plan_change(
 # ============================================================
 
 @router.get("/plans")
-async def list_plans(admin: AdminUserDep) -> List[Dict[str, Any]]:
+async def list_plans(admin: AdminUserDep) -> list[dict[str, Any]]:
     """List all subscription plans with their Stripe price IDs."""
     supabase = get_supabase_client()
 
@@ -512,9 +512,9 @@ async def list_plans(admin: AdminUserDep) -> List[Dict[str, Any]]:
 @router.patch("/plans/{plan_id}/limits")
 async def update_plan_limits(
     plan_id: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update numeric limits for a plan (cv_analyses, coach_seconds, job_searches)."""
     supabase = get_supabase_client()
 
@@ -537,7 +537,7 @@ async def update_plan_limits(
 
         result = supabase.table("subscription_plans").update({
             "limits": merged_limits,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }).eq("id", plan_id).execute()
 
         _log_admin_action(supabase, admin["id"], "admin.plan_limits_updated", None, {
@@ -570,9 +570,9 @@ async def update_plan_limits(
 @router.patch("/plans/{plan_id}/features")
 async def update_plan_features(
     plan_id: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Met à jour les feature flags d'un plan.
     - feature_flags : dict booléen {"has_pdf_export": true, ...} → accès réel (DB → API → frontend)
@@ -601,7 +601,7 @@ async def update_plan_features(
         if not current.data:
             raise HTTPException(status_code=404, detail="Plan not found")
 
-        update_data: Dict[str, Any] = {"updated_at": datetime.now(timezone.utc).isoformat()}
+        update_data: dict[str, Any] = {"updated_at": datetime.now(UTC).isoformat()}
         if feature_flags is not None:
             # Merge avec les flags existants (ne pas écraser les flags non fournis)
             merged_flags = {**(current.data.get("feature_flags") or {}), **feature_flags}
@@ -637,20 +637,20 @@ async def update_plan_features(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to update features")
 
 
 @router.patch("/plans/{plan_id}/wording")
 async def update_plan_wording(
     plan_id: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update display_name and/or description for a plan (admin only)."""
     supabase = get_supabase_client()
 
-    update_data: Dict[str, Any] = {}
+    update_data: dict[str, Any] = {}
     if "display_name" in body and isinstance(body["display_name"], str):
         update_data["display_name"] = body["display_name"].strip()
     if "description" in body and isinstance(body["description"], str):
@@ -659,7 +659,7 @@ async def update_plan_wording(
     if not update_data:
         raise HTTPException(status_code=400, detail="display_name ou description requis")
 
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data["updated_at"] = datetime.now(UTC).isoformat()
 
     try:
         current = supabase.table("subscription_plans").select("name").eq("id", plan_id).single().execute()
@@ -691,20 +691,20 @@ async def update_plan_wording(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to update wording")
 
 
 @router.patch("/plans/{plan_id}/price")
 async def update_plan_display_price(
     plan_id: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update displayed price for a plan (DB only, does NOT touch Stripe)."""
     supabase = get_supabase_client()
 
-    update_data: Dict[str, Any] = {}
+    update_data: dict[str, Any] = {}
     if "price_monthly" in body:
         update_data["price_monthly"] = float(body["price_monthly"])
     if "price_yearly" in body:
@@ -713,7 +713,7 @@ async def update_plan_display_price(
     if not update_data:
         raise HTTPException(status_code=400, detail="No price fields provided")
 
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data["updated_at"] = datetime.now(UTC).isoformat()
 
     try:
         current = supabase.table("subscription_plans").select("name").eq("id", plan_id).single().execute()
@@ -739,16 +739,16 @@ async def update_plan_display_price(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to update price")
 
 
 @router.post("/plans/{plan_id}/stripe-price")
 async def update_stripe_price(
     plan_id: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create a new Stripe price and archive the old one.
     Stripe does NOT allow editing existing prices — we must create new + archive old.
@@ -838,13 +838,13 @@ async def update_stripe_price(
 
 
 @router.get("/stats")
-async def get_admin_stats(admin: AdminUserDep) -> Dict[str, Any]:
+async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
     """Dashboard KPI counters: users, revenue, growth, churn, webhooks."""
     supabase = get_supabase_client()
 
-    today = datetime.now(timezone.utc).date().isoformat()
-    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).date().isoformat()
-    month_ago = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+    today = datetime.now(UTC).date().isoformat()
+    week_ago = (datetime.now(UTC) - timedelta(days=7)).date().isoformat()
+    month_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
     users_res = supabase.table("profiles").select("id", count="exact").execute()
     webhooks_res = supabase.table("webhook_failures").select("id", count="exact").eq("resolved", False).execute()
@@ -884,10 +884,10 @@ async def get_admin_stats(admin: AdminUserDep) -> Dict[str, Any]:
 async def get_churn_analytics(
     admin: AdminUserDep,
     days: int = Query(default=30, ge=1, le=365),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Users who cancelled in the last N days."""
     supabase = get_supabase_client()
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
     # subscription_plans!left fonctionne (FK plan_id → subscription_plans)
     # profiles!left retiré : subscription_history.user_id → auth.users, pas profiles
     result = supabase.table("subscription_history").select(
@@ -897,7 +897,7 @@ async def get_churn_analytics(
 
     rows = result.data or []
     churn_user_ids = list({r["user_id"] for r in rows if r.get("user_id")})
-    profiles_map: Dict[str, Any] = {}
+    profiles_map: dict[str, Any] = {}
     if churn_user_ids:
         pr = supabase.table("profiles").select("id, email, full_name").in_("id", churn_user_ids).execute()
         profiles_map = {p["id"]: {"email": p["email"], "full_name": p.get("full_name")} for p in (pr.data or [])}
@@ -910,11 +910,11 @@ async def get_churn_analytics(
 async def get_usage_analytics(
     admin: AdminUserDep,
     days: int = Query(default=30, ge=1, le=90),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Aggregate feature usage over the last N days."""
     from collections import defaultdict
     supabase = get_supabase_client()
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).date().isoformat()
+    since = (datetime.now(UTC) - timedelta(days=days)).date().isoformat()
     result = supabase.table("usage_quotas").select(
         "cv_analyses_used, coach_seconds_used, job_searches_used, user_id"
     ).gte("quota_date", since).execute()
@@ -924,7 +924,7 @@ async def get_usage_analytics(
         "coach_seconds": sum(r.get("coach_seconds_used") or 0 for r in rows),
         "job_searches": sum(r.get("job_searches_used") or 0 for r in rows),
     }
-    per_user: Dict[str, Dict[str, int]] = defaultdict(lambda: {"cv_analyses": 0, "coach_seconds": 0, "job_searches": 0})
+    per_user: dict[str, dict[str, int]] = defaultdict(lambda: {"cv_analyses": 0, "coach_seconds": 0, "job_searches": 0})
     for r in rows:
         uid = r["user_id"]
         per_user[uid]["cv_analyses"] += r.get("cv_analyses_used") or 0
@@ -932,7 +932,7 @@ async def get_usage_analytics(
         per_user[uid]["job_searches"] += r.get("job_searches_used") or 0
     top = sorted(per_user.items(), key=lambda x: x[1]["cv_analyses"], reverse=True)[:10]
     top_user_ids = [uid for uid, _ in top]
-    email_map: Dict[str, str] = {}
+    email_map: dict[str, str] = {}
     if top_user_ids:
         profiles_res = supabase.table("profiles").select("id, email").in_("id", top_user_ids).execute()
         email_map = {p["id"]: p["email"] for p in (profiles_res.data or [])}
@@ -948,7 +948,7 @@ async def get_usage_analytics(
 async def get_revenue_analytics(
     admin: AdminUserDep,
     period: str = Query(default="30d", pattern="^(30d|90d|12m)$"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """MRR, ARR, revenue breakdown by plan."""
     supabase = get_supabase_client()
 
@@ -959,7 +959,7 @@ async def get_revenue_analytics(
         ).eq("status", "active").execute()
 
         mrr = 0.0
-        by_plan: Dict[str, Dict] = {}
+        by_plan: dict[str, dict] = {}
 
         for sub in (subs.data or []):
             plan_info = sub.get("subscription_plans", {})
@@ -1003,7 +1003,7 @@ async def get_revenue_analytics(
 @router.get("/analytics/subscriptions")
 async def get_subscriptions_breakdown(
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Count of users per plan (active subscriptions)."""
     supabase = get_supabase_client()
 
@@ -1012,14 +1012,14 @@ async def get_subscriptions_breakdown(
             "status, subscription_plans!inner(name, display_name)"
         ).in_("status", ["active", "past_due", "trialing"]).execute()
 
-        breakdown: Dict[str, int] = {}
+        breakdown: dict[str, int] = {}
         for sub in (result.data or []):
             plan_name = sub.get("subscription_plans", {}).get("name", "free")
             breakdown[plan_name] = breakdown.get(plan_name, 0) + 1
 
         return {"breakdown": breakdown}
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to fetch subscriptions breakdown")
 
 
@@ -1027,14 +1027,14 @@ async def get_subscriptions_breakdown(
 async def get_usage_heatmap(
     admin: AdminUserDep,
     days: int = Query(default=30, ge=7, le=90),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Agrège les user_events par heure de la journée (0-23).
     Retourne un tableau de 24 entrées avec count par heure.
     """
     supabase = get_supabase_client()
 
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
     try:
         result = supabase.table("user_events").select(
@@ -1052,7 +1052,7 @@ async def get_usage_heatmap(
         heatmap = [{"hour": h, "count": counts[h]} for h in range(24)]
         return {"heatmap": heatmap, "days": days, "total": sum(counts)}
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to fetch heatmap")
 
 
@@ -1063,13 +1063,13 @@ async def get_usage_heatmap(
 @router.get("/events")
 async def get_platform_events(
     admin: AdminUserDep,
-    feature: Optional[str] = Query(default=None),
-    category: Optional[str] = Query(default=None),
-    severity: Optional[str] = Query(default=None),
-    search: Optional[str] = Query(default=None, description="Search in event_label"),
+    feature: str | None = Query(default=None),
+    category: str | None = Query(default=None),
+    severity: str | None = Query(default=None),
+    search: str | None = Query(default=None, description="Search in event_label"),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=50, ge=1, le=200),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Fetch all platform user_events (business events with readable labels)."""
     supabase = get_supabase_client()
     try:
@@ -1102,7 +1102,7 @@ async def get_platform_events(
 
         events_data = result.data or []
         user_ids = list({e["user_id"] for e in events_data if e.get("user_id")})
-        profiles_map: Dict[str, str] = {}
+        profiles_map: dict[str, str] = {}
         if user_ids:
             profiles_res = supabase.table("profiles").select(
                 "id, email"
@@ -1128,14 +1128,14 @@ async def get_platform_events(
 @router.get("/logs/security")
 async def get_security_logs(
     admin: AdminUserDep,
-    user_id: Optional[str] = Query(default=None),
-    event_type: Optional[str] = Query(default=None),
-    severity: Optional[str] = Query(default=None),
-    from_date: Optional[str] = Query(default=None),
-    to_date: Optional[str] = Query(default=None),
+    user_id: str | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    severity: str | None = Query(default=None),
+    from_date: str | None = Query(default=None),
+    to_date: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=50, ge=1, le=200),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Query security events with filters."""
     supabase = get_supabase_client()
 
@@ -1166,7 +1166,7 @@ async def get_security_logs(
         # Récupérer les profils séparément (pas de FK directe security_events → profiles)
         events_data = result.data or []
         event_user_ids = list({e["user_id"] for e in events_data if e.get("user_id")})
-        profiles_map: Dict[str, Any] = {}
+        profiles_map: dict[str, Any] = {}
         if event_user_ids:
             profiles_res = supabase.table("profiles").select(
                 "id, email, full_name"
@@ -1197,7 +1197,7 @@ async def get_security_logs(
 async def get_user_logs(
     user_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """All security events for a specific user."""
     supabase = get_supabase_client()
 
@@ -1213,7 +1213,7 @@ async def get_webhook_logs(
     admin: AdminUserDep,
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=50, ge=1, le=100),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """List Stripe webhook failures."""
     supabase = get_supabase_client()
 
@@ -1230,7 +1230,7 @@ async def get_webhook_logs(
             "total": count_result.count or 0,
         }
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to fetch webhook logs")
 
 
@@ -1238,7 +1238,7 @@ async def get_webhook_logs(
 async def retry_webhook(
     failure_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Rejoue un webhook Stripe échoué via stripe.Event.retrieve + redispatch."""
     supabase = get_supabase_client()
     settings = get_settings()
@@ -1265,7 +1265,7 @@ async def retry_webhook(
         # nécessite l'endpoint webhook complet, ici on simule via resolve)
         supabase.table("webhook_failures").update({
             "resolved": True,
-            "resolved_at": datetime.now(timezone.utc).isoformat(),
+            "resolved_at": datetime.now(UTC).isoformat(),
             "resolution_note": f"Retry by admin {admin.get('email', admin['id'])}",
         }).eq("id", failure_id).execute()
 
@@ -1288,7 +1288,7 @@ async def retry_webhook(
 async def get_referral_leaderboard(
     admin: AdminUserDep,
     limit: int = Query(default=20, ge=1, le=100),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Top referrers sorted by total_conversions."""
     supabase = get_supabase_client()
     result = supabase.table("referrals").select(
@@ -1297,7 +1297,7 @@ async def get_referral_leaderboard(
 
     rows = result.data or []
     referrer_ids = list({r["referrer_id"] for r in rows if r.get("referrer_id")})
-    profiles_map: Dict[str, Any] = {}
+    profiles_map: dict[str, Any] = {}
     if referrer_ids:
         pr = supabase.table("profiles").select("id, email, full_name").in_("id", referrer_ids).execute()
         profiles_map = {p["id"]: {"email": p["email"], "full_name": p.get("full_name")} for p in (pr.data or [])}
@@ -1307,7 +1307,7 @@ async def get_referral_leaderboard(
 
 
 @router.get("/referrals/stats")
-async def get_referral_stats(admin: AdminUserDep) -> Dict[str, Any]:
+async def get_referral_stats(admin: AdminUserDep) -> dict[str, Any]:
     """Global referral program statistics."""
     supabase = get_supabase_client()
     return {
@@ -1319,7 +1319,7 @@ async def get_referral_stats(admin: AdminUserDep) -> Dict[str, Any]:
 
 
 @router.get("/referrals/config")
-async def get_referral_config(admin: AdminUserDep) -> Dict[str, Any]:
+async def get_referral_config(admin: AdminUserDep) -> dict[str, Any]:
     supabase = get_supabase_client()
     result = supabase.table("referral_config").select("*").eq("id", 1).single().execute()
     if not result.data:
@@ -1328,28 +1328,28 @@ async def get_referral_config(admin: AdminUserDep) -> Dict[str, Any]:
 
 
 class ReferralConfigUpdate(BaseModel):
-    signup_reward_type: Optional[str] = None
-    signup_reward_value: Optional[Dict[str, Any]] = None
-    conversion_reward_type: Optional[str] = None
-    conversion_reward_value: Optional[Dict[str, Any]] = None
-    is_active: Optional[bool] = None
-    tiers: Optional[list[Dict[str, Any]]] = None
+    signup_reward_type: str | None = None
+    signup_reward_value: dict[str, Any] | None = None
+    conversion_reward_type: str | None = None
+    conversion_reward_value: dict[str, Any] | None = None
+    is_active: bool | None = None
+    tiers: list[dict[str, Any]] | None = None
 
 
 @router.patch("/referrals/config")
-async def update_referral_config(body: ReferralConfigUpdate, admin: AdminUserDep) -> Dict[str, Any]:
+async def update_referral_config(body: ReferralConfigUpdate, admin: AdminUserDep) -> dict[str, Any]:
     supabase = get_supabase_client()
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
-    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    updates["updated_at"] = datetime.now(UTC).isoformat()
     result = supabase.table("referral_config").update(updates).eq("id", 1).execute()
     _log_admin_action(supabase, admin["id"], "admin.referral_config_updated", None, {"changes": list(updates.keys())})
     return result.data[0] if result.data else {}
 
 
 @router.post("/referrals/grant-reward/{signup_id}")
-async def grant_manual_reward(signup_id: str, admin: AdminUserDep) -> Dict[str, Any]:
+async def grant_manual_reward(signup_id: str, admin: AdminUserDep) -> dict[str, Any]:
     """Manually apply a referral reward."""
     supabase = get_supabase_client()
     from src.services.referrals import apply_referral_reward
@@ -1379,10 +1379,10 @@ async def list_recruiter_requests(
     admin: AdminUserDep,
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=25, ge=1, le=100),
-    search: Optional[str] = Query(default=None),
-    req_status: Optional[str] = Query(default=None, alias="status"),
-    payment_status: Optional[str] = Query(default=None),
-) -> Dict[str, Any]:
+    search: str | None = Query(default=None),
+    req_status: str | None = Query(default=None, alias="status"),
+    payment_status: str | None = Query(default=None),
+) -> dict[str, Any]:
     """List recruiter consultation requests with pagination and filters."""
     supabase = get_supabase_client()
     offset = (page - 1) * per_page
@@ -1409,7 +1409,7 @@ async def update_recruiter_request_status(
     request_id: str,
     body: UpdateRecruiterRequestStatusBody,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update the status of a recruiter consultation request."""
     valid_statuses = {"new", "assigned", "scheduled", "completed", "cancelled"}
     if body.status not in valid_statuses:
@@ -1417,7 +1417,7 @@ async def update_recruiter_request_status(
 
     supabase = get_supabase_client()
     result = supabase.table("recruiter_requests").update(
-        {"status": body.status, "updated_at": datetime.now(timezone.utc).isoformat()}
+        {"status": body.status, "updated_at": datetime.now(UTC).isoformat()}
     ).eq("id", request_id).execute()
 
     if not result.data:
@@ -1438,7 +1438,7 @@ async def update_recruiter_request_status(
 async def resolve_webhook_failure(
     failure_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Mark a webhook failure as resolved."""
     supabase = get_supabase_client()
     result = supabase.table("webhook_failures").update(
@@ -1463,17 +1463,17 @@ async def resolve_webhook_failure(
 async def get_user_growth(
     admin: AdminUserDep,
     days: int = Query(default=30, ge=7, le=90),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Daily new user signups for the last N days."""
     supabase = get_supabase_client()
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
     result = supabase.table("profiles").select(
         "created_at"
     ).gte("created_at", since).order("created_at").execute()
 
     # Group by date
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for p in (result.data or []):
         try:
             date = p["created_at"][:10]
@@ -1489,7 +1489,7 @@ async def get_user_growth(
     cumulative = total_before.count or 0
 
     for i in range(days):
-        d = (datetime.now(timezone.utc) - timedelta(days=days - 1 - i)).date().isoformat()
+        d = (datetime.now(UTC) - timedelta(days=days - 1 - i)).date().isoformat()
         new = counts.get(d, 0)
         cumulative += new
         growth.append({"date": d, "new_signups": new, "cumulative": cumulative})
@@ -1501,10 +1501,10 @@ async def get_user_growth(
 async def get_mrr_trend(
     admin: AdminUserDep,
     days: int = Query(default=90, ge=30, le=365),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Approximate daily MRR for the last N days (based on active subscriptions)."""
     supabase = get_supabase_client()
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
     # Load all subscriptions created within range or active during range
     subs_res = supabase.table("user_subscriptions").select(
@@ -1512,7 +1512,7 @@ async def get_mrr_trend(
     ).in_("status", ["active", "canceled", "past_due"]).execute()
     subs = subs_res.data or []
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     trend = []
     for i in range(days):
         day = (now - timedelta(days=days - 1 - i)).replace(
@@ -1542,10 +1542,10 @@ async def get_mrr_trend(
 # ============================================================
 
 @router.post("/users/{user_id}/reset-usage")
-async def reset_user_usage(user_id: str, admin: AdminUserDep) -> Dict[str, Any]:
+async def reset_user_usage(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
     """Reset a user's daily usage quotas to zero for today."""
     supabase = get_supabase_client()
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
 
     result = supabase.table("usage_quotas").update({
         "cv_analyses_used": 0,
@@ -1565,10 +1565,10 @@ async def reset_user_usage(user_id: str, admin: AdminUserDep) -> Dict[str, Any]:
 # ============================================================
 
 @router.get("/segments/at-risk")
-async def get_at_risk_users(admin: AdminUserDep) -> Dict[str, Any]:
+async def get_at_risk_users(admin: AdminUserDep) -> dict[str, Any]:
     """Abonnés actifs sans usage depuis 7+ jours."""
     supabase = get_supabase_client()
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).date().isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=7)).date().isoformat()
 
     subs = supabase.table("user_subscriptions").select(
         "user_id, current_period_end, subscription_plans(name, display_name)"
@@ -1599,12 +1599,12 @@ async def get_at_risk_users(admin: AdminUserDep) -> Dict[str, Any]:
         "user_id, quota_date"
     ).in_("user_id", at_risk_ids).order("quota_date", desc=True).execute()
 
-    last_usage_map: Dict[str, str] = {}
+    last_usage_map: dict[str, str] = {}
     for u in (last_usage.data or []):
         if u["user_id"] not in last_usage_map:
             last_usage_map[u["user_id"]] = u["quota_date"]
 
-    today_date = datetime.now(timezone.utc).date()
+    today_date = datetime.now(UTC).date()
     result = []
     for p in (profiles.data or []):
         sub = sub_map.get(p["id"], {})
@@ -1624,7 +1624,7 @@ async def get_at_risk_users(admin: AdminUserDep) -> Dict[str, Any]:
 
 
 @router.get("/segments/about-to-churn")
-async def get_about_to_churn(admin: AdminUserDep) -> Dict[str, Any]:
+async def get_about_to_churn(admin: AdminUserDep) -> dict[str, Any]:
     """Abonnés ayant annulé ou en retard de paiement."""
     supabase = get_supabase_client()
 
@@ -1642,7 +1642,7 @@ async def get_about_to_churn(admin: AdminUserDep) -> Dict[str, Any]:
         "id, email, full_name"
     ).in_("id", user_ids).execute()
 
-    today_date = datetime.now(timezone.utc).date()
+    today_date = datetime.now(UTC).date()
     result = []
     for p in (profiles.data or []):
         sub = sub_map.get(p["id"], {})
@@ -1668,10 +1668,10 @@ async def get_about_to_churn(admin: AdminUserDep) -> Dict[str, Any]:
 
 
 @router.get("/segments/never-converted")
-async def get_never_converted(admin: AdminUserDep) -> Dict[str, Any]:
+async def get_never_converted(admin: AdminUserDep) -> dict[str, Any]:
     """Inscrits depuis 14j+ sans abonnement, mais avec au moins une action."""
     supabase = get_supabase_client()
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=14)).isoformat()
 
     profiles_res = supabase.table("profiles").select(
         "id, email, full_name, created_at"
@@ -1695,7 +1695,7 @@ async def get_never_converted(admin: AdminUserDep) -> Dict[str, Any]:
         "user_id, cv_analyses_used, coach_seconds_used"
     ).in_("user_id", free_ids).execute()
 
-    usage_map: Dict[str, Dict] = {}
+    usage_map: dict[str, dict] = {}
     for u in (usage_res.data or []):
         uid = u["user_id"]
         if uid not in usage_map:
@@ -1703,7 +1703,7 @@ async def get_never_converted(admin: AdminUserDep) -> Dict[str, Any]:
         usage_map[uid]["cv"] += u.get("cv_analyses_used", 0)
         usage_map[uid]["coach"] += u.get("coach_seconds_used", 0)
 
-    today_date = datetime.now(timezone.utc).date()
+    today_date = datetime.now(UTC).date()
     result = []
     for p in profiles_res.data:
         if p["id"] not in free_ids:
@@ -1736,10 +1736,10 @@ async def get_never_converted(admin: AdminUserDep) -> Dict[str, Any]:
 async def get_conversion_funnel(
     admin: AdminUserDep,
     days: int = Query(default=30, ge=7, le=90)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Funnel de conversion : Inscrits → CV → Coach → Payé → Renouvelé."""
     supabase = get_supabase_client()
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
     signups = supabase.table("profiles").select("id", count="exact").gte(
         "created_at", cutoff
@@ -1783,10 +1783,10 @@ async def get_conversion_funnel(
 async def get_cohort_retention(
     admin: AdminUserDep,
     months: int = Query(default=6, ge=2, le=12)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Analyse de rétention par cohorte mensuelle."""
     supabase = get_supabase_client()
-    today = datetime.now(timezone.utc)
+    today = datetime.now(UTC)
     cohorts = []
 
     for i in range(months - 1, -1, -1):
@@ -1828,18 +1828,18 @@ async def get_cohort_retention(
 
 
 @router.get("/analytics/mrr-forecast")
-async def get_mrr_forecast(admin: AdminUserDep) -> Dict[str, Any]:
+async def get_mrr_forecast(admin: AdminUserDep) -> dict[str, Any]:
     """Prévision MRR sur 3 mois basée sur régression linéaire des 90 derniers jours."""
     supabase = get_supabase_client()
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    cutoff = (datetime.now(UTC) - timedelta(days=90)).isoformat()
 
     subs = supabase.table("user_subscriptions").select(
         "created_at, canceled_at, cancel_at_period_end, subscription_plans(price_monthly)"
-    ).lte("created_at", datetime.now(timezone.utc).isoformat()).execute()
+    ).lte("created_at", datetime.now(UTC).isoformat()).execute()
 
     subs_data = [s for s in (subs.data or []) if s.get("subscription_plans")]
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     days_list = [(today - timedelta(days=d)) for d in range(89, -1, -1)]
     daily_mrr = []
     for day in days_list:
@@ -1905,7 +1905,7 @@ async def send_custom_email(
     user_id: str,
     req: SendEmailRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Envoie un email custom à un utilisateur via Resend."""
     import resend as resend_lib
     supabase = get_supabase_client()
@@ -1938,7 +1938,7 @@ async def send_custom_email(
 async def send_bulk_email(
     req: BulkEmailRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Envoie un email à tous les users d'un segment."""
     import resend as resend_lib
     supabase = get_supabase_client()
@@ -1946,7 +1946,7 @@ async def send_bulk_email(
     resend_lib.api_key = settings.get_resend_api_key()
 
     # Récupérer les emails du segment
-    emails: List[str] = []
+    emails: list[str] = []
     if req.segment == "all-paying":
         subs = supabase.table("user_subscriptions").select("user_id").eq("status", "active").execute()
         user_ids = [s["user_id"] for s in (subs.data or [])]
@@ -1999,10 +1999,10 @@ async def send_bulk_email(
 # ============================================================
 
 @router.get("/health")
-async def get_health_check(admin: AdminUserDep) -> Dict[str, Any]:
+async def get_health_check(admin: AdminUserDep) -> dict[str, Any]:
     """Vérifie le statut de chaque service (Supabase, Stripe, Email, Backend)."""
-    import asyncio
     import time
+
     import httpx
 
     services = []
@@ -2039,7 +2039,7 @@ async def get_health_check(admin: AdminUserDep) -> Dict[str, Any]:
         services.append({"name": "Email (Resend)", "status": "error", "latency_ms": round((time.monotonic() - t) * 1000)})
 
     overall = "ok" if all(s["status"] == "ok" for s in services) else "degraded"
-    return {"status": overall, "services": services, "checked_at": datetime.now(timezone.utc).isoformat()}
+    return {"status": overall, "services": services, "checked_at": datetime.now(UTC).isoformat()}
 
 
 # ============================================================
@@ -2047,7 +2047,7 @@ async def get_health_check(admin: AdminUserDep) -> Dict[str, Any]:
 # ============================================================
 
 @router.get("/users/{user_id}/payments")
-async def get_user_payments(user_id: str, admin: AdminUserDep) -> Dict[str, Any]:
+async def get_user_payments(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
     """Récupère les 20 derniers paiements Stripe d'un utilisateur."""
     supabase = get_supabase_client()
     settings = get_settings()
@@ -2070,7 +2070,7 @@ async def get_user_payments(user_id: str, admin: AdminUserDep) -> Dict[str, Any]
                 "amount": c.amount / 100,
                 "currency": c.currency.upper(),
                 "status": c.status,
-                "created_at": datetime.fromtimestamp(c.created, tz=timezone.utc).isoformat(),
+                "created_at": datetime.fromtimestamp(c.created, tz=UTC).isoformat(),
                 "description": c.description,
                 "receipt_url": c.receipt_url,
             })
@@ -2085,7 +2085,7 @@ async def get_user_payments(user_id: str, admin: AdminUserDep) -> Dict[str, Any]
 # ============================================================
 
 @router.post("/users/{user_id}/impersonate")
-async def impersonate_user(user_id: str, admin: AdminUserDep) -> Dict[str, Any]:
+async def impersonate_user(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
     """Génère un magic link pour se connecter en tant qu'un utilisateur."""
     supabase = get_supabase_client()
 
@@ -2129,11 +2129,11 @@ ALL_FEATURES = [
 class FeatureOverrideRequest(BaseModel):
     feature_name: str
     enabled: bool
-    note: Optional[str] = None
+    note: str | None = None
 
 
 @router.get("/users/{user_id}/feature-overrides")
-async def get_feature_overrides(user_id: str, admin: AdminUserDep) -> Dict[str, Any]:
+async def get_feature_overrides(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
     """Retourne les feature overrides d'un utilisateur + la liste de toutes les features."""
     supabase = get_supabase_client()
     res = supabase.table("user_feature_overrides").select("*").eq("user_id", user_id).execute()
@@ -2157,7 +2157,7 @@ async def set_feature_override(
     user_id: str,
     req: FeatureOverrideRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Crée ou met à jour un feature override pour un utilisateur."""
     if req.feature_name not in ALL_FEATURES:
         raise HTTPException(status_code=400, detail=f"Feature inconnue : {req.feature_name}")
@@ -2183,7 +2183,7 @@ async def delete_feature_override(
     user_id: str,
     feature_name: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Supprime un feature override — l'user revient aux droits de son plan."""
     supabase = get_supabase_client()
     supabase.table("user_feature_overrides").delete().eq(
@@ -2234,7 +2234,7 @@ class PromptUpdateRequest(BaseModel):
 
 
 @router.get("/prompts")
-async def list_prompts(admin: AdminUserDep) -> Dict[str, Any]:
+async def list_prompts(admin: AdminUserDep) -> dict[str, Any]:
     """Liste tous les prompts depuis la DB (seed depuis fichiers si vide)."""
     supabase = get_supabase_client()
     res = supabase.table("ai_prompts").select("name, display_name, updated_at, updated_by").order("name").execute()
@@ -2261,7 +2261,7 @@ async def list_prompts(admin: AdminUserDep) -> Dict[str, Any]:
 
 
 @router.get("/prompts/{name}")
-async def get_prompt(name: str, admin: AdminUserDep) -> Dict[str, Any]:
+async def get_prompt(name: str, admin: AdminUserDep) -> dict[str, Any]:
     """Retourne le contenu complet d'un prompt."""
     supabase = get_supabase_client()
     res = supabase.table("ai_prompts").select("*").eq("name", name).single().execute()
@@ -2275,12 +2275,12 @@ async def update_prompt(
     name: str,
     req: PromptUpdateRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Met à jour le contenu d'un prompt."""
     supabase = get_supabase_client()
     res = supabase.table("ai_prompts").update({
         "content": req.content,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
         "updated_by": admin["id"],
     }).eq("name", name).execute()
 
@@ -2297,12 +2297,12 @@ async def update_prompt(
 
 class CouponCreateRequest(BaseModel):
     name: str
-    percent_off: Optional[float] = None
-    amount_off: Optional[int] = None
+    percent_off: float | None = None
+    amount_off: int | None = None
     currency: str = "eur"
     duration: str = "once"  # "once" | "forever" | "repeating"
-    duration_in_months: Optional[int] = None
-    max_redemptions: Optional[int] = None
+    duration_in_months: int | None = None
+    max_redemptions: int | None = None
 
 
 class ApplyCouponRequest(BaseModel):
@@ -2310,7 +2310,7 @@ class ApplyCouponRequest(BaseModel):
 
 
 @router.get("/coupons")
-async def list_coupons(admin: AdminUserDep) -> Dict[str, Any]:
+async def list_coupons(admin: AdminUserDep) -> dict[str, Any]:
     """Liste les coupons Stripe actifs."""
     settings = get_settings()
     stripe_lib.api_key = settings.get_stripe_secret_key()
@@ -2329,7 +2329,7 @@ async def list_coupons(admin: AdminUserDep) -> Dict[str, Any]:
                 "max_redemptions": c.max_redemptions,
                 "times_redeemed": c.times_redeemed,
                 "valid": c.valid,
-                "created_at": datetime.fromtimestamp(c.created, tz=timezone.utc).isoformat(),
+                "created_at": datetime.fromtimestamp(c.created, tz=UTC).isoformat(),
             })
         return {"coupons": result, "total": len(result)}
     except Exception as e:
@@ -2337,7 +2337,7 @@ async def list_coupons(admin: AdminUserDep) -> Dict[str, Any]:
 
 
 @router.post("/coupons")
-async def create_coupon(req: CouponCreateRequest, admin: AdminUserDep) -> Dict[str, Any]:
+async def create_coupon(req: CouponCreateRequest, admin: AdminUserDep) -> dict[str, Any]:
     """Crée un coupon Stripe."""
     settings = get_settings()
     stripe_lib.api_key = settings.get_stripe_secret_key()
@@ -2345,7 +2345,7 @@ async def create_coupon(req: CouponCreateRequest, admin: AdminUserDep) -> Dict[s
     if req.percent_off is None and req.amount_off is None:
         raise HTTPException(status_code=400, detail="percent_off ou amount_off requis")
 
-    params: Dict[str, Any] = {
+    params: dict[str, Any] = {
         "name": req.name,
         "duration": req.duration,
         "currency": req.currency,
@@ -2371,7 +2371,7 @@ async def create_coupon(req: CouponCreateRequest, admin: AdminUserDep) -> Dict[s
 
 
 @router.delete("/coupons/{coupon_id}")
-async def delete_coupon(coupon_id: str, admin: AdminUserDep) -> Dict[str, Any]:
+async def delete_coupon(coupon_id: str, admin: AdminUserDep) -> dict[str, Any]:
     """Supprime un coupon Stripe."""
     settings = get_settings()
     stripe_lib.api_key = settings.get_stripe_secret_key()
@@ -2390,7 +2390,7 @@ async def apply_coupon_to_user(
     user_id: str,
     req: ApplyCouponRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Applique un coupon Stripe à l'abonnement actif d'un utilisateur."""
     supabase = get_supabase_client()
     settings = get_settings()
@@ -2427,7 +2427,7 @@ async def ban_user(
     user_id: str,
     req: BanUserRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Bannit un utilisateur (Supabase Auth ban_duration + is_banned=True)."""
     supabase = get_supabase_client()
     settings = get_settings()
@@ -2455,7 +2455,7 @@ async def ban_user(
 async def unban_user(
     user_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Lève le ban d'un utilisateur."""
     supabase = get_supabase_client()
     settings = get_settings()
@@ -2478,7 +2478,7 @@ async def unban_user(
 async def force_signout_user(
     user_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Force la déconnexion globale d'un utilisateur (révoque tous ses tokens)."""
     supabase = get_supabase_client()
     settings = get_settings()
@@ -2497,7 +2497,7 @@ async def update_user_email(
     user_id: str,
     req: UpdateEmailRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Met à jour l'email d'un utilisateur (Supabase Auth + profil)."""
     supabase = get_supabase_client()
     settings = get_settings()
@@ -2519,7 +2519,7 @@ async def update_user_email(
 async def get_admin_notes(
     user_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Retourne les notes internes sur un utilisateur."""
     supabase = get_supabase_client()
     res = supabase.table("admin_notes").select(
@@ -2533,7 +2533,7 @@ async def add_admin_note(
     user_id: str,
     req: AddNoteRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Ajoute une note interne sur un utilisateur."""
     supabase = get_supabase_client()
 
@@ -2541,7 +2541,7 @@ async def add_admin_note(
         "user_id": user_id,
         "admin_id": admin["id"],
         "note": req.content,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }).execute()
 
     _log_admin_action(supabase, admin["id"], "admin.note_added", user_id, {
@@ -2555,7 +2555,7 @@ async def grant_free_days(
     user_id: str,
     req: GrantDaysRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Offre des jours gratuits : via Stripe trial si abonnement actif, sinon via user_subscriptions."""
     supabase = get_supabase_client()
     settings = get_settings()
@@ -2572,9 +2572,9 @@ async def grant_free_days(
             if isinstance(current_end, str):
                 current_dt = datetime.fromisoformat(current_end.replace("Z", "+00:00"))
             else:
-                current_dt = datetime.fromtimestamp(current_end, tz=timezone.utc)
+                current_dt = datetime.fromtimestamp(current_end, tz=UTC)
         else:
-            current_dt = datetime.now(timezone.utc)
+            current_dt = datetime.now(UTC)
 
         new_end = current_dt + timedelta(days=req.days)
         stripe_lib.Subscription.modify(
@@ -2584,7 +2584,7 @@ async def grant_free_days(
     else:
         # Freemium : créer ou prolonger un abonnement local
         plan_id = sub.data["plan_id"] if sub.data else None
-        new_end = datetime.now(timezone.utc) + timedelta(days=req.days)
+        new_end = datetime.now(UTC) + timedelta(days=req.days)
         if sub.data:
             supabase.table("user_subscriptions").update({
                 "current_period_end": new_end.isoformat(),
@@ -2596,7 +2596,7 @@ async def grant_free_days(
                 "user_id": user_id,
                 "plan_id": pro_plan.data["id"] if pro_plan.data else None,
                 "status": "active",
-                "current_period_start": datetime.now(timezone.utc).isoformat(),
+                "current_period_start": datetime.now(UTC).isoformat(),
                 "current_period_end": new_end.isoformat(),
             }).execute()
 
@@ -2612,11 +2612,11 @@ async def set_custom_limits(
     user_id: str,
     req: SetCustomLimitsRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Définit des limites personnalisées pour un utilisateur."""
     supabase = get_supabase_client()
 
-    limits: Dict[str, Any] = {}
+    limits: dict[str, Any] = {}
     if req.cv_analyses_daily is not None:
         limits["cv_analyses_daily"] = req.cv_analyses_daily
     if req.coach_seconds_daily is not None:
@@ -2649,7 +2649,7 @@ async def retry_arq_job(
     user_id: str,
     req: RetryJobRequest,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Réenqueue réellement un job ARQ pour un utilisateur."""
     if req.function_name not in VALID_ARQ_FUNCTIONS:
         raise HTTPException(
@@ -2659,7 +2659,9 @@ async def retry_arq_job(
 
     try:
         from uuid import uuid4
+
         from arq import create_pool
+
         from src.workers.settings import _get_redis_settings
         pool = await create_pool(_get_redis_settings())
         job = await pool.enqueue_job(req.function_name, _job_id=str(uuid4()), **req.kwargs)
@@ -2681,7 +2683,7 @@ async def get_user_events(
     user_id: str,
     admin: AdminUserDep,
     limit: int = Query(default=100, le=200),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Retourne les 100 derniers événements d'un utilisateur (user_events)."""
     supabase = get_supabase_client()
 
@@ -2700,7 +2702,7 @@ async def get_user_events(
 async def admin_search(
     admin: AdminUserDep,
     q: str = Query(..., min_length=2),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Recherche globale admin : users par email/nom."""
     supabase = get_supabase_client()
 
@@ -2724,6 +2726,7 @@ async def export_users_csv(
     """Exporte tous les utilisateurs en CSV (StreamingResponse)."""
     import csv
     import io
+
     from fastapi.responses import StreamingResponse
 
     supabase = get_supabase_client()
@@ -2759,9 +2762,9 @@ async def export_users_csv(
 async def broadcast_notification(
     admin: AdminUserDep,
     payload: BroadcastNotificationRequest,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Envoie une notification in-app à tous les users d'un segment."""
-    from src.services.notifications import create_notification, VALID_TYPES
+    from src.services.notifications import VALID_TYPES, create_notification
 
     if payload.type not in VALID_TYPES:
         raise HTTPException(
@@ -2804,7 +2807,7 @@ async def broadcast_notification(
         user_ids = [r["id"] for r in (all_result.data or []) if r["id"] not in paying_ids]
 
     else:  # at-risk : abonnés actifs sans activité depuis 7j
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(days=7)).isoformat()
         subs_result = supabase.table("user_subscriptions").select("user_id").eq("status", "active").execute()
         all_paying_ids = [r["user_id"] for r in (subs_result.data or [])]
         if not all_paying_ids:
@@ -2848,7 +2851,7 @@ BAN_TTL = 30 * 24 * 3600  # 30 jours en secondes
 async def ban_ip(
     admin: AdminUserDep,
     payload: BanIPRequest,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Bannit une IP (stockage Redis, TTL 30j)."""
     from src.utils.cache import get_redis
     redis = await get_redis()
@@ -2856,7 +2859,7 @@ async def ban_ip(
         raise HTTPException(status_code=503, detail="Redis indisponible")
 
     import json as _json
-    meta = _json.dumps({"reason": payload.reason, "admin_id": admin["id"], "banned_at": datetime.now(timezone.utc).isoformat()})
+    meta = _json.dumps({"reason": payload.reason, "admin_id": admin["id"], "banned_at": datetime.now(UTC).isoformat()})
     await redis.setex(f"banned_ip:{payload.ip}", BAN_TTL, meta)
 
     supabase = get_supabase_client()
@@ -2869,7 +2872,7 @@ async def ban_ip(
 async def unban_ip(
     ip: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Lève le bannissement d'une IP."""
     from src.utils.cache import get_redis
     redis = await get_redis()
@@ -2887,10 +2890,11 @@ async def unban_ip(
 @router.get("/banned-ips")
 async def list_banned_ips(
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Liste toutes les IPs bannies avec leurs métadonnées."""
-    from src.utils.cache import get_redis
     import json as _json
+
+    from src.utils.cache import get_redis
     redis = await get_redis()
     if not redis:
         return {"ips": []}
@@ -2914,7 +2918,7 @@ async def list_banned_ips(
 async def blacklist_email(
     admin: AdminUserDep,
     payload: BlacklistEmailRequest,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Ajoute un email à la liste noire (Redis, TTL 30j)."""
     from src.utils.cache import get_redis
     redis = await get_redis()
@@ -2923,7 +2927,7 @@ async def blacklist_email(
 
     import json as _json
     email_key = payload.email.lower().strip()
-    meta = _json.dumps({"reason": payload.reason, "admin_id": admin["id"], "added_at": datetime.now(timezone.utc).isoformat()})
+    meta = _json.dumps({"reason": payload.reason, "admin_id": admin["id"], "added_at": datetime.now(UTC).isoformat()})
     await redis.setex(f"blacklisted_email:{email_key}", BAN_TTL, meta)
 
     supabase = get_supabase_client()
@@ -2935,10 +2939,11 @@ async def blacklist_email(
 @router.get("/blacklisted-emails")
 async def list_blacklisted_emails(
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Liste tous les emails en liste noire."""
-    from src.utils.cache import get_redis
     import json as _json
+
+    from src.utils.cache import get_redis
     redis = await get_redis()
     if not redis:
         return {"emails": []}
@@ -2963,14 +2968,14 @@ async def list_blacklisted_emails(
 # ============================================================
 
 @router.get("/suggestions")
-async def admin_get_suggestions(admin: AdminUserDep) -> Dict[str, Any]:
+async def admin_get_suggestions(admin: AdminUserDep) -> dict[str, Any]:
     """Get all suggestions grouped by assistant."""
     supabase = get_supabase_client()
     result = supabase.table("assistant_suggestions").select(
         "id, assistant_id, text, display_order, is_active, created_at"
     ).order("assistant_id").order("display_order").execute()
 
-    grouped: Dict[str, list] = {}
+    grouped: dict[str, list] = {}
     for row in (result.data or []):
         aid = row["assistant_id"]
         if aid not in grouped:
@@ -2982,9 +2987,9 @@ async def admin_get_suggestions(admin: AdminUserDep) -> Dict[str, Any]:
 
 @router.post("/suggestions")
 async def admin_add_suggestion(
-    body: Dict[str, Any],
+    body: dict[str, Any],
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Add a new suggestion for an assistant."""
     supabase = get_supabase_client()
     assistant_id = body.get("assistant_id")
@@ -3013,12 +3018,12 @@ async def admin_add_suggestion(
 @router.patch("/suggestions/{suggestion_id}")
 async def admin_update_suggestion(
     suggestion_id: str,
-    body: Dict[str, Any],
+    body: dict[str, Any],
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update a suggestion (text or is_active)."""
     supabase = get_supabase_client()
-    update_data: Dict[str, Any] = {}
+    update_data: dict[str, Any] = {}
     if "text" in body:
         update_data["text"] = body["text"].strip()
     if "is_active" in body:
@@ -3040,7 +3045,7 @@ async def admin_update_suggestion(
 async def admin_delete_suggestion(
     suggestion_id: str,
     admin: AdminUserDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Delete a suggestion."""
     supabase = get_supabase_client()
     supabase.table("assistant_suggestions").delete().eq("id", suggestion_id).execute()

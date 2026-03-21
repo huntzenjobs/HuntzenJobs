@@ -8,7 +8,6 @@ Throttle via Redis : max 1 email par type d'alerte par heure.
 import hashlib
 import logging
 import time
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +33,8 @@ async def send_admin_alert(
         severity: "info" | "warning" | "error"
     """
     try:
-        from src.utils.cache import get_redis
         from src.config.settings import settings
+        from src.utils.cache import get_redis
 
         # Clé Redis de throttle basée sur le hash du sujet
         subject_hash = hashlib.md5(subject.encode()).hexdigest()[:12]

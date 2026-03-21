@@ -9,7 +9,7 @@ Feature flag controls which system is active:
 """
 
 import logging
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def get_cv_agent():
 
 async def analyze_cv(
     cv_text: str,
-    job_description: Optional[str] = None,
+    job_description: str | None = None,
     language: str = "fr",
 ) -> dict[str, Any]:
     """

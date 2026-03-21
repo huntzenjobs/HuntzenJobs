@@ -11,18 +11,16 @@ Sub-agents:
 """
 
 import asyncio
-import json
 import logging
 import os
 import tempfile
-from typing import Any, Optional
+from typing import Any
 
 from groq import Groq
-from langchain_groq import ChatGroq
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
-from src.models.schemas import ATSScore, CVAnalysisResponse, TrainingRecommendation
+from src.models.schemas import ATSScore
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ class CVAnalyzerAgent(BaseAgent):
     - Job matching analysis
     - Improvement recommendations
     """
-    
+
     def __init__(self):
         """Initialize the CV Analyzer with its sub-agents."""
         config = AgentConfig(
@@ -50,16 +48,16 @@ class CVAnalyzerAgent(BaseAgent):
             system_prompt_file="cv_analyzer_context.txt",
         )
         super().__init__(config)
-        
+
         # Groq client for JSON mode
         self.groq_client = Groq(api_key=settings.get_groq_key())
-        
+
         # Docling converter (lazy loaded)
         self._docling_converter = None
-        
+
         # Initialize sub-agents
         self._init_sub_agents()
-    
+
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
         self.ats_scorer = SubAgent(
@@ -70,7 +68,7 @@ class CVAnalyzerAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.ats_scorer)
-        
+
         self.skill_extractor = SubAgent(
             name="SkillExtractor",
             system_prompt=load_prompt("cv_skill_extractor.txt"),
@@ -78,7 +76,7 @@ class CVAnalyzerAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.skill_extractor)
-        
+
         self.job_matcher = SubAgent(
             name="JobMatcher",
             system_prompt=load_prompt("cv_job_matcher.txt"),
@@ -87,7 +85,7 @@ class CVAnalyzerAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.job_matcher)
-        
+
         self.improvement_advisor = SubAgent(
             name="ImprovementAdvisor",
             system_prompt=load_prompt("cv_improvement_advisor.txt"),
@@ -95,16 +93,16 @@ class CVAnalyzerAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.improvement_advisor)
-        
+
         logger.info(f"[{self.name}] Initialized 4 sub-agents")
-    
+
     @property
     def docling_converter(self):
         """Lazy load Docling converter."""
         if self._docling_converter is None:
-            from docling.document_converter import DocumentConverter
-            from docling.datamodel.pipeline_options import PdfPipelineOptions
             from docling.datamodel.base_models import InputFormat
+            from docling.datamodel.pipeline_options import PdfPipelineOptions
+            from docling.document_converter import DocumentConverter
 
             logger.info(f"[{self.name}] Initializing Docling converter...")
             # CVs are text-based PDFs — OCR is unnecessary and triggers
@@ -115,11 +113,11 @@ class CVAnalyzerAgent(BaseAgent):
             )
             logger.info(f"[{self.name}] Docling ready (OCR disabled for text-based PDFs)")
         return self._docling_converter
-    
+
     async def run(
         self,
         cv_text: str,
-        job_description: Optional[str] = None,
+        job_description: str | None = None,
         language: str = "fr",
     ) -> dict[str, Any]:
         """
@@ -158,7 +156,7 @@ class CVAnalyzerAgent(BaseAgent):
 
             if is_huntzen_optimized:
                 improvements_result = self._filter_improvements_for_certified_cv(improvements_result)
-            
+
             recommended_titles = self._extract_recommended_titles(skills_result)
 
             # Build response (with score capping to prevent validation errors)
@@ -179,7 +177,7 @@ class CVAnalyzerAgent(BaseAgent):
                 "weaknesses": self._extract_weaknesses(ats_result, improvements_result),
                 "recommended_job_titles": recommended_titles,
             }
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Analysis error: {e}")
             return {
@@ -188,28 +186,28 @@ class CVAnalyzerAgent(BaseAgent):
                 "strengths": [],
                 "weaknesses": [],
             }
-    
+
     async def _score_ats(self, cv_text: str) -> dict:
         """Score CV for ATS compatibility."""
         result = await self.ats_scorer.run(task=f"Score this CV:\n\n{cv_text}")
         return self._parse_json(result) or {}
-    
+
     async def _extract_skills(self, cv_text: str) -> dict:
         """Extract skills from CV."""
         result = await self.skill_extractor.run(task=f"Extract skills:\n\n{cv_text}")
         return self._parse_json(result) or {}
-    
+
     async def _match_job(self, cv_text: str, job_description: str) -> dict:
         """Match CV against job description."""
         task = f"CV:\n{cv_text}\n\nJob Description:\n{job_description}"
         result = await self.job_matcher.run(task=task)
         return self._parse_json(result) or {}
-    
+
     async def _get_improvements(self, cv_text: str) -> dict:
         """Get improvement suggestions."""
         result = await self.improvement_advisor.run(task=f"Suggest improvements:\n\n{cv_text}")
         return self._parse_json(result) or {}
-    
+
     def _extract_recommended_titles(self, skills_result: dict) -> list[str]:
         """Extraire les titres de poste recommandés depuis l'analyse des skills."""
         titles = skills_result.get("suggested_job_titles", [])
@@ -235,40 +233,40 @@ class CVAnalyzerAgent(BaseAgent):
     def _extract_strengths(self, ats_result: dict, skills_result: dict) -> list[str]:
         """Extract strengths from analysis."""
         strengths = []
-        
+
         # From ATS breakdown
         breakdown = ats_result.get("breakdown", {})
         for key, value in breakdown.items():
             if any(word in str(value).lower() for word in ["good", "strong", "clear", "well", "excellent"]):
                 strengths.append(value)
-        
+
         # From Soft/Technical Skills (Top ones)
         tech_skills = skills_result.get("technical_skills", [])[:3]
         if tech_skills:
             strengths.append(f"Strong proficiency in: {', '.join(tech_skills)}")
-            
+
         if skills_result.get("certifications"):
             strengths.append(f"Has {len(skills_result['certifications'])} certifications")
-        
+
         return strengths[:5]
-    
+
     def _extract_weaknesses(self, ats_result: dict, improvements_result: dict) -> list[str]:
         """Extract weaknesses from analysis."""
         weaknesses = []
-        
+
         if ats_result.get("total", 100) < 70:
             weaknesses.append(f"ATS score ({ats_result.get('total')}) is below optimal criteria")
-        
+
         missing = improvements_result.get("missing_sections", [])
         if missing:
             weaknesses.extend([f"Missing section: {m}" for m in missing[:2]])
-            
+
         content_tips = improvements_result.get("content_improvements", [])
         if content_tips:
             weaknesses.extend(content_tips[:2])
-        
+
         return weaknesses[:5]
-    
+
     async def extract_text_from_pdf(self, pdf_bytes: bytes) -> str:
         """
         Extract text from PDF using Docling, with pypdf fallback.
@@ -315,6 +313,7 @@ class CVAnalyzerAgent(BaseAgent):
         # It works for text-based PDFs without requiring system libraries.
         try:
             import io as _io
+
             from pypdf import PdfReader
             reader = PdfReader(_io.BytesIO(pdf_bytes))
             text = "\n".join(
@@ -336,7 +335,7 @@ class CVAnalyzerAgent(BaseAgent):
             )
         finally:
             os.unlink(tmp_path)
-    
+
     async def analyze_ats_only(self, cv_text: str) -> dict:
         """
         Quick ATS-only analysis.
@@ -348,7 +347,7 @@ class CVAnalyzerAgent(BaseAgent):
             ATS score and breakdown
         """
         return await self._score_ats(cv_text)
-    
+
     async def match_with_job(self, cv_text: str, job_description: str) -> dict:
         """
         Match CV against specific job.
@@ -380,7 +379,7 @@ def get_cv_analyzer() -> CVAnalyzerAgent:
 
 async def analyze_cv(
     cv_text: str,
-    job_description: Optional[str] = None,
+    job_description: str | None = None,
     language: str = "fr",
 ) -> dict[str, Any]:
     """

@@ -4,12 +4,11 @@ Cron endpoints — appelés par Vercel Cron via le frontend Next.js.
 POST /api/cron/retention-notifications — notifie les users inactifs depuis 7 jours
 """
 
-import os
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+import os
+from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, Header, HTTPException
 
 from src.api.deps import get_supabase_client
 from src.services.notifications import create_notification
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 CRON_SECRET = os.getenv("CRON_SECRET", "")
 
 
-def _verify_cron_secret(authorization: Optional[str]) -> None:
+def _verify_cron_secret(authorization: str | None) -> None:
     if not CRON_SECRET or authorization != f"Bearer {CRON_SECRET}":
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -31,7 +30,7 @@ def _verify_cron_secret(authorization: Optional[str]) -> None:
 # ---------------------------------------------------------------------------
 
 @router.post("/retention-notifications")
-async def retention_notifications(authorization: Optional[str] = Header(None)):
+async def retention_notifications(authorization: str | None = Header(None)):
     """
     Envoie une notification in-app aux utilisateurs inactifs depuis 7-14 jours.
     Idempotent : ne renvoie pas de notif si une du même type existe dans les 7 derniers jours.
@@ -39,7 +38,7 @@ async def retention_notifications(authorization: Optional[str] = Header(None)):
     _verify_cron_secret(authorization)
 
     supabase = get_supabase_client()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     cutoff_7d_date = (now - timedelta(days=7)).date().isoformat()
     cutoff_14d_date = (now - timedelta(days=14)).date().isoformat()
     cutoff_7d_iso = (now - timedelta(days=7)).isoformat()
@@ -96,7 +95,7 @@ async def retention_notifications(authorization: Optional[str] = Header(None)):
 # ---------------------------------------------------------------------------
 
 @router.post("/purge-events")
-async def purge_events(authorization: Optional[str] = Header(None)):
+async def purge_events(authorization: str | None = Header(None)):
     """
     Purge les user_events de plus de 30 jours.
     Appelé par cron quotidien (Vercel Cron ou Railway Cron).

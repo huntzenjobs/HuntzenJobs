@@ -97,7 +97,9 @@ async def health_check():
     """
     import os
     import time
+
     from fastapi.responses import JSONResponse
+
     from app.database import get_pool_stats
     from src.utils.cache import get_redis
 

@@ -1,6 +1,7 @@
 
 import logging
-from typing import Any, List, Dict
+from typing import Any
+
 import httpx
 
 from src.agents.insider_finder.agent import InsiderFinderAgent
@@ -19,12 +20,12 @@ class InsiderFinderService:
         self.serpapi_url = "https://serpapi.com/search"
 
     async def find_insiders(
-        self, 
-        job_title: str, 
-        company: str, 
-        city: str = "", 
+        self,
+        job_title: str,
+        company: str,
+        city: str = "",
         is_alternance: bool = False
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Executes a hunt for insiders for a specific job.
         
@@ -39,7 +40,7 @@ class InsiderFinderService:
             city=city,
             is_alternance=is_alternance
         )
-        
+
         if not strategy_result.get("success"):
             return {
                 "success": False,
@@ -49,7 +50,7 @@ class InsiderFinderService:
 
         queries = strategy_result.get("queries", [])
         strategy_text = strategy_result.get("strategy", "")
-        
+
         all_insiders = []
         api_key = settings.get_serpapi_key()
 
@@ -62,7 +63,7 @@ class InsiderFinderService:
                 query_text = q_obj.get("query")
                 query_type = q_obj.get("type", "other")
                 label = q_obj.get("label", "Contact")
-                
+
                 params = {
                     "engine": "google",
                     "q": query_text,
@@ -70,14 +71,14 @@ class InsiderFinderService:
                     "gl": "fr", # Default to France, can be improved to detect country
                     "hl": "fr"
                 }
-                
+
                 try:
                     resp = await client.get(self.serpapi_url, params=params)
                     resp.raise_for_status()
                     data = resp.json()
-                    
+
                     organic_results = data.get("organic_results", [])
-                    
+
                     for res in organic_results:
                         link = res.get("link", "")
                         if "linkedin.com/in/" in link and link not in seen_links:

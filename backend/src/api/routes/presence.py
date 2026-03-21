@@ -12,12 +12,12 @@ import asyncio
 import json
 import logging
 import time
-from typing import Optional, AsyncGenerator
+from collections.abc import AsyncGenerator
 
-from fastapi import APIRouter, Request, Depends, Header, Response
+from fastapi import APIRouter, Depends, Header, Request, Response
 from pydantic import BaseModel
 
-from src.api.deps import get_current_user, get_supabase_client, AdminUserDep
+from src.api.deps import AdminUserDep, get_current_user, get_supabase_client
 from src.services.user_events import log_event
 
 logger = logging.getLogger(__name__)
@@ -33,19 +33,19 @@ banner_router   = APIRouter()
 
 class HeartbeatRequest(BaseModel):
     page: str
-    feature: Optional[str] = None
+    feature: str | None = None
 
 
 class TrackEventRequest(BaseModel):
     event_name: str
-    event_label: Optional[str] = None
+    event_label: str | None = None
     category: str = "action"
-    feature: Optional[str] = None
+    feature: str | None = None
     severity: str = "info"
-    properties: Optional[dict] = None
+    properties: dict | None = None
     source: str = "frontend"
-    error_code: Optional[str] = None
-    duration_ms: Optional[int] = None
+    error_code: str | None = None
+    duration_ms: int | None = None
 
 
 class BannerRequest(BaseModel):
@@ -79,7 +79,7 @@ async def heartbeat(
             return {"ok": True}
 
         # Détection abus — sliding window 10 heartbeats/min max
-        from src.services.abuse_detection import is_rate_limited, HEARTBEAT_MAX, HEARTBEAT_WINDOW
+        from src.services.abuse_detection import HEARTBEAT_MAX, HEARTBEAT_WINDOW, is_rate_limited
         if await is_rate_limited(redis, "ratelimit:heartbeat", user_id, HEARTBEAT_MAX, HEARTBEAT_WINDOW):
             return {"ok": True}  # silencieux, ne pas casser l'UX
 
@@ -172,7 +172,7 @@ async def _live_event_generator(request: Request) -> AsyncGenerator[dict, None]:
 @presence_router.get("/admin/live")
 async def admin_sse_live(
     request: Request,
-    token: Optional[str] = None,
+    token: str | None = None,
 ):
     """
     SSE endpoint pour l'admin — snapshot présence toutes les 10 secondes.
@@ -182,7 +182,8 @@ async def admin_sse_live(
     if not token:
         return Response(status_code=401)
     try:
-        from src.api.deps import get_supabase_anon_client, get_supabase_client as _get_sb
+        from src.api.deps import get_supabase_anon_client
+        from src.api.deps import get_supabase_client as _get_sb
         user_resp = get_supabase_anon_client().auth.get_user(token)
         if not user_resp or not user_resp.user:
             return Response(status_code=401)
@@ -207,7 +208,7 @@ async def admin_sse_live(
 @tracking_router.post("/event")
 async def track_event(
     body: TrackEventRequest,
-    authorization: Optional[str] = Header(default=None),
+    authorization: str | None = Header(default=None),
 ):
     """
     Reçoit un événement depuis le frontend et l'insère dans user_events.

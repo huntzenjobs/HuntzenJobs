@@ -18,14 +18,14 @@ class Settings(BaseSettings):
     All settings can be overridden via environment variables or .env file.
     Secret values use SecretStr for security.
     """
-    
+
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
     )
-    
+
     # --------------------------------------------------------------------------
     # Application
     # --------------------------------------------------------------------------
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     app_version: str = "3.0.0"
     debug: bool = Field(default=False, description="Enable debug mode")
     environment: Literal["development", "staging", "production", "test"] = "development"
-    
+
     # --------------------------------------------------------------------------
     # Monitoring
     # --------------------------------------------------------------------------
@@ -46,12 +46,12 @@ class Settings(BaseSettings):
     port: int = 8000
     reload: bool = Field(default=True, description="Hot reload for development")
     workers: int = Field(default=1, ge=1, le=8, description="Number of workers")
-    
+
     # --------------------------------------------------------------------------
     # API Keys - LLM Providers
     # --------------------------------------------------------------------------
     groq_api_key: SecretStr = Field(default=SecretStr(""), description="Groq API Key")
-    
+
     # --------------------------------------------------------------------------
     # API Keys - Job Providers
     # --------------------------------------------------------------------------
@@ -105,7 +105,7 @@ class Settings(BaseSettings):
     default_language: Literal["fr", "en", "es", "de"] = "en"
     max_search_results: int = Field(default=100, ge=5, le=200)
     cache_ttl_seconds: int = Field(default=3600, ge=60)
-    
+
     # LLM Models (Groq)
     # - Fast: For quick extraction/analysis tasks (needs to be resistant to jailbreaks)
     # - Powerful: For complex rewriting/generation tasks
@@ -113,7 +113,7 @@ class Settings(BaseSettings):
     llm_model_powerful: str = "llama-3.3-70b-versatile"  # 70B dense, 300K TPM, optimisé français
     llm_temperature: float = Field(default=0.3, ge=0.0, le=1.0)
     llm_max_tokens: int = Field(default=2048, ge=256, le=8192)
-    
+
     # --------------------------------------------------------------------------
     # Security
     # --------------------------------------------------------------------------
@@ -155,7 +155,7 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production."""
         return self.environment == "production"
-    
+
     def get_groq_key(self) -> str:
         """Get Groq API key as string."""
         return self.groq_api_key.get_secret_value()
@@ -163,7 +163,7 @@ class Settings(BaseSettings):
     def get_serpapi_key(self) -> str:
         """Get SerpAPI key as string."""
         return self.serpapi_key.get_secret_value()
-    
+
     def get_adzuna_key(self) -> str:
         """Get Adzuna API key as string."""
         return self.adzuna_api_key.get_secret_value()

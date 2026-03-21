@@ -1,10 +1,10 @@
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
-from src.agents.base import BaseAgent, AgentConfig, SubAgent, load_prompt
-from src.config.settings import settings
+from src.agents.base import AgentConfig, BaseAgent, SubAgent
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class InsiderQuery(BaseModel):
     reason: str
 
 class InsiderFinderResponse(BaseModel):
-    queries: List[InsiderQuery]
+    queries: list[InsiderQuery]
     strategy: str
 
 class InsiderFinderAgent(BaseAgent):
@@ -32,7 +32,7 @@ class InsiderFinderAgent(BaseAgent):
             temperature=0.1
         )
         super().__init__(config)
-        
+
         # We can also use a SubAgent for specific query generation if needed
         # but here the main agent prompt already handles it well.
         # For pure OOP/SubAgent demo, let's wrap the logic.
@@ -41,7 +41,7 @@ class InsiderFinderAgent(BaseAgent):
             system_prompt=self.system_prompt
         )
 
-    async def run(self, job_title: str, company: str, city: str = "", is_alternance: bool = False) -> Dict[str, Any]:
+    async def run(self, job_title: str, company: str, city: str = "", is_alternance: bool = False) -> dict[str, Any]:
         """
         Generates LinkedIn search queries for a job.
         
@@ -55,12 +55,12 @@ class InsiderFinderAgent(BaseAgent):
             Dict containing queries and strategy
         """
         task = f"Job: {job_title}\nCompany: {company}\nLocation: {city}\nType: {'Work-study/Internship' if is_alternance else 'Standard'}"
-        
+
         logger.info(f"[{self.name}] Generating queries for {job_title} at {company}")
-        
+
         raw_response = await self.query_gen.run(task)
         parsed = self._parse_json(raw_response)
-        
+
         if not parsed:
             return {
                 "success": False,
@@ -68,7 +68,7 @@ class InsiderFinderAgent(BaseAgent):
                 "queries": [],
                 "strategy": ""
             }
-            
+
         return {
             "success": True,
             "queries": parsed.get("queries", []),

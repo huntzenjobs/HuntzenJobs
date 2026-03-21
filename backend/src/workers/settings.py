@@ -7,15 +7,16 @@ Lancement sur Railway (service séparé, même repo) :
     Répertoire de travail  : backend/
 """
 import os
+
 from arq.connections import RedisSettings
 
 from src.workers.tasks import (
-    coach_task,
     assistant_task,
-    cv_adapt_task,
+    coach_task,
     cover_letter_task,
-    startup,
+    cv_adapt_task,
     shutdown,
+    startup,
 )
 
 

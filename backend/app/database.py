@@ -14,15 +14,16 @@ Date: 2026-01-27
 
 import os
 from contextlib import asynccontextmanager
-from typing import Optional, Dict, Any
-from psycopg_pool import AsyncConnectionPool
-from psycopg.rows import dict_row
+from typing import Any
+
 import structlog
+from psycopg.rows import dict_row
+from psycopg_pool import AsyncConnectionPool
 
 logger = structlog.get_logger(__name__)
 
 # Global connection pool instance
-pool: Optional[AsyncConnectionPool] = None
+pool: AsyncConnectionPool | None = None
 
 
 async def init_connection_pool_async() -> None:
@@ -161,7 +162,7 @@ async def get_db():
         yield conn
 
 
-async def get_pool_stats() -> Dict[str, Any]:
+async def get_pool_stats() -> dict[str, Any]:
     """
     Get connection pool statistics for monitoring and health checks.
 
@@ -231,7 +232,6 @@ async def get_pool_stats() -> Dict[str, Any]:
 
 import re
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict
 
 
 def normalize_search_key(job_title: str, location: str) -> str:
@@ -245,7 +245,7 @@ def normalize_search_key(job_title: str, location: str) -> str:
     return "_".join(words)
 
 
-def check_job_cache(cache_key: str) -> Optional[List[Dict]]:
+def check_job_cache(cache_key: str) -> list[dict] | None:
     """
     LEGACY: Check job cache using old psycopg2 connection.
     Will be migrated to async in Sprint 7.
@@ -275,8 +275,8 @@ def save_job_cache(cache_key: str, query_params: dict, results: list):
     LEGACY: Save job cache using old psycopg2 connection.
     Will be migrated to async in Sprint 7.
     """
-    from job_finder.config import get_settings
     import psycopg2.extras
+    from job_finder.config import get_settings
 
     conn = get_db_connection()
     if not conn:
@@ -313,7 +313,6 @@ def get_db_connection():
     Will be removed in Sprint 7.
     """
     import psycopg2
-    from psycopg2.extras import RealDictCursor
     from job_finder.config import get_settings
 
     logger.warning(

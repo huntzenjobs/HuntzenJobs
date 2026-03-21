@@ -6,15 +6,15 @@ user notification preferences.
 """
 
 import logging
-from typing import Optional
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+
+import httpx
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel
 from supabase import create_client
-import httpx
 
-from src.config.settings import get_settings
 from src.api.deps import get_supabase_client
+from src.config.settings import get_settings
 from src.services.email import send_job_alerts, send_weekly_summary
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ router = APIRouter()
 settings = get_settings()
 
 
-def get_user_id_and_email_from_header(authorization: Optional[str]):
+def get_user_id_and_email_from_header(authorization: str | None):
     """Return (user_id, email) from Bearer token, or (None, None)."""
     if not authorization or not authorization.startswith("Bearer "):
         return None, None
@@ -38,7 +38,7 @@ def get_user_id_and_email_from_header(authorization: Optional[str]):
     return None, None
 
 
-def _get_user_email_by_id(user_id: str) -> Optional[str]:
+def _get_user_email_by_id(user_id: str) -> str | None:
     """
     Fetch user email via Supabase Admin REST API (service role key required).
     supabase-py sync client doesn't expose auth.admin — we call the HTTP endpoint directly.
@@ -72,12 +72,12 @@ class SendWeeklySummaryRequest(BaseModel):
 
 
 class NotificationPreferences(BaseModel):
-    job_alerts: Optional[bool] = None
-    application_confirmation: Optional[bool] = None
-    weekly_summary: Optional[bool] = None
-    reengagement: Optional[bool] = None
-    followup_reminder: Optional[bool] = None
-    alert_frequency: Optional[str] = None  # 'instant' | 'daily' | 'weekly'
+    job_alerts: bool | None = None
+    application_confirmation: bool | None = None
+    weekly_summary: bool | None = None
+    reengagement: bool | None = None
+    followup_reminder: bool | None = None
+    alert_frequency: str | None = None  # 'instant' | 'daily' | 'weekly'
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ async def send_job_alerts_route(payload: SendJobAlertsRequest):
         )
 
     # Get saved jobs from the last 24h that haven't been applied to yet
-    since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    since = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
     try:
         resp = supabase.table("saved_jobs") \
             .select("external_job_id, job_title, company, location, salary, job_url") \
@@ -159,7 +159,7 @@ async def send_weekly_summary_route(payload: SendWeeklySummaryRequest):
             detail="User not found",
         )
 
-    since = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    since = (datetime.now(UTC) - timedelta(days=7)).isoformat()
 
     try:
         # Count applications confirmed this week
@@ -187,7 +187,7 @@ async def send_weekly_summary_route(payload: SendWeeklySummaryRequest):
         documents = docs_resp.count or 0
 
         # Sum job views from usage_quotas over last 7 days
-        quota_since = (datetime.now(timezone.utc) - timedelta(days=7)).date().isoformat()
+        quota_since = (datetime.now(UTC) - timedelta(days=7)).date().isoformat()
         views_resp = supabase.table("usage_quotas") \
             .select("job_views_used") \
             .eq("user_id", user_id) \
@@ -215,7 +215,7 @@ async def send_weekly_summary_route(payload: SendWeeklySummaryRequest):
 # ---------------------------------------------------------------------------
 
 @router.get("/api/notifications/preferences")
-async def get_notification_preferences(authorization: Optional[str] = Header(None)):
+async def get_notification_preferences(authorization: str | None = Header(None)):
     """Return the current user's notification preferences."""
     user_id, _ = get_user_id_and_email_from_header(authorization)
     if not user_id:
@@ -255,7 +255,7 @@ async def get_notification_preferences(authorization: Optional[str] = Header(Non
 @router.patch("/api/notifications/preferences")
 async def update_notification_preferences(
     payload: NotificationPreferences,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """Upsert the current user's notification preferences."""
     user_id, _ = get_user_id_and_email_from_header(authorization)
@@ -283,7 +283,7 @@ async def update_notification_preferences(
         )
 
     update_data["user_id"] = user_id
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data["updated_at"] = datetime.now(UTC).isoformat()
 
     supabase = get_supabase_client()
     try:

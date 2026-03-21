@@ -12,11 +12,11 @@ Sub-agents:
 import json
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
-from src.models.schemas import CoachResponse, TrainingRecommendation
+from src.models.schemas import TrainingRecommendation
 from src.services.salary.service import get_realtime_salary
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class CareerCoachAgent(BaseAgent):
     - Career path planning
     - Skill gap analysis
     """
-    
+
     def __init__(self):
         """Initialize the Career Coach with its sub-agents."""
         config = AgentConfig(
@@ -42,10 +42,10 @@ class CareerCoachAgent(BaseAgent):
             system_prompt_file="coach_main.txt",
         )
         super().__init__(config)
-        
+
         # Initialize sub-agents
         self._init_sub_agents()
-    
+
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
         # Training Advisor
@@ -56,7 +56,7 @@ class CareerCoachAgent(BaseAgent):
             temperature=0.2,
         )
         self.register_sub_agent(self.training_advisor)
-        
+
         # Career Planner
         self.career_planner = SubAgent(
             name="CareerPlanner",
@@ -65,7 +65,7 @@ class CareerCoachAgent(BaseAgent):
             temperature=0.3,
         )
         self.register_sub_agent(self.career_planner)
-        
+
         # Skill Analyzer
         self.skill_analyzer = SubAgent(
             name="SkillAnalyzer",
@@ -74,7 +74,7 @@ class CareerCoachAgent(BaseAgent):
             temperature=0.1,
         )
         self.register_sub_agent(self.skill_analyzer)
-        
+
         # Salary Advisor
         self.salary_advisor = SubAgent(
             name="SalaryAdvisor",
@@ -92,9 +92,9 @@ class CareerCoachAgent(BaseAgent):
             temperature=0.0,
         )
         self.register_sub_agent(self.parameter_extractor)
-        
+
         logger.info(f"[{self.name}] Initialized 4 sub-agents")
-    
+
     # ── Meta-message patterns (language switch, greetings, formatting) ──
     _META_PATTERNS = [
         r"^(salut|bonjour|hello|hi|hey|coucou|bonsoir)\b",
@@ -200,7 +200,7 @@ class CareerCoachAgent(BaseAgent):
 
         return needs
 
-    def _extract_user_profile(self, message: str, history: Optional[list[dict]] = None) -> dict[str, str]:
+    def _extract_user_profile(self, message: str, history: list[dict] | None = None) -> dict[str, str]:
         """
         Extract user domain, country, and level from the conversation history.
         Returns best-effort profile dict.
@@ -264,7 +264,7 @@ class CareerCoachAgent(BaseAgent):
     async def run(
         self,
         message: str,
-        history: Optional[list[dict]] = None,
+        history: list[dict] | None = None,
         language: str = "fr",
         deep_analysis: bool = False,
     ) -> dict[str, Any]:
@@ -288,10 +288,10 @@ class CareerCoachAgent(BaseAgent):
                 lang_instruction += "[If the user asks for code, provide it in a Markdown code block.] "
 
             full_message = f"{lang_instruction}{message}"
-            
+
             # Main conversation (coach principal always responds)
             response = await self.chat(full_message, history)
-            
+
             result = {
                 "success": True,
                 "response": response,
@@ -299,7 +299,7 @@ class CareerCoachAgent(BaseAgent):
                 "training_suggestions": [],
                 "career_insights": {},
             }
-            
+
             # Filter: do NOT invoke sub-agents for meta messages
             if self._is_meta_message(message):
                 return result
@@ -320,9 +320,9 @@ class CareerCoachAgent(BaseAgent):
                 insights = await self._gather_deep_insights(message, language, profile, history)
                 result["training_suggestions"] = insights.get("training", [])
                 result["career_insights"] = insights.get("career", {})
-            
+
             return result
-            
+
         except Exception as e:
             # Re-raise Groq rate limit errors so coach.py can return 429 instead of 500
             err_str = str(e).lower()
@@ -333,7 +333,7 @@ class CareerCoachAgent(BaseAgent):
                 "error": str(e),
                 "response": "I'm sorry, an error occurred while processing your request.",
             }
-    
+
     def _should_invoke_sub_agents(self, message: str) -> bool:
         """Determine if message requires deep analysis — intentionally broad."""
         trigger_words = [
@@ -367,7 +367,7 @@ class CareerCoachAgent(BaseAgent):
         if self._is_crisis_message(message) or self._is_orientation_message(message):
             return True
         return any(word in message_lower for word in trigger_words)
-    
+
     def _build_sub_agent_context(self, message: str, language: str, profile: dict[str, str]) -> str:
         """Build a context block for sub-agents with user profile info."""
         lang_name = {"fr": "French", "en": "English", "es": "Spanish", "de": "German", "ar": "Arabic"}.get(language, language)
@@ -396,8 +396,8 @@ class CareerCoachAgent(BaseAgent):
 
     async def _gather_deep_insights(
         self, message: str, language: str = "fr",
-        profile: Optional[dict[str, str]] = None,
-        history: Optional[list[dict]] = None,
+        profile: dict[str, str] | None = None,
+        history: list[dict] | None = None,
     ) -> dict[str, Any]:
         """
         Gather insights from RELEVANT sub-agents only (smart routing).
@@ -415,7 +415,7 @@ class CareerCoachAgent(BaseAgent):
         needs = self._classify_message_needs(message)
         insights = {"training": [], "career": {}}
         logger.info(f"[{self.name}] Smart routing → {needs} for: {message[:80]}...")
-        
+
         # ── 1. Training recommendations (only if needed) ──
         if "training" in needs:
             try:
@@ -423,7 +423,7 @@ class CareerCoachAgent(BaseAgent):
                     task=f"Recommend professional training for this user.\n\n{ctx}"
                 )
                 training_data = self._parse_json(training_result)
-                
+
                 if training_data and "recommendations" in training_data:
                     recs = []
                     for rec in training_data["recommendations"][:3]:
@@ -450,7 +450,7 @@ class CareerCoachAgent(BaseAgent):
                     insights["training"] = recs
             except Exception as e:
                 logger.warning(f"[{self.name}] Training advisor failed: {e}")
-        
+
         # ── 2. Skill gap analysis (only if needed) ──
         if "skills" in needs:
             try:
@@ -458,13 +458,13 @@ class CareerCoachAgent(BaseAgent):
                     task=f"Analyze skill gaps for this user.\n\n{ctx}"
                 )
                 skills_data = self._parse_json(skills_result)
-                
+
                 if skills_data:
                     insights["career"]["skill_gaps"] = skills_data.get("gaps", [])
                     insights["career"]["strengths"] = skills_data.get("strengths_to_leverage", [])
             except Exception as e:
                 logger.warning(f"[{self.name}] Skill analyzer failed: {e}")
-        
+
         # ── 3. Salary insights (only if needed — with enriched extraction) ──
         if "salary" in needs:
             try:
@@ -485,7 +485,7 @@ class CareerCoachAgent(BaseAgent):
                 # Extract enriched parameters (job, city, country + contract, XP, salary)
                 params_result = await self.parameter_extractor.run(task=extraction_input)
                 params = self._parse_json(params_result) or {}
-                
+
                 job = params.get("job_title", "")
                 cc = params.get("country_code") or self._COUNTRY_TO_CODE.get(
                     profile.get("country", ""), "fr"
@@ -499,7 +499,7 @@ class CareerCoachAgent(BaseAgent):
 
                 # Fetch Adzuna market data
                 stats = await get_realtime_salary(job, cc, city)
-                
+
                 # Build enriched context for salary advisor with extra parameters
                 extra_parts = []
                 if params.get("contract_type") and params["contract_type"] != "unknown":
@@ -524,7 +524,7 @@ class CareerCoachAgent(BaseAgent):
                     insights["career"]["salary_insights"] = salary_data
             except Exception as e:
                 logger.warning(f"[{self.name}] Salary advisor failed: {e}")
-        
+
         return insights
 
     async def get_training_recommendations(
@@ -551,10 +551,10 @@ class CareerCoachAgent(BaseAgent):
         
         Recommend the best training path with 3-5 specific courses/certifications.
         """
-        
+
         result = await self.training_advisor.run(task=task)
         data = self._parse_json_response(result)
-        
+
         if data and "recommendations" in data:
             return [
                 TrainingRecommendation(
@@ -567,7 +567,7 @@ class CareerCoachAgent(BaseAgent):
                 for rec in data["recommendations"]
             ]
         return []
-    
+
     async def plan_career_path(
         self,
         current_role: str,
@@ -592,7 +592,7 @@ class CareerCoachAgent(BaseAgent):
         
         Create a detailed career progression plan.
         """
-        
+
         result = await self.career_planner.run(task=task)
         return self._parse_json_response(result) or {}
 
@@ -614,7 +614,7 @@ def get_career_coach() -> CareerCoachAgent:
 
 async def career_coach_chat(
     message: str,
-    history: Optional[list[dict]] = None,
+    history: list[dict] | None = None,
     language: str = "fr",
 ) -> dict[str, Any]:
     """

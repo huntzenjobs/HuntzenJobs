@@ -27,10 +27,10 @@ class RemoteOKProvider(BaseJobProvider):
     - Tech-focused
     - No authentication required
     """
-    
+
     name = "remoteok"
     supported_countries = set()  # Remote = all countries
-    
+
     BASE_URL = "https://remoteok.com/api"
 
     @handle_provider_errors
@@ -83,7 +83,7 @@ class RemoteOKProvider(BaseJobProvider):
 
         logger.info(f"[{self.name}] Found {len(jobs)} remote jobs for '{query}'")
         return jobs
-    
+
     def _normalize_remoteok_job(self, item: dict) -> dict[str, Any]:
         """Normalize RemoteOK job response."""
         raw_desc = item.get("description") or ""
@@ -108,12 +108,12 @@ class RemoteOKProvider(BaseJobProvider):
             "url_is_direct": is_direct_job_url(url),
             "description_truncated": False,
         }
-    
+
     def _format_salary(self, item: dict) -> str | None:
         """Format salary if available."""
         min_sal = item.get("salary_min")
         max_sal = item.get("salary_max")
-        
+
         if min_sal and max_sal:
             return f"${int(min_sal):,} - ${int(max_sal):,}"
         return None

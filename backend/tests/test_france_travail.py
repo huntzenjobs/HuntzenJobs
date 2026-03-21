@@ -12,8 +12,8 @@ Tests cover:
 """
 
 import pytest
-from src.services.job_providers.france_travail import FranceTravailProvider
 
+from src.services.job_providers.france_travail import FranceTravailProvider
 
 # ============================================================================
 #  Fixture

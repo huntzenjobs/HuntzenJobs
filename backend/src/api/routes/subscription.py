@@ -5,11 +5,12 @@ Provides endpoints for subscription synchronization and cache management.
 Used by frontend after Stripe checkout success to force cache refresh.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from structlog import get_logger
-from typing import Dict, Any
 from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from structlog import get_logger
 
 logger = get_logger(__name__)
 
@@ -26,7 +27,7 @@ except ImportError as e:
 
 
 @router.post("/sync-cache")
-async def sync_subscription_cache(current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+async def sync_subscription_cache(current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
     """
     Force sync subscription cache after upgrade/downgrade.
 
@@ -92,7 +93,7 @@ async def sync_subscription_cache(current_user: dict = Depends(get_current_user)
 
 
 @router.get("/current")
-async def get_current_subscription(current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+async def get_current_subscription(current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
     """
     Get current subscription with fresh data (no cache).
 
@@ -166,7 +167,7 @@ class CoachSessionRequest(BaseModel):
 async def manage_coach_session(
     request: CoachSessionRequest,
     current_user: dict = Depends(get_current_user)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Manage coach session server-side to prevent exploitation via multi-tab sessions.
 

@@ -4,14 +4,14 @@ Stripe Payment Routes
 API endpoints for Stripe payment processing.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Form, Request, Header
-from typing import Optional
+
+from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request
 from structlog import get_logger
 
 from src.api.deps import get_current_user
 from src.api.middleware import limiter
-from src.services.stripe import create_checkout_session, handle_stripe_webhook, supabase_client
 from src.config.settings import settings
+from src.services.stripe import create_checkout_session, handle_stripe_webhook, supabase_client
 
 logger = get_logger(__name__)
 
@@ -89,7 +89,7 @@ async def create_stripe_checkout(
 @router.post("/webhook")
 async def stripe_webhook(
     request: Request,
-    stripe_signature: Optional[str] = Header(None, alias="stripe-signature")
+    stripe_signature: str | None = Header(None, alias="stripe-signature")
 ):
     """
     Handle Stripe webhook events.

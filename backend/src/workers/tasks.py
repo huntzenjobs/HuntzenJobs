@@ -56,10 +56,10 @@ async def assistant_task(
     assistant_type détermine quel agent utiliser.
     """
     from src.api.deps import (
-        get_job_scout_conversational_agent,
-        get_cv_analyzer_conversational_agent,
         get_cv_adapter_agent,
+        get_cv_analyzer_conversational_agent,
         get_interview_sim_agent,
+        get_job_scout_conversational_agent,
     )
 
     history = history or []

@@ -13,7 +13,6 @@ Author: Abdessamad
 Version: 3.0.0
 """
 
-import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -24,7 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from src.api import router
 from src.api.middleware import setup_middleware
 from src.config.settings import settings
-from src.utils.logger import setup_logging, get_logger
+from src.utils.logger import get_logger, setup_logging
 
 # Setup logging
 setup_logging()
@@ -55,7 +54,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"LLM Models: {settings.llm_model_fast} / {settings.llm_model_powerful}")
 
     # Initialiser le pool DB async
-    from app.database import init_connection_pool_async, get_pool_stats
+    from app.database import get_pool_stats, init_connection_pool_async
     await init_connection_pool_async()
 
     # Valider que la DB est accessible avant d'accepter du trafic

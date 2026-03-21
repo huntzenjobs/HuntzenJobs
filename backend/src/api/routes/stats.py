@@ -5,9 +5,8 @@ GET /api/stats/plan-distribution — répartition des abonnements (pour Pop-up #
 Public, pas d'auth requise. Données mises en cache 1h.
 """
 
-import json
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter
 from supabase import create_client
@@ -41,7 +40,7 @@ async def get_plan_distribution():
     """
     global _plan_distribution_cache, _cache_expires_at
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if _cache_expires_at and now < _cache_expires_at and _plan_distribution_cache:
         return _plan_distribution_cache
 

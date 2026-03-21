@@ -10,13 +10,12 @@ Cet agent guide l'utilisateur dans sa recherche d'emploi avec:
 - Techniques de networking
 """
 
-from typing import Any, Optional
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from typing import Any
 
-from src.agents.base import BaseAgent, AgentConfig
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+
+from src.agents.base import AgentConfig, BaseAgent
 from src.config.settings import settings
-
 
 LANG_INSTRUCTIONS = {
     "fr": "Réponds TOUJOURS en français",
@@ -84,7 +83,7 @@ Tu guides les chercheurs d'emploi avec des stratégies personnalisées et des co
     async def run(
         self,
         message: str,
-        history: Optional[list[dict]] = None,
+        history: list[dict] | None = None,
         language: str = "fr",
     ) -> dict[str, Any]:
         """

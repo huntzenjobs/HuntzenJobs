@@ -12,7 +12,7 @@ import logging
 import re
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 from bs4 import BeautifulSoup
@@ -32,22 +32,22 @@ class JobFair:
     sector: str      # tech, industry, health, all, etc.
     level: str       # all, bac, bac+2, bac+5, etc.
     date_start: str  # YYYY-MM-DD
-    date_end: Optional[str]
-    time_start: Optional[str]
-    time_end: Optional[str]
+    date_end: str | None
+    time_start: str | None
+    time_end: str | None
     city: str
     region: str
-    address: Optional[str]
+    address: str | None
     format: str     # physical, virtual, hybrid
     organizer: str
-    description: Optional[str]
+    description: str | None
     url: str
     source: str
-    registration_url: Optional[str] = None
+    registration_url: str | None = None
     is_free: bool = True
-    companies_count: Optional[int] = None
+    companies_count: int | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert dataclass to dictionary."""
         return asdict(self)
 
@@ -67,7 +67,7 @@ HEADERS = {
 }
 
 
-async def scrape_france_travail_events(region: str = "", sector: str = "") -> List[JobFair]:
+async def scrape_france_travail_events(region: str = "", sector: str = "") -> list[JobFair]:
     """Scrape events from France Travail (formerly Pôle Emploi)."""
     events = []
     try:
@@ -127,7 +127,7 @@ async def scrape_france_travail_events(region: str = "", sector: str = "") -> Li
     return events
 
 
-async def scrape_letudiant_salons() -> List[JobFair]:
+async def scrape_letudiant_salons() -> list[JobFair]:
     """
     Scrape student fairs from L'Etudiant.
 
@@ -213,7 +213,7 @@ async def scrape_letudiant_salons() -> List[JobFair]:
     return events
 
 
-async def scrape_studyrama_salons() -> List[JobFair]:
+async def scrape_studyrama_salons() -> list[JobFair]:
     """
     Scrape salons from Studyrama.
 
@@ -283,7 +283,7 @@ async def scrape_studyrama_salons() -> List[JobFair]:
     return events
 
 
-async def scrape_cidj_events() -> List[JobFair]:
+async def scrape_cidj_events() -> list[JobFair]:
     """
     Scrape events from CIDJ (Centre d'Information et Documentation Jeunesse).
 
@@ -376,7 +376,7 @@ async def scrape_cidj_events() -> List[JobFair]:
     return events
 
 
-async def scrape_apec_events() -> List[JobFair]:
+async def scrape_apec_events() -> list[JobFair]:
     """
     Fetch events from APEC internal JSON API.
 
@@ -486,7 +486,7 @@ async def scrape_apec_events() -> List[JobFair]:
     return events
 
 
-async def scrape_cci_events(region: str = "") -> List[JobFair]:
+async def scrape_cci_events(region: str = "") -> list[JobFair]:
     """Scrape events from CCI France regional sites."""
     events = []
     cci_urls = [
@@ -667,7 +667,7 @@ async def search_job_fairs(
     event_type: str = "",
     format_type: str = "",
     include_mock: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Aggregate professional events from multiple sources."""
 
     # ── FR→EN mapping: translate frontend French values to backend English ──
@@ -709,7 +709,7 @@ async def search_job_fairs(
     ]
     results = await asyncio.gather(*[t[1] for t in tasks], return_exceptions=True)
 
-    all_events: List[JobFair] = []
+    all_events: list[JobFair] = []
     sources = []
     for (source_name, _), res in zip(tasks, results):
         if not isinstance(res, Exception) and res:
@@ -738,7 +738,7 @@ async def search_job_fairs(
 
     # Deduplicate across sources (same title + same city = same event)
     seen_keys: set = set()
-    deduped: List[JobFair] = []
+    deduped: list[JobFair] = []
     for event in filtered:
         key = (event.title.lower().strip(), event.city.lower().strip())
         if key not in seen_keys:

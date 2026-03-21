@@ -11,8 +11,7 @@ En dessous du seuil, traitement synchrone immédiat (UX optimale).
 import asyncio
 import uuid
 
-from fastapi import APIRouter, HTTPException, status, Request, Depends
-from typing import Union
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 # Seuil global (toutes replicas confondues) → au-dessus : queue Redis
 COACH_SYNC_THRESHOLD = 12  # max 12 Groq simultanés TOTAL (cross-replicas via Redis)
@@ -44,22 +43,21 @@ async def _decr_active() -> None:
             await redis.set(_GROQ_ACTIVE_KEY, 0)
 
 from arq import create_pool
+from pydantic import BaseModel, Field
+from structlog import get_logger
 
 from src.api.deps import (
     CoachAgentDep,
     CurrentUserDep,
-    get_session_history,
-    update_session_history,
     clear_session,
     get_current_user,
+    get_session_history,
     get_supabase_client,
-    check_assistant_quota,
+    update_session_history,
 )
-from src.services.user_events import log_event
 from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
-from pydantic import BaseModel, Field
-from structlog import get_logger
+from src.services.user_events import log_event
 
 
 def _get_user_cv_context(user_id: str) -> str:

@@ -6,8 +6,9 @@ Abstract base class for all job providers.
 
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 import httpx
 from pydantic import BaseModel
@@ -67,14 +68,14 @@ class BaseJobProvider(ABC):
     All job providers must implement the `search` method
     and return standardized JobListing objects.
     """
-    
+
     name: str = "base"
     supported_countries: set[str] = set()
-    
+
     def __init__(self):
         """Initialize the provider."""
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
-    
+
     @abstractmethod
     async def search(
         self,
@@ -96,13 +97,13 @@ class BaseJobProvider(ABC):
             List of job listings as dicts
         """
         pass
-    
+
     def supports_country(self, country_code: str) -> bool:
         """Check if provider supports a country."""
         if not self.supported_countries:
             return True  # Empty set means all countries
         return country_code.lower() in self.supported_countries
-    
+
     def normalize_job(self, raw_job: dict[str, Any]) -> dict[str, Any]:
         """
         Normalize a raw job response to standard format.

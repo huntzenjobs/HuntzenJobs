@@ -14,14 +14,13 @@ Career Score /100 =
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
 from langchain_groq import ChatGroq
+from pydantic import BaseModel
 
-from src.api.deps import get_supabase_client, CurrentUserDep
+from src.api.deps import CurrentUserDep, get_supabase_client
 from src.config.settings import get_settings
 from src.services.notifications import create_notification
 from src.services.user_events import log_event
@@ -49,7 +48,7 @@ SCORE_CACHE_HOURS = 24
 
 class XPEventRequest(BaseModel):
     event_type: str
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -61,7 +60,7 @@ def _load_prompt() -> str:
         os.path.dirname(__file__), "../../../../prompts/career_score_advisor.txt"
     )
     try:
-        with open(prompt_path, "r", encoding="utf-8") as f:
+        with open(prompt_path, encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         logger.warning("[career_score] Prompt file not found, using fallback")
@@ -241,7 +240,7 @@ def _calculate_ai_score(supabase, user_id: str) -> tuple[int, str]:
 def _upsert_score(supabase, user_id: str, activity: int, ai: int, xp: int, justification: str) -> dict:
     """Sauvegarde le score calculé en cache (user_career_score)."""
     total = activity + ai + xp
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     next_recalc = now + timedelta(hours=SCORE_CACHE_HOURS)
 
     payload = {
@@ -280,7 +279,7 @@ async def get_career_score(current_user: CurrentUserDep):
             next_recalc = cached.data.get("next_recalc_at", "")
             is_fresh = next_recalc and datetime.fromisoformat(
                 next_recalc.replace("Z", "+00:00")
-            ) > datetime.now(timezone.utc)
+            ) > datetime.now(UTC)
             if is_fresh:
                 return cached.data
     except Exception as e:
@@ -369,7 +368,7 @@ async def record_xp_event(body: XPEventRequest, current_user: CurrentUserDep):
         # Invalide le cache pour forcer recalcul au prochain GET
         # -1s pour éviter la race condition (now() == next_recalc_at → cache vu comme "frais")
         supabase.table("user_career_score").update(
-            {"next_recalc_at": (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()}
+            {"next_recalc_at": (datetime.now(UTC) - timedelta(seconds=1)).isoformat()}
         ).eq("user_id", user_id).execute()
 
         logger.info(f"[career_score] xp_event={body.event_type} +{xp_gained}xp user={user_id}")

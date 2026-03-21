@@ -7,12 +7,11 @@ Ce endpoint gère uniquement les métadonnées en base.
 """
 
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, Header, status
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 from src.config.settings import get_settings
 
@@ -29,13 +28,13 @@ supabase: Client = create_client(
 class DocumentCreate(BaseModel):
     job_title: str
     company: str = ""
-    match_score: Optional[int] = None
+    match_score: int | None = None
     cv_data: dict = {}
-    cv_pdf_url: Optional[str] = None
-    lm_pdf_url: Optional[str] = None
+    cv_pdf_url: str | None = None
+    lm_pdf_url: str | None = None
     language: str = "fr"
-    saved_job_id: Optional[str] = None
-    job_url: Optional[str] = None
+    saved_job_id: str | None = None
+    job_url: str | None = None
 
 
 class DocumentMarkApplied(BaseModel):
@@ -43,11 +42,11 @@ class DocumentMarkApplied(BaseModel):
 
 
 class DocumentUpdate(BaseModel):
-    cv_pdf_url: Optional[str] = None
-    cv_data: Optional[dict] = None
+    cv_pdf_url: str | None = None
+    cv_data: dict | None = None
 
 
-def _get_user_id(authorization: Optional[str]) -> str:
+def _get_user_id(authorization: str | None) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Authentication required")
     token = authorization.removeprefix("Bearer ")
@@ -59,7 +58,7 @@ def _get_user_id(authorization: Optional[str]) -> str:
 
 
 @router.get("")
-async def list_documents(authorization: Optional[str] = Header(None)):
+async def list_documents(authorization: str | None = Header(None)):
     user_id = _get_user_id(authorization)
     try:
         response = (
@@ -78,7 +77,7 @@ async def list_documents(authorization: Optional[str] = Header(None)):
 @router.post("", status_code=201)
 async def create_document(
     body: DocumentCreate,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     user_id = _get_user_id(authorization)
     try:
@@ -113,7 +112,7 @@ async def create_document(
 @router.delete("/{document_id}", status_code=204)
 async def delete_document(
     document_id: str,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     user_id = _get_user_id(authorization)
     try:
@@ -129,14 +128,14 @@ async def delete_document(
 async def update_document(
     document_id: str,
     body: DocumentUpdate,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     user_id = _get_user_id(authorization)
     try:
         update_data = {k: v for k, v in body.model_dump().items() if v is not None}
         if not update_data:
             raise HTTPException(status_code=400, detail="Nothing to update")
-        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        update_data["updated_at"] = datetime.now(UTC).isoformat()
         response = (
             supabase.table("user_documents")
             .update(update_data)
@@ -157,12 +156,12 @@ async def update_document(
 @router.post("/mark-applied")
 async def mark_applied(
     body: DocumentMarkApplied,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     user_id = _get_user_id(authorization)
     try:
         supabase.table("saved_jobs").update(
-            {"applied_at": datetime.now(timezone.utc).isoformat()}
+            {"applied_at": datetime.now(UTC).isoformat()}
         ).eq("id", body.saved_job_id).eq("user_id", user_id).execute()
         return {"success": True}
     except Exception as e:

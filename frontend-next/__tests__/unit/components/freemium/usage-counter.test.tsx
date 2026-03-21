@@ -37,14 +37,16 @@ describe("UsageCounter Component", () => {
     it("renders job_search feature counter", () => {
       render(<UsageCounter feature="job_search" />);
       // Should display remaining searches
-      expect(screen.getByText(/recherches/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/features\.jobSearch\.label/i),
+      ).toBeInTheDocument();
     });
 
     it("renders cv_analysis feature counter", () => {
       mockSubscriptionContext.getRemaining.mockReturnValue(1);
       render(<UsageCounter feature="cv_analysis" />);
       // Use getAllByText since "analyses" appears multiple times
-      const elements = screen.getAllByText(/analyses/i);
+      const elements = screen.getAllByText(/features\.cvAnalysis\.label/i);
       expect(elements.length).toBeGreaterThan(0);
     });
 
@@ -52,7 +54,9 @@ describe("UsageCounter Component", () => {
       mockSubscriptionContext.getRemaining.mockReturnValue(300);
       render(<UsageCounter feature="assistant_messages" />);
       // Should display messages remaining
-      expect(screen.getByText(/messages|300/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/features\.assistantMessages\.label/i),
+      ).toBeInTheDocument();
     });
   });
 
@@ -60,13 +64,17 @@ describe("UsageCounter Component", () => {
     it("shows icon by default", () => {
       render(<UsageCounter feature="job_search" showIcon={true} />);
       // Icon should be present (SVG element)
-      const container = screen.getByText(/recherches/i).closest("div");
+      const container = screen
+        .getByText(/features\.jobSearch\.label/i)
+        .closest("div");
       expect(container?.querySelector("svg")).toBeInTheDocument();
     });
 
     it("hides icon when showIcon is false", () => {
       render(<UsageCounter feature="job_search" showIcon={false} />);
-      const container = screen.getByText(/recherches/i).closest("span");
+      const container = screen
+        .getByText(/features\.jobSearch\.label/i)
+        .closest("span");
       expect(container?.querySelector("svg")).toBeNull();
     });
   });
@@ -93,20 +101,24 @@ describe("UsageCounter Component", () => {
     it("shows counter when remaining is more than half", () => {
       mockSubscriptionContext.getRemaining.mockReturnValue(2); // 2/3 = 66%
       render(<UsageCounter feature="job_search" />);
-      const text = screen.getByText(/recherches/i);
+      const text = screen.getByText(/features\.jobSearch\.label/i);
       expect(text).toBeInTheDocument();
     });
 
     it("shows counter when remaining is between 25-50%", () => {
       mockSubscriptionContext.getRemaining.mockReturnValue(1); // 1/3 = 33%
       render(<UsageCounter feature="job_search" />);
-      expect(screen.getByText(/recherches/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/features\.jobSearch\.label/i),
+      ).toBeInTheDocument();
     });
 
     it("shows counter when remaining is less than 25%", () => {
       mockSubscriptionContext.getRemaining.mockReturnValue(0); // 0/3 = 0%
       render(<UsageCounter feature="job_search" />);
-      expect(screen.getByText(/recherches/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/features\.jobSearch\.label/i),
+      ).toBeInTheDocument();
     });
   });
 
@@ -124,7 +136,9 @@ describe("UsageCounter Component", () => {
   describe("Custom className", () => {
     it("accepts custom className", () => {
       render(<UsageCounter feature="job_search" className="custom-class" />);
-      const container = screen.getByText(/recherches/i).closest("div");
+      const container = screen
+        .getByText(/features\.jobSearch\.label/i)
+        .closest("div");
       expect(container?.parentElement).toHaveClass("custom-class");
     });
   });
@@ -145,7 +159,7 @@ describe("UsageSummary Component", () => {
   describe("Rendering", () => {
     it("renders summary for free plan", () => {
       render(<UsageSummary />);
-      expect(screen.getByText("Utilisation du jour")).toBeInTheDocument();
+      expect(screen.getByText("dailyUsage")).toBeInTheDocument();
     });
 
     it("does not render for paid plan", () => {
@@ -158,27 +172,31 @@ describe("UsageSummary Component", () => {
   describe("Features displayed", () => {
     it("displays job search counter", () => {
       render(<UsageSummary />);
-      expect(screen.getByText(/recherches/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/features\.jobSearch\.label/i),
+      ).toBeInTheDocument();
     });
 
     it("displays cv analysis counter", () => {
       render(<UsageSummary />);
       // Use getAllByText since "analyses" appears multiple times
-      const elements = screen.getAllByText(/analyses/i);
+      const elements = screen.getAllByText(/features\.cvAnalysis\.label/i);
       expect(elements.length).toBeGreaterThan(0);
     });
 
     it("displays assistant messages counter", () => {
       render(<UsageSummary />);
       // Should display messages label
-      expect(screen.getByText(/messages/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/features\.assistantMessages\.label/i),
+      ).toBeInTheDocument();
     });
   });
 
   describe("Custom className", () => {
     it("accepts custom className", () => {
       render(<UsageSummary className="custom-summary" />);
-      const container = screen.getByText("Utilisation du jour").closest("div");
+      const container = screen.getByText("dailyUsage").closest("div");
       expect(container).toHaveClass("custom-summary");
     });
   });

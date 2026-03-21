@@ -10,7 +10,12 @@ from functools import lru_cache
 import pycountry
 from fastapi import APIRouter, Query
 
-from src.utils.geo import country_code_to_name, get_cities_for_country, search_cities_nominatim, search_french_locations
+from src.utils.geo import (
+    country_code_to_name,
+    get_cities_for_country,
+    search_cities_nominatim,
+    search_french_locations,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

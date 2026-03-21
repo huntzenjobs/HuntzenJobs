@@ -11,14 +11,13 @@ Triggers supportés :
 
 import logging
 import os
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import stripe
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
-from src.api.deps import get_supabase_client, CurrentUserDep
+from src.api.deps import CurrentUserDep, get_supabase_client
 from src.services.notifications import create_notification
 
 logger = logging.getLogger(__name__)
@@ -66,7 +65,7 @@ TRIGGER_CONFIG = {
 
 class GenerateCouponRequest(BaseModel):
     trigger_type: str
-    user_id: Optional[str] = None  # Admin peut passer un user_id explicite
+    user_id: str | None = None  # Admin peut passer un user_id explicite
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +115,7 @@ async def generate_for_trigger(
 
     # Créer le coupon Stripe
     try:
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=config["expires_hours"])
+        expires_at = datetime.now(UTC) + timedelta(hours=config["expires_hours"])
         coupon_params: dict = {
             "percent_off": config["percent_off"],
             "duration": config["duration"],

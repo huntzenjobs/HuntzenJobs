@@ -28,11 +28,10 @@ import hashlib
 import inspect
 import json
 import os
+from collections.abc import Callable
+from functools import wraps
 
 import orjson
-from functools import wraps
-from typing import Any, Callable
-
 import redis.asyncio as aioredis
 
 from src.config.settings import settings

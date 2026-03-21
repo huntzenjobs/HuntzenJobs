@@ -9,7 +9,7 @@ CRITIQUE : toujours dans try/except — le tracking ne doit JAMAIS planter une r
 """
 
 import logging
-from typing import Optional
+from datetime import UTC
 
 logger = logging.getLogger(__name__)
 
@@ -17,15 +17,15 @@ logger = logging.getLogger(__name__)
 def log_event(
     supabase,
     event_name: str,
-    event_label: Optional[str] = None,
+    event_label: str | None = None,
     category: str = "action",
-    user_id: Optional[str] = None,
-    feature: Optional[str] = None,
+    user_id: str | None = None,
+    feature: str | None = None,
     severity: str = "info",
-    properties: Optional[dict] = None,
+    properties: dict | None = None,
     source: str = "backend",
-    error_code: Optional[str] = None,
-    duration_ms: Optional[int] = None,
+    error_code: str | None = None,
+    duration_ms: int | None = None,
 ) -> None:
     """
     Insère un événement dans user_events.
@@ -76,9 +76,9 @@ def purge_old_user_events(supabase, days: int = 30) -> int:
     Retourne le nombre de lignes supprimées (-1 si erreur).
     Ne lève jamais d'exception.
     """
-    from datetime import datetime, timezone, timedelta
+    from datetime import datetime, timedelta
     try:
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat()
         res = supabase.table("user_events").delete().lt("created_at", cutoff).execute()
         deleted = len(res.data) if res.data else 0
         logger.info(f"[user_events] purge: {deleted} événements supprimés (>{days}j)")

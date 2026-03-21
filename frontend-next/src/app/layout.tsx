@@ -78,6 +78,21 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${dmSans.variable} font-sans antialiased`}
       >
+        <noscript>
+          <div
+            style={{
+              padding: "2rem",
+              textAlign: "center",
+              fontFamily: "system-ui",
+            }}
+          >
+            <h1>JavaScript requis</h1>
+            <p>
+              HuntZen Jobs n{"é"}cessite JavaScript pour fonctionner. Veuillez l
+              {"'"}activer dans votre navigateur.
+            </p>
+          </div>
+        </noscript>
         <SiteBanner />
         <SkipLink />
         <NextIntlClientProvider locale={locale} messages={messages}>

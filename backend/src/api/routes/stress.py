@@ -10,9 +10,10 @@ GET    /api/admin/stress/runs/{run_id}    Détail complet
 import asyncio
 import json
 import logging
-from typing import Optional, AsyncGenerator, List
+from collections.abc import AsyncGenerator
+from datetime import UTC
 
-from fastapi import APIRouter, Request, Response, Query
+from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, Field
 
 from src.api.deps import AdminUserDep, get_supabase_client
@@ -75,7 +76,7 @@ class StressRunRequest(BaseModel):
     concurrency: int = Field(..., ge=1, le=500)
     duration_sec: int = Field(..., ge=10, le=600)
     ramp_up_sec: int = Field(default=0, ge=0, le=120)
-    features: List[str] = Field(..., min_length=1)
+    features: list[str] = Field(..., min_length=1)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -95,8 +96,9 @@ async def start_stress_run(
 ) -> dict:
     """Lance un stress test via ARQ (queue dédiée stress_test)."""
     from arq import create_pool
-    from src.workers.stress_settings import _get_redis_settings
+
     from src.utils.cache import get_redis
+    from src.workers.stress_settings import _get_redis_settings
 
     supabase = get_supabase_client()
 
@@ -169,8 +171,8 @@ async def cancel_stress_run(
     supabase = get_supabase_client()
     await redis_set_cancel(run_id)
 
-    from datetime import datetime, timezone
-    now_iso = datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    now_iso = datetime.now(UTC).isoformat()
     supabase.table("stress_test_runs").update({
         "status": "cancelled",
         "completed_at": now_iso,
@@ -227,13 +229,14 @@ async def _stress_sse_generator(
 async def stress_sse_stream(
     request: Request,
     run_id: str,
-    token: Optional[str] = None,
+    token: str | None = None,
 ):
     """SSE endpoint — métriques live d'un stress test."""
     if not token:
         return Response(status_code=401)
     try:
-        from src.api.deps import get_supabase_anon_client, get_supabase_client as _get_sb
+        from src.api.deps import get_supabase_anon_client
+        from src.api.deps import get_supabase_client as _get_sb
         user_resp = get_supabase_anon_client().auth.get_user(token)
         if not user_resp or not user_resp.user:
             return Response(status_code=401)

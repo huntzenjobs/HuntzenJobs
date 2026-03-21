@@ -7,8 +7,6 @@ IMPORTANT: This file loads .env BEFORE any imports to ensure
 environment variables are available when settings.py is first imported.
 """
 
-import os
-import sys
 from pathlib import Path
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -32,9 +30,11 @@ if env_test_file.exists():
 # NOW import the rest (settings will pick up env vars)
 # ═══════════════════════════════════════════════════════════════════════════════
 import pytest
+
 from src.agents.coach.main_agent import CareerCoachAgent
 from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
 from src.agents.job_scout.main_agent import JobScoutAgent
+
 
 @pytest.fixture
 def coach_agent():

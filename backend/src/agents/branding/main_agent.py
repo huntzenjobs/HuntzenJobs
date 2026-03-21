@@ -14,11 +14,10 @@ it as "branding_state" in the conversation context. This way, when
 the user comes back, the agent knows where it left off.
 """
 
-import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
-from src.agents.base import AgentConfig, BaseAgent, load_prompt
+from src.agents.base import AgentConfig, BaseAgent
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -42,7 +41,7 @@ class BrandingAgent(BaseAgent):
     3. Identifies their target audience and topics
     4. Generates personalized content
     """
-    
+
     def __init__(self):
         """Initialize the Branding Agent."""
         config = AgentConfig(
@@ -53,13 +52,13 @@ class BrandingAgent(BaseAgent):
             system_prompt_file="branding_main.txt",
         )
         super().__init__(config)
-    
+
     async def run(
         self,
         message: str,
-        history: Optional[list[dict]] = None,
+        history: list[dict] | None = None,
         language: str = "fr",
-        branding_state: Optional[dict] = None,
+        branding_state: dict | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -79,25 +78,25 @@ class BrandingAgent(BaseAgent):
             # Build state context to inject into the prompt
             state = branding_state or {"step": STATES["ONBOARDING"], "profile": {}}
             state_context = self._build_state_context(state)
-            
+
             # Build messages with state context injected
             augmented_message = f"{state_context}\n\n{message}" if state_context else message
             messages = self.build_messages(augmented_message, history)
-            
+
             # Call LLM
             response = await self.llm.ainvoke(messages)
             response_text = response.content
-            
+
             # Try to extract any state updates from the response
             updated_state = self._extract_state_updates(response_text, state)
-            
+
             return {
                 "success": True,
                 "response": response_text,
                 "language": language,
                 "branding_state": updated_state,
             }
-            
+
         except Exception as e:
             logger.error(f"[BrandingAgent] Error: {e}", exc_info=True)
             return {
@@ -106,7 +105,7 @@ class BrandingAgent(BaseAgent):
                 "response": "Désolé, une erreur s'est produite. Réessayez.",
                 "language": language,
             }
-    
+
     def _build_state_context(self, state: dict) -> str:
         """
         Build a context string from the current branding state.
@@ -116,13 +115,13 @@ class BrandingAgent(BaseAgent):
         """
         step = state.get("step", STATES["ONBOARDING"])
         profile = state.get("profile", {})
-        
+
         if not profile:
             return f"[ÉTAT ACTUEL: {step} — Aucune info collectée encore]"
-        
+
         parts = [f"[ÉTAT ACTUEL: {step}]"]
         parts.append("[PROFIL BRANDING COLLECTÉ:]")
-        
+
         if profile.get("background"):
             parts.append(f"- Parcours: {profile['background']}")
         if profile.get("current_role"):
@@ -139,9 +138,9 @@ class BrandingAgent(BaseAgent):
             parts.append(f"- Sujets: {', '.join(profile['topics'])}")
         if profile.get("platforms"):
             parts.append(f"- Plateformes: {', '.join(profile['platforms'])}")
-        
+
         return "\n".join(parts)
-    
+
     def _extract_state_updates(self, response_text: str, current_state: dict) -> dict:
         """
         Try to extract structured state updates from the LLM response.
@@ -151,7 +150,7 @@ class BrandingAgent(BaseAgent):
         """
         state = current_state.copy()
         profile = state.get("profile", {}).copy()
-        
+
         # Look for JSON state block in response
         parsed = self._parse_json(response_text)
         if parsed and "profile_update" in parsed:
@@ -160,12 +159,12 @@ class BrandingAgent(BaseAgent):
                 if value:  # Only update non-empty values
                     profile[key] = value
             state["profile"] = profile
-            
+
             # Auto-advance state based on what we know
             state["step"] = self._determine_step(profile)
-        
+
         return state
-    
+
     def _determine_step(self, profile: dict) -> str:
         """Determine which step we should be on based on collected data."""
         if not profile.get("background") and not profile.get("current_role"):

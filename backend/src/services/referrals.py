@@ -5,7 +5,7 @@ Called from handle_checkout_completed() in stripe.py.
 """
 
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ async def apply_referral_reward(
         if success:
             supabase_client.table("referral_rewards").update({
                 "applied": True,
-                "applied_at": datetime.now(timezone.utc).isoformat(),
+                "applied_at": datetime.now(UTC).isoformat(),
             }).eq("id", reward_id).execute()
             logger.info(f"[REFERRAL] {reward_type} reward applied to referrer {referrer_id}")
         else:
@@ -105,7 +105,7 @@ async def _apply_free_days(supabase_client, referrer_id: str, reward_value: dict
 
         supabase_client.table("user_subscriptions").update({
             "current_period_end": new_end.isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }).eq("id", sub["id"]).execute()
 
         return True

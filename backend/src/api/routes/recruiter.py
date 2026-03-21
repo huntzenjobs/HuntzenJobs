@@ -8,16 +8,15 @@ Sprint 3: 50€ one-time payment for 30-minute consultation with expert recruite
 
 import logging
 import uuid
-from typing import Optional
-from datetime import date, datetime
+from datetime import date
 
-from fastapi import APIRouter, HTTPException, status, Request, Header
-from pydantic import BaseModel, EmailStr, Field
 import stripe
-from supabase import create_client, Client
+from fastapi import APIRouter, Header, HTTPException, Request, status
+from pydantic import BaseModel, EmailStr, Field
+from supabase import Client, create_client
 
-from src.config.settings import get_settings
 from src.api.deps import get_user_id_from_token
+from src.config.settings import get_settings
 from src.services.email import (
     send_recruiter_request_confirmation,
     send_recruiter_request_notification,
@@ -46,11 +45,11 @@ class RecruiterRequestCreate(BaseModel):
     """Create a new recruiter consultation request."""
     full_name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
-    phone: Optional[str] = Field(None, max_length=20)
+    phone: str | None = Field(None, max_length=20)
     sector: str = Field(..., description="Professional sector")
     experience_level: str = Field(..., description="Years of experience level")
     message: str = Field(..., min_length=10, max_length=1000)
-    preferred_date: Optional[date] = None
+    preferred_date: date | None = None
 
 
 class RecruiterRequestResponse(BaseModel):
@@ -77,14 +76,14 @@ class RecruiterRequestStatus(BaseModel):
     payment_status: str
     request_status: str
     created_at: str
-    scheduled_at: Optional[str] = None
+    scheduled_at: str | None = None
 
 
 # ============================================================================
 # Helper Functions
 # ============================================================================
 
-def get_user_id_from_header(authorization: Optional[str] = Header(None)) -> Optional[str]:
+def get_user_id_from_header(authorization: str | None = Header(None)) -> str | None:
     """
     Extract user ID from Authorization Bearer token via Supabase JWT validation.
     Returns None for anonymous/unauthenticated requests (allowed for recruiter contact).
@@ -99,7 +98,7 @@ def get_user_id_from_header(authorization: Optional[str] = Header(None)) -> Opti
 @router.post("/request", response_model=RecruiterRequestResponse)
 async def create_recruiter_request(
     request: RecruiterRequestCreate,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     Create a new recruiter consultation request.
@@ -153,7 +152,7 @@ async def create_recruiter_request(
 @router.post("/create-payment", response_model=PaymentSessionResponse)
 async def create_payment_session(
     payment: PaymentSessionCreate,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     Create a Stripe checkout session for recruiter consultation payment.
@@ -232,7 +231,7 @@ async def create_payment_session(
 @router.get("/status/{request_id}", response_model=RecruiterRequestStatus)
 async def get_request_status(
     request_id: str,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     Get status of a recruiter consultation request.

@@ -12,7 +12,7 @@ import httpx
 
 from src.config.settings import settings
 from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
-from src.utils.geo import country_code_to_name, country_code_to_language
+from src.utils.geo import country_code_to_language, country_code_to_name
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +27,10 @@ class SerpAPIProvider(BaseJobProvider):
     - Structured data
     - Paid API (100 free searches/month)
     """
-    
+
     name = "google_jobs"
     supported_countries = set()  # All countries
-    
+
     BASE_URL = "https://serpapi.com/search"
 
     @handle_provider_errors
@@ -93,18 +93,18 @@ class SerpAPIProvider(BaseJobProvider):
 
         logger.info(f"[{self.name}] Found {len(jobs)} jobs for '{query}'")
         return jobs
-    
+
     def _normalize_serpapi_job(self, item: dict) -> dict[str, Any]:
         """Normalize SerpAPI job response."""
         # Extract apply link
         apply_options = item.get("apply_options", [])
         url = apply_options[0].get("link") if apply_options else None
-        
+
         # Extract salary
         salary = None
         if "salary" in item.get("detected_extensions", {}):
             salary = item["detected_extensions"]["salary"]
-        
+
         return {
             "id": f"google_{hash(item.get('title', '') + item.get('company_name', ''))}",
             "title": item.get("title", ""),
@@ -117,7 +117,7 @@ class SerpAPIProvider(BaseJobProvider):
             "source": self.name,
             "posted_date": item.get("detected_extensions", {}).get("posted_at"),
         }
-    
+
     def _extract_contract_type(self, item: dict) -> str | None:
         """Extract contract type from extensions."""
         extensions = item.get("detected_extensions", {})

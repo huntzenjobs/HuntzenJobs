@@ -13,9 +13,9 @@ import logging
 import os
 from functools import lru_cache
 
+import geonamescache
 import httpx
 import pycountry
-import geonamescache
 
 logger = logging.getLogger(__name__)
 

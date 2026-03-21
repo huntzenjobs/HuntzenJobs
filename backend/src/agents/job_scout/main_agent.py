@@ -9,16 +9,13 @@ Sub-agents:
 3. MarketAnalyzer - Provides job market insights
 """
 
-import json
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor
 from difflib import SequenceMatcher
-from typing import Any, Optional
+from typing import Any
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
-from src.models.schemas import Job, JobSearchResponse, SearchMetadata
 from src.services.job_providers import (
     AdzunaProvider,
     FranceTravailProvider,
@@ -70,7 +67,7 @@ class JobScoutAgent(BaseAgent):
     - Multi-provider job aggregation
     - AI-powered ranking and insights
     """
-    
+
     def __init__(self):
         """Initialize the Job Scout with its sub-agents."""
         config = AgentConfig(
@@ -81,7 +78,7 @@ class JobScoutAgent(BaseAgent):
             system_prompt_file="job_scout_context.txt",
         )
         super().__init__(config)
-        
+
         # Initialize providers
         self.providers = [
             AdzunaProvider(),
@@ -89,13 +86,13 @@ class JobScoutAgent(BaseAgent):
             JSearchProvider(),
             RemoteOKProvider(),
         ]
-        
+
         # France-only provider (activated conditionally in run())
         self.france_travail = FranceTravailProvider()
-        
+
         # Initialize sub-agents
         self._init_sub_agents()
-    
+
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
         self.query_refiner = SubAgent(
@@ -105,7 +102,7 @@ class JobScoutAgent(BaseAgent):
             max_tokens=512,
         )
         self.register_sub_agent(self.query_refiner)
-        
+
         self.job_ranker = SubAgent(
             name="JobRanker",
             system_prompt=load_prompt("job_scout_ranker.txt"),
@@ -114,7 +111,7 @@ class JobScoutAgent(BaseAgent):
             max_tokens=256,
         )
         self.register_sub_agent(self.job_ranker)
-        
+
         self.market_analyzer = SubAgent(
             name="MarketAnalyzer",
             system_prompt=load_prompt("job_scout_market_analyzer.txt"),
@@ -123,7 +120,7 @@ class JobScoutAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.market_analyzer)
-        
+
         logger.info(f"[{self.name}] Initialized 3 sub-agents + {len(self.providers)} providers")
 
     @redis_cache(ttl=900, prefix="jobs")  # Cache job searches for 15 minutes
@@ -135,7 +132,7 @@ class JobScoutAgent(BaseAgent):
         contract_type: str = "",
         max_results: int = 50,
         max_days: int = 7,
-        radius_km: Optional[int] = None,
+        radius_km: int | None = None,
         include_remote: bool = True,
         include_insights: bool = True,
     ) -> dict[str, Any]:
@@ -167,12 +164,12 @@ class JobScoutAgent(BaseAgent):
 
             # Step 2: Filter providers based on settings
             active_providers = list(self.providers)
-            
+
             # Add France Travail only for French searches
             if country_code.lower() == "fr":
                 active_providers.append(self.france_travail)
                 logger.info(f"[{self.name}] France Travail activated (country=fr)")
-            
+
             # Remove RemoteOK if user doesn't want remote jobs
             if not include_remote:
                 active_providers = [p for p in active_providers if p.name != "remoteok"]
@@ -200,10 +197,10 @@ class JobScoutAgent(BaseAgent):
                 contract_type=contract_type,
                 radius_km=radius_km,
             )
-            
+
             # Step 3: Deduplicate
             unique_jobs = self._deduplicate_jobs(raw_jobs)
-            
+
             # Step 3.5: Pre-filter by relevance (safety net)
             filtered_jobs = self._pre_filter_by_relevance(unique_jobs, search_query)
             logger.info(f"[{self.name}] Pre-filter: {len(unique_jobs)} → {len(filtered_jobs)} jobs")
@@ -216,17 +213,17 @@ class JobScoutAgent(BaseAgent):
 
             # Step 4: Rank with AI (sample for performance)
             ranked_jobs = await self._rank_jobs(filtered_jobs, job_title)
-            
+
             # Step 5: Limit results
             final_jobs = ranked_jobs[:max_results]
-            
+
             # Step 6: Market insights (optional)
             insights = None
             if include_insights and final_jobs:
                 insights = await self._get_market_insights(job_title, country_code)
-            
+
             elapsed_ms = int((time.time() - start_time) * 1000)
-            
+
             return {
                 "success": True,
                 "jobs": final_jobs,
@@ -240,7 +237,7 @@ class JobScoutAgent(BaseAgent):
                 },
                 "insights": insights,
             }
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Search error: {e}")
             return {
@@ -248,7 +245,7 @@ class JobScoutAgent(BaseAgent):
                 "error": str(e),
                 "jobs": [],
             }
-    
+
     async def _refine_query(self, query: str) -> dict:
         """Refine search query using sub-agent."""
         try:
@@ -257,7 +254,7 @@ class JobScoutAgent(BaseAgent):
         except Exception as e:
             logger.warning(f"[{self.name}] Query refinement failed: {e}")
             return {"corrected_query": query}
-    
+
     def _quick_score(self, job: dict, query: str) -> float:
         """
         Instant keyword-based scoring (no LLM, < 1ms per job).
@@ -323,7 +320,7 @@ class JobScoutAgent(BaseAgent):
         # Re-sort all jobs (AI scores updated top 20, rest keep keyword scores)
         jobs.sort(key=lambda x: x.get("score", 0), reverse=True)
         return jobs
-    
+
     async def _get_market_insights(self, job_title: str, country: str, location: str = "") -> dict:
         """Get market insights from sub-agent."""
         try:
@@ -334,7 +331,7 @@ class JobScoutAgent(BaseAgent):
         except Exception as e:
             logger.warning(f"[{self.name}] Market insights failed: {e}")
             return {}
-    
+
     def _deduplicate_jobs(self, jobs: list[dict], threshold: float = 0.85) -> list[dict]:
         """
         Remove duplicate job listings.
@@ -343,20 +340,20 @@ class JobScoutAgent(BaseAgent):
         """
         if not jobs:
             return []
-        
+
         seen = set()
         unique = []
-        
+
         for job in jobs:
             # Create fingerprint
             title = (job.get("title") or "").lower()
             company = (job.get("company") or "").lower()
             fingerprint = f"{title[:30]}|{company[:20]}"
-            
+
             if fingerprint not in seen:
                 seen.add(fingerprint)
                 unique.append(job)
-        
+
         return unique
 
     @staticmethod
@@ -375,21 +372,21 @@ class JobScoutAgent(BaseAgent):
         """
         if not jobs or not query:
             return jobs
-        
+
         query_words = set(query.lower().split())
         filtered = []
-        
+
         for job in jobs:
             title = (job.get("title") or "").lower()
             company = (job.get("company") or "").lower()
             title_words = set(title.split())
-            
+
             # Check 1: Direct word overlap between query and title
             overlap = query_words & title_words
             if overlap:
                 filtered.append(job)
                 continue
-            
+
             # Check 2: Fuzzy match (partial word match like "boulang" in "boulangerie")
             has_fuzzy = False
             for qw in query_words:
@@ -405,20 +402,20 @@ class JobScoutAgent(BaseAgent):
                         break
                 if has_fuzzy:
                     break
-            
+
             if has_fuzzy:
                 filtered.append(job)
                 continue
-            
+
             # Check 3: Company name matches query (keep "Conseiller chez Boulanger")
             for qw in query_words:
                 if qw in company:
                     filtered.append(job)
                     break
-        
+
         # Fallback: if filter is too aggressive and removes everything, return originals
         if not filtered:
-            logger.warning(f"[JobScout] Pre-filter removed ALL jobs, falling back to original list")
+            logger.warning("[JobScout] Pre-filter removed ALL jobs, falling back to original list")
             return jobs
 
         return filtered

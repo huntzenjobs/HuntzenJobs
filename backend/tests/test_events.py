@@ -5,24 +5,21 @@ Tests for Studyrama, CIDJ, and L'Etudiant event providers.
 Validates that each scraper correctly extracts events with proper structure.
 """
 
-import pytest
-import re
 from datetime import datetime
 from unittest.mock import AsyncMock, patch
 
-from src.services.events.provider import (
-    scrape_studyrama_salons,
-    scrape_cidj_events,
-    scrape_letudiant_salons,
-    search_job_fairs,
-    parse_french_date,
-    classify_event_type,
-    classify_sector,
-    classify_public,
-    detect_region,
-    JobFair,
-)
+import pytest
 
+from src.services.events.provider import (
+    classify_event_type,
+    classify_public,
+    classify_sector,
+    detect_region,
+    parse_french_date,
+    scrape_cidj_events,
+    scrape_studyrama_salons,
+    search_job_fairs,
+)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Unit Tests: Helper Functions

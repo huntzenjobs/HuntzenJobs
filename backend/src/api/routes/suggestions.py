@@ -2,17 +2,18 @@
 Public assistant suggestions endpoint.
 Returns active suggestions for a given assistant_id.
 """
+
 from fastapi import APIRouter, Query
-from typing import Optional
-from src.api.deps import get_supabase_client
 from structlog import get_logger
+
+from src.api.deps import get_supabase_client
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
 @router.get("/suggestions")
-async def get_suggestions(assistant_id: Optional[str] = Query(default=None)):
+async def get_suggestions(assistant_id: str | None = Query(default=None)):
     """Get active suggestions for all or a specific assistant."""
     supabase = get_supabase_client()
     try:

@@ -6,14 +6,13 @@ Expose Hunter.io contact discovery via a single POST endpoint.
 
 import logging
 import os
-from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Header, status
+from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel
-from supabase import create_client, Client
+from supabase import Client, create_client
 
-from src.services.recruiter_finder.hunter import find_recruiters_for_job
 from src.api.deps import get_user_id_from_token
+from src.services.recruiter_finder.hunter import find_recruiters_for_job
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 if SUPABASE_URL and SUPABASE_KEY:
-    supabase_client: Optional[Client] = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase_client: Client | None = create_client(SUPABASE_URL, SUPABASE_KEY)
 else:
     supabase_client = None
     logger.warning("Supabase not configured for quota management (recruiter_finder)")
@@ -103,26 +102,26 @@ def increment_recruiter_search_quota(user_id: str) -> bool:
 
 class RecruiterFinderRequest(BaseModel):
     company_name: str
-    company_website: Optional[str] = ""
-    company_domain: Optional[str] = ""
-    job_title: Optional[str] = ""
+    company_website: str | None = ""
+    company_domain: str | None = ""
+    job_title: str | None = ""
 
 
 class ContactItem(BaseModel):
     name: str
     email: str
-    position: Optional[str] = None
-    department: Optional[str] = None
-    seniority: Optional[str] = None
+    position: str | None = None
+    department: str | None = None
+    seniority: str | None = None
     confidence: int = 0
-    linkedin: Optional[str] = None
+    linkedin: str | None = None
     role: str = "other"
 
 
 class RecruiterFinderResponse(BaseModel):
     company: str
     domain: str
-    email_pattern: Optional[str] = None
+    email_pattern: str | None = None
     recruiters: list[ContactItem]
     tech_team: list[ContactItem]
     all_contacts: list[ContactItem]
@@ -137,7 +136,7 @@ class RecruiterFinderResponse(BaseModel):
 @router.post("/find", response_model=RecruiterFinderResponse)
 async def find_recruiters(
     body: RecruiterFinderRequest,
-    authorization: Optional[str] = Header(default=None),
+    authorization: str | None = Header(default=None),
 ):
     """
     Discover recruiter contacts at a company using Hunter.io.

@@ -5,12 +5,13 @@ Manage user's saved/bookmarked jobs.
 """
 
 import logging
-from typing import Optional
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Header, HTTPException, Query, status
 from pydantic import BaseModel
-from src.config.settings import get_settings
+
 from src.api.deps import get_supabase_client
+from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +24,14 @@ class SaveJobRequest(BaseModel):
     job_title: str
     company: str
     location: str
-    salary: Optional[str] = None
+    salary: str | None = None
     job_url: str
-    description: Optional[str] = None
-    external_job_id: Optional[str] = None
+    description: str | None = None
+    external_job_id: str | None = None
     job_source: str = "unknown"
 
 
-def get_user_id_from_header(authorization: Optional[str]) -> Optional[str]:
+def get_user_id_from_header(authorization: str | None) -> str | None:
     """Extract user ID from Authorization header."""
     if not authorization or not authorization.startswith("Bearer "):
         return None
@@ -49,7 +50,7 @@ def get_user_id_from_header(authorization: Optional[str]) -> Optional[str]:
 
 
 @router.get("/api/saved-jobs")
-async def get_saved_jobs(authorization: Optional[str] = Header(None)):
+async def get_saved_jobs(authorization: str | None = Header(None)):
     """
     Get all saved jobs for the current user.
 
@@ -82,7 +83,7 @@ async def get_saved_jobs(authorization: Optional[str] = Header(None)):
 @router.post("/api/saved-jobs")
 async def save_job(
     body: SaveJobRequest,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Save a job for the current user.
@@ -143,7 +144,7 @@ async def track_apply_click(
     external_job_id: str,
     job_url: str = Query(...),
     job_source: str = Query(default="unknown"),
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Track when a user clicks 'Postuler directement'.
@@ -155,7 +156,7 @@ async def track_apply_click(
     if user_id:
         try:
             supabase = get_supabase_client()
-            now = datetime.now(timezone.utc).isoformat()
+            now = datetime.now(UTC).isoformat()
             supabase.table("saved_jobs") \
                 .update({"applied_at": now}) \
                 .eq("user_id", user_id) \
@@ -170,7 +171,7 @@ async def track_apply_click(
 @router.delete("/api/saved-jobs/{external_job_id}")
 async def unsave_job(
     external_job_id: str,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Remove a saved job for the current user by external_job_id.

@@ -7,24 +7,24 @@ Handles routing to the appropriate agent based on assistant_type parameter.
 
 import logging
 import uuid
-from typing import Annotated, Literal
+from typing import Literal
 
 from arq import create_pool
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from src.api.deps import (
     BrandingAgentDep,
     CoachAgentDep,
+    CurrentUserDep,
     CVAdapterAgentDep,
     CVAgentDep,
     InterviewSimAgentDep,
     ScoutConversationalAgentDep,
-    get_session_history,
-    update_session_history,
-    CurrentUserDep,
     check_assistant_quota,
+    get_session_history,
     increment_assistant_messages,
+    update_session_history,
 )
 from src.services.cv_chat_extractor import extract_cv_structured
 from src.services.modal_pdf_extractor import extract_text_via_modal, is_modal_pdf_enabled
@@ -439,6 +439,7 @@ async def _extract_pdf_text(pdf_bytes: bytes, filename: str) -> str:
 
     try:
         import io
+
         import pypdf
 
         reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))

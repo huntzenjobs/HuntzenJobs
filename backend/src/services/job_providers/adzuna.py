@@ -26,13 +26,13 @@ class AdzunaProvider(BaseJobProvider):
     - Supports 17 countries
     - Good for Europe and English-speaking countries
     """
-    
+
     name = "adzuna"
     supported_countries = {
         "au", "at", "br", "ca", "de", "fr", "in", "it",
         "mx", "nl", "nz", "pl", "ru", "sg", "za", "gb", "us"
     }
-    
+
     BASE_URL = "https://api.adzuna.com/v1/api/jobs"
 
     @handle_provider_errors
@@ -64,13 +64,13 @@ class AdzunaProvider(BaseJobProvider):
         if not settings.adzuna_app_id or not settings.get_adzuna_key():
             logger.debug(f"[{self.name}] Missing credentials")
             return []
-        
+
         # Check country support
         cc = country_code.lower()
         if not self.supports_country(cc):
             logger.debug(f"[{self.name}] Country {cc} not supported")
             return []
-        
+
         url = f"{self.BASE_URL}/{cc}/search/1"
         params = {
             "app_id": settings.adzuna_app_id,
@@ -81,7 +81,7 @@ class AdzunaProvider(BaseJobProvider):
             "max_days_old": max_days,
             "content-type": "application/json",
         }
-        
+
         # Map contract types to Adzuna values
         if contract_type in ("alternance", "apprentissage"):
             # Adzuna n'a pas de type natif alternance — enrichir la query
@@ -109,7 +109,7 @@ class AdzunaProvider(BaseJobProvider):
 
         logger.info(f"[{self.name}] Found {len(jobs)} jobs for '{query}' in {cc}")
         return jobs
-    
+
     def _normalize_adzuna_job(self, item: dict) -> dict[str, Any]:
         """Normalize Adzuna job response."""
         description = item.get("description")
@@ -128,12 +128,12 @@ class AdzunaProvider(BaseJobProvider):
             "url_is_direct": is_direct_job_url(url),
             "description_truncated": is_description_truncated(description, "adzuna"),
         }
-    
+
     def _format_salary(self, item: dict) -> str | None:
         """Format salary range."""
         min_sal = item.get("salary_min")
         max_sal = item.get("salary_max")
-        
+
         if min_sal and max_sal:
             return f"{int(min_sal):,} - {int(max_sal):,}"
         elif min_sal:

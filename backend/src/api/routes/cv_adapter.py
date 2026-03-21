@@ -8,7 +8,6 @@ import io
 import json
 import logging
 import re
-from typing import Optional
 
 from arq import create_pool
 from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile, status
@@ -155,7 +154,6 @@ def get_adapter_agent() -> "CVAdapterAgent":
     DEPRECATED: Redirects to deps.get_cv_adapter_main() for thread-safe singleton.
     This function is maintained for backward compatibility with existing routes.
     """
-    from src.agents.cv_adapter import CVAdapterAgent  # Import for type hint
     return get_cv_adapter_main()
 
 
@@ -163,8 +161,8 @@ def generate_pdf_sync(cv_data: dict, template: str, language: str, photo_base64:
     """Generate PDF using WeasyPrint."""
     pdf_gen = get_pdf_generator()
     return pdf_gen.generate(
-        cv_data=cv_data, 
-        template=template, 
+        cv_data=cv_data,
+        template=template,
         language=language,
         photo_base64=photo_base64
     )
@@ -175,9 +173,9 @@ async def adapt_cv(
     job_description: str = Form(..., description="Target job description"),
     language: str = Form(default="en", description="Output language (en/fr)"),
     template: str = Form(default="ats", description="Template (ats/modern)"),
-    cv_text: Optional[str] = Form(default=None, description="Original CV content as text"),
-    file: Optional[UploadFile] = File(default=None, description="CV file (PDF or DOCX)"),
-    authorization: Optional[str] = Header(default=None),
+    cv_text: str | None = Form(default=None, description="Original CV content as text"),
+    file: UploadFile | None = File(default=None, description="CV file (PDF or DOCX)"),
+    authorization: str | None = Header(default=None),
 ):
     """
     Adapt a CV to match a specific job offer.
@@ -270,9 +268,9 @@ async def adapt_cv_to_pdf(
     job_description: str = Form(..., description="Target job description"),
     language: str = Form(default="en", description="Output language (en/fr)"),
     template: str = Form(default="ats", description="Template (ats/modern)"),
-    cv_text: Optional[str] = Form(default=None, description="Original CV content as text"),
-    file: Optional[UploadFile] = File(default=None, description="CV file (PDF or DOCX)"),
-    authorization: Optional[str] = Header(default=None),
+    cv_text: str | None = Form(default=None, description="Original CV content as text"),
+    file: UploadFile | None = File(default=None, description="CV file (PDF or DOCX)"),
+    authorization: str | None = Header(default=None),
 ):
     """
     Adapt CV and generate PDF directly.
@@ -301,7 +299,7 @@ async def adapt_cv_to_pdf(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Job description too short",
         )
-    
+
     # Run adaptation
     try:
         await _incr_active()
@@ -326,7 +324,7 @@ async def adapt_cv_to_pdf(
 
     # Generate PDF
     cv_data = result.get("cv_data", {})
-    
+
     try:
         pdf_bytes = generate_pdf_sync(cv_data=cv_data, template=template, language=language)
     except Exception as e:
@@ -335,7 +333,7 @@ async def adapt_cv_to_pdf(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"PDF generation failed: {str(e)}",
         )
-    
+
     # Get candidate name for filename
     name = cv_data.get("personal_info", {}).get("name", "cv")
     safe_name = "".join(c for c in name if c.isalnum() or c in " -_").strip()
@@ -377,14 +375,14 @@ async def adapt_cv_from_file(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No filename provided",
         )
-    
+
     filename = file.filename.lower()
     if not (filename.endswith(".pdf") or filename.endswith(".docx")):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only PDF and DOCX files are supported",
         )
-    
+
     # Read file
     content = await file.read()
 
@@ -459,7 +457,7 @@ async def adapt_cv_from_file(
                 "minimum 100 requis). Assurez-vous que votre PDF n'est pas un scan ou une image."
             ),
         )
-    
+
     # Now adapt
     agent = get_adapter_agent()
     result = await agent.run(
@@ -468,13 +466,13 @@ async def adapt_cv_from_file(
         language=language,
         template=template,
     )
-    
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "CV adaptation failed"),
         )
-    
+
     # Return based on output format
     if output_format == "pdf":
         pdf_gen = get_pdf_generator()
@@ -483,13 +481,13 @@ async def adapt_cv_from_file(
             template=template,
             language=language,
         )
-        
+
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
             headers={"Content-Disposition": "attachment; filename=cv_adapted.pdf"},
         )
-    
+
     return {
         "success": True,
         "cv_data": result.get("cv_data"),
@@ -510,13 +508,13 @@ async def quick_adapt_cv(
     Faster but less thorough. Good for previews.
     """
     agent = get_adapter_agent()
-    
+
     result = await agent.quick_adapt(
         cv_text=cv_text,
         job_description=job_description,
         language=language,
     )
-    
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -546,8 +544,8 @@ async def generate_pdf_from_data(request: PDFRequest):
     try:
         logger.info(f"[PDFGenerator] Generating {request.template} PDF...")
         pdf_bytes = generate_pdf_sync(
-            cv_data=request.cv_data, 
-            template=request.template, 
+            cv_data=request.cv_data,
+            template=request.template,
             language=request.language,
             photo_base64=request.photo
         )
@@ -558,7 +556,7 @@ async def generate_pdf_from_data(request: PDFRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
-    
+
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -584,7 +582,7 @@ class CoverLetterRequest(BaseModel):
 
 
 @router.post("/generate-cover-letter")
-async def generate_cover_letter(request: CoverLetterRequest, authorization: Optional[str] = Header(default=None)):
+async def generate_cover_letter(request: CoverLetterRequest, authorization: str | None = Header(default=None)):
     """
     Generate a personalized cover letter from CV data and job description.
     
@@ -627,7 +625,7 @@ async def generate_cover_letter(request: CoverLetterRequest, authorization: Opti
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
         )
-    
+
     # Get candidate name for filename
     name = request.cv_data.get("personal_info", {}).get("name", "candidate")
     safe_name = "".join(c for c in name if c.isalnum() or c in " -_").strip()

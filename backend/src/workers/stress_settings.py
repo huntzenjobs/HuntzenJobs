@@ -6,6 +6,7 @@ Lancement :
     python -m arq src.workers.stress_settings.StressWorkerSettings
 """
 import os
+
 from arq.connections import RedisSettings
 
 from src.workers.stress_worker import stress_test_task

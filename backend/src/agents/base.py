@@ -15,16 +15,15 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import BaseTool as LangChainBaseTool
 from langchain_groq import ChatGroq
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from src.config.settings import settings
-from src.utils.groq_retry import with_groq_retry, with_groq_key_rotation
+from src.utils.groq_retry import with_groq_key_rotation, with_groq_retry
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +56,8 @@ class AgentConfig(BaseModel):
     model: str = settings.llm_model_fast
     temperature: float = settings.llm_temperature
     max_tokens: int = settings.llm_max_tokens
-    system_prompt_file: Optional[str] = None
-    system_prompt: Optional[str] = None
+    system_prompt_file: str | None = None
+    system_prompt: str | None = None
 
 
 class BaseAgent(ABC):
@@ -71,7 +70,7 @@ class BaseAgent(ABC):
     - Message building utilities
     - Sub-agent orchestration pattern
     """
-    
+
     def __init__(self, config: AgentConfig):
         """
         Initialize the agent.
@@ -81,9 +80,9 @@ class BaseAgent(ABC):
         """
         self.name = config.name
         self.config = config
-        self._sub_agents: dict[str, "SubAgent"] = {}
+        self._sub_agents: dict[str, SubAgent] = {}
         self._tools: list[LangChainBaseTool] = []
-        
+
         # Initialize LLM — clé payante unique (14 400 RPM, pas besoin de rotation)
         self.llm = ChatGroq(
             model=config.model,
@@ -93,12 +92,12 @@ class BaseAgent(ABC):
             max_retries=3,  # retry natif LangChain sur 429 (backoff exponentiel)
         )
         self._llms = [self.llm]  # compatibilité with_groq_key_rotation
-        
+
         # Load system prompt
         self.system_prompt = self._load_system_prompt(config)
-        
+
         logger.info(f"[{self.name}] Agent initialized with {config.model}")
-    
+
     def _load_system_prompt(self, config: AgentConfig) -> str:
         """Load system prompt — DB first, then file, then default."""
         if config.system_prompt:
@@ -108,7 +107,7 @@ class BaseAgent(ABC):
             return load_prompt(config.system_prompt_file)
 
         return f"You are {self.name}, an AI assistant."
-    
+
     def register_sub_agent(self, sub_agent: "SubAgent") -> None:
         """
         Register a sub-agent for delegation.
@@ -118,7 +117,7 @@ class BaseAgent(ABC):
         """
         self._sub_agents[sub_agent.name] = sub_agent
         logger.debug(f"[{self.name}] Registered sub-agent: {sub_agent.name}")
-    
+
     def register_tool(self, tool: LangChainBaseTool) -> None:
         """
         Register a tool for the agent.
@@ -128,7 +127,7 @@ class BaseAgent(ABC):
         """
         self._tools.append(tool)
         logger.debug(f"[{self.name}] Registered tool: {tool.name}")
-    
+
     async def delegate_to(self, sub_agent_name: str, **kwargs: Any) -> Any:
         """
         Delegate task to a sub-agent.
@@ -142,13 +141,13 @@ class BaseAgent(ABC):
         """
         if sub_agent_name not in self._sub_agents:
             raise ValueError(f"Sub-agent '{sub_agent_name}' not registered")
-        
+
         return await self._sub_agents[sub_agent_name].run(**kwargs)
-    
+
     def build_messages(
         self,
         user_message: str,
-        history: Optional[list[dict]] = None,
+        history: list[dict] | None = None,
     ) -> list:
         """
         Build message list for LLM.
@@ -161,7 +160,7 @@ class BaseAgent(ABC):
             List of LangChain messages
         """
         messages = [SystemMessage(content=self.system_prompt)]
-        
+
         if history:
             for msg in history:
                 role = msg.get("role", "user")
@@ -170,14 +169,14 @@ class BaseAgent(ABC):
                     messages.append(HumanMessage(content=content))
                 elif role == "assistant":
                     messages.append(AIMessage(content=content))
-        
+
         messages.append(HumanMessage(content=user_message))
         return messages
-    
+
     async def chat(
         self,
         message: str,
-        history: Optional[list[dict]] = None,
+        history: list[dict] | None = None,
     ) -> str:
         """
         Simple chat method.
@@ -199,11 +198,11 @@ class BaseAgent(ABC):
                 ),
                 timeout=60.0,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"LLM timeout after 60s for agent {self.name}")
             return "Le service IA est temporairement surchargé. Réessayez dans quelques instants."
         return response.content
-    
+
     def _parse_json(self, text: str) -> dict | None:
         """
         Parse JSON from LLM response text.
@@ -218,13 +217,13 @@ class BaseAgent(ABC):
         """
         if not text:
             return None
-        
+
         try:
             # Try direct parse first
             return json.loads(text)
         except json.JSONDecodeError:
             pass
-        
+
         # Try to extract JSON from markdown code blocks
         json_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
         if json_match:
@@ -232,7 +231,7 @@ class BaseAgent(ABC):
                 return json.loads(json_match.group(1))
             except json.JSONDecodeError:
                 pass
-        
+
         # Try to find JSON object in text
         brace_match = re.search(r'\{[\s\S]*\}', text)
         if brace_match:
@@ -240,14 +239,14 @@ class BaseAgent(ABC):
                 return json.loads(brace_match.group(0))
             except json.JSONDecodeError:
                 pass
-        
+
         logger.warning(f"[{self.name}] Failed to parse JSON from response")
         return None
-    
+
     def _parse_json_response(self, text: str) -> dict | None:
         """Alias for _parse_json for backwards compatibility."""
         return self._parse_json(text)
-    
+
     @abstractmethod
     async def run(self, **kwargs: Any) -> dict[str, Any]:
         """
@@ -269,7 +268,7 @@ class SubAgent:
     Sub-agents are simpler than main agents and focus on
     a single specialized task (e.g., query refinement, scoring).
     """
-    
+
     def __init__(
         self,
         name: str,
@@ -290,7 +289,7 @@ class SubAgent:
         """
         self.name = name
         self.system_prompt = system_prompt
-        
+
         # max_retries=3 : retry natif LangChain sur 429 (backoff exponentiel intégré)
         self.llm = ChatGroq(
             model=model,
@@ -299,9 +298,9 @@ class SubAgent:
             max_tokens=max_tokens,
             max_retries=3,
         )
-        
+
         logger.debug(f"[SubAgent:{name}] Initialized")
-    
+
     async def run(self, task: str, context: str = "") -> str:
         """
         Execute the sub-agent's task.
@@ -318,7 +317,7 @@ class SubAgent:
             SystemMessage(content=self.system_prompt),
             HumanMessage(content=prompt),
         ]
-        
+
         try:
             response = await asyncio.wait_for(
                 with_groq_retry(
@@ -328,7 +327,7 @@ class SubAgent:
                 ),
                 timeout=60.0,  # +15s pour absorber les retries backoff
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"LLM timeout after 60s for sub-agent {self.name}")
             return "Le service IA est temporairement surchargé. Réessayez dans quelques instants."
         return response.content
@@ -340,14 +339,14 @@ class BaseTool(LangChainBaseTool):
     
     Wraps external APIs or functions as LangChain tools.
     """
-    
+
     name: str = "base_tool"
     description: str = "A base tool"
-    
+
     def _run(self, *args: Any, **kwargs: Any) -> Any:
         """Synchronous run - not implemented."""
         raise NotImplementedError("Use async version")
-    
+
     async def _arun(self, *args: Any, **kwargs: Any) -> Any:
         """Async run - must be implemented by subclasses."""
         raise NotImplementedError("Subclass must implement _arun")

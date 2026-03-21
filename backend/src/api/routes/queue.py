@@ -5,11 +5,10 @@ Endpoint universel de polling pour tous les jobs async.
 Supporte les jobs ARQ (remplace la queue custom Redis).
 """
 
-from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, Header, HTTPException
+
 from src.utils.cache import get_redis
-
 
 router = APIRouter()
 
@@ -17,7 +16,7 @@ router = APIRouter()
 @router.get("/status/{job_id}")
 async def get_status(
     job_id: str,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Statut d'un job ARQ.
@@ -29,8 +28,9 @@ async def get_status(
     - `failed`     → {status, error}
     """
     try:
-        from arq.jobs import Job
         from arq import create_pool
+        from arq.jobs import Job
+
         from src.workers.settings import _get_redis_settings
 
         pool = await create_pool(_get_redis_settings())

@@ -14,19 +14,16 @@ Date: 2026-02-08
 Sprint: 6 - Modal Integration
 """
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Header, Request, Query, Body
-from typing import Optional, Dict, Any
 import os
-from supabase import create_client, Client
-from structlog import get_logger
+from typing import Any
 
-from src.api.middleware import limiter
-from src.modal_integration import (
-    process_cv_async,
-    get_cv_analysis_status,
-    list_user_cv_analyses
-)
+from fastapi import APIRouter, Body, File, Form, Header, HTTPException, Query, Request, UploadFile
+from structlog import get_logger
+from supabase import Client, create_client
+
 from src.api.deps import get_user_id_from_token
+from src.api.middleware import limiter
+from src.modal_integration import get_cv_analysis_status, list_user_cv_analyses, process_cv_async
 from src.services.user_events import log_event
 
 logger = get_logger(__name__)
@@ -40,7 +37,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 if SUPABASE_URL and SUPABASE_KEY:
-    supabase_client: Optional[Client] = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase_client: Client | None = create_client(SUPABASE_URL, SUPABASE_KEY)
 else:
     supabase_client = None
     logger.warning("Supabase not configured for quota management")
@@ -127,11 +124,11 @@ async def increment_user_cv_quota(user_id: str) -> bool:
 @limiter.limit("10/minute")
 async def analyze_cv_async(
     request: Request,
-    file: Optional[UploadFile] = File(None),
-    cv_text: Optional[str] = Form(None),
-    job_description: Optional[str] = Form(None),
+    file: UploadFile | None = File(None),
+    cv_text: str | None = Form(None),
+    job_description: str | None = Form(None),
     language: str = Form("fr"),
-    authorization: Optional[str] = Header(default=None)
+    authorization: str | None = Header(default=None)
 ):
     """
     Upload CV for async processing with Modal Labs.
@@ -227,8 +224,8 @@ async def analyze_cv_async(
 @router.get("/status/{cv_id}")
 async def get_analysis_status(
     cv_id: str,
-    authorization: Optional[str] = Header(default=None),
-    anonymous_id: Optional[str] = Query(None)
+    authorization: str | None = Header(default=None),
+    anonymous_id: str | None = Query(None)
 ):
     """
     Poll CV analysis status.
@@ -268,7 +265,7 @@ async def get_analysis_status(
 
 @router.get("/list")
 async def list_analyses(
-    authorization: Optional[str] = Header(default=None),
+    authorization: str | None = Header(default=None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0)
 ):
@@ -323,7 +320,7 @@ async def list_analyses(
 @router.post("/callback")
 async def cv_analysis_callback(
     request: Request,
-    callback_data: Dict[str, Any] = Body(...)
+    callback_data: dict[str, Any] = Body(...)
 ):
     """
     Callback endpoint for Modal to report CV processing completion.
@@ -383,7 +380,7 @@ async def cv_analysis_callback(
                 log_event(
                     supabase_client,
                     event_name="cv_analyzed",
-                    event_label=f"Un utilisateur a analysé son CV",
+                    event_label="Un utilisateur a analysé son CV",
                     category="action",
                     user_id=user_id,
                     feature="cv_analysis",

@@ -7,7 +7,8 @@ import { Metadata } from "next";
 
 const SITE_URL = "https://huntzenjobs.com";
 const SITE_NAME = "HuntZen Jobs";
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
+// Next.js auto-generates /opengraph-image from src/app/opengraph-image.tsx
+const DEFAULT_OG_IMAGE = `${SITE_URL}/opengraph-image`;
 
 /**
  * Metadata par défaut (fallback)
@@ -135,6 +136,13 @@ export const homeMetadata: Metadata = {
   },
   alternates: {
     canonical: SITE_URL,
+    languages: {
+      fr: SITE_URL,
+      en: SITE_URL,
+      es: SITE_URL,
+      pt: SITE_URL,
+      "x-default": SITE_URL,
+    },
   },
   robots: {
     index: true,

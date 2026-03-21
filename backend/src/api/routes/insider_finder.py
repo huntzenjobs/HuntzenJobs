@@ -1,6 +1,6 @@
 
 import logging
-from typing import List, Optional
+
 from fastapi import APIRouter, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
@@ -28,13 +28,13 @@ class InsiderContact(BaseModel):
 class InsiderSearchRequest(BaseModel):
     job_title: str = Field(..., example="Data Analyst")
     company: str = Field(..., example="La Banque Postale")
-    city: Optional[str] = Field("", example="Paris")
+    city: str | None = Field("", example="Paris")
     is_alternance: bool = Field(False, description="True if it is a student/work-study job")
 
 class InsiderSearchResponse(BaseModel):
     success: bool
     strategy: str
-    insiders: List[InsiderContact]
+    insiders: list[InsiderContact]
     total_found: int
 
 # ============================================================================
@@ -46,7 +46,7 @@ class InsiderSearchResponse(BaseModel):
 async def find_insiders(
     http_request: Request,
     request: InsiderSearchRequest,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Find company insiders (recruiters, colleagues) using AI strategy and Google/LinkedIn search.

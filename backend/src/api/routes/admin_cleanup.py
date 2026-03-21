@@ -3,10 +3,11 @@ Admin cleanup endpoint for subscription synchronization.
 Temporary endpoint to fix orphaned subscriptions by querying Stripe.
 """
 
+from typing import Any
+
+import stripe
 from fastapi import APIRouter, Depends, HTTPException
 from structlog import get_logger
-from typing import Dict, Any
-import stripe
 
 logger = get_logger(__name__)
 
@@ -15,7 +16,7 @@ router = APIRouter()
 # Import dependencies
 try:
     from src.api.deps import get_current_admin
-    from src.services.stripe import supabase_client, stripe
+    from src.services.stripe import stripe, supabase_client
 except ImportError as e:
     logger.error(f"Failed to import dependencies: {e}")
     raise
@@ -25,7 +26,7 @@ except ImportError as e:
 async def sync_user_subscriptions(
     user_id: str,
     current_user: dict = Depends(get_current_admin)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Cleanup orphaned subscriptions by synchronizing with Stripe.
 
@@ -101,7 +102,7 @@ async def sync_user_subscriptions(
 
         return {
             "success": True,
-            "message": f"Synchronized subscriptions with Stripe",
+            "message": "Synchronized subscriptions with Stripe",
             "db_count": len(db_subs),
             "stripe_count": len(stripe_sub_ids),
             "canceled_count": canceled_count,

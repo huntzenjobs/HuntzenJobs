@@ -4,15 +4,16 @@ Utilise:
 - Marker pour conversion PDF → Markdown (haute qualité)
 - Groq llama-3.3-70b pour l'analyse approfondie des CVs
 """
-import os
-import json
 import asyncio
+import json
+import os
 import tempfile
-from typing import Optional, Dict, Any
+from typing import Any
+
 from groq import Groq
-from langchain_groq import ChatGroq
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from job_finder.config import get_settings
+from langchain_core.messages import AIMessage
+from langchain_groq import ChatGroq
 
 settings = get_settings()
 
@@ -152,14 +153,14 @@ FORMAT DE SORTIE (JSON UNIQUEMENT) :
 }"""
 
 
-async def analyze_cv_with_job(cv_text: str, job_description: str, language: str = "fr") -> Dict[str, Any]:
+async def analyze_cv_with_job(cv_text: str, job_description: str, language: str = "fr") -> dict[str, Any]:
     """
     Analyse un CV contre une offre d'emploi spécifique.
     Utilise Groq direct avec JSON mode pour garantir un output structuré.
     """
     try:
         user_content = f"Offre d'emploi :\n{job_description}\n\nContenu du CV :\n{cv_text}"
-        
+
         # Utiliser le client Groq direct avec response_format JSON
         loop = asyncio.get_event_loop()
         completion = await loop.run_in_executor(
@@ -174,13 +175,13 @@ async def analyze_cv_with_job(cv_text: str, job_description: str, language: str 
                 temperature=0.1
             )
         )
-        
+
         result = json.loads(completion.choices[0].message.content)
         result["success"] = True
         result["type"] = "job_matching"
-        
+
         return result
-        
+
     except json.JSONDecodeError as e:
         return {
             "success": False,
@@ -194,14 +195,14 @@ async def analyze_cv_with_job(cv_text: str, job_description: str, language: str 
         }
 
 
-async def analyze_cv_ats(cv_text: str, language: str = "fr") -> Dict[str, Any]:
+async def analyze_cv_ats(cv_text: str, language: str = "fr") -> dict[str, Any]:
     """
     Analyse ATS d'un CV seul (sans offre d'emploi).
     Utilise Groq direct avec JSON mode.
     """
     try:
         user_content = f"CV à analyser:\n{cv_text}"
-        
+
         # Utiliser le client Groq direct avec response_format JSON
         loop = asyncio.get_event_loop()
         completion = await loop.run_in_executor(
@@ -216,13 +217,13 @@ async def analyze_cv_ats(cv_text: str, language: str = "fr") -> Dict[str, Any]:
                 temperature=0.1
             )
         )
-        
+
         result = json.loads(completion.choices[0].message.content)
         result["success"] = True
         result["type"] = "ats_score"
-        
+
         return result
-        
+
     except json.JSONDecodeError:
         return {
             "success": False,
@@ -235,14 +236,14 @@ async def analyze_cv_ats(cv_text: str, language: str = "fr") -> Dict[str, Any]:
         }
 
 
-async def extract_cv_info(cv_text: str) -> Dict[str, Any]:
+async def extract_cv_info(cv_text: str) -> dict[str, Any]:
     """
     Extraction rapide des informations clés d'un CV.
     Utilise le modèle 8B pour la vitesse avec JSON mode.
     """
     try:
         user_content = f"CV:\n{cv_text[:3000]}"  # Limiter pour la vitesse
-        
+
         loop = asyncio.get_event_loop()
         completion = await loop.run_in_executor(
             None,
@@ -257,9 +258,9 @@ async def extract_cv_info(cv_text: str) -> Dict[str, Any]:
                 temperature=0.1
             )
         )
-        
+
         return json.loads(completion.choices[0].message.content)
-        
+
     except Exception:
         return {
             "nom": "Non détecté",
@@ -276,25 +277,24 @@ async def matchmaker_node_enhanced(state: dict) -> dict:
     Nœud MatchMaker amélioré pour le graph LangGraph.
     Intègre l'analyse CV dans le système multi-agent.
     """
-    from langchain_core.messages import AIMessage
-    
+
     cv_text = state.get("cv_text")
     job_description = state.get("job_description")
     language = state.get("user_language", "fr")
-    
+
     if not cv_text:
         msg = "📄 **CV requis.** Veuillez uploader votre CV pour l'analyse." if language == "fr" else "📄 **CV required.** Please upload your CV for analysis."
         return {"messages": [AIMessage(content=msg)], "next_agent": "END"}
-    
+
     # Déterminer le type d'analyse
     if job_description:
         # Analyse compatibilité CV vs Job
         result = await analyze_cv_with_job(cv_text, job_description, language)
-        
+
         if result.get("success"):
             score = result.get("score_matching", 0)
             emoji = "🎯" if score >= 70 else "📊" if score >= 50 else "⚠️"
-            
+
             msg = f"""{emoji} **Score de Compatibilité: {score}%**
 
 ✅ **Points Forts:**
@@ -315,11 +315,11 @@ async def matchmaker_node_enhanced(state: dict) -> dict:
     else:
         # Analyse ATS seule
         result = await analyze_cv_ats(cv_text, language)
-        
+
         if result.get("success"):
             score = result.get("score_ats", 0)
             emoji = "🌟" if score >= 80 else "📊" if score >= 60 else "⚠️"
-            
+
             details = result.get("details", {})
             msg = f"""{emoji} **Score ATS: {score}/100**
 
@@ -340,7 +340,7 @@ async def matchmaker_node_enhanced(state: dict) -> dict:
 {chr(10).join(f"• {f['nom']} ({f.get('plateforme', 'N/A')}) - {f.get('raison', '')}" for f in result.get('formations_suggerees', []))}"""
         else:
             msg = f"❌ Erreur lors de l'analyse ATS: {result.get('error', 'Erreur inconnue')}"
-    
+
     return {
         "messages": [AIMessage(content=msg)],
         "match_score": result,

@@ -9,14 +9,13 @@ Uses the same RAPIDAPI_KEY as the salary JSearch integration.
 """
 
 import logging
-import re
 from typing import Any
 
 import httpx
 
 from src.config.settings import settings
 from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
-from src.utils.geo import country_code_to_name, format_location_query
+from src.utils.geo import country_code_to_name
 from src.utils.url_validator import is_description_truncated, is_direct_job_url
 
 logger = logging.getLogger(__name__)

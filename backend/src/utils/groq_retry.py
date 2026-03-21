@@ -7,7 +7,8 @@ Délais : 1s → 2s → 4s (backoff exponentiel, max 3 tentatives).
 
 import asyncio
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

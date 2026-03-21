@@ -6,10 +6,10 @@ User authentication and profile management.
 
 import json
 import logging
-from typing import Optional
-from fastapi import APIRouter, Header, HTTPException, status, Request
+
+from fastapi import APIRouter, Header, HTTPException, Request, status
 from pydantic import BaseModel
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 from src.api.middleware import limiter
 from src.config.settings import get_settings
@@ -39,7 +39,7 @@ def get_supabase_client() -> Client:
     )
 
 
-def get_user_from_token(authorization: Optional[str]) -> Optional[dict]:
+def get_user_from_token(authorization: str | None) -> dict | None:
     """
     Extract user from Authorization header.
 
@@ -74,7 +74,7 @@ def get_user_from_token(authorization: Optional[str]) -> Optional[dict]:
 @limiter.limit("60/minute")
 async def get_current_user_info(
     request: Request,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     Get current authenticated user information with subscription and quotas.
@@ -142,7 +142,7 @@ async def get_current_user_info(
 
         # 🔍 DEBUG: Log raw RPC response
         logger.debug("="*70)
-        logger.debug(f"[AUTH_ME DEBUG] RPC get_user_current_subscription Response:")
+        logger.debug("[AUTH_ME DEBUG] RPC get_user_current_subscription Response:")
         logger.debug(f"  - Data: {subscription_response.data}")
         logger.debug(f"  - Type: {type(subscription_response.data)}")
         logger.debug(f"  - Length: {len(subscription_response.data) if subscription_response.data else 0}")
@@ -163,7 +163,7 @@ async def get_current_user_info(
 
             # 🔍 DEBUG: Log subscription object details
             logger.debug("="*70)
-            logger.debug(f"[AUTH_ME DEBUG] ✅ Subscription FOUND:")
+            logger.debug("[AUTH_ME DEBUG] ✅ Subscription FOUND:")
             logger.debug(f"  - plan_name: {sub.get('plan_name')}")
             logger.debug(f"  - plan_display_name: {sub.get('plan_display_name')}")
             logger.debug(f"  - subscription_status: {sub.get('subscription_status')}")
@@ -195,7 +195,7 @@ async def get_current_user_info(
         else:
             # 🔍 DEBUG: No subscription found
             logger.debug("="*70)
-            logger.debug(f"[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
+            logger.debug("[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
             logger.debug(f"  - User ID: {user_id}")
             logger.debug(f"  - Email: {user['email']}")
 
@@ -213,18 +213,18 @@ async def get_current_user_info(
                     stripe_customer_id = profile_check.data.get("stripe_customer_id")
 
                     if stripe_sub_id:
-                        logger.warning(f"🚨 DESYNC DETECTED:")
+                        logger.warning("🚨 DESYNC DETECTED:")
                         logger.warning(f"   - Stripe Subscription ID in profiles: {stripe_sub_id}")
                         logger.warning(f"   - Stripe Customer ID: {stripe_customer_id}")
-                        logger.warning(f"   - BUT no active subscription in user_subscriptions table!")
-                        logger.warning(f"   - This indicates a webhook failure or manual DB modification")
-                        logger.warning(f"Possible causes:")
-                        logger.warning(f"   1. Stripe webhook failed to process subscription.created")
-                        logger.warning(f"   2. user_subscriptions.status is not 'active' or 'trialing'")
-                        logger.warning(f"   3. user_subscriptions.current_period_end has expired")
-                        logger.warning(f"   4. Manual deletion from user_subscriptions table")
+                        logger.warning("   - BUT no active subscription in user_subscriptions table!")
+                        logger.warning("   - This indicates a webhook failure or manual DB modification")
+                        logger.warning("Possible causes:")
+                        logger.warning("   1. Stripe webhook failed to process subscription.created")
+                        logger.warning("   2. user_subscriptions.status is not 'active' or 'trialing'")
+                        logger.warning("   3. user_subscriptions.current_period_end has expired")
+                        logger.warning("   4. Manual deletion from user_subscriptions table")
                     else:
-                        logger.debug(f"ℹ️ No Stripe subscription IDs in profiles (user never subscribed)")
+                        logger.debug("ℹ️ No Stripe subscription IDs in profiles (user never subscribed)")
             except Exception as check_error:
                 logger.error(f"⚠️ Failed to check profiles for Stripe IDs: {check_error}")
 
@@ -291,7 +291,7 @@ async def get_current_user_info(
 
         # 🔍 DEBUG: Log final response
         logger.debug("="*70)
-        logger.debug(f"[AUTH_ME DEBUG] 📤 FINAL RESPONSE to frontend:")
+        logger.debug("[AUTH_ME DEBUG] 📤 FINAL RESPONSE to frontend:")
         logger.debug(f"  - subscription.plan_name: {subscription_data.get('plan_name')}")
         logger.debug(f"  - subscription.plan_display_name: {subscription_data.get('plan_display_name')}")
         logger.debug(f"  - subscription.status: {subscription_data.get('status')}")

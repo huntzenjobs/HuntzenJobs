@@ -6,17 +6,17 @@ Endpoints for AI personal branding assistant (LinkedIn & X).
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, Request, status
+from pydantic import BaseModel, Field
+from structlog import get_logger
 
 from src.api.deps import (
     BrandingAgentDep,
+    clear_session,
     get_session_history,
     update_session_history,
-    clear_session,
 )
 from src.api.middleware import limiter
-from pydantic import BaseModel, Field
-from structlog import get_logger
 
 logger = get_logger(__name__)
 

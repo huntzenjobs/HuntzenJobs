@@ -18,12 +18,13 @@ Sprint: 6 - Ticket S6-6
 
 import os
 import uuid
+from datetime import datetime
+from typing import Any
+
 import httpx
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
+from fastapi import HTTPException, UploadFile
 from structlog import get_logger
-from fastapi import UploadFile, HTTPException
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 logger = get_logger(__name__)
 
@@ -36,7 +37,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     logger.warning("Supabase credentials not configured - Modal integration disabled")
-    supabase_client: Optional[Client] = None
+    supabase_client: Client | None = None
 else:
     supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
     logger.info("Supabase client initialized for Modal integration")
@@ -127,10 +128,10 @@ async def upload_cv_to_storage(
 
 async def create_cv_analysis_record(
     user_id: str,  # ✅ Maintenant OBLIGATOIRE (pas Optional)
-    pdf_url: Optional[str] = None,
-    cv_text: Optional[str] = None,
-    filename: Optional[str] = None,
-    job_description: Optional[str] = None,
+    pdf_url: str | None = None,
+    cv_text: str | None = None,
+    filename: str | None = None,
+    job_description: str | None = None,
     language: str = "fr"
 ) -> str:
     """
@@ -194,10 +195,10 @@ async def create_cv_analysis_record(
 
 async def spawn_modal_cv_processing(
     cv_id: str,
-    user_id: Optional[str] = None,
-    pdf_url: Optional[str] = None,
-    cv_text: Optional[str] = None,
-    job_description: Optional[str] = None,
+    user_id: str | None = None,
+    pdf_url: str | None = None,
+    cv_text: str | None = None,
+    job_description: str | None = None,
     language: str = "fr"
 ) -> bool:
     """
@@ -293,11 +294,11 @@ async def spawn_modal_cv_processing(
 
 async def process_cv_async(
     user_id: str,  # ✅ Maintenant OBLIGATOIRE (pas Optional)
-    file: Optional[UploadFile] = None,
-    cv_text: Optional[str] = None,
-    job_description: Optional[str] = None,
+    file: UploadFile | None = None,
+    cv_text: str | None = None,
+    job_description: str | None = None,
     language: str = "fr"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Main workflow for async CV processing with Modal.
 
@@ -387,9 +388,9 @@ async def process_cv_async(
 
 async def get_cv_analysis_status(
     cv_id: str,
-    user_id: Optional[str] = None,
-    anonymous_id: Optional[str] = None
-) -> Dict[str, Any]:
+    user_id: str | None = None,
+    anonymous_id: str | None = None
+) -> dict[str, Any]:
     """
     Get CV analysis status for polling.
 
@@ -467,7 +468,7 @@ async def list_user_cv_analyses(
     user_id: str,
     limit: int = 20,
     offset: int = 0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     List all CV analyses for a user.
 

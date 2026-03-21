@@ -8,8 +8,7 @@ Also triggers emails for inactive users if reengagement preference is enabled.
 """
 
 import logging
-from typing import Optional
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +32,8 @@ def create_notification(
     type: str,
     title: str,
     body: str,
-    data: Optional[dict] = None,
-) -> Optional[str]:
+    data: dict | None = None,
+) -> str | None:
     """
     Insert a notification into user_notifications table.
 
@@ -98,7 +97,7 @@ def _maybe_send_email(
         # Mark email as sent on the latest unread notification of this type
         # (avoids double-send if this function is called twice)
         supabase_client.table("user_notifications").update(
-            {"email_sent_at": datetime.now(timezone.utc).isoformat()}
+            {"email_sent_at": datetime.now(UTC).isoformat()}
         ).eq("user_id", user_id).eq("type", notif_type).is_(
             "email_sent_at", "null"
         ).execute()

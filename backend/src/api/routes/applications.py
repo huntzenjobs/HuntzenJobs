@@ -5,14 +5,14 @@ Track confirmed job applications.
 """
 
 import logging
-from typing import Optional
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel
 from supabase import create_client
 
-from src.config.settings import get_settings
 from src.api.deps import get_supabase_client
+from src.config.settings import get_settings
 from src.services.email import send_application_confirmation, send_application_status_change
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ router = APIRouter()
 settings = get_settings()
 
 
-def get_user_from_header(authorization: Optional[str]):
+def get_user_from_header(authorization: str | None):
     """Return (user_id, user_email) or (None, None) if not authenticated."""
     if not authorization or not authorization.startswith("Bearer "):
         return None, None
@@ -40,12 +40,12 @@ class ApplicationCreate(BaseModel):
     external_job_id: str
     job_title: str
     company: str
-    location: Optional[str] = None
-    salary: Optional[str] = None
+    location: str | None = None
+    salary: str | None = None
     job_url: str
-    job_source: Optional[str] = "unknown"
-    confirmed_by_user: Optional[bool] = True
-    notes: Optional[str] = None
+    job_source: str | None = "unknown"
+    confirmed_by_user: bool | None = True
+    notes: str | None = None
 
 
 class ApplicationStatusUpdate(BaseModel):
@@ -53,7 +53,7 @@ class ApplicationStatusUpdate(BaseModel):
 
 
 @router.get("/api/applications")
-async def get_applications(authorization: Optional[str] = Header(None)):
+async def get_applications(authorization: str | None = Header(None)):
     """Get all job applications for the current user, newest first."""
     user_id, _ = get_user_from_header(authorization)
     if not user_id:
@@ -75,7 +75,7 @@ async def get_applications(authorization: Optional[str] = Header(None)):
 @router.post("/api/applications", status_code=status.HTTP_201_CREATED)
 async def create_application(
     payload: ApplicationCreate,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """
     Create or update a job application entry.
@@ -91,7 +91,7 @@ async def create_application(
 
     try:
         supabase = get_supabase_client()
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         data = {
             "user_id": user_id,
@@ -140,7 +140,7 @@ async def create_application(
 async def update_application_status(
     application_id: str,
     payload: ApplicationStatusUpdate,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """Update the status of a job application."""
     valid_statuses = {"applied", "viewed", "interview", "rejected", "offer"}
@@ -160,7 +160,7 @@ async def update_application_status(
     try:
         supabase = get_supabase_client()
         resp = supabase.table("user_applications") \
-            .update({"status": payload.status, "updated_at": datetime.now(timezone.utc).isoformat()}) \
+            .update({"status": payload.status, "updated_at": datetime.now(UTC).isoformat()}) \
             .eq("id", application_id) \
             .eq("user_id", user_id) \
             .execute()
@@ -190,7 +190,7 @@ async def update_application_status(
 @router.delete("/api/applications/{application_id}")
 async def delete_application(
     application_id: str,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
 ):
     """Delete a job application entry."""
     user_id, _ = get_user_from_header(authorization)

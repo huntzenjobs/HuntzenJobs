@@ -83,19 +83,19 @@ async def aggregate_jobs(
         except Exception as e:
             logger.error(f"[Aggregator] {provider.name} failed: {e}")
             return provider.name, []
-    
+
     # Search all providers in parallel
     tasks = [search_provider(p) for p in providers]
     results = await asyncio.gather(*tasks)
-    
+
     # Combine results
     all_jobs = []
     source_stats = {}
-    
+
     for source_name, jobs in results:
         source_stats[source_name] = len(jobs)
         all_jobs.extend(jobs)
-    
+
     logger.info(f"[Aggregator] Collected {len(all_jobs)} total jobs | {source_stats}")
 
     # Post-filter alternance — filet de sécurité contre les faux positifs résiduels
@@ -131,13 +131,13 @@ def deduplicate_jobs(
     """
     if not jobs:
         return []
-    
+
     unique_jobs: list[dict[str, Any]] = []
     fingerprints: list[str] = []
-    
+
     for job in jobs:
         fp = _create_fingerprint(job)
-        
+
         # Check against all kept fingerprints for fuzzy match
         is_duplicate = False
         for existing_fp in fingerprints:
@@ -145,17 +145,17 @@ def deduplicate_jobs(
             if ratio >= similarity_threshold:
                 is_duplicate = True
                 break
-        
+
         if not is_duplicate:
             fingerprints.append(fp)
             unique_jobs.append(job)
-    
+
     if len(jobs) != len(unique_jobs):
         logger.info(
             f"[Dedup] {len(jobs)} → {len(unique_jobs)} "
             f"(removed {len(jobs) - len(unique_jobs)} duplicates, threshold={similarity_threshold})"
         )
-    
+
     return unique_jobs
 
 
@@ -168,13 +168,13 @@ def _create_fingerprint(job: dict) -> str:
     """
     title = (job.get("title") or "").lower().strip()
     company = (job.get("company") or "").lower().strip()
-    
+
     # Normalize common variations
     title = title.replace("senior", "sr").replace("junior", "jr")
     # Remove common suffixes that inflate difference
     for noise in ("(h/f)", "(f/h)", "(m/w/d)", "- cdi", "- cdd"):
         title = title.replace(noise, "")
-    
+
     return f"{title.strip()}|{company.strip()}"
 
 
@@ -193,15 +193,15 @@ def sort_jobs_by_relevance(
         Sorted list (most relevant first)
     """
     query_words = set(query.lower().split())
-    
+
     def relevance_score(job: dict) -> float:
         title = (job.get("title") or "").lower()
         title_words = set(title.split())
-        
+
         # Title word overlap
         overlap = len(query_words & title_words)
         title_score = overlap / len(query_words) if query_words else 0
-        
+
         # Source priority
         source_priority = {
             "google_jobs": 0.9,
@@ -213,13 +213,13 @@ def sort_jobs_by_relevance(
             "remoteok": 0.7,
         }
         source_score = source_priority.get(job.get("source", ""), 0.5)
-        
+
         # Has URL bonus
         url_bonus = 0.1 if job.get("url") else 0
-        
+
         # Has description bonus
         desc_bonus = 0.1 if job.get("description") else 0
-        
+
         return title_score * 0.5 + source_score * 0.3 + url_bonus + desc_bonus
-    
+
     return sorted(jobs, key=relevance_score, reverse=True)

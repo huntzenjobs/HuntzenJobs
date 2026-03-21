@@ -104,7 +104,7 @@ async def stress_test_task(
     Publie les métriques sur Redis channel stress:{run_id} toutes les 500ms.
     """
     from src.api.deps import get_supabase_client
-    from src.utils.cache import get_redis, redis_publish, redis_check_cancel
+    from src.utils.cache import get_redis, redis_check_cancel, redis_publish
 
     supabase = get_supabase_client()
     redis = await get_redis()

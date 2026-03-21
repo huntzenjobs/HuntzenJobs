@@ -53,7 +53,7 @@ describe("ReferralProgressBar", () => {
         tiers={mockTiers}
       />,
     );
-    expect(screen.getByText(/2 ami/i)).toBeInTheDocument();
+    expect(screen.getByText("remaining")).toBeInTheDocument();
   });
 });
 
@@ -78,7 +78,7 @@ describe("ReferralTierCard", () => {
         isCurrent={false}
       />,
     );
-    expect(screen.getByText(/atteint/i)).toBeInTheDocument();
+    expect(screen.getByText("reached")).toBeInTheDocument();
   });
   it("affiche 'Verrouillé' si non débloqué", () => {
     render(
@@ -89,7 +89,7 @@ describe("ReferralTierCard", () => {
         isCurrent={false}
       />,
     );
-    expect(screen.getByText(/verrouillé/i)).toBeInTheDocument();
+    expect(screen.getByText("locked")).toBeInTheDocument();
   });
 });
 
@@ -103,11 +103,15 @@ describe("ReferralFriendsList", () => {
         ]}
       />,
     );
-    expect(screen.getAllByText(/validé/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/inscrit/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/validated|badgeValidated/i).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/registered|badgeRegistered/i).length,
+    ).toBeGreaterThan(0);
   });
   it("affiche message vide si aucun ami", () => {
     render(<ReferralFriendsList friends={[]} />);
-    expect(screen.getByText(/aucun ami/i)).toBeInTheDocument();
+    expect(screen.getByText("emptyTitle")).toBeInTheDocument();
   });
 });

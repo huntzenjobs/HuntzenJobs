@@ -15,14 +15,16 @@ Simplified: Removed idempotency tables, webhook_failures logging, complex upgrad
 """
 
 import os
+from datetime import UTC, datetime
+from typing import Any, Literal
+
 import stripe
-from typing import Optional, Dict, Any, Literal
-from datetime import datetime, timezone
-from structlog import get_logger
 from fastapi import HTTPException
-from supabase import create_client, Client
-from src.services.user_events import log_event
+from structlog import get_logger
+from supabase import Client, create_client
+
 from src.services.admin_alerts import send_admin_alert
+from src.services.user_events import log_event
 
 logger = get_logger(__name__)
 
@@ -41,9 +43,9 @@ async def invalidate_user_quota_cache(user_id: str) -> bool:
 # Import email service for recruiter confirmations and payment emails
 try:
     from src.services.email import (
-        send_recruiter_request_confirmation,
         send_payment_confirmation_email,
         send_payment_failed_email,
+        send_recruiter_request_confirmation,
         send_subscription_cancelled_email,
     )
 except ImportError:
@@ -77,7 +79,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     logger.warning("Supabase not configured for Stripe integration")
-    supabase_client: Optional[Client] = None
+    supabase_client: Client | None = None
 else:
     supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
     logger.info("Supabase client initialized for Stripe integration")
@@ -91,7 +93,7 @@ PLAN_HIERARCHY = {"free": 0, "starter": 1, "pro": 2, "premium": 3}
 # HELPER: Get active subscription
 # ============================================
 
-async def get_active_subscription(user_id: str) -> Optional[Dict[str, Any]]:
+async def get_active_subscription(user_id: str) -> dict[str, Any] | None:
     """Get user's active subscription from database."""
     if not supabase_client:
         return None
@@ -110,7 +112,7 @@ async def get_active_subscription(user_id: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-async def _get_billing_period_from_price_id(price_id: str) -> Optional[str]:
+async def _get_billing_period_from_price_id(price_id: str) -> str | None:
     """Look up billing period (monthly/yearly) for a Stripe price ID."""
     if not supabase_client or not price_id:
         return None
@@ -126,7 +128,7 @@ async def _get_billing_period_from_price_id(price_id: str) -> Optional[str]:
         return None
 
 
-async def _get_or_create_stripe_customer(user_email: str) -> Optional[str]:
+async def _get_or_create_stripe_customer(user_email: str) -> str | None:
     """Return existing Stripe customer ID or None (let Stripe create one at checkout)."""
     try:
         customers = stripe.Customer.list(email=user_email, limit=1)
@@ -147,7 +149,7 @@ async def create_checkout_session(
     billing_period: Literal["monthly", "yearly"],
     success_url: str,
     cancel_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create or modify a Stripe subscription with smart routing:
 
@@ -309,7 +311,7 @@ async def _create_new_checkout(
     billing_period: str,
     success_url: str,
     cancel_url: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a brand-new Stripe Checkout session."""
     customer_id = await _get_or_create_stripe_customer(user_email)
 
@@ -342,7 +344,7 @@ async def _upgrade_subscription(
     new_price_id: str,
     plan_name: str,
     billing_period: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Upgrade an existing subscription immediately with Stripe proration.
     - Charges the difference right now
@@ -373,7 +375,7 @@ async def _schedule_downgrade(
     new_price_id: str,
     plan_name: str,
     billing_period: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Schedule a downgrade at the end of the current billing period.
     - No immediate charge
@@ -391,7 +393,7 @@ async def _schedule_downgrade(
         billing_cycle_anchor="unchanged",     # Keep same renewal date
     )
 
-    period_end_dt = datetime.fromtimestamp(period_end, tz=timezone.utc).isoformat() if period_end else None
+    period_end_dt = datetime.fromtimestamp(period_end, tz=UTC).isoformat() if period_end else None
     logger.info(f"[CHECKOUT] Downgrade scheduled for {stripe_sub_id} → {plan_name}/{billing_period} at period end")
     return {
         "success": True,
@@ -411,7 +413,7 @@ async def _schedule_downgrade(
 async def handle_stripe_webhook(
     payload: bytes,
     signature: str
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Handle Stripe webhook events - SIMPLIFIED.
 
@@ -501,7 +503,7 @@ async def handle_stripe_webhook(
 # WEBHOOK HANDLERS
 # ============================================
 
-async def handle_checkout_completed(session: Dict[str, Any]):
+async def handle_checkout_completed(session: dict[str, Any]):
     """Handle successful checkout - create or update subscription."""
     metadata = session.get("metadata", {})
 
@@ -515,7 +517,7 @@ async def handle_checkout_completed(session: Dict[str, Any]):
     session_id = session.get("id", "unknown")
 
     if not user_id or not plan_name:
-        error_msg = f"Missing user_id or plan_name in checkout metadata"
+        error_msg = "Missing user_id or plan_name in checkout metadata"
         logger.error(f"[WEBHOOK] {error_msg}")
 
         # ✅ FIX 2: Logger dans webhook_failures
@@ -614,15 +616,15 @@ async def handle_checkout_completed(session: Dict[str, Any]):
             "stripe_customer_id": stripe_customer_id,
             "stripe_price_id": stripe_subscription["items"]["data"][0]["price"]["id"],
             "current_period_start": datetime.fromtimestamp(
-                stripe_subscription.get("current_period_start", int(datetime.now(timezone.utc).timestamp())),
-                tz=timezone.utc
+                stripe_subscription.get("current_period_start", int(datetime.now(UTC).timestamp())),
+                tz=UTC
             ).isoformat(),
             "current_period_end": datetime.fromtimestamp(
-                stripe_subscription.get("current_period_end", int(datetime.now(timezone.utc).timestamp()) + 2592000),  # +30 days
-                tz=timezone.utc
+                stripe_subscription.get("current_period_end", int(datetime.now(UTC).timestamp()) + 2592000),  # +30 days
+                tz=UTC
             ).isoformat(),
             "cancel_at_period_end": stripe_subscription.get("cancel_at_period_end", False),
-            "updated_at": datetime.now(timezone.utc).isoformat()
+            "updated_at": datetime.now(UTC).isoformat()
         }
 
         # Check if user already has an active subscription
@@ -638,8 +640,8 @@ async def handle_checkout_completed(session: Dict[str, Any]):
             supabase_client.table("user_subscriptions")\
                 .update({
                     "status": "canceled",
-                    "canceled_at": datetime.now(timezone.utc).isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat()
+                    "canceled_at": datetime.now(UTC).isoformat(),
+                    "updated_at": datetime.now(UTC).isoformat()
                 })\
                 .eq("user_id", user_id)\
                 .eq("status", "active")\
@@ -712,7 +714,7 @@ async def handle_checkout_completed(session: Dict[str, Any]):
                 signup = signup_res.data
                 referrer_id = signup["referrals"]["referrer_id"]
                 supabase_client.table("referral_signups").update({
-                    "converted_to_paid_at": datetime.now(timezone.utc).isoformat(),
+                    "converted_to_paid_at": datetime.now(UTC).isoformat(),
                     "converted_plan": plan_name,
                 }).eq("id", signup["id"]).execute()
                 supabase_client.rpc(
@@ -736,7 +738,7 @@ async def handle_checkout_completed(session: Dict[str, Any]):
         raise
 
 
-async def handle_subscription_updated(subscription: Dict[str, Any]):
+async def handle_subscription_updated(subscription: dict[str, Any]):
     """Handle subscription updates (renewals, plan changes via modify)."""
     stripe_subscription_id = subscription["id"]
 
@@ -750,15 +752,15 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
             "status": subscription["status"],
             "stripe_price_id": new_price_id,
             "current_period_start": datetime.fromtimestamp(
-                subscription.get("current_period_start", int(datetime.now(timezone.utc).timestamp())),
-                tz=timezone.utc
+                subscription.get("current_period_start", int(datetime.now(UTC).timestamp())),
+                tz=UTC
             ).isoformat(),
             "current_period_end": datetime.fromtimestamp(
-                subscription.get("current_period_end", int(datetime.now(timezone.utc).timestamp())),
-                tz=timezone.utc
+                subscription.get("current_period_end", int(datetime.now(UTC).timestamp())),
+                tz=UTC
             ).isoformat(),
             "cancel_at_period_end": subscription.get("cancel_at_period_end", False),
-            "updated_at": datetime.now(timezone.utc).isoformat()
+            "updated_at": datetime.now(UTC).isoformat()
         }
 
         # Resolve plan_id from the new price ID (handles upgrades/downgrades via Subscription.modify)
@@ -811,7 +813,7 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
                                     plan_display = plan_row.data.get("display_name", plan_display)
                             period_end = subscription.get("current_period_end", 0)
                             end_date = datetime.fromtimestamp(
-                                period_end, tz=timezone.utc
+                                period_end, tz=UTC
                             ).strftime("%d/%m/%Y") if period_end else ""
                             send_subscription_cancelled_email(
                                 user_email=user_email,
@@ -828,7 +830,7 @@ async def handle_subscription_updated(subscription: Dict[str, Any]):
         raise
 
 
-async def handle_subscription_deleted(subscription: Dict[str, Any]):
+async def handle_subscription_deleted(subscription: dict[str, Any]):
     """Handle subscription cancellation."""
     stripe_subscription_id = subscription["id"]
 
@@ -839,8 +841,8 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
         result = supabase_client.table("user_subscriptions")\
             .update({
                 "status": "canceled",
-                "canceled_at": datetime.now(timezone.utc).isoformat(),
-                "updated_at": datetime.now(timezone.utc).isoformat()
+                "canceled_at": datetime.now(UTC).isoformat(),
+                "updated_at": datetime.now(UTC).isoformat()
             })\
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .execute()
@@ -852,7 +854,7 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
                 log_event(
                     supabase_client,
                     event_name="subscription_cancelled",
-                    event_label=f"Un utilisateur a annulé son abonnement",
+                    event_label="Un utilisateur a annulé son abonnement",
                     category="payment",
                     user_id=user_id,
                     feature="stripe",
@@ -860,7 +862,7 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
                     properties={"stripe_subscription_id": stripe_subscription_id},
                 )
                 await send_admin_alert(
-                    subject=f"Résiliation abonnement",
+                    subject="Résiliation abonnement",
                     body=f"User {user_id} a annulé.\nStripe sub: {stripe_subscription_id}",
                     severity="warning",
                 )
@@ -872,7 +874,7 @@ async def handle_subscription_deleted(subscription: Dict[str, Any]):
         raise
 
 
-async def handle_payment_failed(invoice: Dict[str, Any]):
+async def handle_payment_failed(invoice: dict[str, Any]):
     """Handle failed payment."""
     stripe_subscription_id = invoice["subscription"]
 
@@ -883,7 +885,7 @@ async def handle_payment_failed(invoice: Dict[str, Any]):
         result = supabase_client.table("user_subscriptions")\
             .update({
                 "status": "past_due",
-                "updated_at": datetime.now(timezone.utc).isoformat()
+                "updated_at": datetime.now(UTC).isoformat()
             })\
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .execute()
@@ -921,7 +923,7 @@ async def handle_payment_failed(invoice: Dict[str, Any]):
         raise
 
 
-async def handle_recruiter_checkout(session: Dict[str, Any]):
+async def handle_recruiter_checkout(session: dict[str, Any]):
     """Handle successful recruiter request payment."""
     request_id = session["metadata"].get("request_id")
 

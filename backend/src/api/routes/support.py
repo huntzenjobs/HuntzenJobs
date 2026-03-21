@@ -9,13 +9,12 @@ PATCH /api/admin/support/tickets/{id} — admin: update status + reply
 """
 
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from src.api.deps import get_supabase_client, CurrentUserDep, AdminUserDep
+from src.api.deps import AdminUserDep, CurrentUserDep, get_supabase_client
 from src.api.middleware import limiter
 from src.config.settings import get_settings
 from src.services.email import send_support_ticket_notification, send_support_ticket_reply
@@ -34,13 +33,13 @@ class SupportTicketCreate(BaseModel):
     priority: str = Field(default="normal", pattern="^(low|normal|urgent)$")
     subject: str = Field(..., min_length=5, max_length=150)
     description: str = Field(..., min_length=20, max_length=2000)
-    attachment_url: Optional[str] = None
-    page_url: Optional[str] = None
+    attachment_url: str | None = None
+    page_url: str | None = None
 
 
 class AdminTicketUpdate(BaseModel):
-    status: Optional[str] = Field(default=None, pattern="^(open|in_progress|resolved|closed)$")
-    admin_reply: Optional[str] = None
+    status: str | None = Field(default=None, pattern="^(open|in_progress|resolved|closed)$")
+    admin_reply: str | None = None
 
 
 class ChatbotRequest(BaseModel):
@@ -193,7 +192,7 @@ Réponds en français. Sois précis et concis. Ne mentionne pas d'autres sites o
             max_tokens=400,
         )
 
-        from langchain_core.messages import SystemMessage, HumanMessage
+        from langchain_core.messages import HumanMessage, SystemMessage
         response = llm.invoke([
             SystemMessage(content=guardrail_prompt),
             HumanMessage(content=payload.question),
@@ -218,10 +217,10 @@ Réponds en français. Sois précis et concis. Ne mentionne pas d'autres sites o
 @router.get("/admin/support/tickets")
 async def admin_list_tickets(
     current_admin: AdminUserDep,
-    status_filter: Optional[str] = None,
-    category: Optional[str] = None,
-    priority: Optional[str] = None,
-    search: Optional[str] = None,
+    status_filter: str | None = None,
+    category: str | None = None,
+    priority: str | None = None,
+    search: str | None = None,
     page: int = 1,
     page_size: int = 20,
 ):
@@ -275,7 +274,7 @@ async def admin_list_tickets(
         in_progress_count = sum(1 for t in all_tickets if t.get("status") == "in_progress")
         resolved_count = sum(1 for t in all_tickets if t.get("status") == "resolved")
         total = len(all_tickets)
-        resolved_pct = round((resolved_count / total * 100)) if total > 0 else 0
+        resolved_pct = round(resolved_count / total * 100) if total > 0 else 0
     except Exception:
         open_count = in_progress_count = resolved_count = resolved_pct = 0
 
@@ -311,11 +310,11 @@ async def admin_update_ticket(
         raise HTTPException(status_code=404, detail="Ticket introuvable")
 
     # Build update payload
-    update_data: dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    update_data: dict = {"updated_at": datetime.now(UTC).isoformat()}
     if payload.status:
         update_data["status"] = payload.status
         if payload.status == "resolved":
-            update_data["resolved_at"] = datetime.now(timezone.utc).isoformat()
+            update_data["resolved_at"] = datetime.now(UTC).isoformat()
     if payload.admin_reply:
         update_data["admin_reply"] = payload.admin_reply
 

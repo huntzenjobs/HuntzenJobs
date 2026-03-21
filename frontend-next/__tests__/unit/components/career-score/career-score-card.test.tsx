@@ -31,9 +31,9 @@ describe("CareerScoreCard", () => {
 
   it("affiche les 3 sous-barres Activity, AI, XP", () => {
     render(<CareerScoreCard />);
-    expect(screen.getByText(/activité/i)).toBeInTheDocument();
-    expect(screen.getByText(/ia/i)).toBeInTheDocument();
-    expect(screen.getByText(/xp/i)).toBeInTheDocument();
+    expect(screen.getByText("activity")).toBeInTheDocument();
+    expect(screen.getByText("ai")).toBeInTheDocument();
+    expect(screen.getByText("xp")).toBeInTheDocument();
   });
 
   it("affiche la justification IA", () => {
@@ -43,8 +43,6 @@ describe("CareerScoreCard", () => {
 
   it("affiche le message motivant si score > 60", () => {
     render(<CareerScoreCard />);
-    expect(
-      screen.getByText(/profil devient vraiment intéressant/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText("profileAttractive")).toBeInTheDocument();
   });
 });

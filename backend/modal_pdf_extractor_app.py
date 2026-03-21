@@ -28,6 +28,7 @@ def _download_docling_models():
     """
     import os
     import tempfile
+
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions
     from docling.document_converter import DocumentConverter, PdfFormatOption
@@ -110,9 +111,10 @@ async def extract_pdf_text(body: dict) -> dict:
     import base64
     import os
     import tempfile
-    from docling.document_converter import DocumentConverter, PdfFormatOption
-    from docling.datamodel.pipeline_options import PdfPipelineOptions
+
     from docling.datamodel.base_models import InputFormat
+    from docling.datamodel.pipeline_options import PdfPipelineOptions
+    from docling.document_converter import DocumentConverter, PdfFormatOption
 
     pdf_bytes_b64 = body.get("pdf_bytes")
     if not pdf_bytes_b64:
@@ -144,6 +146,7 @@ async def extract_pdf_text(body: dict) -> dict:
             print(f"⚠️ Docling returned only {len((text or '').strip())} chars, trying pypdf fallback")
             try:
                 import io as _io
+
                 from pypdf import PdfReader
                 reader = PdfReader(_io.BytesIO(pdf_bytes))
                 fallback_text = "\n".join(

@@ -7,20 +7,20 @@ Dependency injection for FastAPI routes.
 import logging
 import threading
 from collections import defaultdict
-from typing import Annotated, Generator, Optional
+from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, status
-from supabase import create_client, Client
+from supabase import Client, create_client
 
-from src.agents.coach import CareerCoachAgent
-from src.agents.job_scout.main_agent import JobScoutAgent
-from src.agents.job_scout.conversational_agent import JobScoutConversationalAgent
-from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
-from src.agents.cv_analyzer.conversational_agent import CVAnalyzerConversationalAgent
-from src.agents.cv_adapter.main_agent import CVAdapterAgent
-from src.agents.cv_adapter.conversational_agent import CVAdapterConversationalAgent
-from src.agents.interview_sim.conversational_agent import InterviewSimAgent
 from src.agents.branding.main_agent import BrandingAgent
+from src.agents.coach import CareerCoachAgent
+from src.agents.cv_adapter.conversational_agent import CVAdapterConversationalAgent
+from src.agents.cv_adapter.main_agent import CVAdapterAgent
+from src.agents.cv_analyzer.conversational_agent import CVAnalyzerConversationalAgent
+from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
+from src.agents.interview_sim.conversational_agent import InterviewSimAgent
+from src.agents.job_scout.conversational_agent import JobScoutConversationalAgent
+from src.agents.job_scout.main_agent import JobScoutAgent
 from src.config.settings import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -330,7 +330,7 @@ def get_supabase_anon_client() -> Client:
     return _supabase_anon_client
 
 
-def get_user_info_from_token(authorization: Optional[str]) -> Optional[dict]:
+def get_user_info_from_token(authorization: str | None) -> dict | None:
     """Return {"id": ..., "email": ...} or None if not authenticated."""
     if not authorization or not authorization.startswith("Bearer "):
         return None
@@ -344,7 +344,7 @@ def get_user_info_from_token(authorization: Optional[str]) -> Optional[dict]:
     return None
 
 
-def get_user_id_from_token(authorization: Optional[str]) -> Optional[str]:
+def get_user_id_from_token(authorization: str | None) -> str | None:
     """
     Extract user ID from Authorization Bearer token.
 
@@ -373,7 +373,7 @@ def get_user_id_from_token(authorization: Optional[str]) -> Optional[str]:
 SupabaseClientDep = Annotated[Client, Depends(get_supabase_client)]
 
 
-async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
+async def get_current_user(authorization: str | None = Header(None)) -> dict:
     """
     Get current authenticated user from JWT token.
 

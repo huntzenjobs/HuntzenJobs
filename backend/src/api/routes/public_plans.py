@@ -5,7 +5,7 @@ Returns active subscription plans for pricing pages and frontend hooks.
 
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi import APIRouter
 
@@ -20,7 +20,7 @@ PLANS_CACHE_TTL = 300  # 5 minutes
 
 
 @router.get("/plans")
-async def get_public_plans() -> List[Dict[str, Any]]:
+async def get_public_plans() -> list[dict[str, Any]]:
     """
     Returns all active subscription plans with display info.
     Used by pricing pages and modals — no auth required.
