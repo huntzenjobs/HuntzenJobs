@@ -63,7 +63,7 @@ class AgentConfig(BaseModel):
 class BaseAgent(ABC):
     """
     Abstract base class for all HuntZen agents.
-    
+
     Provides:
     - LLM initialization with Groq
     - System prompt loading from files
@@ -74,7 +74,7 @@ class BaseAgent(ABC):
     def __init__(self, config: AgentConfig):
         """
         Initialize the agent.
-        
+
         Args:
             config: Agent configuration
         """
@@ -111,7 +111,7 @@ class BaseAgent(ABC):
     def register_sub_agent(self, sub_agent: "SubAgent") -> None:
         """
         Register a sub-agent for delegation.
-        
+
         Args:
             sub_agent: SubAgent instance to register
         """
@@ -121,7 +121,7 @@ class BaseAgent(ABC):
     def register_tool(self, tool: LangChainBaseTool) -> None:
         """
         Register a tool for the agent.
-        
+
         Args:
             tool: LangChain tool to register
         """
@@ -131,11 +131,11 @@ class BaseAgent(ABC):
     async def delegate_to(self, sub_agent_name: str, **kwargs: Any) -> Any:
         """
         Delegate task to a sub-agent.
-        
+
         Args:
             sub_agent_name: Name of the sub-agent
             **kwargs: Arguments to pass to sub-agent
-            
+
         Returns:
             Sub-agent result
         """
@@ -151,11 +151,11 @@ class BaseAgent(ABC):
     ) -> list:
         """
         Build message list for LLM.
-        
+
         Args:
             user_message: Current user message
             history: Conversation history
-            
+
         Returns:
             List of LangChain messages
         """
@@ -180,11 +180,11 @@ class BaseAgent(ABC):
     ) -> str:
         """
         Simple chat method.
-        
+
         Args:
             message: User message
             history: Conversation history
-            
+
         Returns:
             Agent response
         """
@@ -206,12 +206,12 @@ class BaseAgent(ABC):
     def _parse_json(self, text: str) -> dict | None:
         """
         Parse JSON from LLM response text.
-        
+
         Handles common issues like markdown code blocks and trailing text.
-        
+
         Args:
             text: Raw LLM response text
-            
+
         Returns:
             Parsed dict or None if parsing fails
         """
@@ -251,10 +251,10 @@ class BaseAgent(ABC):
     async def run(self, **kwargs: Any) -> dict[str, Any]:
         """
         Main execution method - must be implemented by subclasses.
-        
+
         Args:
             **kwargs: Task-specific arguments
-            
+
         Returns:
             Task result
         """
@@ -264,7 +264,7 @@ class BaseAgent(ABC):
 class SubAgent:
     """
     Lightweight sub-agent for specialized tasks.
-    
+
     Sub-agents are simpler than main agents and focus on
     a single specialized task (e.g., query refinement, scoring).
     """
@@ -279,7 +279,7 @@ class SubAgent:
     ):
         """
         Initialize sub-agent.
-        
+
         Args:
             name: Sub-agent name
             system_prompt: System prompt for the task
@@ -304,11 +304,11 @@ class SubAgent:
     async def run(self, task: str, context: str = "") -> str:
         """
         Execute the sub-agent's task.
-        
+
         Args:
             task: Task description or input
             context: Additional context
-            
+
         Returns:
             Task result
         """
@@ -336,7 +336,7 @@ class SubAgent:
 class BaseTool(LangChainBaseTool):
     """
     Base class for custom tools.
-    
+
     Wraps external APIs or functions as LangChain tools.
     """
 

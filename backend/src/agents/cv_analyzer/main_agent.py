@@ -30,7 +30,7 @@ HUNTZEN_CV_MARKERS = ["HuntZen Jobs", "Optimisé par HuntZen", "HuntZen ATS", "h
 class CVAnalyzerAgent(BaseAgent):
     """
     CV Analyzer Agent with deep sub-agent architecture.
-    
+
     Orchestrates:
     - ATS scoring for resume optimization
     - Skill extraction and categorization
@@ -122,12 +122,12 @@ class CVAnalyzerAgent(BaseAgent):
     ) -> dict[str, Any]:
         """
         Execute comprehensive CV analysis.
-        
+
         Args:
             cv_text: CV content as text
             job_description: Optional job description for matching
             language: Response language
-            
+
         Returns:
             Complete analysis results
         """
@@ -236,7 +236,7 @@ class CVAnalyzerAgent(BaseAgent):
 
         # From ATS breakdown
         breakdown = ats_result.get("breakdown", {})
-        for key, value in breakdown.items():
+        for _key, value in breakdown.items():
             if any(word in str(value).lower() for word in ["good", "strong", "clear", "well", "excellent"]):
                 strengths.append(value)
 
@@ -327,22 +327,22 @@ class CVAnalyzerAgent(BaseAgent):
                 raise RuntimeError(
                     f"All PDF extraction methods failed. "
                     f"Docling: {docling_exc}. pypdf: {pypdf_exc}."
-                )
+                ) from None
             raise RuntimeError(
                 f"Docling returned insufficient text ({len((docling_text or '').strip())} chars). "
                 f"pypdf fallback also failed: {pypdf_exc}. "
                 "The PDF may be image-based (scanned) or use unsupported encoding."
-            )
+            ) from None
         finally:
             os.unlink(tmp_path)
 
     async def analyze_ats_only(self, cv_text: str) -> dict:
         """
         Quick ATS-only analysis.
-        
+
         Args:
             cv_text: CV content
-            
+
         Returns:
             ATS score and breakdown
         """
@@ -351,11 +351,11 @@ class CVAnalyzerAgent(BaseAgent):
     async def match_with_job(self, cv_text: str, job_description: str) -> dict:
         """
         Match CV against specific job.
-        
+
         Args:
             cv_text: CV content
             job_description: Job posting content
-            
+
         Returns:
             Match analysis
         """
@@ -384,12 +384,12 @@ async def analyze_cv(
 ) -> dict[str, Any]:
     """
     Utility function for CV analysis.
-    
+
     Args:
         cv_text: CV content
         job_description: Optional job description
         language: Response language
-        
+
     Returns:
         Analysis results
     """

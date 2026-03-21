@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class AdzunaProvider(BaseJobProvider):
     """
     Adzuna API provider.
-    
+
     Features:
     - Free tier: 1000 requests/month
     - Supports 17 countries
@@ -48,7 +48,7 @@ class AdzunaProvider(BaseJobProvider):
     ) -> list[dict[str, Any]]:
         """
         Search Adzuna for jobs.
-        
+
         Args:
             query: Job title or keywords
             location: City or region
@@ -56,7 +56,7 @@ class AdzunaProvider(BaseJobProvider):
             max_results: Maximum results (max 50 per page)
             max_days: Only jobs from last N days
             contract_type: Filter by contract type
-            
+
         Returns:
             List of normalized job listings
         """

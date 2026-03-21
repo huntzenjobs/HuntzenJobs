@@ -13,7 +13,9 @@ import { Step2AnalysisType } from "@/components/cv/wizard/step2-analysis-type";
 import { Step3Results } from "@/components/cv/wizard/step3-results";
 import { CVHistoryDrawer } from "@/components/cv/cv-history-drawer";
 import { useCVHistory } from "@/hooks/use-cv-history";
-import { exportCVAnalysisToPDF } from "@/utils/export-cv-pdf";
+// Dynamic import: @react-pdf/renderer est lourd (~200KB), chargé uniquement au clic export
+const lazyExportCVAnalysisToPDF = () =>
+  import("@/utils/export-cv-pdf").then((mod) => mod.exportCVAnalysisToPDF);
 import type { CVAnalysisResult } from "@/hooks/use-cv-history";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
 import type { BreakdownItem } from "@/components/cv/score-breakdown-v2";
@@ -206,6 +208,7 @@ export function WizardContainer({
     const fileName = wizardState.file?.name
       ? `cv-analysis-${wizardState.file.name.replace(/\.[^.]+$/, "")}.pdf`
       : undefined;
+    const exportCVAnalysisToPDF = await lazyExportCVAnalysisToPDF();
     await exportCVAnalysisToPDF(wizardState.result, fileName);
   };
 

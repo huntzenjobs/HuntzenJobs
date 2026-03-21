@@ -431,4 +431,4 @@ async def cv_analysis_callback(
         raise
     except Exception as e:
         logger.error(f"[CALLBACK] Error processing callback: {e}")
-        raise HTTPException(status_code=500, detail=f"Callback processing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Callback processing failed: {str(e)}") from None

@@ -34,7 +34,7 @@ STATES = {
 class BrandingAgent(BaseAgent):
     """
     Personal Branding Agent with conversational state machine.
-    
+
     Guides users through building their personal brand on LinkedIn & X:
     1. Learns their background and goals
     2. Discovers their preferred writing style
@@ -63,14 +63,14 @@ class BrandingAgent(BaseAgent):
     ) -> dict[str, Any]:
         """
         Main execution — conversational branding assistant.
-        
+
         Args:
             message: User's message
             history: Conversation history
             language: Response language (fr/en)
             branding_state: Current state of the branding profile
                             (state, profile data collected so far)
-        
+
         Returns:
             {success, response, language, branding_state}
         """
@@ -109,7 +109,7 @@ class BrandingAgent(BaseAgent):
     def _build_state_context(self, state: dict) -> str:
         """
         Build a context string from the current branding state.
-        
+
         This is injected before the user message so the LLM knows
         where we are in the flow and what we already know about the user.
         """
@@ -144,7 +144,7 @@ class BrandingAgent(BaseAgent):
     def _extract_state_updates(self, response_text: str, current_state: dict) -> dict:
         """
         Try to extract structured state updates from the LLM response.
-        
+
         The prompt instructs the LLM to include a JSON block at the end
         with any profile updates. If found, merge into current state.
         """

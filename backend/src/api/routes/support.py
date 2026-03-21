@@ -86,7 +86,7 @@ async def create_ticket(
         }).execute()
     except Exception as e:
         logger.error(f"Failed to create support ticket for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Erreur lors de la création du ticket")
+        raise HTTPException(status_code=500, detail="Erreur lors de la création du ticket") from None
 
     ticket = result.data[0] if result.data else {}
     ticket_id = ticket.get("id", "")
@@ -144,7 +144,7 @@ async def get_my_tickets(current_user: CurrentUserDep):
         )
     except Exception as e:
         logger.error(f"Failed to fetch tickets for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Erreur lors du chargement des tickets")
+        raise HTTPException(status_code=500, detail="Erreur lors du chargement des tickets") from None
 
     tickets = result.data or []
     # Add short ID for display
@@ -207,7 +207,7 @@ Réponds en français. Sois précis et concis. Ne mentionne pas d'autres sites o
 
     except Exception as e:
         logger.error(f"Chatbot error: {e}")
-        raise HTTPException(status_code=500, detail="Service temporairement indisponible")
+        raise HTTPException(status_code=500, detail="Service temporairement indisponible") from None
 
 
 # ---------------------------------------------------------------------------
@@ -249,7 +249,7 @@ async def admin_list_tickets(
         result = query.execute()
     except Exception as e:
         logger.error(f"Admin ticket list failed: {e}")
-        raise HTTPException(status_code=500, detail="Erreur lors du chargement des tickets")
+        raise HTTPException(status_code=500, detail="Erreur lors du chargement des tickets") from None
 
     tickets = result.data or []
 
@@ -303,7 +303,7 @@ async def admin_update_ticket(
     try:
         existing = supabase.table("support_tickets").select("*").eq("id", ticket_id).single().execute()
     except Exception:
-        raise HTTPException(status_code=404, detail="Ticket introuvable")
+        raise HTTPException(status_code=404, detail="Ticket introuvable") from None
 
     ticket = existing.data
     if not ticket:
@@ -322,7 +322,7 @@ async def admin_update_ticket(
         supabase.table("support_tickets").update(update_data).eq("id", ticket_id).execute()
     except Exception as e:
         logger.error(f"Failed to update ticket {ticket_id}: {e}")
-        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour du ticket")
+        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour du ticket") from None
 
     short_id = str(ticket_id)[:8].upper()
 

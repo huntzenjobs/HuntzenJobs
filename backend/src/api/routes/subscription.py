@@ -89,7 +89,7 @@ async def sync_subscription_cache(current_user: dict = Depends(get_current_user)
         raise
     except Exception as e:
         logger.error(f"Cache sync failed for user {current_user.get('id')}: {e}")
-        raise HTTPException(status_code=500, detail=f"Cache sync failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Cache sync failed: {str(e)}") from None
 
 
 @router.get("/current")
@@ -152,7 +152,7 @@ async def get_current_subscription(current_user: dict = Depends(get_current_user
         raise
     except Exception as e:
         logger.error(f"Failed to get current subscription for user {current_user.get('id')}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get subscription: {str(e)}") from None
 
 
 # ============================================================================
@@ -233,7 +233,7 @@ async def manage_coach_session(
 
             # Increment usage via RPC
             try:
-                increment_result = supabase_client.rpc("increment_usage", {
+                supabase_client.rpc("increment_usage", {
                     "p_user_id": user_id,
                     "p_feature": "coach",
                     "p_amount": elapsed_seconds
@@ -303,4 +303,4 @@ async def manage_coach_session(
         raise
     except Exception as e:
         logger.error(f"Failed to manage coach session for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to manage coach session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to manage coach session: {str(e)}") from None

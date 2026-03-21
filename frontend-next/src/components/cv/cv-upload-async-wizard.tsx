@@ -54,7 +54,9 @@ import { ResultsAccordion } from "@/components/cv/results-accordion";
 import { CVInfoPanel } from "@/components/cv/cv-info-panel";
 import { ScoreRing } from "@/components/cv/score-ring";
 import { ProcessingSteps } from "@/components/cv/processing-steps";
-import { exportCVAnalysisToPDF } from "@/utils/export-cv-pdf";
+// Dynamic import: @react-pdf/renderer est lourd (~200KB), chargé uniquement au clic export
+const lazyExportCVAnalysisToPDF = () =>
+  import("@/utils/export-cv-pdf").then((mod) => mod.exportCVAnalysisToPDF);
 import { type FeatureType, PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
 import type { CvInfo } from "@/components/cv/cv-info-panel";
@@ -1626,6 +1628,8 @@ export function CVUploadAsyncWizard({
                   try {
                     // exportCVAnalysisToPDF expects CVAnalysisResult (history format)
                     // but displayResult is CVAnalysisApiResult -- compatible at runtime
+                    const exportCVAnalysisToPDF =
+                      await lazyExportCVAnalysisToPDF();
                     await exportCVAnalysisToPDF(
                       displayResult as unknown as Parameters<
                         typeof exportCVAnalysisToPDF

@@ -199,7 +199,7 @@ async def list_users(
 
     except Exception as e:
         logger.error(f"Failed to list users: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch users")
+        raise HTTPException(status_code=500, detail="Failed to fetch users") from None
 
 
 @router.get("/users/{user_id}")
@@ -281,7 +281,7 @@ async def get_user_detail(
         raise
     except Exception as e:
         logger.error(f"Failed to get user detail {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch user detail")
+        raise HTTPException(status_code=500, detail="Failed to fetch user detail") from None
 
 
 @router.patch("/users/{user_id}/suspend")
@@ -314,7 +314,7 @@ async def suspend_user(
         raise
     except Exception as e:
         logger.error(f"Failed to suspend user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to suspend user")
+        raise HTTPException(status_code=500, detail="Failed to suspend user") from None
 
 
 @router.patch("/users/{user_id}/reactivate")
@@ -344,7 +344,7 @@ async def reactivate_user(
         raise
     except Exception as e:
         logger.error(f"Failed to reactivate user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to reactivate user")
+        raise HTTPException(status_code=500, detail="Failed to reactivate user") from None
 
 
 @router.post("/users/{user_id}/reset-password")
@@ -392,7 +392,7 @@ async def reset_user_password(
         raise
     except Exception as e:
         logger.error(f"Failed to reset password for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to send reset email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to send reset email: {str(e)}") from None
 
 
 @router.delete("/users/{user_id}")
@@ -431,7 +431,7 @@ async def delete_user(
         raise
     except Exception as e:
         logger.error(f"Failed to delete user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}") from None
 
 
 @router.post("/users/{user_id}/force-plan")
@@ -490,7 +490,7 @@ async def force_plan_change(
         raise
     except Exception as e:
         logger.error(f"Failed to force plan change for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to change plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to change plan: {str(e)}") from None
 
 
 # ============================================================
@@ -535,7 +535,7 @@ async def update_plan_limits(
 
         merged_limits = {**(current.data.get("limits") or {}), **limits}
 
-        result = supabase.table("subscription_plans").update({
+        supabase.table("subscription_plans").update({
             "limits": merged_limits,
             "updated_at": datetime.now(UTC).isoformat(),
         }).eq("id", plan_id).execute()
@@ -564,7 +564,7 @@ async def update_plan_limits(
         raise
     except Exception as e:
         logger.error(f"Failed to update plan limits {plan_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update limits")
+        raise HTTPException(status_code=500, detail="Failed to update limits") from None
 
 
 @router.patch("/plans/{plan_id}/features")
@@ -638,7 +638,7 @@ async def update_plan_features(
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to update features")
+        raise HTTPException(status_code=500, detail="Failed to update features") from None
 
 
 @router.patch("/plans/{plan_id}/wording")
@@ -692,7 +692,7 @@ async def update_plan_wording(
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to update wording")
+        raise HTTPException(status_code=500, detail="Failed to update wording") from None
 
 
 @router.patch("/plans/{plan_id}/price")
@@ -740,7 +740,7 @@ async def update_plan_display_price(
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to update price")
+        raise HTTPException(status_code=500, detail="Failed to update price") from None
 
 
 @router.post("/plans/{plan_id}/stripe-price")
@@ -825,10 +825,10 @@ async def update_stripe_price(
         raise
     except stripe_lib.StripeError as e:
         logger.error(f"Stripe error updating price: {e}")
-        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}") from None
     except Exception as e:
         logger.error(f"Failed to update Stripe price: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update Stripe price")
+        raise HTTPException(status_code=500, detail="Failed to update Stripe price") from None
 
 
 # ============================================================
@@ -979,7 +979,7 @@ async def get_revenue_analytics(
             by_plan[plan_name]["mrr"] += monthly
 
         # Total users per plan (including free)
-        all_subs = supabase.table("user_subscriptions").select(
+        supabase.table("user_subscriptions").select(
             "subscription_plans!inner(name)", count="exact"
         ).eq("status", "active").execute()
 
@@ -997,7 +997,7 @@ async def get_revenue_analytics(
 
     except Exception as e:
         logger.error(f"Failed to fetch revenue analytics: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch revenue analytics")
+        raise HTTPException(status_code=500, detail="Failed to fetch revenue analytics") from None
 
 
 @router.get("/analytics/subscriptions")
@@ -1020,7 +1020,7 @@ async def get_subscriptions_breakdown(
         return {"breakdown": breakdown}
 
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to fetch subscriptions breakdown")
+        raise HTTPException(status_code=500, detail="Failed to fetch subscriptions breakdown") from None
 
 
 @router.get("/analytics/usage-heatmap")
@@ -1053,7 +1053,7 @@ async def get_usage_heatmap(
         return {"heatmap": heatmap, "days": days, "total": sum(counts)}
 
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to fetch heatmap")
+        raise HTTPException(status_code=500, detail="Failed to fetch heatmap") from None
 
 
 # ============================================================
@@ -1122,7 +1122,7 @@ async def get_platform_events(
         }
     except Exception as e:
         logger.error(f"Failed to fetch platform events: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch events")
+        raise HTTPException(status_code=500, detail="Failed to fetch events") from None
 
 
 @router.get("/logs/security")
@@ -1190,7 +1190,7 @@ async def get_security_logs(
 
     except Exception as e:
         logger.error(f"Failed to fetch security logs: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch security logs")
+        raise HTTPException(status_code=500, detail="Failed to fetch security logs") from None
 
 
 @router.get("/logs/users/{user_id}")
@@ -1231,7 +1231,7 @@ async def get_webhook_logs(
         }
 
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to fetch webhook logs")
+        raise HTTPException(status_code=500, detail="Failed to fetch webhook logs") from None
 
 
 @router.post("/logs/webhooks/{failure_id}/retry")
@@ -1277,7 +1277,7 @@ async def retry_webhook(
         return {"ok": True, "stripe_event_id": stripe_event_id, "event_type": event.type}
 
     except stripe_lib.error.StripeError as e:
-        raise HTTPException(status_code=502, detail=f"Erreur Stripe : {str(e)}")
+        raise HTTPException(status_code=502, detail=f"Erreur Stripe : {str(e)}") from None
 
 
 # ============================================================
@@ -1504,7 +1504,7 @@ async def get_mrr_trend(
 ) -> dict[str, Any]:
     """Approximate daily MRR for the last N days (based on active subscriptions)."""
     supabase = get_supabase_client()
-    since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
+    _since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
     # Load all subscriptions created within range or active during range
     subs_res = supabase.table("user_subscriptions").select(
@@ -1547,7 +1547,7 @@ async def reset_user_usage(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
     supabase = get_supabase_client()
     today = datetime.now(UTC).date().isoformat()
 
-    result = supabase.table("usage_quotas").update({
+    supabase.table("usage_quotas").update({
         "cv_analyses_used": 0,
         "coach_seconds_used": 0,
         "job_searches_used": 0,
@@ -1806,15 +1806,15 @@ async def get_cohort_retention(
             cohorts.append({"cohort_month": cohort_month, "total": 0, "retained_m1": None, "retained_m2": None, "retained_m3": None})
             continue
 
-        def retention_at(m_offset):
-            check_date = (cohort_start + timedelta(days=m_offset * 30)).isoformat()
+        def retention_at(m_offset, _cohort_start=cohort_start, _cohort_ids=cohort_ids, _total=total):
+            check_date = (_cohort_start + timedelta(days=m_offset * 30)).isoformat()
             if check_date > today.isoformat():
                 return None
             active = supabase.table("user_subscriptions").select("user_id").in_(
-                "user_id", cohort_ids
+                "user_id", _cohort_ids
             ).in_("status", ["active", "trialing"]).lte("created_at", check_date).execute()
             count = len({r["user_id"] for r in (active.data or [])})
-            return round(count / total * 100, 1)
+            return round(count / _total * 100, 1)
 
         cohorts.append({
             "cohort_month": cohort_month,
@@ -1831,7 +1831,7 @@ async def get_cohort_retention(
 async def get_mrr_forecast(admin: AdminUserDep) -> dict[str, Any]:
     """Prévision MRR sur 3 mois basée sur régression linéaire des 90 derniers jours."""
     supabase = get_supabase_client()
-    cutoff = (datetime.now(UTC) - timedelta(days=90)).isoformat()
+    _cutoff = (datetime.now(UTC) - timedelta(days=90)).isoformat()
 
     subs = supabase.table("user_subscriptions").select(
         "created_at, canceled_at, cancel_at_period_end, subscription_plans(price_monthly)"
@@ -2106,7 +2106,7 @@ async def impersonate_user(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
             raise HTTPException(status_code=500, detail="Impossible de générer le lien")
     except Exception as e:
         logger.error(f"Impersonation failed for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur génération lien : {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur génération lien : {str(e)}") from None
 
     _log_admin_action(supabase, admin["id"], "admin.impersonation", user_id, {
         "target_email": email,
@@ -2333,7 +2333,7 @@ async def list_coupons(admin: AdminUserDep) -> dict[str, Any]:
             })
         return {"coupons": result, "total": len(result)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}") from None
 
 
 @router.post("/coupons")
@@ -2367,7 +2367,7 @@ async def create_coupon(req: CouponCreateRequest, admin: AdminUserDep) -> dict[s
         })
         return {"ok": True, "id": coupon.id, "name": coupon.name}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}") from None
 
 
 @router.delete("/coupons/{coupon_id}")
@@ -2382,7 +2382,7 @@ async def delete_coupon(coupon_id: str, admin: AdminUserDep) -> dict[str, Any]:
         })
         return {"ok": True}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}") from None
 
 
 @router.post("/users/{user_id}/apply-coupon")
@@ -2415,7 +2415,7 @@ async def apply_coupon_to_user(
         })
         return {"ok": True, "coupon_applied": req.coupon_id}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}") from None
 
 
 # ============================================================
@@ -2583,7 +2583,7 @@ async def grant_free_days(
         )
     else:
         # Freemium : créer ou prolonger un abonnement local
-        plan_id = sub.data["plan_id"] if sub.data else None
+        _plan_id = sub.data["plan_id"] if sub.data else None
         new_end = datetime.now(UTC) + timedelta(days=req.days)
         if sub.data:
             supabase.table("user_subscriptions").update({
@@ -2667,7 +2667,7 @@ async def retry_arq_job(
         job = await pool.enqueue_job(req.function_name, _job_id=str(uuid4()), **req.kwargs)
         await pool.close()
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Redis/ARQ indisponible : {e}")
+        raise HTTPException(status_code=503, detail=f"Redis/ARQ indisponible : {e}") from None
 
     supabase = get_supabase_client()
     new_job_id = job.job_id if job else None

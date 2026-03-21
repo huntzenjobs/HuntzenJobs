@@ -146,7 +146,7 @@ async def create_recruiter_request(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating request: {str(e)}",
-        )
+        ) from None
 
 
 @router.post("/create-payment", response_model=PaymentSessionResponse)
@@ -220,12 +220,12 @@ async def create_payment_session(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Stripe error: {str(e)}"
-        )
+        ) from None
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating payment session: {str(e)}",
-        )
+        ) from None
 
 
 @router.get("/status/{request_id}", response_model=RecruiterRequestStatus)
@@ -267,7 +267,7 @@ async def get_request_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching status: {str(e)}",
-        )
+        ) from None
 
 
 @router.post("/webhook")
@@ -339,9 +339,9 @@ async def stripe_webhook(request: Request):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid signature: {str(e)}"
-        )
+        ) from None
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Webhook error: {str(e)}",
-        )
+        ) from None

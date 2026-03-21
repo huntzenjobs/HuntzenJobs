@@ -24,7 +24,11 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import type { CoachMessage, ExportMetadata } from "@/types/coach-history";
 import { exportToMarkdown } from "@/lib/export/markdown-exporter";
-import { exportToPDF, validatePDFSize } from "@/lib/export/pdf-exporter";
+// Dynamic import: @react-pdf/renderer est lourd (~200KB), chargé uniquement au clic export
+const lazyExportToPDF = () =>
+  import("@/lib/export/pdf-exporter").then((mod) => mod.exportToPDF);
+const lazyValidatePDFSize = () =>
+  import("@/lib/export/pdf-exporter").then((mod) => mod.validatePDFSize);
 
 interface ExportDialogProps {
   messages: CoachMessage[];
@@ -59,13 +63,15 @@ export function ExportDialog({
 
     try {
       if (format === "pdf") {
-        // Validate PDF size
+        // Validate PDF size (lazy loaded)
+        const validatePDFSize = await lazyValidatePDFSize();
         const validation = validatePDFSize(messages.length);
         if (validation.warning) {
           toast.warning(validation.warning);
         }
 
-        // Export PDF
+        // Export PDF (lazy loaded — @react-pdf/renderer chargé ici)
+        const exportToPDF = await lazyExportToPDF();
         await exportToPDF(messages, metadata);
         toast.success(t("toasts.pdfSuccess"));
       } else {

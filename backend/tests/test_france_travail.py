@@ -5,7 +5,7 @@ Unit tests for the FranceTravailProvider class.
 
 Tests cover:
 1. Normalization of job data
-2. Country filtering (France-only)  
+2. Country filtering (France-only)
 3. Contract type mapping
 4. Salary formatting
 5. Integration test (live API — skipped without credentials)

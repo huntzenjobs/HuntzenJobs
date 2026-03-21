@@ -64,7 +64,7 @@ class JobListing(BaseModel):
 class BaseJobProvider(ABC):
     """
     Abstract base class for job providers.
-    
+
     All job providers must implement the `search` method
     and return standardized JobListing objects.
     """
@@ -86,13 +86,13 @@ class BaseJobProvider(ABC):
     ) -> list[dict[str, Any]]:
         """
         Search for jobs.
-        
+
         Args:
             query: Job title or keywords
             location: City or region
             country_code: ISO country code
             max_results: Maximum number of results
-            
+
         Returns:
             List of job listings as dicts
         """
@@ -107,7 +107,7 @@ class BaseJobProvider(ABC):
     def normalize_job(self, raw_job: dict[str, Any]) -> dict[str, Any]:
         """
         Normalize a raw job response to standard format.
-        
+
         Override in subclasses for provider-specific normalization.
         """
         return {

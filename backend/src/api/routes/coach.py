@@ -11,7 +11,23 @@ En dessous du seuil, traitement synchrone immédiat (UX optimale).
 import asyncio
 import uuid
 
+from arq import create_pool
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, Field
+from structlog import get_logger
+
+from src.api.deps import (
+    CoachAgentDep,
+    CurrentUserDep,
+    clear_session,
+    get_current_user,
+    get_session_history,
+    get_supabase_client,
+    update_session_history,
+)
+from src.api.middleware import limiter
+from src.models.schemas import CoachRequest, CoachResponse
+from src.services.user_events import log_event
 
 # Seuil global (toutes replicas confondues) → au-dessus : queue Redis
 COACH_SYNC_THRESHOLD = 12  # max 12 Groq simultanés TOTAL (cross-replicas via Redis)
@@ -41,23 +57,6 @@ async def _decr_active() -> None:
         val = await redis.decr(_GROQ_ACTIVE_KEY)
         if val < 0:
             await redis.set(_GROQ_ACTIVE_KEY, 0)
-
-from arq import create_pool
-from pydantic import BaseModel, Field
-from structlog import get_logger
-
-from src.api.deps import (
-    CoachAgentDep,
-    CurrentUserDep,
-    clear_session,
-    get_current_user,
-    get_session_history,
-    get_supabase_client,
-    update_session_history,
-)
-from src.api.middleware import limiter
-from src.models.schemas import CoachRequest, CoachResponse
-from src.services.user_events import log_event
 
 
 def _get_user_cv_context(user_id: str) -> str:
@@ -228,11 +227,11 @@ async def coach_chat(
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Service IA temporairement saturé. Réessayez dans quelques secondes.",
-            )
+            ) from None
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erreur IA inattendue : {str(exc)[:200]}",
-        )
+        ) from None
     finally:
         await _decr_active()
 
@@ -422,4 +421,4 @@ async def sync_coach_time(
         raise
     except Exception as e:
         logger.error(f"Coach time sync failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}") from None

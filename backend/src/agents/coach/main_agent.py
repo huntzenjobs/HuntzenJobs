@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class CareerCoachAgent(BaseAgent):
     """
     Career Coach Agent with deep sub-agent architecture.
-    
+
     Orchestrates specialized sub-agents for:
     - Training recommendations
     - Career path planning
@@ -401,7 +401,7 @@ class CareerCoachAgent(BaseAgent):
     ) -> dict[str, Any]:
         """
         Gather insights from RELEVANT sub-agents only (smart routing).
-        
+
         Fixes applied:
         - Only invokes sub-agents that match the message intent (not all 4 every time)
         - Parameter extractor receives conversation history for richer extraction
@@ -535,12 +535,12 @@ class CareerCoachAgent(BaseAgent):
     ) -> list[TrainingRecommendation]:
         """
         Get targeted training recommendations.
-        
+
         Args:
             domain: Career domain (data, dev, security, etc.)
             current_level: beginner/intermediate/advanced
             budget: free/paid/mixed
-            
+
         Returns:
             List of training recommendations
         """
@@ -548,7 +548,7 @@ class CareerCoachAgent(BaseAgent):
         Domain: {domain}
         Current Level: {current_level}
         Budget: {budget}
-        
+
         Recommend the best training path with 3-5 specific courses/certifications.
         """
 
@@ -576,12 +576,12 @@ class CareerCoachAgent(BaseAgent):
     ) -> dict[str, Any]:
         """
         Generate a career progression plan.
-        
+
         Args:
             current_role: Current job title
             target_role: Target job title
             years: Planning horizon in years
-            
+
         Returns:
             Career path plan
         """
@@ -589,7 +589,7 @@ class CareerCoachAgent(BaseAgent):
         Current Role: {current_role}
         Target Role: {target_role}
         Timeline: {years} years
-        
+
         Create a detailed career progression plan.
         """
 
@@ -619,12 +619,12 @@ async def career_coach_chat(
 ) -> dict[str, Any]:
     """
     Utility function for career coach chat.
-    
+
     Args:
         message: User message
         history: Conversation history
         language: Response language
-        
+
     Returns:
         Coach response
     """

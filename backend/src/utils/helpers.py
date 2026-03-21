@@ -29,13 +29,13 @@ def async_retry(
 ) -> Callable:
     """
     Decorator for async functions with exponential backoff retry.
-    
+
     Args:
         max_attempts: Maximum number of retry attempts
         min_wait: Minimum wait time between retries (seconds)
         max_wait: Maximum wait time between retries (seconds)
         exceptions: Tuple of exceptions to catch and retry
-        
+
     Returns:
         Decorated function
     """
@@ -50,11 +50,11 @@ def async_retry(
 def timed_lru_cache(seconds: int = 3600, maxsize: int = 128) -> Callable:
     """
     LRU cache with TTL expiration.
-    
+
     Args:
         seconds: Time-to-live in seconds
         maxsize: Maximum cache size
-        
+
     Returns:
         Decorated function with caching
     """

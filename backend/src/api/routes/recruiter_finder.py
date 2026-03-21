@@ -180,4 +180,4 @@ async def find_recruiters(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to search for recruiter contacts",
-        )
+        ) from None

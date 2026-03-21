@@ -230,8 +230,8 @@ async def get_pool_stats() -> dict[str, Any]:
 # Will be migrated to async in Sprint 7
 # ============================================
 
-import re
-from datetime import datetime, timedelta
+import re  # noqa: E402
+from datetime import datetime, timedelta  # noqa: E402
 
 
 def normalize_search_key(job_title: str, location: str) -> str:

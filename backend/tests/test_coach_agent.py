@@ -1,7 +1,7 @@
 """
 Tests for CareerCoachAgent
 ==========================
-Validates prompt engineering, salary negotiation logic, 
+Validates prompt engineering, salary negotiation logic,
 and multi-language support.
 """
 
@@ -64,7 +64,7 @@ async def test_coach_international_context_de(coach_agent):
 @pytest.mark.asyncio
 async def test_coach_fortress_security_injection(coach_agent):
     """Test if the FORTRESS protocol rejects prompt injection.
-    
+
     Uses Llama 4 Maverick which has strong jailbreak resistance.
     The model should refuse to change role and stay as career coach.
     """

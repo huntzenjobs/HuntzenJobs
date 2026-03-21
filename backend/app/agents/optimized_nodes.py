@@ -184,7 +184,7 @@ async def job_scout_node(state: HuntZenState) -> dict:
         # Construire la réponse
         if jobs:
             count = len(jobs)
-            source = "cache" if from_cache else "live"
+            _source = "cache" if from_cache else "live"
             msg = f"🚀 **{count} offres trouvées** pour **{job_title}** à **{city}** ({country_code.upper()})\n\n"
 
             # Top 3 preview

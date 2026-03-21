@@ -51,7 +51,7 @@ async def get_status(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Queue error: {e}")
+        raise HTTPException(status_code=500, detail=f"Queue error: {e}") from None
 
 
 @router.get("/all-stats")

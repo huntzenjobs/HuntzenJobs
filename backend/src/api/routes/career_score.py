@@ -376,4 +376,4 @@ async def record_xp_event(body: XPEventRequest, current_user: CurrentUserDep):
 
     except Exception as e:
         logger.error(f"[career_score] xp_event error for {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to record XP event")
+        raise HTTPException(status_code=500, detail="Failed to record XP event") from None

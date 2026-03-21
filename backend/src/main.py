@@ -92,15 +92,15 @@ app = FastAPI(
     title=settings.app_name,
     description="""
     HuntZen - AI-Powered Career Platform
-    
+
     ## Features
-    
+
     - Career Coach: AI advisor for career guidance and training recommendations
     - Job Scout: Multi-source job search with AI ranking
     - CV Analyzer: ATS scoring and improvement suggestions
-    
+
     ## Architecture
-    
+
     Built with:
     - FastAPI + Jinja2 for backend/frontend
     - LangChain with deep sub-agents (no LangGraph)

@@ -133,7 +133,7 @@ async def create_application(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to save application",
-        )
+        ) from None
 
 
 @router.patch("/api/applications/{application_id}")
@@ -184,7 +184,7 @@ async def update_application_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update application",
-        )
+        ) from None
 
 
 @router.delete("/api/applications/{application_id}")
@@ -213,4 +213,4 @@ async def delete_application(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete application",
-        )
+        ) from None

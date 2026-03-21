@@ -5,7 +5,6 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SkipLink } from "@/components/ui/skip-link";
-import { createClient } from "@/lib/supabase/server";
 import { homeMetadata } from "@/lib/seo/metadata";
 import { HomePageSchemas } from "@/components/seo/structured-data";
 import { inter, dmSans } from "@/lib/fonts";
@@ -29,11 +28,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Fetch user server-side to eliminate race condition
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // NOTE: getUser() a été déplacé dans (dashboard)/layout.tsx pour ne pas
+  // forcer cache-control: private sur les pages publiques (landing, pricing, etc.).
+  // Le AuthProvider côté client fonctionne sans initialUser (fetch via getSession).
 
   const locale = await getLocale();
   const messages = await getMessages();
@@ -96,7 +93,7 @@ export default async function RootLayout({
         <SiteBanner />
         <SkipLink />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers initialUser={user}>
+          <Providers>
             <div id="main-content">{children}</div>
           </Providers>
           <CookieBanner />

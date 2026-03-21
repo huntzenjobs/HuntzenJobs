@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class CVAdapterAgent(BaseAgent):
     """
     CV Adapter Agent with deep sub-agent architecture.
-    
+
     Transforms a CV to match a specific job offer while:
     - Keeping all content truthful (no invention)
     - Using the job's exact vocabulary
@@ -106,12 +106,12 @@ class CVAdapterAgent(BaseAgent):
     ) -> dict[str, Any]:
         """
         Adapt CV to match a job offer using HYBRID approach.
-        
+
         HYBRID APPROACH:
         1. Extract factual data from original CV (dates, companies, schools - NEVER modified)
         2. LLM rewrites ONLY bullet points and summary
         3. Merge: factual data + improved bullets = perfect CV
-        
+
         This prevents ALL hallucinations on dates and company names.
         """
         try:
@@ -176,7 +176,7 @@ class CVAdapterAgent(BaseAgent):
     async def _extract_factual_data(self, cv_text: str, language: str) -> dict[str, Any]:
         """
         Extract FACTUAL data from CV that MUST NEVER be modified.
-        
+
         This includes:
         - Personal info (name, email, phone, etc.)
         - Experience dates, companies, locations
@@ -281,20 +281,20 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
     ) -> dict[str, Any]:
         """
         Rewrite ONLY bullet points and summary.
-        
+
         CRITICAL: This function NEVER touches:
         - Dates
         - Company names
         - School names
         - Personal info
         - Project names
-        
+
         It ONLY improves the textual descriptions.
         """
         try:
             keywords = job_analysis.get("keywords", [])
             tone = job_analysis.get("tone", "professional")
-            skills_coverage = cv_mapping.get("skills_coverage", {})
+            _skills_coverage = cv_mapping.get("skills_coverage", {})
 
             # Prepare experiences for rewriting
             original_experiences = original_data.get("experiences", [])
@@ -418,7 +418,7 @@ Return JSON:
     ) -> dict:
         """
         Merge original FACTUAL data with rewritten TEXTUAL content.
-        
+
         FACTUAL DATA (from original, IMMUTABLE):
         - All dates
         - Company names
@@ -426,7 +426,7 @@ Return JSON:
         - Personal info (email, phone, etc.)
         - Certification names and issuers
         - Project names and URLs
-        
+
         REWRITTEN CONTENT (from LLM):
         - Bullet points
         - Summary
@@ -662,7 +662,7 @@ CRITICAL RULES:
 
 2. **ADD MISSING SKILLS STRATEGICALLY**:
    - ADD all transferable skills to the skills section
-   - For missing skills that are IMPLICIT in the candidate's work (e.g., Docker if they use GCP, 
+   - For missing skills that are IMPLICIT in the candidate's work (e.g., Docker if they use GCP,
      CI/CD if they build pipelines), ADD THEM - they likely know these!
    - If candidate does Data Engineering → they know SQL, ETL, data pipelines
    - If candidate does ML/AI → they likely know Docker, MLflow basics, model deployment
@@ -801,11 +801,11 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
             current_skills = {}
 
         all_current_skills = []
-        for category, skills_list in current_skills.items():
+        for _category, skills_list in current_skills.items():
             if isinstance(skills_list, list):
                 all_current_skills.extend(self._skill_to_str(s) for s in skills_list)
 
-        all_current_lower = set(s.lower() for s in all_current_skills if s)
+        all_current_lower = {s.lower() for s in all_current_skills if s}
 
         # Collect ALL skills to add
         skills_to_add = []
@@ -915,7 +915,7 @@ Return JSON with category names as keys and skill arrays as values:
     async def _fact_check(self, original_cv: str, adapted_cv: dict) -> dict[str, Any]:
         """
         Verify adapted CV doesn't contain hallucinated content.
-        
+
         IMPORTANT: We do NOT check skills because:
         1. Skills are strategically added to maximize ATS score
         2. Skills represent what the candidate should know/learn
@@ -976,7 +976,7 @@ Return a JSON object:
         """Calculate overall match score."""
         skills_coverage = cv_mapping.get("skills_coverage", {})
         matched = len(skills_coverage.get("matched", []))
-        missing = len(skills_coverage.get("missing", []))
+        _missing = len(skills_coverage.get("missing", []))
         total_required = len(job_analysis.get("required_skills", []))
 
         skills_score = (matched / max(total_required, 1)) * 100 if total_required > 0 else 50
@@ -1001,7 +1001,7 @@ Return a JSON object:
     ) -> dict[str, Any]:
         """
         Quick adaptation without full fact-checking (faster but less safe).
-        
+
         Use for previews or when speed is critical.
         """
         try:
@@ -1043,13 +1043,13 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
     ) -> dict[str, Any]:
         """
         Generate a personalized cover letter from CV data and job description.
-        
+
         Args:
             cv_data: Adapted CV data (from run() method)
             job_description: The job posting text
             language: 'fr' or 'en'
             company_name: Optional company name override
-        
+
         Returns:
             dict with cover letter content ready for PDF generation
         """
@@ -1089,7 +1089,7 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
             if language == "fr":
                 try:
                     locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
-                except:
+                except Exception:
                     pass
                 today = datetime.now()
                 date_str = today.strftime("%d %B %Y").lstrip("0")  # "5 février 2025"

@@ -28,7 +28,7 @@ class InsiderFinderService:
     ) -> dict[str, Any]:
         """
         Executes a hunt for insiders for a specific job.
-        
+
         1. Asks the AI for a search strategy.
         2. Executes queries via SerpAPI.
         3. Formats and returns the list of potential contacts.

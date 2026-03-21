@@ -391,7 +391,7 @@ async def scrape_apec_events() -> list[JobFair]:
         101961: "pros",      # Candidat
         101962: "pros",      # Recruteur / Partenaire
     }
-    MODALITE_MAP = {
+    _MODALITE_MAP = {
         102070: "virtual",   # À distance
         102072: "physical",  # Présentiel
         102071: "hybrid",    # Hybride
@@ -711,7 +711,7 @@ async def search_job_fairs(
 
     all_events: list[JobFair] = []
     sources = []
-    for (source_name, _), res in zip(tasks, results):
+    for (source_name, _), res in zip(tasks, results, strict=False):
         if not isinstance(res, Exception) and res:
             all_events.extend(res)
             sources.append(source_name)

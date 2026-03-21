@@ -29,11 +29,11 @@ if env_test_file.exists():
 # ═══════════════════════════════════════════════════════════════════════════════
 # NOW import the rest (settings will pick up env vars)
 # ═══════════════════════════════════════════════════════════════════════════════
-import pytest
+import pytest  # noqa: E402
 
-from src.agents.coach.main_agent import CareerCoachAgent
-from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
-from src.agents.job_scout.main_agent import JobScoutAgent
+from src.agents.coach.main_agent import CareerCoachAgent  # noqa: E402
+from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent  # noqa: E402
+from src.agents.job_scout.main_agent import JobScoutAgent  # noqa: E402
 
 
 @pytest.fixture

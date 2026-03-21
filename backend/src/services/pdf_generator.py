@@ -29,7 +29,7 @@ TEMPLATE_DIR = Path(__file__).parent.parent.parent / "templates" / "cv_pdf"
 class PDFGenerator:
     """
     CV PDF Generator using WeasyPrint.
-    
+
     Generates professional PDFs with:
     - ATS-friendly or Modern templates
     - Automatic 1-page fitting
@@ -60,14 +60,14 @@ class PDFGenerator:
     ) -> bytes:
         """
         Generate PDF from CV data.
-        
+
         Args:
             cv_data: Structured CV data from adapter
             template: Template name (ats/modern/classic)
             compact: Use compact mode for fitting
             language: Output language
             photo_base64: Optional base64 encoded photo
-            
+
         Returns:
             PDF bytes
         """
@@ -107,7 +107,7 @@ class PDFGenerator:
     def _sanitize_data(self, data: Any) -> Any:
         """
         Recursively sanitize data to fix HTML encoding issues.
-        
+
         Fixes:
         - &lt; &gt; &amp; entities
         - Unicode issues
@@ -130,7 +130,7 @@ class PDFGenerator:
     def _count_pages(self, pdf_bytes: bytes) -> int:
         """
         Count pages in a PDF.
-        
+
         Uses a simple heuristic based on PDF structure.
         """
         try:
@@ -239,11 +239,11 @@ class PDFGenerator:
     ) -> bytes:
         """
         Generate PDF cover letter from letter data.
-        
+
         Args:
             letter_data: Cover letter content from LLM
             language: Output language (fr/en)
-            
+
         Returns:
             PDF bytes
         """

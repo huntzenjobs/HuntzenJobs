@@ -8,6 +8,7 @@ import io
 import json
 import logging
 import re
+from typing import TYPE_CHECKING
 
 from arq import create_pool
 from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile, status
@@ -15,6 +16,9 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 from src.api.deps import get_cv_adapter_main, get_user_info_from_token
+
+if TYPE_CHECKING:
+    from src.agents.cv_adapter.main_agent import CVAdapterAgent
 from src.services.email import send_document_generated
 from src.services.pdf_generator import get_pdf_generator
 
@@ -113,7 +117,7 @@ async def _extract_cv_text_from_file(file: UploadFile) -> str:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=str(user_err),
-                    )
+                    ) from None
                 except Exception as modal_exc:
                     logger.warning(
                         f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"
@@ -134,7 +138,7 @@ async def _extract_cv_text_from_file(file: UploadFile) -> str:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Could not extract text from file: {str(exc)}",
-        )
+        ) from None
 
     # Normalize PDF extraction artifacts (both Docling backends)
     cv_text = _normalize_pdf_text(cv_text)
@@ -332,7 +336,7 @@ async def adapt_cv_to_pdf(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"PDF generation failed: {str(e)}",
-        )
+        ) from None
 
     # Get candidate name for filename
     name = cv_data.get("personal_info", {}).get("name", "cv")
@@ -364,7 +368,7 @@ async def adapt_cv_from_file(
 ):
     """
     Upload CV file and adapt it to a job offer.
-    
+
     Supports PDF and DOCX formats.
     """
     from src.api.deps import get_cv_analyzer_main
@@ -418,7 +422,7 @@ async def adapt_cv_from_file(
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=str(user_err),
-                    )
+                    ) from None
                 except Exception as modal_exc:
                     logger.warning(
                         f"[cv_adapter] Modal extraction failed, falling back to local: {modal_exc}"
@@ -440,7 +444,7 @@ async def adapt_cv_from_file(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Could not extract text from file: {str(exc)}",
-        )
+        ) from None
 
     # Normalize PDF extraction artifacts (pypdfium2 spaces, ligatures)
     cv_text = _normalize_pdf_text(cv_text)
@@ -504,7 +508,7 @@ async def quick_adapt_cv(
 ):
     """
     Quick CV adaptation without full fact-checking.
-    
+
     Faster but less thorough. Good for previews.
     """
     agent = get_adapter_agent()
@@ -535,7 +539,7 @@ class PDFRequest(BaseModel):
 async def generate_pdf_from_data(request: PDFRequest):
     """
     Generate PDF from structured CV data.
-    
+
     Templates:
     - ats: Simple 1-column, ATS-optimized (no photo)
     - modern: 2-column design with sidebar (with photo)
@@ -555,7 +559,7 @@ async def generate_pdf_from_data(request: PDFRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
-        )
+        ) from None
 
     return Response(
         content=pdf_bytes,
@@ -585,7 +589,7 @@ class CoverLetterRequest(BaseModel):
 async def generate_cover_letter(request: CoverLetterRequest, authorization: str | None = Header(default=None)):
     """
     Generate a personalized cover letter from CV data and job description.
-    
+
     Returns a PDF cover letter tailored to the specific job.
     """
     agent = get_adapter_agent()
@@ -624,7 +628,7 @@ async def generate_cover_letter(request: CoverLetterRequest, authorization: str 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
-        )
+        ) from None
 
     # Get candidate name for filename
     name = request.cv_data.get("personal_info", {}).get("name", "candidate")
@@ -726,7 +730,7 @@ async def generate_cover_letter_pdf_from_data(request: CoverLetterFromDataReques
         )
     except Exception as e:
         logger.error(f"Cover letter PDF from data failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from None
 
 
 class PreviewRequest(BaseModel):

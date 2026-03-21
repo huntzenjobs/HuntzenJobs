@@ -313,7 +313,7 @@ async def get_current_user_info(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get user info: {str(e)}"
-        )
+        ) from None
 
 
 class WelcomeRequest(BaseModel):

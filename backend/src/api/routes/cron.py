@@ -55,7 +55,7 @@ async def retention_notifications(authorization: str | None = Header(None)):
         user_ids = list({r["user_id"] for r in (res.data or [])})
     except Exception as e:
         logger.error(f"[cron] retention: failed to query inactive users: {e}")
-        raise HTTPException(status_code=500, detail="DB query failed")
+        raise HTTPException(status_code=500, detail="DB query failed") from None
 
     sent = 0
     for uid in user_ids:

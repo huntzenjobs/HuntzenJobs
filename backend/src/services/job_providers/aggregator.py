@@ -116,16 +116,16 @@ def deduplicate_jobs(
 ) -> list[dict[str, Any]]:
     """
     Remove duplicate job listings using fuzzy matching.
-    
+
     Uses title + company similarity to catch near-duplicates like:
     - "Data Scientist" vs "Data Scientist - Paris"
     - "Software Engineer" vs "Software Engineer (H/F)"
-    
+
     Args:
         jobs: List of job listings
         similarity_threshold: Min similarity ratio (0-1) to consider duplicate.
                               0.85 = 85% match → duplicate. Lower = more aggressive.
-        
+
     Returns:
         Deduplicated list (keeps the first occurrence)
     """
@@ -162,7 +162,7 @@ def deduplicate_jobs(
 def _create_fingerprint(job: dict) -> str:
     """
     Create a normalized fingerprint for deduplication.
-    
+
     Uses full title + company (not truncated) so SequenceMatcher
     can properly measure similarity between near-duplicates.
     """
@@ -184,11 +184,11 @@ def sort_jobs_by_relevance(
 ) -> list[dict[str, Any]]:
     """
     Sort jobs by relevance to query.
-    
+
     Args:
         jobs: List of job listings
         query: Original search query
-        
+
     Returns:
         Sorted list (most relevant first)
     """

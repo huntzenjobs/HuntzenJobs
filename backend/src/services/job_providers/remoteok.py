@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class RemoteOKProvider(BaseJobProvider):
     """
     RemoteOK API provider.
-    
+
     Features:
     - 100% free API
     - Remote-only jobs
@@ -44,13 +44,13 @@ class RemoteOKProvider(BaseJobProvider):
     ) -> list[dict[str, Any]]:
         """
         Search RemoteOK for remote jobs.
-        
+
         Args:
             query: Job title or keywords
             location: Ignored (all remote)
             country_code: Ignored (all remote)
             max_results: Maximum results
-            
+
         Returns:
             List of normalized job listings
         """

@@ -136,7 +136,7 @@ async def save_job(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to save job",
-        )
+        ) from None
 
 
 @router.post("/api/saved-jobs/apply-click/{external_job_id}")
@@ -199,4 +199,4 @@ async def unsave_job(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to remove saved job",
-        )
+        ) from None

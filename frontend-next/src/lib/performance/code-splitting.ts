@@ -36,6 +36,16 @@ export const DynamicPricingModal = dynamic(
   },
 );
 
+// Page admin stress test (recharts ~120KB, chargée uniquement pour les admins)
+export const DynamicAdminStressPage = dynamic(
+  () => import("@/app/admin/stress/page"),
+  {
+    loading: () =>
+      React.createElement("div", { className: "animate-pulse h-96" }),
+    ssr: false,
+  },
+);
+
 /**
  * Prefetch des routes critiques
  * Améliore la navigation perçue

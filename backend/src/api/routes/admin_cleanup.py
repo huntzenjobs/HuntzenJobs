@@ -111,7 +111,7 @@ async def sync_user_subscriptions(
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe API error during sync: {e}")
-        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}") from None
     except Exception as e:
         logger.error(f"Subscription sync failed for user {user_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}") from None

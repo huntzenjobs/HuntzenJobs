@@ -44,7 +44,7 @@ _sessions: dict[str, list[dict]] = defaultdict(list)
 def get_session_history(session_id: str) -> list[dict]:
     """
     Get conversation history for a session.
-    
+
     Tries Supabase first (persistent across restarts/workers),
     falls back to in-memory if unavailable.
     """
@@ -78,7 +78,7 @@ def update_session_history(
 ) -> None:
     """
     Update conversation history (Supabase + in-memory fallback).
-    
+
     Tries to update the Supabase row matching this session_id.
     Always updates in-memory as hot cache.
     """
@@ -413,7 +413,7 @@ async def get_current_user(authorization: str | None = Header(None)) -> dict:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Authentication failed: {str(e)}"
-        )
+        ) from None
 
 
 CurrentUserDep = Annotated[dict, Depends(get_current_user)]
@@ -500,7 +500,7 @@ async def get_current_admin(current_user: dict = Depends(get_current_user)) -> d
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access verification failed"
-        )
+        ) from None
 
     return {**current_user, "is_admin": True}
 

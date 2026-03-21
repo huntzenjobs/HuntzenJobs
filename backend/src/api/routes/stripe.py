@@ -83,7 +83,7 @@ async def create_stripe_checkout(
         raise
     except Exception as e:
         logger.error(f"[STRIPE] Checkout creation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create checkout: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create checkout: {str(e)}") from None
 
 
 @router.post("/webhook")
@@ -114,7 +114,7 @@ async def stripe_webhook(
         raise
     except Exception as e:
         logger.error(f"[STRIPE] Webhook processing failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Webhook processing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Webhook processing failed: {str(e)}") from None
 
 
 @router.post("/cancel-subscription")
@@ -181,7 +181,7 @@ async def cancel_subscription(
         raise
     except Exception as e:
         logger.error(f"[STRIPE] Cancel subscription failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}") from None
 
 
 @router.post("/reactivate-subscription")
@@ -246,7 +246,7 @@ async def reactivate_subscription(
         raise
     except Exception as e:
         logger.error(f"[STRIPE] Reactivate subscription failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to reactivate subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to reactivate subscription: {str(e)}") from None
 
 
 @router.post("/create-portal-session")
@@ -300,4 +300,4 @@ async def create_portal_session(
         raise
     except Exception as e:
         logger.error(f"[STRIPE] Create portal session failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create portal session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create portal session: {str(e)}") from None

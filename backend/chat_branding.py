@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-from src.agents.branding.main_agent import BrandingAgent
+from src.agents.branding.main_agent import BrandingAgent  # noqa: E402
 
 
 async def main():

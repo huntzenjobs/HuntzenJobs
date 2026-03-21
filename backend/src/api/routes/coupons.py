@@ -133,7 +133,7 @@ async def generate_for_trigger(
 
     except Exception as e:
         logger.error(f"[coupons] Stripe coupon creation failed: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create Stripe coupon")
+        raise HTTPException(status_code=500, detail="Failed to create Stripe coupon") from None
 
     # Construire l'URL de checkout avec le coupon pré-rempli
     checkout_url = f"{APP_URL}/pricing?coupon={coupon_code}&plan={config['plan']}"

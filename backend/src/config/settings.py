@@ -14,7 +14,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """
     Application settings with environment variable support.
-    
+
     All settings can be overridden via environment variables or .env file.
     Secret values use SecretStr for security.
     """
@@ -226,7 +226,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """
     Get cached settings instance (singleton pattern).
-    
+
     Returns:
         Settings: Application settings
     """

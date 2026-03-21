@@ -297,10 +297,10 @@ async def create_checkout_session(
         raise
     except stripe.error.StripeError as e:
         logger.error(f"[CHECKOUT] Stripe API error: {e}")
-        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}") from None
     except Exception as e:
         logger.error(f"[CHECKOUT] Failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Checkout failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Checkout failed: {str(e)}") from None
 
 
 async def _create_new_checkout(
@@ -435,10 +435,10 @@ async def handle_stripe_webhook(
             )
         except stripe.error.SignatureVerificationError as e:
             logger.error(f"Webhook signature verification failed: {e}")
-            raise HTTPException(status_code=400, detail="Invalid signature")
+            raise HTTPException(status_code=400, detail="Invalid signature") from None
         except Exception as e:
             logger.error(f"Webhook parsing failed: {e}")
-            raise HTTPException(status_code=400, detail="Webhook parsing failed")
+            raise HTTPException(status_code=400, detail="Webhook parsing failed") from None
 
     event_type = event["type"]
     event_id = event.get("id", "unknown")
@@ -580,7 +580,7 @@ async def handle_checkout_completed(session: dict[str, Any]):
     except Exception as e:
         error_msg = f"Failed to verify user existence: {str(e)}"
         logger.error(f"[WEBHOOK] {error_msg}")
-        raise HTTPException(status_code=500, detail="User verification failed")
+        raise HTTPException(status_code=500, detail="User verification failed") from None
 
     try:
         # Get plan_id from database
@@ -605,7 +605,7 @@ async def handle_checkout_completed(session: dict[str, Any]):
             raise HTTPException(
                 status_code=400,
                 detail=f"Failed to retrieve subscription: {str(e)}"
-            )
+            ) from None
 
         # 🔧 FIX: Safely extract subscription data with defaults
         subscription_data = {

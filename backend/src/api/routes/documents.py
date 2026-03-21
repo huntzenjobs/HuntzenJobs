@@ -54,7 +54,7 @@ def _get_user_id(authorization: str | None) -> str:
         user = supabase.auth.get_user(token)
         return user.user.id
     except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid token") from None
 
 
 @router.get("")
@@ -71,7 +71,7 @@ async def list_documents(authorization: str | None = Header(None)):
         return {"documents": response.data}
     except Exception as e:
         logger.error(f"[Documents] List error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch documents")
+        raise HTTPException(status_code=500, detail="Failed to fetch documents") from None
 
 
 @router.post("", status_code=201)
@@ -106,7 +106,7 @@ async def create_document(
         raise
     except Exception as e:
         logger.error(f"[Documents] Create error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to save document")
+        raise HTTPException(status_code=500, detail="Failed to save document") from None
 
 
 @router.delete("/{document_id}", status_code=204)
@@ -121,7 +121,7 @@ async def delete_document(
         ).eq("user_id", user_id).execute()
     except Exception as e:
         logger.error(f"[Documents] Delete error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to delete document")
+        raise HTTPException(status_code=500, detail="Failed to delete document") from None
 
 
 @router.patch("/{document_id}", status_code=200)
@@ -150,7 +150,7 @@ async def update_document(
         raise
     except Exception as e:
         logger.error(f"[Documents] Update error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update document")
+        raise HTTPException(status_code=500, detail="Failed to update document") from None
 
 
 @router.post("/mark-applied")
@@ -166,4 +166,4 @@ async def mark_applied(
         return {"success": True}
     except Exception as e:
         logger.error(f"[Documents] Mark applied error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to mark as applied")
+        raise HTTPException(status_code=500, detail="Failed to mark as applied") from None

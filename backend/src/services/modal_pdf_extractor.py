@@ -125,11 +125,11 @@ async def extract_text_via_modal(pdf_bytes: bytes) -> str:
         raise RuntimeError(
             f"Modal PDF extraction timed out after {MODAL_TIMEOUT_SECONDS}s — "
             "try again (cold start) or check Modal deployment"
-        )
+        ) from None
 
     except RuntimeError:
         raise
 
     except Exception as e:
         logger.error(f"[ModalPDF] Unexpected error: {type(e).__name__}: {e}")
-        raise RuntimeError(f"Modal PDF extraction failed: {str(e)}")
+        raise RuntimeError(f"Modal PDF extraction failed: {str(e)}") from None

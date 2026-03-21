@@ -130,7 +130,7 @@ async def start_stress_run(
     run_id = run_data.data[0]["id"]
 
     # Récupérer le token admin pour les requêtes auth
-    redis = await get_redis()
+    _redis = await get_redis()
     token = admin.get("_token")
 
     # Enqueue dans ARQ queue stress_test

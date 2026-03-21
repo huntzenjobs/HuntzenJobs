@@ -31,7 +31,7 @@ class ColoredFormatter(logging.Formatter):
 def setup_logging(level: str | None = None) -> None:
     """
     Configure application logging.
-    
+
     Args:
         level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
@@ -69,10 +69,10 @@ def setup_logging(level: str | None = None) -> None:
 def get_logger(name: str) -> logging.Logger:
     """
     Get a logger instance with the given name.
-    
+
     Args:
         name: Logger name (usually __name__)
-        
+
     Returns:
         Logger instance
     """

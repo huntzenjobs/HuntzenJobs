@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class SerpAPIProvider(BaseJobProvider):
     """
     SerpAPI Google Jobs provider.
-    
+
     Features:
     - Access to Google Jobs aggregator
     - Worldwide coverage

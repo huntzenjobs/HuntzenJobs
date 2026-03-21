@@ -105,7 +105,7 @@ async def upload_cv_to_storage(
         logger.info(f"Uploading CV to Supabase Storage: {unique_filename}")
 
         # Upload to Supabase Storage bucket 'cvs'
-        response = supabase_client.storage.from_("cvs").upload(
+        supabase_client.storage.from_("cvs").upload(
             path=unique_filename,
             file=file_content,
             file_options={"content-type": "application/pdf"}
@@ -119,7 +119,7 @@ async def upload_cv_to_storage(
 
     except Exception as e:
         logger.error(f"Failed to upload CV to storage: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to upload CV: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload CV: {str(e)}") from None
 
 
 # ============================================
@@ -179,14 +179,14 @@ async def create_cv_analysis_record(
 
         logger.info(f"Creating CV analysis record: {cv_id} (mode: {'text' if cv_text else 'file'}, user_id: {user_id})")
 
-        response = supabase_client.table("cv_analyses").insert(data).execute()
+        supabase_client.table("cv_analyses").insert(data).execute()
 
         logger.info(f"CV analysis record created successfully: {cv_id}")
         return cv_id
 
     except Exception as e:
         logger.error(f"Failed to create CV analysis record: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create analysis record: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create analysis record: {str(e)}") from None
 
 
 # ============================================
@@ -379,7 +379,7 @@ async def process_cv_async(
         raise
     except Exception as e:
         logger.error(f"CV async processing failed: {e}")
-        raise HTTPException(status_code=500, detail=f"CV processing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"CV processing failed: {str(e)}") from None
 
 
 # ============================================
@@ -457,7 +457,7 @@ async def get_cv_analysis_status(
         raise
     except Exception as e:
         logger.error(f"Failed to get CV status: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}") from None
 
 
 # ============================================
@@ -527,4 +527,4 @@ async def list_user_cv_analyses(
 
     except Exception as e:
         logger.error(f"Failed to list CV analyses: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to list analyses: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list analyses: {str(e)}") from None

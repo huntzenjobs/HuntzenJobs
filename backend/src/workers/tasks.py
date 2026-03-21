@@ -76,7 +76,7 @@ async def assistant_task(
         return {"success": False, "error": f"Unknown assistant_type: {assistant_type}"}
 
     async with _groq_semaphore:
-        kwargs = dict(message=message, history=history, language=language)
+        kwargs = {"message": message, "history": history, "language": language}
         if cv_text:
             kwargs["cv_text"] = cv_text
         if job_description:

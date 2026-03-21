@@ -151,7 +151,7 @@ async def get_webhook_health(hours: int = 24) -> dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Failed to get webhook health: {e}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}") from None
 
 
 @router.get("/ping")

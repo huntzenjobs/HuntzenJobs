@@ -21,7 +21,7 @@ class InsiderFinderResponse(BaseModel):
 class InsiderFinderAgent(BaseAgent):
     """
     Agent responsible for finding the best people to contact for a job.
-    Uses Groq to generate strategic search queries and could later be extended 
+    Uses Groq to generate strategic search queries and could later be extended
     to process search results.
     """
 
@@ -44,13 +44,13 @@ class InsiderFinderAgent(BaseAgent):
     async def run(self, job_title: str, company: str, city: str = "", is_alternance: bool = False) -> dict[str, Any]:
         """
         Generates LinkedIn search queries for a job.
-        
+
         Args:
             job_title: Title of the job
             company: Company name
             city: City location
             is_alternance: Whether it's a student job
-            
+
         Returns:
             Dict containing queries and strategy
         """

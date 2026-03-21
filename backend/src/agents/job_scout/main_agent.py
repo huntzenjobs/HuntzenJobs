@@ -61,7 +61,7 @@ _SCHOOL_CONTENT_PATTERNS = [
 class JobScoutAgent(BaseAgent):
     """
     Job Scout Agent with deep sub-agent architecture.
-    
+
     Orchestrates:
     - Query refinement for better search results
     - Multi-provider job aggregation
@@ -335,7 +335,7 @@ class JobScoutAgent(BaseAgent):
     def _deduplicate_jobs(self, jobs: list[dict], threshold: float = 0.85) -> list[dict]:
         """
         Remove duplicate job listings.
-        
+
         Uses title + company similarity matching.
         """
         if not jobs:
@@ -360,11 +360,11 @@ class JobScoutAgent(BaseAgent):
     def _pre_filter_by_relevance(jobs: list[dict], query: str, min_similarity: float = 0.25) -> list[dict]:
         """
         Safety-net filter: remove jobs whose title has NO relation to the search query.
-        
+
         This runs BEFORE the AI ranker. Even if the ranker crashes,
         obviously irrelevant jobs (e.g. "Scrum Master" for query "boulanger")
         will never reach the frontend.
-        
+
         Uses word overlap + fuzzy matching to be flexible:
         - "boulanger" matches "Boulanger H/F" ✅
         - "boulanger" matches "Vendeur en boulangerie" ✅ (fuzzy)
@@ -464,10 +464,10 @@ class JobScoutAgent(BaseAgent):
     async def refine_query(self, query: str) -> dict:
         """
         Public method to refine search query.
-        
+
         Args:
             query: Raw search query
-            
+
         Returns:
             Refined search parameters
         """
@@ -481,12 +481,12 @@ class JobScoutAgent(BaseAgent):
     ) -> dict:
         """
         Public method to analyze job market.
-        
+
         Args:
             role: Job role
             country_code: ISO country code
             location: City or region
-            
+
         Returns:
             Market insights
         """
@@ -495,10 +495,10 @@ class JobScoutAgent(BaseAgent):
     async def analyze_query(self, user_query: str) -> dict:
         """
         Analyze a natural language job query (alias for refine_query).
-        
+
         Args:
             user_query: Natural language query
-            
+
         Returns:
             Extracted search parameters
         """
@@ -529,14 +529,14 @@ async def search_jobs(
 ) -> dict[str, Any]:
     """
     Utility function for job search.
-    
+
     Args:
         job_title: Job title to search
         country_code: ISO country code
         city: City filter
         contract_type: Contract type filter
         max_results: Maximum results
-        
+
     Returns:
         Search results
     """

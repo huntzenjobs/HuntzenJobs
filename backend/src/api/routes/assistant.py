@@ -580,13 +580,13 @@ async def attach_cv_to_chat(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
-        )
+        ) from None
     except Exception as e:
         logger.error(f"[attach-cv] Unexpected error: {type(e).__name__}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erreur lors du traitement du CV",
-        )
+        ) from None
 
 
 @router.post("/new-session")

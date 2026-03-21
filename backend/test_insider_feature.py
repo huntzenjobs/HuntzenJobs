@@ -4,10 +4,10 @@ from dotenv import load_dotenv
 # Load environment variables from project root BEFORE importing any project files
 load_dotenv("../.env")
 
-import asyncio
-import logging
+import asyncio  # noqa: E402
+import logging  # noqa: E402
 
-from src.services.recruiter_finder.insider_service import InsiderFinderService
+from src.services.recruiter_finder.insider_service import InsiderFinderService  # noqa: E402
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
