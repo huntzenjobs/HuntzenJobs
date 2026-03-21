@@ -205,49 +205,66 @@ def apply_advanced_filters(
 
     # Filter by work schedule (heuristic on text)
     if work_schedule:
+        # Special logic: "temps_plein" = EXCLUDE part-time offers (most jobs are full-time by default)
+        # Other schedules = INCLUDE only jobs mentioning those keywords
+        has_temps_plein = "temps_plein" in [s.lower().strip() for s in work_schedule]
+        other_schedules = [s for s in work_schedule if s.lower().strip() != "temps_plein"]
+
+        part_time_keywords = ["temps partiel", "part-time", "part time", "mi-temps", "half-time", "partiel"]
+
         schedule_keywords: dict[str, list[str]] = {
-            "matin": ["matin", "morning", "6h", "7h", "8h", "tôt", "early shift"],
-            "journee": ["journée", "day shift", "9h-17h", "bureau", "office hours", "horaires de bureau"],
-            "soir": ["soir", "evening", "soirée", "18h", "19h", "20h", "evening shift"],
-            "nuit": ["nuit", "night", "nocturne", "3x8", "2x8", "night shift"],
-            "temps_plein": ["temps plein", "full-time", "full time", "35h", "39h", "temps complet"],
+            "matin": ["matin", "morning", "6h", "7h", "8h", "tôt", "early shift", "poste du matin"],
+            "journee": ["journée", "day shift", "9h-17h", "9h-18h", "bureau", "office hours", "horaires de bureau", "horaires classiques"],
+            "soir": ["soir", "evening", "soirée", "18h", "19h", "20h", "evening shift", "poste du soir", "après 17h"],
+            "nuit": ["nuit", "night", "nocturne", "3x8", "2x8", "night shift", "poste de nuit", "travail de nuit"],
         }
+
         sched_kws: list[str] = []
-        for s in work_schedule:
+        for s in other_schedules:
             sched_kws.extend(schedule_keywords.get(s.lower().strip(), []))
-        if sched_kws:
-            filtered = [
-                job for job in filtered
-                if any(
-                    kw in job.get('title', '').lower()
-                    or kw in job.get('description', '').lower()
-                    for kw in sched_kws
-                )
-            ]
+
+        def matches_schedule(job: dict) -> bool:
+            text = (job.get('title', '') + ' ' + job.get('description', '')).lower()
+            # If temps_plein selected: exclude part-time jobs
+            if has_temps_plein and any(kw in text for kw in part_time_keywords):
+                return False
+            # If other schedules selected: must match at least one
+            if sched_kws and not any(kw in text for kw in sched_kws):
+                return False
+            return True
+
+        filtered = [job for job in filtered if matches_schedule(job)]
 
     # Filter by work days (heuristic on text)
+    # If both "semaine" and "weekend" selected → no filter (show all)
     if work_days:
-        days_keywords: dict[str, list[str]] = {
-            "semaine": [
-                "lundi", "mardi", "mercredi", "jeudi", "vendredi",
-                "monday", "tuesday", "wednesday", "thursday", "friday",
-                "weekday", "en semaine", "du lundi au vendredi",
-            ],
-            "weekend": [
-                "samedi", "dimanche", "weekend", "week-end",
-                "saturday", "sunday", "le week-end",
-            ],
-        }
-        days_kws: list[str] = []
-        for d in work_days:
-            days_kws.extend(days_keywords.get(d.lower().strip(), []))
-        if days_kws:
-            filtered = [
-                job for job in filtered
-                if any(
-                    kw in job.get('title', '').lower()
-                    or kw in job.get('description', '').lower()
-                    for kw in days_kws
+        selected_days = [d.lower().strip() for d in work_days]
+        both_selected = "semaine" in selected_days and "weekend" in selected_days
+
+        if not both_selected:
+            days_keywords: dict[str, list[str]] = {
+                "semaine": [
+                    "lundi", "mardi", "mercredi", "jeudi", "vendredi",
+                    "monday", "tuesday", "wednesday", "thursday", "friday",
+                    "weekday", "en semaine", "du lundi au vendredi", "lundi-vendredi",
+                ],
+                "weekend": [
+                    "samedi", "dimanche", "weekend", "week-end", "week end",
+                    "saturday", "sunday", "le week-end", "le weekend",
+                    "travail le samedi", "travail le dimanche",
+                    "disponible le weekend", "weekends",
+                ],
+            }
+            days_kws: list[str] = []
+            for d in selected_days:
+                days_kws.extend(days_keywords.get(d, []))
+            if days_kws:
+                filtered = [
+                    job for job in filtered
+                    if any(
+                        kw in job.get('title', '').lower()
+                        or kw in job.get('description', '').lower()
+                        for kw in days_kws
                 )
             ]
 
