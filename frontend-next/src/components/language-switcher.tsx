@@ -51,15 +51,12 @@ export function LanguageSwitcher({ className }: { className?: string }) {
         <Button
           variant="ghost"
           size="sm"
-          className={cn("gap-2", className)}
+          className={cn("gap-1.5 px-2.5", className)}
           aria-label="Change language"
         >
-          <Globe className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            <LocaleFlag locale={locale} /> {LOCALE_LABELS[locale]}
-          </span>
-          <span className="sm:hidden">
-            <LocaleFlag locale={locale} />
+          <LocaleFlag locale={locale} className="w-5 h-3.5 rounded-sm" />
+          <span className="hidden sm:inline text-xs font-medium">
+            {locale.toUpperCase()}
           </span>
         </Button>
       </DropdownMenuTrigger>
