@@ -275,26 +275,40 @@ async def _create_new_checkout(
     """Create a brand-new Stripe Checkout session."""
     customer_id = await _get_or_create_stripe_customer(user_email)
 
-    session = stripe.checkout.Session.create(
-        customer=customer_id,
-        customer_email=user_email if not customer_id else None,
-        mode="subscription",
-        payment_method_types=["card"],
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata={
-            "user_id": user_id,
-            "plan_name": plan_name,
-            "billing_period": billing_period
-        },
-        subscription_data={
-            "metadata": {
+    try:
+        session = stripe.checkout.Session.create(
+            customer=customer_id,
+            customer_email=user_email if not customer_id else None,
+            mode="subscription",
+            payment_method_types=["card"],
+            line_items=[{"price": price_id, "quantity": 1}],
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
                 "user_id": user_id,
-                "plan_name": plan_name
+                "plan_name": plan_name,
+                "billing_period": billing_period
+            },
+            subscription_data={
+                "metadata": {
+                    "user_id": user_id,
+                    "plan_name": plan_name
+                }
             }
-        }
-    )
+        )
+    except stripe.error.InvalidRequestError as e:
+        logger.error(f"[CHECKOUT] Stripe InvalidRequestError: {e}. price_id={price_id}, customer={customer_id}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Stripe rejected the request: {str(e)}. The price ID may be invalid or inactive."
+        ) from None
+    except Exception as e:
+        logger.error(f"[CHECKOUT] Stripe Session.create failed: {e}. price_id={price_id}, user={user_id}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create checkout session. Please try again or contact support."
+        ) from None
+
     logger.info(f"[CHECKOUT] New checkout created: {session.id} for {plan_name}/{billing_period}")
     return {"success": True, "checkout_url": session.url, "session_id": session.id}
 
