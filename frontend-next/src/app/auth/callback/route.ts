@@ -65,9 +65,20 @@ export async function GET(request: NextRequest) {
 
       // OAuth / email confirmation flow: redirect to final destination
       const isNewUser = !data.user.user_metadata?.onboarding_completed;
-      const defaultRedirect = isNewUser ? "/onboarding" : "/jobs";
-      const finalRedirect =
-        redirectTo && redirectTo.startsWith("/") ? redirectTo : defaultRedirect;
+
+      let finalRedirect: string;
+      if (isNewUser) {
+        // New users ALWAYS go through onboarding first
+        // Preserve the original redirectTo so onboarding can redirect after completion
+        const onboardingUrl =
+          redirectTo && redirectTo.startsWith("/")
+            ? `/onboarding?redirectTo=${encodeURIComponent(redirectTo)}`
+            : "/onboarding";
+        finalRedirect = onboardingUrl;
+      } else {
+        finalRedirect =
+          redirectTo && redirectTo.startsWith("/") ? redirectTo : "/jobs";
+      }
 
       const response = NextResponse.redirect(`${origin}${finalRedirect}`);
 

@@ -808,6 +808,11 @@
       "timeout": {
         "title": "Connexion lente détectée",
         "description": "La requête a pris trop de temps. Vérifiez votre connexion internet et réessayez dans quelques instants."
+      },
+      "referral": {
+        "title": "Vous avez été invité par un ami !",
+        "description": "Inscrivez-vous et profitez de HuntZen gratuitement. Votre ami recevra une récompense quand vous vous inscrirez.",
+        "code": "Code parrainage : {code}"
       }
     },
     "forgotPassword": {
@@ -2083,18 +2088,52 @@
     "ctaButton": "Commencer gratuitement"
   },
   "onboarding": {
-    "title": "Bienvenue sur HuntZen !",
-    "subtitle": "Dites-nous ce que vous cherchez pour personnaliser vos offres.",
-    "jobTitle": {
-      "label": "Quel poste cherchez-vous ?",
-      "placeholder": "Ex : Développeur React, Designer UX, Chef de projet..."
+    "step": "Étape {current} sur {total}",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "start": "Commencer",
+    "skip": "Passer",
+    "identity": {
+      "title": "Comment vous appelez-vous ?",
+      "subtitle": "Nous aimons savoir à qui nous parlons.",
+      "firstName": "Prénom",
+      "firstNamePlaceholder": "Votre prénom",
+      "lastName": "Nom",
+      "lastNamePlaceholder": "Votre nom de famille"
     },
-    "location": {
-      "label": "Dans quelle ville ?",
-      "placeholder": "Ex : Paris, Lyon, Remote..."
+    "situation": {
+      "title": "Quelle est votre situation ?",
+      "subtitle": "Cela nous aide à personnaliser votre expérience.",
+      "active": "En recherche active",
+      "watching": "En veille / ouvert aux opportunités",
+      "student": "Étudiant / Alternant",
+      "employed": "En poste, je me renseigne"
     },
-    "cta": "Voir mes offres",
-    "skip": "Passer pour l'instant"
+    "jobSearch": {
+      "title": "Que recherchez-vous ?",
+      "subtitle": "Nous trouverons les offres qui vous correspondent.",
+      "jobTitle": "Poste recherché",
+      "jobTitlePlaceholder": "Développeur React, Designer UX...",
+      "location": "Ville / Localisation",
+      "locationPlaceholder": "Paris, Lyon, Remote..."
+    },
+    "experience": {
+      "title": "Quel est votre niveau d'expérience ?",
+      "subtitle": "Pour affiner les résultats à votre profil.",
+      "junior": "Junior (0-2 ans)",
+      "confirmed": "Confirmé (3-5 ans)",
+      "senior": "Senior (6-10 ans)",
+      "expert": "Expert (10+ ans)"
+    },
+    "discovery": {
+      "title": "Comment avez-vous connu HuntZen ?",
+      "subtitle": "Cela nous aide à mieux vous servir.",
+      "wordOfMouth": "Bouche-à-oreille / Ami",
+      "social": "Réseaux sociaux",
+      "seo": "Google / SEO",
+      "ads": "Publicité",
+      "other": "Autre"
+    }
   },
   "theme": {
     "toggleAriaLabel": "Changer le thème",

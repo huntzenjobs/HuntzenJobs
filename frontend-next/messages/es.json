@@ -620,6 +620,11 @@
       "timeout": {
         "title": "Conexión lenta detectada",
         "description": "La solicitud tardó demasiado. Verifica tu conexión a internet e inténtalo de nuevo."
+      },
+      "referral": {
+        "title": "Has sido invitado por un amigo!",
+        "description": "Registrate y disfruta de HuntZen gratis. Tu amigo recibira una recompensa cuando te registres.",
+        "code": "Codigo de referido: {code}"
       }
     },
     "layout": {
@@ -1718,18 +1723,52 @@
     "ctaButton": "Get started for free"
   },
   "onboarding": {
-    "title": "Welcome to HuntZen!",
-    "subtitle": "Tell us what you're looking for to personalize your job results.",
-    "jobTitle": {
-      "label": "What role are you looking for?",
-      "placeholder": "e.g. React Developer, UX Designer, Project Manager..."
+    "step": "Paso {current} de {total}",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "start": "Comenzar",
+    "skip": "Omitir",
+    "identity": {
+      "title": "Como te llamas?",
+      "subtitle": "Nos gusta saber con quien hablamos.",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Tu nombre",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Tu apellido"
     },
-    "location": {
-      "label": "In which city?",
-      "placeholder": "e.g. London, Remote, New York..."
+    "situation": {
+      "title": "Cual es tu situacion?",
+      "subtitle": "Esto nos ayuda a personalizar tu experiencia.",
+      "active": "En busqueda activa",
+      "watching": "Abierto a oportunidades",
+      "student": "Estudiante / Practicante",
+      "employed": "Empleado, solo explorando"
     },
-    "cta": "Show my jobs",
-    "skip": "Skip for now"
+    "jobSearch": {
+      "title": "Que buscas?",
+      "subtitle": "Encontraremos las ofertas adecuadas para ti.",
+      "jobTitle": "Puesto buscado",
+      "jobTitlePlaceholder": "Desarrollador React, UX Designer...",
+      "location": "Ciudad / Ubicacion",
+      "locationPlaceholder": "Madrid, Barcelona, Remoto..."
+    },
+    "experience": {
+      "title": "Cual es tu nivel de experiencia?",
+      "subtitle": "Para afinar los resultados a tu perfil.",
+      "junior": "Junior (0-2 anos)",
+      "confirmed": "Confirmado (3-5 anos)",
+      "senior": "Senior (6-10 anos)",
+      "expert": "Experto (10+ anos)"
+    },
+    "discovery": {
+      "title": "Como conociste HuntZen?",
+      "subtitle": "Esto nos ayuda a servirte mejor.",
+      "wordOfMouth": "Boca a boca / Amigo",
+      "social": "Redes sociales",
+      "seo": "Google / SEO",
+      "ads": "Publicidad",
+      "other": "Otro"
+    }
   },
   "testimonials": {
     "title": "HuntZen Jobs Testimonials",

@@ -651,6 +651,11 @@
       "timeout": {
         "title": "Slow connection detected",
         "description": "The request took too long. Check your internet connection and try again in a moment."
+      },
+      "referral": {
+        "title": "You've been invited by a friend!",
+        "description": "Sign up and enjoy HuntZen for free. Your friend will earn a reward when you register.",
+        "code": "Referral code: {code}"
       }
     },
     "layout": {
@@ -2096,18 +2101,52 @@
     "ctaButton": "Get started for free"
   },
   "onboarding": {
-    "title": "Welcome to HuntZen!",
-    "subtitle": "Tell us what you're looking for to personalize your job results.",
-    "jobTitle": {
-      "label": "What role are you looking for?",
-      "placeholder": "e.g. React Developer, UX Designer, Project Manager..."
+    "step": "Step {current} of {total}",
+    "next": "Next",
+    "previous": "Previous",
+    "start": "Get started",
+    "skip": "Skip",
+    "identity": {
+      "title": "What's your name?",
+      "subtitle": "We like to know who we're talking to.",
+      "firstName": "First name",
+      "firstNamePlaceholder": "Your first name",
+      "lastName": "Last name",
+      "lastNamePlaceholder": "Your last name"
     },
-    "location": {
-      "label": "In which city?",
-      "placeholder": "e.g. London, Remote, New York..."
+    "situation": {
+      "title": "What's your current situation?",
+      "subtitle": "This helps us personalize your experience.",
+      "active": "Actively looking",
+      "watching": "Open to opportunities",
+      "student": "Student / Intern",
+      "employed": "Employed, just exploring"
     },
-    "cta": "Show my jobs",
-    "skip": "Skip for now"
+    "jobSearch": {
+      "title": "What are you looking for?",
+      "subtitle": "We'll find the right jobs for you.",
+      "jobTitle": "Job title",
+      "jobTitlePlaceholder": "React Developer, UX Designer...",
+      "location": "City / Location",
+      "locationPlaceholder": "London, New York, Remote..."
+    },
+    "experience": {
+      "title": "What's your experience level?",
+      "subtitle": "To refine results to your profile.",
+      "junior": "Junior (0-2 years)",
+      "confirmed": "Mid-level (3-5 years)",
+      "senior": "Senior (6-10 years)",
+      "expert": "Expert (10+ years)"
+    },
+    "discovery": {
+      "title": "How did you find HuntZen?",
+      "subtitle": "This helps us serve you better.",
+      "wordOfMouth": "Word of mouth / Friend",
+      "social": "Social media",
+      "seo": "Google / SEO",
+      "ads": "Advertising",
+      "other": "Other"
+    }
   },
   "testimonials": {
     "title": "HuntZen Jobs Testimonials",

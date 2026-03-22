@@ -331,3 +331,68 @@ async def send_welcome_email(request: Request, payload: WelcomeRequest):
     except Exception as e:
         logger.warning(f"Welcome email failed (non-blocking): {e}")
     return {"success": True}
+
+
+class OnboardingDataRequest(BaseModel):
+    first_name: str = ""
+    last_name: str = ""
+    situation: str = ""
+    job_title: str = ""
+    location: str = ""
+    experience: str = ""
+    discovery_source: str = ""
+
+
+@router.post("/api/auth/onboarding-data")
+@limiter.limit("10/minute")
+async def save_onboarding_data(
+    request: Request,
+    payload: OnboardingDataRequest,
+    authorization: str | None = Header(None),
+):
+    """
+    Save onboarding wizard data for admin analytics.
+    Stores all fields as JSONB in profiles.onboarding_data.
+    """
+    user = get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+
+    user_id = user["id"]
+
+    try:
+        supabase = get_supabase_client()
+
+        onboarding_data = {
+            "first_name": payload.first_name,
+            "last_name": payload.last_name,
+            "situation": payload.situation,
+            "job_title": payload.job_title,
+            "location": payload.location,
+            "experience": payload.experience,
+            "discovery_source": payload.discovery_source,
+        }
+
+        # Update profiles table with onboarding data
+        full_name = f"{payload.first_name} {payload.last_name}".strip()
+        update_data: dict = {"onboarding_data": json.dumps(onboarding_data)}
+        if full_name:
+            update_data["full_name"] = full_name
+
+        supabase.table("profiles").update(update_data).eq("id", user_id).execute()
+
+        logger.info(f"Onboarding data saved for user {user_id}")
+
+        return {"success": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save onboarding data for user {user_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save onboarding data"
+        ) from None

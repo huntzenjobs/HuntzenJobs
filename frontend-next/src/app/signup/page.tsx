@@ -41,6 +41,27 @@ function SignupForm() {
   } = useAuth();
   const t = useTranslations("auth.signup");
 
+  // Detect referral code from URL, cookie, or localStorage
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  useEffect(() => {
+    const fromUrl = searchParams.get("ref");
+    if (fromUrl) {
+      setReferralCode(fromUrl);
+      return;
+    }
+    const refCookie = document.cookie
+      .split("; ")
+      .find((r) => r.startsWith("huntzen_referral_code="));
+    if (refCookie) {
+      setReferralCode(refCookie.split("=")[1]);
+      return;
+    }
+    const fromStorage = localStorage.getItem("huntzen_referral_code");
+    if (fromStorage) {
+      setReferralCode(fromStorage);
+    }
+  }, [searchParams]);
+
   // Detect CV analysis redirect
   const redirectTo = searchParams.get("redirectTo");
   const message = searchParams.get("message");
@@ -253,6 +274,26 @@ function SignupForm() {
       </AnimatePresence>
 
       <div className="space-y-8">
+        {/* Referral Welcome Banner */}
+        {referralCode && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-gradient-to-r from-[#00D9FF]/10 via-[#00D9FF]/5 to-cyan-100/10 border-2 border-[#00D9FF]/30 rounded-xl p-5"
+          >
+            <h3 className="font-bold text-gray-900 mb-2 text-lg">
+              {t("referral.title")}
+            </h3>
+            <p className="text-gray-700 text-sm mb-2">
+              {t("referral.description")}
+            </p>
+            <p className="text-xs text-gray-500 font-mono">
+              {t("referral.code", { code: referralCode })}
+            </p>
+          </motion.div>
+        )}
+
         {/* Header */}
         <div>
           <motion.h1
