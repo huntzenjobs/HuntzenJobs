@@ -306,7 +306,7 @@ async def _create_new_checkout(
         logger.error(f"[CHECKOUT] Stripe Session.create failed: {e}. price_id={price_id}, user={user_id}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create checkout session. Please try again or contact support."
+            detail="Failed to create checkout session. Please try again or contact support."
         ) from None
 
     logger.info(f"[CHECKOUT] New checkout created: {session.id} for {plan_name}/{billing_period}")
