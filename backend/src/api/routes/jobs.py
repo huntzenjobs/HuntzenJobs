@@ -546,6 +546,8 @@ async def search_jobs_get(
             work_days=work_days_list or None,
         )
         result['jobs'] = filtered_jobs
+        if 'metadata' not in result:
+            result['metadata'] = {}
         result['metadata']['total_filtered'] = len(filtered_jobs)
         result['metadata']['total_before_filters'] = len(jobs)
 
