@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useLocale } from "next-intl";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-const CACHE_KEY = "plans_config_cache";
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export interface PlanConfig {
@@ -20,13 +20,17 @@ export interface PlanConfig {
   sort_order: number;
 }
 
-function loadCache(): PlanConfig[] | null {
+function getCacheKey(locale: string): string {
+  return `plans_config_cache:${locale}`;
+}
+
+function loadCache(locale: string): PlanConfig[] | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(getCacheKey(locale));
     if (!raw) return null;
     const { data, expiry } = JSON.parse(raw);
     if (Date.now() > expiry) {
-      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(getCacheKey(locale));
       return null;
     }
     return data as PlanConfig[];
@@ -35,28 +39,29 @@ function loadCache(): PlanConfig[] | null {
   }
 }
 
-function saveCache(data: PlanConfig[]) {
+function saveCache(locale: string, data: PlanConfig[]) {
   try {
     localStorage.setItem(
-      CACHE_KEY,
+      getCacheKey(locale),
       JSON.stringify({ data, expiry: Date.now() + CACHE_TTL }),
     );
   } catch {}
 }
 
-function clearCache() {
+function clearCache(locale: string) {
   try {
-    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(getCacheKey(locale));
   } catch {}
 }
 
 export function usePlansConfig() {
+  const locale = useLocale();
   const [plans, setPlans] = useState<PlanConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPlans = useCallback(async () => {
     // Try cache first
-    const cached = loadCache();
+    const cached = loadCache(locale);
     if (cached) {
       setPlans(cached);
       setIsLoading(false);
@@ -64,17 +69,18 @@ export function usePlansConfig() {
     }
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/public/plans`);
+      const url = `${BACKEND_URL}/api/public/plans${locale !== "fr" ? `?locale=${locale}` : ""}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch plans");
       const data: PlanConfig[] = await res.json();
-      saveCache(data);
+      saveCache(locale, data);
       setPlans(data);
     } catch (err) {
       console.warn("[usePlansConfig] API unavailable, no fallback:", err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     fetchPlans();
@@ -83,13 +89,13 @@ export function usePlansConfig() {
   // Refresh when admin saves plan changes
   useEffect(() => {
     const handleChange = () => {
-      clearCache();
+      clearCache(locale);
       fetchPlans();
     };
     window.addEventListener("subscription-changed", handleChange);
     return () =>
       window.removeEventListener("subscription-changed", handleChange);
-  }, [fetchPlans]);
+  }, [fetchPlans, locale]);
 
   const getPlan = useCallback(
     (name: string): PlanConfig | undefined =>

@@ -13,6 +13,7 @@ export default function AdminPlansPage() {
     updateDisplayPrice,
     updateWording,
     updateStripePrice,
+    translatePlan,
     loading,
   } = useAdminPlans();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -77,6 +78,11 @@ export default function AdminPlansPage() {
               }}
               onUpdateWording={async (id, wording) => {
                 const ok = await updateWording(id, wording);
+                if (ok) refresh();
+                return ok;
+              }}
+              onTranslatePlan={async (id) => {
+                const ok = await translatePlan(id);
                 if (ok) refresh();
                 return ok;
               }}

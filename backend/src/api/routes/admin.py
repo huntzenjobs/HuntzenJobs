@@ -5,6 +5,7 @@ Complete admin API for user management, plan editing, analytics, and logs.
 All endpoints require is_admin = TRUE in profiles table.
 """
 
+import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -552,6 +553,9 @@ async def update_plan_limits(
             redis = await get_redis()
             if redis:
                 await redis.delete("plans_config")
+                locale_keys = [k async for k in redis.scan_iter("plans_config:*")]
+                if locale_keys:
+                    await redis.delete(*locale_keys)
                 keys = [k async for k in redis.scan_iter("auth_me:*")]
                 if keys:
                     await redis.delete(*keys)
@@ -619,6 +623,9 @@ async def update_plan_features(
             redis = await get_redis()
             if redis:
                 await redis.delete("plans_config")
+                locale_keys = [k async for k in redis.scan_iter("plans_config:*")]
+                if locale_keys:
+                    await redis.delete(*locale_keys)
                 keys = [k async for k in redis.scan_iter("auth_me:*")]
                 if keys:
                     await redis.delete(*keys)
@@ -668,12 +675,15 @@ async def update_plan_wording(
 
         supabase.table("subscription_plans").update(update_data).eq("id", plan_id).execute()
 
-        # Invalider cache public plans_config
+        # Invalider cache public plans_config + locale variants
         try:
             from src.utils.cache import get_redis
             redis = await get_redis()
             if redis:
                 await redis.delete("plans_config")
+                locale_keys = [k async for k in redis.scan_iter("plans_config:*")]
+                if locale_keys:
+                    await redis.delete(*locale_keys)
                 # Invalider aussi auth_me car plan_display_name change
                 keys = [k async for k in redis.scan_iter("auth_me:*")]
                 if keys:
@@ -693,6 +703,104 @@ async def update_plan_wording(
         raise
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to update wording") from None
+
+
+@router.post("/plans/{plan_id}/translate")
+async def translate_plan(
+    plan_id: str,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """
+    Auto-translate a plan's display_name, description, features, features_excluded
+    from French to en/es/pt using Groq LLM. Saves translations in the translations JSONB column.
+    """
+    from groq import Groq
+
+    supabase = get_supabase_client()
+    settings = get_settings()
+
+    try:
+        plan_result = supabase.table("subscription_plans").select(
+            "name, display_name, description, features, features_excluded"
+        ).eq("id", plan_id).single().execute()
+        if not plan_result.data:
+            raise HTTPException(status_code=404, detail="Plan not found")
+
+        plan_data = plan_result.data
+        source = {
+            "display_name": plan_data.get("display_name") or plan_data["name"],
+            "description": plan_data.get("description") or "",
+            "features": plan_data.get("features") or [],
+            "features_excluded": plan_data.get("features_excluded") or [],
+        }
+
+        groq_client = Groq(api_key=settings.get_groq_key())
+        translations: dict[str, Any] = {}
+        target_languages = {"en": "English", "es": "Spanish", "pt": "Portuguese"}
+
+        for lang_code, lang_name in target_languages.items():
+            prompt = (
+                f"Translate the following subscription plan data from French to {lang_name}. "
+                "Return ONLY a valid JSON object with these exact keys: "
+                "display_name (string), description (string), features (array of strings), "
+                "features_excluded (array of strings). "
+                "Keep the same number of items in each array. Do not add or remove items. "
+                "Do not include any text outside the JSON.\n\n"
+                f"French source:\n{json.dumps(source, ensure_ascii=False, indent=2)}"
+            )
+
+            response = groq_client.chat.completions.create(
+                model=settings.llm_model_powerful,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=2048,
+                response_format={"type": "json_object"},
+            )
+
+            raw_content = response.choices[0].message.content or "{}"
+            try:
+                parsed = json.loads(raw_content)
+                translations[lang_code] = {
+                    "display_name": parsed.get("display_name", source["display_name"]),
+                    "description": parsed.get("description", source["description"]),
+                    "features": parsed.get("features", source["features"]),
+                    "features_excluded": parsed.get("features_excluded", source["features_excluded"]),
+                }
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse Groq translation for {lang_code}, plan {plan_id}")
+                translations[lang_code] = source
+
+        # Save translations to DB
+        supabase.table("subscription_plans").update({
+            "translations": translations,
+            "updated_at": datetime.now(UTC).isoformat(),
+        }).eq("id", plan_id).execute()
+
+        # Invalider cache plans_config + locale variants
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis:
+                await redis.delete("plans_config")
+                locale_keys = [k async for k in redis.scan_iter("plans_config:*")]
+                if locale_keys:
+                    await redis.delete(*locale_keys)
+        except Exception:
+            pass
+
+        _log_admin_action(supabase, admin["id"], "admin.plan_translated", None, {
+            "plan_id": plan_id,
+            "plan_name": plan_data["name"],
+            "languages": list(translations.keys()),
+        })
+
+        return {"success": True, "translations": translations}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to translate plan {plan_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to translate plan") from None
 
 
 @router.patch("/plans/{plan_id}/price")
@@ -722,12 +830,15 @@ async def update_plan_display_price(
 
         result = supabase.table("subscription_plans").update(update_data).eq("id", plan_id).execute()
 
-        # Invalider cache public plans_config
+        # Invalider cache public plans_config + locale variants
         try:
             from src.utils.cache import get_redis
             redis = await get_redis()
             if redis:
                 await redis.delete("plans_config")
+                locale_keys = [k async for k in redis.scan_iter("plans_config:*")]
+                if locale_keys:
+                    await redis.delete(*locale_keys)
         except Exception:
             pass
 

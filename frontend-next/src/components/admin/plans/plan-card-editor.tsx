@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Zap, Pencil, ToggleRight } from "lucide-react";
+import { Save, Zap, Pencil, ToggleRight, Languages } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -81,6 +81,7 @@ interface Props {
     planId: string,
     wording: { display_name?: string; description?: string },
   ) => Promise<boolean>;
+  onTranslatePlan: (planId: string) => Promise<boolean>;
 }
 
 export default function PlanCardEditor({
@@ -90,6 +91,7 @@ export default function PlanCardEditor({
   onUpdatePrice,
   onUpdateStripePrice,
   onUpdateWording,
+  onTranslatePlan,
 }: Props) {
   const [limits, setLimits] = useState({
     cv_analyses: plan.limits?.cv_analyses ?? 0,
@@ -157,6 +159,12 @@ export default function PlanCardEditor({
   const handleSaveWording = async () => {
     setSaving("wording");
     await onUpdateWording(plan.id, { display_name: displayName, description });
+    setSaving(null);
+  };
+
+  const handleTranslate = async () => {
+    setSaving("translate");
+    await onTranslatePlan(plan.id);
     setSaving(null);
   };
 
@@ -590,6 +598,16 @@ export default function PlanCardEditor({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            <Button
+              variant="secondary"
+              onClick={handleTranslate}
+              disabled={saving === "translate"}
+            >
+              <Languages className="h-4 w-4 mr-2" />
+              {saving === "translate"
+                ? "Traduction en cours..."
+                : "Traduire en toutes les langues"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

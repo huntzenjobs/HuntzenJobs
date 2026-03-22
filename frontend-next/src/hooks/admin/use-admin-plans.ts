@@ -202,13 +202,35 @@ export function useAdminPlans() {
     [],
   );
 
+  const translatePlan = useCallback(async (planId: string) => {
+    setLoading(true);
+    try {
+      await adminFetch(`/api/admin/plans/${planId}/translate`, {
+        method: "POST",
+      });
+      toast.success("Traductions générées (en, es, pt)");
+      window.dispatchEvent(new Event("subscription-changed"));
+      return true;
+    } catch (e) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "Erreur lors de la traduction automatique",
+      );
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     fetchPlans,
     updateLimits,
-    updateFeatures, // now accepts Record<string, boolean>
+    updateFeatures,
     updateDisplayPrice,
     updateWording,
     updateStripePrice,
+    translatePlan,
   };
 }
