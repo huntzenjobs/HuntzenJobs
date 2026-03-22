@@ -98,8 +98,8 @@ describe("ReferralFriendsList", () => {
     render(
       <ReferralFriendsList
         friends={[
-          { status: "validated", created_at: "2026-03-11T10:00:00Z" },
-          { status: "registered", created_at: "2026-03-10T10:00:00Z" },
+          { status: "validated", signed_up_at: "2026-03-11T10:00:00Z" },
+          { status: "registered", signed_up_at: "2026-03-10T10:00:00Z" },
         ]}
       />,
     );

@@ -358,6 +358,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               <Bell className="w-4 h-4 mr-2" />
               {tProfile("tabs.notifications")}
             </TabsTrigger>
+            {/* Progression tab — hidden until feature is ready
             <TabsTrigger
               value="progression"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
@@ -365,6 +366,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
               <TrendingUp className="w-4 h-4 mr-2" />
               {tProfile("tabs.progression")}
             </TabsTrigger>
+            */}
             <TabsTrigger
               value="referral"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"

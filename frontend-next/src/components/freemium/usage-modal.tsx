@@ -241,6 +241,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
           <Separator />
 
           {/* Career Score */}
+          {/* Career Score — hidden until feature is ready
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
               {t("progressTitle")}
@@ -249,6 +250,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
           </div>
 
           <Separator />
+          */}
 
           {/* Quotas Usage */}
           <div className="space-y-4">
