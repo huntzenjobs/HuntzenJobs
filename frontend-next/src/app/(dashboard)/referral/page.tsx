@@ -33,7 +33,8 @@ interface BoostStatus {
   }>;
   recent_referrals: Array<{
     status: "validated" | "registered";
-    created_at: string;
+    signed_up_at: string;
+    name?: string;
   }>;
 }
 
