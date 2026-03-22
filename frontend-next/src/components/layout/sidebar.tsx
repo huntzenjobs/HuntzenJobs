@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { TextLogo } from "@/components/ui/adaptive-logo";
@@ -18,6 +18,7 @@ import {
   Sparkles,
   Crown,
   LogIn,
+  LogOut,
   Calendar,
   Activity,
   Users,
@@ -33,6 +34,18 @@ import { UsageSummary } from "@/components/freemium/usage-counter";
 import { UsageModal } from "@/components/freemium/usage-modal";
 import { useTranslations } from "next-intl";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { LanguageSwitcherCompact } from "@/components/language-switcher";
+import { createClient } from "@/lib/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SidebarProps {
   className?: string;
@@ -40,8 +53,10 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isCandidaturesNew, setIsCandidaturesNew] = useState(() => {
     try {
       return !localStorage.getItem("huntzen_candidatures_visited");
@@ -61,6 +76,22 @@ export function Sidebar({ className }: SidebarProps) {
   const plan = subscription?.plan || "free";
   const isFreePlan = subscription?.isFreePlan ?? true;
   const openPricingModal = subscription?.openPricingModal || (() => {});
+
+  const handleLogout = async () => {
+    try {
+      if (auth?.signOut) {
+        await auth.signOut();
+      } else {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push("/login");
+        router.refresh();
+      }
+    } catch {
+      router.push("/login");
+      router.refresh();
+    }
+  };
 
   const navigation = [
     {
@@ -307,6 +338,58 @@ export function Sidebar({ className }: SidebarProps) {
           </Link>
         )}
 
+        {/* User profile, language switcher, logout */}
+        {user && (
+          <div className="mb-3 space-y-1">
+            {/* Profile link */}
+            <Link
+              href="/profile"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/8 transition-colors group"
+            >
+              <div className="w-8 h-8 rounded-full bg-[#00D9FF]/20 flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-[#00D9FF]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-white truncate">
+                    {user.user_metadata?.full_name ||
+                      user.email?.split("@")[0] ||
+                      t("user.default")}
+                  </span>
+                  {planBadge && (
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white",
+                        planBadge.color,
+                      )}
+                    >
+                      {planBadge.icon}
+                      {planBadge.label}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-white/50 truncate">{user.email}</p>
+              </div>
+            </Link>
+
+            {/* Language switcher */}
+            <div className="px-3 py-1">
+              <LanguageSwitcherCompact />
+            </div>
+
+            {/* Logout button */}
+            <button
+              onClick={() => setShowLogoutDialog(true)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-red-500/10 hover:text-red-400 transition-colors w-full group"
+              aria-label={t("aria.logout")}
+            >
+              <LogOut className="w-4 h-4" />
+              <span>{t("footer.logout")}</span>
+            </button>
+          </div>
+        )}
+
         {/* Upgrade button for free users */}
         {user && isFreePlan && (
           <button
@@ -399,7 +482,26 @@ export function Sidebar({ className }: SidebarProps) {
         onClose={() => setIsUsageModalOpen(false)}
       />
 
-      {/* Logout dialog moved to DashboardNavbar */}
+      {/* Logout confirmation dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("logout.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("logout.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("logout.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {t("logout.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

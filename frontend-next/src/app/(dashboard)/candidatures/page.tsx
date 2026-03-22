@@ -201,7 +201,7 @@ export default function CandidaturesPage() {
           </div>
 
           {/* Stats */}
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-2 md:gap-3 flex-wrap">
             {[
               {
                 label: t("stats.total"),
@@ -226,7 +226,7 @@ export default function CandidaturesPage() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-center shadow-sm"
+                className="bg-white border border-slate-200 rounded-xl px-2 md:px-4 py-2 text-center shadow-sm"
               >
                 <p className={cn("text-2xl font-black", s.color)}>{s.value}</p>
                 <p className="text-xs text-slate-500">{s.label}</p>
@@ -291,7 +291,7 @@ export default function CandidaturesPage() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center gap-4"
+                  className="bg-white border border-slate-200 rounded-xl p-3 md:p-4 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center gap-2 md:gap-4"
                 >
                   {/* Info */}
                   <div className="flex-1 min-w-0">
@@ -328,7 +328,7 @@ export default function CandidaturesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
                     <Select
                       value={app.status}
                       onValueChange={(v) => updateStatus(app.id, v)}

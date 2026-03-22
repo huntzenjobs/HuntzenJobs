@@ -217,6 +217,7 @@ const nextConfig = {
   // Enable instrumentation for Sentry and other monitoring
   experimental: {
     instrumentationHook: true,
+    scrollRestoration: true,
   },
 
   // Webpack configuration to suppress OpenTelemetry dynamic require warnings

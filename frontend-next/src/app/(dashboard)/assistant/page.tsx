@@ -56,7 +56,14 @@ export default function AssistantPage() {
   const t = useTranslations("dashboard.assistant");
   const locale = useLocale();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(() => {
+    try {
+      if (typeof window === "undefined") return "";
+      return sessionStorage.getItem("huntzen_assistant_draft") || "";
+    } catch {
+      return "";
+    }
+  });
   const [loading, setLoading] = useState(false);
   const [queueState, setQueueState] = useState<QueueWaitingState | null>(null);
   const [sessionId, setSessionId] = useState(() => uuidv4());
@@ -118,6 +125,19 @@ export default function AssistantPage() {
 
   const canChat =
     assistantMessagesRemaining > 0 || assistantMessagesLimit === Infinity;
+
+  // Persist draft input to sessionStorage so it survives back/forward navigation
+  useEffect(() => {
+    try {
+      if (input) {
+        sessionStorage.setItem("huntzen_assistant_draft", input);
+      } else {
+        sessionStorage.removeItem("huntzen_assistant_draft");
+      }
+    } catch {
+      // sessionStorage unavailable — silently ignore
+    }
+  }, [input]);
 
   // Smart scroll: scroll to user message when sent (best UX)
   useEffect(() => {
@@ -418,7 +438,7 @@ export default function AssistantPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-center justify-between gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-sm border border-slate-200"
+          className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 mb-6 bg-gradient-to-br from-white to-gray-50 p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200"
         >
           {/* BotSelector compact à gauche */}
           <motion.div
@@ -477,7 +497,7 @@ export default function AssistantPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="flex items-center gap-2 flex-shrink-0"
+            className="flex items-center gap-2 flex-shrink-0 flex-wrap"
           >
             {/* Message counter for free users */}
             {isFreePlan && assistantMessagesLimit !== Infinity && (
@@ -799,7 +819,7 @@ export default function AssistantPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-2 items-end">
+                  <div className="flex gap-2 items-end flex-wrap sm:flex-nowrap">
                     {/* Hidden file input */}
                     <input
                       ref={cvFileInputRef}

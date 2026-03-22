@@ -166,7 +166,7 @@ export default function SalonsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-slate-200 shadow-sm mb-8"
+          className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 bg-gradient-to-br from-white to-gray-50 p-4 md:p-8 rounded-2xl border border-slate-200 shadow-sm mb-8"
         >
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-3">
@@ -628,7 +628,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
     >
       <Card className="h-full flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 border-slate-200 hover:border-[#00D9FF]/50 bg-white overflow-hidden">
         {/* Header - hauteur fixe */}
-        <div className="bg-gradient-to-br from-white to-gray-50 border-b border-slate-200 p-4 h-[88px] flex items-center">
+        <div className="bg-gradient-to-br from-white to-gray-50 border-b border-slate-200 p-3 md:p-4 min-h-[88px] flex items-center">
           <div className="flex items-start justify-between gap-3 w-full">
             <div className="flex-1 min-w-0">
               <h3 className="text-base font-bold line-clamp-1 text-black mb-1.5 leading-tight">

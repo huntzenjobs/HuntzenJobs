@@ -97,8 +97,8 @@ export default function ExpatPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-muted rounded-lg p-4 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+              <div className="bg-muted rounded-lg p-2 md:p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-1">
                   {t("costOfLiving.rent")}
                 </p>
@@ -110,7 +110,7 @@ export default function ExpatPage() {
                   {t("costOfLiving.perMonth")}
                 </p>
               </div>
-              <div className="bg-muted rounded-lg p-4 text-center">
+              <div className="bg-muted rounded-lg p-2 md:p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-1">
                   {t("costOfLiving.transport")}
                 </p>
@@ -121,7 +121,7 @@ export default function ExpatPage() {
                   {t("costOfLiving.perMonth")}
                 </p>
               </div>
-              <div className="bg-muted rounded-lg p-4 text-center">
+              <div className="bg-muted rounded-lg p-2 md:p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-1">
                   {t("costOfLiving.food")}
                 </p>
@@ -132,7 +132,7 @@ export default function ExpatPage() {
                   {t("costOfLiving.perMonth")}
                 </p>
               </div>
-              <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <div className="bg-blue-50 rounded-lg p-2 md:p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-1">
                   {t("costOfLiving.index")}
                 </p>
@@ -238,7 +238,7 @@ export default function ExpatPage() {
 
         <Card className="bg-gradient-to-br from-blue-50 to-teal-50 border-blue-100">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div>
                 <h3 className="font-semibold">{t("coach.title")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bookmark,
@@ -55,18 +55,34 @@ export default function SavedJobsPage() {
   const auth = useOptionalAuth();
   const user = auth?.user;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("dashboard.savedJobs");
 
   const PAGE_SIZE = 10;
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState(
+    () => searchParams.get("q") || "",
+  );
+  const [currentPage, setCurrentPage] = useState(() => {
+    const pageParam = searchParams.get("page");
+    const parsed = pageParam ? parseInt(pageParam, 10) : 1;
+    return parsed > 0 ? parsed : 1;
+  });
   const [totalCount, setTotalCount] = useState(0);
   const [selectedJobForApply, setSelectedJobForApply] =
     useState<SavedJob | null>(null);
 
   const { documents, fetchDocuments } = useDocuments();
+
+  // Sync state changes back to URL params
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (currentPage > 1) params.set("page", String(currentPage));
+    if (searchQuery) params.set("q", searchQuery);
+    const qs = params.toString();
+    router.replace(`/saved-jobs${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [currentPage, searchQuery, router]);
 
   const fetchSavedJobs = useCallback(
     async (page = 1) => {
@@ -177,7 +193,7 @@ export default function SavedJobsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-slate-200 shadow-sm"
+          className="bg-gradient-to-br from-white to-gray-50 p-4 md:p-8 rounded-2xl border border-slate-200 shadow-sm"
         >
           <div className="flex items-center gap-4 mb-3">
             <motion.div
@@ -210,7 +226,7 @@ export default function SavedJobsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm"
+          className="bg-white p-3 md:p-6 rounded-2xl border-2 border-slate-200 shadow-sm"
         >
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -298,10 +314,10 @@ export default function SavedJobsPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -100 }}
                       transition={{ delay: index * 0.05 }}
-                      className="p-6 hover:bg-slate-50 transition-colors"
+                      className="p-3 md:p-6 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-3">
+                      <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                        <div className="flex-1 space-y-3 min-w-0">
                           {/* Job Title & Company */}
                           <div>
                             <h3 className="text-xl font-bold text-black mb-1">
@@ -374,7 +390,7 @@ export default function SavedJobsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-row sm:flex-col gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
                           {!jobDoc && (
                             <Button
                               onClick={() => setSelectedJobForApply(job)}

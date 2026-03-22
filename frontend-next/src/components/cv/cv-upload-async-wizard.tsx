@@ -42,7 +42,7 @@ import type { Job } from "@/lib/api/huntzen-client";
 import { useDocuments } from "@/hooks/use-documents";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCVAnalysis,
   type CVAnalysisApiResult,
@@ -151,6 +151,7 @@ export function CVUploadAsyncWizard({
 }: CVUploadAsyncWizardProps) {
   const { session, user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("cv");
 
   // ============================================
@@ -163,16 +164,28 @@ export function CVUploadAsyncWizard({
   const [loadedHistoryResult, setLoadedHistoryResult] =
     useState<CVAnalysisApiResult | null>(null);
 
-  // Wizard state
-  const [wizardState, setWizardState] = useState<WizardState>({
-    currentStep: 1,
-    uploadMethod: "file",
-    file: null,
-    cvText: "",
-    analysisType: null,
-    jobDescription: "",
-    adaptLanguage: "fr",
+  // Wizard state — initialise step from URL ?step=X if present
+  const [wizardState, setWizardState] = useState<WizardState>(() => {
+    const stepParam = searchParams.get("step");
+    const parsed = stepParam ? parseInt(stepParam, 10) : 1;
+    const initialStep: WizardStep = parsed === 2 ? 2 : parsed === 3 ? 3 : 1;
+    return {
+      currentStep: initialStep,
+      uploadMethod: "file",
+      file: null,
+      cvText: "",
+      analysisType: null,
+      jobDescription: "",
+      adaptLanguage: "fr",
+    };
   });
+
+  // Sync wizard step to URL params for back/forward navigation
+  useEffect(() => {
+    const step = wizardState.currentStep;
+    const qs = step > 1 ? `?step=${step}` : "";
+    router.replace(`/cv-analysis${qs}`, { scroll: false });
+  }, [wizardState.currentStep, router]);
 
   // Adapt mode state
   const [adaptLoading, setAdaptLoading] = useState(false);
