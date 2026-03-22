@@ -5,13 +5,38 @@
 
 import { Metadata } from "next";
 import Script from "next/script";
+import { getLocale } from "next-intl/server";
 import { testimonialsMetadata } from "@/lib/seo/metadata";
 import { TestimonialsClient } from "./testimonials-client";
-import { testimonials } from "./testimonials-data";
+import type { Testimonial } from "./testimonials-data";
 
 export const metadata: Metadata = testimonialsMetadata;
 
-export default function TestimonialsPage() {
+async function getTestimonials(locale: string): Promise<Testimonial[]> {
+  switch (locale) {
+    case "en": {
+      const mod = await import("./testimonials-data.en");
+      return mod.testimonialsEn;
+    }
+    case "es": {
+      const mod = await import("./testimonials-data.es");
+      return mod.testimonials;
+    }
+    case "pt": {
+      const mod = await import("./testimonials-data.pt");
+      return mod.testimonials;
+    }
+    default: {
+      const mod = await import("./testimonials-data");
+      return mod.testimonials;
+    }
+  }
+}
+
+export default async function TestimonialsPage() {
+  const locale = await getLocale();
+  const testimonials = await getTestimonials(locale);
+
   // Calculer note moyenne et nombre total de reviews
   const totalReviews = testimonials.length;
   const averageRating =
