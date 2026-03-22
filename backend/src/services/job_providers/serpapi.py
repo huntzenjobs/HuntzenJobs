@@ -11,7 +11,11 @@ from typing import Any
 import httpx
 
 from src.config.settings import settings
-from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
+from src.services.job_providers.base import (
+    BaseJobProvider,
+    handle_provider_errors,
+    normalize_contract_type,
+)
 from src.utils.geo import country_code_to_language, country_code_to_name
 
 logger = logging.getLogger(__name__)
@@ -118,17 +122,14 @@ class SerpAPIProvider(BaseJobProvider):
             "posted_date": item.get("detected_extensions", {}).get("posted_at"),
         }
 
-    def _extract_contract_type(self, item: dict) -> str | None:
-        """Extract contract type from extensions."""
+    def _extract_contract_type(self, item: dict) -> str:
+        """Extract and normalize contract type from extensions."""
         extensions = item.get("detected_extensions", {})
         schedule = extensions.get("schedule_type", "") or ""
         if schedule:
-            schedule_lower = schedule.lower()
-            if any(kw in schedule_lower for kw in ("alternance", "apprenti", "apprenticeship", "work-study")):
-                return "alternance"
-            return schedule
-        # Fallback : vérifier le titre
+            return normalize_contract_type(schedule)
+        # Fallback : verifier le titre
         title = (item.get("title") or "").lower()
         if "alternance" in title or "apprenti" in title:
-            return "alternance"
-        return None
+            return "Alternance"
+        return ""

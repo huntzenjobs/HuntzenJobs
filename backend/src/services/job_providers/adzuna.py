@@ -11,7 +11,11 @@ from typing import Any
 import httpx
 
 from src.config.settings import settings
-from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
+from src.services.job_providers.base import (
+    BaseJobProvider,
+    handle_provider_errors,
+    normalize_contract_type,
+)
 from src.utils.url_validator import is_description_truncated, is_direct_job_url
 
 logger = logging.getLogger(__name__)
@@ -122,7 +126,7 @@ class AdzunaProvider(BaseJobProvider):
             "description": description,
             "url": url,
             "salary": self._format_salary(item),
-            "contract_type": item.get("contract_type"),
+            "contract_type": normalize_contract_type(item.get("contract_type")),
             "source": self.name,
             "posted_date": item.get("created"),
             "url_is_direct": is_direct_job_url(url),

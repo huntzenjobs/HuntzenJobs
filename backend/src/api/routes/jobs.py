@@ -175,32 +175,32 @@ def apply_advanced_filters(
                 )
             ]
 
-    # Filter by multiple contract types (heuristic on text)
+    # Filter by multiple contract types (exact match on normalized contract_type)
     if contract_types:
-        contract_keywords: dict[str, list[str]] = {
-            "cdi": ["cdi", "permanent", "indéterminée", "indefinite", "unbefristet"],
-            "cdd": ["cdd", "déterminée", "fixed-term", "temporary contract", "befristet"],
-            "freelance": ["freelance", "indépendant", "independent", "consultant", "mission libre"],
-            "internship": ["stage", "intern", "internship", "stagiaire"],
-            "alternance": ["alternance", "apprenticeship", "work-study", "contrat pro"],
-            "apprentissage": ["apprentissage", "apprentice", "apprenti"],
-            "interim": ["intérim", "interim", "travail temporaire", "temp work"],
-            "stage": ["stage", "intern", "internship", "stagiaire"],
-            "cdi_partial": ["temps partiel", "part-time", "mi-temps", "cdi partiel"],
-            "cdd_partial": ["temps partiel", "part-time", "cdd partiel"],
+        filter_to_normalized: dict[str, str] = {
+            "cdi": "CDI",
+            "cdd": "CDD",
+            "freelance": "Freelance",
+            "internship": "Stage",
+            "stage": "Stage",
+            "alternance": "Alternance",
+            "apprentissage": "Alternance",
+            "interim": "Interim",
+            "cdi_partial": "Temps partiel",
+            "cdd_partial": "Temps partiel",
         }
-        selected_kws: list[str] = []
+
+        target_types: set[str] = set()
         for ct in contract_types:
-            selected_kws.extend(contract_keywords.get(ct.lower().strip(), []))
-        if selected_kws:
+            normalized = filter_to_normalized.get(ct.lower().strip())
+            if normalized:
+                target_types.add(normalized)
+
+        if target_types:
             filtered = [
                 job for job in filtered
-                if any(
-                    kw in job.get('contract_type', '').lower()
-                    or kw in job.get('title', '').lower()
-                    or kw in job.get('description', '').lower()
-                    for kw in selected_kws
-                )
+                if job.get("contract_type", "") in target_types
+                or not job.get("contract_type")  # Include jobs with unknown type
             ]
 
     # Filter by work schedule (heuristic on text)

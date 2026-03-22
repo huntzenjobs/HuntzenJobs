@@ -11,7 +11,11 @@ from typing import Any
 import httpx
 from bs4 import BeautifulSoup
 
-from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
+from src.services.job_providers.base import (
+    BaseJobProvider,
+    handle_provider_errors,
+    normalize_contract_type,
+)
 from src.utils.url_validator import is_direct_job_url
 
 logger = logging.getLogger(__name__)
@@ -102,7 +106,7 @@ class RemoteOKProvider(BaseJobProvider):
             "description": description,
             "url": url,
             "salary": self._format_salary(item),
-            "contract_type": "remote",
+            "contract_type": normalize_contract_type("remote"),
             "source": self.name,
             "posted_date": item.get("date"),
             "url_is_direct": is_direct_job_url(url),

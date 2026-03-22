@@ -18,7 +18,11 @@ from typing import Any
 import httpx
 
 from src.config.settings import settings
-from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
+from src.services.job_providers.base import (
+    BaseJobProvider,
+    handle_provider_errors,
+    normalize_contract_type,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -121,10 +125,18 @@ class FranceTravailProvider(BaseJobProvider):
         if location:
             params["motsCles"] = f"{query} {location}"
 
-        # Filtre natif France Travail pour l'alternance
+        # Filtre natif France Travail par type de contrat
         contract_type = kwargs.get("contract_type", "")
-        if contract_type in ("alternance", "apprentissage"):
-            params["typeContrat"] = "ALT"
+        ft_contract_map = {
+            "alternance": "ALT",
+            "apprentissage": "ALT",
+            "cdi": "CDI",
+            "cdd": "CDD",
+            "interim": "MIS",
+        }
+        ft_type = ft_contract_map.get(contract_type.lower().strip()) if contract_type else None
+        if ft_type:
+            params["typeContrat"] = ft_type
 
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -212,22 +224,25 @@ class FranceTravailProvider(BaseJobProvider):
         return None
 
     @staticmethod
-    def _normalize_contract(raw: str | None) -> str | None:
-        """Normalize France Travail contract type strings."""
+    def _normalize_contract(raw: str | None) -> str:
+        """Normalize France Travail contract type strings via centralized normalizer."""
         if not raw:
-            return None
-        mapping = {
+            return ""
+        # France Travail has well-known exact labels -- map them first
+        ft_mapping = {
             "CDI": "CDI",
             "CDD": "CDD",
-            "MIS": "Intérim",
-            "SAI": "Saisonnier",
+            "MIS": "Interim",
+            "SAI": "CDD",  # Saisonnier -> CDD (fixed-term)
             "LIB": "Freelance",
-            # Alternance — libellés textuels retournés par typeContratLibelle
-            # Note : "ALT" est le code de requête API, jamais retourné dans ce champ.
-            "Contrat d'apprentissage": "alternance",
-            "Apprentissage": "alternance",
-            "Alternance": "alternance",
-            "Contrat de professionnalisation": "alternance",
-            "Contrat pro": "alternance",
+            "Contrat d'apprentissage": "Alternance",
+            "Apprentissage": "Alternance",
+            "Alternance": "Alternance",
+            "Contrat de professionnalisation": "Alternance",
+            "Contrat pro": "Alternance",
         }
-        return mapping.get(raw, raw)
+        mapped = ft_mapping.get(raw)
+        if mapped:
+            return mapped
+        # Fallback : use centralized normalizer for unknown labels
+        return normalize_contract_type(raw)

@@ -15,6 +15,76 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
+# Normalized contract type values used across all providers
+NORMALIZED_CONTRACT_TYPES = {
+    "CDI", "CDD", "Freelance", "Stage", "Alternance", "Interim", "Remote", "Temps partiel",
+}
+
+
+def normalize_contract_type(raw: str | None) -> str:
+    """Normalize contract type from any provider to a standard value."""
+    if not raw:
+        return ""
+
+    raw_lower = raw.lower().strip()
+
+    # CDI / Permanent / Full-time (check partial first)
+    if any(kw in raw_lower for kw in ["cdi", "permanent", "indéterminée", "indeterminee", "indefinite"]):
+        if any(kw in raw_lower for kw in ["partiel", "partial", "part-time", "part time", "mi-temps"]):
+            return "Temps partiel"
+        return "CDI"
+
+    # Full-time -> CDI (most full-time jobs are CDI)
+    if any(kw in raw_lower for kw in [
+        "plein temps", "full-time", "full time", "fulltime", "full--time",
+        "à plein temps",
+    ]):
+        return "CDI"
+
+    # Alternance (before CDD to avoid false match on "contrat")
+    if any(kw in raw_lower for kw in [
+        "alternance", "apprentissage", "apprenticeship", "work-study",
+        "work study", "contrat pro",
+    ]):
+        return "Alternance"
+
+    # Stage / Internship (before CDD to avoid "contract" false match)
+    if any(kw in raw_lower for kw in ["stage", "intern", "internship", "stagiaire"]):
+        return "Stage"
+
+    # CDD / Contract / Fixed-term
+    if any(kw in raw_lower for kw in [
+        "cdd", "contract", "déterminée", "determinee", "fixed-term", "temporary",
+    ]):
+        if any(kw in raw_lower for kw in ["partiel", "partial", "part-time"]):
+            return "Temps partiel"
+        return "CDD"
+
+    # Freelance
+    if any(kw in raw_lower for kw in [
+        "freelance", "indépendant", "independant", "profession libérale",
+        "profession liberale", "prestataire", "contractor", "self-employed",
+    ]):
+        return "Freelance"
+
+    # Interim
+    if any(kw in raw_lower for kw in [
+        "intérim", "interim", "travail temporaire", "temp work", "mis ",
+    ]):
+        return "Interim"
+
+    # Temps partiel
+    if any(kw in raw_lower for kw in [
+        "temps partiel", "part-time", "part time", "mi-temps", "partiel",
+    ]):
+        return "Temps partiel"
+
+    # Remote (exact match only)
+    if raw_lower == "remote":
+        return "Remote"
+
+    return raw  # Garder la valeur originale si pas reconnue
+
 
 def handle_provider_errors(func: Callable) -> Callable:
     """

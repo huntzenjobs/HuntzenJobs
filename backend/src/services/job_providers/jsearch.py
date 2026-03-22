@@ -14,7 +14,11 @@ from typing import Any
 import httpx
 
 from src.config.settings import settings
-from src.services.job_providers.base import BaseJobProvider, handle_provider_errors
+from src.services.job_providers.base import (
+    BaseJobProvider,
+    handle_provider_errors,
+    normalize_contract_type,
+)
 from src.utils.geo import country_code_to_name
 from src.utils.url_validator import is_description_truncated, is_direct_job_url
 
@@ -220,27 +224,10 @@ class JSearchProvider(BaseJobProvider):
         return None
 
     @staticmethod
-    def _normalize_contract_type(raw: str | None) -> str | None:
-        """Normalize JSearch employment type strings."""
+    def _normalize_contract_type(raw: str | None) -> str:
+        """Normalize JSearch employment type strings via centralized normalizer."""
         if not raw:
-            return None
-        raw_lower = raw.lower().replace("_", " ").replace("-", " ")
-        # Détection alternance en premier
-        alternance_keywords = {"alternance", "apprenticeship", "apprentissage", "work-study", "work study", "contrat pro"}
-        if any(kw in raw_lower for kw in alternance_keywords):
-            return "alternance"
-        mapping = {
-            "fulltime": "CDI",
-            "full time": "CDI",
-            "parttime": "CDD",
-            "part time": "CDD",
-            "contractor": "Freelance",
-            "contract": "CDD",
-            "intern": "Stage",
-            "internship": "Stage",
-            "temporary": "Intérim",
-        }
-        for key, value in mapping.items():
-            if key in raw_lower:
-                return value
-        return raw
+            return ""
+        # Pre-process JSearch specific format (FULLTIME, PART_TIME, etc.)
+        cleaned = raw.replace("_", " ").replace("-", " ")
+        return normalize_contract_type(cleaned)
