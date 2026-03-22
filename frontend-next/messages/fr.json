@@ -2141,6 +2141,16 @@
       "seo": "Google / SEO",
       "ads": "Publicité",
       "other": "Autre"
+    },
+    "plans": {
+      "title": "Envie d'aller plus vite ?",
+      "subtitle": "Découvrez nos formules pour booster votre recherche. Aucune obligation.",
+      "seePlans": "Voir les formules disponibles",
+      "seePlansDesc": "Analyses CV illimitées, coaching 24/7, et bien plus",
+      "stat1": "plus de résultats",
+      "stat2": "coaching IA",
+      "stat3": "taux de réponse",
+      "skip": "Continuer gratuitement"
     }
   },
   "theme": {

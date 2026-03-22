@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 interface RadioCardProps {
   selected: boolean;
@@ -41,14 +41,16 @@ function RadioCard({ selected, onClick, icon, label }: RadioCardProps) {
         "w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200",
         selected
           ? "border-[#00D9FF] bg-[#00D9FF]/10 text-white"
-          : "border-white/10 bg-white/5 text-gray-300 hover:border-white/30 hover:bg-white/10"
+          : "border-white/10 bg-white/5 text-gray-300 hover:border-white/30 hover:bg-white/10",
       )}
     >
       {icon && (
         <span
           className={cn(
             "flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center",
-            selected ? "bg-[#00D9FF]/20 text-[#00D9FF]" : "bg-white/10 text-gray-400"
+            selected
+              ? "bg-[#00D9FF]/20 text-[#00D9FF]"
+              : "bg-white/10 text-gray-400",
           )}
         >
           {icon}
@@ -181,10 +183,24 @@ function OnboardingWizard() {
         return experience.length > 0;
       case 5:
         return discoverySource.length > 0;
+      case 6:
+        return true; // plans step, always can proceed
       default:
         return false;
     }
   }, [step, firstName, lastName, situation, experience, discoverySource]);
+
+  // Navigate to final destination (after step 6 or skip)
+  const navigateToApp = useCallback(() => {
+    if (redirectTo && redirectTo.startsWith("/")) {
+      router.push(redirectTo);
+    } else {
+      const params = new URLSearchParams();
+      if (jobTitle.trim()) params.set("q", jobTitle.trim());
+      if (location.trim()) params.set("location", location.trim());
+      router.push(`/jobs${params.toString() ? `?${params}` : ""}`);
+    }
+  }, [redirectTo, jobTitle, location, router]);
 
   const handleComplete = useCallback(async () => {
     setLoading(true);
@@ -223,7 +239,10 @@ function OnboardingWizard() {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_URL ||
+          process.env.NEXT_PUBLIC_BACKEND_URL ||
+          "";
         fetch(`${backendUrl}/api/auth/onboarding-data`, {
           method: "POST",
           headers: {
@@ -242,15 +261,10 @@ function OnboardingWizard() {
         }).catch(() => {});
       }
 
-      // 4. Redirect
-      if (redirectTo && redirectTo.startsWith("/")) {
-        router.push(redirectTo);
-      } else {
-        const params = new URLSearchParams();
-        if (jobTitle.trim()) params.set("q", jobTitle.trim());
-        if (location.trim()) params.set("location", location.trim());
-        router.push(`/jobs${params.toString() ? `?${params}` : ""}`);
-      }
+      // 4. Go to step 6 (plans) instead of redirecting
+      setLoading(false);
+      setDirection(1);
+      setStep(6);
     } catch {
       router.push("/jobs");
     }
@@ -532,12 +546,67 @@ function OnboardingWizard() {
                   </div>
                 </div>
               )}
+
+              {/* Step 6 - Plans */}
+              {step === 6 && (
+                <div className="space-y-5">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-black text-white mb-2">
+                      {t("plans.title")}
+                    </h1>
+                    <p className="text-gray-400 text-sm">
+                      {t("plans.subtitle")}
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => router.push("/pricing")}
+                      className="w-full p-4 rounded-xl border-2 border-[#00D9FF]/30 bg-[#00D9FF]/5 text-left transition-all hover:border-[#00D9FF] hover:bg-[#00D9FF]/10"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-white text-sm">
+                            {t("plans.seePlans")}
+                          </p>
+                          <p className="text-gray-400 text-xs mt-1">
+                            {t("plans.seePlansDesc")}
+                          </p>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-[#00D9FF] flex-shrink-0" />
+                      </div>
+                    </button>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <p className="text-lg font-black text-[#00D9FF]">5x</p>
+                        <p className="text-[10px] text-gray-400">
+                          {t("plans.stat1")}
+                        </p>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <p className="text-lg font-black text-[#00D9FF]">
+                          24/7
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          {t("plans.stat2")}
+                        </p>
+                      </div>
+                      <div className="bg-white/5 rounded-lg p-3">
+                        <p className="text-lg font-black text-[#00D9FF]">87%</p>
+                        <p className="text-[10px] text-gray-400">
+                          {t("plans.stat3")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
 
           {/* Navigation */}
           <div className="flex items-center justify-between mt-8 gap-3">
-            {step > 1 ? (
+            {step > 1 && step < 6 ? (
               <Button
                 type="button"
                 variant="ghost"
@@ -551,26 +620,38 @@ function OnboardingWizard() {
               <div />
             )}
 
-            <Button
-              type="button"
-              disabled={loading || (!canProceed() && step !== 3)}
-              onClick={isLastStep ? handleComplete : goNext}
-              className="bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold px-8 h-12"
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : isLastStep ? (
-                <>
-                  {t("start")}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                <>
-                  {t("next")}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
+            {step === 6 ? (
+              <Button
+                type="button"
+                onClick={navigateToApp}
+                variant="ghost"
+                className="text-gray-400 hover:text-white hover:bg-white/10 text-sm ml-auto"
+              >
+                {t("plans.skip")}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                disabled={loading || (!canProceed() && step !== 3)}
+                onClick={step === 5 ? handleComplete : goNext}
+                className="bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold px-8 h-12"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : step === 5 ? (
+                  <>
+                    {t("start")}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                ) : (
+                  <>
+                    {t("next")}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {/* Skip link */}

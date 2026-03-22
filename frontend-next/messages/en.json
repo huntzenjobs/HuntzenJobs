@@ -2154,6 +2154,16 @@
       "seo": "Google / SEO",
       "ads": "Advertising",
       "other": "Other"
+    },
+    "plans": {
+      "title": "Want to go faster?",
+      "subtitle": "Discover our plans to boost your search. No obligation.",
+      "seePlans": "See available plans",
+      "seePlansDesc": "Unlimited CV analyses, 24/7 coaching, and much more",
+      "stat1": "more results",
+      "stat2": "AI coaching",
+      "stat3": "response rate",
+      "skip": "Continue for free"
     }
   },
   "testimonials": {
