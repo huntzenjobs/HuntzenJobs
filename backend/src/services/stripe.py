@@ -208,8 +208,22 @@ async def create_checkout_session(
 
         # ── Has existing subscription → determine change type ────────────────
         current_plan = (existing.get("subscription_plans") or {}).get("name", "free")
-        current_stripe_sub_id = existing.get("stripe_subscription_id", "")
-        current_price_id = existing.get("stripe_price_id", "")
+        current_stripe_sub_id = existing.get("stripe_subscription_id") or ""
+        current_price_id = existing.get("stripe_price_id") or ""
+
+        # If existing subscription has no Stripe ID (e.g. admin-assigned),
+        # treat as new user — create fresh checkout
+        if not current_stripe_sub_id:
+            logger.info(f"[CHECKOUT] User {user_id} has DB subscription without Stripe ID — creating new checkout")
+            return await _create_new_checkout(
+                user_email=user_email,
+                price_id=new_price_id,
+                user_id=user_id,
+                plan_name=plan_name,
+                billing_period=billing_period,
+                success_url=success_url,
+                cancel_url=cancel_url
+            )
         current_billing = await _get_billing_period_from_price_id(current_price_id) or "monthly"
 
         # Same plan, same billing period → nothing to do

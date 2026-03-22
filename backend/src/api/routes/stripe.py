@@ -151,11 +151,14 @@ async def cancel_subscription(
             raise HTTPException(status_code=404, detail="No active subscription found")
 
         subscription = result.data[0]
-        stripe_subscription_id = subscription.get("stripe_subscription_id")
+        stripe_subscription_id = subscription.get("stripe_subscription_id") or ""
         plan_name = (subscription.get("subscription_plans") or {}).get("name", "unknown")
 
         if not stripe_subscription_id or not stripe_subscription_id.startswith("sub_"):
-            raise HTTPException(status_code=400, detail="Invalid subscription ID")
+            raise HTTPException(
+                status_code=400,
+                detail="No Stripe subscription linked. Your plan may have been admin-assigned. Subscribe via the pricing page.",
+            )
 
         # GARDE-FOU: cancel_at_period_end=True UNIQUEMENT — jamais stripe.Subscription.delete()
         import stripe as stripe_lib
@@ -218,11 +221,14 @@ async def reactivate_subscription(
             raise HTTPException(status_code=404, detail="No active subscription found")
 
         subscription = result.data[0]
-        stripe_subscription_id = subscription.get("stripe_subscription_id")
+        stripe_subscription_id = subscription.get("stripe_subscription_id") or ""
         plan_name = (subscription.get("subscription_plans") or {}).get("name", "unknown")
 
         if not stripe_subscription_id or not stripe_subscription_id.startswith("sub_"):
-            raise HTTPException(status_code=400, detail="Invalid subscription ID")
+            raise HTTPException(
+                status_code=400,
+                detail="No Stripe subscription linked. Your plan may have been admin-assigned. Subscribe via the pricing page.",
+            )
 
         import stripe as stripe_lib
         updated = stripe_lib.Subscription.modify(
