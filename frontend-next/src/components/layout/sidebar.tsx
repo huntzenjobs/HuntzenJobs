@@ -338,9 +338,9 @@ export function Sidebar({ className }: SidebarProps) {
           </Link>
         )}
 
-        {/* User profile, language switcher, logout */}
+        {/* User profile, language switcher, logout — mobile only (navbar handles desktop) */}
         {user && (
-          <div className="mb-3 space-y-1">
+          <div className="mb-3 space-y-1 lg:hidden">
             {/* Profile link */}
             <Link
               href="/profile"
