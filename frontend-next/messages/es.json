@@ -1895,9 +1895,12 @@
       "profileSaveError": "Error saving profile.",
       "applicationSent": "Application marked as sent!",
       "emailCopied": "Email copied!",
-      "contactsLoadError": "Unable to retrieve contacts. Try again later.",
-      "applicationSaveError": "Unable to save application. Try again."
+      "contactsLoadError": "No se pudieron recuperar los contactos. Inténtalo de nuevo.",
+      "applicationSaveError": "No se pudo guardar la candidatura. Inténtalo de nuevo.",
+      "quotaReachedRecruiter": "Cuota de búsqueda de reclutador alcanzada. Pasa a Pro para acceso ilimitado."
     },
+    "recruiterFinderBeta": "Esta funcionalidad está en mejora. Los resultados pueden estar incompletos.",
+    "recruiterFinderRgpd": "Estos correos provienen de fuentes públicas (Hunter.io). Respeta el RGPD en tus comunicaciones.",
     "blurred": {
       "source": "Source",
       "lockedOffer": "Locked offer",

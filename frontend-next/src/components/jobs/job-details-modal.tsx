@@ -44,6 +44,7 @@ import { sendXpEvent } from "@/hooks/use-career-score";
 import { toast } from "sonner";
 import { ApplyModal } from "./apply-modal";
 import { InsiderFinderDrawer } from "./insider-finder-drawer";
+import { RecruiterFinderDrawer } from "./recruiter-finder-drawer";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
@@ -106,6 +107,7 @@ export function JobDetailsModal({
 }: JobDetailsModalProps) {
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
   const [insiderDrawerOpen, setInsiderDrawerOpen] = React.useState(false);
+  const [recruiterDrawerOpen, setRecruiterDrawerOpen] = React.useState(false);
   const [showAppliedConfirm, setShowAppliedConfirm] = React.useState(false);
   const [appliedConfirmed, setAppliedConfirmed] = React.useState(false);
   const confirmTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -517,6 +519,15 @@ export function JobDetailsModal({
                 <Button
                   variant="outline"
                   size="sm"
+                  className="flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+                  onClick={() => setRecruiterDrawerOpen(true)}
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  {t("findRecruiter")}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="flex-1 sm:flex-none border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-300"
                   onClick={() => setInsiderDrawerOpen(true)}
                 >
@@ -698,7 +709,16 @@ export function JobDetailsModal({
         />
       )}
 
-      {/* Insider Finder — trouve des contacts internes LinkedIn */}
+      {/* Recruiter Finder — emails recruteurs via Hunter.io */}
+      {job && (
+        <RecruiterFinderDrawer
+          open={recruiterDrawerOpen}
+          onOpenChange={setRecruiterDrawerOpen}
+          job={job}
+        />
+      )}
+
+      {/* Insider Finder — contacts internes LinkedIn via SerpAPI */}
       {job && (
         <InsiderFinderDrawer
           open={insiderDrawerOpen}

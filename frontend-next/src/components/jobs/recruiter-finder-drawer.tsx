@@ -26,9 +26,11 @@ import {
   Loader2,
   SearchX,
   AtSign,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/contexts/auth-context";
 import type { Job } from "@/lib/api/huntzen-client";
 
 // ============================================================================
@@ -161,19 +163,29 @@ export function RecruiterFinderDrawer({
   job,
 }: RecruiterFinderDrawerProps) {
   const tJobs = useTranslations("jobs");
+  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FinderResult | null>(null);
   const [searched, setSearched] = useState(false);
+  const [quotaError, setQuotaError] = useState(false);
 
   const handleSearch = async () => {
+    if (!session?.access_token) {
+      toast.error("Connectez-vous pour utiliser cette fonctionnalité");
+      return;
+    }
     setLoading(true);
     setSearched(true);
+    setQuotaError(false);
 
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/recruiter-finder/find`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           company_name: job.company || "",
           company_website: job.url || "",
@@ -181,13 +193,19 @@ export function RecruiterFinderDrawer({
         }),
       });
 
+      if (response.status === 429) {
+        setQuotaError(true);
+        toast.error(tJobs("toasts.quotaReached"));
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
       const data: FinderResult = await response.json();
       setResult(data);
-    } catch (err) {
+    } catch {
       toast.error(tJobs("toasts.contactsLoadError"));
       setResult(null);
     } finally {
@@ -225,6 +243,15 @@ export function RecruiterFinderDrawer({
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
+          {/* Badge BÊTA */}
+          <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
+            <div className="text-xs text-orange-700">
+              <span className="font-semibold">BÊTA</span> —{" "}
+              {tJobs("recruiterFinderBeta")}
+            </div>
+          </div>
+
           {/* Search button */}
           {!searched && (
             <div className="text-center space-y-3">
@@ -360,6 +387,11 @@ export function RecruiterFinderDrawer({
                   Nouvelle recherche
                 </Button>
               )}
+
+              {/* RGPD Disclaimer */}
+              <p className="text-xs text-muted-foreground border-t pt-3">
+                {tJobs("recruiterFinderRgpd")}
+              </p>
             </>
           )}
         </div>

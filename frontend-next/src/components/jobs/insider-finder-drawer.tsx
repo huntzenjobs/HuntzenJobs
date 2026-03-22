@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Linkedin, Loader2, SearchX, Sparkles, Users } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 import type { Job } from "@/lib/api/huntzen-client";
 
 // ============================================================================
@@ -150,11 +151,15 @@ export function InsiderFinderDrawer({
   job,
 }: InsiderFinderDrawerProps) {
   const t = useTranslations("jobDetails");
+  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<InsiderResult | null>(null);
   const [searched, setSearched] = useState(false);
 
   const handleSearch = async () => {
+    if (!session?.access_token) {
+      return;
+    }
     setLoading(true);
     setSearched(true);
 
@@ -162,7 +167,10 @@ export function InsiderFinderDrawer({
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/insider-finder/find`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           job_title: job.title || "",
           company: job.company || "",
@@ -170,6 +178,16 @@ export function InsiderFinderDrawer({
           is_alternance: detectAlternance(job.title),
         }),
       });
+
+      if (response.status === 429) {
+        setResult({
+          success: false,
+          strategy: "",
+          insiders: [],
+          total_found: 0,
+        });
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);

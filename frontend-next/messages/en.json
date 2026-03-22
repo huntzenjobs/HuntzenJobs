@@ -1501,8 +1501,11 @@
       "applicationSent": "Application marked as sent!",
       "emailCopied": "Email copied!",
       "contactsLoadError": "Unable to retrieve contacts. Try again later.",
-      "applicationSaveError": "Unable to save application. Try again."
+      "applicationSaveError": "Unable to save application. Try again.",
+      "quotaReachedRecruiter": "Recruiter search quota reached. Upgrade to Pro for unlimited access."
     },
+    "recruiterFinderBeta": "This feature is being improved. Results may be incomplete.",
+    "recruiterFinderRgpd": "These emails come from public sources (Hunter.io). Please comply with GDPR in your communications.",
     "blurred": {
       "source": "Source",
       "lockedOffer": "Locked offer",
