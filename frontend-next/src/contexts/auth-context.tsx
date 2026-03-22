@@ -64,7 +64,7 @@ export function AuthProvider({
   const tErr = useTranslations("auth.errors");
   const [user, setUser] = useState<User | null>(initialUser);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(!initialUser);
+  const [loading, setLoading] = useState(true); // Always start loading
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
@@ -74,31 +74,29 @@ export function AuthProvider({
 
   useEffect(() => {
     const initializeAuth = async () => {
-      if (initialUser) {
-        // User fourni par SSR, fetch seulement session
-        try {
+      try {
+        if (initialUser) {
+          // User fourni par SSR, fetch seulement session
           const {
             data: { session },
           } = await supabaseClient.auth.getSession();
           setSession(session);
-          // Ne pas toucher user (déjà set par initialUser)
-        } catch (err) {
-          devError("Failed to get session:", err);
-        }
-        // Pas de setLoading(false) - déjà false
-      } else {
-        // Pas d'initialUser, fetch complet
-        try {
+          // Ne pas toucher user (deja set par initialUser)
+        } else {
+          // Pas d'initialUser, fetch complet avec getUser() pour coherence SSR
+          const {
+            data: { user: fetchedUser },
+          } = await supabaseClient.auth.getUser();
           const {
             data: { session },
           } = await supabaseClient.auth.getSession();
           setSession(session);
-          setUser(session?.user ?? null);
-        } catch (err) {
-          devError("Failed to get session:", err);
-        } finally {
-          setLoading(false);
+          setUser(fetchedUser ?? null);
         }
+      } catch (err) {
+        devError("Failed to initialize auth:", err);
+      } finally {
+        setLoading(false);
       }
     };
 

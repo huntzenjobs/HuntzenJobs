@@ -38,6 +38,8 @@ interface QuotasData {
   coach: QuotaData;
   job_search: QuotaData;
   assistant_messages: QuotaData;
+  job_view?: QuotaData;
+  recruiter_search?: QuotaData;
 }
 
 interface ApiResponse {

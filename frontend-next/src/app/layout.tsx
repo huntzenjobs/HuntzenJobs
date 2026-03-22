@@ -31,10 +31,14 @@ export default async function RootLayout({
 }>) {
   // Fetch user server-side to avoid hydration mismatch (React #418/#422)
   // This is needed because AuthProvider renders differently with/without user
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data?.user ?? null;
+  } catch {
+    // SSR auth check failed — client-side will recover
+  }
 
   const locale = await getLocale();
   const messages = await getMessages();

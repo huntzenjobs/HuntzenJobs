@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from typing import Any, Literal
 
 import stripe
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from structlog import get_logger
 from supabase import Client, create_client
 
@@ -83,10 +83,6 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 else:
     supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
     logger.info("Supabase client initialized for Stripe integration")
-
-
-# Plan hierarchy for upgrade/downgrade detection
-PLAN_HIERARCHY = {"free": 0, "starter": 1, "pro": 2, "premium": 3}
 
 
 # ============================================
@@ -175,13 +171,25 @@ async def create_checkout_session(
             raise HTTPException(status_code=400, detail="User not found. Please logout and login again.")
 
         # 2. Get target price ID
-        price_response = supabase_client.rpc("get_stripe_price_id", {
-            "p_plan_name": plan_name,
-            "p_billing_period": billing_period
-        }).execute()
-        if not price_response.data:
-            raise HTTPException(status_code=404, detail=f"Price not found for {plan_name}/{billing_period}")
-        new_price_id = price_response.data
+        try:
+            price_response = supabase_client.rpc("get_stripe_price_id", {
+                "p_plan_name": plan_name,
+                "p_billing_period": billing_period
+            }).execute()
+            if not price_response.data:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No Stripe price configured for plan={plan_name}, period={billing_period}. Check stripe_prices table."
+                )
+            new_price_id = price_response.data
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"[CHECKOUT] RPC get_stripe_price_id failed for {plan_name}/{billing_period}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Price lookup failed for {plan_name}/{billing_period}. Contact support."
+            ) from None
 
         # 3. Check existing subscription
         existing = await get_active_subscription(user_id)
@@ -222,67 +230,19 @@ async def create_checkout_session(
                 detail=f"ANNUAL_TO_MONTHLY_BLOCKED|{period_end_display}"
             )
 
-        current_rank = PLAN_HIERARCHY.get(current_plan, 0)
-        target_rank = PLAN_HIERARCHY.get(plan_name, 0)
-        is_upgrade = target_rank > current_rank
-        is_downgrade = target_rank < current_rank
+        # ── Changement de plan (upgrade ou downgrade) → TOUJOURS via Checkout ──
+        # 1. Programmer la cancellation de l'ancien abonnement en fin de periode
+        if current_stripe_sub_id and is_real_stripe_sub:
+            try:
+                stripe.Subscription.modify(
+                    current_stripe_sub_id,
+                    cancel_at_period_end=True,
+                )
+                logger.info(f"[CHECKOUT] Scheduled old sub {current_stripe_sub_id} for end-of-period cancel")
+            except Exception as e:
+                logger.warning(f"[CHECKOUT] Could not schedule old sub cancellation: {e}")
 
-        # ── Monthly → Annual: schedule end-of-period cancel, then new annual checkout ──────
-        # Safe order: schedule cancel BEFORE creating checkout.
-        # If user abandons checkout, monthly sub stays active (no loss).
-        # When checkout.session.completed fires, webhook creates the annual sub
-        # and DB trigger auto-cancels the old monthly.
-        if current_billing == "monthly" and billing_period == "yearly":
-            if is_real_stripe_sub:
-                try:
-                    stripe.Subscription.modify(
-                        current_stripe_sub_id,
-                        cancel_at_period_end=True,
-                    )
-                    logger.info(f"[CHECKOUT] Scheduled monthly sub {current_stripe_sub_id} for end-of-period cancel (annual upgrade)")
-                except Exception as e:
-                    logger.warning(f"[CHECKOUT] Could not schedule monthly sub cancellation: {e}")
-            return await _create_new_checkout(
-                user_email=user_email,
-                price_id=new_price_id,
-                user_id=user_id,
-                plan_name=plan_name,
-                billing_period=billing_period,
-                success_url=success_url,
-                cancel_url=cancel_url
-            )
-
-        # ── Same billing period: upgrade or downgrade via Subscription.modify ──
-        if not is_real_stripe_sub:
-            # Fake/manual subscription — fall back to new checkout
-            logger.warning(f"[CHECKOUT] Non-Stripe sub ID {current_stripe_sub_id}, using checkout")
-            return await _create_new_checkout(
-                user_email=user_email,
-                price_id=new_price_id,
-                user_id=user_id,
-                plan_name=plan_name,
-                billing_period=billing_period,
-                success_url=success_url,
-                cancel_url=cancel_url
-            )
-
-        if is_upgrade:
-            return await _upgrade_subscription(
-                stripe_sub_id=current_stripe_sub_id,
-                new_price_id=new_price_id,
-                plan_name=plan_name,
-                billing_period=billing_period
-            )
-
-        if is_downgrade:
-            return await _schedule_downgrade(
-                stripe_sub_id=current_stripe_sub_id,
-                new_price_id=new_price_id,
-                plan_name=plan_name,
-                billing_period=billing_period
-            )
-
-        # Fallback (same rank, different billing — shouldn't reach here)
+        # 2. Creer un nouveau checkout Stripe (l'user verra la page de paiement)
         return await _create_new_checkout(
             user_email=user_email,
             price_id=new_price_id,
@@ -290,7 +250,7 @@ async def create_checkout_session(
             plan_name=plan_name,
             billing_period=billing_period,
             success_url=success_url,
-            cancel_url=cancel_url
+            cancel_url=cancel_url,
         )
 
     except HTTPException:
@@ -337,73 +297,6 @@ async def _create_new_checkout(
     )
     logger.info(f"[CHECKOUT] New checkout created: {session.id} for {plan_name}/{billing_period}")
     return {"success": True, "checkout_url": session.url, "session_id": session.id}
-
-
-async def _upgrade_subscription(
-    stripe_sub_id: str,
-    new_price_id: str,
-    plan_name: str,
-    billing_period: str
-) -> dict[str, Any]:
-    """
-    Upgrade an existing subscription immediately with Stripe proration.
-    - Charges the difference right now
-    - Keeps the same billing cycle anchor (renewal date unchanged)
-    """
-    stripe_sub = stripe.Subscription.retrieve(stripe_sub_id)
-    item_id = stripe_sub["items"]["data"][0]["id"]
-
-    stripe.Subscription.modify(
-        stripe_sub_id,
-        items=[{"id": item_id, "price": new_price_id}],
-        proration_behavior="always_invoice",   # Charge difference immediately
-        billing_cycle_anchor="unchanged",       # Keep same renewal date
-    )
-    logger.info(f"[CHECKOUT] Upgraded subscription {stripe_sub_id} to {plan_name}/{billing_period} with proration")
-    return {
-        "success": True,
-        "modified": True,
-        "immediate": True,
-        "plan_name": plan_name,
-        "billing_period": billing_period,
-        "message": f"Plan upgraded to {plan_name}. The difference has been charged immediately."
-    }
-
-
-async def _schedule_downgrade(
-    stripe_sub_id: str,
-    new_price_id: str,
-    plan_name: str,
-    billing_period: str
-) -> dict[str, Any]:
-    """
-    Schedule a downgrade at the end of the current billing period.
-    - No immediate charge
-    - No credit issued
-    - User keeps current plan until renewal, then switches
-    """
-    stripe_sub = stripe.Subscription.retrieve(stripe_sub_id)
-    item_id = stripe_sub["items"]["data"][0]["id"]
-    period_end = stripe_sub.get("current_period_end", 0)
-
-    stripe.Subscription.modify(
-        stripe_sub_id,
-        items=[{"id": item_id, "price": new_price_id}],
-        proration_behavior="none",            # No proration, no credit
-        billing_cycle_anchor="unchanged",     # Keep same renewal date
-    )
-
-    period_end_dt = datetime.fromtimestamp(period_end, tz=UTC).isoformat() if period_end else None
-    logger.info(f"[CHECKOUT] Downgrade scheduled for {stripe_sub_id} → {plan_name}/{billing_period} at period end")
-    return {
-        "success": True,
-        "modified": True,
-        "immediate": False,
-        "plan_name": plan_name,
-        "billing_period": billing_period,
-        "effective_date": period_end_dt,
-        "message": f"Plan will switch to {plan_name} at next renewal. You keep your current plan until then."
-    }
 
 
 # ============================================

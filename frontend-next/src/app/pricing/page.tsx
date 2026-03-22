@@ -18,16 +18,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { toast } from "sonner";
@@ -51,36 +41,17 @@ const PLAN_COLORS: Record<string, string> = {
   amber: "#F97316",
 };
 
-// Plan hierarchy for upgrade/downgrade detection
-const PLAN_RANK: Record<string, number> = {
-  free: 0,
-  starter: 1,
-  pro: 2,
-  premium: 3,
-};
-
 // Testimonials and FAQs are now in i18n files (pricing namespace)
-
-interface PendingPlanInfo {
-  id: string;
-  name: string;
-  priceMonthly: string;
-  priceYearly: string;
-}
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
     "monthly",
   );
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingPlan, setPendingPlan] = useState<PendingPlanInfo | null>(null);
-  const [isUpgrade, setIsUpgrade] = useState(true);
   const auth = useOptionalAuth();
   const user = auth?.user;
   const subscription = useOptionalSubscription();
   const tPricing = useTranslations("pricing");
-  const tModal = useTranslations("pricingModal");
   const tFooter = useTranslations("footer");
   const router = useRouter();
   const {
@@ -147,7 +118,7 @@ export default function PricingPage() {
     return { amount: savings.toFixed(2).replace(".", ","), percentage };
   };
 
-  // Initiate plan selection: show confirmation dialog if changing between paid plans
+  // Initiate plan selection: always go through Stripe Checkout
   const handleSelectPlan = useCallback(
     (planId: string) => {
       if (planId === "free" || planId === currentPlan) {
@@ -161,28 +132,10 @@ export default function PricingPage() {
         return;
       }
 
-      const targetPlan = plans.find((p) => p.id === planId);
-      if (!targetPlan) return;
-
-      // If user already has a paid plan, show confirmation dialog
-      if (currentPlan && currentPlan !== "free") {
-        const currentRank = PLAN_RANK[currentPlan] ?? 0;
-        const targetRank = PLAN_RANK[planId] ?? 0;
-        setIsUpgrade(targetRank > currentRank);
-        setPendingPlan({
-          id: targetPlan.id,
-          name: targetPlan.name,
-          priceMonthly: targetPlan.priceMonthly,
-          priceYearly: targetPlan.priceYearly,
-        });
-        setConfirmOpen(true);
-        return;
-      }
-
-      // New subscription (from free) - proceed directly
+      // All plan changes go through Stripe Checkout
       executeSelectPlan(planId);
     },
-    [currentPlan, plans, user, auth?.session, tPricing],
+    [currentPlan, user, auth?.session, tPricing],
   );
 
   // Execute the actual plan change (called directly or after confirmation)
@@ -232,18 +185,15 @@ export default function PricingPage() {
 
       toast.dismiss("stripe-redirect");
 
-      if (data.modified) {
-        if (data.immediate) {
-          toast.success(tPricing("toasts.upgraded"));
-        } else {
-          toast.success(tPricing("toasts.scheduledChange"));
-        }
-        window.location.href = `/payment/success?session_id=mod_${Date.now()}&type=modification`;
-      } else {
-        if (!data.checkout_url) {
-          throw new Error("Checkout URL manquante");
-        }
+      if (data.already_subscribed) {
+        toast.info(tPricing("toasts.alreadyOnPlan"));
+        return;
+      }
+
+      if (data.checkout_url) {
         window.location.href = data.checkout_url;
+      } else {
+        throw new Error("No checkout URL returned");
       }
     } catch (error: unknown) {
       toast.dismiss("stripe-redirect");
@@ -255,65 +205,8 @@ export default function PricingPage() {
     }
   };
 
-  const handleConfirmChange = () => {
-    if (!pendingPlan) return;
-    setConfirmOpen(false);
-    executeSelectPlan(pendingPlan.id);
-    setPendingPlan(null);
-  };
-
-  const handleCancelChange = () => {
-    setConfirmOpen(false);
-    setPendingPlan(null);
-  };
-
-  const getConfirmPrice = () => {
-    if (!pendingPlan) return "";
-    const price =
-      billingPeriod === "yearly"
-        ? pendingPlan.priceYearly
-        : pendingPlan.priceMonthly;
-    return `${price}\u20AC`;
-  };
-
-  const getConfirmPeriod = () => {
-    return billingPeriod === "yearly"
-      ? tModal("billing.perYear")
-      : tModal("billing.perMonth");
-  };
-
   return (
     <>
-      <AlertDialog open={confirmOpen} onOpenChange={handleCancelChange}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isUpgrade
-                ? tModal("confirmChange.upgradeTitle")
-                : tModal("confirmChange.downgradeTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {isUpgrade
-                ? tModal("confirmChange.upgradeDescription", {
-                    planName: pendingPlan?.name ?? "",
-                    price: getConfirmPrice(),
-                    period: getConfirmPeriod(),
-                  })
-                : tModal("confirmChange.downgradeDescription", {
-                    planName: pendingPlan?.name ?? "",
-                  })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelChange}>
-              {tModal("confirmChange.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmChange}>
-              {tModal("confirmChange.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       <div className="min-h-screen bg-white dark:bg-gray-900">
         <LandingHeader />
 

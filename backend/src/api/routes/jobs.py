@@ -17,8 +17,10 @@ from pydantic import BaseModel, Field
 from src.api.deps import (
     ScoutAgentDep,
     _require_feature_flag_sync,
+    check_quota,
     get_supabase_client,
     get_user_id_from_token,
+    increment_quota,
 )
 from src.api.middleware import limiter
 from src.models.schemas import Job, JobSearchRequest, JobSearchResponse, SearchMetadata
@@ -725,6 +727,8 @@ async def track_job_view(
         }
 
     try:
+        await check_quota(user_id, "job_view")
+
         supabase = get_supabase_client()
 
         # Increment job_view usage
@@ -783,6 +787,7 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
         )
+    await check_quota(user_id, "recruiter_search")
     try:
         body = await request.json()
         company_name = body.get("company_name", "")
@@ -832,6 +837,8 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
             else:
                 contact["email_verified"] = (contact.get("confidence", 0) >= 80)
             contact.setdefault("source", source)
+
+        await increment_quota(user_id, "recruiter_search")
 
         return {
             "success": True,

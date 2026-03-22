@@ -283,8 +283,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       cvAnalysesToday: apiData.quotas?.cv_analysis.used ?? 0,
       assistantMessagesUsedToday: apiData.quotas?.assistant_messages?.used ?? 0,
 
-      // From localStorage (not tracked in backend)
-      jobsViewedToday: freemium.usage.jobsViewedToday,
+      // From API backend (fallback to localStorage if not tracked)
+      jobsViewedToday:
+        apiData.quotas?.job_view?.used ?? freemium.usage.jobsViewedToday,
       lastResetDate:
         apiData.quotas?.cv_analysis.reset_at ?? freemium.usage.lastResetDate,
     }),

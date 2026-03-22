@@ -466,6 +466,42 @@ def increment_assistant_messages(user_id: str) -> None:
         logger.warning(f"[quota] increment failed for {user_id}: {e}")
 
 
+async def check_quota(user_id: str, feature: str) -> None:
+    """Check quota for any feature via RPC. Raises 429 if exhausted."""
+    try:
+        supabase = get_supabase_client()
+        result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        for row in (result.data or []):
+            if row.get("feature") == feature and not row.get("has_access", True):
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail={
+                        "code": "QUOTA_EXCEEDED",
+                        "feature": feature,
+                        "limit": row.get("quota_limit"),
+                        "used": row.get("quota_used"),
+                        "message": f"Quota journalier atteint pour {feature}.",
+                    },
+                )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"[quota] check_quota({feature}) failed: {e} — allowing through")
+
+
+async def increment_quota(user_id: str, feature: str, amount: int = 1) -> None:
+    """Increment usage counter. Best-effort, never raises."""
+    try:
+        supabase = get_supabase_client()
+        supabase.rpc("increment_usage", {
+            "p_user_id": user_id,
+            "p_feature": feature,
+            "p_amount": amount,
+        }).execute()
+    except Exception as e:
+        logger.warning(f"[quota] increment_quota({feature}) failed: {e}")
+
+
 async def get_current_admin(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Verify the current user has admin privileges (is_admin = TRUE in profiles).

@@ -7,16 +7,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Sparkles, Zap, Crown, Gift } from "lucide-react";
@@ -52,14 +42,6 @@ interface PricingPlan {
 
 type BillingPeriod = "monthly" | "yearly";
 
-// Plan hierarchy for upgrade/downgrade detection
-const PLAN_RANK: Record<string, number> = {
-  free: 0,
-  starter: 1,
-  pro: 2,
-  premium: 3,
-};
-
 export function PricingModal() {
   const tModal = useTranslations("pricingModal");
   const { showPricingModal, closePricingModal, pricingModalFeature } =
@@ -67,9 +49,6 @@ export function PricingModal() {
   const auth = useOptionalAuth();
   const user = auth?.user;
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingPlan, setPendingPlan] = useState<PricingPlan | null>(null);
-  const [isUpgrade, setIsUpgrade] = useState(true);
 
   const {
     plans: dbPlans,
@@ -128,7 +107,7 @@ export function PricingModal() {
     };
   });
 
-  // Initiate plan selection: show confirmation dialog if changing between paid plans
+  // Initiate plan selection: always go through Stripe Checkout
   const handleSelectPlan = useCallback(
     (planId: PlanType) => {
       if (planId === "free" || planId === currentPlan) {
@@ -145,23 +124,10 @@ export function PricingModal() {
         return;
       }
 
-      const targetPlan = plans.find((p) => p.id === planId);
-      if (!targetPlan) return;
-
-      // If user already has a paid plan, show confirmation dialog
-      if (currentPlan && currentPlan !== "free") {
-        const currentRank = PLAN_RANK[currentPlan] ?? 0;
-        const targetRank = PLAN_RANK[planId] ?? 0;
-        setIsUpgrade(targetRank > currentRank);
-        setPendingPlan(targetPlan);
-        setConfirmOpen(true);
-        return;
-      }
-
-      // New subscription (from free) - proceed directly
+      // All plan changes go through Stripe Checkout
       executeSelectPlan(planId);
     },
-    [currentPlan, plans, user, auth?.session, tModal, closePricingModal],
+    [currentPlan, user, auth?.session, tModal, closePricingModal],
   );
 
   // Execute the actual plan change (called directly or after confirmation)
@@ -231,27 +197,15 @@ export function PricingModal() {
 
       toast.dismiss("stripe-redirect");
 
-      // Already on this plan
       if (data.already_subscribed) {
         toast.info(tModal("toasts.alreadyOnPlan"));
         return;
       }
 
-      // Check if it's a subscription modification (upgrade/downgrade) or new subscription
-      if (data.modified) {
-        // Subscription was modified immediately (upgrade) or scheduled (downgrade)
-        if (data.immediate) {
-          toast.success(tModal("toasts.upgraded"));
-        } else {
-          toast.success(tModal("toasts.scheduled"));
-        }
-
-        // Redirect to success page with polling to verify update
-        const sessionId = `mod_${Date.now()}`;
-        window.location.href = `/payment/success?session_id=${sessionId}&type=modification`;
-      } else {
-        // New subscription - redirect to Stripe Checkout
+      if (data.checkout_url) {
         window.location.href = data.checkout_url;
+      } else {
+        throw new Error("No checkout URL returned");
       }
     } catch (error: unknown) {
       toast.dismiss("stripe-redirect");
@@ -261,263 +215,204 @@ export function PricingModal() {
     }
   };
 
-  const handleConfirmChange = () => {
-    if (!pendingPlan) return;
-    setConfirmOpen(false);
-    executeSelectPlan(pendingPlan.id);
-    setPendingPlan(null);
-  };
-
-  const handleCancelChange = () => {
-    setConfirmOpen(false);
-    setPendingPlan(null);
-  };
-
-  const getConfirmPrice = () => {
-    if (!pendingPlan) return "";
-    const price =
-      billingPeriod === "yearly" ? pendingPlan.priceYearly : pendingPlan.price;
-    return `${price}\u20AC`;
-  };
-
-  const getConfirmPeriod = () => {
-    return billingPeriod === "yearly"
-      ? tModal("billing.perYear")
-      : tModal("billing.perMonth");
-  };
-
   return (
-    <>
-      <AlertDialog open={confirmOpen} onOpenChange={handleCancelChange}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isUpgrade
-                ? tModal("confirmChange.upgradeTitle")
-                : tModal("confirmChange.downgradeTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {isUpgrade
-                ? tModal("confirmChange.upgradeDescription", {
-                    planName: pendingPlan?.name ?? "",
-                    price: getConfirmPrice(),
-                    period: getConfirmPeriod(),
-                  })
-                : tModal("confirmChange.downgradeDescription", {
-                    planName: pendingPlan?.name ?? "",
-                  })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelChange}>
-              {tModal("confirmChange.cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmChange}>
-              {tModal("confirmChange.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <Dialog open={showPricingModal} onOpenChange={closePricingModal}>
-        <DialogContent className="max-w-[95vw] w-full lg:max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-white text-gray-900">
-          <DialogHeader className="px-4 md:px-6 pt-4 md:pt-6 pb-3 flex-shrink-0">
-            <DialogTitle className="text-2xl font-bold text-center">
-              {tModal("title")}
-            </DialogTitle>
-            {pricingModalFeature && (
-              <p className="text-center text-muted-foreground mt-2 text-sm">
-                {tModal("featureRequired")}
-              </p>
-            )}
-          </DialogHeader>
+    <Dialog open={showPricingModal} onOpenChange={closePricingModal}>
+      <DialogContent className="max-w-[95vw] w-full lg:max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-white text-gray-900">
+        <DialogHeader className="px-4 md:px-6 pt-4 md:pt-6 pb-3 flex-shrink-0">
+          <DialogTitle className="text-2xl font-bold text-center">
+            {tModal("title")}
+          </DialogTitle>
+          {pricingModalFeature && (
+            <p className="text-center text-muted-foreground mt-2 text-sm">
+              {tModal("featureRequired")}
+            </p>
+          )}
+        </DialogHeader>
 
-          <div className="px-4 md:px-6 pb-4 md:pb-6 overflow-y-auto flex-1">
-            {/* Billing Period Toggle */}
-            <div className="flex items-center justify-center gap-3 pt-2 pb-2">
+        <div className="px-4 md:px-6 pb-4 md:pb-6 overflow-y-auto flex-1">
+          {/* Billing Period Toggle */}
+          <div className="flex items-center justify-center gap-3 pt-2 pb-2">
+            <span
+              className={`text-sm font-medium ${billingPeriod === "monthly" ? "text-gray-900" : "text-gray-400"}`}
+            >
+              {tModal("billing.monthly")}
+            </span>
+            <button
+              onClick={() =>
+                setBillingPeriod(
+                  billingPeriod === "monthly" ? "yearly" : "monthly",
+                )
+              }
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                billingPeriod === "yearly" ? "bg-violet-600" : "bg-gray-300"
+              }`}
+              aria-label={tModal("billing.toggleLabel")}
+            >
               <span
-                className={`text-sm font-medium ${billingPeriod === "monthly" ? "text-gray-900" : "text-gray-400"}`}
-              >
-                {tModal("billing.monthly")}
-              </span>
-              <button
-                onClick={() =>
-                  setBillingPeriod(
-                    billingPeriod === "monthly" ? "yearly" : "monthly",
-                  )
-                }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                  billingPeriod === "yearly" ? "bg-violet-600" : "bg-gray-300"
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  billingPeriod === "yearly" ? "translate-x-6" : "translate-x-1"
                 }`}
-                aria-label={tModal("billing.toggleLabel")}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    billingPeriod === "yearly"
-                      ? "translate-x-6"
-                      : "translate-x-1"
-                  }`}
-                />
-              </button>
-              <span
-                className={`text-sm font-medium ${billingPeriod === "yearly" ? "text-gray-900" : "text-gray-400"}`}
-              >
-                {tModal("billing.yearly")}
-              </span>
-              {billingPeriod === "yearly" && (
-                <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                  {tModal("billing.saveBadge")}
-                </Badge>
-              )}
-            </div>
+              />
+            </button>
+            <span
+              className={`text-sm font-medium ${billingPeriod === "yearly" ? "text-gray-900" : "text-gray-400"}`}
+            >
+              {tModal("billing.yearly")}
+            </span>
+            {billingPeriod === "yearly" && (
+              <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
+                {tModal("billing.saveBadge")}
+              </Badge>
+            )}
+          </div>
 
-            {/* Plans Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4">
-              {plans.map((plan) => (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-xl border-2 p-5 transition-all hover:shadow-lg ${
-                    plan.popular
-                      ? "border-violet-500 shadow-violet-100 shadow-lg"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  {/* Popular Badge */}
-                  {plan.popular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 text-xs py-1 px-3 whitespace-nowrap">
-                      {tModal("popular")}
-                    </Badge>
-                  )}
+          {/* Plans Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`relative rounded-xl border-2 p-5 transition-all hover:shadow-lg ${
+                  plan.popular
+                    ? "border-violet-500 shadow-violet-100 shadow-lg"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {/* Popular Badge */}
+                {plan.popular && (
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 text-xs py-1 px-3 whitespace-nowrap">
+                    {tModal("popular")}
+                  </Badge>
+                )}
 
-                  {/* Plan Header */}
-                  <div className="text-center mb-4">
-                    <div
-                      className={`inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br ${plan.bgGradient} text-white mb-3`}
-                    >
-                      {plan.icon}
-                    </div>
-                    <h3 className="text-xl font-bold">{plan.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                      {plan.description}
-                    </p>
+                {/* Plan Header */}
+                <div className="text-center mb-4">
+                  <div
+                    className={`inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br ${plan.bgGradient} text-white mb-3`}
+                  >
+                    {plan.icon}
                   </div>
+                  <h3 className="text-xl font-bold">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                    {plan.description}
+                  </p>
+                </div>
 
-                  {/* Price */}
-                  <div className="text-center mb-4 py-3 bg-white rounded-lg">
-                    <div className="flex items-baseline justify-center gap-1">
-                      {plan.id === "free" ? (
+                {/* Price */}
+                <div className="text-center mb-4 py-3 bg-white rounded-lg">
+                  <div className="flex items-baseline justify-center gap-1">
+                    {plan.id === "free" ? (
+                      <span className="text-3xl font-bold text-gray-900">
+                        {tModal("free")}
+                      </span>
+                    ) : (
+                      <>
                         <span className="text-3xl font-bold text-gray-900">
-                          {tModal("free")}
+                          {billingPeriod === "yearly"
+                            ? plan.priceYearly
+                            : plan.price}
+                          €
                         </span>
-                      ) : (
-                        <>
-                          <span className="text-3xl font-bold text-gray-900">
-                            {billingPeriod === "yearly"
-                              ? plan.priceYearly
-                              : plan.price}
-                            €
-                          </span>
-                          <span className="text-base text-gray-600">
-                            {billingPeriod === "yearly"
-                              ? tModal("billing.perYear")
-                              : plan.period}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    {billingPeriod === "yearly" && plan.id !== "free" && (
-                      <p className="text-xs text-green-600 mt-1">
-                        {tModal("billing.yearlyEquivalent", {
-                          price: (plan.priceYearlyValue / 12)
-                            .toFixed(2)
-                            .replace(".", ","),
-                        })}
-                      </p>
+                        <span className="text-base text-gray-600">
+                          {billingPeriod === "yearly"
+                            ? tModal("billing.perYear")
+                            : plan.period}
+                        </span>
+                      </>
                     )}
                   </div>
-
-                  {/* Features */}
-                  <ul className="space-y-2 mb-4">
-                    {plan.features
-                      .filter((f) => f.name)
-                      .slice(0, 6)
-                      .map((feature, index) => (
-                        <li
-                          key={index}
-                          className={`flex items-start gap-2 text-sm ${
-                            feature.highlight ? "font-medium" : ""
-                          }`}
-                        >
-                          {feature.included ? (
-                            <div
-                              className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                                feature.highlight
-                                  ? `bg-gradient-to-br ${plan.bgGradient}`
-                                  : "bg-green-500"
-                              }`}
-                            >
-                              <Check className="w-2.5 h-2.5 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <X className="w-2.5 h-2.5 text-gray-400" />
-                            </div>
-                          )}
-                          <span
-                            className={feature.included ? "" : "text-gray-400"}
-                          >
-                            {feature.name}
-                          </span>
-                        </li>
-                      ))}
-                    {plan.features.filter((f) => f.name).length > 6 && (
-                      <li className="text-xs text-muted-foreground italic pl-6">
-                        {tModal("moreFeatures", {
-                          count: plan.features.filter((f) => f.name).length - 6,
-                        })}
-                      </li>
-                    )}
-                  </ul>
-
-                  {/* CTA Button — Skeleton pendant chargement (BUG 2) */}
-                  {currentPlan === null ? (
-                    <Skeleton className="h-9 w-full rounded-md" />
-                  ) : (
-                    <Button
-                      onClick={() => handleSelectPlan(plan.id)}
-                      className={`w-full h-11 text-sm font-semibold ${
-                        plan.popular
-                          ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
-                          : ""
-                      }`}
-                      variant={plan.popular ? "default" : "outline"}
-                      disabled={plan.id === "free" || plan.id === currentPlan}
-                    >
-                      {plan.id === currentPlan
-                        ? tModal("currentPlan")
-                        : tModal("choosePlan", { name: plan.name })}
-                    </Button>
+                  {billingPeriod === "yearly" && plan.id !== "free" && (
+                    <p className="text-xs text-green-600 mt-1">
+                      {tModal("billing.yearlyEquivalent", {
+                        price: (plan.priceYearlyValue / 12)
+                          .toFixed(2)
+                          .replace(".", ","),
+                      })}
+                    </p>
                   )}
                 </div>
-              ))}
-            </div>
 
-            {/* Footer */}
-            <div className="text-center mt-4 space-y-2">
-              <p className="text-sm text-muted-foreground font-medium">
-                {tModal("guarantee")}
-              </p>
-              <Link
-                href="/pricing"
-                onClick={closePricingModal}
-                className="text-xs text-primary hover:underline block"
-              >
-                {tModal("seeComparison")}
-              </Link>
-            </div>
+                {/* Features */}
+                <ul className="space-y-2 mb-4">
+                  {plan.features
+                    .filter((f) => f.name)
+                    .slice(0, 6)
+                    .map((feature, index) => (
+                      <li
+                        key={index}
+                        className={`flex items-start gap-2 text-sm ${
+                          feature.highlight ? "font-medium" : ""
+                        }`}
+                      >
+                        {feature.included ? (
+                          <div
+                            className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                              feature.highlight
+                                ? `bg-gradient-to-br ${plan.bgGradient}`
+                                : "bg-green-500"
+                            }`}
+                          >
+                            <Check className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        ) : (
+                          <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <X className="w-2.5 h-2.5 text-gray-400" />
+                          </div>
+                        )}
+                        <span
+                          className={feature.included ? "" : "text-gray-400"}
+                        >
+                          {feature.name}
+                        </span>
+                      </li>
+                    ))}
+                  {plan.features.filter((f) => f.name).length > 6 && (
+                    <li className="text-xs text-muted-foreground italic pl-6">
+                      {tModal("moreFeatures", {
+                        count: plan.features.filter((f) => f.name).length - 6,
+                      })}
+                    </li>
+                  )}
+                </ul>
+
+                {/* CTA Button — Skeleton pendant chargement (BUG 2) */}
+                {currentPlan === null ? (
+                  <Skeleton className="h-9 w-full rounded-md" />
+                ) : (
+                  <Button
+                    onClick={() => handleSelectPlan(plan.id)}
+                    className={`w-full h-11 text-sm font-semibold ${
+                      plan.popular
+                        ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                        : ""
+                    }`}
+                    variant={plan.popular ? "default" : "outline"}
+                    disabled={plan.id === "free" || plan.id === currentPlan}
+                  >
+                    {plan.id === currentPlan
+                      ? tModal("currentPlan")
+                      : tModal("choosePlan", { name: plan.name })}
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+
+          {/* Footer */}
+          <div className="text-center mt-4 space-y-2">
+            <p className="text-sm text-muted-foreground font-medium">
+              {tModal("guarantee")}
+            </p>
+            <Link
+              href="/pricing"
+              onClick={closePricingModal}
+              className="text-xs text-primary hover:underline block"
+            >
+              {tModal("seeComparison")}
+            </Link>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
