@@ -352,6 +352,14 @@ export function AuthProvider({
 
       if (error) throw error;
 
+      // Supabase returns a fake success when email already exists (with email confirmation enabled)
+      // The user object will have an empty identities array
+      if (data.user && data.user.identities?.length === 0) {
+        setError(tErr("emailAlreadyExists"));
+        setLoading(false);
+        return;
+      }
+
       // Log successful signup (non-blocking)
       if (data.user) {
         logSecurityEvent({

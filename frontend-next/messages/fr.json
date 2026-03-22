@@ -866,6 +866,7 @@
       "invalidCredentials": "Email ou mot de passe invalide",
       "timeout": "La requête prend trop de temps. Vérifiez votre connexion internet et réessayez.",
       "signupFailed": "Échec de la création du compte",
+      "emailAlreadyExists": "Un compte existe déjà avec cette adresse email. Connectez-vous ou utilisez le mot de passe oublié.",
       "resetPasswordFailed": "Impossible d'envoyer le lien de réinitialisation",
       "resendConfirmationFailed": "Impossible de renvoyer l'email de confirmation"
     }
