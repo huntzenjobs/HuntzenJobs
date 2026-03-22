@@ -240,7 +240,7 @@
       },
       {
         "question": "What is your refund policy?",
-        "answer": "We offer a 14-day money-back guarantee on all our plans. If you're not satisfied, contact our support and we'll refund you."
+        "answer": "Puedes cancelar tu suscripcion en cualquier momento desde tu perfil. La cancelacion se hace efectiva al final del periodo en curso. Sin compromiso de permanencia."
       },
       {
         "question": "Do prices include VAT?",
@@ -418,7 +418,7 @@
     "choosePlan": "Elegir {name}",
     "startWith": "Comenzar con {name}",
     "moreFeatures": "+ {count} más funcionalidades",
-    "guarantee": "✓ Satisfecho o reembolsado durante 14 días",
+    "guarantee": "✓ Sin compromiso, cancela cuando quieras",
     "seeComparison": "Ver la comparación completa de funcionalidades",
     "toasts": {
       "alreadyOnPlan": "Ya estás en este plan",
@@ -430,6 +430,14 @@
       "paymentError": "Error al crear la sesión de pago",
       "annualToMonthlyBlocked": "Cambio de anual a mensual no posible. Tu suscripción anual se extiende hasta el {date}. Podrás cambiar a mensual en esa fecha.",
       "annualToMonthlyBlockedGeneric": "Tienes una suscripción anual activa. El cambio a mensual será posible al final del período."
+    },
+    "confirmChange": {
+      "upgradeTitle": "Confirmar cambio de plan",
+      "upgradeDescription": "Vas a cambiar al plan {planName} a {price} {period}. La diferencia se cobrara inmediatamente en tu tarjeta registrada.",
+      "downgradeTitle": "Confirmar cambio de plan",
+      "downgradeDescription": "Tu plan sera reducido a {planName} al final de tu periodo de facturacion actual.",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar"
     },
     "billing": {
       "monthly": "Mensual",
@@ -2632,8 +2640,8 @@
         "a1": "HuntZen Jobs ofrece 2 planes: Gratis (0€/mes) con {freeCvLimit} análisis CV/día y acceso a ofertas, y Pro ({proPrice}) con análisis CV ilimitados, coach personal, alertas de empleo y acompañamiento personalizado. Puedes actualizar al plan Pro en cualquier momento desde tu cuenta.",
         "q2": "¿Cómo cancelo mi suscripción a HuntZen Jobs?",
         "a2": "Puedes cancelar tu suscripción a HuntZen Jobs en cualquier momento desde tu cuenta. Vaya a Configuración > Suscripción > Cancelar. Sin cargos ocultos: con HuntZen solo pagas hasta el final de tu periodo. Su acceso a HuntZen Pro permanecerá activo hasta que caduque.",
-        "q3": "¿Puedo obtener un reembolso si HuntZen Jobs no me conviene?",
-        "a3": "Si no está satisfecho con su suscripción a HuntZen Jobs, póngase en contacto con nuestro soporte en support@huntzenjobs.com. Cada solicitud se estudia individualmente. También puede cancelar su suscripción en cualquier momento para que no se le cobre en la próxima fecha de vencimiento."
+        "q3": "¿Como cancelo si HuntZen Jobs no me conviene?",
+        "a3": "Puedes cancelar tu suscripcion en cualquier momento desde tu perfil. La cancelacion se hace efectiva al final del periodo en curso. Sin compromiso de permanencia. Para cualquier pregunta, contacta nuestro soporte en support@huntzenjobs.com."
       },
       "support": {
         "title": "Soporte & Ayuda",

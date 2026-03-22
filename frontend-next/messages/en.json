@@ -245,7 +245,7 @@
       },
       {
         "question": "What is your refund policy?",
-        "answer": "We offer a 14-day money-back guarantee on all our plans. If you're not satisfied, contact our support and we'll refund you."
+        "answer": "You can cancel your subscription at any time from your profile. Cancellation takes effect at the end of the current billing period. No long-term commitment."
       },
       {
         "question": "Do prices include VAT?",
@@ -423,7 +423,7 @@
     "choosePlan": "Choose {name}",
     "startWith": "Start with {name}",
     "moreFeatures": "+ {count} more features",
-    "guarantee": "✓ 14-day money-back guarantee",
+    "guarantee": "✓ No commitment, cancel anytime",
     "seeComparison": "See the full feature comparison",
     "toasts": {
       "alreadyOnPlan": "You are already on this plan",
@@ -435,6 +435,14 @@
       "paymentError": "Error creating payment session",
       "annualToMonthlyBlocked": "Annual to monthly change not possible. Your annual subscription runs until {date}. You can switch to monthly at that date.",
       "annualToMonthlyBlockedGeneric": "You have an active annual subscription. The change to monthly will be possible at the end of the period."
+    },
+    "confirmChange": {
+      "upgradeTitle": "Confirm plan change",
+      "upgradeDescription": "You are about to switch to the {planName} plan at {price} {period}. The difference will be charged immediately to your card on file.",
+      "downgradeTitle": "Confirm plan change",
+      "downgradeDescription": "Your plan will be downgraded to {planName} at the end of your current billing period.",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
     },
     "billing": {
       "monthly": "Monthly",
