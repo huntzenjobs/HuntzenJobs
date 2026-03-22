@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/sidebar";
+import { DashboardNavbar } from "@/components/layout/dashboard-navbar";
 import { NavigationLoader } from "@/components/layout/navigation-loader";
 import { SubscriptionProvider } from "@/contexts/subscription-context";
 import { PricingModal } from "@/components/freemium/pricing-modal";
@@ -31,6 +32,9 @@ export default async function DashboardLayout({
         >
           {/* Presence heartbeat — tracks user on /dashboard */}
           <PresenceTracker page="/dashboard" />
+
+          {/* Dashboard top navbar (desktop only) */}
+          <DashboardNavbar />
 
           {/* Mobile spacer for fixed header */}
           <div className="h-14 lg:hidden" />

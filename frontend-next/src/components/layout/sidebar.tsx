@@ -11,10 +11,7 @@ import {
   FolderOpen,
   MessageSquare,
   Bookmark,
-  HelpCircle,
-  ArrowLeft,
   User,
-  LogOut,
   Menu,
   X,
   Lock,
@@ -29,26 +26,13 @@ import {
   Globe,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { UsageSummary } from "@/components/freemium/usage-counter";
 import { UsageModal } from "@/components/freemium/usage-modal";
 import { useTranslations } from "next-intl";
-import { LanguageSwitcherCompact } from "@/components/language-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface SidebarProps {
   className?: string;
@@ -56,10 +40,8 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isCandidaturesNew, setIsCandidaturesNew] = useState(() => {
     try {
       return !localStorage.getItem("huntzen_candidatures_visited");
@@ -178,25 +160,6 @@ export function Sidebar({ className }: SidebarProps) {
   };
 
   const planBadge = PLAN_BADGES[plan];
-
-  const handleLogout = async () => {
-    try {
-      // Use the Auth context signOut which handles logging and state management
-      if (auth?.signOut) {
-        await auth.signOut();
-      } else {
-        // Fallback if context not available
-        const supabase = createClient();
-        await supabase.auth.signOut();
-        router.push("/login");
-        router.refresh();
-      }
-    } catch {
-      // Still redirect on error
-      router.push("/login");
-      router.refresh();
-    }
-  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-[#0D1F3C]">
@@ -329,64 +292,22 @@ export function Sidebar({ className }: SidebarProps) {
         )}
       </nav>
 
-      {/* User section */}
+      {/* Bottom section — compact */}
       <div className="px-4 py-4 border-t border-white/10">
-        {isAuthLoading ? (
-          <div className="flex items-center gap-3 px-3 py-2 mb-3">
-            <Skeleton className="w-10 h-10 rounded-full bg-gray-200" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-32 mb-2 bg-gray-200" />
-              <Skeleton className="h-3 w-40 bg-gray-200" />
-            </div>
-          </div>
-        ) : user ? (
-          <div>
-            <Link
-              href="/profile"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 mb-3 rounded-xl hover:bg-white/8 transition-colors cursor-pointer group"
-            >
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#00D9FF]/15 transition-colors border border-white/10">
-                <User className="w-5 h-5 text-white/60 group-hover:text-[#00D9FF] transition-colors" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-white truncate group-hover:text-[#00D9FF] transition-colors">
-                    {user.user_metadata?.full_name || t("user.default")}
-                  </p>
-                  {subscription === null ? (
-                    <span className="bg-gray-200 animate-pulse rounded-full px-2 py-0.5 w-14 h-4" />
-                  ) : planBadge ? (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white",
-                        planBadge.color,
-                      )}
-                    >
-                      {planBadge.icon}
-                      {planBadge.label}
-                    </span>
-                  ) : null}
-                </div>
-                <p className="text-xs text-white/60 truncate">{user.email}</p>
-              </div>
-            </Link>
-          </div>
-        ) : (
-          <div>
-            <Link
-              href="/login"
-              className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-white/70 hover:bg-white/8 hover:text-white w-full group"
-            >
-              <LogIn className="w-5 h-5 text-white/70 group-hover:text-[#00D9FF] transition-colors" />
-              <span className="nav-label flex-1 text-left">
-                {t("footer.login")}
-              </span>
-            </Link>
-          </div>
+        {/* Login button for non-authenticated users */}
+        {!isAuthLoading && !user && (
+          <Link
+            href="/login"
+            className="nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all text-white/70 hover:bg-white/8 hover:text-white w-full group"
+          >
+            <LogIn className="w-5 h-5 text-white/70 group-hover:text-[#00D9FF] transition-colors" />
+            <span className="nav-label flex-1 text-left">
+              {t("footer.login")}
+            </span>
+          </Link>
         )}
 
-        {/* Upgrade button for free users - only show if logged in */}
+        {/* Upgrade button for free users */}
         {user && isFreePlan && (
           <button
             onClick={() => openPricingModal()}
@@ -394,51 +315,6 @@ export function Sidebar({ className }: SidebarProps) {
           >
             <Sparkles className="w-4 h-4" />
             {t("upgradeCta")}
-          </button>
-        )}
-      </div>
-
-      {/* Footer Navigation */}
-      <div className="sidebar-footer px-4 py-3 border-t border-white/10">
-        {/* Language switcher */}
-        <div className="px-2 py-2 mb-1">
-          <LanguageSwitcherCompact />
-        </div>
-
-        <Link
-          href="/pricing"
-          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/8 hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          <Crown className="w-4 h-4 group-hover:text-[#00D9FF] transition-colors" />
-          <span className="nav-label">{t("footer.pricing")}</span>
-        </Link>
-
-        <Link
-          href="mailto:contact@huntzenjobs.com"
-          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/8 hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          <HelpCircle className="w-4 h-4 group-hover:text-[#00D9FF] transition-colors" />
-          <span className="nav-label">{t("footer.help")}</span>
-        </Link>
-
-        <Link
-          href="https://huntzen.co"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/8 hover:text-white transition-all group focus-visible:ring-2 focus-visible:ring-[#00D9FF] focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:text-[#00D9FF] transition-colors" />
-          <span className="nav-label">{t("footer.back")}</span>
-        </Link>
-
-        {user && (
-          <button
-            onClick={() => setShowLogoutDialog(true)}
-            className="nav-item nav-item-secondary flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-red-500/10 hover:text-red-400 transition-all w-full group"
-            aria-label={t("aria.logout")}
-          >
-            <LogOut className="w-4 h-4 group-hover:text-red-400 transition-colors" />
-            <span className="nav-label">{t("footer.logout")}</span>
           </button>
         )}
       </div>
@@ -523,28 +399,7 @@ export function Sidebar({ className }: SidebarProps) {
         onClose={() => setIsUsageModalOpen(false)}
       />
 
-      {/* Logout Confirmation Dialog */}
-      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent className="bg-white border-slate-200">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-slate-900">
-              {t("logout.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-600">
-              {t("logout.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("logout.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {t("logout.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Logout dialog moved to DashboardNavbar */}
     </>
   );
 }
