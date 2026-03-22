@@ -1506,7 +1506,11 @@
       "quotaReachedRecruiter": "Recruiter search quota reached. Upgrade to Pro for unlimited access."
     },
     "recruiterFinderBeta": "This feature is being improved. Results may be incomplete.",
-    "recruiterFinderRgpd": "These emails come from public sources (Hunter.io). Please comply with GDPR in your communications.",
+    "recruiterFinderRgpd": "These emails come from public sources (Apollo.io, Hunter.io). Please comply with GDPR in your communications.",
+    "recruiterEmailVerified": "Verified",
+    "recruiterEmailGuessed": "Estimated",
+    "recruiterViewLinkedin": "View LinkedIn profile",
+    "recruiterSearching": "Searching for contacts...",
     "blurred": {
       "source": "Source",
       "lockedOffer": "Locked offer",

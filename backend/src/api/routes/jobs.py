@@ -796,14 +796,42 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
                 detail="At least company_name or company_domain is required",
             )
 
-        from src.services.recruiter_finder.hunter import find_recruiters_for_job
+        from src.services.recruiter_finder.apollo import find_recruiters_apollo
+        from src.services.recruiter_finder.hunter import extract_domain, find_recruiters_for_job
 
-        result = await find_recruiters_for_job(
+        # Resolve domain
+        domain = ""
+        if company_domain:
+            domain = extract_domain(company_domain)
+        elif company_website:
+            domain = extract_domain(company_website)
+
+        # 1. Try Apollo first (primary source)
+        result = await find_recruiters_apollo(
             company_name=company_name,
-            company_domain=company_domain,
-            company_website=company_website,
+            company_domain=domain,
             job_title=job_title,
         )
+
+        # 2. If Apollo found nothing, fallback to Hunter.io
+        if not result.get("recruiters") and not result.get("tech_team"):
+            logger.info("[find-recruiter] Apollo found nothing, trying Hunter.io fallback")
+            result = await find_recruiters_for_job(
+                company_name=company_name,
+                company_domain=company_domain,
+                company_website=company_website,
+                job_title=job_title,
+            )
+            result["source"] = "hunter"
+
+        # 3. Mark email verification status
+        source = result.get("source", "hunter")
+        for contact in result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", []):
+            if source == "apollo":
+                contact["email_verified"] = contact.get("email_status") == "verified"
+            else:
+                contact["email_verified"] = (contact.get("confidence", 0) >= 80)
+            contact.setdefault("source", source)
 
         return {
             "success": True,

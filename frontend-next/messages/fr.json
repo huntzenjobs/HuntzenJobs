@@ -1663,7 +1663,11 @@
       "quotaReachedRecruiter": "Quota de recherche recruteur atteint. Passez à Pro pour un accès illimité."
     },
     "recruiterFinderBeta": "Cette fonctionnalité est en cours d'amélioration. Les résultats peuvent être incomplets.",
-    "recruiterFinderRgpd": "Ces emails proviennent de sources publiques (Hunter.io). Respectez le RGPD dans vos communications.",
+    "recruiterFinderRgpd": "Ces emails proviennent de sources publiques (Apollo.io, Hunter.io). Respectez le RGPD dans vos communications.",
+    "recruiterEmailVerified": "Verifie",
+    "recruiterEmailGuessed": "Estime",
+    "recruiterViewLinkedin": "Voir le profil LinkedIn",
+    "recruiterSearching": "Recherche des contacts en cours...",
     "blurred": {
       "source": "Source",
       "lockedOffer": "Offre verrouillée",

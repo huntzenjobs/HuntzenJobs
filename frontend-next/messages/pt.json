@@ -1901,7 +1901,11 @@
       "quotaReachedRecruiter": "Cota de pesquisa de recrutador atingida. Atualize para Pro para acesso ilimitado."
     },
     "recruiterFinderBeta": "Esta funcionalidade está sendo aprimorada. Os resultados podem estar incompletos.",
-    "recruiterFinderRgpd": "Estes e-mails são de fontes públicas (Hunter.io). Respeite o RGPD nas suas comunicações.",
+    "recruiterFinderRgpd": "Estes e-mails sao de fontes publicas (Apollo.io, Hunter.io). Respeite o RGPD nas suas comunicacoes.",
+    "recruiterEmailVerified": "Verificado",
+    "recruiterEmailGuessed": "Estimado",
+    "recruiterViewLinkedin": "Ver perfil do LinkedIn",
+    "recruiterSearching": "Procurando contatos...",
     "blurred": {
       "source": "Source",
       "lockedOffer": "Locked offer",

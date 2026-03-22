@@ -27,6 +27,8 @@ import {
   SearchX,
   AtSign,
   AlertTriangle,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -46,6 +48,8 @@ interface Contact {
   confidence: number;
   linkedin: string | null;
   role: "hr" | "tech" | "other";
+  source: "apollo" | "hunter";
+  email_verified: boolean;
 }
 
 interface FinderResult {
@@ -56,6 +60,7 @@ interface FinderResult {
   tech_team: Contact[];
   all_contacts: Contact[];
   total_found: number;
+  source: "apollo" | "hunter";
 }
 
 interface RecruiterFinderDrawerProps {
@@ -95,6 +100,7 @@ function CopyEmailButton({ email }: { email: string }) {
 }
 
 function ContactCard({ contact }: { contact: Contact }) {
+  const tJobs = useTranslations("jobs");
   const roleBadge =
     contact.role === "hr"
       ? { label: "RH / Recruteur", className: "bg-blue-100 text-blue-700" }
@@ -128,10 +134,19 @@ function ContactCard({ contact }: { contact: Contact }) {
             {contact.email}
           </a>
           <CopyEmailButton email={contact.email} />
-          {contact.confidence > 0 && (
-            <span className="text-xs text-gray-400 ml-auto shrink-0">
-              {contact.confidence}%
+          {/* Email verification badge */}
+          {contact.email_verified ? (
+            <span className="inline-flex items-center gap-0.5 text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">
+              <ShieldCheck className="h-3 w-3" />
+              {tJobs("recruiterEmailVerified")}
             </span>
+          ) : (
+            contact.email && (
+              <span className="inline-flex items-center gap-0.5 text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">
+                <ShieldAlert className="h-3 w-3" />
+                {tJobs("recruiterEmailGuessed")}
+              </span>
+            )
           )}
         </div>
       )}
@@ -145,7 +160,7 @@ function ContactCard({ contact }: { contact: Contact }) {
             rel="noopener noreferrer"
             className="text-[#0A66C2] hover:underline text-xs"
           >
-            Voir le profil LinkedIn
+            {tJobs("recruiterViewLinkedin")}
           </a>
         </div>
       )}
@@ -283,7 +298,7 @@ export function RecruiterFinderDrawer({
           {loading && (
             <div className="flex flex-col items-center justify-center py-10 gap-3 text-gray-500">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <p className="text-sm">Interrogation de Hunter.io…</p>
+              <p className="text-sm">{tJobs("recruiterSearching")}</p>
             </div>
           )}
 

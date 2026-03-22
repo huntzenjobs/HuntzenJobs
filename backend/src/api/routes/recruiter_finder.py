@@ -1,7 +1,7 @@
 """
 Recruiter Finder API Routes
 ============================
-Expose Hunter.io contact discovery via a single POST endpoint.
+Expose recruiter contact discovery via Apollo.io (primary) with Hunter.io fallback.
 """
 
 import logging
@@ -12,7 +12,8 @@ from pydantic import BaseModel
 from supabase import Client, create_client
 
 from src.api.deps import get_user_id_from_token
-from src.services.recruiter_finder.hunter import find_recruiters_for_job
+from src.services.recruiter_finder.apollo import find_recruiters_apollo
+from src.services.recruiter_finder.hunter import extract_domain, find_recruiters_for_job
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +117,8 @@ class ContactItem(BaseModel):
     confidence: int = 0
     linkedin: str | None = None
     role: str = "other"
+    source: str = "hunter"
+    email_verified: bool = False
 
 
 class RecruiterFinderResponse(BaseModel):
@@ -126,6 +129,7 @@ class RecruiterFinderResponse(BaseModel):
     tech_team: list[ContactItem]
     all_contacts: list[ContactItem]
     total_found: int
+    source: str = "apollo"
 
 
 # ============================================================================
@@ -164,12 +168,34 @@ async def find_recruiters(
     check_recruiter_search_quota(user_id)
 
     try:
-        result = await find_recruiters_for_job(
+        # Resolve domain from website or domain field
+        domain = ""
+        if body.company_domain:
+            domain = extract_domain(body.company_domain)
+        elif body.company_website:
+            domain = extract_domain(body.company_website)
+
+        # 1. Try Apollo first (primary source)
+        result = await find_recruiters_apollo(
             company_name=body.company_name,
-            company_domain=body.company_domain or "",
-            company_website=body.company_website or "",
+            company_domain=domain,
             job_title=body.job_title or "",
         )
+
+        # 2. If Apollo found nothing, fallback to Hunter.io
+        if not result.get("recruiters") and not result.get("tech_team"):
+            logger.info("[RecruiterFinder] Apollo found nothing, trying Hunter.io fallback")
+            result = await find_recruiters_for_job(
+                company_name=body.company_name,
+                company_domain=body.company_domain or "",
+                company_website=body.company_website or "",
+                job_title=body.job_title or "",
+            )
+            result["source"] = "hunter"
+
+        # 3. Mark email verification status on all contacts
+        _enrich_email_verification(result)
+
         # Incrémenter le quota après succès
         increment_recruiter_search_quota(user_id)
         return result
@@ -181,3 +207,24 @@ async def find_recruiters(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to search for recruiter contacts",
         ) from None
+
+
+# ============================================================================
+# Helpers
+# ============================================================================
+
+
+def _enrich_email_verification(result: dict) -> None:
+    """
+    Mark email_verified on all contacts based on source-specific logic.
+    Apollo: email_status == "verified" → True
+    Hunter: confidence >= 80 → True
+    """
+    source = result.get("source", "hunter")
+    for contact in result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", []):
+        if source == "apollo":
+            contact["email_verified"] = contact.get("email_status") == "verified"
+        else:
+            # Hunter: high confidence = verified
+            contact["email_verified"] = (contact.get("confidence", 0) >= 80)
+        contact.setdefault("source", source)
