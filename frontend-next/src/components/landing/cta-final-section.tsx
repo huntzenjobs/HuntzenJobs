@@ -64,7 +64,7 @@ export function CtaFinalSection({ texts }: CtaFinalSectionProps) {
         >
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-bold text-white bg-[#EA580C] hover:bg-[#C2410C] transition-all shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-2xl hover:shadow-[#00D9FF]/30 hover:-translate-y-0.5"
           >
             {texts.cta}
           </Link>
