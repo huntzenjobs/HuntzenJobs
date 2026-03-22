@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { useDocuments } from "@/hooks/use-documents";
 import { ApplyModal } from "@/components/jobs/apply-modal";
+import { PageGate } from "@/components/auth/page-gate";
 
 interface SavedJob {
   id: string;
@@ -136,409 +137,415 @@ export default function SavedJobsPage() {
 
   if (!user) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center space-y-4"
-        >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#00D9FF]/20 to-[#00C4EA]/20 flex items-center justify-center"
-          >
-            <Bookmark className="w-10 h-10 text-[#00D9FF]" />
-          </motion.div>
-          <h2 className="text-2xl font-bold text-black">
-            {t("loginRequired")}
-          </h2>
-          <p className="text-slate-600 max-w-md mx-auto">{t("noJobsDesc")}</p>
-          <Button
-            onClick={() => router.push("/login")}
-            className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
-          >
-            {t("searchJobs")}
-          </Button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Hero Header - HuntZen Style */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-slate-200 shadow-sm"
-      >
-        <div className="flex items-center gap-4 mb-3">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
-          >
-            <Bookmark className="w-7 h-7 text-white" />
-          </motion.div>
-          <h1 className="text-4xl font-black text-black">{t("title")}</h1>
-        </div>
-        <p className="text-base text-slate-700 leading-relaxed">
-          {t("noJobsDesc")}
-        </p>
-        {!loading && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-sm text-[#00D9FF] font-medium mt-2"
-          >
-            {t("savedCount", { count: totalCount })}
-          </motion.p>
-        )}
-      </motion.div>
-
-      {/* Search Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm"
-      >
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <Input
-            type="text"
-            placeholder={t("searchPlaceholder")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 text-base border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
-          />
-        </div>
-      </motion.div>
-
-      {/* Jobs List */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white rounded-2xl border-2 border-slate-200 shadow-sm"
-      >
-        {loading ? (
-          <div className="divide-y divide-slate-200">
-            {[1, 2, 3].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="p-6 space-y-3"
-              >
-                <Skeleton className="h-6 w-2/3" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-4 w-1/3" />
-              </motion.div>
-            ))}
-          </div>
-        ) : filteredJobs.length === 0 ? (
+      <PageGate featureFlag="page_saved_jobs">
+        <div className="min-h-[60vh] flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="p-12 text-center"
+            transition={{ duration: 0.5 }}
+            className="text-center space-y-4"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200 }}
-              className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#00D9FF]/20 to-[#00C4EA]/20 flex items-center justify-center"
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#00D9FF]/20 to-[#00C4EA]/20 flex items-center justify-center"
             >
               <Bookmark className="w-10 h-10 text-[#00D9FF]" />
             </motion.div>
-            {searchQuery ? (
-              <>
-                <h3 className="text-xl font-bold text-black mb-2">
-                  {t("noJobs")}
-                </h3>
-                <p className="text-slate-600 mb-4">{t("noJobsDesc")}</p>
-              </>
-            ) : (
-              <>
-                <h3 className="text-xl font-bold text-black mb-2">
-                  {t("noJobs")}
-                </h3>
-                <p className="text-slate-600 mb-4">{t("noJobsDesc")}</p>
-                <Button
-                  onClick={() => router.push("/jobs")}
-                  className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
-                >
-                  <Briefcase className="w-4 h-4 mr-2" />
-                  {t("searchJobs")}
-                </Button>
-              </>
-            )}
+            <h2 className="text-2xl font-bold text-black">
+              {t("loginRequired")}
+            </h2>
+            <p className="text-slate-600 max-w-md mx-auto">{t("noJobsDesc")}</p>
+            <Button
+              onClick={() => router.push("/login")}
+              className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
+            >
+              {t("searchJobs")}
+            </Button>
           </motion.div>
-        ) : (
-          <div className="divide-y divide-slate-200">
-            <AnimatePresence mode="popLayout">
-              {filteredJobs.map((job, index) => {
-                const jobDoc =
-                  documents.find((d) => d.saved_job_id === job.id) ?? null;
+        </div>
+      </PageGate>
+    );
+  }
 
-                return (
-                  <motion.div
-                    key={job.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="p-6 hover:bg-slate-50 transition-colors"
+  return (
+    <PageGate featureFlag="page_saved_jobs">
+      <div className="space-y-6">
+        {/* Hero Header - HuntZen Style */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-slate-200 shadow-sm"
+        >
+          <div className="flex items-center gap-4 mb-3">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
+            >
+              <Bookmark className="w-7 h-7 text-white" />
+            </motion.div>
+            <h1 className="text-4xl font-black text-black">{t("title")}</h1>
+          </div>
+          <p className="text-base text-slate-700 leading-relaxed">
+            {t("noJobsDesc")}
+          </p>
+          {!loading && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-sm text-[#00D9FF] font-medium mt-2"
+            >
+              {t("savedCount", { count: totalCount })}
+            </motion.p>
+          )}
+        </motion.div>
+
+        {/* Search Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm"
+        >
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Input
+              type="text"
+              placeholder={t("searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 text-base border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+            />
+          </div>
+        </motion.div>
+
+        {/* Jobs List */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-2xl border-2 border-slate-200 shadow-sm"
+        >
+          {loading ? (
+            <div className="divide-y divide-slate-200">
+              {[1, 2, 3].map((i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="p-6 space-y-3"
+                >
+                  <Skeleton className="h-6 w-2/3" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-1/3" />
+                </motion.div>
+              ))}
+            </div>
+          ) : filteredJobs.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-12 text-center"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200 }}
+                className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#00D9FF]/20 to-[#00C4EA]/20 flex items-center justify-center"
+              >
+                <Bookmark className="w-10 h-10 text-[#00D9FF]" />
+              </motion.div>
+              {searchQuery ? (
+                <>
+                  <h3 className="text-xl font-bold text-black mb-2">
+                    {t("noJobs")}
+                  </h3>
+                  <p className="text-slate-600 mb-4">{t("noJobsDesc")}</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-bold text-black mb-2">
+                    {t("noJobs")}
+                  </h3>
+                  <p className="text-slate-600 mb-4">{t("noJobsDesc")}</p>
+                  <Button
+                    onClick={() => router.push("/jobs")}
+                    className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-3">
-                        {/* Job Title & Company */}
-                        <div>
-                          <h3 className="text-xl font-bold text-black mb-1">
-                            {job.job_title}
-                          </h3>
-                          <p className="text-base text-slate-700 font-medium">
-                            {job.company}
-                          </p>
-                        </div>
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    {t("searchJobs")}
+                  </Button>
+                </>
+              )}
+            </motion.div>
+          ) : (
+            <div className="divide-y divide-slate-200">
+              <AnimatePresence mode="popLayout">
+                {filteredJobs.map((job, index) => {
+                  const jobDoc =
+                    documents.find((d) => d.saved_job_id === job.id) ?? null;
 
-                        {/* Location & Salary */}
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="w-4 h-4" />
-                            <span>{job.location}</span>
+                  return (
+                    <motion.div
+                      key={job.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -100 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="p-6 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-3">
+                          {/* Job Title & Company */}
+                          <div>
+                            <h3 className="text-xl font-bold text-black mb-1">
+                              {job.job_title}
+                            </h3>
+                            <p className="text-base text-slate-700 font-medium">
+                              {job.company}
+                            </p>
                           </div>
-                          {job.salary && (
-                            <div className="flex items-center gap-1.5 text-[#00D9FF] font-medium">
-                              <span>{job.salary}</span>
+
+                          {/* Location & Salary */}
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-4 h-4" />
+                              <span>{job.location}</span>
+                            </div>
+                            {job.salary && (
+                              <div className="flex items-center gap-1.5 text-[#00D9FF] font-medium">
+                                <span>{job.salary}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5 text-slate-400">
+                              <Clock className="w-4 h-4" />
+                              <span>
+                                {t("savedAt")}{" "}
+                                {new Date(job.saved_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Description preview */}
+                          {job.description && (
+                            <p className="text-sm text-slate-600 line-clamp-2">
+                              {job.description}
+                            </p>
+                          )}
+
+                          {/* Status badges */}
+                          {(jobDoc || job.applied_at) && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {jobDoc?.cv_pdf_url && (
+                                <a
+                                  href="/documents"
+                                  className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors"
+                                >
+                                  <FileText className="h-3 w-3" />
+                                  {t("statusCvGenerated")}
+                                  {jobDoc.match_score != null &&
+                                    ` · ${jobDoc.match_score}%`}
+                                </a>
+                              )}
+                              {jobDoc?.lm_pdf_url && (
+                                <span className="inline-flex items-center gap-1 text-xs text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">
+                                  <Mail className="h-3 w-3" />
+                                  {t("statusCoverLetterGenerated")}
+                                </span>
+                              )}
+                              {job.applied_at && (
+                                <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  {t("statusApplied")}{" "}
+                                  {new Date(job.applied_at).toLocaleDateString(
+                                    "fr-FR",
+                                    { day: "numeric", month: "short" },
+                                  )}
+                                </span>
+                              )}
                             </div>
                           )}
-                          <div className="flex items-center gap-1.5 text-slate-400">
-                            <Clock className="w-4 h-4" />
-                            <span>
-                              {t("savedAt")}{" "}
-                              {new Date(job.saved_at).toLocaleDateString()}
-                            </span>
-                          </div>
                         </div>
 
-                        {/* Description preview */}
-                        {job.description && (
-                          <p className="text-sm text-slate-600 line-clamp-2">
-                            {job.description}
-                          </p>
-                        )}
-
-                        {/* Status badges */}
-                        {(jobDoc || job.applied_at) && (
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {jobDoc?.cv_pdf_url && (
-                              <a
-                                href="/documents"
-                                className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors"
-                              >
-                                <FileText className="h-3 w-3" />
-                                {t("statusCvGenerated")}
-                                {jobDoc.match_score != null &&
-                                  ` · ${jobDoc.match_score}%`}
-                              </a>
-                            )}
-                            {jobDoc?.lm_pdf_url && (
-                              <span className="inline-flex items-center gap-1 text-xs text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">
-                                <Mail className="h-3 w-3" />
-                                {t("statusCoverLetterGenerated")}
-                              </span>
-                            )}
-                            {job.applied_at && (
-                              <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
-                                <CheckCircle2 className="h-3 w-3" />
-                                {t("statusApplied")}{" "}
-                                {new Date(job.applied_at).toLocaleDateString(
-                                  "fr-FR",
-                                  { day: "numeric", month: "short" },
-                                )}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex flex-col gap-2">
-                        {!jobDoc && (
-                          <Button
-                            onClick={() => setSelectedJobForApply(job)}
-                            size="sm"
-                            variant="outline"
-                            className="whitespace-nowrap text-blue-600 border-blue-200 hover:bg-blue-50"
-                          >
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            {t("generateCvLm")}
-                          </Button>
-                        )}
-                        <Button
-                          onClick={() => window.open(job.job_url, "_blank")}
-                          size="sm"
-                          className="whitespace-nowrap bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          {t("viewOffer")}
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                        {/* Actions */}
+                        <div className="flex flex-col gap-2">
+                          {!jobDoc && (
                             <Button
-                              variant="outline"
+                              onClick={() => setSelectedJobForApply(job)}
                               size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                              variant="outline"
+                              className="whitespace-nowrap text-blue-600 border-blue-200 hover:bg-blue-50"
                             >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              {t("delete")}
+                              <Sparkles className="w-4 h-4 mr-2" />
+                              {t("generateCvLm")}
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                {t("confirmDeleteTitle")}
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t("confirmDeleteDescription")}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>
-                                {t("confirmDeleteCancel")}
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleRemoveSavedJob(job.id)}
-                                className="bg-red-500 hover:bg-red-600"
+                          )}
+                          <Button
+                            onClick={() => window.open(job.job_url, "_blank")}
+                            size="sm"
+                            className="whitespace-nowrap bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white transition-all duration-300"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            {t("viewOffer")}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                               >
-                                {t("confirmDeleteConfirm")}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                {t("delete")}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  {t("confirmDeleteTitle")}
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("confirmDeleteDescription")}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>
+                                  {t("confirmDeleteCancel")}
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleRemoveSavedJob(job.id)}
+                                  className="bg-red-500 hover:bg-red-600"
+                                >
+                                  {t("confirmDeleteConfirm")}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
+            <p className="text-sm text-slate-500">
+              {t("pagination.count", { count: totalCount })}
+            </p>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                {t("pagination.previous")}
+              </Button>
+              <span className="text-sm text-slate-600">
+                {t("pagination.page", {
+                  current: currentPage,
+                  total: totalPages,
+                })}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                {t("pagination.next")}
+              </Button>
+            </div>
           </div>
         )}
-      </motion.div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
-          <p className="text-sm text-slate-500">
-            {t("pagination.count", { count: totalCount })}
-          </p>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
+        {/* Info Banner */}
+        <AnimatePresence>
+          {!loading && filteredJobs.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ delay: 0.5 }}
+              className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/30 rounded-2xl p-6"
             >
-              {t("pagination.previous")}
-            </Button>
-            <span className="text-sm text-slate-600">
-              {t("pagination.page", {
-                current: currentPage,
-                total: totalPages,
-              })}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              {t("pagination.next")}
-            </Button>
-          </div>
-        </div>
-      )}
+              <h3 className="font-bold text-black mb-2">{t("tipTitle")}</h3>
+              <p className="text-slate-700 text-sm">{t("tipText")}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Info Banner */}
-      <AnimatePresence>
-        {!loading && filteredJobs.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ delay: 0.5 }}
-            className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/30 rounded-2xl p-6"
-          >
-            <h3 className="font-bold text-black mb-2">{t("tipTitle")}</h3>
-            <p className="text-slate-700 text-sm">{t("tipText")}</p>
-          </motion.div>
+        {/* Coming Soon Features */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white border-2 border-slate-200 rounded-2xl p-6"
+        >
+          <h3 className="font-bold text-black mb-3">{t("comingSoonTitle")}</h3>
+          <ul className="space-y-2 text-sm text-slate-700">
+            <motion.li
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.7 }}
+              className="flex items-start gap-2"
+            >
+              <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
+              <span>{t("comingSoonText")}</span>
+            </motion.li>
+            <motion.li
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+              className="flex items-start gap-2"
+            >
+              <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
+              <span>{t("comingSoonText2")}</span>
+            </motion.li>
+            <motion.li
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.9 }}
+              className="flex items-start gap-2"
+            >
+              <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
+              <span>{t("comingSoonText3")}</span>
+            </motion.li>
+          </ul>
+        </motion.div>
+
+        {/* ApplyModal — triggered from "Générer CV + LM" button */}
+        {selectedJobForApply && (
+          <ApplyModal
+            open={!!selectedJobForApply}
+            onOpenChange={(open) => !open && setSelectedJobForApply(null)}
+            job={{
+              id: selectedJobForApply.id,
+              title: selectedJobForApply.job_title,
+              company: selectedJobForApply.company,
+              location: selectedJobForApply.location,
+              description: selectedJobForApply.description ?? "",
+              url: selectedJobForApply.job_url,
+              source: "saved",
+            }}
+            jobDescription={selectedJobForApply.description ?? undefined}
+            savedJobId={selectedJobForApply.id}
+          />
         )}
-      </AnimatePresence>
-
-      {/* Coming Soon Features */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-white border-2 border-slate-200 rounded-2xl p-6"
-      >
-        <h3 className="font-bold text-black mb-3">{t("comingSoonTitle")}</h3>
-        <ul className="space-y-2 text-sm text-slate-700">
-          <motion.li
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.7 }}
-            className="flex items-start gap-2"
-          >
-            <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
-            <span>{t("comingSoonText")}</span>
-          </motion.li>
-          <motion.li
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.8 }}
-            className="flex items-start gap-2"
-          >
-            <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
-            <span>{t("comingSoonText2")}</span>
-          </motion.li>
-          <motion.li
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.9 }}
-            className="flex items-start gap-2"
-          >
-            <span className="w-1.5 h-1.5 bg-[#00D9FF] rounded-full mt-1.5" />
-            <span>{t("comingSoonText3")}</span>
-          </motion.li>
-        </ul>
-      </motion.div>
-
-      {/* ApplyModal — triggered from "Générer CV + LM" button */}
-      {selectedJobForApply && (
-        <ApplyModal
-          open={!!selectedJobForApply}
-          onOpenChange={(open) => !open && setSelectedJobForApply(null)}
-          job={{
-            id: selectedJobForApply.id,
-            title: selectedJobForApply.job_title,
-            company: selectedJobForApply.company,
-            location: selectedJobForApply.location,
-            description: selectedJobForApply.description ?? "",
-            url: selectedJobForApply.job_url,
-            source: "saved",
-          }}
-          jobDescription={selectedJobForApply.description ?? undefined}
-          savedJobId={selectedJobForApply.id}
-        />
-      )}
-    </div>
+      </div>
+    </PageGate>
   );
 }

@@ -81,25 +81,40 @@ export function Sidebar({ className }: SidebarProps) {
   const openPricingModal = subscription?.openPricingModal || (() => {});
 
   const navigation = [
-    { name: t("nav.jobs"), href: "/jobs", icon: Briefcase, premium: false },
+    {
+      name: t("nav.jobs"),
+      href: "/jobs",
+      icon: Briefcase,
+      premium: false,
+      pageFlag: "page_jobs",
+    },
     {
       name: t("nav.cvAnalysis"),
       href: "/cv-analysis",
       icon: FileText,
       premium: false,
+      pageFlag: "page_cv_analysis",
     },
     {
       name: t("nav.assistant"),
       href: "/assistant",
       icon: MessageSquare,
       premium: false,
+      pageFlag: "page_assistant",
     },
-    { name: t("nav.salons"), href: "/salons", icon: Calendar, premium: false },
+    {
+      name: t("nav.salons"),
+      href: "/salons",
+      icon: Calendar,
+      premium: false,
+      pageFlag: "page_salons",
+    },
     {
       name: t("nav.savedJobs"),
       href: "/saved-jobs",
       icon: Bookmark,
       premium: true,
+      pageFlag: "page_saved_jobs",
     },
     {
       name: t("nav.candidatures"),
@@ -107,18 +122,21 @@ export function Sidebar({ className }: SidebarProps) {
       icon: Send,
       premium: false,
       badge: isCandidaturesNew ? t("badges.new") : undefined,
+      pageFlag: "page_candidatures",
     },
     {
       name: t("nav.expat"),
       href: "/expat",
       icon: Globe,
       premium: false,
+      pageFlag: "page_expat",
     },
     {
       name: t("nav.referral"),
       href: "/referral",
       icon: Gift,
       premium: false,
+      pageFlag: "page_referral",
     },
     {
       name: t("nav.recruiterContact"),
@@ -126,12 +144,14 @@ export function Sidebar({ className }: SidebarProps) {
       icon: Users,
       premium: false,
       badge: t("badges.recruiterPrice"),
+      pageFlag: "page_recruiter_contact",
     },
     {
       name: t("nav.documents"),
       href: "/documents",
       icon: FolderOpen,
       premium: false,
+      pageFlag: "page_documents",
     },
   ];
 
@@ -211,7 +231,16 @@ export function Sidebar({ className }: SidebarProps) {
           {navigation.map((item, index) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/");
-            const isLocked = item.premium && (!user || isFreePlan);
+            const isPageBlocked =
+              item.pageFlag && subscription?.hasFeature
+                ? !subscription.hasFeature(
+                    item.pageFlag as Parameters<
+                      typeof subscription.hasFeature
+                    >[0],
+                  )
+                : false;
+            const isLocked =
+              isPageBlocked || (item.premium && (!user || isFreePlan));
 
             return (
               <div key={item.name}>

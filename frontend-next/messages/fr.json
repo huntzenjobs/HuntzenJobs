@@ -2597,5 +2597,10 @@
         "a3": "Oui ! HuntZen Jobs est 100% responsive et fonctionne parfaitement sur mobile et tablette via votre navigateur. Accédez à toutes les fonctionnalités depuis votre smartphone : recherche d'emploi, analyse de CV, et coaching personnalisé."
       }
     }
+  },
+  "pageGate": {
+    "title": "Page non disponible",
+    "description": "Cette fonctionnalite n'est pas incluse dans votre plan actuel. Passez a un plan superieur pour y acceder.",
+    "upgrade": "Voir les plans"
   }
 }

@@ -38,6 +38,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
+import { PageGate } from "@/components/auth/page-gate";
 
 type Filter = "all" | "cv-only" | "cv-lm";
 
@@ -116,7 +117,7 @@ export default function DocumentsPage() {
   };
 
   return (
-    <>
+    <PageGate featureFlag="page_documents">
       <div className="p-6 max-w-3xl mx-auto space-y-8">
         <h1 className="sr-only">Mes documents</h1>
         {/* ── Section Profils CV ── */}
@@ -281,7 +282,7 @@ export default function DocumentsPage() {
         initialName={editingProfile?.name}
         onSave={handleWizardSave}
       />
-    </>
+    </PageGate>
   );
 }
 

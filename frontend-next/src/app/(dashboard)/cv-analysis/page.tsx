@@ -9,6 +9,7 @@ import { CVUploadAsyncWizard } from "@/components/cv/cv-upload-async-wizard";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Card } from "@/components/ui/card";
 import { useTranslations } from "next-intl";
+import { PageGate } from "@/components/auth/page-gate";
 
 export default function CVAnalysisPage() {
   const { session, loading } = useAuth();
@@ -74,9 +75,7 @@ export default function CVAnalysisPage() {
             <h3 className="text-lg font-bold text-slate-900 mb-2 text-center">
               {t("errorTitle")}
             </h3>
-            <p className="text-slate-600 text-center">
-              {t("errorDesc")}
-            </p>
+            <p className="text-slate-600 text-center">{t("errorDesc")}</p>
           </Card>
         }
       >
@@ -101,5 +100,5 @@ export default function CVAnalysisPage() {
   );
 
   // Always show page content (authentication is handled by CVUploadAsyncWizard)
-  return pageContent;
+  return <PageGate featureFlag="page_cv_analysis">{pageContent}</PageGate>;
 }

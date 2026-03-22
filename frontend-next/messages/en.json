@@ -2601,5 +2601,10 @@
         "a3": "Yes! HuntZen Jobs is 100% responsive and works perfectly on mobile and tablet through your browser. Access all features from your smartphone: job search, CV analysis, and personalized coaching."
       }
     }
+  },
+  "pageGate": {
+    "title": "Page not available",
+    "description": "This feature is not included in your current plan. Upgrade to a higher plan to access it.",
+    "upgrade": "View plans"
   }
 }
