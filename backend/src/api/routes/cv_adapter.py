@@ -15,7 +15,12 @@ from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile, st
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from src.api.deps import get_cv_adapter_main, get_user_info_from_token
+from src.api.deps import (
+    _require_feature_flag_sync,
+    get_cv_adapter_main,
+    get_user_id_from_token,
+    get_user_info_from_token,
+)
 
 if TYPE_CHECKING:
     from src.agents.cv_adapter.main_agent import CVAdapterAgent
@@ -536,15 +541,23 @@ class PDFRequest(BaseModel):
 
 
 @router.post("/generate-pdf")
-async def generate_pdf_from_data(request: PDFRequest):
+async def generate_pdf_from_data(
+    request: PDFRequest,
+    authorization: str | None = Header(default=None),
+):
     """
     Generate PDF from structured CV data.
 
+    [PREMIUM FEATURE]
     Templates:
     - ats: Simple 1-column, ATS-optimized (no photo)
     - modern: 2-column design with sidebar (with photo)
     - classic: Traditional design (optional photo)
     """
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        _require_feature_flag_sync(user_id, "pdf_export", "L'export PDF necessite un plan superieur.")
+
     try:
         logger.info(f"[PDFGenerator] Generating {request.template} PDF...")
         pdf_bytes = generate_pdf_sync(
@@ -590,8 +603,13 @@ async def generate_cover_letter(request: CoverLetterRequest, authorization: str 
     """
     Generate a personalized cover letter from CV data and job description.
 
+    [PREMIUM FEATURE]
     Returns a PDF cover letter tailored to the specific job.
     """
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        _require_feature_flag_sync(user_id, "cover_letter", "La generation de lettre de motivation necessite un plan superieur.")
+
     agent = get_adapter_agent()
 
     try:
@@ -651,10 +669,19 @@ async def generate_cover_letter(request: CoverLetterRequest, authorization: str 
 
 
 @router.post("/generate-cover-letter/json")
-async def generate_cover_letter_json(request: CoverLetterRequest):
+async def generate_cover_letter_json(
+    request: CoverLetterRequest,
+    authorization: str | None = Header(default=None),
+):
     """
     Generate cover letter and return JSON data (for preview).
+
+    [PREMIUM FEATURE]
     """
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        _require_feature_flag_sync(user_id, "cover_letter", "La generation de lettre de motivation necessite un plan superieur.")
+
     agent = get_adapter_agent()
 
     try:

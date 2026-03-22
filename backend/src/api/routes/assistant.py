@@ -21,6 +21,7 @@ from src.api.deps import (
     CVAgentDep,
     InterviewSimAgentDep,
     ScoutConversationalAgentDep,
+    _require_feature_flag_sync,
     check_assistant_quota,
     get_session_history,
     increment_assistant_messages,
@@ -366,6 +367,7 @@ async def interview_sim_chat(
     Includes behavioral questions, technical questions, and constructive feedback.
     """
     user_id = current_user["id"]
+    _require_feature_flag_sync(user_id, "interview_sim", "Le simulateur d'entretien necessite un plan superieur.")
     check_assistant_quota(user_id)
 
     history = get_session_history(request.session_id)

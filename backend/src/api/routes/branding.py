@@ -12,6 +12,8 @@ from structlog import get_logger
 
 from src.api.deps import (
     BrandingAgentDep,
+    CurrentUserDep,
+    _require_feature_flag_sync,
     clear_session,
     get_session_history,
     update_session_history,
@@ -45,10 +47,12 @@ async def branding_chat(
     request: Request,
     data: BrandingRequest,
     agent: BrandingAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the Personal Branding AI.
 
+    [PREMIUM FEATURE]
     The agent guides users through building their personal brand
     on LinkedIn and X (Twitter) with a conversational state machine:
     1. Onboarding — discover background & goals
@@ -56,6 +60,9 @@ async def branding_chat(
     3. Target audience — who they want to reach
     4. Generation — create personalized content
     """
+    user_id = current_user["id"]
+    _require_feature_flag_sync(user_id, "branding", "Le personal branding necessite un plan superieur.")
+
     # Get conversation history
     history = get_session_history(data.session_id)
 

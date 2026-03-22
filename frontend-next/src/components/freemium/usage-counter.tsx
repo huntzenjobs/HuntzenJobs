@@ -2,7 +2,7 @@
 
 import { useSubscription } from "@/contexts/subscription-context";
 import { FeatureType } from "@/hooks/use-freemium-limits";
-import { Search, FileText, Clock, Eye } from "lucide-react";
+import { Search, FileText, Clock, Eye, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface UsageCounterProps {
@@ -57,6 +57,14 @@ const featureConfig: Record<FeatureType, FeatureConfig> = {
     formatValue: (value, max, t) =>
       max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
   },
+  recruiter_search: {
+    icon: <Users className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.recruiterSearch.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}`,
+    formatValue: (value, max, t) =>
+      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
+  },
 };
 
 export function UsageCounter({
@@ -86,6 +94,9 @@ export function UsageCounter({
       break;
     case "assistant_messages":
       max = limits.assistant_messages_per_day;
+      break;
+    case "recruiter_search":
+      max = 0;
       break;
     default:
       max = 0;

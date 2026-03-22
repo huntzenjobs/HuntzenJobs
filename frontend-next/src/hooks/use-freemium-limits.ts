@@ -11,7 +11,8 @@ export type FeatureType =
   | "job_search"
   | "job_view"
   | "cv_analysis"
-  | "assistant_messages";
+  | "assistant_messages"
+  | "recruiter_search";
 
 // ── Plan limits — Dynamic from Supabase via /api/public/plans ──────────────
 // PLAN_LIMITS is a Proxy that reads from the API cache (localStorage).
@@ -32,6 +33,8 @@ interface PlanLimitValues {
   has_interview_sim: boolean;
   has_personalized_advice: boolean;
   has_coach_history: boolean;
+  has_branding: boolean;
+  has_cover_letter: boolean;
 }
 
 // Hardcoded defaults — last resort if API cache is empty
@@ -50,6 +53,8 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_interview_sim: false,
     has_personalized_advice: false,
     has_coach_history: false,
+    has_branding: false,
+    has_cover_letter: false,
   },
   starter: {
     job_searches_per_day: Infinity,
@@ -60,11 +65,13 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_favorites: true,
     has_email_alerts: false,
     has_visual_score: true,
-    has_pdf_export: false,
-    has_cv_history: false,
+    has_pdf_export: true,
+    has_cv_history: true,
     has_interview_sim: false,
     has_personalized_advice: false,
-    has_coach_history: false,
+    has_coach_history: true,
+    has_branding: false,
+    has_cover_letter: false,
   },
   pro: {
     job_searches_per_day: Infinity,
@@ -76,10 +83,12 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_email_alerts: false,
     has_visual_score: true,
     has_pdf_export: true,
-    has_cv_history: false,
-    has_interview_sim: true,
+    has_cv_history: true,
+    has_interview_sim: false,
     has_personalized_advice: false,
-    has_coach_history: false,
+    has_coach_history: true,
+    has_branding: true,
+    has_cover_letter: true,
   },
   premium: {
     job_searches_per_day: Infinity,
@@ -95,6 +104,8 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_interview_sim: true,
     has_personalized_advice: true,
     has_coach_history: true,
+    has_branding: true,
+    has_cover_letter: true,
   },
 };
 
@@ -144,6 +155,8 @@ function buildLimitsFromApi(
       defaults.has_personalized_advice,
     ),
     has_coach_history: flag("coach_history", defaults.has_coach_history),
+    has_branding: flag("branding", defaults.has_branding),
+    has_cover_letter: flag("cover_letter", defaults.has_cover_letter),
   };
 }
 

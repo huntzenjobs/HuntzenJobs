@@ -506,3 +506,140 @@ async def get_current_admin(current_user: dict = Depends(get_current_user)) -> d
 
 
 AdminUserDep = Annotated[dict, Depends(get_current_admin)]
+
+
+async def check_feature_flag(user_id: str, feature: str) -> bool:
+    """Check if user's plan has a specific feature flag enabled.
+
+    Priority order:
+    1. user_feature_overrides (admin per-user override)
+    2. subscription_plans.feature_flags (plan-level flags)
+    3. Fallback: False (free plan default)
+    """
+    supabase = get_supabase_client()
+
+    # 1. Check user-specific override first
+    try:
+        override = (
+            supabase.table("user_feature_overrides")
+            .select("enabled")
+            .eq("user_id", user_id)
+            .eq("feature_name", feature)
+            .maybe_single()
+            .execute()
+        )
+        if override.data:
+            return override.data["enabled"]
+    except Exception as e:
+        logger.warning(f"[feature_flag] override check failed for {user_id}/{feature}: {e}")
+
+    # 2. Check plan feature flags
+    try:
+        sub = (
+            supabase.table("user_subscriptions")
+            .select("subscription_plans(feature_flags)")
+            .eq("user_id", user_id)
+            .eq("status", "active")
+            .maybe_single()
+            .execute()
+        )
+        if sub.data:
+            flags = (sub.data.get("subscription_plans") or {}).get("feature_flags", {})
+            return flags.get(feature, False)
+    except Exception as e:
+        logger.warning(f"[feature_flag] plan check failed for {user_id}/{feature}: {e}")
+
+    # 3. Fallback: free plan flags (all false by default)
+    return False
+
+
+def require_feature_flag(user_id: str, feature: str, feature_label: str | None = None) -> None:
+    """Check feature flag synchronously (blocking). Raises HTTP 403 if locked.
+
+    Use in sync route handlers. For async handlers, use check_feature_flag() directly.
+    """
+    import asyncio
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        # We are inside an async context but called synchronously.
+        # Use a synchronous Supabase check instead.
+        _require_feature_flag_sync(user_id, feature, feature_label)
+    else:
+        allowed = asyncio.run(check_feature_flag(user_id, feature))
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_LOCKED",
+                    "feature": feature,
+                    "message": feature_label or "Cette fonctionnalite necessite un plan superieur.",
+                },
+            )
+
+
+def _require_feature_flag_sync(
+    user_id: str, feature: str, feature_label: str | None = None
+) -> None:
+    """Synchronous feature flag check using direct Supabase calls."""
+    supabase = get_supabase_client()
+    allowed = False
+
+    # 1. Check user-specific override
+    try:
+        override = (
+            supabase.table("user_feature_overrides")
+            .select("enabled")
+            .eq("user_id", user_id)
+            .eq("feature_name", feature)
+            .maybe_single()
+            .execute()
+        )
+        if override.data:
+            allowed = override.data["enabled"]
+            if not allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "code": "FEATURE_LOCKED",
+                        "feature": feature,
+                        "message": feature_label
+                        or "Cette fonctionnalite necessite un plan superieur.",
+                    },
+                )
+            return  # Override says enabled
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"[feature_flag] sync override check failed: {e}")
+
+    # 2. Check plan feature flags
+    try:
+        sub = (
+            supabase.table("user_subscriptions")
+            .select("subscription_plans(feature_flags)")
+            .eq("user_id", user_id)
+            .eq("status", "active")
+            .maybe_single()
+            .execute()
+        )
+        if sub.data:
+            flags = (sub.data.get("subscription_plans") or {}).get("feature_flags", {})
+            allowed = flags.get(feature, False)
+    except Exception as e:
+        logger.warning(f"[feature_flag] sync plan check failed: {e}")
+
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FEATURE_LOCKED",
+                "feature": feature,
+                "message": feature_label
+                or "Cette fonctionnalite necessite un plan superieur.",
+            },
+        )

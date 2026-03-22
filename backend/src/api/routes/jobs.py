@@ -14,7 +14,12 @@ from bs4 import BeautifulSoup
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
-from src.api.deps import ScoutAgentDep, get_supabase_client, get_user_id_from_token
+from src.api.deps import (
+    ScoutAgentDep,
+    _require_feature_flag_sync,
+    get_supabase_client,
+    get_user_id_from_token,
+)
 from src.api.middleware import limiter
 from src.models.schemas import Job, JobSearchRequest, JobSearchResponse, SearchMetadata
 from src.utils.cache import get_redis
@@ -532,6 +537,9 @@ async def search_jobs_get(
         contract_types_list, work_schedule_list, work_days_list,
     ])
     if has_filters:
+        user_id = get_user_id_from_token(authorization)
+        if user_id:
+            _require_feature_flag_sync(user_id, "advanced_filters", "Les filtres avances necessitent un plan superieur.")
         jobs = result.get('jobs', [])
         filtered_jobs = apply_advanced_filters(
             jobs=jobs,
