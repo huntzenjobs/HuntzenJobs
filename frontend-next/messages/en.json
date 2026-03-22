@@ -1544,7 +1544,7 @@
     "company": "Company",
     "location": "Location",
     "postedDate": "Posted date",
-    "findRecruiter": "Find Recruiter",
+    "findRecruiter": "Find recruiter emails",
     "generateDocuments": "Generate adapted CVs + letters",
     "notAvailable": "Not specified",
     "applyDirect": "Apply directly",
@@ -1558,7 +1558,7 @@
       "weeksAgo_other": "{count} weeks ago",
       "monthsAgo": "{count} months ago"
     },
-    "findInternalContact": "Find an internal contact",
+    "findInternalContact": "Find LinkedIn profiles",
     "insiderTitle": "Internal contacts at {company}",
     "insiderSubtitle": "Find real people to contact on LinkedIn to maximize your chances",
     "insiderWhyTitle": "Why contact an insider?",

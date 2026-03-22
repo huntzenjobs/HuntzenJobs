@@ -1701,7 +1701,7 @@
     "company": "Entreprise",
     "location": "Localisation",
     "postedDate": "Date de publication",
-    "findRecruiter": "Trouver le recruteur",
+    "findRecruiter": "Trouver les emails recruteurs",
     "generateDocuments": "Générer CV + lettre adaptés",
     "notAvailable": "Non spécifié",
     "applyDirect": "Postuler directement",
@@ -1715,7 +1715,7 @@
       "weeksAgo_other": "Il y a {count} semaines",
       "monthsAgo": "Il y a {count} mois"
     },
-    "findInternalContact": "Trouver un contact interne",
+    "findInternalContact": "Trouver des profils LinkedIn",
     "insiderTitle": "Contacts internes chez {company}",
     "insiderSubtitle": "Trouve de vraies personnes à contacter sur LinkedIn pour maximiser vos chances",
     "insiderWhyTitle": "Pourquoi contacter un insider ?",

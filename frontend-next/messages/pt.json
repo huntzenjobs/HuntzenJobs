@@ -1335,7 +1335,7 @@
     "company": "Empresa",
     "location": "Localização",
     "postedDate": "Date de publication",
-    "findRecruiter": "Encontrar recrutador",
+    "findRecruiter": "Encontrar e-mails de recrutadores",
     "generateDocuments": "Gerar CVs adaptados + letras",
     "notAvailable": "Não especificado",
     "applyDirect": "Candidatar-se diretamente",
@@ -1349,7 +1349,7 @@
       "weeksAgo_other": "Há {count} semanas",
       "monthsAgo": "Há {count} meses"
     },
-    "findInternalContact": "Encontrar um contato interno",
+    "findInternalContact": "Encontrar perfis LinkedIn",
     "insiderTitle": "Contatos internos em {company}",
     "insiderSubtitle": "Encontre pessoas reais para contatar no LinkedIn e maximizar suas chances",
     "insiderWhyTitle": "Por que contatar um insider?",
