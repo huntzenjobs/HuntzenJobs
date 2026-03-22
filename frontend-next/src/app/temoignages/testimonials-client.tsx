@@ -15,6 +15,7 @@ import {
 } from "./testimonials-data";
 import { testimonialsEn } from "./testimonials-data.en";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
+import { Footer } from "@/components/layout/footer";
 import { LandingHeader } from "@/components/landing-header";
 import { useTranslations, useLocale } from "next-intl";
 
@@ -385,6 +386,7 @@ export function TestimonialsClient({
 
       {/* Internal Links Footer for SEO */}
       <InternalLinksFooter />
+      <Footer />
     </div>
   );
 }

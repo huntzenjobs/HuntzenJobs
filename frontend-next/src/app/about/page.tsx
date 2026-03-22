@@ -16,6 +16,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { LandingHeader } from "@/components/landing-header";
+import { Footer } from "@/components/layout/footer";
 
 export default function AboutPage() {
   const t = useTranslations("about");
@@ -33,6 +35,7 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
+      <LandingHeader />
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -301,6 +304,7 @@ export default function AboutPage() {
           </motion.div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Search, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { InternalLinksFooter } from "@/components/seo/internal-links";
+import { Footer } from "@/components/layout/footer";
 import { LandingHeader } from "@/components/landing-header";
 import { buildFaqCategories } from "./faq-data";
 import { useTranslations } from "next-intl";
@@ -225,6 +226,7 @@ export function FAQClient() {
 
       {/* Internal Links Footer for SEO */}
       <InternalLinksFooter />
+      <Footer />
     </div>
   );
 }
