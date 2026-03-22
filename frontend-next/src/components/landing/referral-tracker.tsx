@@ -12,6 +12,8 @@ export function ReferralTracker() {
     if (ref && /^HZN-[A-Z0-9]{6}$/.test(ref)) {
       // Store referral code in cookie (30 days, aligned with middleware)
       document.cookie = `huntzen_referral_code=${ref}; path=/; max-age=2592000; SameSite=Lax`;
+      // Also store in localStorage as backup (survives Google OAuth redirect)
+      localStorage.setItem("huntzen_referral_code", ref);
 
       // Fire-and-forget: notify backend of referral click
       if (BACKEND_URL) {

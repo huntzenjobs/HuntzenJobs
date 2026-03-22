@@ -58,6 +58,18 @@ function ReferralWidget({
     total_signups: 0,
     total_conversions: 0,
   });
+  const [tiers, setTiers] = useState<
+    Array<{
+      name: string;
+      friends: number;
+      reward_type: string;
+      reward_value: number;
+      description: string;
+    }>
+  >([]);
+  const [friends, setFriends] = useState<
+    Array<{ email: string; signed_up_at: string; converted: boolean }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -69,17 +81,19 @@ function ReferralWidget({
       } = await supabase.auth.getSession();
       if (!session?.access_token) return;
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
-      const res = await fetch(`${backendUrl}/api/referrals/my-code`, {
+      const res = await fetch(`${backendUrl}/api/referrals/boost-status`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (!res.ok) return;
       const data = await res.json();
-      setCode(data.code);
+      setCode(data.referral_code);
       setStats({
-        total_clicks: data.total_clicks,
-        total_signups: data.total_signups,
-        total_conversions: data.total_conversions,
+        total_clicks: data.total_clicks ?? 0,
+        total_signups: data.total_signups ?? 0,
+        total_conversions: data.total_conversions ?? 0,
       });
+      setTiers(data.tiers ?? []);
+      setFriends(data.signups ?? []);
     } catch {
     } finally {
       setLoading(false);
@@ -167,6 +181,82 @@ function ReferralWidget({
           </Card>
         ))}
       </div>
+      {/* Tiers / Paliers */}
+      {tiers.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700">
+            Paliers de récompenses
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {tiers.map((tier, i) => {
+              const reached = stats.total_signups >= tier.friends;
+              const current =
+                !reached &&
+                (i === 0 || stats.total_signups >= tiers[i - 1].friends);
+              return (
+                <Card
+                  key={tier.name}
+                  className={`border-2 ${reached ? "border-green-400 bg-green-50" : current ? "border-[#00D9FF] bg-[#00D9FF]/5" : "border-gray-200 opacity-60"}`}
+                >
+                  <CardContent className="pt-3 pb-3 text-center">
+                    <p className="text-xs font-bold text-gray-500 uppercase">
+                      {tier.name}
+                    </p>
+                    <p className="text-lg font-black mt-1">
+                      {tier.friends} {tier.friends > 1 ? "amis" : "ami"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {tier.description}
+                    </p>
+                    {reached && (
+                      <p className="text-xs text-green-600 font-semibold mt-1">
+                        ✓ Atteint
+                      </p>
+                    )}
+                    {current && (
+                      <p className="text-xs text-[#00D9FF] font-semibold mt-1">
+                        En cours
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Liste des filleuls */}
+      {friends.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700">
+            Vos filleuls ({friends.length})
+          </h3>
+          <div className="space-y-2">
+            {friends.map((f, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#00D9FF]/10 flex items-center justify-center text-xs font-bold text-[#00D9FF]">
+                    {(f.email || "?")[0].toUpperCase()}
+                  </div>
+                  <span className="text-sm text-gray-700">
+                    {f.email || "Utilisateur"}
+                  </span>
+                </div>
+                <span
+                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${f.converted ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"}`}
+                >
+                  {f.converted ? "Converti" : "Inscrit"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
         <strong>{tProfile("referral.howItWorks")}</strong>{" "}
         {tProfile("referral.howItWorksDescription")}
