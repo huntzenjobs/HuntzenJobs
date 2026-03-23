@@ -171,8 +171,7 @@ export function PricingModal() {
       const data = await response.json();
 
       if (!response.ok) {
-        const detail: string =
-          data.detail || "Failed to create checkout session";
+        const detail: string = data.detail || tModal("toasts.checkoutFailed");
         // Parse annual-to-monthly block: "ANNUAL_TO_MONTHLY_BLOCKED|2026-12-15"
         if (
           typeof detail === "string" &&
@@ -205,7 +204,7 @@ export function PricingModal() {
       if (data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {
-        throw new Error("No checkout URL returned");
+        throw new Error(tModal("toasts.noCheckoutUrl"));
       }
     } catch (error: unknown) {
       toast.dismiss("stripe-redirect");

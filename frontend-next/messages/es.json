@@ -429,7 +429,9 @@
       "sessionExpired": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
       "paymentError": "Error al crear la sesión de pago",
       "annualToMonthlyBlocked": "Cambio de anual a mensual no posible. Tu suscripción anual se extiende hasta el {date}. Podrás cambiar a mensual en esa fecha.",
-      "annualToMonthlyBlockedGeneric": "Tienes una suscripción anual activa. El cambio a mensual será posible al final del período."
+      "annualToMonthlyBlockedGeneric": "Tienes una suscripción anual activa. El cambio a mensual será posible al final del período.",
+      "checkoutFailed": "No se pudo crear la sesión de pago",
+      "noCheckoutUrl": "URL de pago no disponible — inténtalo de nuevo"
     },
     "confirmChange": {
       "upgradeTitle": "Confirmar cambio de plan",

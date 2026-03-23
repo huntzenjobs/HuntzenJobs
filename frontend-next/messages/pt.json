@@ -429,7 +429,9 @@
       "sessionExpired": "Sua sessão expirou. Por favor, faça login novamente.",
       "paymentError": "Erro ao criar sessão de pagamento",
       "annualToMonthlyBlocked": "Mudança de anual para mensal não possível. Sua assinatura anual vai até {date}. Você poderá mudar para mensal nessa data.",
-      "annualToMonthlyBlockedGeneric": "Você tem uma assinatura anual ativa. A mudança para mensal será possível no final do período."
+      "annualToMonthlyBlockedGeneric": "Você tem uma assinatura anual ativa. A mudança para mensal será possível no final do período.",
+      "checkoutFailed": "Não foi possível criar a sessão de pagamento",
+      "noCheckoutUrl": "URL de pagamento indisponível — tente novamente"
     },
     "confirmChange": {
       "upgradeTitle": "Confirmar mudanca de plano",

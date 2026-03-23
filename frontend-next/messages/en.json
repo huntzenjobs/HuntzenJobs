@@ -434,7 +434,9 @@
       "sessionExpired": "Your session has expired. Please log in again.",
       "paymentError": "Error creating payment session",
       "annualToMonthlyBlocked": "Annual to monthly change not possible. Your annual subscription runs until {date}. You can switch to monthly at that date.",
-      "annualToMonthlyBlockedGeneric": "You have an active annual subscription. The change to monthly will be possible at the end of the period."
+      "annualToMonthlyBlockedGeneric": "You have an active annual subscription. The change to monthly will be possible at the end of the period.",
+      "checkoutFailed": "Failed to create checkout session",
+      "noCheckoutUrl": "No checkout URL returned — please try again"
     },
     "confirmChange": {
       "upgradeTitle": "Confirm plan change",
