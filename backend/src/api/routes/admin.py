@@ -16,6 +16,7 @@ from structlog import get_logger
 
 from src.api.deps import AdminUserDep, get_supabase_client
 from src.config.settings import get_settings
+from src.services.email import send_payment_confirmation_email
 
 
 async def _invalidate_user_cache(user_id: str) -> None:
@@ -2237,6 +2238,55 @@ async def send_custom_email(
         "to": email_addr,
     })
     return {"ok": True, "sent_to": email_addr}
+
+
+@router.post("/users/{user_id}/resend-payment-email")
+async def resend_payment_email(
+    user_id: str,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Renvoie l'email de confirmation de paiement à un utilisateur ayant un abonnement actif."""
+    supabase = get_supabase_client()
+
+    profile = supabase.table("profiles").select("email, full_name").eq("id", user_id).maybe_single().execute()
+    if not profile.data:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    sub = (
+        supabase.table("user_subscriptions")
+        .select("plan_id, stripe_subscription_id, user_subscriptions.*, subscription_plans(display_name, price_monthly)")
+        .eq("user_id", user_id)
+        .eq("status", "active")
+        .maybe_single()
+        .execute()
+    )
+    if not sub.data:
+        raise HTTPException(status_code=404, detail="Aucun abonnement actif pour cet utilisateur")
+
+    plan_info = sub.data.get("subscription_plans") or {}
+    plan_name = plan_info.get("display_name") or sub.data.get("plan_id", "Pro")
+    price = plan_info.get("price_monthly")
+    amount = f"{price}€/mois" if price else "—"
+
+    language = profile.data.get("language") or "fr"
+    email_addr = profile.data["email"]
+
+    ok = send_payment_confirmation_email(
+        user_email=email_addr,
+        plan_name=plan_name,
+        amount=amount,
+        language=language,
+        billing_reason="subscription_create",
+    )
+    if not ok:
+        raise HTTPException(status_code=500, detail="Échec de l'envoi via Resend")
+
+    _log_admin_action(supabase, admin["id"], "admin.resend_payment_email", user_id, {
+        "sent_to": email_addr,
+        "plan": plan_name,
+    })
+    logger.info(f"Admin {admin['email']} resent payment email to {email_addr} (plan={plan_name})")
+    return {"ok": True, "sent_to": email_addr, "plan": plan_name}
 
 
 @router.post("/users/bulk-email")

@@ -13,7 +13,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useAdminUsers, type UserDetail } from "@/hooks/admin/use-admin-users";
 import UserActionsMenu from "./user-actions-menu";
-import { RotateCcw, ExternalLink, Copy, Receipt, Zap } from "lucide-react";
+import {
+  RotateCcw,
+  ExternalLink,
+  Copy,
+  Receipt,
+  Zap,
+  Mail,
+} from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import type {
@@ -95,6 +102,7 @@ export default function UserDetailDrawer({
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [resettingUsage, setResettingUsage] = useState(false);
+  const [sendingPaymentEmail, setSendingPaymentEmail] = useState(false);
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
   const [features, setFeatures] = useState<FeatureOverrideEntry[]>([]);
   const [togglingFeature, setTogglingFeature] = useState<string | null>(null);
@@ -132,6 +140,22 @@ export default function UserDetailDrawer({
     await resetUsage(userId);
     setResettingUsage(false);
     reload();
+  };
+
+  const handleResendPaymentEmail = async () => {
+    if (!userId) return;
+    setSendingPaymentEmail(true);
+    try {
+      const res = await adminFetch(
+        `/api/admin/users/${userId}/resend-payment-email`,
+        { method: "POST" },
+      );
+      toast.success(`Email de confirmation envoyé à ${res.sent_to}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Échec de l'envoi");
+    } finally {
+      setSendingPaymentEmail(false);
+    }
   };
 
   const handleToggleFeature = async (
@@ -319,6 +343,20 @@ export default function UserDetailDrawer({
                         Voir dans Stripe
                       </a>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs mt-1"
+                      onClick={handleResendPaymentEmail}
+                      disabled={sendingPaymentEmail}
+                    >
+                      <Mail
+                        className={`h-3 w-3 mr-1 ${sendingPaymentEmail ? "animate-pulse" : ""}`}
+                      />
+                      {sendingPaymentEmail
+                        ? "Envoi…"
+                        : "Renvoyer email de paiement"}
+                    </Button>
                   </>
                 ) : (
                   <div className="text-muted-foreground">
