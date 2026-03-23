@@ -623,7 +623,9 @@
         "close": "Cerrar",
         "noEmail": "¿No recibiste el correo? Espera unos minutos o revisa tu spam.",
         "resendButton": "Reenviar correo electrónico de confirmación",
-        "resendSuccess": "Correo electrónico reenviado! Compruebe su buzón de correo electrónico."
+        "resendSuccess": "Correo electrónico reenviado! Compruebe su buzón de correo electrónico.",
+        "spamWarning": "Recuerde revisar su spam / correo no deseado si no puede encontrar el correo electrónico.",
+        "openMail": "Abrir mi buzón de correo"
       },
       "timeout": {
         "title": "Conexión lenta detectada",
@@ -665,7 +667,8 @@
       "timeout": "La solicitud está tardando demasiado. Verifique su conexión a Internet e inténtelo de nuevo.",
       "signupFailed": "Error al crear la cuenta",
       "resetPasswordFailed": "No se ha podido enviar el enlace de restablecimiento",
-      "resendConfirmationFailed": "No se ha podido devolver el correo electrónico de confirmación"
+      "resendConfirmationFailed": "No se ha podido devolver el correo electrónico de confirmación",
+      "emailAlreadyExists": "Ya existe una cuenta con esta dirección de correo electrónico. Inicie sesión o utilice la contraseña olvidada."
     },
     "forgotPassword": {
       "title": "Contraseña olvidada",
@@ -1778,6 +1781,16 @@
       "seo": "Google / SEO",
       "ads": "Publicidad",
       "other": "Otro"
+    },
+    "plans": {
+      "title": "¿Quieres ir más rápido?",
+      "subtitle": "Descubre nuestras fórmulas para impulsar tu búsqueda. Sin compromiso.",
+      "seePlans": "Ver las fórmulas disponibles",
+      "seePlansDesc": "Análisis de CV ilimitados, coaching 24/7 y mucho más",
+      "stat1": "Más resultados",
+      "stat2": "coaching IA",
+      "stat3": "tasa de respuesta postal",
+      "skip": "Continuar gratis"
     }
   },
   "testimonials": {

@@ -623,7 +623,9 @@
         "close": "Fechar",
         "noEmail": "Não recebeu o email? Aguarde alguns minutos ou verifique o spam.",
         "resendButton": "Reenviar e-mail de confirmação",
-        "resendSuccess": "E-mail reenviado! Verifique a sua caixa de correio."
+        "resendSuccess": "E-mail reenviado! Verifique a sua caixa de correio.",
+        "spamWarning": "Lembre-se de verificar o seu spam / lixo eletrónico se não conseguir encontrar o e-mail.",
+        "openMail": "Abrir a minha caixa de correio"
       },
       "timeout": {
         "title": "Conexão lenta detectada",
@@ -665,7 +667,8 @@
       "timeout": "A solicitação está demorando muito. Verifique sua conexão com a Internet e tente novamente.",
       "signupFailed": "Falha ao criar a conta",
       "resetPasswordFailed": "Não foi possível enviar o link de redefinição",
-      "resendConfirmationFailed": "Não foi possível reenviar o e-mail de confirmação"
+      "resendConfirmationFailed": "Não foi possível reenviar o e-mail de confirmação",
+      "emailAlreadyExists": "Já existe uma conta com este endereço de e-mail. Inicie sessão ou utilize a palavra-passe esquecida."
     },
     "forgotPassword": {
       "title": "Esqueci-me da palavra-passe",
@@ -1778,6 +1781,16 @@
       "seo": "Google / SEO",
       "ads": "Publicidade",
       "other": "Outro"
+    },
+    "plans": {
+      "title": "Quer ir mais rápido?",
+      "subtitle": "Descubra as nossas fórmulas para impulsionar a sua pesquisa. Sem compromisso.",
+      "seePlans": "Ver planos disponíveis",
+      "seePlansDesc": "Análise ilimitada de currículos, coaching 24 horas por dia, 7 dias por semana e muito mais",
+      "stat1": "Ver mais resultados",
+      "stat2": "coaching de IA",
+      "stat3": "taxa de resposta",
+      "skip": "Continue gratuitamente"
     }
   },
   "testimonials": {
