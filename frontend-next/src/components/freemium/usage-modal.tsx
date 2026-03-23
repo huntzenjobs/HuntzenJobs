@@ -262,10 +262,12 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
               <h3 className="text-lg font-semibold text-gray-900">
                 {t("dailyUsageTitle")}
               </h3>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <Clock className="w-3.5 h-3.5" />
-                <QuotaResetTimer />
-              </div>
+              {plan !== "premium" && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Clock className="w-3.5 h-3.5" />
+                  <QuotaResetTimer />
+                </div>
+              )}
             </div>
 
             <div className="grid gap-4">

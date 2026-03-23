@@ -231,8 +231,11 @@ function SavedJobsCounter() {
 }
 
 export function UsageSummary({ className = "" }: UsageSummaryProps) {
-  const { isFreePlan } = useSubscription();
+  const { plan, isFreePlan } = useSubscription();
   const tUsage = useTranslations("usageCounter");
+
+  // Plan Carrière (premium) = tout illimité, pas besoin du timer
+  if (plan === "premium") return null;
 
   return (
     <div className={className}>
