@@ -239,7 +239,7 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
 
   return (
     <div className={className}>
-      {isFreePlan && (
+      {(isFreePlan || plan === "starter") && (
         <>
           <h4 className="text-sm font-semibold mb-3 text-white/90">
             {tUsage("dailyUsage")}
