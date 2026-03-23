@@ -82,7 +82,7 @@ async def track_click(request: Request, body: TrackClickRequest):
             .select("id, total_clicks") \
             .eq("referral_code", body.code) \
             .eq("is_active", True) \
-            .maybe_single() \
+            .limit(1) \
             .execute()
 
         if not ref_res.data:
@@ -90,8 +90,8 @@ async def track_click(request: Request, body: TrackClickRequest):
             return {"ok": False, "error": "invalid_code"}
 
         # Increment total_clicks
-        ref_id = ref_res.data["id"]
-        old_clicks = ref_res.data.get("total_clicks", 0)
+        ref_id = ref_res.data[0]["id"]
+        old_clicks = ref_res.data[0].get("total_clicks", 0)
         supabase.table("referrals").update({
             "total_clicks": old_clicks + 1,
         }).eq("id", ref_id).execute()

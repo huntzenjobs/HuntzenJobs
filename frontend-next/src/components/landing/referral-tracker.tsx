@@ -20,7 +20,7 @@ export function ReferralTracker() {
         fetch(`${BACKEND_URL}/api/referrals/track-click`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ referral_code: ref }),
+          body: JSON.stringify({ code: ref }),
         }).catch(() => {
           // Silently ignore — tracking failure must not block rendering
         });

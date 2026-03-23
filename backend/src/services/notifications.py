@@ -16,6 +16,7 @@ VALID_TYPES = {
     "job_alert",
     "cv_feedback",
     "referral_bonus",
+    "referral_signup",
     "promo_code",
     "career_progress",
     "interview_ready",
