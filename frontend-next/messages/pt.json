@@ -1987,6 +1987,10 @@
       "quotaReachedRecruiter": "Cota de pesquisa de recrutador atingida. Atualize para Pro para acesso ilimitado."
     },
     "recruiterFinderBeta": "Esta funcionalidade está sendo aprimorada. Os resultados podem estar incompletos.",
+    "recruiterFinderSubtitle": "Encontre contatos de RH e decisores da empresa",
+    "recruiterFinderDescription": "Identifica automaticamente recrutadores e decisores para esta vaga.",
+    "recruiterCompanyLabel": "Nome da empresa",
+    "recruiterCompanyPlaceholder": "Ex: Google, Capgemini...",
     "recruiterFinderRgpd": "Estes e-mails sao de fontes publicas (Apollo.io, Hunter.io). Respeite o RGPD nas suas comunicacoes.",
     "recruiterEmailVerified": "Verificado",
     "recruiterEmailGuessed": "Estimado",

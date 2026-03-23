@@ -172,6 +172,30 @@ function ContactCard({ contact }: { contact: Contact }) {
 // MAIN COMPONENT
 // ============================================================================
 
+// Source names that should NOT be used as company names
+const SOURCE_NAMES = new Set([
+  "adzuna",
+  "huntzen",
+  "serpapi",
+  "remoteok",
+  "remote ok",
+  "france travail",
+  "indeed",
+  "linkedin",
+  "google jobs",
+  "glassdoor",
+  "monster",
+  "apec",
+  "pole emploi",
+]);
+
+function cleanCompanyName(company: string): string {
+  if (!company) return "";
+  const lower = company.toLowerCase().trim();
+  if (SOURCE_NAMES.has(lower)) return "";
+  return company.trim();
+}
+
 export function RecruiterFinderDrawer({
   open,
   onOpenChange,
@@ -183,6 +207,7 @@ export function RecruiterFinderDrawer({
   const [result, setResult] = useState<FinderResult | null>(null);
   const [searched, setSearched] = useState(false);
   const [quotaError, setQuotaError] = useState(false);
+  const [companyName, setCompanyName] = useState(cleanCompanyName(job.company));
 
   const handleSearch = async () => {
     if (!session?.access_token) {
@@ -202,8 +227,7 @@ export function RecruiterFinderDrawer({
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          company_name: job.company || "",
-          company_website: job.url || "",
+          company_name: companyName,
           job_title: job.title || "",
         }),
       });
@@ -233,6 +257,7 @@ export function RecruiterFinderDrawer({
     if (!isOpen) {
       setResult(null);
       setSearched(false);
+      setCompanyName(cleanCompanyName(job.company));
     }
     onOpenChange(isOpen);
   };
@@ -250,10 +275,7 @@ export function RecruiterFinderDrawer({
             Trouver le recruteur
           </SheetTitle>
           <SheetDescription className="text-sm text-gray-500">
-            Contacts RH et décideurs chez{" "}
-            <span className="font-medium text-gray-700">
-              {job.company || "cette entreprise"}
-            </span>
+            {tJobs("recruiterFinderSubtitle")}
           </SheetDescription>
         </SheetHeader>
 
@@ -267,17 +289,28 @@ export function RecruiterFinderDrawer({
             </div>
           </div>
 
-          {/* Search button */}
+          {/* Company name input + search button */}
           {!searched && (
-            <div className="text-center space-y-3">
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">
+                  {tJobs("recruiterCompanyLabel")}
+                </label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder={tJobs("recruiterCompanyPlaceholder")}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
               <p className="text-sm text-gray-500">
-                Identifie automatiquement les recruteurs et décideurs à
-                contacter pour ce poste.
+                {tJobs("recruiterFinderDescription")}
               </p>
               <Button
                 onClick={handleSearch}
                 className="bg-gradient-to-r from-blue-600 to-violet-600 text-white w-full"
-                disabled={loading}
+                disabled={loading || !companyName.trim()}
               >
                 {loading ? (
                   <>
