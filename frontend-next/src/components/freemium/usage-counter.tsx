@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSubscription } from "@/contexts/subscription-context";
 import { FeatureType } from "@/hooks/use-freemium-limits";
 import { Search, FileText, Clock, Eye, Users, Bookmark } from "lucide-react";
@@ -248,6 +249,31 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
         <UsageCounter feature="assistant_messages" showBar />
         <SavedJobsCounter />
       </div>
+      <div className="flex items-center gap-1.5 mt-3 text-xs text-white/50">
+        <Clock className="w-3 h-3" />
+        <QuotaResetTimer />
+      </div>
     </div>
   );
+}
+
+export function QuotaResetTimer({ className = "" }: { className?: string }) {
+  const [label, setLabel] = useState("");
+
+  useEffect(() => {
+    const compute = () => {
+      const now = new Date();
+      const next = new Date();
+      next.setUTCHours(24, 0, 0, 0);
+      const diff = next.getTime() - now.getTime();
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      setLabel(`Recharge dans ${h}h ${m}m`);
+    };
+    compute();
+    const id = setInterval(compute, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  return <span className={className}>{label}</span>;
 }

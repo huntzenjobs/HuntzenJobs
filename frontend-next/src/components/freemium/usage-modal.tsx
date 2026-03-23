@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useSubscription } from "@/contexts/subscription-context";
+import { QuotaResetTimer } from "@/components/freemium/usage-counter";
 import {
   Crown,
   Sparkles,
@@ -263,7 +264,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
               </h3>
               <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <Clock className="w-3.5 h-3.5" />
-                <span>{t("resetAtMidnight")}</span>
+                <QuotaResetTimer />
               </div>
             </div>
 
