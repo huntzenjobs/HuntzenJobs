@@ -178,6 +178,16 @@ export function AuthProvider({
             }
           }
 
+          // Redirect new users to onboarding (covers Google OAuth + any flow)
+          if (
+            session?.user &&
+            !session.user.user_metadata?.onboarding_completed &&
+            !window.location.pathname.startsWith("/onboarding") &&
+            !window.location.pathname.startsWith("/auth/callback")
+          ) {
+            router.push("/onboarding");
+          }
+
           // Clear old subscription cache and trigger refresh
           localStorage.removeItem("huntzen_subscription_cache");
           localStorage.removeItem("huntzen_subscription_cache_expiry");
