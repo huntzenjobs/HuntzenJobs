@@ -126,6 +126,8 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     Ensures CORS headers are present even on unhandled 500 errors so the
     browser can read the error detail instead of seeing a CORS violation.
     """
+    from fastapi.exceptions import HTTPException as FastAPIHTTPException
+
     origin = request.headers.get("origin", "")
     cors_headers: dict[str, str] = {}
     if origin:
@@ -133,13 +135,21 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
         cors_headers["Access-Control-Allow-Credentials"] = "true"
         cors_headers["Vary"] = "Origin"
 
+    # Preserve HTTPException status code and detail (don't mask with generic 500)
+    if isinstance(exc, FastAPIHTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=cors_headers,
+        )
+
     logger.error(
-        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
+        f"Unhandled exception on {request.method} {request.url.path}: {type(exc).__name__}: {exc}",
         exc_info=True,
     )
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"},
+        content={"detail": f"Internal server error: {type(exc).__name__}"},
         headers=cors_headers,
     )
 
