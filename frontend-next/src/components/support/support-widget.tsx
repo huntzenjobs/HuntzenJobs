@@ -35,7 +35,11 @@ export function SupportWidget({
   // Close on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+      const target = e.target as Element;
+      // Ignore clicks inside Radix UI portals (Select, DropdownMenu, etc.)
+      // These render outside the widget DOM via portal but are still "inside" logically
+      if (target.closest?.("[data-radix-popper-content-wrapper]")) return;
+      if (panelRef.current && !panelRef.current.contains(target as Node)) {
         // Also exclude the FAB button (it handles its own toggle)
         onClose();
       }
