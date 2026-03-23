@@ -602,7 +602,7 @@
       "annualToMonthlyBlocked": "Changement annuel vers mensuel impossible. Votre abonnement annuel court jusqu'au {date}. Vous pourrez passer en mensuel à cette date.",
       "annualToMonthlyBlockedGeneric": "Vous avez un abonnement annuel en cours. Le changement vers mensuel sera possible à la fin de la période.",
       "checkoutFailed": "Impossible de créer la session de paiement",
-      "noCheckoutUrl": "URL de paiement manquante — veuillez réessayer"
+      "noCheckoutUrl": "URL de paiement non disponible — réessayez"
     },
     "confirmChange": {
       "upgradeTitle": "Confirmer le changement de plan",
