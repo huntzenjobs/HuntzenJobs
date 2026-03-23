@@ -14,11 +14,18 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const CRON_SECRET = process.env.CRON_SECRET || "";
+const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function GET(request: Request) {
   try {
     // Security: Verify cron secret (Vercel sets this automatically)
+    if (!CRON_SECRET) {
+      console.error("[Cron Cleanup] CRON_SECRET is not configured");
+      return NextResponse.json(
+        { error: "Server misconfiguration" },
+        { status: 500 },
+      );
+    }
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${CRON_SECRET}`) {
       console.error("[Cron Cleanup] Unauthorized access attempt");
@@ -44,9 +51,7 @@ export async function GET(request: Request) {
       : { success: true };
 
     // 2. Cleanup expired cache
-    const { error: cacheError } = await supabase.rpc(
-      "cleanup_expired_cache",
-    );
+    const { error: cacheError } = await supabase.rpc("cleanup_expired_cache");
     results.expired_cache = cacheError
       ? { success: false, error: cacheError.message }
       : { success: true };

@@ -3,14 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
-
-const STEPS = [
-  { label: "Connexion aux job boards", duration: 5 },
-  { label: "Analyse de votre recherche", duration: 10 },
-  { label: "Filtrage par pertinence", duration: 18 },
-  { label: "Vérification des offres", duration: 24 },
-  { label: "Tri des meilleurs résultats", duration: 30 },
-];
+import { useTranslations } from "next-intl";
 
 interface SearchLoadingModalProps {
   isOpen: boolean;
@@ -21,6 +14,14 @@ export function SearchLoadingModal({
   isOpen,
   searchQuery,
 }: SearchLoadingModalProps) {
+  const t = useTranslations("jobs.searchLoadingModal");
+  const STEPS = [
+    { label: t("steps.connectingJobBoards"), duration: 5 },
+    { label: t("steps.analyzingSearch"), duration: 10 },
+    { label: t("steps.filteringRelevance"), duration: 18 },
+    { label: t("steps.verifyingOffers"), duration: 24 },
+    { label: t("steps.sortingResults"), duration: 30 },
+  ];
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -35,7 +36,8 @@ export function SearchLoadingModal({
 
   const progress = Math.min((elapsed / 30) * 100, 95);
   const currentStepIndex = STEPS.findIndex((s) => elapsed < s.duration);
-  const activeStep = currentStepIndex === -1 ? STEPS.length - 1 : currentStepIndex;
+  const activeStep =
+    currentStepIndex === -1 ? STEPS.length - 1 : currentStepIndex;
 
   return (
     <AnimatePresence>
@@ -59,7 +61,8 @@ export function SearchLoadingModal({
             transition={{ type: "spring", damping: 30, stiffness: 340 }}
             className="relative mx-4 w-full max-w-sm bg-white rounded-2xl overflow-hidden"
             style={{
-              boxShadow: "0 8px 40px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06)",
+              boxShadow:
+                "0 8px 40px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06)",
               border: "1px solid rgba(0,0,0,0.06)",
             }}
           >
@@ -78,15 +81,13 @@ export function SearchLoadingModal({
               {/* Header */}
               <div className="mb-7">
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                  Recherche en cours
+                  {t("title")}
                 </p>
                 <h2 className="text-[17px] font-semibold text-gray-900 leading-snug">
                   {searchQuery ? (
-                    <>
-                      <span className="text-gray-900">{searchQuery}</span>
-                    </>
+                    <span className="text-gray-900">{searchQuery}</span>
                   ) : (
-                    "Offres d'emploi"
+                    t("defaultQuery")
                   )}
                 </h2>
               </div>
@@ -109,11 +110,18 @@ export function SearchLoadingModal({
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ type: "spring", damping: 20, stiffness: 400 }}
+                            transition={{
+                              type: "spring",
+                              damping: 20,
+                              stiffness: 400,
+                            }}
                             className="w-5 h-5 rounded-full flex items-center justify-center"
                             style={{ background: "#00d4aa" }}
                           >
-                            <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                            <Check
+                              className="w-3 h-3 text-white"
+                              strokeWidth={2.5}
+                            />
                           </motion.div>
                         ) : isActive ? (
                           <div className="relative w-4 h-4 flex items-center justify-center">
@@ -121,7 +129,11 @@ export function SearchLoadingModal({
                               className="absolute w-4 h-4 rounded-full border-2"
                               style={{ borderColor: "#2563eb" }}
                               animate={{ rotate: 360 }}
-                              transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                              transition={{
+                                duration: 1.2,
+                                repeat: Infinity,
+                                ease: "linear",
+                              }}
                             />
                             <div
                               className="w-1.5 h-1.5 rounded-full"
@@ -143,8 +155,8 @@ export function SearchLoadingModal({
                           color: isDone
                             ? "#94a3b8"
                             : isActive
-                            ? "#1e293b"
-                            : "#cbd5e1",
+                              ? "#1e293b"
+                              : "#cbd5e1",
                           fontWeight: isActive ? 500 : 400,
                         }}
                       >
@@ -157,7 +169,7 @@ export function SearchLoadingModal({
 
               {/* Footer */}
               <p className="text-[11px] text-gray-300 text-center">
-                Environ 30 secondes · Ne fermez pas cette page
+                {t("footer")}
               </p>
             </div>
           </motion.div>

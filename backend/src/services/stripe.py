@@ -565,11 +565,11 @@ async def handle_checkout_completed(session: dict[str, Any]):
         plan_response = supabase_client.table("subscription_plans")\
             .select("id")\
             .eq("name", plan_name)\
-            .single()\
+            .maybe_single()\
             .execute()
 
         if not plan_response.data:
-            logger.error(f"Plan not found: {plan_name}")
+            logger.error(f"[WEBHOOK] Plan not found in DB: {plan_name}")
             return
 
         plan_id = plan_response.data["id"]

@@ -2,14 +2,23 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
-const CRON_SECRET = process.env.CRON_SECRET || "";
+const CRON_SECRET = process.env.CRON_SECRET;
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
 
 export async function GET(request: Request) {
+  if (!CRON_SECRET) {
+    console.error("[Cron] CRON_SECRET is not configured");
+    return NextResponse.json(
+      { error: "Server misconfiguration" },
+      { status: 500 },
+    );
+  }
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${CRON_SECRET}`) {
-    console.error("[Cron] Unauthorized access attempt to retention-notifications");
+    console.error(
+      "[Cron] Unauthorized access attempt to retention-notifications",
+    );
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

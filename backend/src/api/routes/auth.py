@@ -156,8 +156,7 @@ async def get_current_user_info(
 
         # 🔍 DEBUG: Log user info before RPC call
         logger.debug("="*70)
-        logger.debug(f"[AUTH_ME DEBUG] User ID: {user_id}")
-        logger.debug(f"[AUTH_ME DEBUG] Email: {profile.get('email')}")
+        logger.debug("[AUTH_ME DEBUG] Fetching subscription for user")
         logger.debug("="*70)
 
         # Get user's active subscription using RPC (with ORDER BY fix)
@@ -223,8 +222,6 @@ async def get_current_user_info(
             # 🔍 DEBUG: No subscription found
             logger.debug("="*70)
             logger.debug("[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
-            logger.debug(f"  - User ID: {user_id}")
-            logger.debug(f"  - Email: {user['email']}")
 
             # Check if user has stripe_subscription_id in profiles but no active subscription
             # This would indicate a desync between Stripe and Supabase
@@ -232,7 +229,7 @@ async def get_current_user_info(
                 profile_check = supabase.table("profiles") \
                     .select("stripe_subscription_id, stripe_customer_id") \
                     .eq("id", user_id) \
-                    .single() \
+                    .maybe_single() \
                     .execute()
 
                 if profile_check.data:

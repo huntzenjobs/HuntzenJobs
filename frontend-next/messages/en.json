@@ -1578,6 +1578,18 @@
     "recruiterFinderRgpd": "These emails come from public sources (Apollo.io, Hunter.io). Please comply with GDPR in your communications.",
     "recruiterEmailVerified": "Verified",
     "recruiterEmailGuessed": "Estimated",
+    "searchLoadingModal": {
+      "title": "Searching",
+      "defaultQuery": "Job offers",
+      "footer": "About 30 seconds · Don't close this page",
+      "steps": {
+        "connectingJobBoards": "Connecting to job boards",
+        "analyzingSearch": "Analyzing your search",
+        "filteringRelevance": "Filtering by relevance",
+        "verifyingOffers": "Verifying offers",
+        "sortingResults": "Sorting best results"
+      }
+    },
     "recruiterViewLinkedin": "View LinkedIn profile",
     "recruiterSearching": "Searching for contacts...",
     "blurred": {

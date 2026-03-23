@@ -246,14 +246,14 @@ _T: dict[str, dict[str, dict[str, str]]] = {
     },
     "payment_confirmation": {
         "fr": {
-            "subject": "Paiement confirme - HuntZen",
-            "header": "Paiement confirme !",
+            "subject": "Paiement confirmé - HuntZen",
+            "header": "Paiement confirmé !",
             "greeting": "Bonjour",
-            "intro": "Votre paiement a ete traite avec succes.",
+            "intro": "Votre paiement a été traité avec succès.",
             "plan_label": "Plan :",
             "amount_label": "Montant :",
             "date_label": "Date :",
-            "cta": "Acceder a mon espace",
+            "cta": "Accéder à mon espace",
             "footer": "Merci de votre confiance !",
         },
         "en": {
@@ -270,13 +270,13 @@ _T: dict[str, dict[str, dict[str, str]]] = {
     },
     "payment_failed": {
         "fr": {
-            "subject": "Paiement echoue - Action requise - HuntZen",
-            "header": "Paiement echoue",
+            "subject": "Paiement échoué - Action requise - HuntZen",
+            "header": "Paiement échoué",
             "greeting": "Bonjour",
-            "intro": "Votre dernier paiement n'a pas pu etre traite.",
-            "action": "Pour conserver votre abonnement, veuillez mettre a jour votre moyen de paiement.",
-            "cta": "Mettre a jour mon paiement",
-            "footer": "Si vous avez des questions, contactez-nous a",
+            "intro": "Votre dernier paiement n'a pas pu être traité.",
+            "action": "Pour conserver votre abonnement, veuillez mettre à jour votre moyen de paiement.",
+            "cta": "Mettre à jour mon paiement",
+            "footer": "Si vous avez des questions, contactez-nous à",
         },
         "en": {
             "subject": "Payment failed - Action required - HuntZen",
@@ -290,10 +290,10 @@ _T: dict[str, dict[str, dict[str, str]]] = {
     },
     "contact_confirmation": {
         "fr": {
-            "subject": "Nous avons bien recu votre message - HuntZen",
-            "header": "Message bien recu !",
+            "subject": "Nous avons bien reçu votre message - HuntZen",
+            "header": "Message bien reçu !",
             "greeting": "Bonjour",
-            "body": "Nous avons bien recu votre message et notre equipe vous repondra sous 48h en semaine.",
+            "body": "Nous avons bien reçu votre message et notre équipe vous répondra sous 48h en semaine.",
             "thanks": "Merci de votre confiance !",
             "cta": "Retour sur HuntZen",
         },
@@ -309,14 +309,14 @@ _T: dict[str, dict[str, dict[str, str]]] = {
     "subscription_cancelled": {
         "fr": {
             "subject": "Confirmation d'annulation - HuntZen",
-            "header": "Abonnement annule",
+            "header": "Abonnement annulé",
             "greeting": "Bonjour",
-            "intro": "Votre annulation a bien ete prise en compte.",
+            "intro": "Votre annulation a bien été prise en compte.",
             "plan_label": "Plan :",
-            "end_date_label": "Acces jusqu'au :",
-            "note": "Vous conservez l'acces a toutes les fonctionnalites de votre plan jusqu'a cette date.",
+            "end_date_label": "Accès jusqu'au :",
+            "note": "Vous conservez l'accès à toutes les fonctionnalités de votre plan jusqu'à cette date.",
             "cta": "Retour sur HuntZen",
-            "footer": "Vous pouvez vous reabonner a tout moment depuis votre espace.",
+            "footer": "Vous pouvez vous réabonner à tout moment depuis votre espace.",
         },
         "en": {
             "subject": "Cancellation confirmed - HuntZen",

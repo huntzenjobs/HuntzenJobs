@@ -2009,6 +2009,18 @@
     "recruiterFinderRgpd": "Estos correos provienen de fuentes publicas (Apollo.io, Hunter.io). Respeta el RGPD en tus comunicaciones.",
     "recruiterEmailVerified": "Verificado",
     "recruiterEmailGuessed": "Estimado",
+    "searchLoadingModal": {
+      "title": "Buscando",
+      "defaultQuery": "Ofertas de empleo",
+      "footer": "Aproximadamente 30 segundos · No cierres esta página",
+      "steps": {
+        "connectingJobBoards": "Conectando con portales de empleo",
+        "analyzingSearch": "Analizando tu búsqueda",
+        "filteringRelevance": "Filtrando por relevancia",
+        "verifyingOffers": "Verificando ofertas",
+        "sortingResults": "Ordenando los mejores resultados"
+      }
+    },
     "recruiterViewLinkedin": "Ver perfil de LinkedIn",
     "recruiterSearching": "Buscando contactos...",
     "blurred": {
