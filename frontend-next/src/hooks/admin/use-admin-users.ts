@@ -232,6 +232,37 @@ export function useAdminUsers() {
     }
   }, []);
 
+  const createUser = useCallback(
+    async (data: {
+      email: string;
+      full_name: string;
+      plan_name?: string;
+      send_invite?: boolean;
+    }) => {
+      setLoading(true);
+      try {
+        const result = await adminFetch("/api/admin/users/create", {
+          method: "POST",
+          body: JSON.stringify({
+            email: data.email,
+            full_name: data.full_name,
+            plan_name: data.plan_name || null,
+            send_invite: data.send_invite ?? true,
+          }),
+        });
+        toast.success("Compte créé avec succès");
+        return result;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erreur";
+        toast.error(msg);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   return {
     loading,
     fetchUsers,
@@ -243,5 +274,6 @@ export function useAdminUsers() {
     forcePlan,
     fetchPlans,
     resetUsage,
+    createUser,
   };
 }

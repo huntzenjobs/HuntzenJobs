@@ -84,6 +84,12 @@ class BlacklistEmailRequest(BaseModel):
     email: str
     reason: str = ""
 
+class CreateUserRequest(BaseModel):
+    email: str
+    full_name: str
+    plan_name: str | None = None
+    send_invite: bool = True
+
 
 def _log_admin_action(
     supabase,
@@ -515,6 +521,105 @@ async def force_plan_change(
     except Exception as e:
         logger.error(f"Failed to force plan change for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to change plan: {str(e)}") from None
+
+
+@router.post("/users/create")
+async def create_user(
+    body: CreateUserRequest,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """
+    Create a new user account (admin only).
+    Optionally assign a plan and send a magic link invitation.
+    """
+    supabase = get_supabase_client()
+
+    try:
+        # 1. Check email not already taken
+        existing = supabase.table("profiles").select("id").eq(
+            "email", body.email
+        ).maybe_single().execute()
+        if existing.data:
+            raise HTTPException(status_code=409, detail="Un compte avec cet email existe déjà")
+
+        # 2. Create user via Supabase Admin API
+        user_response = supabase.auth.admin.create_user({
+            "email": body.email,
+            "email_confirm": True,
+            "user_metadata": {"full_name": body.full_name},
+        })
+
+        if not user_response.user:
+            raise HTTPException(status_code=500, detail="Échec de la création du compte")
+
+        new_user_id = user_response.user.id
+
+        # 3. Create profile entry
+        supabase.table("profiles").upsert({
+            "id": new_user_id,
+            "email": body.email,
+            "full_name": body.full_name,
+            "is_admin": False,
+            "status": "active",
+        }).execute()
+
+        # 4. Assign plan if requested
+        plan_assigned = None
+        if body.plan_name and body.plan_name != "free":
+            plan_result = supabase.table("subscription_plans").select(
+                "id, name, display_name"
+            ).eq("name", body.plan_name).maybe_single().execute()
+
+            if plan_result.data:
+                now = datetime.now(UTC)
+                supabase.table("user_subscriptions").insert({
+                    "user_id": new_user_id,
+                    "plan_id": plan_result.data["id"],
+                    "status": "active",
+                    "stripe_subscription_id": "admin_granted",
+                    "current_period_start": now.isoformat(),
+                    "current_period_end": (now + timedelta(days=36500)).isoformat(),
+                }).execute()
+                plan_assigned = plan_result.data["display_name"]
+
+        # 5. Send magic link invitation
+        invite_sent = False
+        if body.send_invite:
+            try:
+                supabase.auth.admin.generate_link({
+                    "type": "magiclink",
+                    "email": body.email,
+                })
+                invite_sent = True
+            except Exception as e:
+                logger.warning(f"Failed to send invite to {body.email}: {e}")
+
+        _log_admin_action(supabase, admin["id"], "admin.user_created", new_user_id, {
+            "email": body.email,
+            "plan_assigned": plan_assigned,
+            "invite_sent": invite_sent,
+        })
+
+        logger.info(
+            f"Admin {admin['email']} created user {body.email} "
+            f"(plan={plan_assigned}, invite={invite_sent})"
+        )
+
+        return {
+            "success": True,
+            "user_id": new_user_id,
+            "email": body.email,
+            "plan_assigned": plan_assigned,
+            "invite_sent": invite_sent,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create user {body.email}: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Échec de la création: {str(e)}"
+        ) from None
 
 
 # ============================================================
