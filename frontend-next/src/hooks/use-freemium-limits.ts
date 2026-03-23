@@ -236,7 +236,11 @@ interface FreemiumState {
   planExpiresAt: string | null;
 }
 
-const STORAGE_KEY = "huntzen_freemium_state";
+const STORAGE_KEY_PREFIX = "huntzen_freemium_state";
+
+function getStorageKey(userId?: string): string {
+  return userId ? `${STORAGE_KEY_PREFIX}_${userId}` : STORAGE_KEY_PREFIX;
+}
 
 function getTodayDate(): string {
   return new Date().toISOString().split("T")[0];
@@ -257,11 +261,12 @@ function getDefaultState(): FreemiumState {
   };
 }
 
-function loadState(): FreemiumState {
+function loadState(userId?: string): FreemiumState {
   if (typeof window === "undefined") return getDefaultState();
 
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const key = getStorageKey(userId);
+    const stored = localStorage.getItem(key);
     if (stored) {
       const state = JSON.parse(stored) as FreemiumState;
       // Reset daily limits if it's a new day
@@ -273,6 +278,13 @@ function loadState(): FreemiumState {
       }
       return state;
     }
+    // Migration: try loading from old global key and move to user-scoped key
+    if (userId) {
+      const oldStored = localStorage.getItem(STORAGE_KEY_PREFIX);
+      if (oldStored) {
+        localStorage.removeItem(STORAGE_KEY_PREFIX);
+      }
+    }
   } catch {
     // Ignore parse errors
   }
@@ -280,33 +292,35 @@ function loadState(): FreemiumState {
   return getDefaultState();
 }
 
-function saveState(state: FreemiumState): void {
+function saveState(state: FreemiumState, userId?: string): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(getStorageKey(userId), JSON.stringify(state));
 }
 
-export function useFreemiumLimits() {
+export function useFreemiumLimits(userId?: string) {
   const [state, setState] = useState<FreemiumState>(getDefaultState);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Use refs to access current state without causing re-renders
   const stateRef = useRef(state);
   const limitsRef = useRef(PLAN_LIMITS[state.plan]);
+  const userIdRef = useRef(userId);
 
   // Update refs when state changes
   useEffect(() => {
     stateRef.current = state;
     limitsRef.current = PLAN_LIMITS[state.plan];
-  }, [state]);
+    userIdRef.current = userId;
+  }, [state, userId]);
 
-  // Load state on mount
+  // Load state on mount or when userId changes
   useEffect(() => {
-    const loadedState = loadState();
+    const loadedState = loadState(userId);
     loadedState.clientId = getClientId();
     setState(loadedState);
-    saveState(loadedState);
+    saveState(loadedState, userId);
     setIsLoaded(true);
-  }, []);
+  }, [userId]);
 
   // Get current plan limits - memoize to prevent reference changes
   const limits = useMemo(() => PLAN_LIMITS[state.plan], [state.plan]);
@@ -403,7 +417,7 @@ export function useFreemiumLimits() {
             newState.usage.assistantMessagesUsedToday += amount;
             break;
         }
-        saveState(newState);
+        saveState(newState, userIdRef.current);
         return newState;
       });
     },

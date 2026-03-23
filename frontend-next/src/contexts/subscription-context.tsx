@@ -77,14 +77,15 @@ const SubscriptionContext = createContext<SubscriptionContextType | null>(null);
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const t = useTranslations("subscription");
 
+  // Get auth session for inconsistency detection
+  const auth = useOptionalAuth();
+
   // NEW: Fetch subscription data from backend API
   const apiData = useSubscriptionApi();
 
   // KEEP: Local state for setPlan() and coach session until Stripe integration
-  const freemium = useFreemiumLimits();
-
-  // Get auth session for inconsistency detection
-  const auth = useOptionalAuth();
+  // Scoped by userId to prevent cross-user quota leakage
+  const freemium = useFreemiumLimits(auth?.user?.id);
 
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [pricingModalFeature, setPricingModalFeature] = useState<string | null>(
