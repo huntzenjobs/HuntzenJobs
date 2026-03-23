@@ -385,7 +385,7 @@
     "user": {
       "default": "User"
     },
-    "upgradeCta": "Go Premium",
+    "upgradeCta": "Move to the next step",
     "footer": {
       "profile": "My profile",
       "pricing": "Pricing",
@@ -2743,7 +2743,10 @@
   "pageGate": {
     "title": "Page not available",
     "description": "This feature is not included in your current plan. Upgrade to a higher plan to access it.",
-    "upgrade": "View plans"
+    "upgrade": "View plans",
+    "loginTitle": "Sign in to continue",
+    "loginDescription": "Sign in or create a free account to access this feature.",
+    "loginCta": "Sign in"
   },
   "coaches": {
     "greeting": "Hi, I'm",

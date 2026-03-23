@@ -470,7 +470,7 @@
     "user": {
       "default": "Utilisateur"
     },
-    "upgradeCta": "Passer Carrière",
+    "upgradeCta": "Passer a l'etape superieure",
     "footer": {
       "profile": "Mon profil",
       "pricing": "Tarifs",
@@ -2739,7 +2739,10 @@
   "pageGate": {
     "title": "Page non disponible",
     "description": "Cette fonctionnalite n'est pas incluse dans votre plan actuel. Passez a un plan superieur pour y acceder.",
-    "upgrade": "Voir les plans"
+    "upgrade": "Voir les plans",
+    "loginTitle": "Connectez-vous pour continuer",
+    "loginDescription": "Connectez-vous ou creez un compte gratuit pour acceder a cette fonctionnalite.",
+    "loginCta": "Se connecter"
   },
   "coaches": {
     "greeting": "Bonjour, je suis",

@@ -380,7 +380,7 @@
     "user": {
       "default": "Usuario"
     },
-    "upgradeCta": "Pasar a Premium",
+    "upgradeCta": "Pasar al siguiente nivel",
     "footer": {
       "profile": "Mi perfil",
       "pricing": "Precios",
@@ -2730,7 +2730,10 @@
   "pageGate": {
     "title": "Pagina no disponible",
     "description": "Esta funcionalidad no esta incluida en su plan actual. Pase a un plan superior para acceder.",
-    "upgrade": "Ver planes"
+    "upgrade": "Ver planes",
+    "loginTitle": "Inicia sesion para continuar",
+    "loginDescription": "Inicia sesion o crea una cuenta gratuita para acceder a esta funcionalidad.",
+    "loginCta": "Iniciar sesion"
   },
   "coaches": {
     "greeting": "Hola, soy",
