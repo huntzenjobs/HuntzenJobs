@@ -296,24 +296,35 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  // canUse helper: Check if user can use a feature based on API quotas
+  // canUse helper: Check if user can use a feature based on API quotas + local state
   const canUse = useCallback(
     (feature: FeatureType): boolean => {
-      if (!apiData.quotas) return freemium.canUse(feature);
+      // Check local optimistic state first (catches immediate post-action state)
+      const localCanUse = freemium.canUse(feature);
 
+      if (!apiData.quotas) {
+        // API not loaded yet — use local state (conservative)
+        return localCanUse;
+      }
+
+      let apiCanUse: boolean;
       switch (feature) {
         case "cv_analysis":
-          return apiData.quotas.cv_analysis.has_access;
+          apiCanUse = apiData.quotas.cv_analysis.has_access;
+          break;
         case "assistant_messages":
-          return (
-            apiData.quotas?.assistant_messages?.has_access ??
-            freemium.canUse(feature)
-          );
+          apiCanUse =
+            apiData.quotas?.assistant_messages?.has_access ?? localCanUse;
+          break;
         case "job_search":
-          return apiData.quotas.job_search.has_access;
+          apiCanUse = apiData.quotas.job_search.has_access;
+          break;
         default:
-          return freemium.canUse(feature);
+          apiCanUse = localCanUse;
       }
+
+      // Block if EITHER source says no (most conservative = safest)
+      return apiCanUse && localCanUse;
     },
     [apiData.quotas, freemium],
   );
