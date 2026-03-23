@@ -2,6 +2,7 @@
 import logging
 
 from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from src.api.deps import get_user_id_from_token
@@ -57,13 +58,21 @@ async def find_insiders(
     # Check SerpAPI key is configured
     if not settings.get_serpapi_key():
         logger.error("[InsiderFinderAPI] SERPAPI_KEY not configured")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Insider search is temporarily unavailable",
+        return JSONResponse(
+            status_code=503,
+            content={"success": False, "detail": "Insider search is temporarily unavailable", "insiders": [], "total_found": 0},
         )
 
     try:
         service = _get_service()
+    except Exception as e:
+        logger.error(f"[InsiderFinderAPI] Service init failed: {type(e).__name__}: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "detail": f"Service init failed: {type(e).__name__}", "insiders": [], "total_found": 0},
+        )
+
+    try:
         result = await service.find_insiders(
             job_title=request.job_title,
             company=request.company,
@@ -82,11 +91,9 @@ async def find_insiders(
 
         return result
 
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"[InsiderFinderAPI] {type(e).__name__}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Insider search failed: {type(e).__name__}",
-        ) from None
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "detail": f"Insider search failed: {type(e).__name__}", "insiders": [], "total_found": 0},
+        )
