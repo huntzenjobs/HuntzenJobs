@@ -1939,7 +1939,22 @@
       "jobOfferPlaceholder": "Collez ici la description complète de l'offre d'emploi (missions, compétences requises, profil recherché...)..."
     },
     "wizard": {
-      "profileNamePlaceholder": "Mon CV principal"
+      "profileNamePlaceholder": "Mon CV principal",
+      "createTitle": "Créer un profil CV",
+      "editTitle": "Modifier le profil CV",
+      "profileNameLabel": "Nom du profil :",
+      "defaultProfileName": "Mon CV",
+      "steps": {
+        "personalInfo": "Infos perso.",
+        "summary": "Résumé",
+        "experiences": "Expériences",
+        "education": "Formation",
+        "skills": "Compétences"
+      },
+      "prev": "Précédent",
+      "next": "Suivant",
+      "saving": "Sauvegarde...",
+      "save": "Sauvegarder le profil"
     },
     "personalInfo": {
       "namePlaceholder": "Marie Dupont",

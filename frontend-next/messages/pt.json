@@ -535,7 +535,10 @@
         "label": "mensagens"
       },
       "unlimited": "ilimitadas",
-      "unlimitedShort": "Ilimitado"
+      "unlimitedShort": "Ilimitado",
+      "savedJobs": {
+        "label": "Cópias de segurança"
+      }
     },
     "aria": {
       "remaining": "{label}: {remaining} restantes de {max}"
@@ -796,7 +799,8 @@
         "filtersApplied": "{count} filtro(s) avançado(s) aplicado(s)",
         "filtersAppliedDesc": "Busca atualizada com os novos filtros",
         "filtersAppliedNext": "Os filtros serão aplicados à próxima busca",
-        "filtersReset": "Filtros avançados redefinidos"
+        "filtersReset": "Filtros avançados redefinidos",
+        "savedJobsLimitReached": "Limite de backup atingido. Passar para um plano superior."
       },
       "sort": {
         "placeholder": "Sort",
@@ -1344,7 +1348,15 @@
       "strengths": "Strengths",
       "weaknesses": "Areas for improvement",
       "suggestionsTitle": "Improvement suggestions",
-      "actionsCount": "{count} actions"
+      "actionsCount": "{count} actions",
+      "lockedTitle": "Conteúdo reservado para assinantes",
+      "lockedDescription": "Mude para um plano pago para ver os detalhes da análise do seu currículo: pontos fortes, pontos fracos e sugestões personalizadas.",
+      "lockedCta": "Desbloquear detalhes",
+      "recommendedJobs": "Posições recomendadas para o seu perfil",
+      "newAnalysis": "Nova análise",
+      "improveWithCoach": "Melhore com o AI Coach",
+      "exportPdf": "Exportar em PDF",
+      "compare": "Comparar"
     },
     "comparison": {
       "needTwoAnalyses": "You need at least 2 analyses to use the comparison",
@@ -2059,7 +2071,22 @@
       "jobOfferPlaceholder": "Paste the full job description here (responsibilities, required skills, candidate profile...)..."
     },
     "wizard": {
-      "profileNamePlaceholder": "My main CV"
+      "profileNamePlaceholder": "Meu CV principal",
+      "createTitle": "Criar perfil de CV",
+      "editTitle": "Editar perfil de CV",
+      "profileNameLabel": "Nome do perfil:",
+      "defaultProfileName": "Meu CV",
+      "steps": {
+        "personalInfo": "Informações pessoais",
+        "summary": "Resumo",
+        "experiences": "Experiências",
+        "education": "Formação",
+        "skills": "Competências"
+      },
+      "prev": "Anterior",
+      "next": "Próximo",
+      "saving": "Salvando...",
+      "save": "Salvar perfil"
     },
     "personalInfo": {
       "namePlaceholder": "Marie Dupont",
@@ -2310,7 +2337,8 @@
       "outOf": "out of {limit}{unit}",
       "unlimited": "Unlimited usage",
       "reached": "Quota reached for today"
-    }
+    },
+    "savedJobs": "Vagas salvas"
   },
   "notifications": {
     "title": "Notifications",

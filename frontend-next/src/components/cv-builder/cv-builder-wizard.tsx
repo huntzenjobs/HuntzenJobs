@@ -38,16 +38,6 @@ export interface CvBuilderWizardProps {
   onSave: (name: string, data: CvData) => Promise<void>;
 }
 
-// ── Step config ───────────────────────────────────────────────────────────────
-
-const STEPS = [
-  { label: "Infos perso.", short: "1" },
-  { label: "Résumé", short: "2" },
-  { label: "Expériences", short: "3" },
-  { label: "Formation", short: "4" },
-  { label: "Compétences", short: "5" },
-];
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildEmpty(): CvData {
@@ -91,12 +81,20 @@ export function CvBuilderWizard({
   open,
   onOpenChange,
   initialData,
-  initialName = "Mon CV",
+  initialName,
   onSave,
 }: CvBuilderWizardProps) {
   const t = useTranslations("cvBuilder.wizard");
+  const defaultName = t("defaultProfileName");
+  const STEPS = [
+    { label: t("steps.personalInfo"), short: "1" },
+    { label: t("steps.summary"), short: "2" },
+    { label: t("steps.experiences"), short: "3" },
+    { label: t("steps.education"), short: "4" },
+    { label: t("steps.skills"), short: "5" },
+  ];
   const [step, setStep] = useState(0);
-  const [profileName, setProfileName] = useState(initialName);
+  const [profileName, setProfileName] = useState(initialName ?? defaultName);
   const [formData, setFormData] = useState<CvData>(() =>
     mergeInitial(initialData),
   );
@@ -108,7 +106,7 @@ export function CvBuilderWizard({
       if (!saving) {
         setStep(0);
         setFormData(mergeInitial(initialData));
-        setProfileName(initialName);
+        setProfileName(initialName ?? defaultName);
       }
     }
     onOpenChange(v);
@@ -138,7 +136,7 @@ export function CvBuilderWizard({
     if (!isStep0Valid(formData)) return;
     setSaving(true);
     try {
-      await onSave(profileName.trim() || "Mon CV", formData);
+      await onSave(profileName.trim() || defaultName, formData);
       onOpenChange(false);
     } finally {
       setSaving(false);
@@ -150,7 +148,7 @@ export function CvBuilderWizard({
       <DialogContent className="max-w-xl bg-white max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-slate-900">
-            {initialData ? "Modifier le profil CV" : "Créer un profil CV"}
+            {initialData ? t("editTitle") : t("createTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -160,7 +158,7 @@ export function CvBuilderWizard({
             htmlFor="profile-name"
             className="text-xs whitespace-nowrap text-gray-500"
           >
-            Nom du profil :
+            {t("profileNameLabel")}
           </Label>
           <Input
             id="profile-name"
@@ -248,7 +246,7 @@ export function CvBuilderWizard({
             onClick={() => setStep((s) => s - 1)}
             disabled={step === 0}
           >
-            Précédent
+            {t("prev")}
           </Button>
 
           {step < STEPS.length - 1 ? (
@@ -258,7 +256,7 @@ export function CvBuilderWizard({
               disabled={!canNext}
               className="bg-gray-900 hover:bg-gray-700 text-white"
             >
-              Suivant
+              {t("next")}
             </Button>
           ) : (
             <Button
@@ -270,10 +268,10 @@ export function CvBuilderWizard({
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Sauvegarde...
+                  {t("saving")}
                 </>
               ) : (
-                "Sauvegarder le profil"
+                t("save")
               )}
             </Button>
           )}

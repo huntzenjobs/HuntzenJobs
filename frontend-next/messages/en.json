@@ -1952,7 +1952,22 @@
       "jobOfferPlaceholder": "Paste the full job description here (responsibilities, required skills, candidate profile...)..."
     },
     "wizard": {
-      "profileNamePlaceholder": "My main CV"
+      "profileNamePlaceholder": "My main CV",
+      "createTitle": "Create a CV profile",
+      "editTitle": "Edit CV profile",
+      "profileNameLabel": "Profile name:",
+      "defaultProfileName": "My CV",
+      "steps": {
+        "personalInfo": "Personal info",
+        "summary": "Summary",
+        "experiences": "Experience",
+        "education": "Education",
+        "skills": "Skills"
+      },
+      "prev": "Previous",
+      "next": "Next",
+      "saving": "Saving...",
+      "save": "Save profile"
     },
     "personalInfo": {
       "namePlaceholder": "Jane Smith",
