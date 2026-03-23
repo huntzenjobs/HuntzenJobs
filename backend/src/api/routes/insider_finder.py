@@ -6,24 +6,25 @@ from pydantic import BaseModel, Field
 
 from src.api.deps import get_user_id_from_token
 from src.api.middleware import limiter
-from src.services.recruiter_finder.insider_service import InsiderFinderService
+from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-service = InsiderFinderService()
+
+# Lazy init: avoid crash at import time if Groq/SerpAPI not configured
+_service = None
+
+def _get_service():
+    global _service
+    if _service is None:
+        from src.services.recruiter_finder.insider_service import InsiderFinderService
+        _service = InsiderFinderService()
+    return _service
 
 # ============================================================================
 # Schemas
 # ============================================================================
-
-class InsiderContact(BaseModel):
-    name: str
-    title: str
-    link: str
-    snippet: str
-    category: str
-    label: str
 
 class InsiderSearchRequest(BaseModel):
     job_title: str = Field(..., example="Data Analyst")
@@ -31,17 +32,11 @@ class InsiderSearchRequest(BaseModel):
     city: str | None = Field("", example="Paris")
     is_alternance: bool = Field(False, description="True if it is a student/work-study job")
 
-class InsiderSearchResponse(BaseModel):
-    success: bool
-    strategy: str
-    insiders: list[InsiderContact]
-    total_found: int
-
 # ============================================================================
 # Routes
 # ============================================================================
 
-@router.post("/find", response_model=InsiderSearchResponse)
+@router.post("/find")
 @limiter.limit("5/minute")
 async def find_insiders(
     http_request: Request,
@@ -58,27 +53,40 @@ async def find_insiders(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
         )
+
+    # Check SerpAPI key is configured
+    if not settings.get_serpapi_key():
+        logger.error("[InsiderFinderAPI] SERPAPI_KEY not configured")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Insider search is temporarily unavailable",
+        )
+
     try:
+        service = _get_service()
         result = await service.find_insiders(
             job_title=request.job_title,
             company=request.company,
             city=request.city or "",
-            is_alternance=request.is_alternance
+            is_alternance=request.is_alternance,
         )
 
         if not result.get("success"):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=result.get("error", "Failed to find insiders")
-            )
+            logger.warning(f"[InsiderFinderAPI] Search failed: {result.get('error')}")
+            return {
+                "success": False,
+                "strategy": "",
+                "insiders": [],
+                "total_found": 0,
+            }
 
         return result
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[InsiderFinderAPI] Unexpected error: {e}")
+        logger.error(f"[InsiderFinderAPI] {type(e).__name__}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail=f"Insider search failed: {type(e).__name__}",
         ) from None
