@@ -31,6 +31,33 @@ async def test_debug():
     }
 
 
+@router.post("/api/auth/test-email")
+async def test_email(authorization: str | None = Header(None)):
+    """Diagnostic Resend — admin only via token."""
+    user = get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Auth requise")
+    supabase = get_supabase_client()
+    profile = supabase.table("profiles").select("is_admin").eq("id", user["id"]).maybe_single().execute()
+    if not (profile.data and profile.data.get("is_admin")):
+        raise HTTPException(status_code=403, detail="Admin requis")
+    try:
+        import resend as resend_lib
+        resend_lib.api_key = settings.get_resend_api_key()
+        key = settings.get_resend_api_key()
+        key_preview = (key[:8] + "...") if key else "MISSING"
+        result = resend_lib.Emails.send({
+            "from": settings.from_email,
+            "to": [settings.admin_email],
+            "subject": "HuntZen — Test Resend",
+            "html": "<p>Resend fonctionne ✅</p>",
+        })
+        return {"success": True, "resend_id": str(result), "to": settings.admin_email, "api_key_preview": key_preview}
+    except Exception as e:
+        key = settings.get_resend_api_key()
+        return {"success": False, "error": str(e), "api_key_preview": (key[:8] + "...") if key else "MISSING"}
+
+
 def get_supabase_client() -> Client:
     """Get Supabase client (lazy initialization)."""
     return create_client(
