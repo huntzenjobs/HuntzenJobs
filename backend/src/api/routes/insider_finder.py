@@ -1,7 +1,7 @@
 
 import logging
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -48,31 +48,24 @@ async def find_insiders(
     Find company insiders (recruiters, colleagues) using AI strategy and Google/LinkedIn search.
     Requires authentication — calls SerpAPI/Google (paid service).
     """
-    user_id = get_user_id_from_token(authorization)
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required",
-        )
-
-    # Check SerpAPI key is configured
-    if not settings.get_serpapi_key():
-        logger.error("[InsiderFinderAPI] SERPAPI_KEY not configured")
-        return JSONResponse(
-            status_code=503,
-            content={"success": False, "detail": "Insider search is temporarily unavailable", "insiders": [], "total_found": 0},
-        )
-
     try:
+        user_id = get_user_id_from_token(authorization)
+        if not user_id:
+            return JSONResponse(
+                status_code=401,
+                content={"success": False, "detail": "Authentication required", "insiders": [], "total_found": 0},
+            )
+
+        # Check SerpAPI key is configured
+        serpapi_key = settings.get_serpapi_key()
+        if not serpapi_key:
+            logger.error("[InsiderFinderAPI] SERPAPI_KEY not configured")
+            return JSONResponse(
+                status_code=503,
+                content={"success": False, "detail": "Insider search is temporarily unavailable (SERPAPI_KEY missing)", "insiders": [], "total_found": 0},
+            )
+
         service = _get_service()
-    except Exception as e:
-        logger.error(f"[InsiderFinderAPI] Service init failed: {type(e).__name__}: {e}", exc_info=True)
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "detail": f"Service init failed: {type(e).__name__}", "insiders": [], "total_found": 0},
-        )
-
-    try:
         result = await service.find_insiders(
             job_title=request.job_title,
             company=request.company,
@@ -95,5 +88,5 @@ async def find_insiders(
         logger.error(f"[InsiderFinderAPI] {type(e).__name__}: {e}", exc_info=True)
         return JSONResponse(
             status_code=500,
-            content={"success": False, "detail": f"Insider search failed: {type(e).__name__}", "insiders": [], "total_found": 0},
+            content={"success": False, "detail": f"Insider search error: {type(e).__name__}: {str(e)[:200]}", "insiders": [], "total_found": 0},
         )
