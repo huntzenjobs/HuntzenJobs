@@ -147,7 +147,7 @@ export function SupportTicketForm() {
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent position="popper">
+            <SelectContent position="popper" className="z-[70]">
               <SelectItem value="bug">🐛 Bug</SelectItem>
               <SelectItem value="question">❓ Question</SelectItem>
               <SelectItem value="suggestion">💡 Suggestion</SelectItem>
@@ -160,7 +160,7 @@ export function SupportTicketForm() {
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent position="popper">
+            <SelectContent position="popper" className="z-[70]">
               <SelectItem value="low">🟢 Faible</SelectItem>
               <SelectItem value="normal">🟡 Normale</SelectItem>
               <SelectItem value="urgent">🔴 Urgente</SelectItem>
