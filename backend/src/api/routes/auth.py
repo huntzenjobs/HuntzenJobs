@@ -325,11 +325,29 @@ class WelcomeRequest(BaseModel):
 @limiter.limit("3/minute")
 async def send_welcome_email(request: Request, payload: WelcomeRequest):
     """Send welcome email after signup. Rate limited to 3/min to prevent email abuse."""
+    from src.services.admin_alerts import send_admin_alert
     from src.services.email import send_welcome
     try:
         send_welcome(to_email=payload.email, full_name=payload.full_name)
     except Exception as e:
         logger.warning(f"Welcome email failed (non-blocking): {e}")
+
+    # Notifier l'admin en temps reel
+    try:
+        await send_admin_alert(
+            subject=f"Nouvel inscrit : {payload.email}",
+            body=(
+                f"Nom : {payload.full_name or 'Non renseigne'}\n"
+                f"Email : {payload.email}\n"
+                f"Date : maintenant"
+            ),
+            severity="info",
+            skip_throttle=True,
+            category="new_user",
+        )
+    except Exception as e:
+        logger.warning(f"Admin alert new_user failed: {e}")
+
     return {"success": True}
 
 

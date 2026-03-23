@@ -57,11 +57,13 @@ export interface AdminUser {
       price_monthly: number;
     };
   };
-  usage_today?: {
-    cv_analyses_used: number;
-    coach_seconds_used: number;
-    job_searches_used: number;
+  usage_30d?: {
+    cv_analyses: number;
+    assistant_messages: number;
+    job_searches: number;
+    job_views: number;
   };
+  total_paid?: number;
 }
 
 export interface UsersResponse {

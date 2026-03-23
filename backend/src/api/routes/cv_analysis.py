@@ -389,6 +389,7 @@ async def cv_analysis_callback(
                     severity="info",
                     properties={"cv_id": cv_id},
                 )
+            user_email = None
             try:
                 import httpx
                 r = httpx.get(
@@ -397,12 +398,29 @@ async def cv_analysis_callback(
                     timeout=5,
                 )
                 if r.status_code == 200:
-                    email = r.json().get("email")
-                    if email:
+                    user_email = r.json().get("email")
+                    if user_email:
                         from src.services.email import send_cv_analysis_complete
-                        send_cv_analysis_complete(email)
+                        send_cv_analysis_complete(user_email)
             except Exception as email_err:
                 logger.warning(f"[CALLBACK] Email notification failed (non-blocking): {email_err}")
+
+            # Notifier l'admin
+            try:
+                from src.services.admin_alerts import send_admin_alert
+                await send_admin_alert(
+                    subject=f"CV analyse : {user_email or user_id}",
+                    body=(
+                        f"Utilisateur : {user_email or user_id}\n"
+                        f"CV ID : {cv_id}\n"
+                        f"Statut : termine avec succes"
+                    ),
+                    severity="info",
+                    skip_throttle=True,
+                    category="cv_analysis_completed",
+                )
+            except Exception as alert_err:
+                logger.warning(f"[CALLBACK] Admin alert failed: {alert_err}")
             return {
                 "success": True,
                 "quota_incremented": success,

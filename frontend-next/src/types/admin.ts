@@ -128,14 +128,15 @@ export interface AdminUserDetail {
 
 export interface AdminUserListItem extends AdminProfile {
   plan: (AdminSubscription & { subscription_plans: AdminPlanSummary }) | null;
-  usage_today:
+  usage_30d:
     | {
-        user_id: string;
-        cv_analyses_used: number;
-        coach_seconds_used: number;
-        job_searches_used: number;
+        cv_analyses: number;
+        assistant_messages: number;
+        job_searches: number;
+        job_views: number;
       }
     | Record<string, never>;
+  total_paid: number;
 }
 
 export interface AdminSearchUser {

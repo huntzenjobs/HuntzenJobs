@@ -124,6 +124,9 @@ export default function UsersTable() {
       "Nom",
       "Plan",
       "Statut",
+      "CV (30j)",
+      "Msg Coach (30j)",
+      "Revenu",
       "Inscrit le",
       "Fin abonnement",
     ];
@@ -132,6 +135,9 @@ export default function UsersTable() {
       u.full_name || "",
       planDisplay(u),
       u.status,
+      String(u.usage_30d?.cv_analyses ?? 0),
+      String(u.usage_30d?.assistant_messages ?? 0),
+      `${(u.total_paid ?? 0).toFixed(2)}€`,
       u.created_at ? new Date(u.created_at).toISOString().slice(0, 10) : "",
       u.plan?.current_period_end
         ? new Date(u.plan.current_period_end).toISOString().slice(0, 10)
@@ -254,7 +260,10 @@ export default function UsersTable() {
                     Statut
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Usage aujourd'hui
+                    Usage (30j)
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                    Revenu
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
                     Inscrit le
@@ -269,7 +278,7 @@ export default function UsersTable() {
                 {fetching && users.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 py-8 text-center text-muted-foreground"
                     >
                       Chargement...
@@ -278,7 +287,7 @@ export default function UsersTable() {
                 ) : users.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 py-8 text-center text-muted-foreground"
                     >
                       Aucun utilisateur trouvé
@@ -323,17 +332,21 @@ export default function UsersTable() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
-                        {user.usage_today ? (
+                        {user.usage_30d &&
+                        (user.usage_30d.cv_analyses > 0 ||
+                          user.usage_30d.assistant_messages > 0) ? (
                           <span>
-                            {user.usage_today.cv_analyses_used} CV ·{" "}
-                            {Math.round(
-                              (user.usage_today.coach_seconds_used || 0) / 60,
-                            )}
-                            min coach
+                            {user.usage_30d.cv_analyses} CV ·{" "}
+                            {user.usage_30d.assistant_messages} msg coach
                           </span>
                         ) : (
                           "—"
                         )}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {(user.total_paid ?? 0) > 0
+                          ? `${user.total_paid?.toFixed(2)}€`
+                          : "—"}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
                         {formatDate(user.created_at)}

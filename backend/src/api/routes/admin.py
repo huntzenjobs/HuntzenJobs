@@ -170,14 +170,48 @@ async def list_users(
                 if s.get("status") == "active" and uid not in subs_map:
                     subs_map[uid] = s
 
-        # Usage du jour
-        today = datetime.now(UTC).date().isoformat()
-        usage_map: dict[str, Any] = {}
+        # Usage agrégé sur 30 jours (pas juste today)
+        thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).date().isoformat()
+        usage_map: dict[str, dict[str, int]] = {}
         if user_ids:
             usage_result = supabase.table("usage_quotas").select(
-                "user_id, cv_analyses_used, coach_seconds_used, job_searches_used"
-            ).eq("quota_date", today).in_("user_id", user_ids).execute()
-            usage_map = {u["user_id"]: u for u in (usage_result.data or [])}
+                "user_id, cv_analyses_used, assistant_messages_used, "
+                "job_searches_used, job_views_used"
+            ).gte("quota_date", thirty_days_ago).in_("user_id", user_ids).execute()
+            for row in (usage_result.data or []):
+                uid = row["user_id"]
+                if uid not in usage_map:
+                    usage_map[uid] = {
+                        "cv_analyses": 0,
+                        "assistant_messages": 0,
+                        "job_searches": 0,
+                        "job_views": 0,
+                    }
+                usage_map[uid]["cv_analyses"] += row.get("cv_analyses_used") or 0
+                usage_map[uid]["assistant_messages"] += row.get("assistant_messages_used") or 0
+                usage_map[uid]["job_searches"] += row.get("job_searches_used") or 0
+                usage_map[uid]["job_views"] += row.get("job_views_used") or 0
+
+        # Revenue par user (prix mensuel * mois actif)
+        revenue_map: dict[str, float] = {}
+        if user_ids:
+            all_subs = supabase.table("user_subscriptions").select(
+                "user_id, created_at, canceled_at, subscription_plans(price_monthly)"
+            ).in_("user_id", user_ids).in_(
+                "status", ["active", "canceled"]
+            ).execute()
+            now = datetime.now(UTC)
+            for s in (all_subs.data or []):
+                uid = s["user_id"]
+                plan_price = (s.get("subscription_plans") or {}).get("price_monthly", 0)
+                try:
+                    start = datetime.fromisoformat(s["created_at"].replace("Z", "+00:00"))
+                    end_str = s.get("canceled_at")
+                    end = datetime.fromisoformat(end_str.replace("Z", "+00:00")) if end_str else now
+                    months = max(1, (end - start).days / 30)
+                    revenue_map[uid] = revenue_map.get(uid, 0) + plan_price * months
+                except Exception:
+                    pass
 
         # Merge
         users = []
@@ -193,7 +227,8 @@ async def list_users(
             users.append({
                 **user,
                 "plan": active_sub,
-                "usage_today": usage_map.get(user["id"], {}),
+                "usage_30d": usage_map.get(user["id"], {}),
+                "total_paid": round(revenue_map.get(user["id"], 0), 2),
             })
 
         return {

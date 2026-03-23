@@ -62,6 +62,11 @@ ALERT_CATEGORIES = {
         "description": "Email quand une analyse CV est terminee (Modal Labs callback)",
         "default": True,
     },
+    "coach_used": {
+        "label": "Coach utilise",
+        "description": "Email quand un utilisateur utilise le coach IA pour la premiere fois",
+        "default": True,
+    },
     "error": {
         "label": "Erreurs critiques",
         "description": "Email pour les erreurs systeme critiques",

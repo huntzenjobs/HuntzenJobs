@@ -94,6 +94,111 @@ async def retention_notifications(authorization: str | None = Header(None)):
 # POST /api/cron/purge-events (D6)
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# POST /api/cron/daily-admin-digest
+# ---------------------------------------------------------------------------
+
+@router.post("/daily-admin-digest")
+async def daily_admin_digest(authorization: str | None = Header(None)):
+    """
+    Resume quotidien envoye a l'admin : inscrits, paiements, usage, MRR.
+    Envoye meme si 0 activite (heartbeat).
+    """
+    _verify_cron_secret(authorization)
+
+    supabase = get_supabase_client()
+    today = datetime.now(UTC).date().isoformat()
+
+    try:
+        # Nouveaux inscrits aujourd'hui
+        signups = supabase.table("profiles").select(
+            "email, full_name"
+        ).gte("created_at", f"{today}T00:00:00Z").execute()
+        signup_list = signups.data or []
+
+        # Paiements recus (nouvelles souscriptions aujourd'hui)
+        new_subs = supabase.table("user_subscriptions").select(
+            "user_id, subscription_plans(display_name, price_monthly)"
+        ).eq("status", "active").gte("created_at", f"{today}T00:00:00Z").execute()
+        new_sub_list = new_subs.data or []
+        revenue_today = sum(
+            (s.get("subscription_plans") or {}).get("price_monthly", 0)
+            for s in new_sub_list
+        )
+
+        # Usage agrege du jour
+        usage = supabase.table("usage_quotas").select(
+            "cv_analyses_used, assistant_messages_used, job_searches_used"
+        ).eq("quota_date", today).execute()
+        total_cv = sum(r.get("cv_analyses_used", 0) for r in (usage.data or []))
+        total_msgs = sum(r.get("assistant_messages_used", 0) for r in (usage.data or []))
+        total_searches = sum(r.get("job_searches_used", 0) for r in (usage.data or []))
+        active_users = len(usage.data or [])
+
+        # MRR snapshot
+        all_active = supabase.table("user_subscriptions").select(
+            "subscription_plans(price_monthly)"
+        ).eq("status", "active").execute()
+        mrr = sum(
+            (s.get("subscription_plans") or {}).get("price_monthly", 0)
+            for s in (all_active.data or [])
+        )
+
+        # Construire l'email
+        signup_lines = ""
+        if signup_list:
+            for s in signup_list:
+                signup_lines += f"  - {s.get('email', '?')} ({s.get('full_name') or 'pas de nom'})\n"
+        else:
+            signup_lines = "  Aucun\n"
+
+        sub_lines = ""
+        if new_sub_list:
+            for s in new_sub_list:
+                plan = (s.get("subscription_plans") or {})
+                sub_lines += f"  - {plan.get('display_name', '?')} ({plan.get('price_monthly', 0)}EUR/mois)\n"
+        else:
+            sub_lines = "  Aucun\n"
+
+        body = (
+            f"=== RESUME QUOTIDIEN HUNTZEN — {today} ===\n\n"
+            f"INSCRIPTIONS ({len(signup_list)})\n{signup_lines}\n"
+            f"PAIEMENTS ({len(new_sub_list)}) — {revenue_today:.2f}EUR\n{sub_lines}\n"
+            f"USAGE DU JOUR\n"
+            f"  Utilisateurs actifs : {active_users}\n"
+            f"  CV analyses : {total_cv}\n"
+            f"  Messages coach : {total_msgs}\n"
+            f"  Recherches emploi : {total_searches}\n\n"
+            f"MRR ACTUEL : {mrr:.2f}EUR/mois\n\n"
+        )
+
+        if not signup_list and not new_sub_list and active_users == 0:
+            body += "Aucune activite aujourd'hui. Le systeme fonctionne normalement.\n"
+
+        from src.services.admin_alerts import send_admin_alert
+        await send_admin_alert(
+            subject=f"Resume quotidien — {len(signup_list)} inscrits, {len(new_sub_list)} paiements, MRR {mrr:.2f}EUR",
+            body=body,
+            severity="info",
+            skip_throttle=True,
+            category="",
+        )
+
+        logger.info(f"[cron] daily-admin-digest sent: {len(signup_list)} signups, {len(new_sub_list)} subs, MRR={mrr}")
+        return {
+            "success": True,
+            "signups": len(signup_list),
+            "new_subscriptions": len(new_sub_list),
+            "revenue_today": revenue_today,
+            "mrr": mrr,
+            "active_users": active_users,
+        }
+
+    except Exception as e:
+        logger.error(f"[cron] daily-admin-digest failed: {e}")
+        raise HTTPException(status_code=500, detail="Digest failed") from None
+
+
 @router.post("/purge-events")
 async def purge_events(authorization: str | None = Header(None)):
     """

@@ -291,6 +291,7 @@ async def coach_chat(
 
     # Tracking événement coach (best-effort)
     prenom = (current_user.get("email", "") or "").split("@")[0].capitalize() or "Un utilisateur"
+    user_email = current_user.get("email", "inconnu")
     history = get_session_history(data.session_id)
     questions_count = len([m for m in history if m.get("role") == "user"])
     log_event(
@@ -303,6 +304,24 @@ async def coach_chat(
         severity="info",
         properties={"assistant_type": "coach", "questions_count": questions_count},
     )
+
+    # Notifier l'admin au premier message coach de cet utilisateur
+    if questions_count == 1:
+        try:
+            from src.services.admin_alerts import send_admin_alert
+            await send_admin_alert(
+                subject=f"Premier message coach : {user_email}",
+                body=(
+                    f"Utilisateur : {prenom} ({user_email})\n"
+                    f"Coach : {data.assistant_type}\n"
+                    f"Date : maintenant"
+                ),
+                severity="info",
+                skip_throttle=True,
+                category="coach_used",
+            )
+        except Exception as e:
+            logger.warning(f"Admin alert coach_used failed: {e}")
 
     return CoachResponse(
         success=True,

@@ -638,6 +638,7 @@ async def handle_checkout_completed(session: dict[str, Any]):
             subject=f"Nouvelle conversion — {plan_name}",
             body=f"User {user_id} vient de passer au plan {plan_name}.\nStripe sub: {stripe_subscription_id}",
             severity="info",
+            skip_throttle=True,
             category="new_subscription",
         )
 
@@ -805,6 +806,7 @@ async def handle_subscription_deleted(subscription: dict[str, Any]):
                     subject="Résiliation abonnement",
                     body=f"User {user_id} a annulé.\nStripe sub: {stripe_subscription_id}",
                     severity="warning",
+                    skip_throttle=True,
                     category="cancellation",
                 )
 
