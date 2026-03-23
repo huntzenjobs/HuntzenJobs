@@ -74,6 +74,9 @@ async def track_click(request: Request, body: TrackClickRequest):
     """Increment click counter for a referral code (called by frontend on landing)."""
     try:
         supabase = get_supabase_client()
+        if not supabase:
+            logger.error("[REFERRAL] track_click: supabase client is None")
+            return {"ok": False, "error": "db_unavailable"}
 
         ref_res = supabase.table("referrals") \
             .select("id, total_clicks") \
@@ -83,18 +86,20 @@ async def track_click(request: Request, body: TrackClickRequest):
             .execute()
 
         if not ref_res.data:
+            logger.info(f"[REFERRAL] track_click: code {body.code} not found or inactive")
             return {"ok": False, "error": "invalid_code"}
 
-        # Optimistic locking : update seulement si total_clicks n'a pas changé
-        old_clicks = ref_res.data["total_clicks"]
+        # Increment total_clicks
+        ref_id = ref_res.data["id"]
+        old_clicks = ref_res.data.get("total_clicks", 0)
         supabase.table("referrals").update({
             "total_clicks": old_clicks + 1,
-        }).eq("id", ref_res.data["id"]).eq("total_clicks", old_clicks).execute()
+        }).eq("id", ref_id).execute()
 
         return {"ok": True}
 
     except Exception as e:
-        logger.error(f"[REFERRAL] track_click error: {e}")
+        logger.error(f"[REFERRAL] track_click error: {type(e).__name__}: {e}", exc_info=True)
         return {"ok": False, "error": "internal_error"}
 
 
@@ -145,8 +150,17 @@ async def register_referral(request: Request, body: RegisterReferralRequest):
                 "total_signups": old_signups + 1,
             }).eq("id", ref["id"]).eq("total_signups", old_signups).execute()
 
-            # Auto-apply tier reward si un nouveau palier est atteint
+            # Notifier le parrain
             new_signups = old_signups + 1
+            create_notification(
+                supabase,
+                user_id=ref["referrer_id"],
+                type="referral_signup",
+                title="Nouveau filleul !",
+                body=f"Quelqu'un s'est inscrit via votre lien de parrainage. Total : {new_signups} inscrit(s).",
+            )
+
+            # Auto-apply tier reward si un nouveau palier est atteint
             await _auto_apply_tier_rewards(supabase, ref["referrer_id"], new_signups)
 
             logger.info(f"[REFERRAL] User {body.new_user_id} registered via code {body.code}")
