@@ -20,6 +20,7 @@ import {
   Receipt,
   Zap,
   Mail,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -369,8 +370,18 @@ export default function UserDetailDrawer({
             {/* Usage today + reset */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Usage — 30 derniers jours
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Timer de recharge + bouton reset */}
+                <div className="flex items-center justify-between mb-3 p-2 rounded-lg bg-muted/40 border border-border">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5 text-orange-400" />
+                    <span>Recharge dans</span>
+                    <QuotaResetTimer />
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
@@ -381,11 +392,9 @@ export default function UserDetailDrawer({
                     <RotateCcw
                       className={`h-3 w-3 mr-1 ${resettingUsage ? "animate-spin" : ""}`}
                     />
-                    Reset aujourd'hui
+                    Remettre à zéro
                   </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </div>
                 {detail.usage_30d.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
                     Aucune activité enregistrée.
@@ -637,4 +646,25 @@ export default function UserDetailDrawer({
       </SheetContent>
     </Sheet>
   );
+}
+
+function QuotaResetTimer() {
+  const [label, setLabel] = useState("");
+
+  useEffect(() => {
+    const compute = () => {
+      const now = new Date();
+      const next = new Date();
+      next.setUTCHours(24, 0, 0, 0);
+      const diff = next.getTime() - now.getTime();
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      setLabel(`${h}h ${m}m`);
+    };
+    compute();
+    const id = setInterval(compute, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  return <span className="font-semibold text-foreground">{label}</span>;
 }
