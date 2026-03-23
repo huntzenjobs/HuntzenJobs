@@ -578,16 +578,22 @@ async def create_user(
             raise HTTPException(status_code=409, detail="Un compte avec cet email existe déjà")
 
         # 2. Create user via Supabase Admin API
-        user_response = supabase.auth.admin.create_user({
-            "email": body.email,
-            "email_confirm": True,
-            "user_metadata": {"full_name": body.full_name},
-        })
-
-        if not user_response.user:
-            raise HTTPException(status_code=500, detail="Échec de la création du compte")
-
-        new_user_id = user_response.user.id
+        try:
+            user_response = supabase.auth.admin.create_user({
+                "email": body.email,
+                "email_confirm": True,
+                "user_metadata": {"full_name": body.full_name},
+            })
+            # supabase-py v2: response can be AdminUserResponse or dict
+            if hasattr(user_response, "user") and user_response.user:
+                new_user_id = str(user_response.user.id)
+            elif isinstance(user_response, dict) and user_response.get("user"):
+                new_user_id = str(user_response["user"]["id"])
+            else:
+                raise ValueError(f"Unexpected response: {user_response}")
+        except Exception as create_err:
+            logger.error(f"Supabase create_user failed: {create_err}")
+            raise HTTPException(status_code=500, detail=f"Échec de la création du compte: {create_err}") from None
 
         # 3. Create profile entry
         supabase.table("profiles").upsert({
@@ -627,7 +633,13 @@ async def create_user(
                 })
                 invite_sent = True
             except Exception as e:
-                logger.warning(f"Failed to send invite to {body.email}: {e}")
+                logger.warning(f"Failed to generate invite link for {body.email}: {e}")
+                # Fallback: try invite_user_by_email
+                try:
+                    supabase.auth.admin.invite_user_by_email(body.email)
+                    invite_sent = True
+                except Exception as e2:
+                    logger.warning(f"Fallback invite also failed for {body.email}: {e2}")
 
         _log_admin_action(supabase, admin["id"], "admin.user_created", new_user_id, {
             "email": body.email,
