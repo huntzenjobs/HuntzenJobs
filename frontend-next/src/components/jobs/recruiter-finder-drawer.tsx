@@ -234,7 +234,8 @@ export function RecruiterFinderDrawer({
 
       if (response.status === 429) {
         setQuotaError(true);
-        toast.error(tJobs("toasts.quotaReached"));
+        setSearched(false);
+        toast.error(tJobs("toasts.quotaReachedRecruiter"));
         return;
       }
 
@@ -304,13 +305,20 @@ export function RecruiterFinderDrawer({
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <p className="text-sm text-gray-500">
-                {tJobs("recruiterFinderDescription")}
-              </p>
+              {quotaError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  {tJobs("toasts.quotaReachedRecruiter")}
+                </div>
+              )}
+              {!quotaError && (
+                <p className="text-sm text-gray-500">
+                  {tJobs("recruiterFinderDescription")}
+                </p>
+              )}
               <Button
                 onClick={handleSearch}
                 className="bg-gradient-to-r from-blue-600 to-violet-600 text-white w-full"
-                disabled={loading || !companyName.trim()}
+                disabled={loading || !companyName.trim() || quotaError}
               >
                 {loading ? (
                   <>
