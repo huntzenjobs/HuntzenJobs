@@ -222,9 +222,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
       if (!response.ok) {
         // Handle 401 - Token expired, use centralized refresh service
         if (response.status === 401) {
-          console.warn(
-            "[SubscriptionAPI] Token expired (401), getting new token...",
-          );
+          if (isDev)
+            console.warn(
+              "[SubscriptionAPI] Token expired (401), getting new token...",
+            );
 
           const newToken = await tokenRefreshService.getValidToken();
 
@@ -232,9 +233,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
             // Fallback to persistent cache — never drop to "free"
             const cachedData = loadPersistentCache();
             if (cachedData) {
-              console.warn(
-                "[SubscriptionAPI] Using persistent cache after token refresh failed",
-              );
+              if (isDev)
+                console.warn(
+                  "[SubscriptionAPI] Using persistent cache after token refresh failed",
+                );
               setData({
                 user: cachedData.user,
                 subscription: cachedData.subscription,
@@ -337,12 +339,13 @@ export function useSubscriptionApi(): SubscriptionApiData {
         isFromCache: false,
       });
     } catch (error) {
-      console.error("[SubscriptionAPI] Fetch error:", error);
+      if (isDev) console.error("[SubscriptionAPI] Fetch error:", error);
 
       // Fallback to persistent cache — never drop to "free" on transient errors
       const cachedData = loadPersistentCache();
       if (cachedData) {
-        console.warn("[SubscriptionAPI] Using persistent cache as fallback");
+        if (isDev)
+          console.warn("[SubscriptionAPI] Using persistent cache as fallback");
         setData({
           user: cachedData.user,
           subscription: cachedData.subscription,
