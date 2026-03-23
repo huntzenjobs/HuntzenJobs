@@ -14,6 +14,7 @@ import {
   Sparkles,
   RotateCcw,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -21,6 +22,7 @@ import { ScoreRing } from "@/components/cv/score-ring";
 import { CVInfoPanel } from "@/components/cv/cv-info-panel";
 import { ResultsAccordion } from "@/components/cv/results-accordion";
 import { CVComparison } from "@/components/cv/cv-comparison";
+import { useOptionalSubscription } from "@/contexts/subscription-context";
 import type { CVAnalysisResult } from "@/hooks/use-cv-history";
 import { cn } from "@/lib/utils";
 
@@ -136,6 +138,9 @@ export function Step3Results({
   const router = useRouter();
   const t = useTranslations("cv");
   const [showComparison, setShowComparison] = useState(false);
+  const subscription = useOptionalSubscription();
+  const hasCvDetails =
+    subscription?.hasFeature("has_cv_details" as never) ?? true;
 
   // Loading state
   if (loading) {
@@ -190,7 +195,7 @@ export function Step3Results({
           className="gap-2"
         >
           <Download className="h-4 w-4" />
-          Exporter PDF
+          {t("results.exportPdf")}
           {!hasFeatures.hasPDFExport && (
             <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded">
               PRO
@@ -207,7 +212,7 @@ export function Step3Results({
             className="gap-2"
           >
             <GitCompare className="h-4 w-4" />
-            Comparer
+            {t("results.compare")}
           </Button>
         )}
       </div>
@@ -222,12 +227,13 @@ export function Step3Results({
         currentScore={result.score}
       />
 
-      {/* Offres recommandées */}
-      {result.recommended_job_titles &&
+      {/* Offres recommandées — gated pour free */}
+      {hasCvDetails &&
+        result.recommended_job_titles &&
         result.recommended_job_titles.length > 0 && (
           <div className="space-y-3 pt-2">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Postes recommandés pour votre profil
+              {t("results.recommendedJobs")}
             </h3>
             <div className="flex flex-wrap gap-2">
               {result.recommended_job_titles.map((title) => (
@@ -254,17 +260,28 @@ export function Step3Results({
           className="gap-2 w-full sm:w-auto"
         >
           <RotateCcw className="h-4 w-4" />
-          Nouvelle analyse
+          {t("results.newAnalysis")}
         </Button>
 
-        <Button
-          size="lg"
-          onClick={() => router.push("/coach")}
-          className="gap-2 w-full sm:w-auto bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:shadow-lg transition-all"
-        >
-          <Sparkles className="h-4 w-4" />
-          Améliorer avec Coach IA
-        </Button>
+        {hasCvDetails ? (
+          <Button
+            size="lg"
+            onClick={() => router.push("/coach")}
+            className="gap-2 w-full sm:w-auto bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:shadow-lg transition-all"
+          >
+            <Sparkles className="h-4 w-4" />
+            {t("results.improveWithCoach")}
+          </Button>
+        ) : (
+          <Button
+            size="lg"
+            onClick={() => onOpenPricingModal?.("has_cv_details")}
+            className="gap-2 w-full sm:w-auto bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg"
+          >
+            <Lock className="h-4 w-4" />
+            {t("results.lockedCta")}
+          </Button>
+        )}
       </div>
 
       {/* Comparison Dialog */}

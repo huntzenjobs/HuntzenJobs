@@ -5,7 +5,7 @@
 
 "use client";
 
-import { TrendingUp, TrendingDown, Lightbulb } from "lucide-react";
+import { TrendingUp, TrendingDown, Lightbulb, Lock } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -13,6 +13,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   ScoreBreakdownV2,
   type BreakdownItem,
@@ -21,6 +22,7 @@ import {
   ActionableSuggestions,
   type Suggestion,
 } from "@/components/cv/actionable-suggestions";
+import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
@@ -106,6 +108,44 @@ function StrengthsWeaknessesGrid({
 }
 
 // ============================================================================
+// LOCKED OVERLAY — shown when has_cv_details is false
+// ============================================================================
+
+function LockedOverlay({ onUpgrade }: { onUpgrade: () => void }) {
+  const t = useTranslations("cv.results");
+  return (
+    <div className="relative">
+      {/* Blurred placeholder content */}
+      <div className="blur-sm pointer-events-none select-none opacity-50 px-6 py-4">
+        <div className="space-y-3">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
+          <div className="h-4 bg-gray-200 rounded w-2/3" />
+          <div className="h-4 bg-gray-200 rounded w-1/3" />
+        </div>
+      </div>
+
+      {/* CTA overlay */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-[2px]">
+        <div className="flex flex-col items-center gap-3 p-6 text-center max-w-sm">
+          <div className="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center">
+            <Lock className="h-6 w-6 text-violet-600" />
+          </div>
+          <h4 className="font-semibold text-gray-900">{t("lockedTitle")}</h4>
+          <p className="text-sm text-gray-500">{t("lockedDescription")}</p>
+          <Button
+            onClick={onUpgrade}
+            className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg"
+          >
+            {t("lockedCta")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -118,13 +158,22 @@ export function ResultsAccordion({
   className,
 }: ResultsAccordionProps) {
   const t = useTranslations("cv.results");
+  const subscription = useOptionalSubscription();
+  const hasCvDetails =
+    subscription?.hasFeature("has_cv_details" as never) ?? true;
+  const openPricingModal = subscription?.openPricingModal || (() => {});
+
   return (
     <Accordion
       type="multiple"
-      defaultValue={["breakdown", "strengths-weaknesses", "suggestions"]}
+      defaultValue={
+        hasCvDetails
+          ? ["breakdown", "strengths-weaknesses", "suggestions"]
+          : ["breakdown"]
+      }
       className={cn("space-y-3", className)}
     >
-      {/* Section 1: Score Breakdown */}
+      {/* Section 1: Score Breakdown — always visible (teaser) */}
       <AccordionItem
         value="breakdown"
         className="border-2 rounded-xl bg-white overflow-hidden"
@@ -156,7 +205,7 @@ export function ResultsAccordion({
         </AccordionContent>
       </AccordionItem>
 
-      {/* Section 2: Strengths & Weaknesses */}
+      {/* Section 2: Strengths & Weaknesses — locked for free */}
       <AccordionItem
         value="strengths-weaknesses"
         className="border-2 rounded-xl bg-white overflow-hidden"
@@ -181,22 +230,33 @@ export function ResultsAccordion({
             <span className="text-lg font-semibold text-gray-900">
               {t("strengthsAndWeaknesses")}
             </span>
-            <Badge variant="outline" className="ml-auto">
-              {t("elementsCount", {
-                count: strengths.length + weaknesses.length,
-              })}
-            </Badge>
+            {!hasCvDetails && (
+              <Lock className="h-4 w-4 text-gray-400 ml-auto" />
+            )}
+            {hasCvDetails && (
+              <Badge variant="outline" className="ml-auto">
+                {t("elementsCount", {
+                  count: strengths.length + weaknesses.length,
+                })}
+              </Badge>
+            )}
           </div>
         </AccordionTrigger>
-        <AccordionContent className="px-6 py-4 border-t-2">
-          <StrengthsWeaknessesGrid
-            strengths={strengths}
-            weaknesses={weaknesses}
-          />
+        <AccordionContent className="border-t-2">
+          {hasCvDetails ? (
+            <div className="px-6 py-4">
+              <StrengthsWeaknessesGrid
+                strengths={strengths}
+                weaknesses={weaknesses}
+              />
+            </div>
+          ) : (
+            <LockedOverlay onUpgrade={openPricingModal} />
+          )}
         </AccordionContent>
       </AccordionItem>
 
-      {/* Section 3: Actionable Suggestions */}
+      {/* Section 3: Actionable Suggestions — locked for free */}
       <AccordionItem
         value="suggestions"
         className="border-2 rounded-xl bg-white overflow-hidden"
@@ -209,16 +269,27 @@ export function ResultsAccordion({
             <span className="text-lg font-semibold text-gray-900">
               {t("suggestionsTitle")}
             </span>
-            <Badge variant="outline" className="ml-auto">
-              {t("actionsCount", { count: suggestions.length })}
-            </Badge>
+            {!hasCvDetails && (
+              <Lock className="h-4 w-4 text-gray-400 ml-auto" />
+            )}
+            {hasCvDetails && (
+              <Badge variant="outline" className="ml-auto">
+                {t("actionsCount", { count: suggestions.length })}
+              </Badge>
+            )}
           </div>
         </AccordionTrigger>
-        <AccordionContent className="px-6 py-4 border-t-2">
-          <ActionableSuggestions
-            suggestions={suggestions}
-            currentScore={currentScore}
-          />
+        <AccordionContent className="border-t-2">
+          {hasCvDetails ? (
+            <div className="px-6 py-4">
+              <ActionableSuggestions
+                suggestions={suggestions}
+                currentScore={currentScore}
+              />
+            </div>
+          ) : (
+            <LockedOverlay onUpgrade={openPricingModal} />
+          )}
         </AccordionContent>
       </AccordionItem>
     </Accordion>

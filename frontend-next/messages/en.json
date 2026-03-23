@@ -1492,7 +1492,15 @@
       "strengths": "Strengths",
       "weaknesses": "Areas for improvement",
       "suggestionsTitle": "Improvement suggestions",
-      "actionsCount": "{count} actions"
+      "actionsCount": "{count} actions",
+      "lockedTitle": "Premium content",
+      "lockedDescription": "Upgrade to a paid plan to see your full CV analysis: strengths, weaknesses, and personalized suggestions.",
+      "lockedCta": "Unlock details",
+      "recommendedJobs": "Recommended positions for your profile",
+      "newAnalysis": "New analysis",
+      "improveWithCoach": "Improve with AI Coach",
+      "exportPdf": "Export PDF",
+      "compare": "Compare"
     },
     "comparison": {
       "needTwoAnalyses": "You need at least 2 analyses to use the comparison",

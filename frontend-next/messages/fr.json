@@ -1650,7 +1650,15 @@
       "strengths": "Points forts",
       "weaknesses": "Points à améliorer",
       "suggestionsTitle": "Suggestions d'amélioration",
-      "actionsCount": "{count} actions"
+      "actionsCount": "{count} actions",
+      "lockedTitle": "Contenu reserve aux abonnes",
+      "lockedDescription": "Passez a un plan payant pour voir les details de votre analyse CV : points forts, points faibles et suggestions personnalisees.",
+      "lockedCta": "Debloquer les details",
+      "recommendedJobs": "Postes recommandes pour votre profil",
+      "newAnalysis": "Nouvelle analyse",
+      "improveWithCoach": "Ameliorer avec Coach IA",
+      "exportPdf": "Exporter PDF",
+      "compare": "Comparer"
     },
     "comparison": {
       "needTwoAnalyses": "Vous devez avoir au moins 2 analyses pour utiliser la comparaison",
