@@ -586,6 +586,8 @@ export default function JobsPage() {
    * @see https://tanstack.com/query/latest/docs/react/guides/caching
    */
   const hasIncrementedQuotaRef = useRef(false);
+  const isRestoringFromCacheRef = useRef(false);
+  const lastFetchTimeRef = useRef(0);
 
   // Reset to page 1 when search changes
   useEffect(() => {
@@ -614,6 +616,8 @@ export default function JobsPage() {
       const { jobs: cachedJobs, query, timestamp } = JSON.parse(raw);
       const isRecent = Date.now() - timestamp < 15 * 60 * 1000;
       if (isRecent && query.jobTitle === q) {
+        isRestoringFromCacheRef.current = true;
+        hasIncrementedQuotaRef.current = true; // Don't count cache restoration as usage
         setJobs(cachedJobs);
         setJobSearchParams({
           query: q,
@@ -688,39 +692,40 @@ export default function JobsPage() {
    * This allows a new search with different params to increment quota again.
    */
   useEffect(() => {
-    hasIncrementedQuotaRef.current = false;
+    // Only reset if this is a genuinely NEW search (not a cache restoration)
+    if (!isRestoringFromCacheRef.current) {
+      hasIncrementedQuotaRef.current = false;
+    }
+    isRestoringFromCacheRef.current = false;
   }, [jobSearchParams]);
 
   /**
    * Increments user's job_search quota when a NEW fetch completes successfully.
    *
    * Rules:
-   * - ✅ Count on first successful fetch
-   * - ❌ Don't count on cache hits (isFetched && !isFetching check)
-   * - ✅ Count on refetch after staleTime expiration
+   * - ✅ Count on first successful NEW fetch only
+   * - ❌ Don't count on cache hits / page reloads / cache restoration
    * - ❌ Don't count on API errors (isSuccess check)
-   *
-   * @example
-   * // First search: "dev" → Quota++
-   * // Repeat search: "dev" → Quota unchanged (cache hit)
-   * // New search: "designer" → Quota++
    */
   useEffect(() => {
     if (
-      searchQuery.isSuccess && // Fetch succeeded
-      searchQuery.data && // Data available
-      searchQuery.isFetched && // At least 1 fetch completed
-      !searchQuery.isFetching && // Not currently fetching
-      !hasIncrementedQuotaRef.current // Not already counted
+      searchQuery.isSuccess &&
+      searchQuery.data &&
+      searchQuery.isFetched &&
+      !searchQuery.isFetching &&
+      !hasIncrementedQuotaRef.current &&
+      searchQuery.dataUpdatedAt > lastFetchTimeRef.current // Only count genuinely new data
     ) {
       incrementUsage("job_search");
       hasIncrementedQuotaRef.current = true;
+      lastFetchTimeRef.current = searchQuery.dataUpdatedAt;
     }
   }, [
     searchQuery.isSuccess,
     searchQuery.data,
     searchQuery.isFetched,
     searchQuery.isFetching,
+    searchQuery.dataUpdatedAt,
     incrementUsage,
   ]);
 

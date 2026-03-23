@@ -387,9 +387,7 @@ async def search_jobs(
             ),
             ai_insights=None,
         )
-        if user_id:
-            _increment_job_search_quota(user_id)
-            await invalidate_user_quota_cache(user_id)
+        # Cache hit : ne PAS incrémenter le quota (même recherche, pas de nouvelle consommation)
         return response
 
     # ── Cache MISS : executer la recherche ──
