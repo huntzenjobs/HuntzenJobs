@@ -143,6 +143,8 @@ export const featureFlags = {
 // FEATURE FLAG UTILITIES
 // ============================================================================
 
+const isDev = process.env.NODE_ENV === "development";
+
 /**
  * Check if a feature is enabled
  * @param feature - Feature flag key
@@ -288,41 +290,36 @@ export const shouldEnableForUser = (
  * Log feature flag state (debug mode only)
  */
 export const logFeatureFlags = (): void => {
-  if (!featureFlags.enableDebugMode) return;
+  if (!isDev || !featureFlags.enableDebugMode) return;
 
-  if (process.env.NODE_ENV === "development") {
-    console.group("Feature Flags");
-    console.table(featureFlags);
-    console.groupEnd();
-  }
+  console.group("Feature Flags");
+  console.table(featureFlags);
+  console.groupEnd();
 };
 
 /**
  * Log rollout configuration (debug mode only)
  */
 export const logRolloutConfig = (userId: string): void => {
-  if (process.env.NODE_ENV !== "development") return;
-  if (!featureFlags.enableDebugMode) return;
+  if (!isDev || !featureFlags.enableDebugMode) return;
 
   const phase = getCurrentPhase();
 
-  if (process.env.NODE_ENV === "development") {
-    console.group(`Rollout Configuration (Phase: ${phase})`);
-    console.log("User ID:", userId);
-    console.log(
-      "Jobs V2:",
-      shouldEnableForUser(userId, "jobsV2") ? "Enabled" : "Disabled",
-    );
-    console.log(
-      "Coach V2:",
-      shouldEnableForUser(userId, "coachV2") ? "Enabled" : "Disabled",
-    );
-    console.log(
-      "CV Analysis V2:",
-      shouldEnableForUser(userId, "cvAnalysisV2") ? "Enabled" : "Disabled",
-    );
-    console.groupEnd();
-  }
+  console.group(`Rollout Configuration (Phase: ${phase})`);
+  console.log("User ID:", userId);
+  console.log(
+    "Jobs V2:",
+    shouldEnableForUser(userId, "jobsV2") ? "Enabled" : "Disabled",
+  );
+  console.log(
+    "Coach V2:",
+    shouldEnableForUser(userId, "coachV2") ? "Enabled" : "Disabled",
+  );
+  console.log(
+    "CV Analysis V2:",
+    shouldEnableForUser(userId, "cvAnalysisV2") ? "Enabled" : "Disabled",
+  );
+  console.groupEnd();
 };
 
 // ============================================================================
