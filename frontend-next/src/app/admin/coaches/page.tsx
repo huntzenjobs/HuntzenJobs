@@ -59,7 +59,7 @@ export default function AdminCoachesPage() {
         <div className="space-y-4">
           {coaches.map((coach) => (
             <CoachCardEditor
-              key={coach.id}
+              key={`${coach.id}-${coach.updated_at ?? ""}`}
               coach={coach}
               onUpdate={async (id, payload) => {
                 const ok = await updateCoach(id, payload);
@@ -84,10 +84,7 @@ export default function AdminCoachesPage() {
 
 interface CoachCardEditorProps {
   coach: AdminCoach;
-  onUpdate: (
-    id: string,
-    payload: Record<string, unknown>,
-  ) => Promise<boolean>;
+  onUpdate: (id: string, payload: Record<string, unknown>) => Promise<boolean>;
   onTranslate: (id: string) => Promise<boolean>;
   saving: boolean;
 }
@@ -256,9 +253,7 @@ function CoachCardEditor({
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>
-              Modifier {coach.persona_name}
-            </DialogTitle>
+            <DialogTitle>Modifier {coach.persona_name}</DialogTitle>
             <DialogDescription>
               Modifiez le wording et les informations du coach. Les changements
               seront visibles immediatement.
@@ -303,17 +298,18 @@ function CoachCardEditor({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">
-                Specialites (une par ligne)
-              </Label>
+              <Label className="text-xs">Specialites (une par ligne)</Label>
               <Textarea
                 className="text-sm min-h-[100px] font-mono leading-relaxed"
                 value={specialtiesText}
                 onChange={(e) => setSpecialtiesText(e.target.value)}
-                placeholder={"Orientation professionnelle\nReconversion\nPlan de carriere"}
+                placeholder={
+                  "Orientation professionnelle\nReconversion\nPlan de carriere"
+                }
               />
               <p className="text-xs text-muted-foreground">
-                {specialtiesText.split("\n").filter(Boolean).length} specialite(s)
+                {specialtiesText.split("\n").filter(Boolean).length}{" "}
+                specialite(s)
               </p>
             </div>
 
@@ -325,7 +321,9 @@ function CoachCardEditor({
                 className="text-sm min-h-[100px] font-mono leading-relaxed"
                 value={questionsText}
                 onChange={(e) => setQuestionsText(e.target.value)}
-                placeholder={"On va definir ton objectif de carriere.\nTu veux evoluer ou changer de job ?"}
+                placeholder={
+                  "On va definir ton objectif de carriere.\nTu veux evoluer ou changer de job ?"
+                }
               />
               <p className="text-xs text-muted-foreground">
                 {questionsText.split("\n").filter(Boolean).length} question(s)
