@@ -811,7 +811,9 @@
         "close": "Fermer",
         "noEmail": "Vous n'avez pas reçu l'email ? Attendez quelques minutes ou vérifiez vos spams.",
         "resendButton": "Renvoyer l'email de confirmation",
-        "resendSuccess": "Email renvoyé ! Vérifiez votre boîte mail."
+        "resendSuccess": "Email renvoyé ! Vérifiez votre boîte mail.",
+        "spamWarning": "Pensez à vérifier vos spams / courriers indésirables si vous ne trouvez pas l'email.",
+        "openMail": "Ouvrir ma boîte mail"
       },
       "timeout": {
         "title": "Connexion lente détectée",

@@ -654,7 +654,9 @@
         "close": "Close",
         "noEmail": "Didn't receive the email? Wait a few minutes or check your spam.",
         "resendButton": "Resend Email Confirmation",
-        "resendSuccess": "Email resent! Check your mailbox."
+        "resendSuccess": "Email resent! Check your mailbox.",
+        "spamWarning": "Don't forget to check your spam / junk folder if you can't find the email.",
+        "openMail": "Open my mailbox"
       },
       "timeout": {
         "title": "Slow connection detected",

@@ -225,7 +225,22 @@ function SignupForm() {
                     {t("success.checkEmailDesc")}
                   </p>
                 </div>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <p className="text-xs text-orange-800 text-center">
+                    <strong>{t("success.spamWarning")}</strong>
+                  </p>
+                </div>
               </div>
+
+              {/* Open email client */}
+              <a
+                href={`https://mail.google.com/mail/u/0/#search/from%3Ahuntzenjobs+in%3Aanywhere`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold py-3 rounded-xl mb-3 transition-colors"
+              >
+                {t("success.openMail")}
+              </a>
 
               {/* Action buttons */}
               <div className="space-y-3">

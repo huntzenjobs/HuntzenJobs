@@ -285,14 +285,17 @@ export function AuthProvider({
         track.auth.signIn(data.session?.access_token);
       }
 
-      // Check for redirectTo parameter in URL for deep links
-      const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get("redirectTo");
-
-      if (redirectTo && redirectTo.startsWith("/")) {
-        router.push(redirectTo);
+      // Check if new user needs onboarding
+      const isNewUser = !data.user?.user_metadata?.onboarding_completed;
+      if (isNewUser) {
+        router.push("/onboarding");
       } else {
-        router.push("/jobs");
+        // Check for redirectTo parameter in URL for deep links
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get("redirectTo");
+        router.push(
+          redirectTo && redirectTo.startsWith("/") ? redirectTo : "/jobs",
+        );
       }
 
       // Reset loading après navigation initiale
