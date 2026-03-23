@@ -181,7 +181,23 @@ async def create_checkout_session(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"No Stripe price configured for plan={plan_name}, period={billing_period}. Check stripe_prices table."
                 )
-            new_price_id = price_response.data
+            # Extract price_id robustly (Supabase RPC may return string, list, or dict)
+            raw_price = price_response.data
+            if isinstance(raw_price, (list, tuple)):
+                new_price_id = raw_price[0] if raw_price else None
+            elif isinstance(raw_price, str):
+                new_price_id = raw_price
+            else:
+                new_price_id = str(raw_price) if raw_price else None
+
+            if not new_price_id or not isinstance(new_price_id, str):
+                logger.error(f"[CHECKOUT] Invalid price_id type={type(raw_price).__name__} value={raw_price}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Invalid price configuration for {plan_name}/{billing_period}. Contact support."
+                )
+
+            logger.info(f"[STRIPE] Resolved price_id={new_price_id} for {plan_name}/{billing_period}")
         except HTTPException:
             raise
         except Exception as e:

@@ -415,10 +415,33 @@ async def delete_user(
     supabase = get_supabase_client()
 
     try:
-        # Soft-delete profile first
-        supabase.table("profiles").update({
-            "status": "deleted",
-        }).eq("id", user_id).execute()
+        # Delete dependent data first (order matters for FK constraints)
+        for table in [
+            "usage_quotas",
+            "user_notifications",
+            "user_career_score",
+            "user_xp_events",
+            "referral_signups",
+            "referral_rewards",
+            "referrals",
+            "user_subscriptions",
+        ]:
+            try:
+                supabase.table(table).delete().eq("user_id", user_id).execute()
+            except Exception:
+                pass  # Table may not have data for this user
+
+        # Also clean referral_signups where user was referred
+        try:
+            supabase.table("referral_signups").delete().eq("referred_user_id", user_id).execute()
+        except Exception:
+            pass
+
+        # Delete profile
+        try:
+            supabase.table("profiles").delete().eq("id", user_id).execute()
+        except Exception:
+            pass
 
         # Hard delete from Supabase auth
         supabase.auth.admin.delete_user(user_id)

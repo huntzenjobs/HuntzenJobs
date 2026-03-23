@@ -321,26 +321,35 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // getRemaining helper: Get remaining quota based on API data
   const getRemaining = useCallback(
     (feature: FeatureType): number => {
-      if (!apiData.quotas) return freemium.getRemaining(feature);
+      const localRemaining = freemium.getRemaining(feature);
+      if (!apiData.quotas) return localRemaining;
 
+      let apiRemaining: number;
       switch (feature) {
         case "cv_analysis":
-          return apiData.quotas.cv_analysis.remaining === -1
-            ? Infinity
-            : apiData.quotas.cv_analysis.remaining;
+          apiRemaining =
+            apiData.quotas.cv_analysis.remaining === -1
+              ? Infinity
+              : apiData.quotas.cv_analysis.remaining;
+          break;
         case "assistant_messages":
-          return apiData.quotas?.assistant_messages
+          apiRemaining = apiData.quotas?.assistant_messages
             ? apiData.quotas.assistant_messages.remaining === -1
               ? Infinity
               : apiData.quotas.assistant_messages.remaining
-            : freemium.getRemaining(feature);
+            : localRemaining;
+          break;
         case "job_search":
-          return apiData.quotas.job_search.remaining === -1
-            ? Infinity
-            : apiData.quotas.job_search.remaining;
+          apiRemaining =
+            apiData.quotas.job_search.remaining === -1
+              ? Infinity
+              : apiData.quotas.job_search.remaining;
+          break;
         default:
-          return freemium.getRemaining(feature);
+          return localRemaining;
       }
+      // Return the lower value: if local was decremented but API hasn't refreshed yet
+      return Math.min(apiRemaining, localRemaining);
     },
     [apiData.quotas, freemium],
   );
@@ -348,11 +357,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // incrementUsage: Keep local for now (will be removed when backend tracks all usage)
   const incrementUsage = useCallback(
     (feature: FeatureType, amount?: number) => {
-      // Local increment for immediate UI feedback
+      // Optimistic local update for immediate UI feedback
       freemium.incrementUsage(feature, amount);
-      // Backend will update on next API refresh (5 min)
+      // Refetch backend data after cache invalidation completes (~1.5s)
+      setTimeout(() => {
+        apiData.refetch();
+      }, 1500);
     },
-    [freemium],
+    [freemium, apiData],
   );
 
   // hasFeature: Check feature availability — admin overrides take priority over plan

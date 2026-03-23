@@ -24,6 +24,7 @@ from src.api.deps import (
 )
 from src.api.middleware import limiter
 from src.models.schemas import Job, JobSearchRequest, JobSearchResponse, SearchMetadata
+from src.services.stripe import invalidate_user_quota_cache
 from src.utils.cache import get_redis
 
 logger = logging.getLogger(__name__)
@@ -388,6 +389,7 @@ async def search_jobs(
         )
         if user_id:
             _increment_job_search_quota(user_id)
+            await invalidate_user_quota_cache(user_id)
         return response
 
     # ── Cache MISS : executer la recherche ──
@@ -470,6 +472,7 @@ async def search_jobs(
     # Incrementer quota apres succes
     if user_id:
         _increment_job_search_quota(user_id)
+        await invalidate_user_quota_cache(user_id)
 
     return response
 
@@ -737,6 +740,7 @@ async def track_job_view(
             "p_feature": "job_view",
             "p_amount": 1,
         }).execute()
+        await invalidate_user_quota_cache(user_id)
 
         # Get updated quota status
         quota_result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
@@ -839,6 +843,7 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
             contact.setdefault("source", source)
 
         await increment_quota(user_id, "recruiter_search")
+        await invalidate_user_quota_cache(user_id)
 
         return {
             "success": True,

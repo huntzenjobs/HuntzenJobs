@@ -29,6 +29,7 @@ from src.api.deps import (
 )
 from src.services.cv_chat_extractor import extract_cv_structured
 from src.services.modal_pdf_extractor import extract_text_via_modal, is_modal_pdf_enabled
+from src.services.stripe import invalidate_user_quota_cache
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +206,7 @@ async def job_scout_chat(
 
     update_session_history(request.session_id, request.message, result["response"])
     increment_assistant_messages(user_id)
+    await invalidate_user_quota_cache(user_id)
 
     return AssistantResponse(
         success=True,
@@ -274,6 +276,7 @@ async def cv_analyzer_chat(
 
     update_session_history(request.session_id, request.message, result["response"])
     increment_assistant_messages(user_id)
+    await invalidate_user_quota_cache(user_id)
 
     return AssistantResponse(
         success=True,
@@ -343,6 +346,7 @@ async def cv_adapter_chat(
 
     update_session_history(request.session_id, request.message, result["response"])
     increment_assistant_messages(user_id)
+    await invalidate_user_quota_cache(user_id)
 
     return AssistantResponse(
         success=True,
@@ -414,6 +418,7 @@ async def interview_sim_chat(
 
     update_session_history(request.session_id, request.message, result["response"])
     increment_assistant_messages(user_id)
+    await invalidate_user_quota_cache(user_id)
 
     return AssistantResponse(
         success=True,
@@ -561,6 +566,7 @@ async def attach_cv_to_chat(
         # CV (user) + réponse IA (assistant) → stockés ensemble.
         # Tous les tours suivants verront le CV via get_session_history().
         increment_assistant_messages(user_id)
+        await invalidate_user_quota_cache(user_id)
         update_session_history(session_id, cv_message_content, initial_response)
 
         logger.info(

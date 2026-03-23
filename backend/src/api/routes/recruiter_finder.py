@@ -14,6 +14,7 @@ from supabase import Client, create_client
 from src.api.deps import get_user_id_from_token
 from src.services.recruiter_finder.apollo import find_recruiters_apollo
 from src.services.recruiter_finder.hunter import extract_domain, find_recruiters_for_job
+from src.services.stripe import invalidate_user_quota_cache
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +199,7 @@ async def find_recruiters(
 
         # Incrémenter le quota après succès
         increment_recruiter_search_quota(user_id)
+        await invalidate_user_quota_cache(user_id)
         return result
     except HTTPException:
         raise

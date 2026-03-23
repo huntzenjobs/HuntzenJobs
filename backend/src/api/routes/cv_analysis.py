@@ -24,6 +24,7 @@ from supabase import Client, create_client
 from src.api.deps import get_user_id_from_token
 from src.api.middleware import limiter
 from src.modal_integration import get_cv_analysis_status, list_user_cv_analyses, process_cv_async
+from src.services.stripe import invalidate_user_quota_cache
 from src.services.user_events import log_event
 
 logger = get_logger(__name__)
@@ -371,6 +372,7 @@ async def cv_analysis_callback(
         # Only increment quota if processing succeeded AND user is authenticated
         if status == "completed" and user_id:
             success = await increment_user_cv_quota(user_id)
+            await invalidate_user_quota_cache(user_id)
             logger.info(
                 f"[CALLBACK] ✅ Incremented cv_analysis quota for user {user_id} "
                 f"after successful CV processing: {cv_id}"
