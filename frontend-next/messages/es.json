@@ -1610,6 +1610,7 @@
     "relance7days": "Una oportunidad podría esperarte hoy."
   },
   "coach": {
+    "justNow": "ahora mismo",
     "export": {
       "button": "Exportar",
       "title": "Exportar conversación",

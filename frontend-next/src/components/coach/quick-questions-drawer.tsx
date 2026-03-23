@@ -38,54 +38,40 @@ export interface QuickQuestionsDrawerProps {
   className?: string;
 }
 
-const DEFAULT_QUESTIONS: QuickQuestion[] = [
-  {
-    id: "1",
-    category: "cv",
-    text: "Comment structurer mon CV pour un poste senior ?",
-  },
-  {
-    id: "2",
-    category: "interview",
-    text: "Quelles questions poser en fin d'entretien ?",
-  },
-  {
-    id: "3",
-    category: "salary",
-    text: "Comment négocier une augmentation de salaire ?",
-  },
-  {
-    id: "4",
-    category: "career",
-    text: "Quelles compétences développer pour évoluer ?",
-  },
-  {
-    id: "5",
-    category: "cv",
-    text: "Comment valoriser une reconversion professionnelle ?",
-  },
-  {
-    id: "6",
-    category: "interview",
-    text: 'Comment répondre à "Parlez-moi de vous" ?',
-  },
-];
-
 export function QuickQuestionsDrawer({
-  questions = DEFAULT_QUESTIONS,
+  questions,
   onQuestionClick,
   initiallyCollapsed = false,
   className,
 }: QuickQuestionsDrawerProps) {
   const t = useTranslations("coach.questions");
-  const [isCollapsed, setIsCollapsed] = React.useState(initiallyCollapsed);
-  const [displayedQuestions, setDisplayedQuestions] = React.useState(
-    questions.slice(0, 4),
+
+  const defaultQuestions: QuickQuestion[] = React.useMemo(
+    () => [
+      { id: "1", category: "cv", text: t("defaultQuestions.q1") },
+      { id: "2", category: "interview", text: t("defaultQuestions.q2") },
+      { id: "3", category: "salary", text: t("defaultQuestions.q3") },
+      { id: "4", category: "career", text: t("defaultQuestions.q4") },
+      { id: "5", category: "cv", text: t("defaultQuestions.q5") },
+      { id: "6", category: "interview", text: t("defaultQuestions.q6") },
+    ],
+    [t],
   );
+
+  const activeQuestions = questions ?? defaultQuestions;
+  const [isCollapsed, setIsCollapsed] = React.useState(initiallyCollapsed);
+  const [displayedQuestions, setDisplayedQuestions] = React.useState<
+    QuickQuestion[]
+  >([]);
+
+  // Initialiser les questions affichées quand activeQuestions change
+  React.useEffect(() => {
+    setDisplayedQuestions(activeQuestions.slice(0, 4));
+  }, [activeQuestions]);
 
   // Shuffle questions
   const handleShuffle = () => {
-    const shuffled = [...questions].sort(() => Math.random() - 0.5);
+    const shuffled = [...activeQuestions].sort(() => Math.random() - 0.5);
     setDisplayedQuestions(shuffled.slice(0, 4));
   };
 

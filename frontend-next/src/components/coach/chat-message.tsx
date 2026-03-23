@@ -6,7 +6,10 @@ import { User, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS, es, pt, type Locale } from "date-fns/locale";
+import { useTranslations, useLocale } from "next-intl";
+
+const DATE_LOCALES: Record<string, Locale> = { fr, en: enUS, es, pt };
 
 /**
  * ChatMessage - Message bubble component for Coach chat
@@ -58,6 +61,8 @@ export function ChatMessage({
   assistantAvatarUrl,
   assistantColor,
 }: ChatMessageProps) {
+  const t = useTranslations("coach");
+  const locale = useLocale();
   const [showCopyButton, setShowCopyButton] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
@@ -83,12 +88,12 @@ export function ChatMessage({
     try {
       return formatDistanceToNow(timestamp, {
         addSuffix: true,
-        locale: fr,
+        locale: DATE_LOCALES[locale] ?? fr,
       });
     } catch (error) {
-      return "à l'instant";
+      return t("justNow");
     }
-  }, [timestamp]);
+  }, [timestamp, locale, t]);
 
   return (
     <div

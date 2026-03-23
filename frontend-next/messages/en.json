@@ -1827,6 +1827,7 @@
     "relance7days": "An opportunity might be waiting for you today."
   },
   "coach": {
+    "justNow": "just now",
     "export": {
       "button": "Export",
       "title": "Export conversation",
