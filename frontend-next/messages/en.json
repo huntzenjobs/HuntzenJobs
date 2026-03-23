@@ -863,6 +863,8 @@
       "filteredCount_one": "{count} offer displayed",
       "filteredCount_other": "{count} offers displayed",
       "filteredCountTotal": " out of {total} total",
+      "recentSearches": "Recent searches",
+      "allJobs": "All jobs",
       "badgeApplied": "Applied",
       "badgeViewed": "Already viewed",
       "viaAggregator": "Via aggregator",

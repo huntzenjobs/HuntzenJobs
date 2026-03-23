@@ -614,7 +614,7 @@ export default function JobsPage() {
       const raw = sessionStorage.getItem("huntzen_jobs_cache");
       if (!raw) return;
       const { jobs: cachedJobs, query, timestamp } = JSON.parse(raw);
-      const isRecent = Date.now() - timestamp < 15 * 60 * 1000;
+      const isRecent = Date.now() - timestamp < 60 * 60 * 1000; // 1h cache
       if (isRecent && query.jobTitle === q) {
         isRestoringFromCacheRef.current = true;
         hasIncrementedQuotaRef.current = true; // Don't count cache restoration as usage
@@ -682,8 +682,8 @@ export default function JobsPage() {
       return data;
     },
     enabled: !!jobSearchParams,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 15,
+    staleTime: 1000 * 60 * 30, // 30 min — results stay fresh
+    gcTime: 1000 * 60 * 60, // 1h — keep in memory for back navigation
     retry: 1,
   });
 
@@ -771,8 +771,34 @@ export default function JobsPage() {
     if (params.location) urlParams.set("city", params.location);
     router.replace(`/jobs?${urlParams.toString()}`, { scroll: false });
 
+    // Save to search history (last 5, deduplicated)
+    try {
+      const historyKey = "huntzen_search_history";
+      const history: Array<{
+        query: string;
+        country: string;
+        location: string;
+        timestamp: number;
+      }> = JSON.parse(localStorage.getItem(historyKey) || "[]");
+      const entry = {
+        query: params.query,
+        country: params.country,
+        location: params.location,
+        timestamp: Date.now(),
+      };
+      const filtered = history.filter(
+        (h) =>
+          !(
+            h.query === entry.query &&
+            h.country === entry.country &&
+            h.location === entry.location
+          ),
+      );
+      filtered.unshift(entry);
+      localStorage.setItem(historyKey, JSON.stringify(filtered.slice(0, 5)));
+    } catch {}
+
     // Trigger search with caching
-    // Setting params will enable the query and trigger fetch
     setJobSearchParams(params);
   };
 
@@ -2402,7 +2428,55 @@ export default function JobsPage() {
           </ErrorBoundary>
         )}
 
-        {/* Placeholder avant première recherche - NOUVEAU */}
+        {/* Search history — show when no active search */}
+        {!searchQuery.isFetching &&
+          !searchQuery.isSuccess &&
+          jobs.length === 0 &&
+          (() => {
+            try {
+              const history: Array<{
+                query: string;
+                country: string;
+                location: string;
+                timestamp: number;
+              }> = JSON.parse(
+                localStorage.getItem("huntzen_search_history") || "[]",
+              );
+              if (history.length === 0) return null;
+              return (
+                <div className="mb-6">
+                  <p className="text-sm font-semibold text-gray-500 mb-3">
+                    {t("recentSearches")}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {history.map((h, i) => (
+                      <button
+                        key={i}
+                        onClick={() =>
+                          handleSearch({
+                            query: h.query,
+                            location: h.location,
+                            country: h.country,
+                          })
+                        }
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-[#00D9FF] hover:text-[#00D9FF] transition-colors"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-gray-400" />
+                        <span>
+                          {h.query || t("allJobs")}
+                          {h.location ? ` · ${h.location}` : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            } catch {
+              return null;
+            }
+          })()}
+
+        {/* Placeholder avant première recherche */}
         {!searchQuery.isFetching &&
           !searchQuery.isSuccess &&
           jobs.length === 0 && (

@@ -1020,6 +1020,8 @@
       "filteredCount_one": "{count} offre affichée",
       "filteredCount_other": "{count} offres affichées",
       "filteredCountTotal": " sur {total} total",
+      "recentSearches": "Recherches récentes",
+      "allJobs": "Toutes les offres",
       "badgeApplied": "Postulé",
       "badgeViewed": "Déjà ouvert",
       "viaAggregator": "Via agrégateur",
