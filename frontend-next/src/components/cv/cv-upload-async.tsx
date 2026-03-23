@@ -77,6 +77,47 @@ export function CVUploadAsync({
   } = useCVAnalysis();
 
   // ============================================
+  // UPLOAD (declared before early return to respect rules-of-hooks)
+  // ============================================
+
+  const handleUpload = useCallback(async () => {
+    if (!selectedFile) return;
+
+    // Check freemium limit
+    if (!canUse("cv_analysis")) {
+      openPricingModal("cv_analyses_per_day");
+      return;
+    }
+
+    try {
+      await uploadCV(selectedFile, jobDescription || undefined, "fr");
+
+      // Force refresh subscription data to get updated usage from backend
+      // (Backend increments usage after successful upload, so we fetch fresh data)
+      await refetchSubscription();
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
+  }, [
+    selectedFile,
+    jobDescription,
+    uploadCV,
+    canUse,
+    refetchSubscription,
+    openPricingModal,
+  ]);
+
+  // ============================================
+  // RESET
+  // ============================================
+
+  const handleReset = () => {
+    setSelectedFile(null);
+    setJobDescription("");
+    reset();
+  };
+
+  // ============================================
   // AUTH CHECK - Force authentication for CV analysis
   // ============================================
 
@@ -205,47 +246,6 @@ export function CVUploadAsync({
     } else {
       toast.error(t("toasts.pdfOnlyAccepted"));
     }
-  };
-
-  // ============================================
-  // UPLOAD
-  // ============================================
-
-  const handleUpload = useCallback(async () => {
-    if (!selectedFile) return;
-
-    // Check freemium limit
-    if (!canUse("cv_analysis")) {
-      openPricingModal("cv_analyses_per_day");
-      return;
-    }
-
-    try {
-      await uploadCV(selectedFile, jobDescription || undefined, "fr");
-
-      // Force refresh subscription data to get updated usage from backend
-      // (Backend increments usage after successful upload, so we fetch fresh data)
-      await refetchSubscription();
-    } catch (error) {
-      console.error("Upload error:", error);
-    }
-  }, [
-    selectedFile,
-    jobDescription,
-    uploadCV,
-    canUse,
-    refetchSubscription,
-    openPricingModal,
-  ]);
-
-  // ============================================
-  // RESET
-  // ============================================
-
-  const handleReset = () => {
-    setSelectedFile(null);
-    setJobDescription("");
-    reset();
   };
 
   // ============================================
