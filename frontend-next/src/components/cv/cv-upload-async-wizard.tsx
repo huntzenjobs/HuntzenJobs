@@ -215,7 +215,9 @@ export function CVUploadAsyncWizard({
     estimatedTimeRemaining,
     elapsedTime,
     reset: resetAnalysis,
-  } = useCVAnalysis();
+  } = useCVAnalysis(() => {
+    incrementUsage("cv_analysis");
+  });
 
   // Hook to refetch subscription data after CV upload
   const { refetch: refetchSubscription } = useSubscriptionApi();

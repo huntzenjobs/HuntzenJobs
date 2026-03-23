@@ -119,7 +119,7 @@ const ESTIMATED_PROCESSING_TIME = 15; // seconds (from S6-6 docs)
 // HOOK
 // ============================================
 
-export function useCVAnalysis(): UseCVAnalysisReturn {
+export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
   // Get auth session from context (instead of calling Supabase directly)
   const { session } = useAuth();
 
@@ -264,6 +264,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
             }
 
             sendXpEvent(session?.access_token ?? "", "cv_analysis");
+            onComplete?.();
           }
 
           // Handle failure

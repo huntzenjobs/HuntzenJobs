@@ -369,13 +369,13 @@ async def cv_analysis_callback(
 
         logger.info(f"[CALLBACK] Received: cv_id={cv_id}, user_id={user_id}, status={status}")
 
-        # Only increment quota if processing succeeded AND user is authenticated
+        # Increment quota only when processing succeeds
         if status == "completed" and user_id:
             success = await increment_user_cv_quota(user_id)
             await invalidate_user_quota_cache(user_id)
             logger.info(
                 f"[CALLBACK] ✅ Incremented cv_analysis quota for user {user_id} "
-                f"after successful CV processing: {cv_id}"
+                f"after successful CV processing: {cv_id} (success={success})"
             )
             # Tracking événement analyse CV (best-effort)
             if supabase_client:

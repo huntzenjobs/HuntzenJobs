@@ -74,7 +74,10 @@ export function CVUploadAsync({
     estimatedTimeRemaining,
     elapsedTime,
     reset,
-  } = useCVAnalysis();
+  } = useCVAnalysis(() => {
+    // Increment cv_analysis quota when analysis completes successfully
+    incrementUsage("cv_analysis");
+  });
 
   // ============================================
   // UPLOAD (declared before early return to respect rules-of-hooks)
