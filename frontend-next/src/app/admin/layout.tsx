@@ -4,7 +4,7 @@ import AdminNav from "@/components/admin/admin-nav";
 import { AdminSearchDialog } from "@/components/admin/admin-search-dialog";
 
 export const metadata = {
-  title: "Admin — Huntzen",
+  title: "Admin — HuntZen",
   robots: { index: false, follow: false },
 };
 
