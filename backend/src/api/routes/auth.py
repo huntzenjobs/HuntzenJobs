@@ -247,6 +247,23 @@ async def get_current_user_info(
                     "reset_at": quota["reset_at"]
                 }
 
+        # Saved jobs quota (total, not daily)
+        saved_jobs_quota = {"used": 0, "limit": -1}
+        try:
+            sj_count = supabase.table("saved_jobs").select(
+                "id", count="exact"
+            ).eq("user_id", user_id).execute()
+            saved_jobs_quota["used"] = sj_count.count or 0
+            # Get limit from plan
+            plan_name_for_limit = subscription_data.get("plan_name", "free")
+            plan_limits_res = supabase.table("subscription_plans").select(
+                "limits"
+            ).eq("name", plan_name_for_limit).single().execute()
+            if plan_limits_res.data:
+                saved_jobs_quota["limit"] = (plan_limits_res.data.get("limits") or {}).get("saved_jobs", -1)
+        except Exception as e:
+            logger.warning(f"Could not fetch saved_jobs quota for {user_id}: {e}")
+
         # Fetch individual feature overrides set by admin
         feature_overrides = {}
         try:
@@ -285,6 +302,7 @@ async def get_current_user_info(
             },
             "subscription": subscription_data,
             "quotas": quotas,
+            "saved_jobs_quota": saved_jobs_quota,
             "feature_overrides": feature_overrides,
             "plan_feature_flags": plan_feature_flags,
         }

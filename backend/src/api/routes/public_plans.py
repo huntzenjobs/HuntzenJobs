@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 PLANS_CACHE_KEY = "plans_config"
-PLANS_CACHE_TTL = 300  # 5 minutes
+PLANS_CACHE_TTL = 10  # 10 seconds — pre-commercialisation, propagation rapide des changements admin
 SUPPORTED_LOCALES = {"fr", "en", "es", "pt"}
 
 

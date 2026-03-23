@@ -2,7 +2,7 @@
 
 import { useSubscription } from "@/contexts/subscription-context";
 import { FeatureType } from "@/hooks/use-freemium-limits";
-import { Search, FileText, Clock, Eye, Users } from "lucide-react";
+import { Search, FileText, Clock, Eye, Users, Bookmark } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface UsageCounterProps {
@@ -180,6 +180,55 @@ interface UsageSummaryProps {
   className?: string;
 }
 
+function SavedJobsCounter() {
+  const { savedJobsUsed, savedJobsLimit } = useSubscription();
+  const tUsage = useTranslations("usageCounter");
+
+  const isUnlimited = savedJobsLimit === -1;
+  if (isUnlimited) return null;
+
+  const remaining = Math.max(0, savedJobsLimit - savedJobsUsed);
+  const percentage =
+    savedJobsLimit > 0
+      ? Math.min(100, (savedJobsUsed / savedJobsLimit) * 100)
+      : 0;
+
+  const getBarColor = () => {
+    const ratio = remaining / savedJobsLimit;
+    if (ratio > 0.5) return "bg-green-500";
+    if (ratio > 0.25) return "bg-orange-500";
+    return "bg-red-500";
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <span className="flex items-center gap-1.5 text-white/90">
+          <Bookmark className="w-4 h-4" aria-hidden="true" />
+          <span>
+            {`${remaining} ${tUsage("features.savedJobs.label")}`}
+            <span className="text-xs ml-1 text-white/60">
+              /{savedJobsLimit}
+            </span>
+          </span>
+        </span>
+      </div>
+      <div
+        className="h-2 bg-gray-100 rounded-full overflow-hidden"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={savedJobsLimit}
+        aria-valuenow={remaining}
+      >
+        <div
+          className={`h-full transition-all duration-300 ${getBarColor()}`}
+          style={{ width: `${100 - percentage}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function UsageSummary({ className = "" }: UsageSummaryProps) {
   const { plan, isFreePlan } = useSubscription();
   const tUsage = useTranslations("usageCounter");
@@ -197,6 +246,7 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
         <UsageCounter feature="job_search" showBar />
         <UsageCounter feature="cv_analysis" showBar />
         <UsageCounter feature="assistant_messages" showBar />
+        <SavedJobsCounter />
       </div>
     </div>
   );

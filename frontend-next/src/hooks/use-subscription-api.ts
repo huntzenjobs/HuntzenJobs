@@ -42,11 +42,17 @@ interface QuotasData {
   recruiter_search?: QuotaData;
 }
 
+interface SavedJobsQuota {
+  used: number;
+  limit: number;
+}
+
 interface ApiResponse {
   success: boolean;
   user: UserData;
   subscription: SubscriptionData;
   quotas: QuotasData;
+  saved_jobs_quota?: SavedJobsQuota;
   feature_overrides: Record<string, boolean>;
   plan_feature_flags: Record<string, boolean>;
   error?: string;
@@ -56,6 +62,7 @@ interface SubscriptionApiData {
   user: UserData | null;
   subscription: SubscriptionData | null;
   quotas: QuotasData | null;
+  saved_jobs_quota: SavedJobsQuota;
   feature_overrides: Record<string, boolean>;
   plan_feature_flags: Record<string, boolean>;
   isLoading: boolean;
@@ -68,7 +75,7 @@ const CACHE_KEY = "huntzen_subscription_cache";
 // Persistent cache — no TTL expiry.
 // Data is saved permanently and used as fallback when API fails.
 // Background refresh every 5 min keeps data fresh.
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const REFRESH_INTERVAL = 30 * 1000; // 30 seconds — pre-commercialisation, propagation rapide des changements admin
 
 /**
  * Load cached subscription data from localStorage (persistent, no TTL)
@@ -122,6 +129,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
       user: cached?.user ?? null,
       subscription: cached?.subscription ?? null,
       quotas: cached?.quotas ?? null,
+      saved_jobs_quota: cached?.saved_jobs_quota ?? { used: 0, limit: -1 },
       feature_overrides: cached?.feature_overrides ?? {},
       plan_feature_flags: cached?.plan_feature_flags ?? {},
       isLoading: !cached, // If cache exists, no loading state
@@ -166,6 +174,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
             user: cachedData.user,
             subscription: cachedData.subscription,
             quotas: cachedData.quotas,
+            saved_jobs_quota: cachedData.saved_jobs_quota ?? {
+              used: 0,
+              limit: -1,
+            },
             feature_overrides: cachedData.feature_overrides ?? {},
             plan_feature_flags: cachedData.plan_feature_flags ?? {},
             isLoading: false,
@@ -177,6 +189,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
             user: null,
             subscription: null,
             quotas: null,
+            saved_jobs_quota: { used: 0, limit: -1 },
             feature_overrides: {},
             plan_feature_flags: {},
             isLoading: false,
@@ -226,6 +239,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
                 user: cachedData.user,
                 subscription: cachedData.subscription,
                 quotas: cachedData.quotas,
+                saved_jobs_quota: cachedData.saved_jobs_quota ?? {
+                  used: 0,
+                  limit: -1,
+                },
                 feature_overrides: cachedData.feature_overrides ?? {},
                 plan_feature_flags: cachedData.plan_feature_flags ?? {},
                 isLoading: false,
@@ -239,6 +256,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
               user: null,
               subscription: null,
               quotas: null,
+              saved_jobs_quota: { used: 0, limit: -1 },
               feature_overrides: {},
               plan_feature_flags: {},
               isLoading: false,
@@ -271,6 +289,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
                 user: retryData.user,
                 subscription: retryData.subscription,
                 quotas: retryData.quotas,
+                saved_jobs_quota: retryData.saved_jobs_quota ?? {
+                  used: 0,
+                  limit: -1,
+                },
                 feature_overrides: retryData.feature_overrides ?? {},
                 plan_feature_flags: retryData.plan_feature_flags ?? {},
                 isLoading: false,
@@ -307,6 +329,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
         user: apiData.user,
         subscription: apiData.subscription,
         quotas: apiData.quotas,
+        saved_jobs_quota: apiData.saved_jobs_quota ?? { used: 0, limit: -1 },
         feature_overrides: apiData.feature_overrides ?? {},
         plan_feature_flags: apiData.plan_feature_flags ?? {},
         isLoading: false,
@@ -324,6 +347,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
           user: cachedData.user,
           subscription: cachedData.subscription,
           quotas: cachedData.quotas,
+          saved_jobs_quota: cachedData.saved_jobs_quota ?? {
+            used: 0,
+            limit: -1,
+          },
           feature_overrides: cachedData.feature_overrides ?? {},
           plan_feature_flags: cachedData.plan_feature_flags ?? {},
           isLoading: false,
@@ -335,6 +362,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
           user: null,
           subscription: null,
           quotas: null,
+          saved_jobs_quota: { used: 0, limit: -1 },
           feature_overrides: {},
           plan_feature_flags: {},
           isLoading: false,

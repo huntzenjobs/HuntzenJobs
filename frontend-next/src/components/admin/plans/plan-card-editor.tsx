@@ -44,6 +44,22 @@ const FEATURE_FLAGS = [
   { key: "coach_history", label: "Historique coach" },
   { key: "cover_letter", label: "Lettre de motivation IA" },
   { key: "branding", label: "Branding personnel" },
+  { key: "cv_details", label: "Details CV avances" },
+];
+
+// Page access flags — control which pages are accessible per plan
+const PAGE_ACCESS_FLAGS = [
+  { key: "page_assistant", label: "Coach IA" },
+  { key: "page_jobs", label: "Recherche emploi" },
+  { key: "page_saved_jobs", label: "Jobs sauvegardés" },
+  { key: "page_cv_analysis", label: "Analyse CV" },
+  { key: "page_documents", label: "Documents" },
+  { key: "page_candidatures", label: "Candidatures" },
+  { key: "page_expat", label: "Expat" },
+  { key: "page_salons", label: "Salons" },
+  { key: "page_profile", label: "Profil" },
+  { key: "page_recruiter_contact", label: "Contact recruteurs" },
+  { key: "page_referral", label: "Parrainage" },
 ];
 
 const PLAN_ACCENT: Record<string, string> = {
@@ -99,6 +115,10 @@ export default function PlanCardEditor({
     job_searches: plan.limits?.job_searches ?? 0,
     cv_adapt: plan.limits?.cv_adapt ?? 0,
     cover_letter: plan.limits?.cover_letter ?? 0,
+    saved_jobs: plan.limits?.saved_jobs ?? -1,
+    jobs_visible: plan.limits?.jobs_visible ?? -1,
+    job_views: plan.limits?.job_views ?? -1,
+    recruiter_searches: plan.limits?.recruiter_searches ?? 0,
   });
   const [priceMonthly, setPriceMonthly] = useState(String(plan.price_monthly));
   const [priceYearly, setPriceYearly] = useState(
@@ -111,6 +131,18 @@ export default function PlanCardEditor({
       (key) => (plan.feature_flags || {})[`has_${key}`] === true,
     ),
   );
+  // Page access flags — direct keys (page_assistant, page_jobs, etc.)
+  const [pageFlags, setPageFlags] = useState<string[]>(() =>
+    PAGE_ACCESS_FLAGS.map(({ key }) => key).filter(
+      (key) => (plan.feature_flags || {})[key] === true,
+    ),
+  );
+
+  const togglePageFlag = (key: string) => {
+    setPageFlags((prev) =>
+      prev.includes(key) ? prev.filter((f) => f !== key) : [...prev, key],
+    );
+  };
   const [displayName, setDisplayName] = useState(plan.display_name || "");
   const [description, setDescription] = useState(plan.description || "");
   const [stripePriceOpen, setStripePriceOpen] = useState<
@@ -142,8 +174,13 @@ export default function PlanCardEditor({
   const handleSaveFeatures = async () => {
     setSaving("features");
     const featureFlags: Record<string, boolean> = {};
+    // Feature flags classiques (has_* prefix)
     for (const { key } of FEATURE_FLAGS) {
       featureFlags[`has_${key}`] = features.includes(key);
+    }
+    // Page access flags (direct keys, no prefix)
+    for (const { key } of PAGE_ACCESS_FLAGS) {
+      featureFlags[key] = pageFlags.includes(key);
     }
     await onUpdateFeatures(plan.id, { feature_flags: featureFlags });
     setSaving(null);
@@ -213,7 +250,7 @@ export default function PlanCardEditor({
             <div className="space-y-3 lg:pr-6">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Limites / jour
+                  Limites
                 </span>
               </div>
               <div className="space-y-2">
@@ -307,6 +344,78 @@ export default function PlanCardEditor({
                     {formatLimit(limits.cover_letter)}
                   </p>
                 </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Jobs sauvegardés (total)</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.saved_jobs}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        saved_jobs: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.saved_jobs)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Offres visibles/recherche</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.jobs_visible}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        jobs_visible: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.jobs_visible)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Offres vues/jour</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.job_views}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        job_views: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.job_views)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Recherches recruteurs/jour</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.recruiter_searches}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        recruiter_searches: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.recruiter_searches)}
+                  </p>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">-1 = illimité</p>
               <Button
@@ -327,7 +436,8 @@ export default function PlanCardEditor({
                 Feature Flags
               </span>
               <p className="text-xs text-muted-foreground">
-                {features.length} / {FEATURE_FLAGS.length} activées
+                {features.length} / {FEATURE_FLAGS.length} features ·{" "}
+                {pageFlags.length} / {PAGE_ACCESS_FLAGS.length} pages
               </p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {features.map((key) => {
@@ -338,6 +448,14 @@ export default function PlanCardEditor({
                       variant="secondary"
                       className="text-[10px]"
                     >
+                      {flag?.label ?? key}
+                    </Badge>
+                  );
+                })}
+                {pageFlags.map((key) => {
+                  const flag = PAGE_ACCESS_FLAGS.find((f) => f.key === key);
+                  return (
+                    <Badge key={key} variant="outline" className="text-[10px]">
                       {flag?.label ?? key}
                     </Badge>
                   );
@@ -520,25 +638,57 @@ export default function PlanCardEditor({
               changements sont immédiats après sauvegarde.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-4">
-            {FEATURE_FLAGS.map(({ key, label }) => (
-              <div
-                key={key}
-                className="flex items-center justify-between rounded-lg border px-3 py-2.5 hover:bg-accent/50 transition-colors"
-              >
-                <Label
-                  className="text-sm font-normal cursor-pointer flex-1"
-                  htmlFor={`modal-${plan.id}-${key}`}
-                >
-                  {label}
-                </Label>
-                <Switch
-                  id={`modal-${plan.id}-${key}`}
-                  checked={features.includes(key)}
-                  onCheckedChange={() => toggleFeature(key)}
-                />
+          <div className="space-y-4 py-4">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                Fonctionnalités
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {FEATURE_FLAGS.map(({ key, label }) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between rounded-lg border px-3 py-2.5 hover:bg-accent/50 transition-colors"
+                  >
+                    <Label
+                      className="text-sm font-normal cursor-pointer flex-1"
+                      htmlFor={`modal-${plan.id}-${key}`}
+                    >
+                      {label}
+                    </Label>
+                    <Switch
+                      id={`modal-${plan.id}-${key}`}
+                      checked={features.includes(key)}
+                      onCheckedChange={() => toggleFeature(key)}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                Accès aux pages
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {PAGE_ACCESS_FLAGS.map(({ key, label }) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between rounded-lg border px-3 py-2.5 hover:bg-accent/50 transition-colors"
+                  >
+                    <Label
+                      className="text-sm font-normal cursor-pointer flex-1"
+                      htmlFor={`modal-${plan.id}-page-${key}`}
+                    >
+                      {label}
+                    </Label>
+                    <Switch
+                      id={`modal-${plan.id}-page-${key}`}
+                      checked={pageFlags.includes(key)}
+                      onCheckedChange={() => togglePageFlag(key)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFlagsModalOpen(false)}>

@@ -21,6 +21,7 @@ import {
   FileText,
   MessageSquare,
   Briefcase,
+  Bookmark,
   Clock,
   RefreshCw,
 } from "lucide-react";
@@ -151,6 +152,8 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
     isFreePlan,
     refreshQuotas,
     isLoaded,
+    savedJobsUsed,
+    savedJobsLimit,
   } = useSubscription();
 
   const t = useTranslations("usageModal");
@@ -295,6 +298,18 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 color="bg-green-500"
                 t={t}
               />
+
+              {/* Saved Jobs (total, not daily) */}
+              {savedJobsLimit !== -1 && (
+                <QuotaCard
+                  title={t("savedJobs")}
+                  icon={<Bookmark className="w-4 h-4 text-white" />}
+                  used={savedJobsUsed}
+                  limit={savedJobsLimit}
+                  color="bg-amber-500"
+                  t={t}
+                />
+              )}
             </div>
           </div>
 

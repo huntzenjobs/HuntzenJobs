@@ -51,6 +51,10 @@ interface SubscriptionContextType {
   assistantMessagesRemaining: number;
   assistantMessagesLimit: number;
 
+  // Saved jobs quota (total, not daily)
+  savedJobsUsed: number;
+  savedJobsLimit: number;
+
   // Limits
   limits: PlanLimits;
 
@@ -427,6 +431,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       assistantMessagesRemaining,
       assistantMessagesLimit,
 
+      savedJobsUsed: apiData.saved_jobs_quota?.used ?? 0,
+      savedJobsLimit: apiData.saved_jobs_quota?.limit ?? -1,
+
       limits: limitsFromApi,
 
       setPlan: freemium.setPlan, // KEEP local until Stripe integration
@@ -461,6 +468,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // Assistant message quota
       assistantMessagesRemaining,
       assistantMessagesLimit,
+
+      // Saved jobs quota
+      apiData.saved_jobs_quota?.used,
+      apiData.saved_jobs_quota?.limit,
 
       // Loading states
       apiData.isLoading,

@@ -363,13 +363,18 @@ export default function UserDetailDrawer({
                         <span>
                           {u.cv_analyses_used > 0 &&
                             `${u.cv_analyses_used} CV · `}
-                          {u.coach_seconds_used > 0 &&
-                            `${Math.round(u.coach_seconds_used / 60)}min coach · `}
+                          {u.assistant_messages_used > 0 &&
+                            `${u.assistant_messages_used} msgs · `}
                           {u.job_searches_used > 0 &&
-                            `${u.job_searches_used} recherches`}
+                            `${u.job_searches_used} recherches · `}
+                          {u.cv_adapt_used > 0 && `${u.cv_adapt_used} adapt · `}
+                          {u.cover_letter_used > 0 &&
+                            `${u.cover_letter_used} LM`}
                           {u.cv_analyses_used === 0 &&
-                            u.coach_seconds_used === 0 &&
+                            u.assistant_messages_used === 0 &&
                             u.job_searches_used === 0 &&
+                            u.cv_adapt_used === 0 &&
+                            u.cover_letter_used === 0 &&
                             "—"}
                         </span>
                       </div>

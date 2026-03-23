@@ -167,9 +167,20 @@ function buildLimitsFromApi(
 function loadApiPlansCache(): Record<PlanType, PlanLimitValues> | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem("plans_config_cache");
+    // Try locale-specific cache keys first (written by usePlansConfig),
+    // then fallback to legacy key for backward compatibility
+    const locales = ["fr", "en", "es", "pt"];
+    let raw: string | null = null;
+    for (const locale of locales) {
+      raw = localStorage.getItem(`plans_config_cache:${locale}`);
+      if (raw) break;
+    }
+    // Legacy fallback
+    if (!raw) raw = localStorage.getItem("plans_config_cache");
     if (!raw) return null;
-    const { data } = JSON.parse(raw);
+    const { data, expiry } = JSON.parse(raw);
+    // Respect TTL if present
+    if (expiry && Date.now() > expiry) return null;
     if (!Array.isArray(data)) return null;
 
     const result = {} as Record<PlanType, PlanLimitValues>;

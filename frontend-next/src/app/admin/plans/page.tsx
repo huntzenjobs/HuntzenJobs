@@ -49,7 +49,7 @@ export default function AdminPlansPage() {
         <div className="space-y-4">
           {plans.map((plan) => (
             <PlanCardEditor
-              key={plan.id}
+              key={`${plan.id}-${plan.updated_at ?? ""}`}
               plan={plan}
               onUpdateLimits={async (id, limits) => {
                 const ok = await updateLimits(id, limits);

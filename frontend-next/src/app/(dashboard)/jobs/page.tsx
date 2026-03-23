@@ -277,6 +277,8 @@ export default function JobsPage() {
     limits,
     isFreePlan,
     plan,
+    savedJobsUsed,
+    savedJobsLimit,
   } = useSubscription();
 
   const searchLimitPopup = useConversionPopup("search_limit");
@@ -862,6 +864,13 @@ export default function JobsPage() {
     // Check if already saved
     if (savedJobIds.has(job.id)) {
       toast.info(t("toast.alreadySaved"));
+      return;
+    }
+
+    // Check saved jobs quota (total limit)
+    if (savedJobsLimit !== -1 && savedJobsUsed >= savedJobsLimit) {
+      openPricingModal("saved_jobs");
+      toast.error(t("toast.savedJobsLimitReached"));
       return;
     }
 

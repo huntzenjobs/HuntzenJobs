@@ -7,16 +7,71 @@ Manage user's saved/bookmarked jobs.
 import logging
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Header, HTTPException, Query, status
+from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
 from src.api.deps import get_supabase_client
+from src.api.middleware import limiter
 from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
+
+
+def _get_saved_jobs_limit(user_id: str) -> int:
+    """Get saved_jobs limit for user's plan. Returns -1 for unlimited."""
+    try:
+        supabase = get_supabase_client()
+        # Get plan limits via user subscription
+        res = supabase.rpc("get_user_plan_limits", {"p_user_id": user_id}).execute()
+        if res.data and isinstance(res.data, dict):
+            return res.data.get("saved_jobs", -1)
+        # Fallback: query subscription_plans directly
+        sub = supabase.table("user_subscriptions").select(
+            "plan_id, subscription_plans(limits)"
+        ).eq("user_id", user_id).eq("status", "active").limit(1).execute()
+        if sub.data and sub.data[0].get("subscription_plans"):
+            limits = sub.data[0]["subscription_plans"].get("limits") or {}
+            return limits.get("saved_jobs", -1)
+        # No active sub → free plan limits
+        free = supabase.table("subscription_plans").select("limits").eq("name", "free").single().execute()
+        if free.data:
+            return (free.data.get("limits") or {}).get("saved_jobs", -1)
+    except Exception as e:
+        logger.warning(f"Could not check saved_jobs limit for {user_id}: {e}")
+    return -1  # Allow through on error
+
+
+def _check_saved_jobs_limit(user_id: str) -> None:
+    """Check if user has reached their saved jobs limit. Raises 429 if exceeded."""
+    limit = _get_saved_jobs_limit(user_id)
+    if limit == -1:
+        return  # Unlimited
+
+    try:
+        supabase = get_supabase_client()
+        count_res = supabase.table("saved_jobs").select(
+            "id", count="exact"
+        ).eq("user_id", user_id).execute()
+        current_count = count_res.count or 0
+
+        if current_count >= limit:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "code": "QUOTA_EXCEEDED",
+                    "feature": "saved_jobs",
+                    "limit": limit,
+                    "used": current_count,
+                    "message": f"Limite de {limit} offres sauvegardées atteinte. Passez à un plan supérieur.",
+                },
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Could not check saved_jobs count for {user_id}: {e}")
 
 
 class SaveJobRequest(BaseModel):
@@ -50,7 +105,8 @@ def get_user_id_from_header(authorization: str | None) -> str | None:
 
 
 @router.get("/api/saved-jobs")
-async def get_saved_jobs(authorization: str | None = Header(None)):
+@limiter.limit("60/minute")
+async def get_saved_jobs(request: Request, authorization: str | None = Header(None)):
     """
     Get all saved jobs for the current user.
 
@@ -81,7 +137,9 @@ async def get_saved_jobs(authorization: str | None = Header(None)):
 
 
 @router.post("/api/saved-jobs")
+@limiter.limit("30/minute")
 async def save_job(
+    request: Request,
     body: SaveJobRequest,
     authorization: str | None = Header(None),
 ):
@@ -98,6 +156,9 @@ async def save_job(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required to save jobs",
         )
+
+    # Check saved jobs limit before allowing save
+    _check_saved_jobs_limit(user_id)
 
     try:
         supabase = get_supabase_client()
@@ -140,7 +201,9 @@ async def save_job(
 
 
 @router.post("/api/saved-jobs/apply-click/{external_job_id}")
+@limiter.limit("30/minute")
 async def track_apply_click(
+    request: Request,
     external_job_id: str,
     job_url: str = Query(...),
     job_source: str = Query(default="unknown"),
@@ -169,7 +232,9 @@ async def track_apply_click(
 
 
 @router.delete("/api/saved-jobs/{external_job_id}")
+@limiter.limit("30/minute")
 async def unsave_job(
+    request: Request,
     external_job_id: str,
     authorization: str | None = Header(None),
 ):

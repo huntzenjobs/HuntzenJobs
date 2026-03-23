@@ -97,8 +97,13 @@ export interface UsageQuotaEntry {
   user_id: string;
   quota_date: string;
   cv_analyses_used: number;
+  assistant_messages_used: number;
   coach_seconds_used: number;
   job_searches_used: number;
+  cv_adapt_used: number;
+  cover_letter_used: number;
+  job_views_used: number;
+  recruiter_searches_used: number;
   last_reset_at: string;
   created_at: string;
   updated_at: string;

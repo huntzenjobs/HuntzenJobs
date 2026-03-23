@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocale } from "next-intl";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 10 * 1000; // 10 seconds — pre-commercialisation, propagation rapide des changements admin
 
 export interface PlanConfig {
   id: string;

@@ -64,7 +64,7 @@ class GrantDaysRequest(BaseModel):
 
 class SetCustomLimitsRequest(BaseModel):
     cv_analyses_daily: int | None = None
-    coach_seconds_daily: int | None = None
+    assistant_messages_daily: int | None = None
     job_searches_daily: int | None = None
 
 class UpdateEmailRequest(BaseModel):
@@ -584,15 +584,20 @@ async def create_user(
                 "email_confirm": True,
                 "user_metadata": {"full_name": body.full_name},
             })
-            # supabase-py v2: response can be AdminUserResponse or dict
+            logger.info(f"[admin/create_user] response type={type(user_response)}, value={user_response}")
+            # supabase-py v2: response is UserResponse with .user attribute
             if hasattr(user_response, "user") and user_response.user:
                 new_user_id = str(user_response.user.id)
             elif isinstance(user_response, dict) and user_response.get("user"):
                 new_user_id = str(user_response["user"]["id"])
+            elif isinstance(user_response, dict) and user_response.get("id"):
+                new_user_id = str(user_response["id"])
             else:
-                raise ValueError(f"Unexpected response: {user_response}")
+                raise ValueError(f"Unexpected response type={type(user_response)}: {user_response}")
+        except HTTPException:
+            raise
         except Exception as create_err:
-            logger.error(f"Supabase create_user failed: {create_err}")
+            logger.error(f"Supabase create_user failed: {type(create_err).__name__}: {create_err}")
             raise HTTPException(status_code=500, detail=f"Échec de la création du compte: {create_err}") from None
 
         # 3. Create profile entry
@@ -691,10 +696,10 @@ async def update_plan_limits(
     body: dict[str, Any],
     admin: AdminUserDep,
 ) -> dict[str, Any]:
-    """Update numeric limits for a plan (cv_analyses, coach_seconds, job_searches)."""
+    """Update numeric limits for a plan (cv_analyses, assistant_messages, job_searches)."""
     supabase = get_supabase_client()
 
-    allowed_keys = {"cv_analyses", "coach_seconds", "job_searches", "assistant_messages", "cv_adapt", "cover_letter", "saved_jobs", "jobs_visible"}
+    allowed_keys = {"cv_analyses", "coach_seconds", "job_searches", "assistant_messages", "cv_adapt", "cover_letter", "saved_jobs", "jobs_visible", "job_views", "recruiter_searches"}
     limits = {k: v for k, v in body.items() if k in allowed_keys}
 
     if not limits:
@@ -1069,6 +1074,12 @@ async def update_stripe_price(
         old_price_id = old_price.data[0]["stripe_price_id"] if old_price.data else None
         product_id = old_price.data[0].get("stripe_product_id") if old_price.data else None
 
+        if not product_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Impossible de créer le prix : aucun produit Stripe associé à ce plan."
+            )
+
         # Create new Stripe price
         interval = "month" if billing_period == "monthly" else "year"
         new_price = stripe_lib.Price.create(
@@ -1202,19 +1213,19 @@ async def get_usage_analytics(
     supabase = get_supabase_client()
     since = (datetime.now(UTC) - timedelta(days=days)).date().isoformat()
     result = supabase.table("usage_quotas").select(
-        "cv_analyses_used, coach_seconds_used, job_searches_used, user_id"
+        "cv_analyses_used, assistant_messages_used, job_searches_used, user_id"
     ).gte("quota_date", since).execute()
     rows = result.data or []
     totals = {
         "cv_analyses": sum(r.get("cv_analyses_used") or 0 for r in rows),
-        "coach_seconds": sum(r.get("coach_seconds_used") or 0 for r in rows),
+        "assistant_messages": sum(r.get("assistant_messages_used") or 0 for r in rows),
         "job_searches": sum(r.get("job_searches_used") or 0 for r in rows),
     }
-    per_user: dict[str, dict[str, int]] = defaultdict(lambda: {"cv_analyses": 0, "coach_seconds": 0, "job_searches": 0})
+    per_user: dict[str, dict[str, int]] = defaultdict(lambda: {"cv_analyses": 0, "assistant_messages": 0, "job_searches": 0})
     for r in rows:
         uid = r["user_id"]
         per_user[uid]["cv_analyses"] += r.get("cv_analyses_used") or 0
-        per_user[uid]["coach_seconds"] += r.get("coach_seconds_used") or 0
+        per_user[uid]["assistant_messages"] += r.get("assistant_messages_used") or 0
         per_user[uid]["job_searches"] += r.get("job_searches_used") or 0
     top = sorted(per_user.items(), key=lambda x: x[1]["cv_analyses"], reverse=True)[:10]
     top_user_ids = [uid for uid, _ in top]
@@ -1835,8 +1846,13 @@ async def reset_user_usage(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
 
     supabase.table("usage_quotas").update({
         "cv_analyses_used": 0,
+        "assistant_messages_used": 0,
         "coach_seconds_used": 0,
         "job_searches_used": 0,
+        "cv_adapt_used": 0,
+        "cover_letter_used": 0,
+        "job_views_used": 0,
+        "recruiter_searches_used": 0,
     }).eq("user_id", user_id).eq("quota_date", today).execute()
 
     _log_admin_action(
@@ -1978,7 +1994,7 @@ async def get_never_converted(admin: AdminUserDep) -> dict[str, Any]:
         return {"users": [], "total": 0}
 
     usage_res = supabase.table("usage_quotas").select(
-        "user_id, cv_analyses_used, coach_seconds_used"
+        "user_id, cv_analyses_used, assistant_messages_used"
     ).in_("user_id", free_ids).execute()
 
     usage_map: dict[str, dict] = {}
@@ -1987,7 +2003,7 @@ async def get_never_converted(admin: AdminUserDep) -> dict[str, Any]:
         if uid not in usage_map:
             usage_map[uid] = {"cv": 0, "coach": 0}
         usage_map[uid]["cv"] += u.get("cv_analyses_used", 0)
-        usage_map[uid]["coach"] += u.get("coach_seconds_used", 0)
+        usage_map[uid]["coach"] += u.get("assistant_messages_used", 0)
 
     today_date = datetime.now(UTC).date()
     result = []
@@ -2008,9 +2024,9 @@ async def get_never_converted(admin: AdminUserDep) -> dict[str, Any]:
             "created_at": p["created_at"],
             "days_since_signup": days,
             "cv_analyses_total": u["cv"],
-            "coach_seconds_total": u["coach"],
+            "assistant_messages_total": u["coach"],
         })
-    result.sort(key=lambda x: x["cv_analyses_total"] + x["coach_seconds_total"] // 60, reverse=True)
+    result.sort(key=lambda x: x["cv_analyses_total"] + x["assistant_messages_total"], reverse=True)
     return {"users": result, "total": len(result)}
 
 
@@ -2039,7 +2055,7 @@ async def get_conversion_funnel(
 
     coach_users = supabase.table("usage_quotas").select("user_id").gte(
         "quota_date", cutoff[:10]
-    ).gt("coach_seconds_used", 0).execute()
+    ).gt("assistant_messages_used", 0).execute()
     coach_count = len({r["user_id"] for r in (coach_users.data or [])})
 
     paid = supabase.table("subscription_history").select("user_id").gte(
@@ -2905,8 +2921,8 @@ async def set_custom_limits(
     limits: dict[str, Any] = {}
     if req.cv_analyses_daily is not None:
         limits["cv_analyses_daily"] = req.cv_analyses_daily
-    if req.coach_seconds_daily is not None:
-        limits["coach_seconds_daily"] = req.coach_seconds_daily
+    if req.assistant_messages_daily is not None:
+        limits["assistant_messages_daily"] = req.assistant_messages_daily
     if req.job_searches_daily is not None:
         limits["job_searches_daily"] = req.job_searches_daily
 

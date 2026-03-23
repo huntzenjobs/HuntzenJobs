@@ -36,6 +36,10 @@ export interface PlanLimit {
   job_searches: number;
   cv_adapt: number;
   cover_letter: number;
+  saved_jobs: number;
+  jobs_visible: number;
+  job_views: number;
+  recruiter_searches: number;
 }
 
 export interface StripePrice {
@@ -58,6 +62,7 @@ export interface Plan {
   is_active: boolean;
   sort_order: number;
   stripe_prices: StripePrice[];
+  updated_at?: string;
 }
 
 export function useAdminPlans() {
