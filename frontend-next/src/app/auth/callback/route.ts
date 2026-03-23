@@ -34,9 +34,34 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Handle token_hash flow (email confirmation via PKCE)
+  const tokenHash = requestUrl.searchParams.get("token_hash");
+  const type = requestUrl.searchParams.get("type");
+
+  if (tokenHash && type) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type as "signup" | "email" | "recovery",
+    });
+
+    if (!error && data.session) {
+      if (type === "recovery") {
+        return NextResponse.redirect(`${origin}/reset-password`);
+      }
+
+      const isNewUser = !data.user?.user_metadata?.onboarding_completed;
+      const finalRedirect = isNewUser ? "/onboarding" : "/jobs";
+      return NextResponse.redirect(`${origin}${finalRedirect}`);
+    }
+
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent(error?.message || "Email verification failed")}`,
+    );
+  }
+
   if (code) {
     const supabase = await createClient();
-    const type = requestUrl.searchParams.get("type");
 
     // Exchange code for session
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
