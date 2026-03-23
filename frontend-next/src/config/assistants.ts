@@ -115,11 +115,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "cvAdapter.specialty3",
       "cvAdapter.specialty4",
     ],
-    exampleQuestionsKeys: [
-      "cvAdapter.q1",
-      "cvAdapter.q2",
-      "cvAdapter.q3",
-    ],
+    exampleQuestionsKeys: ["cvAdapter.q1", "cvAdapter.q2", "cvAdapter.q3"],
     apiEndpoint: "/api/cv-adapter/adapt",
     responseTime: "< 5 min",
   },
@@ -168,12 +164,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "david.specialty3",
       "david.specialty4",
     ],
-    exampleQuestionsKeys: [
-      "david.q1",
-      "david.q2",
-      "david.q3",
-      "david.q4",
-    ],
+    exampleQuestionsKeys: ["david.q1", "david.q2", "david.q3", "david.q4"],
     apiEndpoint: "/api/branding/chat",
     responseTime: "< 2 min",
   },
@@ -222,3 +213,26 @@ export function getFreeAssistants(): AssistantConfig[] {
 export function getPremiumAssistants(): AssistantConfig[] {
   return getAllAssistants().filter((a) => a.isPremium);
 }
+
+/**
+ * Mapping coach DB id -> AssistantType
+ * Used to bridge between DB coach_config.id and frontend AssistantType
+ */
+export const COACH_ID_TO_ASSISTANT: Record<string, AssistantType> = {
+  nova: "career-coach",
+  maria: "job-scout",
+  sofia: "cv-analyzer",
+  lucas: "interview-sim",
+  david: "branding",
+};
+
+/**
+ * Reverse mapping AssistantType -> coach DB id
+ */
+export const ASSISTANT_TO_COACH_ID: Record<string, string> = {
+  "career-coach": "nova",
+  "job-scout": "maria",
+  "cv-analyzer": "sofia",
+  "interview-sim": "lucas",
+  branding: "david",
+};

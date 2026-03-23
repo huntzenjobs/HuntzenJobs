@@ -28,6 +28,7 @@ from src.api.routes.jobs import router as jobs_router
 from src.api.routes.notifications import router as notifications_router
 from src.api.routes.pages import router as pages_router
 from src.api.routes.presence import banner_router, presence_router, tracking_router
+from src.api.routes.public_coaches import router as public_coaches_router
 from src.api.routes.public_plans import router as public_plans_router
 from src.api.routes.queue import router as queue_router
 from src.api.routes.recruiter import router as recruiter_router
@@ -80,5 +81,6 @@ router.include_router(banner_router, tags=["Banner & Maintenance"])
 router.include_router(stress_router, prefix="/api/admin/stress", tags=["Stress Testing"])
 router.include_router(suggestions_router, prefix="/api/assistant", tags=["Assistant Suggestions"])
 router.include_router(public_plans_router, prefix="/api/public", tags=["Public Plans"])
+router.include_router(public_coaches_router, prefix="/api/public", tags=["Public Coaches"])
 router.include_router(contact_router, prefix="/api/contact", tags=["Contact"])
 router.include_router(account_router, prefix="/api/account", tags=["Account"])

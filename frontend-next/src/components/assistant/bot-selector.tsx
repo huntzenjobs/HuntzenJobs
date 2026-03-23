@@ -7,7 +7,7 @@
  * Ce sont des interfaces pour communiquer avec des humains spécialisés
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Check,
   ChevronDown,
@@ -21,12 +21,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssistant } from "@/contexts/assistant-context";
-import { getAllAssistants, getAssistantConfig } from "@/config/assistants";
+import {
+  getAllAssistants,
+  getAssistantConfig,
+  ASSISTANT_TO_COACH_ID,
+} from "@/config/assistants";
 import { AssistantType } from "@/types/assistant";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
 import type { User } from "@supabase/supabase-js";
+import type { CoachConfig } from "@/hooks/use-coaches-config";
 
 interface BotSelectorProps {
   /** Classes CSS additionnelles */
@@ -35,6 +40,8 @@ interface BotSelectorProps {
   variant?: "default" | "compact";
   /** Callback appelé à la sélection d'un assistant — remplace setSelectedAssistant direct */
   onAssistantChange?: (type: AssistantType) => void;
+  /** DB coach data — if provided, overrides i18n keys for text */
+  coachesData?: CoachConfig[];
 }
 
 /**
@@ -45,6 +52,7 @@ export function BotSelector({
   className,
   variant = "default",
   onAssistantChange,
+  coachesData,
 }: BotSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
@@ -55,6 +63,27 @@ export function BotSelector({
 
   const currentConfig = getAssistantConfig(selectedAssistant);
   const allAssistants = getAllAssistants();
+
+  // Build a lookup map from DB data for quick access
+  const coachMap = useMemo(() => {
+    const map = new Map<string, CoachConfig>();
+    if (coachesData) {
+      for (const c of coachesData) {
+        map.set(c.id, c);
+      }
+    }
+    return map;
+  }, [coachesData]);
+
+  // Helper: get DB coach data for an assistant type
+  const getCoachForAssistant = (
+    assistantId: string,
+  ): CoachConfig | undefined => {
+    const coachId = ASSISTANT_TO_COACH_ID[assistantId];
+    return coachId ? coachMap.get(coachId) : undefined;
+  };
+
+  const currentCoach = getCoachForAssistant(selectedAssistant);
 
   const isFreePlan = subscription?.isFreePlan ?? true;
   const user = auth?.user ?? null;
@@ -120,7 +149,7 @@ export function BotSelector({
             style={{ color: currentConfig.color }}
           />
           <span className="text-sm font-medium text-slate-900">
-            {tc(currentConfig.shortNameKey)}
+            {currentCoach?.short_name || tc(currentConfig.shortNameKey)}
           </span>
           <ChevronDown
             className={cn(
@@ -138,6 +167,7 @@ export function BotSelector({
             isFreePlan={isFreePlan}
             user={user}
             tc={tc}
+            coachMap={coachMap}
           />
         )}
       </div>
@@ -166,14 +196,14 @@ export function BotSelector({
         <div className="flex-1 text-left min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-base font-semibold text-white truncate">
-              {tc(currentConfig.shortNameKey)}
+              {currentCoach?.short_name || tc(currentConfig.shortNameKey)}
             </h3>
             {currentConfig.isPremium && (
               <Crown className="w-4 h-4 text-amber-400" />
             )}
           </div>
           <p className="text-xs text-white/70 truncate">
-            {tc(currentConfig.descriptionKey)}
+            {currentCoach?.description || tc(currentConfig.descriptionKey)}
           </p>
         </div>
 
@@ -195,12 +225,16 @@ export function BotSelector({
           isFreePlan={isFreePlan}
           user={user}
           tc={tc}
+          coachMap={coachMap}
         />
       )}
 
       {/* Coming Soon modal — Interview Simulator */}
       {showComingSoon && (
-        <InterviewSimComingSoon onClose={() => setShowComingSoon(false)} tc={tc} />
+        <InterviewSimComingSoon
+          onClose={() => setShowComingSoon(false)}
+          tc={tc}
+        />
       )}
     </div>
   );
@@ -278,7 +312,9 @@ function InterviewSimComingSoon({
                 <Icon className="w-4 h-4 text-orange-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-900">{tc(labelKey)}</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {tc(labelKey)}
+                </p>
                 <p className="text-xs text-slate-500">{tc(descKey)}</p>
               </div>
             </div>
@@ -321,6 +357,7 @@ interface DropdownMenuProps {
   isFreePlan: boolean;
   user: User | null;
   tc: ReturnType<typeof useTranslations>;
+  coachMap: Map<string, CoachConfig>;
 }
 
 function DropdownMenu({
@@ -330,6 +367,7 @@ function DropdownMenu({
   isFreePlan,
   user,
   tc,
+  coachMap,
 }: DropdownMenuProps) {
   return (
     <div className="absolute top-full left-0 mt-2 z-50 w-[calc(100vw-2rem)] sm:w-[480px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
@@ -338,6 +376,8 @@ function DropdownMenu({
           const isSelected = assistant.id === selectedAssistant;
           const isLocked = assistant.isPremium && (!user || isFreePlan);
           const isComingSoon = !!assistant.isComingSoon;
+          const coachId = ASSISTANT_TO_COACH_ID[assistant.id];
+          const coach = coachId ? coachMap.get(coachId) : undefined;
 
           return (
             <button
@@ -373,17 +413,17 @@ function DropdownMenu({
                     </span>
                   ) : (
                     <span className="text-sm font-medium text-slate-900 truncate">
-                      {tc(assistant.shortNameKey)}
+                      {coach?.short_name || tc(assistant.shortNameKey)}
                     </span>
                   )}
                 </div>
                 {assistant.personaName ? (
                   <p className="text-xs text-slate-600 truncate font-medium">
-                    {tc(assistant.shortNameKey)}
+                    {coach?.short_name || tc(assistant.shortNameKey)}
                   </p>
                 ) : null}
                 <p className="text-xs text-slate-500 truncate">
-                  {tc(assistant.descriptionKey)}
+                  {coach?.description || tc(assistant.descriptionKey)}
                 </p>
               </div>
 

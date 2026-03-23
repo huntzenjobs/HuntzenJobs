@@ -3,24 +3,31 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useAssistant } from "@/contexts/assistant-context";
-import { getAssistantConfig } from "@/config/assistants";
+import { getAssistantConfig, ASSISTANT_TO_COACH_ID } from "@/config/assistants";
 import { useTranslations } from "next-intl";
+import type { CoachConfig } from "@/hooks/use-coaches-config";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
 
 export interface WelcomeScreenProps {
   onQuestionClick?: (question: string) => void;
   className?: string;
+  /** DB coach data — if provided, overrides i18n keys for text */
+  coachData?: CoachConfig;
 }
 
 export function WelcomeScreen({
   onQuestionClick,
   className,
+  coachData,
 }: WelcomeScreenProps) {
   const { selectedAssistant } = useAssistant();
   const assistant = getAssistantConfig(selectedAssistant);
   const tc = useTranslations("coaches");
-  const [dynamicQuestions, setDynamicQuestions] = React.useState<string[] | null>(null);
+  const [dynamicQuestions, setDynamicQuestions] = React.useState<
+    string[] | null
+  >(null);
 
   React.useEffect(() => {
     if (!selectedAssistant) return;
@@ -30,7 +37,7 @@ export function WelcomeScreen({
       try {
         const res = await fetch(
           `${BACKEND_URL}/api/assistant/suggestions?assistant_id=${selectedAssistant}`,
-          { cache: "no-store" }
+          { cache: "no-store" },
         );
         if (!res.ok) throw new Error("fetch failed");
         const data = await res.json();
@@ -52,10 +59,18 @@ export function WelcomeScreen({
     };
   }, [selectedAssistant]);
 
+  // Resolve text: DB data takes priority over i18n keys
+  const shortName = coachData?.short_name || tc(assistant.shortNameKey);
+  const descriptionText =
+    coachData?.description || tc(assistant.descriptionKey);
+  const displayName = assistant.personaName || shortName;
+
   const questions =
     dynamicQuestions && dynamicQuestions.length > 0
       ? dynamicQuestions
-      : assistant.exampleQuestionsKeys.map((key) => tc(key));
+      : coachData?.example_questions && coachData.example_questions.length > 0
+        ? coachData.example_questions
+        : assistant.exampleQuestionsKeys.map((key) => tc(key));
 
   return (
     <div
@@ -73,27 +88,28 @@ export function WelcomeScreen({
         {assistant.avatarUrl ? (
           <img
             src={assistant.avatarUrl}
-            alt={assistant.personaName || tc(assistant.shortNameKey)}
+            alt={displayName}
             className="size-24 rounded-full object-cover"
           />
         ) : (
-          <assistant.icon className="size-12" style={{ color: assistant.color }} />
+          <assistant.icon
+            className="size-12"
+            style={{ color: assistant.color }}
+          />
         )}
       </div>
 
       {/* Identite */}
       <h2 className="text-2xl font-bold text-gray-900 mb-1">
         {tc("greeting")}{" "}
-        <span style={{ color: assistant.color }}>
-          {assistant.personaName || tc(assistant.shortNameKey)}
-        </span>
+        <span style={{ color: assistant.color }}>{displayName}</span>
       </h2>
       <p className="text-sm text-gray-500 text-center max-w-sm mb-6">
-        {tc(assistant.shortNameKey)}
+        {shortName}
       </p>
 
       <p className="text-base text-gray-600 text-center max-w-md mb-8">
-        {tc(assistant.descriptionKey)}
+        {descriptionText}
       </p>
 
       {/* Suggestions */}
@@ -108,7 +124,8 @@ export function WelcomeScreen({
               "hover:shadow-sm transition-all duration-150",
             )}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = assistant.color;
+              (e.currentTarget as HTMLButtonElement).style.borderColor =
+                assistant.color;
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLButtonElement).style.borderColor = "";

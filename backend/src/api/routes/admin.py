@@ -3233,3 +3233,180 @@ async def update_admin_alert_preferences(
     supabase = get_supabase_client()
     _log_admin_action(supabase, admin["id"], "admin.alert_preferences_updated", None, body.preferences)
     return {"success": True, "preferences": prefs}
+
+
+# ============================================================
+# COACH CONFIG MANAGEMENT
+# ============================================================
+
+class UpdateCoachRequest(BaseModel):
+    short_name: str | None = None
+    description: str | None = None
+    specialties: list[str] | None = None
+    example_questions: list[str] | None = None
+    accent_color: str | None = None
+    icon: str | None = None
+    sort_order: int | None = None
+    is_active: bool | None = None
+
+
+@router.get("/coaches")
+async def admin_list_coaches(
+    admin: AdminUserDep,
+) -> list[dict[str, Any]]:
+    """List all coaches with full data (including translations)."""
+    supabase = get_supabase_client()
+    result = supabase.table("coach_config").select("*").order("sort_order").execute()
+    return result.data or []
+
+
+@router.patch("/coaches/{coach_id}")
+async def admin_update_coach(
+    coach_id: str,
+    body: UpdateCoachRequest,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Update coach fields (short_name, description, specialties, etc.)."""
+    supabase = get_supabase_client()
+
+    # Verify coach exists
+    existing = supabase.table("coach_config").select("id").eq("id", coach_id).maybe_single().execute()
+    if not existing.data:
+        raise HTTPException(status_code=404, detail=f"Coach {coach_id} not found")
+
+    update_data: dict[str, Any] = {"updated_at": datetime.now(UTC).isoformat()}
+    if body.short_name is not None:
+        update_data["short_name"] = body.short_name
+    if body.description is not None:
+        update_data["description"] = body.description
+    if body.specialties is not None:
+        update_data["specialties"] = body.specialties
+    if body.example_questions is not None:
+        update_data["example_questions"] = body.example_questions
+    if body.accent_color is not None:
+        update_data["accent_color"] = body.accent_color
+    if body.icon is not None:
+        update_data["icon"] = body.icon
+    if body.sort_order is not None:
+        update_data["sort_order"] = body.sort_order
+    if body.is_active is not None:
+        update_data["is_active"] = body.is_active
+
+    supabase.table("coach_config").update(update_data).eq("id", coach_id).execute()
+
+    # Invalidate cache
+    try:
+        from src.utils.cache import get_redis
+        redis = await get_redis()
+        if redis:
+            await redis.delete("coaches_config")
+            locale_keys = [k async for k in redis.scan_iter("coaches_config:*")]
+            if locale_keys:
+                await redis.delete(*locale_keys)
+    except Exception:
+        pass
+
+    _log_admin_action(supabase, admin["id"], "admin.coach_updated", None, {
+        "coach_id": coach_id,
+        "fields": list(update_data.keys()),
+    })
+
+    return {"success": True, "coach_id": coach_id}
+
+
+@router.post("/coaches/{coach_id}/translate")
+async def translate_coach(
+    coach_id: str,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """
+    Auto-translate a coach's short_name, description, specialties, example_questions
+    from French to en/es/pt using Groq LLM. Same pattern as plans translate.
+    """
+    from groq import Groq
+
+    supabase = get_supabase_client()
+    settings = get_settings()
+
+    try:
+        coach_result = supabase.table("coach_config").select(
+            "id, persona_name, short_name, description, specialties, example_questions"
+        ).eq("id", coach_id).single().execute()
+        if not coach_result.data:
+            raise HTTPException(status_code=404, detail="Coach not found")
+
+        coach_data = coach_result.data
+        source = {
+            "short_name": coach_data.get("short_name") or "",
+            "description": coach_data.get("description") or "",
+            "specialties": coach_data.get("specialties") or [],
+            "example_questions": coach_data.get("example_questions") or [],
+        }
+
+        groq_client = Groq(api_key=settings.get_groq_key())
+        translations: dict[str, Any] = {}
+        target_languages = {"en": "English", "es": "Spanish", "pt": "Portuguese"}
+
+        for lang_code, lang_name in target_languages.items():
+            prompt = (
+                f"Translate the following coach profile data from French to {lang_name}. "
+                "Return ONLY a valid JSON object with these exact keys: "
+                "short_name (string), description (string), specialties (array of strings), "
+                "example_questions (array of strings). "
+                "Keep the same number of items in each array. Do not add or remove items. "
+                "Do not include any text outside the JSON.\n\n"
+                f"French source:\n{json.dumps(source, ensure_ascii=False, indent=2)}"
+            )
+
+            response = groq_client.chat.completions.create(
+                model=settings.llm_model_powerful,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=2048,
+                response_format={"type": "json_object"},
+            )
+
+            raw_content = response.choices[0].message.content or "{}"
+            try:
+                parsed = json.loads(raw_content)
+                translations[lang_code] = {
+                    "short_name": parsed.get("short_name", source["short_name"]),
+                    "description": parsed.get("description", source["description"]),
+                    "specialties": parsed.get("specialties", source["specialties"]),
+                    "example_questions": parsed.get("example_questions", source["example_questions"]),
+                }
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse Groq translation for {lang_code}, coach {coach_id}")
+                translations[lang_code] = source
+
+        # Save translations to DB
+        supabase.table("coach_config").update({
+            "translations": translations,
+            "updated_at": datetime.now(UTC).isoformat(),
+        }).eq("id", coach_id).execute()
+
+        # Invalidate cache
+        try:
+            from src.utils.cache import get_redis
+            redis = await get_redis()
+            if redis:
+                await redis.delete("coaches_config")
+                locale_keys = [k async for k in redis.scan_iter("coaches_config:*")]
+                if locale_keys:
+                    await redis.delete(*locale_keys)
+        except Exception:
+            pass
+
+        _log_admin_action(supabase, admin["id"], "admin.coach_translated", None, {
+            "coach_id": coach_id,
+            "persona_name": coach_data["persona_name"],
+            "languages": list(translations.keys()),
+        })
+
+        return {"success": True, "translations": translations}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to translate coach {coach_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to translate coach") from None

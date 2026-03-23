@@ -19,6 +19,7 @@ import {
   Zap,
   FlaskConical,
   MessageSquarePlus,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -56,6 +57,7 @@ export default function AdminNav() {
     { href: "/admin/stress", label: "Stress Test", icon: FlaskConical },
     { href: "/admin/users", label: "Utilisateurs", icon: Users },
     { href: "/admin/plans", label: "Packages", icon: Package },
+    { href: "/admin/coaches", label: "Coaches IA", icon: UserCheck },
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
     {
       href: "/admin/logs",

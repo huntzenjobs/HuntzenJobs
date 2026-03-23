@@ -25,7 +25,12 @@ import type { QueueWaitingState } from "@/lib/api/huntzen-client";
 import { v4 as uuidv4 } from "uuid";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAssistant } from "@/contexts/assistant-context";
-import { getAssistantConfig, ASSISTANTS_CONFIG } from "@/config/assistants";
+import {
+  getAssistantConfig,
+  ASSISTANTS_CONFIG,
+  ASSISTANT_TO_COACH_ID,
+} from "@/config/assistants";
+import { useCoachesConfig } from "@/hooks/use-coaches-config";
 import {
   Dialog,
   DialogContent,
@@ -87,6 +92,11 @@ export default function AssistantPage() {
   const { selectedAssistant, setSelectedAssistant } = useAssistant();
   const assistantConfig = getAssistantConfig(selectedAssistant);
   const accentColor = assistantConfig.accentColor ?? assistantConfig.color;
+
+  // DB coach data (overrides i18n keys when available)
+  const { coaches: coachesData, getCoach } = useCoachesConfig();
+  const currentCoachId = ASSISTANT_TO_COACH_ID[selectedAssistant];
+  const currentCoach = currentCoachId ? getCoach(currentCoachId) : undefined;
   const [transitioning, setTransitioning] = useState(false);
 
   const triggerTransition = () => {
@@ -451,6 +461,7 @@ export default function AssistantPage() {
             <BotSelector
               variant="compact"
               onAssistantChange={handleAssistantChange}
+              coachesData={coachesData}
             />
           </motion.div>
 
@@ -482,7 +493,8 @@ export default function AssistantPage() {
                   </h1>
                 </div>
                 <p className="text-sm text-slate-700 truncate">
-                  {tc(assistantConfig.descriptionKey)}
+                  {currentCoach?.description ||
+                    tc(assistantConfig.descriptionKey)}
                 </p>
               </div>
             </div>
@@ -661,7 +673,10 @@ export default function AssistantPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <WelcomeScreen onQuestionClick={sendMessage} />
+                  <WelcomeScreen
+                    onQuestionClick={sendMessage}
+                    coachData={currentCoach}
+                  />
                 </motion.div>
               ) : (
                 /* Compact assistant info when chatting */
@@ -682,31 +697,41 @@ export default function AssistantPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                        {tc(assistantConfig.shortNameKey)}
+                        {currentCoach?.short_name ||
+                          tc(assistantConfig.shortNameKey)}
                       </h3>
                       <p className="text-sm text-slate-700">
-                        {tc(assistantConfig.descriptionKey)}
+                        {currentCoach?.description ||
+                          tc(assistantConfig.descriptionKey)}
                       </p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {assistantConfig.specialtiesKeys.map(
-                      (specialtyKey, idx) => (
-                        <motion.span
-                          key={idx}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: idx * 0.05 }}
-                          className="text-xs px-3 py-1 rounded-full font-medium"
-                          style={{
-                            backgroundColor: assistantConfig.bgColor,
-                            color: assistantConfig.color,
-                          }}
-                        >
-                          {tc(specialtyKey)}
-                        </motion.span>
-                      ),
-                    )}
+                    {(currentCoach?.specialties &&
+                    currentCoach.specialties.length > 0
+                      ? currentCoach.specialties.map((s, idx) => ({
+                          label: s,
+                          idx,
+                        }))
+                      : assistantConfig.specialtiesKeys.map((key, idx) => ({
+                          label: tc(key),
+                          idx,
+                        }))
+                    ).map(({ label, idx }) => (
+                      <motion.span
+                        key={idx}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="text-xs px-3 py-1 rounded-full font-medium"
+                        style={{
+                          backgroundColor: assistantConfig.bgColor,
+                          color: assistantConfig.color,
+                        }}
+                      >
+                        {label}
+                      </motion.span>
+                    ))}
                   </div>
                 </motion.div>
               )}
