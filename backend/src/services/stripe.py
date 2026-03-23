@@ -878,7 +878,7 @@ async def handle_payment_failed(invoice: dict[str, Any]):
 
 
 async def handle_invoice_paid(invoice: dict[str, Any]):
-    """Handle successful invoice payment — notify admin for every payment received."""
+    """Handle successful invoice payment — update subscription period + notify admin."""
     try:
         amount = invoice.get("amount_paid", 0) / 100  # cents to euros
         currency = (invoice.get("currency") or "eur").upper()
@@ -886,8 +886,37 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
         billing_reason = invoice.get("billing_reason", "unknown")
         subscription_id = invoice.get("subscription", "N/A")
 
-        # Only notify for subscription payments (not one-time)
-        if billing_reason in ("subscription_create", "subscription_cycle", "subscription_update"):
+        # Update current_period_end on renewal/create/update
+        if billing_reason in ("subscription_create", "subscription_cycle", "subscription_update") and subscription_id and subscription_id != "N/A":
+            try:
+                # Fetch fresh subscription data from Stripe
+                stripe_sub = stripe.Subscription.retrieve(subscription_id)
+                new_period_end = datetime.fromtimestamp(
+                    stripe_sub.get("current_period_end", int(datetime.now(UTC).timestamp()) + 2592000),
+                    tz=UTC,
+                )
+                new_period_start = datetime.fromtimestamp(
+                    stripe_sub.get("current_period_start", int(datetime.now(UTC).timestamp())),
+                    tz=UTC,
+                )
+
+                if supabase_client:
+                    supabase_client.table("user_subscriptions").update({
+                        "current_period_start": new_period_start.isoformat(),
+                        "current_period_end": new_period_end.isoformat(),
+                        "status": "active",
+                    }).eq("stripe_subscription_id", subscription_id).execute()
+
+                    logger.info(f"[WEBHOOK] Updated period_end={new_period_end.isoformat()} for sub={subscription_id}")
+
+                    # Invalidate cache so user sees updated quotas immediately
+                    # Find user_id from subscription
+                    sub_row = supabase_client.table("user_subscriptions").select("user_id").eq("stripe_subscription_id", subscription_id).maybe_single().execute()
+                    if sub_row.data:
+                        await invalidate_user_quota_cache(sub_row.data["user_id"])
+            except Exception as e:
+                logger.error(f"[WEBHOOK] Failed to update period_end for {subscription_id}: {e}")
+
             reason_label = {
                 "subscription_create": "Nouvel abonnement",
                 "subscription_cycle": "Renouvellement",
