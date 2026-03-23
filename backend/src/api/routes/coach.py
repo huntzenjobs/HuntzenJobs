@@ -105,6 +105,35 @@ async def _get_arq_pool():
 logger = get_logger(__name__)
 
 
+def _check_per_coach_quota(user_id: str, coach_type: str) -> None:
+    """Check per-coach message quota. Raises 429 if this coach's messages are exhausted."""
+    try:
+        supabase = get_supabase_client()
+        result = supabase.rpc("check_coach_message_quota", {
+            "p_user_id": user_id,
+            "p_coach_type": coach_type,
+        }).execute()
+        if result.data:
+            row = result.data[0] if isinstance(result.data, list) else result.data
+            if not row.get("has_access", True):
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail={
+                        "code": "QUOTA_EXCEEDED",
+                        "feature": "assistant_messages",
+                        "coach_type": coach_type,
+                        "limit": row.get("quota_limit"),
+                        "used": row.get("quota_used"),
+                        "reset_at": str(row.get("reset_at", "")),
+                        "message": "COACH_QUOTA_EXCEEDED"
+                    }
+                )
+    except Exception as e:
+        if hasattr(e, 'status_code'):
+            raise
+        logger.warning(f"[quota] per-coach check failed for {user_id}/{coach_type}, allowing through: {e}")
+
+
 def _check_coach_quota(user_id: str) -> None:
     """Check coach seconds quota. Raises 429 if exhausted."""
     try:
@@ -163,10 +192,10 @@ async def coach_chat(
     Réponse synchrone : CoachResponse standard
     Réponse queue     : {"queued": true, "job_id": "...", "position": N, "estimated_wait_seconds": N}
     """
-    # ✅ CHECK QUOTA COACH AVANT TRAITEMENT
+    # ✅ CHECK QUOTA COACH AVANT TRAITEMENT (per-coach)
     user_id_for_quota = current_user.get("id")
     if user_id_for_quota:
-        _check_coach_quota(user_id_for_quota)
+        _check_per_coach_quota(user_id_for_quota, data.assistant_type)
 
     # Compteur global Redis cross-replicas : INCR atomique
     try:
@@ -247,8 +276,20 @@ async def coach_chat(
         result["response"],
     )
 
-    # Tracking événement coach (best-effort)
+    # Incrémenter quota assistant_messages par coach après message réussi
     user_id = current_user.get("id")
+    if user_id:
+        try:
+            supabase = get_supabase_client()
+            supabase.rpc("increment_coach_message", {
+                "p_user_id": user_id,
+                "p_coach_type": data.assistant_type,
+                "p_amount": 1,
+            }).execute()
+        except Exception as e:
+            logger.warning(f"[coach/chat] increment_coach_message failed for {user_id}/{data.assistant_type}: {e}")
+
+    # Tracking événement coach (best-effort)
     prenom = (current_user.get("email", "") or "").split("@")[0].capitalize() or "Un utilisateur"
     history = get_session_history(data.session_id)
     questions_count = len([m for m in history if m.get("role") == "user"])

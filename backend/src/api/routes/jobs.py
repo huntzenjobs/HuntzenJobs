@@ -467,8 +467,8 @@ async def search_jobs(
         ai_insights=str(result.get("insights", "")) if result.get("insights") else None,
     )
 
-    # Incrementer quota apres succes
-    if user_id:
+    # Incrementer quota apres succes (sauf si recherche depuis l'historique)
+    if user_id and not data.from_history:
         _increment_job_search_quota(user_id)
         await invalidate_user_quota_cache(user_id)
 
@@ -498,6 +498,7 @@ async def search_jobs_get(
     contract_types: str = Query(default="", description="Comma-separated contract types: cdi,cdd,freelance,internship,alternance,apprentissage,interim,stage,cdi_partial,cdd_partial"),
     work_schedule: str = Query(default="", description="Comma-separated work schedules: matin,journee,soir,nuit,temps_plein"),
     work_days: str = Query(default="", description="Comma-separated work days: semaine,weekend"),
+    from_history: bool = Query(default=False, description="True if search is from history (skip quota increment)"),
     authorization: str | None = Header(None),
 ):
     """

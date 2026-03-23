@@ -114,6 +114,7 @@ export interface SearchParams {
   workDays?: string[];
   workSchedule?: string[];
   includeRemote?: boolean;
+  fromHistory?: boolean;
 }
 
 export function SearchFormInline({

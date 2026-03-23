@@ -211,6 +211,7 @@ class HuntzenApiClient {
     salaryMin?: number;
     salaryMax?: number;
     companySize?: string;
+    from_history?: boolean;
   }): Promise<{ jobs: Job[]; count: number; corrected_query?: string }> {
     // Build query parameters
     const queryParams = new URLSearchParams();
@@ -241,6 +242,7 @@ class HuntzenApiClient {
       queryParams.append("salary_max", params.salaryMax.toString());
     if (params.companySize)
       queryParams.append("company_size", params.companySize);
+    if (params.from_history) queryParams.append("from_history", "true");
 
     const response = await this.fetch<{
       success: boolean;

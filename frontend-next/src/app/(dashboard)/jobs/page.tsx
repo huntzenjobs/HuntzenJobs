@@ -670,6 +670,7 @@ export default function JobsPage() {
         work_days: effectiveWorkDays,
         work_schedule: effectiveWorkSchedule,
         includeRemote: jobSearchParams.includeRemote,
+        from_history: jobSearchParams.fromHistory,
         // Advanced filters (Premium feature)
         industries: advancedFilters.industries?.join(","),
         keywords: advancedFilters.keywords?.join(","),
@@ -714,6 +715,7 @@ export default function JobsPage() {
       searchQuery.isFetched &&
       !searchQuery.isFetching &&
       !hasIncrementedQuotaRef.current &&
+      !jobSearchParams?.fromHistory &&
       searchQuery.dataUpdatedAt > lastFetchTimeRef.current // Only count genuinely new data
     ) {
       incrementUsage("job_search");
@@ -2457,6 +2459,7 @@ export default function JobsPage() {
                             query: h.query,
                             location: h.location,
                             country: h.country,
+                            fromHistory: true,
                           })
                         }
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-[#00D9FF] hover:text-[#00D9FF] transition-colors"

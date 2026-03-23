@@ -29,6 +29,7 @@ class CoachRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000, description="User message")
     session_id: str = Field(..., pattern=r"^[a-f0-9-]{36}$", description="Session UUID")
     language: Literal["fr", "en", "es", "pt"] = Field(default="fr")
+    assistant_type: str = Field(default="career-coach", description="Coach/assistant type for per-coach quota tracking")
 
     model_config = {"json_schema_extra": {"example": {
         "message": "How can I improve my CV for a Data Engineer position?",
@@ -85,6 +86,10 @@ class JobSearchRequest(BaseModel):
     work_days: list[str] = Field(
         default_factory=list,
         description="Work days filter: semaine, weekend",
+    )
+    from_history: bool = Field(
+        default=False,
+        description="True if search is from history (skip quota increment)",
     )
 
     model_config = {"json_schema_extra": {"example": {

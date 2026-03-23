@@ -120,6 +120,7 @@ export default function AssistantPage() {
     hasFeature,
     openPricingModal,
     isFreePlan,
+    incrementUsage,
   } = useSubscription();
 
   // History state
@@ -268,6 +269,9 @@ export default function AssistantPage() {
 
       setMessages((prev) => [...prev, assistantMessage]);
       setQueueState(null);
+
+      // Incrémenter le quota assistant_messages après message réussi
+      incrementUsage("assistant_messages");
     } catch (error) {
       const errorMessage: ChatMessageType = {
         id: uuidv4(),
