@@ -54,9 +54,10 @@ export function useAuthenticatedFetch() {
 
       // Handle 401 - Token expired, use centralized refresh service
       if (response.status === 401 && !skipAuth) {
-        console.warn(
-          "[AuthenticatedFetch] Token expired (401), getting new token...",
-        );
+        if (isDev)
+          console.warn(
+            "[AuthenticatedFetch] Token expired (401), getting new token...",
+          );
 
         const newToken = await tokenRefreshService.getValidToken();
 
@@ -81,9 +82,10 @@ export function useAuthenticatedFetch() {
 
         // If still 401 after refresh, session is invalid
         if (retryResponse.status === 401) {
-          console.error(
-            "[AuthenticatedFetch] Still 401 after token refresh - session invalid",
-          );
+          if (isDev)
+            console.error(
+              "[AuthenticatedFetch] Still 401 after token refresh - session invalid",
+            );
           throw new Error("Session invalide - veuillez vous reconnecter");
         }
 
