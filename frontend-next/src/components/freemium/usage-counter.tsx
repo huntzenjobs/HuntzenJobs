@@ -231,24 +231,24 @@ function SavedJobsCounter() {
 }
 
 export function UsageSummary({ className = "" }: UsageSummaryProps) {
-  const { plan, isFreePlan } = useSubscription();
+  const { isFreePlan } = useSubscription();
   const tUsage = useTranslations("usageCounter");
-
-  if (!isFreePlan) {
-    return null;
-  }
 
   return (
     <div className={className}>
-      <h4 className="text-sm font-semibold mb-3 text-white/90">
-        {tUsage("dailyUsage")}
-      </h4>
-      <div className="space-y-3">
-        <UsageCounter feature="job_search" showBar />
-        <UsageCounter feature="cv_analysis" showBar />
-        <UsageCounter feature="assistant_messages" showBar />
-        <SavedJobsCounter />
-      </div>
+      {isFreePlan && (
+        <>
+          <h4 className="text-sm font-semibold mb-3 text-white/90">
+            {tUsage("dailyUsage")}
+          </h4>
+          <div className="space-y-3">
+            <UsageCounter feature="job_search" showBar />
+            <UsageCounter feature="cv_analysis" showBar />
+            <UsageCounter feature="assistant_messages" showBar />
+            <SavedJobsCounter />
+          </div>
+        </>
+      )}
       <div className="flex items-center gap-1.5 mt-3 text-xs text-white/50">
         <Clock className="w-3 h-3" />
         <QuotaResetTimer />
