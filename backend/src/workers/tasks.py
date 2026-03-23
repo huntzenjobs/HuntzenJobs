@@ -150,3 +150,51 @@ async def shutdown(ctx: dict) -> None:
     from src.utils.cache import close_redis
     await close_connection_pool()
     await close_redis()
+
+# ─── Expiry notifications ─────────────────────────────────────────────────────
+
+async def notify_expiring_plans(ctx: dict) -> dict:
+    """
+    Tâche quotidienne : envoie un email J-7 aux users dont le plan admin_granted
+    expire dans 7 jours. Appelée via cron POST /api/admin/crons/notify-expiring-plans.
+    """
+    from datetime import UTC, datetime, timedelta
+    from src.api.deps import get_supabase_client
+    from src.services.email import send_expiring_plan_email
+
+    supabase = get_supabase_client()
+    now = datetime.now(UTC)
+    in_7_days_start = now + timedelta(days=7)
+    in_7_days_end = now + timedelta(days=8)
+
+    try:
+        rows = supabase.table("user_subscriptions").select(
+            "user_id, plan_id, current_period_end, profiles!inner(email, language)"
+        ).eq("status", "active").eq("stripe_subscription_id", "admin_granted").gte(
+            "current_period_end", in_7_days_start.isoformat()
+        ).lt(
+            "current_period_end", in_7_days_end.isoformat()
+        ).execute()
+
+        sent = 0
+        for row in (rows.data or []):
+            profile = row.get("profiles") or {}
+            email = profile.get("email")
+            language = profile.get("language", "fr")
+            if not email:
+                continue
+            # Get plan display name
+            plan_res = supabase.table("subscription_plans").select(
+                "display_name"
+            ).eq("id", row["plan_id"]).maybe_single().execute()
+            plan_name = (plan_res.data or {}).get("display_name", "Pro")
+            send_expiring_plan_email(
+                user_email=email,
+                plan_name=plan_name,
+                language=language,
+            )
+            sent += 1
+
+        return {"success": True, "emails_sent": sent}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

@@ -891,13 +891,28 @@ def send_payment_confirmation_email(
     plan_name: str,
     amount: str,
     language: str = "fr",
+    invoice_url: str | None = None,
+    billing_reason: str = "subscription_create",
 ) -> bool:
-    """Send payment confirmation email after successful Stripe checkout."""
+    """Send payment confirmation email after successful Stripe checkout or renewal."""
     try:
         lang = _lang(language)
         tr = _T["payment_confirmation"][lang]
         frontend_url = settings.get_primary_frontend_url()
         today = datetime.now().strftime("%d/%m/%Y")
+
+        is_renewal = billing_reason == "subscription_cycle"
+        subject = f"[HuntZen] Renouvellement {plan_name} confirmé" if is_renewal else tr["subject"]
+
+        invoice_block = ""
+        if invoice_url:
+            invoice_label = "Voir ma facture" if lang == "fr" else "View my invoice"
+            invoice_block = f"""
+                <div style="text-align:center;margin-top:12px;">
+                    <a href="{invoice_url}" style="display:inline-block;background:#f1f5f9;color:#334155;padding:10px 24px;border-radius:8px;text-decoration:none;font-size:14px;border:1px solid #cbd5e1;">
+                        🧾 {invoice_label}
+                    </a>
+                </div>"""
 
         html_content = f"""
         <!DOCTYPE html><html><head><meta charset="utf-8"></head>
@@ -914,6 +929,7 @@ def send_payment_confirmation_email(
                         <p style="margin:6px 0;"><strong>{tr["amount_label"]}</strong> {amount}</p>
                         <p style="margin:6px 0;"><strong>{tr["date_label"]}</strong> {today}</p>
                     </div>
+                    {invoice_block}
                     <p>{tr["footer"]}</p>
                     <div style="text-align:center;margin-top:20px;">
                         <a href="{frontend_url}/dashboard" style="display:inline-block;background:linear-gradient(135deg,#16a34a,#15803d);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
@@ -930,10 +946,10 @@ def send_payment_confirmation_email(
         resend.Emails.send({
             "from": settings.from_email,
             "to": [user_email],
-            "subject": tr["subject"],
+            "subject": subject,
             "html": html_content,
         })
-        logger.info(f"Payment confirmation email sent to {user_email} (plan={plan_name})")
+        logger.info(f"Payment confirmation email sent to {user_email} (plan={plan_name}, reason={billing_reason})")
         return True
     except Exception as e:
         logger.error(f"Failed to send payment confirmation to {user_email}: {e}")
@@ -1381,4 +1397,57 @@ def send_contact_admin_notification(
         return True
     except Exception as e:
         logger.error(f"Failed to send contact admin notification for {email}: {e}")
+        return False
+
+
+def send_expiring_plan_email(
+    user_email: str,
+    plan_name: str,
+    language: str = "fr",
+) -> bool:
+    """Email J-7 avant expiration d'un plan admin_granted."""
+    try:
+        lang = _lang(language)
+        frontend_url = settings.get_primary_frontend_url()
+        if lang == "fr":
+            subject = f"Votre accès {plan_name} expire dans 7 jours"
+            body_line1 = f"Votre accès au plan <strong>{plan_name}</strong> expire dans <strong>7 jours</strong>."
+            body_line2 = "Pour continuer à profiter de toutes les fonctionnalités, activez votre abonnement avant la date d'expiration."
+            cta = "Activer mon abonnement"
+        else:
+            subject = f"Your {plan_name} access expires in 7 days"
+            body_line1 = f"Your <strong>{plan_name}</strong> plan access expires in <strong>7 days</strong>."
+            body_line2 = "To keep enjoying all features, activate your subscription before the expiry date."
+            cta = "Activate my subscription"
+
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">⏰ {subject}</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>{body_line1}</p>
+                    <p>{body_line2}</p>
+                    <div style="text-align:center;margin-top:24px;">
+                        <a href="{frontend_url}/pricing" style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            {cta}
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZen</p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [user_email],
+            "subject": subject,
+            "html": html_content,
+        })
+        logger.info(f"Expiry warning email sent to {user_email} (plan={plan_name})")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send expiry warning to {user_email}: {e}")
         return False

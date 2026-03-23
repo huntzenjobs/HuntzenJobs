@@ -964,6 +964,31 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                 "subscription_update": "Changement de plan",
             }.get(billing_reason, billing_reason)
 
+            # Email client avec lien facture Stripe
+            if customer_email and customer_email != "inconnu" and amount > 0:
+                try:
+                    invoice_url = invoice.get("hosted_invoice_url") or invoice.get("invoice_pdf")
+                    # Recuperer le nom du plan depuis la sub Stripe
+                    plan_label = plan_name if "plan_name" in dir() else "Pro"
+                    try:
+                        items = stripe_sub.get("items", {}).get("data", [])
+                        if items:
+                            prod_id = items[0].get("price", {}).get("product")
+                            if prod_id:
+                                prod = stripe.Product.retrieve(prod_id)
+                                plan_label = prod.get("name", plan_label)
+                    except Exception:
+                        pass
+                    send_payment_confirmation_email(
+                        user_email=customer_email,
+                        plan_name=plan_label,
+                        amount=f"{amount:.2f} {currency}",
+                        invoice_url=invoice_url,
+                        billing_reason=billing_reason,
+                    )
+                except Exception as email_err:
+                    logger.warning(f"[WEBHOOK] Invoice email failed (non-fatal): {email_err}")
+
             await send_admin_alert(
                 subject=f"Paiement recu — {amount:.2f} {currency}",
                 body=(

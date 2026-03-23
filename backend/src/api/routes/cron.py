@@ -228,3 +228,16 @@ async def purge_events(authorization: str | None = Header(None)):
     deleted = purge_old_user_events(supabase, days=30)
     logger.info(f"[cron] purge-events: {deleted} événements supprimés")
     return {"success": True, "deleted": deleted}
+
+
+@router.post("/notify-expiring-plans")
+async def notify_expiring_plans_cron(authorization: str | None = Header(None)):
+    """
+    Envoie un email J-7 aux users dont le plan admin_granted expire dans 7 jours.
+    Appeler quotidiennement via cron (08:00 UTC).
+    """
+    _verify_cron_secret(authorization)
+    from src.workers.tasks import notify_expiring_plans
+    result = await notify_expiring_plans({})
+    logger.info(f"[cron] notify-expiring-plans: {result}")
+    return result
