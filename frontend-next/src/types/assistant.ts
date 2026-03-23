@@ -25,17 +25,17 @@ export interface AssistantConfig {
   /** Identifiant unique de l'assistant */
   id: AssistantType;
 
-  /** Nom de l'expert (ex: "Marie Dupont - Coach Carrière") */
-  name: string;
+  /** Clé i18n pour le nom complet (ex: "coaches.nova.name") */
+  nameKey: string;
 
-  /** Prénom du persona Gamma (ex: "Nova", "Maria", "Sofia") */
+  /** Prénom du persona Gamma (ex: "Nova", "Maria", "Sofia") — non traduit */
   personaName?: string;
 
-  /** Titre court (ex: "Coach Carrière") */
-  shortName: string;
+  /** Clé i18n pour le titre court (ex: "coaches.nova.shortName") */
+  shortNameKey: string;
 
-  /** Description du service humain */
-  description: string;
+  /** Clé i18n pour la description du service */
+  descriptionKey: string;
 
   /** Icône pour l'UI */
   icon: LucideIcon;
@@ -55,14 +55,11 @@ export interface AssistantConfig {
   /** Est-ce un service premium ? */
   isPremium: boolean;
 
-  /** Badge de certification (ex: "Certifié RNCP", "10 ans d'expérience") */
-  certificationBadge?: string;
+  /** Clés i18n pour les spécialités de l'expert */
+  specialtiesKeys: string[];
 
-  /** Spécialités de l'expert */
-  specialties: string[];
-
-  /** Questions types posées par les utilisateurs */
-  exampleQuestions: string[];
+  /** Clés i18n pour les questions types */
+  exampleQuestionsKeys: string[];
 
   /** Endpoint API pour cet assistant */
   apiEndpoint: string;

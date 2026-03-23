@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Globe,
   MapPin,
@@ -9,7 +9,10 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import expatData from "@/data/expat-data.json";
+import expatDataFr from "@/data/expat-data.json";
+import expatDataEn from "@/data/expat-data.en.json";
+import expatDataEs from "@/data/expat-data.es.json";
+import expatDataPt from "@/data/expat-data.pt.json";
 import {
   Select,
   SelectContent,
@@ -19,24 +22,51 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { PageGate } from "@/components/auth/page-gate";
 
-type Country = (typeof expatData.countries)[0];
+type Country = (typeof expatDataFr.countries)[0];
 
-function formatSalary(amount: number, currency: string, eurRate: number) {
-  const eur = Math.round(amount * eurRate);
-  if (currency === "EUR") return `${amount.toLocaleString("fr-FR")} €/an`;
-  return `${amount.toLocaleString("fr-FR")} ${currency}/an ≈ ${eur.toLocaleString("fr-FR")} €`;
-}
+const expatDataByLocale: Record<string, typeof expatDataFr> = {
+  fr: expatDataFr,
+  en: expatDataEn,
+  es: expatDataEs,
+  pt: expatDataPt,
+};
+
+const numberLocaleMap: Record<string, string> = {
+  fr: "fr-FR",
+  en: "en-US",
+  es: "es-ES",
+  pt: "pt-PT",
+};
 
 export default function ExpatPage() {
   const t = useTranslations("expat");
+  const locale = useLocale();
   const router = useRouter();
   const [selectedCode, setSelectedCode] = useState("CA");
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
 
+  const expatData = useMemo(
+    () => expatDataByLocale[locale] ?? expatDataFr,
+    [locale],
+  );
+
+  const numberLocale = numberLocaleMap[locale] ?? "fr-FR";
+
   const country = expatData.countries.find((c) => c.code === selectedCode)!;
+
+  const formatSalary = (amount: number, currency: string, eurRate: number) => {
+    const eur = Math.round(amount * eurRate);
+    if (currency === "EUR")
+      return `${amount.toLocaleString(numberLocale)} ${t("salaryPerYear")}`;
+    return t("salaryApprox", {
+      amount: amount.toLocaleString(numberLocale),
+      currency,
+      eurAmount: eur.toLocaleString(numberLocale),
+    });
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem(`expat_checklist_${selectedCode}`);
@@ -103,7 +133,7 @@ export default function ExpatPage() {
                   {t("costOfLiving.rent")}
                 </p>
                 <p className="text-lg font-bold">
-                  {country.costOfLiving.rent1br.toLocaleString("fr-FR")}{" "}
+                  {country.costOfLiving.rent1br.toLocaleString(numberLocale)}{" "}
                   {country.currency}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -248,7 +278,7 @@ export default function ExpatPage() {
               <Button
                 onClick={() =>
                   router.push(
-                    `/assistant?prefill=${encodeURIComponent(`Je souhaite m'expatrier en ${country.name}. Peux-tu m'aider à préparer mon projet ?`)}`,
+                    `/assistant?prefill=${encodeURIComponent(t("coachPrefill", { country: country.name }))}`,
                   )
                 }
                 className="shrink-0 gap-2"

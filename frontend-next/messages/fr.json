@@ -1129,7 +1129,11 @@
         "physical": "Physique",
         "virtual": "Virtuel",
         "hybrid": "Hybride",
-        "companies": "{count} entreprises"
+        "companies": "{count} entreprises",
+        "jobDating": "Job Dating",
+        "dateLabel": "Date",
+        "locationLabel": "Lieu",
+        "scheduleLabel": "Horaires"
       }
     },
     "documents": {
@@ -1146,6 +1150,26 @@
       "cvLabel": "CV",
       "coverLetterLabel": "Lettre de motivation",
       "generatedOn": "Généré le",
+      "srTitle": "Mes documents",
+      "profilesTitle": "Mes profils CV",
+      "profilesSubtitle": "Réutilisez votre profil pour générer des documents adaptés à chaque offre",
+      "createProfile": "Créer un profil",
+      "noProfileTitle": "Aucun profil CV créé",
+      "noProfileSubtitle": "Créez votre profil une fois et utilisez-le pour toutes vos candidatures sans re-uploader votre CV",
+      "createFirstProfile": "Créer mon premier profil",
+      "profileFallbackName": "Profil CV",
+      "modifiedOn": "Modifié le",
+      "editButton": "Modifier",
+      "deleteProfileTitle": "Supprimer ce profil CV ?",
+      "deleteProfileDescription": "Cette action est irréversible. Le profil sera définitivement supprimé.",
+      "cancelButton": "Annuler",
+      "confirmDeleteButton": "Supprimer",
+      "browseJobs": "Parcourir les offres",
+      "companyUnknown": "Entreprise non précisée",
+      "viewJob": "Voir l'offre",
+      "previewButton": "Prévisualiser",
+      "deleteDocTitle": "Supprimer ce document ?",
+      "deleteDocDescription": "Cette action est irréversible. Le document sera définitivement supprimé.",
       "edit": {
         "startDatePlaceholder": "Ex: 2022-01",
         "endDatePlaceholder": "Ex: 2024-06 ou Présent",
@@ -1681,6 +1705,10 @@
       "quotaReachedRecruiter": "Quota de recherche recruteur atteint. Passez à Pro pour un accès illimité."
     },
     "recruiterFinderBeta": "Cette fonctionnalité est en cours d'amélioration. Les résultats peuvent être incomplets.",
+    "recruiterFinderSubtitle": "Trouvez les contacts RH et décideurs de l'entreprise",
+    "recruiterFinderDescription": "Identifie automatiquement les recruteurs et décideurs à contacter pour ce poste.",
+    "recruiterCompanyLabel": "Nom de l'entreprise",
+    "recruiterCompanyPlaceholder": "Ex: Capgemini, BNP Paribas...",
     "recruiterFinderRgpd": "Ces emails proviennent de sources publiques (Apollo.io, Hunter.io). Respectez le RGPD dans vos communications.",
     "recruiterEmailVerified": "Verifie",
     "recruiterEmailGuessed": "Estime",
@@ -2029,7 +2057,10 @@
       "finance": "Finance",
       "health": "Santé",
       "sales": "Commerce"
-    }
+    },
+    "salaryPerYear": "/an",
+    "salaryApprox": "{amount} {currency}/an ≈ {eurAmount} €",
+    "coachPrefill": "Je souhaite m'expatrier en {country}. Peux-tu m'aider à préparer mon projet ?"
   },
   "about": {
     "hero_title": "HuntZen Jobs : Votre Allié Carrière en France",
@@ -2669,5 +2700,99 @@
     "title": "Page non disponible",
     "description": "Cette fonctionnalite n'est pas incluse dans votre plan actuel. Passez a un plan superieur pour y acceder.",
     "upgrade": "Voir les plans"
+  },
+  "coaches": {
+    "greeting": "Bonjour, je suis",
+    "comingSoon": "Bientôt disponible",
+    "soon": "Bientôt",
+    "close": "Fermer",
+    "closeComing": "J'ai hâte ! Fermer",
+    "notifiedOnLaunch": "Vous serez notifié dès le lancement",
+    "interviewSimTitle": "Interview Simulator",
+    "interviewSimDesc": "Préparez vos entretiens comme jamais auparavant — avec une IA qui joue le recruteur en temps réel.",
+    "whatsComingTitle": "Ce qui arrive",
+    "interviewFeature1Label": "Entretiens en temps réel",
+    "interviewFeature1Desc": "Simulation live face à un recruteur IA",
+    "interviewFeature2Label": "Feedback instantané",
+    "interviewFeature2Desc": "Analyse de vos réponses, posture, mots-clés",
+    "interviewFeature3Label": "Tous types d'entretiens",
+    "interviewFeature3Desc": "Tech, RH, comportemental, cas pratiques",
+    "interviewFeature4Label": "Coaching post-entretien",
+    "interviewFeature4Desc": "Plan d'amélioration personnalisé",
+    "expertDisclaimer": "💬 Vous discutez avec des experts humains certifiés",
+    "nova": {
+      "name": "Nova – Coach Carrière",
+      "shortName": "Coach Carrière",
+      "description": "Je t'aide à clarifier ce que tu veux vraiment pour ta carrière et à construire un plan pour y arriver.",
+      "specialty1": "Orientation professionnelle",
+      "specialty2": "Reconversion",
+      "specialty3": "Plan de carrière",
+      "specialty4": "Formation continue",
+      "q1": "On va définir ton objectif de carrière.",
+      "q2": "Tu veux évoluer, changer de job ou gagner plus ?",
+      "q3": "On construit ton plan ensemble."
+    },
+    "maria": {
+      "name": "Maria – Coach Recherche d'Emploi",
+      "shortName": "Recherche d'Emploi",
+      "description": "Je t'aide à trouver les bonnes offres et à postuler efficacement.",
+      "specialty1": "Stratégie de recherche",
+      "specialty2": "Ciblage d'entreprises",
+      "specialty3": "Candidature spontanée",
+      "specialty4": "Réseau professionnel",
+      "q1": "Je viens de trouver des offres qui peuvent t'intéresser.",
+      "q2": "On va optimiser ta recherche pour trouver plus vite.",
+      "q3": "Comment approcher un recruteur ?"
+    },
+    "sofia": {
+      "name": "Sofia – Expert CV",
+      "shortName": "Expert CV",
+      "description": "Je t'aide à créer un CV qui attire l'attention des recruteurs.",
+      "specialty1": "Analyse ATS",
+      "specialty2": "Structure et mise en page",
+      "specialty3": "Mots-clés sectoriels",
+      "specialty4": "Impact des expériences",
+      "specialty5": "Adaptation à une offre d'emploi",
+      "q1": "Je peux améliorer ton CV en quelques minutes.",
+      "q2": "Ton CV peut être beaucoup plus impactant.",
+      "q3": "Quels mots-clés utiliser ?"
+    },
+    "cvAdapter": {
+      "name": "Assistant Adaptation CV",
+      "shortName": "Adaptation CV",
+      "description": "Personnalisation par un spécialiste pour chaque offre",
+      "specialty1": "Matching CV-offre",
+      "specialty2": "Reformulation ciblée",
+      "specialty3": "Alignement compétences",
+      "specialty4": "Optimisation mots-clés",
+      "q1": "Comment adapter mon CV à cette offre ?",
+      "q2": "Quelles compétences mettre en avant ?",
+      "q3": "Comment reformuler mon expérience ?"
+    },
+    "lucas": {
+      "name": "Lucas – Coach Entretien",
+      "shortName": "Coach Entretien",
+      "description": "Je te prépare aux entretiens pour que tu sois prêt le jour J.",
+      "specialty1": "Entretien technique",
+      "specialty2": "Entretien RH",
+      "specialty3": "Questions pièges",
+      "specialty4": "Communication verbale",
+      "q1": "On va simuler un entretien.",
+      "q2": "Je vais te poser les questions que les recruteurs posent vraiment.",
+      "q3": "Comment gérer le stress ?"
+    },
+    "david": {
+      "name": "David – Coach Personal Branding",
+      "shortName": "Personal Branding",
+      "description": "Je t'aide à construire un profil qui attire les recruteurs.",
+      "specialty1": "Posts LinkedIn viraux",
+      "specialty2": "Storytelling professionnel",
+      "specialty3": "Personal branding X/Twitter",
+      "specialty4": "Stratégie de contenu",
+      "q1": "Ton profil peut devenir beaucoup plus attractif.",
+      "q2": "On va améliorer ta présence professionnelle.",
+      "q3": "Comment développer ma marque personnelle ?",
+      "q4": "Fais moi un post LinkedIn viral pour créer de l'engagement."
+    }
   }
 }

@@ -25,6 +25,7 @@ import { getAllAssistants, getAssistantConfig } from "@/config/assistants";
 import { AssistantType } from "@/types/assistant";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { useOptionalAuth } from "@/contexts/auth-context";
+import { useTranslations } from "next-intl";
 import type { User } from "@supabase/supabase-js";
 
 interface BotSelectorProps {
@@ -50,6 +51,7 @@ export function BotSelector({
   const { selectedAssistant, setSelectedAssistant } = useAssistant();
   const subscription = useOptionalSubscription();
   const auth = useOptionalAuth();
+  const tc = useTranslations("coaches");
 
   const currentConfig = getAssistantConfig(selectedAssistant);
   const allAssistants = getAllAssistants();
@@ -118,7 +120,7 @@ export function BotSelector({
             style={{ color: currentConfig.color }}
           />
           <span className="text-sm font-medium text-slate-900">
-            {currentConfig.shortName}
+            {tc(currentConfig.shortNameKey)}
           </span>
           <ChevronDown
             className={cn(
@@ -135,6 +137,7 @@ export function BotSelector({
             onSelect={handleSelect}
             isFreePlan={isFreePlan}
             user={user}
+            tc={tc}
           />
         )}
       </div>
@@ -163,19 +166,14 @@ export function BotSelector({
         <div className="flex-1 text-left min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-base font-semibold text-white truncate">
-              {currentConfig.shortName}
+              {tc(currentConfig.shortNameKey)}
             </h3>
-            {currentConfig.certificationBadge && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium">
-                {currentConfig.certificationBadge}
-              </span>
-            )}
             {currentConfig.isPremium && (
               <Crown className="w-4 h-4 text-amber-400" />
             )}
           </div>
           <p className="text-xs text-white/70 truncate">
-            {currentConfig.description}
+            {tc(currentConfig.descriptionKey)}
           </p>
         </div>
 
@@ -196,12 +194,13 @@ export function BotSelector({
           onSelect={handleSelect}
           isFreePlan={isFreePlan}
           user={user}
+          tc={tc}
         />
       )}
 
       {/* Coming Soon modal — Interview Simulator */}
       {showComingSoon && (
-        <InterviewSimComingSoon onClose={() => setShowComingSoon(false)} />
+        <InterviewSimComingSoon onClose={() => setShowComingSoon(false)} tc={tc} />
       )}
     </div>
   );
@@ -210,7 +209,13 @@ export function BotSelector({
 /**
  * Modale "Coming Soon" pour l'Interview Simulator
  */
-function InterviewSimComingSoon({ onClose }: { onClose: () => void }) {
+function InterviewSimComingSoon({
+  onClose,
+  tc,
+}: {
+  onClose: () => void;
+  tc: ReturnType<typeof useTranslations>;
+}) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
@@ -226,18 +231,17 @@ function InterviewSimComingSoon({ onClose }: { onClose: () => void }) {
           <div className="relative">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm uppercase tracking-wider">
-                Bientôt disponible
+                {tc("comingSoon")}
               </span>
             </div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
                 <Mic className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-2xl font-bold">Interview Simulator</h2>
+              <h2 className="text-2xl font-bold">{tc("interviewSimTitle")}</h2>
             </div>
             <p className="text-white/80 text-sm leading-relaxed">
-              Préparez vos entretiens comme jamais auparavant — avec une IA qui
-              joue le recruteur en temps réel.
+              {tc("interviewSimDesc")}
             </p>
           </div>
         </div>
@@ -245,37 +249,37 @@ function InterviewSimComingSoon({ onClose }: { onClose: () => void }) {
         {/* Features */}
         <div className="px-6 py-5 space-y-3">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            Ce qui arrive
+            {tc("whatsComingTitle")}
           </p>
           {[
             {
               icon: Zap,
-              label: "Entretiens en temps réel",
-              desc: "Simulation live face à un recruteur IA",
+              labelKey: "interviewFeature1Label" as const,
+              descKey: "interviewFeature1Desc" as const,
             },
             {
               icon: Brain,
-              label: "Feedback instantané",
-              desc: "Analyse de vos réponses, posture, mots-clés",
+              labelKey: "interviewFeature2Label" as const,
+              descKey: "interviewFeature2Desc" as const,
             },
             {
               icon: Star,
-              label: "Tous types d'entretiens",
-              desc: "Tech, RH, comportemental, cas pratiques",
+              labelKey: "interviewFeature3Label" as const,
+              descKey: "interviewFeature3Desc" as const,
             },
             {
               icon: Sparkles,
-              label: "Coaching post-entretien",
-              desc: "Plan d'amélioration personnalisé",
+              labelKey: "interviewFeature4Label" as const,
+              descKey: "interviewFeature4Desc" as const,
             },
-          ].map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="flex items-start gap-3">
+          ].map(({ icon: Icon, labelKey, descKey }) => (
+            <div key={labelKey} className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 mt-0.5">
                 <Icon className="w-4 h-4 text-orange-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-900">{label}</p>
-                <p className="text-xs text-slate-500">{desc}</p>
+                <p className="text-sm font-medium text-slate-900">{tc(labelKey)}</p>
+                <p className="text-xs text-slate-500">{tc(descKey)}</p>
               </div>
             </div>
           ))}
@@ -287,10 +291,10 @@ function InterviewSimComingSoon({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-sm hover:from-orange-600 hover:to-amber-600 transition-all shadow-lg shadow-orange-200"
           >
-            J&apos;ai hâte ! Fermer
+            {tc("closeComing")}
           </button>
           <p className="text-center text-xs text-slate-400 mt-3">
-            Vous serez notifié dès le lancement 🚀
+            {tc("notifiedOnLaunch")}
           </p>
         </div>
 
@@ -298,7 +302,7 @@ function InterviewSimComingSoon({ onClose }: { onClose: () => void }) {
         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
-          aria-label="Fermer"
+          aria-label={tc("close")}
         >
           ✕
         </button>
@@ -316,6 +320,7 @@ interface DropdownMenuProps {
   onSelect: (type: AssistantType) => void;
   isFreePlan: boolean;
   user: User | null;
+  tc: ReturnType<typeof useTranslations>;
 }
 
 function DropdownMenu({
@@ -324,6 +329,7 @@ function DropdownMenu({
   onSelect,
   isFreePlan,
   user,
+  tc,
 }: DropdownMenuProps) {
   return (
     <div className="absolute top-full left-0 mt-2 z-50 w-[calc(100vw-2rem)] sm:w-[480px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
@@ -367,22 +373,17 @@ function DropdownMenu({
                     </span>
                   ) : (
                     <span className="text-sm font-medium text-slate-900 truncate">
-                      {assistant.shortName}
-                    </span>
-                  )}
-                  {assistant.certificationBadge && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-700 font-medium shrink-0">
-                      {assistant.certificationBadge}
+                      {tc(assistant.shortNameKey)}
                     </span>
                   )}
                 </div>
                 {assistant.personaName ? (
                   <p className="text-xs text-slate-600 truncate font-medium">
-                    {assistant.shortName}
+                    {tc(assistant.shortNameKey)}
                   </p>
                 ) : null}
                 <p className="text-xs text-slate-500 truncate">
-                  {assistant.description}
+                  {tc(assistant.descriptionKey)}
                 </p>
               </div>
 
@@ -390,7 +391,7 @@ function DropdownMenu({
               <div className="shrink-0">
                 {isComingSoon ? (
                   <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 font-semibold">
-                    Bientôt
+                    {tc("soon")}
                   </span>
                 ) : isSelected ? (
                   <Check className="w-4 h-4 text-[#00D9FF]" />
@@ -408,10 +409,7 @@ function DropdownMenu({
       {/* Footer info */}
       <div className="px-4 py-3 border-t border-slate-100 bg-slate-50">
         <p className="text-xs text-slate-500 text-center">
-          💬 Vous discutez avec des{" "}
-          <span className="text-slate-900 font-medium">
-            experts humains certifiés
-          </span>
+          {tc("expertDisclaimer")}
         </p>
       </div>
     </div>

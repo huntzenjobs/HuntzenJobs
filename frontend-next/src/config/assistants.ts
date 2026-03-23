@@ -3,6 +3,10 @@
  *
  * WORDING IMPORTANT : Ce sont des interfaces pour communiquer avec des
  * agents humains spécialisés (coach carrière humain, recruteur humain, etc.)
+ *
+ * Les textes visibles (name, shortName, description, specialties, exampleQuestions)
+ * sont stockés sous forme de clés i18n dans le namespace "coaches" des fichiers
+ * de traduction (messages/fr.json, en.json, etc.).
  */
 
 import {
@@ -21,11 +25,10 @@ import { AssistantConfig, AssistantType } from "@/types/assistant";
 export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
   "career-coach": {
     id: "career-coach",
-    name: "Nova – Coach Carrière",
+    nameKey: "nova.name",
     personaName: "Nova",
-    shortName: "Coach Carrière",
-    description:
-      "Je t'aide à clarifier ce que tu veux vraiment pour ta carrière et à construire un plan pour y arriver.",
+    shortNameKey: "nova.shortName",
+    descriptionKey: "nova.description",
     icon: UserCheck,
     color: "#2563eb", // blue-600
     bgColor: "#dbeafe", // blue-100
@@ -33,29 +36,23 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     avatarUrl:
       "https://api.dicebear.com/9.x/personas/svg?seed=Nova&backgroundColor=dbeafe",
     isPremium: false,
-    certificationBadge: "Certifié RNCP",
-    specialties: [
-      "Orientation professionnelle",
-      "Reconversion",
-      "Plan de carrière",
-      "Formation continue",
+    specialtiesKeys: [
+      "nova.specialty1",
+      "nova.specialty2",
+      "nova.specialty3",
+      "nova.specialty4",
     ],
-    exampleQuestions: [
-      "On va définir ton objectif de carrière.",
-      "Tu veux évoluer, changer de job ou gagner plus ?",
-      "On construit ton plan ensemble.",
-    ],
+    exampleQuestionsKeys: ["nova.q1", "nova.q2", "nova.q3"],
     apiEndpoint: "/api/coach/chat",
     responseTime: "< 2 min",
   },
 
   "job-scout": {
     id: "job-scout",
-    name: "Maria – Coach Recherche d'Emploi",
+    nameKey: "maria.name",
     personaName: "Maria",
-    shortName: "Recherche d'Emploi",
-    description:
-      "Je t'aide à trouver les bonnes offres et à postuler efficacement.",
+    shortNameKey: "maria.shortName",
+    descriptionKey: "maria.description",
     icon: Briefcase,
     color: "#059669", // emerald-600
     bgColor: "#d1fae5", // emerald-100
@@ -63,29 +60,23 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     avatarUrl:
       "https://api.dicebear.com/9.x/lorelei/svg?seed=Maria&backgroundColor=d1fae5",
     isPremium: false,
-    certificationBadge: "10+ ans d'expérience",
-    specialties: [
-      "Stratégie de recherche",
-      "Ciblage d'entreprises",
-      "Candidature spontanée",
-      "Réseau professionnel",
+    specialtiesKeys: [
+      "maria.specialty1",
+      "maria.specialty2",
+      "maria.specialty3",
+      "maria.specialty4",
     ],
-    exampleQuestions: [
-      "Je viens de trouver des offres qui peuvent t'intéresser.",
-      "On va optimiser ta recherche pour trouver plus vite.",
-      "Comment approcher un recruteur ?",
-    ],
+    exampleQuestionsKeys: ["maria.q1", "maria.q2", "maria.q3"],
     apiEndpoint: "/api/jobs/search",
     responseTime: "< 3 min",
   },
 
   "cv-analyzer": {
     id: "cv-analyzer",
-    name: "Sofia – Expert CV",
+    nameKey: "sofia.name",
     personaName: "Sofia",
-    shortName: "Expert CV",
-    description:
-      "Je t'aide à créer un CV qui attire l'attention des recruteurs.",
+    shortNameKey: "sofia.shortName",
+    descriptionKey: "sofia.description",
     icon: FileText,
     color: "#7c3aed", // violet-600
     bgColor: "#ede9fe", // violet-100
@@ -93,19 +84,14 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     avatarUrl:
       "https://api.dicebear.com/9.x/personas/svg?seed=Sofia&backgroundColor=ede9fe",
     isPremium: false,
-    certificationBadge: "Expert RH",
-    specialties: [
-      "Analyse ATS",
-      "Structure et mise en page",
-      "Mots-clés sectoriels",
-      "Impact des expériences",
-      "Adaptation à une offre d'emploi",
+    specialtiesKeys: [
+      "sofia.specialty1",
+      "sofia.specialty2",
+      "sofia.specialty3",
+      "sofia.specialty4",
+      "sofia.specialty5",
     ],
-    exampleQuestions: [
-      "Je peux améliorer ton CV en quelques minutes.",
-      "Ton CV peut être beaucoup plus impactant.",
-      "Quels mots-clés utiliser ?",
-    ],
+    exampleQuestionsKeys: ["sofia.q1", "sofia.q2", "sofia.q3"],
     apiEndpoint: "/api/assistant/cv-analyzer",
     responseTime: "< 5 min",
   },
@@ -114,26 +100,25 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
   // Sofia (cv-analyzer) absorbe ce rôle en mode chat.
   "cv-adapter": {
     id: "cv-adapter",
-    name: "Assistant Adaptation CV",
-    shortName: "Adaptation CV",
-    description: "Personnalisation par un spécialiste pour chaque offre",
+    nameKey: "cvAdapter.name",
+    shortNameKey: "cvAdapter.shortName",
+    descriptionKey: "cvAdapter.description",
     icon: FileEdit,
     color: "#dc2626", // red-600
     bgColor: "#fee2e2", // red-100
     avatarUrl:
       "https://api.dicebear.com/9.x/personas/svg?seed=Adapter&backgroundColor=fee2e2",
     isPremium: false,
-    certificationBadge: "Spécialiste Candidature",
-    specialties: [
-      "Matching CV-offre",
-      "Reformulation ciblée",
-      "Alignement compétences",
-      "Optimisation mots-clés",
+    specialtiesKeys: [
+      "cvAdapter.specialty1",
+      "cvAdapter.specialty2",
+      "cvAdapter.specialty3",
+      "cvAdapter.specialty4",
     ],
-    exampleQuestions: [
-      "Comment adapter mon CV à cette offre ?",
-      "Quelles compétences mettre en avant ?",
-      "Comment reformuler mon expérience ?",
+    exampleQuestionsKeys: [
+      "cvAdapter.q1",
+      "cvAdapter.q2",
+      "cvAdapter.q3",
     ],
     apiEndpoint: "/api/cv-adapter/adapt",
     responseTime: "< 5 min",
@@ -141,11 +126,10 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
 
   "interview-sim": {
     id: "interview-sim",
-    name: "Lucas – Coach Entretien",
+    nameKey: "lucas.name",
     personaName: "Lucas",
-    shortName: "Coach Entretien",
-    description:
-      "Je te prépare aux entretiens pour que tu sois prêt le jour J.",
+    shortNameKey: "lucas.shortName",
+    descriptionKey: "lucas.description",
     icon: Mic,
     color: "#ea580c", // orange-600
     bgColor: "#ffedd5", // orange-100
@@ -154,28 +138,23 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
       "https://api.dicebear.com/9.x/personas/svg?seed=Lucas&backgroundColor=ffedd5",
     isPremium: true,
     isComingSoon: true,
-    certificationBadge: "Recruteur certifié",
-    specialties: [
-      "Entretien technique",
-      "Entretien RH",
-      "Questions pièges",
-      "Communication verbale",
+    specialtiesKeys: [
+      "lucas.specialty1",
+      "lucas.specialty2",
+      "lucas.specialty3",
+      "lucas.specialty4",
     ],
-    exampleQuestions: [
-      "On va simuler un entretien.",
-      "Je vais te poser les questions que les recruteurs posent vraiment.",
-      "Comment gérer le stress ?",
-    ],
+    exampleQuestionsKeys: ["lucas.q1", "lucas.q2", "lucas.q3"],
     apiEndpoint: "/api/interview/start",
     responseTime: "Session live 30 min",
   },
 
   branding: {
     id: "branding",
-    name: "David – Coach Personal Branding",
+    nameKey: "david.name",
     personaName: "David",
-    shortName: "Personal Branding",
-    description: "Je t'aide à construire un profil qui attire les recruteurs.",
+    shortNameKey: "david.shortName",
+    descriptionKey: "david.description",
     icon: Linkedin,
     color: "#0077b5",
     bgColor: "#dbeafe",
@@ -183,18 +162,17 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     avatarUrl:
       "https://api.dicebear.com/9.x/personas/svg?seed=David&backgroundColor=dbeafe&hair=shortHair&skinColor=light",
     isPremium: false,
-    certificationBadge: "Expert Personal Branding",
-    specialties: [
-      "Posts LinkedIn viraux",
-      "Storytelling professionnel",
-      "Personal branding X/Twitter",
-      "Stratégie de contenu",
+    specialtiesKeys: [
+      "david.specialty1",
+      "david.specialty2",
+      "david.specialty3",
+      "david.specialty4",
     ],
-    exampleQuestions: [
-      "Ton profil peut devenir beaucoup plus attractif.",
-      "On va améliorer ta présence professionnelle.",
-      "Comment développer ma marque personnelle ?",
-      "Fais moi un post LinkedIn viral pour créer de l'engagement.",
+    exampleQuestionsKeys: [
+      "david.q1",
+      "david.q2",
+      "david.q3",
+      "david.q4",
     ],
     apiEndpoint: "/api/branding/chat",
     responseTime: "< 2 min",

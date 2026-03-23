@@ -54,6 +54,7 @@ import { PageGate } from "@/components/auth/page-gate";
 
 export default function AssistantPage() {
   const t = useTranslations("dashboard.assistant");
+  const tc = useTranslations("coaches");
   const locale = useLocale();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState(() => {
@@ -405,8 +406,8 @@ export default function AssistantPage() {
       id: `system-change-${Date.now()}`,
       role: "assistant",
       content: t("switchSystemMessage", {
-        name: newConfig.personaName ?? newConfig.shortName,
-        description: newConfig.description,
+        name: newConfig.personaName ?? tc(newConfig.shortNameKey),
+        description: tc(newConfig.descriptionKey),
       }),
       isSystem: true,
       timestamp: new Date(),
@@ -477,16 +478,11 @@ export default function AssistantPage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-black text-slate-900 truncate">
-                    {assistantConfig.name}
+                    {tc(assistantConfig.nameKey)}
                   </h1>
-                  {assistantConfig.certificationBadge && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium flex-shrink-0">
-                      ✓ {assistantConfig.certificationBadge}
-                    </span>
-                  )}
                 </div>
                 <p className="text-sm text-slate-700 truncate">
-                  {assistantConfig.description}
+                  {tc(assistantConfig.descriptionKey)}
                 </p>
               </div>
             </div>
@@ -608,7 +604,7 @@ export default function AssistantPage() {
               <DialogDescription>
                 {hasFeature("has_coach_history")
                   ? t("switchDialogDescHistory", {
-                      name: ASSISTANTS_CONFIG[selectedAssistant]?.name,
+                      name: tc(ASSISTANTS_CONFIG[selectedAssistant]?.nameKey),
                     })
                   : t("switchDialogDescNoHistory")}
               </DialogDescription>
@@ -686,34 +682,31 @@ export default function AssistantPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                        {assistantConfig.shortName}
-                        {assistantConfig.certificationBadge && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
-                            ✓ {assistantConfig.certificationBadge}
-                          </span>
-                        )}
+                        {tc(assistantConfig.shortNameKey)}
                       </h3>
                       <p className="text-sm text-slate-700">
-                        {assistantConfig.description}
+                        {tc(assistantConfig.descriptionKey)}
                       </p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {assistantConfig.specialties.map((specialty, idx) => (
-                      <motion.span
-                        key={idx}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="text-xs px-3 py-1 rounded-full font-medium"
-                        style={{
-                          backgroundColor: assistantConfig.bgColor,
-                          color: assistantConfig.color,
-                        }}
-                      >
-                        {specialty}
-                      </motion.span>
-                    ))}
+                    {assistantConfig.specialtiesKeys.map(
+                      (specialtyKey, idx) => (
+                        <motion.span
+                          key={idx}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="text-xs px-3 py-1 rounded-full font-medium"
+                          style={{
+                            backgroundColor: assistantConfig.bgColor,
+                            color: assistantConfig.color,
+                          }}
+                        >
+                          {tc(specialtyKey)}
+                        </motion.span>
+                      ),
+                    )}
                   </div>
                 </motion.div>
               )}

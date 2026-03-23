@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useAssistant } from "@/contexts/assistant-context";
 import { getAssistantConfig } from "@/config/assistants";
+import { useTranslations } from "next-intl";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -18,6 +19,7 @@ export function WelcomeScreen({
 }: WelcomeScreenProps) {
   const { selectedAssistant } = useAssistant();
   const assistant = getAssistantConfig(selectedAssistant);
+  const tc = useTranslations("coaches");
   const [dynamicQuestions, setDynamicQuestions] = React.useState<string[] | null>(null);
 
   React.useEffect(() => {
@@ -39,7 +41,7 @@ export function WelcomeScreen({
           setDynamicQuestions(items.map((s) => s.text));
         }
       } catch {
-        // Fallback to hardcoded questions — do nothing
+        // Fallback to i18n questions — do nothing
       }
     }
 
@@ -53,7 +55,7 @@ export function WelcomeScreen({
   const questions =
     dynamicQuestions && dynamicQuestions.length > 0
       ? dynamicQuestions
-      : assistant.exampleQuestions;
+      : assistant.exampleQuestionsKeys.map((key) => tc(key));
 
   return (
     <div
@@ -71,7 +73,7 @@ export function WelcomeScreen({
         {assistant.avatarUrl ? (
           <img
             src={assistant.avatarUrl}
-            alt={assistant.personaName || assistant.shortName}
+            alt={assistant.personaName || tc(assistant.shortNameKey)}
             className="size-24 rounded-full object-cover"
           />
         ) : (
@@ -79,30 +81,19 @@ export function WelcomeScreen({
         )}
       </div>
 
-      {/* Identité */}
+      {/* Identite */}
       <h2 className="text-2xl font-bold text-gray-900 mb-1">
-        Bonjour, je suis{" "}
+        {tc("greeting")}{" "}
         <span style={{ color: assistant.color }}>
-          {assistant.personaName || assistant.shortName}
+          {assistant.personaName || tc(assistant.shortNameKey)}
         </span>
       </h2>
-      <p className="text-sm text-gray-500 text-center max-w-sm mb-2">
-        {assistant.shortName}
+      <p className="text-sm text-gray-500 text-center max-w-sm mb-6">
+        {tc(assistant.shortNameKey)}
       </p>
-      {assistant.certificationBadge && (
-        <span
-          className="text-xs font-medium px-3 py-1 rounded-full mb-6"
-          style={{
-            backgroundColor: assistant.bgColor,
-            color: assistant.color,
-          }}
-        >
-          {assistant.certificationBadge}
-        </span>
-      )}
 
       <p className="text-base text-gray-600 text-center max-w-md mb-8">
-        {assistant.description}
+        {tc(assistant.descriptionKey)}
       </p>
 
       {/* Suggestions */}

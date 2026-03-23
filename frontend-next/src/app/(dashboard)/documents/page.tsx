@@ -119,18 +119,17 @@ export default function DocumentsPage() {
   return (
     <PageGate featureFlag="page_documents">
       <div className="p-3 md:p-6 max-w-3xl mx-auto space-y-6 md:space-y-8">
-        <h1 className="sr-only">Mes documents</h1>
+        <h1 className="sr-only">{t("srTitle")}</h1>
         {/* ── Section Profils CV ── */}
         <section>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4">
             <div>
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <User className="h-5 w-5 text-[#00D9FF]" />
-                Mes profils CV
+                {t("profilesTitle")}
               </h2>
               <p className="text-gray-500 text-xs mt-0.5">
-                Réutilisez votre profil pour générer des documents adaptés à
-                chaque offre
+                {t("profilesSubtitle")}
               </p>
             </div>
             <Button
@@ -139,7 +138,7 @@ export default function DocumentsPage() {
               className="bg-[#00D9FF] text-gray-900 hover:bg-[#00b8d9]"
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Créer un profil
+              {t("createProfile")}
             </Button>
           </div>
 
@@ -153,15 +152,14 @@ export default function DocumentsPage() {
             <div className="rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
               <User className="h-10 w-10 mx-auto mb-3 text-gray-300" />
               <p className="text-sm font-medium text-gray-500 mb-1">
-                Aucun profil CV créé
+                {t("noProfileTitle")}
               </p>
               <p className="text-xs text-gray-400 mb-4">
-                Créez votre profil une fois et utilisez-le pour toutes vos
-                candidatures sans re-uploader votre CV
+                {t("noProfileSubtitle")}
               </p>
               <Button variant="outline" size="sm" onClick={openNewWizard}>
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Créer mon premier profil
+                {t("createFirstProfile")}
               </Button>
             </div>
           ) : (
@@ -172,6 +170,7 @@ export default function DocumentsPage() {
                   profile={profile}
                   onEdit={() => openEditWizard(profile)}
                   onDelete={() => handleDeleteProfile(profile.id)}
+                  t={t}
                 />
               ))}
             </div>
@@ -292,10 +291,12 @@ function ProfileCard({
   profile,
   onEdit,
   onDelete,
+  t,
 }: {
   profile: CvProfile;
   onEdit: () => void;
   onDelete: () => void;
+  t: (key: string) => string;
 }) {
   const name = profile.cv_data?.personal_info?.name;
   const title = profile.cv_data?.personal_info?.title;
@@ -313,9 +314,9 @@ function ProfileCard({
           <p className="text-xs text-gray-500 truncate">
             {name && title
               ? `${name} · ${title}`
-              : name || title || "Profil CV"}
+              : name || title || t("profileFallbackName")}
             {" · "}
-            Modifié le{" "}
+            {t("modifiedOn")}{" "}
             {format(new Date(profile.updated_at), "d MMM yyyy", { locale: fr })}
           </p>
         </div>
@@ -328,7 +329,7 @@ function ProfileCard({
           onClick={onEdit}
         >
           <Pencil className="h-3.5 w-3.5 mr-1.5" />
-          Modifier
+          {t("editButton")}
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -342,19 +343,18 @@ function ProfileCard({
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer ce profil CV ?</AlertDialogTitle>
+              <AlertDialogTitle>{t("deleteProfileTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Cette action est irréversible. Le profil sera définitivement
-                supprimé.
+                {t("deleteProfileDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogCancel>{t("cancelButton")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={onDelete}
                 className="bg-red-500 hover:bg-red-600"
               >
-                Supprimer
+                {t("confirmDeleteButton")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -382,7 +382,7 @@ function EmptyState({
       <p className="text-xs text-gray-400 mb-4">{t("emptyStateSubtitle")}</p>
       {!hasDocuments && (
         <Button variant="outline" size="sm" asChild>
-          <Link href="/jobs">Parcourir les offres</Link>
+          <Link href="/jobs">{t("browseJobs")}</Link>
         </Button>
       )}
     </div>
@@ -418,7 +418,7 @@ function DocumentCard({
           )}
         </div>
         <p className="text-xs text-gray-500 mb-3">
-          {doc.company || "Entreprise non précisée"} · {t("generatedOn")}{" "}
+          {doc.company || t("companyUnknown")} · {t("generatedOn")}{" "}
           {format(new Date(doc.created_at), "d MMM yyyy", { locale: fr })}
         </p>
         <div className="flex items-center gap-2 flex-wrap">
@@ -455,7 +455,7 @@ function DocumentCard({
                 className="text-gray-500"
               >
                 <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                Voir l&apos;offre
+                {t("viewJob")}
               </a>
             </Button>
           )}
@@ -468,7 +468,7 @@ function DocumentCard({
             size="icon"
             className="text-gray-400 hover:text-[#00D9FF]"
             onClick={onPreview}
-            title="Prévisualiser"
+            title={t("previewButton")}
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -479,7 +479,7 @@ function DocumentCard({
             size="icon"
             className="text-gray-400 hover:text-gray-900"
             onClick={onEdit}
-            title="Modifier"
+            title={t("editButton")}
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -497,19 +497,18 @@ function DocumentCard({
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer ce document ?</AlertDialogTitle>
+              <AlertDialogTitle>{t("deleteDocTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Cette action est irréversible. Le document sera définitivement
-                supprimé.
+                {t("deleteDocDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogCancel>{t("cancelButton")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={onDelete}
                 className="bg-red-500 hover:bg-red-600"
               >
-                Supprimer
+                {t("confirmDeleteButton")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

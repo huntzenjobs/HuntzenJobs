@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import DOMPurify from "dompurify";
 import { FeaturedEventsCarousel } from "@/components/salons/featured-events-carousel";
 import { ErrorBoundary } from "@/components/error-boundary";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { PageGate } from "@/components/auth/page-gate";
 
 // Fonction pour nettoyer le HTML et extraire le texte brut
@@ -276,7 +276,9 @@ export default function SalonsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                       {/* Region */}
                       <div className="space-y-2">
-                        <Label htmlFor="region">Région</Label>
+                        <Label htmlFor="region">
+                          {t("filters.regionLabel")}
+                        </Label>
                         <Select
                           value={selectedRegion || "all"}
                           onValueChange={(val) =>
@@ -290,7 +292,7 @@ export default function SalonsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">
-                              Toutes les régions
+                              {t("filters.allRegions")}
                             </SelectItem>
                             {regions.map((region) => (
                               <SelectItem key={region} value={region}>
@@ -303,7 +305,9 @@ export default function SalonsPage() {
 
                       {/* Sector */}
                       <div className="space-y-2">
-                        <Label htmlFor="sector">Secteur</Label>
+                        <Label htmlFor="sector">
+                          {t("filters.sectorLabel")}
+                        </Label>
                         <Select
                           value={selectedSector || "all"}
                           onValueChange={(val) =>
@@ -317,7 +321,7 @@ export default function SalonsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">
-                              Tous les secteurs
+                              {t("filters.allSectors")}
                             </SelectItem>
                             {sectors.map((sector) => (
                               <SelectItem key={sector} value={sector}>
@@ -331,7 +335,9 @@ export default function SalonsPage() {
 
                       {/* Public */}
                       <div className="space-y-2">
-                        <Label htmlFor="public">Public</Label>
+                        <Label htmlFor="public">
+                          {t("filters.publicLabel")}
+                        </Label>
                         <Select
                           value={selectedPublic || "all"}
                           onValueChange={(val) =>
@@ -344,21 +350,31 @@ export default function SalonsPage() {
                             />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">Tous publics</SelectItem>
-                            <SelectItem value="etudiants">Étudiants</SelectItem>
-                            <SelectItem value="pros">Professionnels</SelectItem>
-                            <SelectItem value="seniors">Seniors</SelectItem>
-                            <SelectItem value="reconversion">
-                              Reconversion
+                            <SelectItem value="all">
+                              {t("filters.allPublics")}
                             </SelectItem>
-                            <SelectItem value="tous">Tous</SelectItem>
+                            <SelectItem value="etudiants">
+                              {t("filters.students")}
+                            </SelectItem>
+                            <SelectItem value="pros">
+                              {t("filters.professionals")}
+                            </SelectItem>
+                            <SelectItem value="seniors">
+                              {t("filters.seniors")}
+                            </SelectItem>
+                            <SelectItem value="reconversion">
+                              {t("filters.reconversion")}
+                            </SelectItem>
+                            <SelectItem value="tous">
+                              {t("filters.all")}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       {/* Event Type */}
                       <div className="space-y-2">
-                        <Label htmlFor="type">Type</Label>
+                        <Label htmlFor="type">{t("filters.typeLabel")}</Label>
                         <Select
                           value={selectedType || "all"}
                           onValueChange={(val) =>
@@ -369,11 +385,13 @@ export default function SalonsPage() {
                             <SelectValue placeholder={t("filters.allTypes")} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">Tous types</SelectItem>
+                            <SelectItem value="all">
+                              {t("filters.allTypes")}
+                            </SelectItem>
                             {eventTypes.map((type) => (
                               <SelectItem key={type} value={type}>
                                 {type === "job_dating"
-                                  ? "Job Dating"
+                                  ? t("filters.jobDating")
                                   : type.charAt(0).toUpperCase() +
                                     type.slice(1)}
                               </SelectItem>
@@ -384,7 +402,9 @@ export default function SalonsPage() {
 
                       {/* Format */}
                       <div className="space-y-2">
-                        <Label htmlFor="format">Format</Label>
+                        <Label htmlFor="format">
+                          {t("filters.formatLabel")}
+                        </Label>
                         <Select
                           value={selectedFormat || "all"}
                           onValueChange={(val) =>
@@ -397,10 +417,18 @@ export default function SalonsPage() {
                             />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">Tous formats</SelectItem>
-                            <SelectItem value="physique">Physique</SelectItem>
-                            <SelectItem value="virtuel">Virtuel</SelectItem>
-                            <SelectItem value="hybride">Hybride</SelectItem>
+                            <SelectItem value="all">
+                              {t("filters.allFormats")}
+                            </SelectItem>
+                            <SelectItem value="physique">
+                              {t("filters.physical")}
+                            </SelectItem>
+                            <SelectItem value="virtuel">
+                              {t("filters.virtual")}
+                            </SelectItem>
+                            <SelectItem value="hybride">
+                              {t("filters.hybrid")}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -582,9 +610,10 @@ export default function SalonsPage() {
 // Event Card Component
 function EventCard({ event, index }: { event: JobFair; index: number }) {
   const t = useTranslations("dashboard.salons");
+  const locale = useLocale();
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("fr-FR", {
+    return date.toLocaleDateString(locale, {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -663,7 +692,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] text-[#00D9FF] font-medium uppercase tracking-wide leading-none mb-0.5">
-                Date
+                {t("filters.dateLabel")}
               </p>
               <p className="text-xs font-semibold text-black line-clamp-1 leading-tight">
                 {formatDate(event.date_start)}
@@ -684,7 +713,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] text-red-600 font-medium uppercase tracking-wide leading-none mb-0.5">
-                Lieu
+                {t("filters.locationLabel")}
               </p>
               <p className="text-xs font-semibold text-black line-clamp-1 leading-tight">
                 {event.city}, {event.region}
@@ -699,7 +728,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] text-green-600 font-medium uppercase tracking-wide leading-none mb-0.5">
-                Horaires
+                {t("filters.scheduleLabel")}
               </p>
               <p className="text-xs font-semibold text-black line-clamp-1 leading-tight">
                 {event.time_start ? (
@@ -725,7 +754,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
               )}
             >
               {event.event_type === "job_dating"
-                ? "Job Dating"
+                ? t("filters.jobDating")
                 : event.event_type.charAt(0).toUpperCase() +
                   event.event_type.slice(1)}
             </Badge>
@@ -747,7 +776,7 @@ function EventCard({ event, index }: { event: JobFair; index: number }) {
                 variant="outline"
                 className="text-[10px] font-medium border-amber-300 bg-amber-50 text-amber-700 h-5 px-2"
               >
-                {event.companies_count} entreprises
+                {t("filters.companies", { count: event.companies_count })}
               </Badge>
             )}
           </div>
