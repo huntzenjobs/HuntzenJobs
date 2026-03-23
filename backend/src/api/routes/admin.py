@@ -526,12 +526,15 @@ async def force_plan_change(
             "canceled_at": datetime.now(UTC).isoformat(),
         }).eq("user_id", user_id).eq("status", "active").execute()
 
-        # Create new subscription entry
+        # Create new subscription entry — 30 jours grace period
+        # Apres 30j sans paiement Stripe, la sub expire et l'user retombe sur free.
+        # Si l'user paie Stripe pendant ce delai, le webhook remplace cette entree.
         now = datetime.now(UTC)
         result = supabase.table("user_subscriptions").insert({
             "user_id": user_id,
             "plan_id": body.plan_id,
             "status": "active",
+            "stripe_subscription_id": "admin_granted",
             "current_period_start": now.isoformat(),
             "current_period_end": (now + timedelta(days=30)).isoformat(),
         }).execute()
