@@ -115,6 +115,24 @@ export default function CouponsPage() {
   });
   const [creating, setCreating] = useState(false);
 
+  // Promo codes state
+  const [promoCodes, setPromoCodes] = useState<any[]>([]);
+  const [promoLoading, setPromoLoading] = useState(true);
+  const [promoCreateOpen, setPromoCreateOpen] = useState(false);
+  const [promoDeleteTarget, setPromoDeleteTarget] = useState<any>(null);
+  const [promoCreating, setPromoCreating] = useState(false);
+  const [promoForm, setPromoForm] = useState({
+    code: "",
+    description: "",
+    discount_type: "percent",
+    discount_value: "",
+    plan: "",
+    stripe_coupon_id: "",
+    max_uses: "",
+    expires_at: "",
+    campaign: "",
+  });
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -130,6 +148,22 @@ export default function CouponsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const loadPromos = useCallback(async () => {
+    setPromoLoading(true);
+    try {
+      const data = await adminFetch("/api/admin/promo-codes");
+      setPromoCodes(data || []);
+    } catch {
+      toast.error("Impossible de charger les codes promo");
+    } finally {
+      setPromoLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPromos();
+  }, [loadPromos]);
 
   const handleCreate = async () => {
     if (!form.name.trim()) {
@@ -225,6 +259,79 @@ export default function CouponsPage() {
       toast.error(e instanceof Error ? e.message : "Erreur application");
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleCreatePromo = async () => {
+    if (!promoForm.code.trim() || !promoForm.description.trim()) {
+      toast.error("Code et description requis");
+      return;
+    }
+    setPromoCreating(true);
+    try {
+      const body: Record<string, any> = {
+        code: promoForm.code.toUpperCase(),
+        description: promoForm.description,
+        discount_type: promoForm.discount_type,
+        discount_value: parseFloat(promoForm.discount_value) || 0,
+      };
+      if (promoForm.plan) body.plan = promoForm.plan;
+      if (promoForm.stripe_coupon_id)
+        body.stripe_coupon_id = promoForm.stripe_coupon_id;
+      if (promoForm.max_uses) body.max_uses = parseInt(promoForm.max_uses);
+      if (promoForm.expires_at)
+        body.expires_at = new Date(promoForm.expires_at).toISOString();
+      if (promoForm.campaign) body.campaign = promoForm.campaign;
+
+      await adminFetch("/api/admin/promo-codes", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      toast.success("Code promo cree");
+      setPromoCreateOpen(false);
+      setPromoForm({
+        code: "",
+        description: "",
+        discount_type: "percent",
+        discount_value: "",
+        plan: "",
+        stripe_coupon_id: "",
+        max_uses: "",
+        expires_at: "",
+        campaign: "",
+      });
+      loadPromos();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setPromoCreating(false);
+    }
+  };
+
+  const handleDeletePromo = async () => {
+    if (!promoDeleteTarget) return;
+    try {
+      await adminFetch(`/api/admin/promo-codes/${promoDeleteTarget.id}`, {
+        method: "DELETE",
+      });
+      toast.success("Code supprime");
+      setPromoDeleteTarget(null);
+      loadPromos();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    }
+  };
+
+  const handleTogglePromo = async (promo: any) => {
+    try {
+      await adminFetch(`/api/admin/promo-codes/${promo.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_active: !promo.is_active }),
+      });
+      toast.success(promo.is_active ? "Code desactive" : "Code active");
+      loadPromos();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
     }
   };
 
@@ -346,6 +453,133 @@ export default function CouponsPage() {
                         size="sm"
                         className="text-destructive hover:text-destructive"
                         onClick={() => setDeleteTarget(c)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      {/* ═══ CODES PROMO (DB) ═══ */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Codes Promo</CardTitle>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadPromos}
+                disabled={promoLoading}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${promoLoading ? "animate-spin" : ""}`}
+                />
+                Actualiser
+              </Button>
+              <Button size="sm" onClick={() => setPromoCreateOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Creer un code
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Codes saisissables par les utilisateurs au signup. Lies aux coupons
+            Stripe ci-dessus.
+          </p>
+        </CardHeader>
+        <CardContent className="p-0">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/30">
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  Code
+                </th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  Description
+                </th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  Remise
+                </th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  Utilisations
+                </th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  Campagne
+                </th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  Statut
+                </th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {promoLoading ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-8 text-center text-muted-foreground"
+                  >
+                    Chargement...
+                  </td>
+                </tr>
+              ) : promoCodes.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-8 text-center text-muted-foreground"
+                  >
+                    Aucun code promo.
+                  </td>
+                </tr>
+              ) : (
+                promoCodes.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="border-b hover:bg-muted/20 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <code className="font-mono font-bold text-primary">
+                        {p.code}
+                      </code>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground max-w-[200px] truncate">
+                      {p.description}
+                    </td>
+                    <td className="px-4 py-3 font-semibold">
+                      {p.discount_type === "percent"
+                        ? `-${p.discount_value}%`
+                        : p.discount_type === "free_days"
+                          ? `${p.discount_value}j gratuits`
+                          : `-${p.discount_value}€`}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {p.current_uses}
+                      {p.max_uses ? ` / ${p.max_uses}` : ""}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {p.campaign || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        variant={p.is_active ? "default" : "secondary"}
+                        className="text-xs cursor-pointer"
+                        onClick={() => handleTogglePromo(p)}
+                      >
+                        {p.is_active ? "Actif" : "Inactif"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setPromoDeleteTarget(p)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -539,6 +773,187 @@ export default function CouponsPage() {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDelete}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog Creer Code Promo */}
+      <Dialog open={promoCreateOpen} onOpenChange={setPromoCreateOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Creer un code promo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Code</Label>
+                <Input
+                  placeholder="SUMMER2026"
+                  value={promoForm.code}
+                  onChange={(e) =>
+                    setPromoForm((f) => ({ ...f, code: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Campagne</Label>
+                <Input
+                  placeholder="launch_mars"
+                  value={promoForm.campaign}
+                  onChange={(e) =>
+                    setPromoForm((f) => ({ ...f, campaign: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Input
+                placeholder="20% de reduction sur le plan Pro"
+                value={promoForm.description}
+                onChange={(e) =>
+                  setPromoForm((f) => ({ ...f, description: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Type</Label>
+                <Select
+                  value={promoForm.discount_type}
+                  onValueChange={(v) =>
+                    setPromoForm((f) => ({ ...f, discount_type: v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percent">Pourcentage (%)</SelectItem>
+                    <SelectItem value="free_days">Jours gratuits</SelectItem>
+                    <SelectItem value="fixed_amount">Montant fixe</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Valeur</Label>
+                <Input
+                  type="number"
+                  placeholder="20"
+                  value={promoForm.discount_value}
+                  onChange={(e) =>
+                    setPromoForm((f) => ({
+                      ...f,
+                      discount_value: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Coupon Stripe (optionnel)</Label>
+                <Select
+                  value={promoForm.stripe_coupon_id}
+                  onValueChange={(v) =>
+                    setPromoForm((f) => ({ ...f, stripe_coupon_id: v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Lier a un coupon" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun</SelectItem>
+                    {coupons
+                      .filter((c) => c.valid)
+                      .map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name || c.id} — {reductionLabel(c)}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Plan cible</Label>
+                <Select
+                  value={promoForm.plan}
+                  onValueChange={(v) =>
+                    setPromoForm((f) => ({ ...f, plan: v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tous" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Tous les plans</SelectItem>
+                    <SelectItem value="starter">Starter</SelectItem>
+                    <SelectItem value="pro">Pro</SelectItem>
+                    <SelectItem value="premium">Premium</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Max utilisations</Label>
+                <Input
+                  type="number"
+                  placeholder="Illimite"
+                  value={promoForm.max_uses}
+                  onChange={(e) =>
+                    setPromoForm((f) => ({ ...f, max_uses: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Expiration</Label>
+                <Input
+                  type="date"
+                  value={promoForm.expires_at}
+                  onChange={(e) =>
+                    setPromoForm((f) => ({ ...f, expires_at: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPromoCreateOpen(false)}
+              disabled={promoCreating}
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleCreatePromo} disabled={promoCreating}>
+              {promoCreating ? "Creation..." : "Creer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation suppression promo */}
+      <AlertDialog
+        open={!!promoDeleteTarget}
+        onOpenChange={(o) => !o && setPromoDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce code promo ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Le code <strong>{promoDeleteTarget?.code}</strong> sera supprime.
+              Les utilisateurs ne pourront plus l&apos;utiliser.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeletePromo}
             >
               Supprimer
             </AlertDialogAction>

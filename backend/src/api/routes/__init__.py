@@ -15,6 +15,7 @@ from src.api.routes.auth import router as auth_router
 from src.api.routes.branding import router as branding_router
 from src.api.routes.career_score import router as career_score_router
 from src.api.routes.coach import router as coach_router
+from src.api.routes.codes import router as codes_router
 from src.api.routes.contact import router as contact_router
 from src.api.routes.coupons import router as coupons_router
 from src.api.routes.cron import router as cron_router
@@ -70,6 +71,7 @@ router.include_router(referrals_router, prefix="/api/referrals", tags=["Referral
 router.include_router(applications_router, tags=["Applications"])
 router.include_router(notifications_router, tags=["Notifications"])
 router.include_router(career_score_router, prefix="/api/career-score", tags=["Career Score"])
+router.include_router(codes_router, prefix="/api/codes", tags=["Codes"])
 router.include_router(coupons_router, prefix="/api/coupons", tags=["Coupons"])
 router.include_router(stats_router, prefix="/api/stats", tags=["Stats"])
 router.include_router(cron_router, prefix="/api/cron", tags=["Cron"])

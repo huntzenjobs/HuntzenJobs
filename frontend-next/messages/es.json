@@ -670,6 +670,16 @@
       "resendConfirmationFailed": "No se ha podido devolver el correo electrónico de confirmación",
       "emailAlreadyExists": "Ya existe una cuenta con esta dirección de correo electrónico. Inicie sesión o utilice la contraseña olvidada."
     },
+    "promoCode": {
+      "trigger": "Tienes un codigo?",
+      "placeholder": "Codigo promocional o de referido",
+      "apply": "Aplicar",
+      "applying": "Verificando...",
+      "invalid": "Codigo invalido o expirado",
+      "validReferral": "Referido por {name}",
+      "validPromo": "{description}",
+      "alreadyApplied": "Codigo ya aplicado"
+    },
     "forgotPassword": {
       "title": "Contraseña olvidada",
       "subtitle": "Introduzca su dirección de correo electrónico y le enviaremos un enlace de restablecimiento.",
@@ -1806,6 +1816,10 @@
       "seo": "Google / SEO",
       "ads": "Publicidad",
       "other": "Otro"
+    },
+    "promoCode": {
+      "title": "Tienes un codigo?",
+      "subtitle": "Codigo promocional, referido... ingresalo aqui"
     },
     "plans": {
       "title": "¿Quieres ir más rápido?",

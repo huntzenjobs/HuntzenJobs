@@ -26,6 +26,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
+import { PromoCodeInput } from "@/components/auth/promo-code-input";
 import { useTranslations } from "next-intl";
 
 function SignupForm() {
@@ -289,25 +290,16 @@ function SignupForm() {
       </AnimatePresence>
 
       <div className="space-y-8">
-        {/* Referral Welcome Banner */}
-        {referralCode && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-gradient-to-r from-[#00D9FF]/10 via-[#00D9FF]/5 to-cyan-100/10 border-2 border-[#00D9FF]/30 rounded-xl p-5"
-          >
-            <h3 className="font-bold text-gray-900 mb-2 text-lg">
-              {t("referral.title")}
-            </h3>
-            <p className="text-gray-700 text-sm mb-2">
-              {t("referral.description")}
-            </p>
-            <p className="text-xs text-gray-500 font-mono">
-              {t("referral.code", { code: referralCode })}
-            </p>
-          </motion.div>
-        )}
+        {/* Promo/Referral code input */}
+        <PromoCodeInput
+          initialCode={referralCode || undefined}
+          onCodeValidated={(code) => {
+            document.cookie = `huntzen_referral_code=${code}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+            localStorage.setItem("huntzen_referral_code", code);
+            setReferralCode(code);
+          }}
+          className="mt-4"
+        />
 
         {/* Header */}
         <div>

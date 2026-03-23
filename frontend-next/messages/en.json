@@ -537,6 +537,7 @@
     "cvAnalysis": "CV Analyses",
     "assistantMessages": "Assistant Messages",
     "jobSearches": "Job Searches",
+    "savedJobs": "Saved Jobs",
     "unlockTitle": "Unlock HuntZen's full potential",
     "unlockDescription": "Upgrade to a paid plan for unlimited analyses, more coaching messages, and exclusive features.",
     "seePlans": "See available plans",
@@ -564,6 +565,9 @@
       },
       "assistantMessages": {
         "label": "messages"
+      },
+      "savedJobs": {
+        "label": "saved"
       },
       "unlimited": "unlimited",
       "unlimitedShort": "Unlimited"
@@ -701,6 +705,16 @@
       "resetPasswordFailed": "Could not send reset link",
       "resendConfirmationFailed": "Not possible to resend the confirmation email"
     },
+    "promoCode": {
+      "trigger": "Got a code?",
+      "placeholder": "Promo or referral code",
+      "apply": "Apply",
+      "applying": "Verifying...",
+      "invalid": "Invalid or expired code",
+      "validReferral": "Referred by {name}",
+      "validPromo": "{description}",
+      "alreadyApplied": "Code already applied"
+    },
     "forgotPassword": {
       "title": "Forgot Password",
       "subtitle": "Enter your email address and we'll send you a reset link.",
@@ -814,6 +828,7 @@
         "mustLogin": "Log in to save offers",
         "mustLoginSave": "You must be logged in to save offers",
         "alreadySaved": "This offer is already in your favorites",
+        "savedJobsLimitReached": "Saved jobs limit reached. Upgrade to a higher plan.",
         "filtersApplied": "{count} advanced filter(s) applied",
         "filtersAppliedDesc": "Search updated with new filters",
         "filtersAppliedNext": "Filters will be applied to the next search",
@@ -2190,6 +2205,10 @@
       "seo": "Google / SEO",
       "ads": "Advertising",
       "other": "Other"
+    },
+    "promoCode": {
+      "title": "Got a code?",
+      "subtitle": "Promo code, referral... enter it here"
     },
     "plans": {
       "title": "Want to go faster?",

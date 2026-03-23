@@ -158,23 +158,47 @@ export function AuthProvider({
               : localStorage.getItem("huntzen_referral_code");
             if (refCode && !alreadyRegistered) {
               const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
-              fetch(`${backendUrl}/api/referrals/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  code: refCode,
-                  new_user_id: session.user.id,
-                }),
-              })
-                .then((res) => {
-                  if (res.ok) {
-                    document.cookie =
-                      "huntzen_referral_code=; path=/; max-age=0";
-                    localStorage.removeItem("huntzen_referral_code");
-                    localStorage.setItem("huntzen_referral_registered", "1");
-                  }
+              const isReferral = /^HZN-[A-Z0-9]{6}$/.test(refCode);
+
+              if (isReferral) {
+                // Referral code flow (HZN-XXXXXX format)
+                fetch(`${backendUrl}/api/referrals/register`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    code: refCode,
+                    new_user_id: session.user.id,
+                  }),
                 })
-                .catch(() => {});
+                  .then((res) => {
+                    if (res.ok) {
+                      document.cookie =
+                        "huntzen_referral_code=; path=/; max-age=0";
+                      localStorage.removeItem("huntzen_referral_code");
+                      localStorage.setItem("huntzen_referral_registered", "1");
+                    }
+                  })
+                  .catch(() => {});
+              } else {
+                // Promo code flow (any other format)
+                fetch(`${backendUrl}/api/codes/apply`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`,
+                  },
+                  body: JSON.stringify({ code: refCode }),
+                })
+                  .then((res) => {
+                    if (res.ok) {
+                      document.cookie =
+                        "huntzen_referral_code=; path=/; max-age=0";
+                      localStorage.removeItem("huntzen_referral_code");
+                      localStorage.setItem("huntzen_referral_registered", "1");
+                    }
+                  })
+                  .catch(() => {});
+              }
             }
           }
 

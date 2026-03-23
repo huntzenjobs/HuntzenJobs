@@ -670,6 +670,16 @@
       "resendConfirmationFailed": "Não foi possível reenviar o e-mail de confirmação",
       "emailAlreadyExists": "Já existe uma conta com este endereço de e-mail. Inicie sessão ou utilize a palavra-passe esquecida."
     },
+    "promoCode": {
+      "trigger": "Tem um codigo?",
+      "placeholder": "Codigo promocional ou de indicacao",
+      "apply": "Aplicar",
+      "applying": "Verificando...",
+      "invalid": "Codigo invalido ou expirado",
+      "validReferral": "Indicado por {name}",
+      "validPromo": "{description}",
+      "alreadyApplied": "Codigo ja aplicado"
+    },
     "forgotPassword": {
       "title": "Esqueci-me da palavra-passe",
       "subtitle": "Introduza o seu endereço de e-mail e enviar-lhe-emos uma ligação de reposição.",
@@ -1806,6 +1816,10 @@
       "seo": "Google / SEO",
       "ads": "Publicidade",
       "other": "Outro"
+    },
+    "promoCode": {
+      "title": "Tem um codigo?",
+      "subtitle": "Codigo promocional, indicacao... insira aqui"
     },
     "plans": {
       "title": "Quer ir mais rápido?",

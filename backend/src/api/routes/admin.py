@@ -682,7 +682,7 @@ async def update_plan_limits(
     """Update numeric limits for a plan (cv_analyses, coach_seconds, job_searches)."""
     supabase = get_supabase_client()
 
-    allowed_keys = {"cv_analyses", "coach_seconds", "job_searches", "assistant_messages"}
+    allowed_keys = {"cv_analyses", "coach_seconds", "job_searches", "assistant_messages", "cv_adapt", "cover_letter", "saved_jobs", "jobs_visible"}
     limits = {k: v for k, v in body.items() if k in allowed_keys}
 
     if not limits:
@@ -3550,3 +3550,115 @@ async def translate_coach(
     except Exception as e:
         logger.error(f"Failed to translate coach {coach_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to translate coach") from None
+
+
+# ============================================================
+# PROMO CODES MANAGEMENT
+# ============================================================
+
+class CreatePromoCodeRequest(BaseModel):
+    code: str
+    description: str
+    discount_type: str  # "percent", "free_days", "fixed_amount"
+    discount_value: float
+    plan: str | None = None
+    stripe_coupon_id: str | None = None
+    max_uses: int | None = None
+    starts_at: str | None = None
+    expires_at: str | None = None
+    campaign: str | None = None
+
+
+class UpdatePromoCodeRequest(BaseModel):
+    is_active: bool | None = None
+    description: str | None = None
+    max_uses: int | None = None
+    expires_at: str | None = None
+    campaign: str | None = None
+
+
+@router.get("/promo-codes")
+async def list_promo_codes(admin: AdminUserDep) -> list[dict[str, Any]]:
+    """List all promo codes with usage stats."""
+    supabase = get_supabase_client()
+    result = supabase.table("promo_codes").select("*").order("created_at", desc=True).execute()
+    return result.data or []
+
+
+@router.post("/promo-codes")
+async def create_promo_code(body: CreatePromoCodeRequest, admin: AdminUserDep) -> dict[str, Any]:
+    """Create a new promo code."""
+    supabase = get_supabase_client()
+
+    # Check code doesn't already exist
+    existing = supabase.table("promo_codes").select("id").eq("code", body.code.upper()).maybe_single().execute()
+    if existing.data:
+        raise HTTPException(status_code=409, detail="Un code avec ce nom existe deja")
+
+    data: dict[str, Any] = {
+        "code": body.code.upper(),
+        "description": body.description,
+        "discount_type": body.discount_type,
+        "discount_value": body.discount_value,
+        "plan": body.plan,
+        "stripe_coupon_id": body.stripe_coupon_id,
+        "max_uses": body.max_uses,
+        "campaign": body.campaign,
+        "is_active": True,
+    }
+    if body.starts_at:
+        data["starts_at"] = body.starts_at
+    if body.expires_at:
+        data["expires_at"] = body.expires_at
+
+    result = supabase.table("promo_codes").insert(data).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.promo_code_created", None, {
+        "code": body.code.upper(),
+        "campaign": body.campaign,
+    })
+
+    return result.data[0] if result.data else {}
+
+
+@router.patch("/promo-codes/{promo_id}")
+async def update_promo_code(promo_id: str, body: UpdatePromoCodeRequest, admin: AdminUserDep) -> dict[str, Any]:
+    """Update a promo code (toggle active, change fields)."""
+    supabase = get_supabase_client()
+
+    update_data: dict[str, Any] = {}
+    if body.is_active is not None:
+        update_data["is_active"] = body.is_active
+    if body.description is not None:
+        update_data["description"] = body.description
+    if body.max_uses is not None:
+        update_data["max_uses"] = body.max_uses
+    if body.expires_at is not None:
+        update_data["expires_at"] = body.expires_at
+    if body.campaign is not None:
+        update_data["campaign"] = body.campaign
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Aucun champ a mettre a jour")
+
+    result = supabase.table("promo_codes").update(update_data).eq("id", promo_id).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.promo_code_updated", None, {
+        "promo_id": promo_id,
+        "changes": update_data,
+    })
+
+    return result.data[0] if result.data else {}
+
+
+@router.delete("/promo-codes/{promo_id}")
+async def delete_promo_code(promo_id: str, admin: AdminUserDep) -> dict[str, Any]:
+    """Delete a promo code."""
+    supabase = get_supabase_client()
+    supabase.table("promo_codes").delete().eq("id", promo_id).execute()
+
+    _log_admin_action(supabase, admin["id"], "admin.promo_code_deleted", None, {
+        "promo_id": promo_id,
+    })
+
+    return {"success": True}

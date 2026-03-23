@@ -305,27 +305,56 @@ async def _create_new_checkout(
     """Create a brand-new Stripe Checkout session."""
     customer_id = await _get_or_create_stripe_customer(user_email)
 
-    try:
-        session = stripe.checkout.Session.create(
-            customer=customer_id,
-            customer_email=user_email if not customer_id else None,
-            mode="subscription",
-            payment_method_types=["card"],
-            line_items=[{"price": price_id, "quantity": 1}],
-            success_url=success_url,
-            cancel_url=cancel_url,
-            metadata={
+    # Check for unused promo code with Stripe coupon
+    promo_coupon_id = None
+    promo_link_id = None
+    if user_id and supabase_client:
+        try:
+            promo_result = supabase_client.table("user_promo_codes").select(
+                "id, promo_code_id"
+            ).eq("user_id", user_id).is_("used_at", "null").limit(1).execute()
+
+            if promo_result.data:
+                promo_link = promo_result.data[0]
+                promo_link_id = promo_link["id"]
+                # Get the stripe_coupon_id from promo_codes table
+                promo_detail = supabase_client.table("promo_codes").select(
+                    "stripe_coupon_id"
+                ).eq("id", promo_link["promo_code_id"]).maybe_single().execute()
+                if promo_detail.data and promo_detail.data.get("stripe_coupon_id"):
+                    promo_coupon_id = promo_detail.data["stripe_coupon_id"]
+                    logger.info(f"[CHECKOUT] Promo coupon {promo_coupon_id} found for user {user_id}")
+        except Exception as e:
+            logger.warning(f"[CHECKOUT] Failed to check promo code for {user_id}: {e}")
+
+    # Build checkout session params
+    checkout_params: dict[str, Any] = {
+        "customer": customer_id,
+        "customer_email": user_email if not customer_id else None,
+        "mode": "subscription",
+        "payment_method_types": ["card"],
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "metadata": {
+            "user_id": user_id,
+            "plan_name": plan_name,
+            "billing_period": billing_period,
+        },
+        "subscription_data": {
+            "metadata": {
                 "user_id": user_id,
                 "plan_name": plan_name,
-                "billing_period": billing_period
-            },
-            subscription_data={
-                "metadata": {
-                    "user_id": user_id,
-                    "plan_name": plan_name
-                }
             }
-        )
+        },
+    }
+
+    # Apply promo coupon discount if found
+    if promo_coupon_id:
+        checkout_params["discounts"] = [{"coupon": promo_coupon_id}]
+
+    try:
+        session = stripe.checkout.Session.create(**checkout_params)
     except stripe.error.InvalidRequestError as e:
         logger.error(f"[CHECKOUT] Stripe InvalidRequestError: {e}. price_id={price_id}, customer={customer_id}")
         raise HTTPException(
@@ -338,6 +367,16 @@ async def _create_new_checkout(
             status_code=500,
             detail="Failed to create checkout session. Please try again or contact support."
         ) from None
+
+    # Mark promo code as used after successful session creation
+    if promo_link_id and promo_coupon_id:
+        try:
+            supabase_client.table("user_promo_codes").update({
+                "used_at": datetime.now(UTC).isoformat()
+            }).eq("id", promo_link_id).execute()
+            logger.info(f"[CHECKOUT] Promo code link {promo_link_id} marked as used for user {user_id}")
+        except Exception as e:
+            logger.warning(f"[CHECKOUT] Failed to mark promo as used: {e}")
 
     logger.info(f"[CHECKOUT] New checkout created: {session.id} for {plan_name}/{billing_period}")
     return {"success": True, "checkout_url": session.url, "session_id": session.id}

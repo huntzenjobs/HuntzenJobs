@@ -695,6 +695,7 @@
     "cvAnalysis": "Analyses CV",
     "assistantMessages": "Messages Assistant",
     "jobSearches": "Recherches d'emploi",
+    "savedJobs": "Jobs sauvegardés",
     "unlockTitle": "Débloquez tout le potentiel de HuntZen",
     "unlockDescription": "Passez à un plan payant pour des analyses illimitées, plus de messages coaching, et des fonctionnalités exclusives.",
     "seePlans": "Voir les plans disponibles",
@@ -722,6 +723,9 @@
       },
       "assistantMessages": {
         "label": "messages"
+      },
+      "savedJobs": {
+        "label": "sauvegardes"
       },
       "unlimited": "illimitées",
       "unlimitedShort": "Illimité"
@@ -885,6 +889,16 @@
       "emailAlreadyExists": "Un compte existe déjà avec cette adresse email. Connectez-vous ou utilisez le mot de passe oublié.",
       "resetPasswordFailed": "Impossible d'envoyer le lien de réinitialisation",
       "resendConfirmationFailed": "Impossible de renvoyer l'email de confirmation"
+    },
+    "promoCode": {
+      "trigger": "Vous avez un code ?",
+      "placeholder": "Code promo ou de parrainage",
+      "apply": "Appliquer",
+      "applying": "Verification...",
+      "invalid": "Code invalide ou expire",
+      "validReferral": "Parraine par {name}",
+      "validPromo": "{description}",
+      "alreadyApplied": "Code deja applique"
     }
   },
   "dashboard": {
@@ -972,6 +986,7 @@
         "mustLogin": "Connectez-vous pour sauvegarder des offres",
         "mustLoginSave": "Vous devez être connecté(e) pour sauvegarder des offres",
         "alreadySaved": "Cette offre est déjà dans vos favoris",
+        "savedJobsLimitReached": "Limite de sauvegardes atteinte. Passez a un plan superieur.",
         "filtersApplied": "{count} filtre(s) avancé(s) appliqué(s)",
         "filtersAppliedDesc": "Recherche mise à jour avec les nouveaux filtres",
         "filtersAppliedNext": "Les filtres seront appliqués à la prochaine recherche",
@@ -2177,6 +2192,10 @@
       "seo": "Google / SEO",
       "ads": "Publicité",
       "other": "Autre"
+    },
+    "promoCode": {
+      "title": "Vous avez un code ?",
+      "subtitle": "Code promo, parrainage... entrez-le ici"
     },
     "plans": {
       "title": "Envie d'aller plus vite ?",

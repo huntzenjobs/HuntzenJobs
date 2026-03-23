@@ -22,8 +22,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PromoCodeInput } from "@/components/auth/promo-code-input";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 interface RadioCardProps {
   selected: boolean;
@@ -184,6 +185,8 @@ function OnboardingWizard() {
       case 5:
         return discoverySource.length > 0;
       case 6:
+        return true; // promo code step, optional
+      case 7:
         return true; // plans step, always can proceed
       default:
         return false;
@@ -261,7 +264,7 @@ function OnboardingWizard() {
         }).catch(() => {});
       }
 
-      // 4. Go to step 6 (plans) instead of redirecting
+      // 4. Go to step 6 (promo code) instead of redirecting
       setLoading(false);
       setDirection(1);
       setStep(6);
@@ -547,8 +550,29 @@ function OnboardingWizard() {
                 </div>
               )}
 
-              {/* Step 6 - Plans */}
+              {/* Step 6 - Promo Code */}
               {step === 6 && (
+                <div className="space-y-5">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-black text-white mb-2">
+                      {t("promoCode.title")}
+                    </h1>
+                    <p className="text-gray-400 text-sm">
+                      {t("promoCode.subtitle")}
+                    </p>
+                  </div>
+                  <PromoCodeInput
+                    onCodeValidated={(code) => {
+                      document.cookie = `huntzen_referral_code=${code}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+                      localStorage.setItem("huntzen_referral_code", code);
+                    }}
+                    className="[&_input]:bg-white/10 [&_input]:border-white/20 [&_input]:text-white [&_input]:placeholder:text-gray-500"
+                  />
+                </div>
+              )}
+
+              {/* Step 7 - Plans */}
+              {step === 7 && (
                 <div className="space-y-5">
                   <div className="text-center">
                     <h1 className="text-2xl font-black text-white mb-2">
@@ -606,7 +630,7 @@ function OnboardingWizard() {
 
           {/* Navigation */}
           <div className="flex items-center justify-between mt-8 gap-3">
-            {step > 1 && step < 6 ? (
+            {step > 1 && step < 7 ? (
               <Button
                 type="button"
                 variant="ghost"
@@ -620,7 +644,7 @@ function OnboardingWizard() {
               <div />
             )}
 
-            {step === 6 ? (
+            {step === 7 ? (
               <Button
                 type="button"
                 onClick={navigateToApp}
