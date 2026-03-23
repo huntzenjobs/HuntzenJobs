@@ -307,21 +307,24 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return localCanUse;
       }
 
-      let apiCanUse: boolean;
-      switch (feature) {
-        case "cv_analysis":
-          apiCanUse = apiData.quotas.cv_analysis.has_access;
-          break;
-        case "assistant_messages":
-          apiCanUse =
-            apiData.quotas?.assistant_messages?.has_access ?? localCanUse;
-          break;
-        case "job_search":
-          apiCanUse = apiData.quotas.job_search.has_access;
-          break;
-        default:
-          apiCanUse = localCanUse;
-      }
+      // Check API quotas for ALL features with quota tracking
+      const quotaKey =
+        feature === "cv_analysis"
+          ? "cv_analysis"
+          : feature === "job_search"
+            ? "job_search"
+            : feature === "assistant_messages"
+              ? "assistant_messages"
+              : feature === "job_view"
+                ? "job_view"
+                : feature === "recruiter_search"
+                  ? "recruiter_search"
+                  : null;
+
+      const apiCanUse =
+        quotaKey && apiData.quotas[quotaKey]
+          ? apiData.quotas[quotaKey].has_access
+          : localCanUse;
 
       // Block if EITHER source says no (most conservative = safest)
       return apiCanUse && localCanUse;
@@ -329,36 +332,19 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     [apiData.quotas, freemium],
   );
 
-  // getRemaining helper: Get remaining quota based on API data
+  // getRemaining helper: Get remaining quota based on API data for ALL features
   const getRemaining = useCallback(
     (feature: FeatureType): number => {
       const localRemaining = freemium.getRemaining(feature);
       if (!apiData.quotas) return localRemaining;
 
-      let apiRemaining: number;
-      switch (feature) {
-        case "cv_analysis":
-          apiRemaining =
-            apiData.quotas.cv_analysis.remaining === -1
-              ? Infinity
-              : apiData.quotas.cv_analysis.remaining;
-          break;
-        case "assistant_messages":
-          apiRemaining = apiData.quotas?.assistant_messages
-            ? apiData.quotas.assistant_messages.remaining === -1
-              ? Infinity
-              : apiData.quotas.assistant_messages.remaining
-            : localRemaining;
-          break;
-        case "job_search":
-          apiRemaining =
-            apiData.quotas.job_search.remaining === -1
-              ? Infinity
-              : apiData.quotas.job_search.remaining;
-          break;
-        default:
-          return localRemaining;
-      }
+      // Generic lookup for all quota-tracked features
+      const quotaData = apiData.quotas[feature];
+      if (!quotaData) return localRemaining;
+
+      const apiRemaining =
+        quotaData.remaining === -1 ? Infinity : quotaData.remaining;
+
       // Return the lower value: if local was decremented but API hasn't refreshed yet
       return Math.min(apiRemaining, localRemaining);
     },
