@@ -116,11 +116,14 @@ async def daily_admin_digest(authorization: str | None = Header(None)):
         ).gte("created_at", f"{today}T00:00:00Z").execute()
         signup_list = signups.data or []
 
-        # Paiements recus (nouvelles souscriptions aujourd'hui)
+        # Paiements recus (nouvelles souscriptions aujourd'hui, hors plan free)
         new_subs = supabase.table("user_subscriptions").select(
-            "user_id, subscription_plans(display_name, price_monthly)"
-        ).eq("status", "active").gte("created_at", f"{today}T00:00:00Z").execute()
-        new_sub_list = new_subs.data or []
+            "user_id, plan_id, status, subscription_plans(name, display_name, price_monthly)"
+        ).in_("status", ["active", "trialing"]).gte("created_at", f"{today}T00:00:00Z").execute()
+        new_sub_list = [
+            s for s in (new_subs.data or [])
+            if (s.get("subscription_plans") or {}).get("price_monthly", 0) > 0
+        ]
         revenue_today = sum(
             (s.get("subscription_plans") or {}).get("price_monthly", 0)
             for s in new_sub_list
@@ -135,13 +138,14 @@ async def daily_admin_digest(authorization: str | None = Header(None)):
         total_searches = sum(r.get("job_searches_used", 0) for r in (usage.data or []))
         active_users = len(usage.data or [])
 
-        # MRR snapshot
+        # MRR snapshot (toutes les souscriptions payantes actives)
         all_active = supabase.table("user_subscriptions").select(
-            "subscription_plans(price_monthly)"
-        ).eq("status", "active").execute()
+            "user_id, plan_id, subscription_plans(name, display_name, price_monthly)"
+        ).in_("status", ["active", "trialing"]).execute()
         mrr = sum(
             (s.get("subscription_plans") or {}).get("price_monthly", 0)
             for s in (all_active.data or [])
+            if (s.get("subscription_plans") or {}).get("price_monthly", 0) > 0
         )
 
         # Construire l'email
@@ -152,11 +156,25 @@ async def daily_admin_digest(authorization: str | None = Header(None)):
         else:
             signup_lines = "  Aucun\n"
 
+        # Enrichir les souscriptions avec l'email du user
         sub_lines = ""
         if new_sub_list:
             for s in new_sub_list:
                 plan = (s.get("subscription_plans") or {})
-                sub_lines += f"  - {plan.get('display_name', '?')} ({plan.get('price_monthly', 0)}EUR/mois)\n"
+                uid = s.get("user_id", "")
+                # Chercher l'email dans la liste des inscrits ou en DB
+                user_email = "?"
+                for sg in signup_list:
+                    if sg.get("id") == uid:
+                        user_email = sg.get("email", "?")
+                        break
+                if user_email == "?":
+                    try:
+                        p = supabase.table("profiles").select("email").eq("id", uid).maybe_single().execute()
+                        user_email = (p.data or {}).get("email", uid[:8])
+                    except Exception:
+                        user_email = uid[:8]
+                sub_lines += f"  - {user_email} → {plan.get('display_name', '?')} ({plan.get('price_monthly', 0)}EUR/mois)\n"
         else:
             sub_lines = "  Aucun\n"
 
