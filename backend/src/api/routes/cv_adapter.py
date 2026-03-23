@@ -18,6 +18,7 @@ from pydantic import BaseModel
 from src.api.deps import (
     _require_feature_flag_sync,
     get_cv_adapter_main,
+    get_supabase_client,
     get_user_id_from_token,
     get_user_info_from_token,
 )
@@ -28,6 +29,39 @@ from src.services.email import send_document_generated
 from src.services.pdf_generator import get_pdf_generator
 
 logger = logging.getLogger(__name__)
+
+
+def _check_and_increment_quota(user_id: str, feature: str) -> None:
+    """Check quota and increment usage for cv_adapt or cover_letter. Raises 429 if exhausted."""
+    supabase = get_supabase_client()
+    try:
+        result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if result.data:
+            for row in result.data:
+                if row.get("feature") == feature:
+                    if not row.get("has_access", True):
+                        raise HTTPException(
+                            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                            detail={
+                                "code": "QUOTA_EXCEEDED",
+                                "feature": feature,
+                                "limit": row.get("quota_limit"),
+                                "used": row.get("quota_used"),
+                                "reset_at": str(row.get("reset_at", "")),
+                                "message": "QUOTA_EXCEEDED",
+                            },
+                        )
+                    break
+        # Increment after check passes
+        supabase.rpc("increment_usage", {
+            "p_user_id": user_id,
+            "p_feature": feature,
+            "p_amount": 1,
+        }).execute()
+    except Exception as e:
+        if hasattr(e, "status_code"):
+            raise
+        logger.warning(f"[quota] {feature} check/increment failed for {user_id}: {e}")
 
 router = APIRouter()
 
@@ -199,6 +233,11 @@ async def adapt_cv(
 
     Returns structured CV data with match analysis.
     """
+    # Check and increment cv_adapt quota
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        _check_and_increment_quota(user_id, "cv_adapt")
+
     # Resolve CV text — from file or raw text
     if file and file.filename:
         cv_text = await _extract_cv_text_from_file(file)
@@ -609,6 +648,7 @@ async def generate_cover_letter(request: CoverLetterRequest, authorization: str 
     user_id = get_user_id_from_token(authorization)
     if user_id:
         _require_feature_flag_sync(user_id, "cover_letter", "La generation de lettre de motivation necessite un plan superieur.")
+        _check_and_increment_quota(user_id, "cover_letter")
 
     agent = get_adapter_agent()
 
@@ -681,6 +721,7 @@ async def generate_cover_letter_json(
     user_id = get_user_id_from_token(authorization)
     if user_id:
         _require_feature_flag_sync(user_id, "cover_letter", "La generation de lettre de motivation necessite un plan superieur.")
+        _check_and_increment_quota(user_id, "cover_letter")
 
     agent = get_adapter_agent()
 

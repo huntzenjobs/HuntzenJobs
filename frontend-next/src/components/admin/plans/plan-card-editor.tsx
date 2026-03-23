@@ -97,6 +97,8 @@ export default function PlanCardEditor({
     cv_analyses: plan.limits?.cv_analyses ?? 0,
     assistant_messages: plan.limits?.assistant_messages ?? 0,
     job_searches: plan.limits?.job_searches ?? 0,
+    cv_adapt: plan.limits?.cv_adapt ?? 0,
+    cover_letter: plan.limits?.cover_letter ?? 0,
   });
   const [priceMonthly, setPriceMonthly] = useState(String(plan.price_monthly));
   const [priceYearly, setPriceYearly] = useState(
@@ -267,6 +269,42 @@ export default function PlanCardEditor({
                   />
                   <p className="text-xs text-muted-foreground">
                     {formatLimit(limits.job_searches)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">CV adapt/jour</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.cv_adapt}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        cv_adapt: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.cv_adapt)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Lettres motiv/jour</Label>
+                  <Input
+                    type="number"
+                    min="-1"
+                    value={limits.cover_letter}
+                    onChange={(e) =>
+                      setLimits((l) => ({
+                        ...l,
+                        cover_letter: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="h-8 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formatLimit(limits.cover_letter)}
                   </p>
                 </div>
               </div>

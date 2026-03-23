@@ -34,6 +34,8 @@ export interface PlanLimit {
   cv_analyses: number;
   assistant_messages: number;
   job_searches: number;
+  cv_adapt: number;
+  cover_letter: number;
 }
 
 export interface StripePrice {
