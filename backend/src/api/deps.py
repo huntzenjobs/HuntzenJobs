@@ -502,6 +502,28 @@ async def increment_quota(user_id: str, feature: str, amount: int = 1) -> None:
         logger.warning(f"[quota] increment_quota({feature}) failed: {e}")
 
 
+async def increment_and_invalidate_quota(user_id: str, feature: str, amount: int = 1) -> None:
+    """Increment usage counter AND invalidate Redis cache so /api/auth/me returns fresh data.
+
+    Use this instead of calling increment_quota + invalidate_user_quota_cache separately.
+    Best-effort: logs warning on failure, does NOT raise.
+    """
+    try:
+        supabase = get_supabase_client()
+        supabase.rpc("increment_usage", {
+            "p_user_id": user_id,
+            "p_feature": feature,
+            "p_amount": amount,
+        }).execute()
+    except Exception as e:
+        logger.warning(f"[quota] increment_and_invalidate({feature}) failed for {user_id}: {e}")
+    try:
+        from src.services.stripe import invalidate_user_quota_cache
+        await invalidate_user_quota_cache(user_id)
+    except Exception as e:
+        logger.warning(f"[quota] cache invalidation failed for {user_id}: {e}")
+
+
 async def get_current_admin(current_user: dict = Depends(get_current_user)) -> dict:
     """
     Verify the current user has admin privileges (is_admin = TRUE in profiles).

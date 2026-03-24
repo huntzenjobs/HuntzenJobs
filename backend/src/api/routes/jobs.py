@@ -563,6 +563,12 @@ async def search_jobs_get(
         result['metadata']['total_filtered'] = len(filtered_jobs)
         result['metadata']['total_before_filters'] = len(jobs)
 
+    # Incrémenter quota après recherche réussie (comme le POST /search)
+    from_history = request.query_params.get("from_history", "").lower() == "true"
+    if user_id and not from_history:
+        _increment_job_search_quota(user_id)
+        await invalidate_user_quota_cache(user_id)
+
     return result
 
 

@@ -31,7 +31,7 @@ from src.services.pdf_generator import get_pdf_generator
 logger = logging.getLogger(__name__)
 
 
-def _check_and_increment_quota(user_id: str, feature: str) -> None:
+async def _check_and_increment_quota(user_id: str, feature: str) -> None:
     """Check quota and increment usage for cv_adapt or cover_letter. Raises 429 if exhausted."""
     supabase = get_supabase_client()
     try:
@@ -58,6 +58,9 @@ def _check_and_increment_quota(user_id: str, feature: str) -> None:
             "p_feature": feature,
             "p_amount": 1,
         }).execute()
+        # Invalider le cache Redis pour que /api/auth/me retourne les quotas à jour
+        from src.services.stripe import invalidate_user_quota_cache
+        await invalidate_user_quota_cache(user_id)
     except Exception as e:
         if hasattr(e, "status_code"):
             raise
@@ -236,7 +239,7 @@ async def adapt_cv(
     # Check and increment cv_adapt quota
     user_id = get_user_id_from_token(authorization)
     if user_id:
-        _check_and_increment_quota(user_id, "cv_adapt")
+        await _check_and_increment_quota(user_id, "cv_adapt")
 
     # Resolve CV text — from file or raw text
     if file and file.filename:
@@ -648,7 +651,7 @@ async def generate_cover_letter(request: CoverLetterRequest, authorization: str 
     user_id = get_user_id_from_token(authorization)
     if user_id:
         _require_feature_flag_sync(user_id, "cover_letter", "La generation de lettre de motivation necessite un plan superieur.")
-        _check_and_increment_quota(user_id, "cover_letter")
+        await _check_and_increment_quota(user_id, "cover_letter")
 
     agent = get_adapter_agent()
 
@@ -721,7 +724,7 @@ async def generate_cover_letter_json(
     user_id = get_user_id_from_token(authorization)
     if user_id:
         _require_feature_flag_sync(user_id, "cover_letter", "La generation de lettre de motivation necessite un plan superieur.")
-        _check_and_increment_quota(user_id, "cover_letter")
+        await _check_and_increment_quota(user_id, "cover_letter")
 
     agent = get_adapter_agent()
 
