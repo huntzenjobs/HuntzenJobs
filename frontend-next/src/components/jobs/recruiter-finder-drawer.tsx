@@ -124,32 +124,7 @@ function ContactCard({ contact }: { contact: Contact }) {
         </span>
       </div>
 
-      {contact.email && (
-        <div className="flex items-center gap-1.5 text-sm min-w-0">
-          <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-          <a
-            href={`mailto:${contact.email}`}
-            className="text-blue-600 hover:underline truncate min-w-0"
-          >
-            {contact.email}
-          </a>
-          <CopyEmailButton email={contact.email} />
-          {/* Email verification badge */}
-          {contact.email_verified ? (
-            <span className="inline-flex items-center gap-0.5 text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">
-              <ShieldCheck className="h-3 w-3" />
-              {tJobs("recruiterEmailVerified")}
-            </span>
-          ) : (
-            contact.email && (
-              <span className="inline-flex items-center gap-0.5 text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-full font-medium shrink-0">
-                <ShieldAlert className="h-3 w-3" />
-                {tJobs("recruiterEmailGuessed")}
-              </span>
-            )
-          )}
-        </div>
-      )}
+      {/* Emails masqués — fiabilité insuffisante, on affiche uniquement les profils LinkedIn */}
 
       {contact.linkedin && (
         <div className="flex items-center gap-1.5 text-sm">

@@ -525,15 +525,7 @@ export function JobDetailsModal({
                   <Mail className="mr-2 h-4 w-4" />
                   {t("findRecruiter")}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 sm:flex-none border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-300"
-                  onClick={() => setInsiderDrawerOpen(true)}
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  {t("findInternalContact")}
-                </Button>
+                {/* Bouton "Trouver des profils LinkedIn" masqué — redondant avec RecruiterFinderDrawer */}
                 <Button
                   variant="outline"
                   size="sm"
