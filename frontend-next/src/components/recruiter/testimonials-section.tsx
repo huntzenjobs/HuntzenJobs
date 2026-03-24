@@ -71,7 +71,7 @@ export function TestimonialsSection() {
   return (
     <section className="mb-16">
       <div className="text-center mb-10">
-        <p className="text-sm font-semibold text-huntzen-turquoise uppercase tracking-wider mb-2">
+        <p className="text-sm font-semibold text-[#00D9FF] uppercase tracking-wider mb-2">
           Témoignages
         </p>
         <h2 className="text-3xl font-bold text-gray-900">Ce que disent nos candidats</h2>
@@ -102,7 +102,7 @@ export function TestimonialsSection() {
                   </blockquote>
                   <div className="flex items-center gap-3">
                     <Avatar className="size-9">
-                      <AvatarFallback className="bg-turquoise-50 text-huntzen-turquoise font-semibold text-xs">
+                      <AvatarFallback className="bg-turquoise-50 text-[#00D9FF] font-semibold text-xs">
                         {testimonial.avatar}
                       </AvatarFallback>
                     </Avatar>

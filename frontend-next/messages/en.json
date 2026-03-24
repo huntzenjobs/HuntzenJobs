@@ -1038,6 +1038,19 @@
     },
     "recruiterContact": {
       "title": "Contact a Recruiter",
+      "hero": {
+        "badge": "Individual session · Response within 48h",
+        "heading1": "Talk directly with",
+        "headingAccent": "a recruiter",
+        "heading2": "expert",
+        "subtitle": "30 minutes of personalized advice to boost your application and land the job of your dreams.",
+        "cta": "Book my consultation",
+        "reviews": "4.9/5 · 127 reviews",
+        "stat1Sub": "consultations completed",
+        "stat2Sub": "find a job within 30 days",
+        "stat3Sub": "client satisfaction",
+        "stat4Sub": "response time"
+      },
       "stats": {
         "consultations": "Successful consultations",
         "satisfaction": "Average satisfaction",

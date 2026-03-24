@@ -1259,6 +1259,19 @@
     },
     "recruiterContact": {
       "title": "Contacter un Recruteur",
+      "hero": {
+        "badge": "Session individuelle · Prise en charge sous 48h",
+        "heading1": "Parlez directement avec",
+        "headingAccent": "un recruteur",
+        "heading2": "expert",
+        "subtitle": "30 minutes de conseil personnalisé pour booster votre candidature et décrocher le job de vos rêves.",
+        "cta": "Réserver ma consultation",
+        "reviews": "4.9/5 · 127 avis",
+        "stat1Sub": "consultations réalisées",
+        "stat2Sub": "trouvent un poste en 30j",
+        "stat3Sub": "satisfaction client",
+        "stat4Sub": "délai de prise en charge"
+      },
       "stats": {
         "consultations": "Consultations réussies",
         "satisfaction": "Satisfaction moyenne",
