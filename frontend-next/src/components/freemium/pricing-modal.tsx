@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePricingData } from "@/hooks/use-pricing-data";
+import { track } from "@/lib/track";
 
 interface PricingPlan {
   id: PlanType;
@@ -56,6 +57,14 @@ export function PricingModal() {
     isLoading: plansLoading,
     formatPrice,
   } = usePricingData();
+
+  // Track pricing modal view
+  useEffect(() => {
+    if (showPricingModal) {
+      const token = auth?.session?.access_token;
+      track.payment.pricingViewed(token);
+    }
+  }, [showPricingModal, auth?.session?.access_token]);
 
   // Map DB plans to PricingPlan shape for the modal
   const ICON_MAP: Record<string, React.ReactNode> = {
@@ -110,6 +119,13 @@ export function PricingModal() {
   // Initiate plan selection: always go through Stripe Checkout
   const handleSelectPlan = useCallback(
     (planId: PlanType) => {
+      // Track CTA click
+      track.payment.ctaClicked(
+        pricingModalFeature || "pricing-modal",
+        planId,
+        auth?.session?.access_token,
+      );
+
       if (planId === "free" || planId === currentPlan) {
         toast.info(tModal("toasts.alreadyOnPlan"));
         closePricingModal();

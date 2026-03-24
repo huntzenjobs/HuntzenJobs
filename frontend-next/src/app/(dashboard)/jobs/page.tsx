@@ -87,6 +87,7 @@ import {
 import { RecruiterEmailFinder } from "@/components/recruiter/recruiter-email-finder";
 import { UserSearch } from "lucide-react";
 import { PageGate } from "@/components/auth/page-gate";
+import { track } from "@/lib/track";
 
 // ─── Fuzzy location helpers ───────────────────────────────────────────────────
 
@@ -880,6 +881,8 @@ export default function JobsPage() {
     onSuccess: (_, job) => {
       setSavedJobIds((prev) => new Set(prev).add(job.id));
       toast.success(t("toast.saved"));
+      // Track job saved event
+      track.jobs.saved(job.company, auth?.session?.access_token);
       // Invalidate saved jobs query
       queryClient.invalidateQueries({ queryKey: ["saved-jobs"] });
       // Invalidate backend Redis cache + refresh quota display
