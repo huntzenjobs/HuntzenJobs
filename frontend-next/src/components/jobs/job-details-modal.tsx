@@ -555,19 +555,7 @@ export function JobDetailsModal({
                         : "flex-1 sm:flex-none"
                     }
                   >
-                    <span
-                      className="cursor-pointer"
-                      onClick={
-                        job.url_is_direct || isNowDirect
-                          ? handleApplyClick
-                          : () =>
-                              window.open(
-                                resolvedUrl,
-                                "_blank",
-                                "noopener,noreferrer",
-                              )
-                      }
-                    >
+                    <span className="cursor-pointer" onClick={handleApplyClick}>
                       {job.url_is_direct || isNowDirect
                         ? t("applyDirect")
                         : t("viewOffer")}
