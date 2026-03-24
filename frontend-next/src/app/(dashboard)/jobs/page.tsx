@@ -2570,7 +2570,18 @@ export default function JobsPage() {
               t("applyConfirmToast", { company: pendingJob.company || "" }),
               {
                 description: pendingJob.title,
-                duration: 12000,
+                duration: 30000,
+                style: {
+                  backgroundColor: "#00d4aa",
+                  color: "#ffffff",
+                  border: "none",
+                  zIndex: 99999,
+                },
+                classNames: {
+                  description: "!text-white/90",
+                  actionButton: "!bg-white !text-[#00d4aa] !font-bold",
+                  cancelButton: "!bg-white/20 !text-white !border-none",
+                },
                 action: {
                   label: `✓ ${t("applyConfirmYes")}`,
                   onClick: () => {

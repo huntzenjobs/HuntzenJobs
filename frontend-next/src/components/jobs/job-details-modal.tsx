@@ -645,26 +645,26 @@ export function JobDetailsModal({
 
             {/* Bannière confirmation candidature */}
             {showAppliedConfirm && !appliedConfirmed && (
-              <div className="sticky bottom-0 left-0 right-0 bg-blue-600 border-t-2 border-blue-700 p-4 shadow-xl z-10 pb-safe">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-white font-bold text-base">
+              <div className="sticky bottom-0 left-0 right-0 bg-blue-600 border-t-2 border-blue-700 p-3 sm:p-4 shadow-xl z-10 pb-safe">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                  <div className="min-w-0">
+                    <p className="text-white font-bold text-sm sm:text-base leading-tight">
                       🎯 As-tu envoyé ta candidature chez {job.company} ?
                     </p>
-                    <p className="text-blue-100 text-sm mt-0.5">
+                    <p className="text-blue-100 text-xs sm:text-sm mt-0.5">
                       On la retrouvera dans ton espace Candidatures
                     </p>
                   </div>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex gap-2 shrink-0 self-end sm:self-auto">
                     <button
                       onClick={handleConfirmApplied}
-                      className="px-5 py-2.5 bg-white text-blue-600 font-bold text-sm rounded-xl hover:bg-blue-50 transition-colors shadow-md"
+                      className="px-4 sm:px-5 py-2 sm:py-2.5 bg-white text-blue-600 font-bold text-sm rounded-xl hover:bg-blue-50 transition-colors shadow-md"
                     >
                       ✓ Oui !
                     </button>
                     <button
                       onClick={handleDenyApplied}
-                      className="px-4 py-2.5 bg-blue-700 text-white text-sm font-medium rounded-xl hover:bg-blue-800 transition-colors"
+                      className="px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-700 text-white text-sm font-medium rounded-xl hover:bg-blue-800 transition-colors"
                     >
                       Non
                     </button>
@@ -675,14 +675,14 @@ export function JobDetailsModal({
 
             {/* Bannière succès après confirmation */}
             {appliedConfirmed && (
-              <div className="sticky bottom-0 left-0 right-0 bg-green-600 border-t-2 border-green-700 p-4 shadow-xl z-10 pb-safe">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">✅</span>
-                  <div>
-                    <p className="text-white font-bold text-base">
+              <div className="sticky bottom-0 left-0 right-0 bg-green-600 border-t-2 border-green-700 p-3 sm:p-4 shadow-xl z-10 pb-safe">
+                <div className="flex items-start sm:items-center gap-2.5 sm:gap-3">
+                  <span className="text-xl sm:text-2xl shrink-0">✅</span>
+                  <div className="min-w-0">
+                    <p className="text-white font-bold text-sm sm:text-base leading-tight">
                       Candidature enregistrée !
                     </p>
-                    <p className="text-green-100 text-sm mt-0.5">
+                    <p className="text-green-100 text-xs sm:text-sm mt-0.5">
                       Vous retrouverez cette annonce sur votre espace{" "}
                       <a
                         href="/candidatures"
