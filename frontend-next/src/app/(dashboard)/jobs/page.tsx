@@ -597,38 +597,74 @@ export default function JobsPage() {
     setCurrentPage(1);
   }, [jobSearchParams]);
 
-  // Restore search state from URL params + sessionStorage on mount
+  // Restore search state from URL params + localStorage on mount
   useEffect(() => {
     const q = searchParams.get("q");
     const country = searchParams.get("country");
     const city = searchParams.get("city");
-    if (!q) return;
 
-    // Restore form fields
-    setJobTitle(q);
-    if (country) setSelectedCountry(country);
-    if (city) {
-      setSelectedCity(city);
-      setCitySearch(city);
-    }
-
-    // Restore jobs from sessionStorage if query matches and cache < 15 min
+    // Try to restore from localStorage (works even without URL params)
     try {
-      const raw = sessionStorage.getItem("huntzen_jobs_cache");
-      if (!raw) return;
+      const raw = localStorage.getItem("huntzen_jobs_cache");
+      if (!raw) {
+        // No cache — only restore form fields from URL
+        if (q) setJobTitle(q);
+        if (country) setSelectedCountry(country);
+        if (city) {
+          setSelectedCity(city);
+          setCitySearch(city);
+        }
+        return;
+      }
       const { jobs: cachedJobs, query, timestamp } = JSON.parse(raw);
       const isRecent = Date.now() - timestamp < 60 * 60 * 1000; // 1h cache
-      if (isRecent && query.jobTitle === q) {
+
+      // Use URL params if present, otherwise use cached query
+      const restoreTitle = q || query.jobTitle;
+      const restoreCountry = country || query.selectedCountry;
+      const restoreCity = city || query.selectedCity;
+
+      if (isRecent && restoreTitle) {
         isRestoringFromCacheRef.current = true;
         hasIncrementedQuotaRef.current = true; // Don't count cache restoration as usage
+        setJobTitle(restoreTitle);
+        if (restoreCountry) setSelectedCountry(restoreCountry);
+        if (restoreCity) {
+          setSelectedCity(restoreCity);
+          setCitySearch(restoreCity);
+        }
         setJobs(cachedJobs);
         setJobSearchParams({
-          query: q,
-          country: country || "",
-          location: city || "",
+          query: restoreTitle,
+          country: restoreCountry || "",
+          location: restoreCity || "",
         });
+        // Sync URL if it was missing params
+        if (!q) {
+          const urlParams = new URLSearchParams();
+          urlParams.set("q", restoreTitle);
+          if (restoreCountry) urlParams.set("country", restoreCountry);
+          if (restoreCity) urlParams.set("city", restoreCity);
+          router.replace(`/jobs?${urlParams.toString()}`, { scroll: false });
+        }
+      } else if (q) {
+        // Cache expired but URL has params — restore form fields only
+        setJobTitle(q);
+        if (country) setSelectedCountry(country);
+        if (city) {
+          setSelectedCity(city);
+          setCitySearch(city);
+        }
       }
-    } catch {}
+    } catch {
+      // Fallback — restore form fields from URL only
+      if (q) setJobTitle(q);
+      if (country) setSelectedCountry(country);
+      if (city) {
+        setSelectedCity(city);
+        setCitySearch(city);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -734,14 +770,14 @@ export default function JobsPage() {
     incrementUsage,
   ]);
 
-  // Handle search query results + persist to sessionStorage
+  // Handle search query results + persist to localStorage
   useEffect(() => {
     if (searchQuery.data) {
       setJobs(searchQuery.data.jobs);
       setVisibleJobsCount(0); // Reset counter for progressive reveal
       setCorrectedQuery(searchQuery.data.corrected_query || null);
       try {
-        sessionStorage.setItem(
+        localStorage.setItem(
           "huntzen_jobs_cache",
           JSON.stringify({
             jobs: searchQuery.data.jobs,
