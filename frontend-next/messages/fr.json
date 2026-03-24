@@ -366,6 +366,9 @@
       "blog": "Blog",
       "testimonials": "Témoignages",
       "about": "À propos",
+      "privacy": "Politique de confidentialité",
+      "terms": "Conditions générales",
+      "contact": "Contact",
       "legalNotice": "Mentions légales"
     },
     "social": {
@@ -2402,9 +2405,9 @@
       "intro": "Nous sommes <strong>HUNTZEN, Unipessoal Lda.</strong>, Sociedade Unipessoal por Quotas au capital de 15.000,00 euros, dont le siège social est situé à <strong>Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal</strong> et titulaire du numéro d'identification de personne morale et d'immatriculation <strong>516481320</strong> (ci-après « HUNTZEN », « nous », « notre ») et ce sont les Conditions Générales de Vente et d'Utilisations (CGVU) d'HUNTZEN.",
       "thanks": "Nous vous remercions de prendre quelques minutes pour lire nos CGVU du Site <strong>https://huntzenjobs.com</strong> (ci-après « Site »), édité par la société HUNTZEN.",
       "important": "Les présentes CGVU contiennent des informations importantes pour vous en tant qu'utilisateur de notre Site et acheteur de nos services, et s'appliquent à tous les services utilisés ou achetés sur notre Site.",
-      "contactIntro": "Si vous avez des questions sur ces CGVU, vous pouvez nous contacter par courrier à l'adresse Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal, par email à l'adresse <strong>contact@huntzenjobs.com</strong> ou par téléphone :",
-      "phonePT": "Téléphone PT : +351 21 111 9967",
-      "phoneFR": "Téléphone FR : +33 (0)1 84 19 26 61"
+      "contactIntro": "Si vous avez des questions sur ces CGVU, vous pouvez nous contacter par courrier à l'adresse Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal, ou par email à l'adresse <strong>contact@huntzenjobs.com</strong>.",
+      "phonePT": "",
+      "phoneFR": ""
     },
     "applicability": {
       "title": "Applicabilité des CGVU",
@@ -2504,7 +2507,7 @@
       "title": "Contact",
       "content1": "Le Site est exploité par HUNTZEN, Unipessoal Lda., dont le siège social est situé à Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal.",
       "content2": "Si vous avez des questions concernant le Site et son contenu, veuillez contacter notre service client :",
-      "phone": "Téléphone : +351 21 111 9967 ou +33 (1) 84 19 26 61",
+      "phone": "",
       "email": "E-mail : contact@huntzenjobs.com"
     },
     "footerLinks": {
@@ -2586,7 +2589,7 @@
     "questions": {
       "title": "Questions et suggestions",
       "content1": "L'Utilisateur peut contacter HUNTZEN vis-à-vis de toutes les questions concernant le traitement de ses données à caractère personnel et l'exercice des droits qui lui sont octroyés par la législation applicable :",
-      "phone": "Téléphone : +351 21 111 9967 ou +33 (1) 84 19 26 61",
+      "phone": "",
       "email": "E-mail : contact@huntzenjobs.com",
       "address": "Adresse : Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal"
     },
