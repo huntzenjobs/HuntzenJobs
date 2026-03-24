@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -208,6 +208,14 @@ export function RecruiterFinderDrawer({
   const [searched, setSearched] = useState(false);
   const [quotaError, setQuotaError] = useState(false);
   const [companyName, setCompanyName] = useState(cleanCompanyName(job.company));
+
+  // Reset company name when the selected job changes
+  useEffect(() => {
+    setCompanyName(cleanCompanyName(job.company));
+    setResult(null);
+    setSearched(false);
+    setQuotaError(false);
+  }, [job.id]);
 
   const handleSearch = async () => {
     if (!session?.access_token) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertTriangle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,14 @@ export function RecruiterEmailFinder({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+
+  // Reset state when companyName prop changes (different job selected)
+  useEffect(() => {
+    setCompany(companyName);
+    setResults([]);
+    setSearched(false);
+    setError(null);
+  }, [companyName]);
 
   const handleSearch = async () => {
     if (!session?.access_token || !company.trim()) return;
