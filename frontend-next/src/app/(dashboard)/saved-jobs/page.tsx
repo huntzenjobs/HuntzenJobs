@@ -30,6 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useOptionalAuth } from "@/contexts/auth-context";
+import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,6 +55,7 @@ interface SavedJob {
 export default function SavedJobsPage() {
   const auth = useOptionalAuth();
   const user = auth?.user;
+  const subscription = useOptionalSubscription();
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("dashboard.savedJobs");
@@ -136,6 +138,16 @@ export default function SavedJobsPage() {
       setSavedJobs((prev) => prev.filter((job) => job.id !== jobId));
       setTotalCount((prev) => Math.max(0, prev - 1));
       toast.success(t("deleted"));
+      // Invalidate backend Redis cache + refresh quota display
+      if (auth?.session?.access_token) {
+        fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/invalidate-cache`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${auth.session.access_token}` },
+          },
+        ).then(() => subscription?.refreshQuotas?.());
+      }
     } catch (error) {
       console.error("Failed to remove saved job:", error);
       toast.error(t("deleteError"));

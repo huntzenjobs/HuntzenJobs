@@ -279,6 +279,7 @@ export default function JobsPage() {
     plan,
     savedJobsUsed,
     savedJobsLimit,
+    refreshQuotas,
   } = useSubscription();
 
   const searchLimitPopup = useConversionPopup("search_limit");
@@ -845,6 +846,16 @@ export default function JobsPage() {
       toast.success(t("toast.saved"));
       // Invalidate saved jobs query
       queryClient.invalidateQueries({ queryKey: ["saved-jobs"] });
+      // Invalidate backend Redis cache + refresh quota display
+      if (auth?.session?.access_token) {
+        fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/invalidate-cache`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${auth.session.access_token}` },
+          },
+        ).then(() => refreshQuotas());
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || t("toast.saveError"));

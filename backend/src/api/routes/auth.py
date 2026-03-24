@@ -358,6 +358,25 @@ async def get_current_user_info(
         ) from None
 
 
+@router.post("/api/auth/invalidate-cache")
+@limiter.limit("30/minute")
+async def invalidate_user_cache(request: Request, authorization: str | None = Header(None)):
+    """
+    Invalidate the Redis cache for the current user's /api/auth/me response.
+    Call after direct Supabase writes (saved jobs, etc.) to force fresh data on next fetch.
+    """
+    user = get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    try:
+        redis = await get_redis()
+        if redis:
+            await redis.delete(f"auth_me:{user['id']}")
+    except Exception:
+        pass
+    return {"success": True}
+
+
 class WelcomeRequest(BaseModel):
     email: str
     full_name: str = ""
