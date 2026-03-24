@@ -57,6 +57,7 @@ export function SupportWidget({
   return (
     <div
       ref={panelRef}
+      style={{ pointerEvents: "auto" }}
       className={cn(
         // Desktop: fixed panel bottom-right
         "fixed bottom-24 right-6 z-[59]",
