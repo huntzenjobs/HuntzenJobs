@@ -51,7 +51,21 @@ export async function GET(request: NextRequest) {
       }
 
       const isNewUser = !data.user?.user_metadata?.onboarding_completed;
-      const finalRedirect = isNewUser ? "/onboarding" : "/jobs";
+      let isAdmin = false;
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", data.user!.id)
+          .single();
+        isAdmin = profile?.is_admin === true;
+      } catch {
+        // Ignore
+      }
+      const defaultDest = isAdmin ? "/admin/dashboard" : "/jobs";
+      const finalRedirect = isNewUser
+        ? `/onboarding?redirectTo=${encodeURIComponent(defaultDest)}`
+        : defaultDest;
       return NextResponse.redirect(`${origin}${finalRedirect}`);
     }
 
@@ -91,15 +105,30 @@ export async function GET(request: NextRequest) {
       // OAuth / email confirmation flow: redirect to final destination
       const isNewUser = !data.user.user_metadata?.onboarding_completed;
 
+      // Check if user is admin
+      let isAdmin = false;
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", data.user.id)
+          .single();
+        isAdmin = profile?.is_admin === true;
+      } catch {
+        // Ignore — default to non-admin
+      }
+
       let finalRedirect: string;
       if (isNewUser) {
-        // New users ALWAYS go through onboarding first
-        // Preserve the original redirectTo so onboarding can redirect after completion
-        const onboardingUrl =
+        const defaultAfter = isAdmin ? "/admin/dashboard" : "/jobs";
+        const afterOnboarding =
+          redirectTo && redirectTo.startsWith("/") ? redirectTo : defaultAfter;
+        finalRedirect = `/onboarding?redirectTo=${encodeURIComponent(afterOnboarding)}`;
+      } else if (isAdmin) {
+        finalRedirect =
           redirectTo && redirectTo.startsWith("/")
-            ? `/onboarding?redirectTo=${encodeURIComponent(redirectTo)}`
-            : "/onboarding";
-        finalRedirect = onboardingUrl;
+            ? redirectTo
+            : "/admin/dashboard";
       } else {
         finalRedirect =
           redirectTo && redirectTo.startsWith("/") ? redirectTo : "/jobs";

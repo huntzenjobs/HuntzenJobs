@@ -311,12 +311,37 @@ export function AuthProvider({
 
       // Check if new user needs onboarding
       const isNewUser = !data.user?.user_metadata?.onboarding_completed;
+
+      // Check if user is admin
+      let isAdmin = false;
+      try {
+        const { data: profile } = await supabaseClient
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", data.user!.id)
+          .single();
+        isAdmin = profile?.is_admin === true;
+      } catch {
+        // Ignore — default to non-admin
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirectTo");
+
       if (isNewUser) {
-        router.push("/onboarding");
+        const defaultAfter = isAdmin ? "/admin/dashboard" : "/jobs";
+        const afterOnboarding =
+          redirectTo && redirectTo.startsWith("/") ? redirectTo : defaultAfter;
+        router.push(
+          `/onboarding?redirectTo=${encodeURIComponent(afterOnboarding)}`,
+        );
+      } else if (isAdmin) {
+        router.push(
+          redirectTo && redirectTo.startsWith("/")
+            ? redirectTo
+            : "/admin/dashboard",
+        );
       } else {
-        // Check for redirectTo parameter in URL for deep links
-        const params = new URLSearchParams(window.location.search);
-        const redirectTo = params.get("redirectTo");
         router.push(
           redirectTo && redirectTo.startsWith("/") ? redirectTo : "/jobs",
         );
