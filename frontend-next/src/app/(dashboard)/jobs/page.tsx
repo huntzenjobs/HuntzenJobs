@@ -2634,6 +2634,30 @@ export default function JobsPage() {
                       } catch {}
                       return next;
                     });
+                    // Enregistrer la candidature en DB (meme logique que la bannière)
+                    const token = auth?.session?.access_token;
+                    if (token) {
+                      fetch(
+                        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/applications`,
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({
+                            external_job_id: pendingJob.id,
+                            job_title: pendingJob.title,
+                            company: pendingJob.company,
+                            location: pendingJob.location,
+                            salary: pendingJob.salary,
+                            job_url: pendingJob.url,
+                            job_source: pendingJob.source,
+                            confirmed_by_user: true,
+                          }),
+                        },
+                      ).catch(() => {});
+                    }
                   },
                 },
                 cancel: { label: t("applyConfirmNo"), onClick: () => {} },
