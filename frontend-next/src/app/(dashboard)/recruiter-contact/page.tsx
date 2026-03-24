@@ -179,27 +179,33 @@ export default function RecruiterContactPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-center p-6 bg-white rounded-xl border-2 border-[#00D9FF]/20 hover:border-[#00D9FF] hover:shadow-lg transition-all"
+            className="text-center p-6 bg-white rounded-xl border-2 border-turquoise-100 hover:border-huntzen-turquoise hover:shadow-lg transition-all"
           >
-            <div className="text-4xl font-black text-[#00D9FF] mb-2">127</div>
+            <div className="text-4xl font-black text-huntzen-turquoise mb-2">
+              127
+            </div>
             <p className="text-sm text-gray-600">{t("stats.consultations")}</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-center p-6 bg-white rounded-xl border-2 border-[#00C4EA]/20 hover:border-[#00C4EA] hover:shadow-lg transition-all"
+            className="text-center p-6 bg-white rounded-xl border-2 border-turquoise-100 hover:border-huntzen-turquoise hover:shadow-lg transition-all"
           >
-            <div className="text-4xl font-black text-[#00C4EA] mb-2">4.9/5</div>
+            <div className="text-4xl font-black text-huntzen-turquoise mb-2">
+              4.9/5
+            </div>
             <p className="text-sm text-gray-600">{t("stats.satisfaction")}</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6 }}
-            className="text-center p-6 bg-white rounded-xl border-2 border-[#00D9FF]/20 hover:border-[#00D9FF] hover:shadow-lg transition-all"
+            className="text-center p-6 bg-white rounded-xl border-2 border-turquoise-100 hover:border-huntzen-turquoise hover:shadow-lg transition-all"
           >
-            <div className="text-4xl font-black text-[#00D9FF] mb-2">48h</div>
+            <div className="text-4xl font-black text-huntzen-turquoise mb-2">
+              48h
+            </div>
             <p className="text-sm text-gray-600">{t("stats.delay")}</p>
           </motion.div>
         </motion.div>
@@ -232,9 +238,9 @@ export default function RecruiterContactPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: benefit.delay }}
             >
-              <Card className="border-2 border-gray-200 hover:border-[#00D9FF] hover:shadow-lg transition-all h-full">
+              <Card className="border-2 border-gray-100 hover:border-huntzen-turquoise hover:shadow-lg transition-all h-full">
                 <CardContent className="pt-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center mb-4 shadow-lg shadow-[#00D9FF]/30">
+                  <div className="w-12 h-12 rounded-xl bg-huntzen-turquoise flex items-center justify-center mb-4 shadow-glow-turquoise">
                     <benefit.icon className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="font-bold text-lg text-black mb-2">
@@ -261,8 +267,8 @@ export default function RecruiterContactPage() {
           className="grid lg:grid-cols-2 gap-8"
         >
           {/* Pricing Card */}
-          <Card className="border-2 border-[#00D9FF] shadow-lg overflow-hidden h-fit">
-            <CardHeader className="bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] text-white">
+          <Card className="border-2 border-huntzen-turquoise shadow-glow-turquoise overflow-hidden h-fit">
+            <CardHeader className="bg-huntzen-turquoise text-white">
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Sparkles className="w-6 h-6" />
                 {t("pricing.title")}
@@ -310,7 +316,7 @@ export default function RecruiterContactPage() {
                     transition={{ delay: 1.1 + index * 0.1 }}
                     className="flex items-start gap-3"
                   >
-                    <CheckCircle2 className="w-5 h-5 text-[#00D9FF] mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 text-huntzen-turquoise mt-0.5" />
                     <div>
                       <p className="font-medium text-black">{item.title}</p>
                       <p className="text-sm text-gray-600">
@@ -348,7 +354,7 @@ export default function RecruiterContactPage() {
                       onChange={(e) => handleChange("fullName", e.target.value)}
                       onBlur={() => handleBlur("fullName")}
                       required
-                      className={`border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.fullName && errors.fullName ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                      className={`border-gray-200 focus:border-huntzen-turquoise ${touched.fullName && errors.fullName ? "border-red-500 focus:border-red-500" : ""}`}
                       aria-invalid={touched.fullName && !!errors.fullName}
                     />
                     {touched.fullName && errors.fullName && (
@@ -366,7 +372,7 @@ export default function RecruiterContactPage() {
                         id="email"
                         type="email"
                         placeholder={t("form.emailPlaceholder")}
-                        className={`pl-10 border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.email && errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                        className={`pl-10 border-slate-300 focus:border-huntzen-turquoise ${touched.email && errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                         value={formData.email}
                         onChange={(e) => handleChange("email", e.target.value)}
                         onBlur={() => handleBlur("email")}
@@ -389,7 +395,7 @@ export default function RecruiterContactPage() {
                         id="phone"
                         type="tel"
                         placeholder={t("form.phonePlaceholder")}
-                        className={`pl-10 border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.phone && errors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                        className={`pl-10 border-slate-300 focus:border-huntzen-turquoise ${touched.phone && errors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                         value={formData.phone}
                         onChange={(e) => handleChange("phone", e.target.value)}
                         onBlur={() => handleBlur("phone")}
@@ -519,7 +525,7 @@ export default function RecruiterContactPage() {
                       <Input
                         id="preferredDate"
                         type="date"
-                        className="pl-10 border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
+                        className="pl-10 border-gray-300 focus:border-huntzen-turquoise"
                         value={formData.preferredDate}
                         onChange={(e) =>
                           handleChange("preferredDate", e.target.value)
@@ -539,7 +545,7 @@ export default function RecruiterContactPage() {
                       onChange={(e) => handleChange("message", e.target.value)}
                       onBlur={() => handleBlur("message")}
                       required
-                      className={`border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF] ${touched.message && errors.message ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                      className={`border-slate-300 focus:border-huntzen-turquoise ${touched.message && errors.message ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                       aria-invalid={touched.message && !!errors.message}
                     />
                     {touched.message && errors.message && (
@@ -552,7 +558,7 @@ export default function RecruiterContactPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-bold bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/40 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                  className="w-full h-12 text-base font-bold bg-huntzen-turquoise hover:bg-huntzen-turquoise-dark hover:shadow-glow-turquoise text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                   disabled={
                     isSubmitting || !formData.fullName || !formData.email
                   }
@@ -586,13 +592,13 @@ export default function RecruiterContactPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
-          className="bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] text-white p-12 rounded-3xl text-center mt-12 shadow-xl"
+          className="bg-huntzen-turquoise text-white p-12 rounded-3xl text-center mt-12 shadow-glow-turquoise"
         >
           <h3 className="text-3xl font-bold mb-4">{t("cta.title")}</h3>
           <p className="text-xl text-white/90 mb-6">{t("cta.spots")}</p>
           <Button
             size="lg"
-            className="h-14 px-12 bg-white text-[#00D9FF] hover:bg-gray-100 font-bold transition-all duration-300 hover:scale-105"
+            className="h-14 px-12 bg-white text-huntzen-turquoise hover:bg-gray-50 font-bold transition-all duration-300 hover:scale-105"
             onClick={() => {
               const formSection = document.getElementById("contact-form");
               formSection?.scrollIntoView({

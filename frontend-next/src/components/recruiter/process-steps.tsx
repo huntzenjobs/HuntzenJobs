@@ -1,46 +1,45 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { FileText, Shield, Calendar, Video } from 'lucide-react'
 
 const steps = [
   { num: 1, title: "Formulaire", desc: "Remplissez en 2 min", icon: FileText },
-  { num: 2, title: "Paiement", desc: "Sécurisé (50€)", icon: Shield },
-  { num: 3, title: "Planification", desc: "Sous 48h", icon: Calendar },
-  { num: 4, title: "Consultation", desc: "30 min avec expert", icon: Video }
+  { num: 2, title: "Paiement", desc: "Sécurisé · 50€ unique", icon: Shield },
+  { num: 3, title: "Planification", desc: "Sous 48h ouvrées", icon: Calendar },
+  { num: 4, title: "Consultation", desc: "30 min avec expert", icon: Video },
 ]
 
 export function ProcessSteps() {
   return (
     <section className="mb-16">
-      <h2 className="text-3xl font-bold text-center mb-12">Comment ça marche ?</h2>
+      <div className="text-center mb-10">
+        <p className="text-sm font-semibold text-huntzen-turquoise uppercase tracking-wider mb-2">
+          Processus
+        </p>
+        <h2 className="text-3xl font-bold text-gray-900">Comment ça marche ?</h2>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        {steps.map((step, idx) => (
-          <motion.div
-            key={step.num}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="relative text-center"
-          >
-            {/* Connector line */}
-            {idx < steps.length - 1 && (
-              <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-huntzen-blue to-transparent" />
-            )}
+      <div className="relative">
+        {/* Connector line */}
+        <div className="hidden md:block absolute top-8 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-turquoise-200 via-huntzen-turquoise to-turquoise-200" />
 
-            {/* Icon circle */}
-            <div className="relative w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-huntzen-blue to-blue-600 flex items-center justify-center shadow-lg">
-              <step.icon className="w-10 h-10 text-white" />
-              <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-huntzen-turquoise text-white font-bold flex items-center justify-center text-sm">
-                {step.num}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {steps.map((step) => (
+            <div key={step.num} className="relative flex flex-col items-center text-center">
+              {/* Icon box */}
+              <div className="relative mb-4 z-10">
+                <div className="w-16 h-16 rounded-2xl bg-white border-2 border-turquoise-100 flex items-center justify-center shadow-sm">
+                  <step.icon className="w-7 h-7 text-huntzen-turquoise" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-huntzen-turquoise text-white font-bold flex items-center justify-center text-xs shadow-glow-turquoise">
+                  {step.num}
+                </div>
               </div>
+              <h3 className="font-bold text-gray-900 mb-1">{step.title}</h3>
+              <p className="text-sm text-gray-500">{step.desc}</p>
             </div>
-
-            <h3 className="font-bold text-lg mb-1">{step.title}</h3>
-            <p className="text-sm text-gray-600">{step.desc}</p>
-          </motion.div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   )
