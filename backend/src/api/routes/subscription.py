@@ -20,7 +20,7 @@ router = APIRouter()
 # Import dependencies
 try:
     from src.api.deps import get_current_user
-    from src.services.stripe import supabase_client
+    from src.services.stripe import invalidate_user_quota_cache, supabase_client
 except ImportError as e:
     logger.error(f"Failed to import dependencies: {e}")
     raise
@@ -240,6 +240,7 @@ async def manage_coach_session(
                 }).execute()
 
                 logger.info(f"Incremented coach usage for user {user_id}: {elapsed_seconds}s")
+                await invalidate_user_quota_cache(user_id)
 
             except Exception as e:
                 logger.error(f"Failed to increment coach usage: {e}")

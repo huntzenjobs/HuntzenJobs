@@ -27,6 +27,7 @@ from src.api.deps import (
 )
 from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
+from src.services.stripe import invalidate_user_quota_cache
 from src.services.user_events import log_event
 
 # Seuil global (toutes replicas confondues) → au-dessus : queue Redis
@@ -288,6 +289,8 @@ async def coach_chat(
             }).execute()
         except Exception as e:
             logger.warning(f"[coach/chat] increment_coach_message failed for {user_id}/{data.assistant_type}: {e}")
+        # Invalider le cache Redis pour que /api/auth/me retourne les quotas à jour
+        await invalidate_user_quota_cache(user_id)
 
     # Tracking événement coach (best-effort)
     prenom = (current_user.get("email", "") or "").split("@")[0].capitalize() or "Un utilisateur"
@@ -471,6 +474,9 @@ async def sync_coach_time(
                 break
 
         logger.info(f"Coach time synced successfully for user {user_id}: {data.seconds_used}s")
+
+        # Invalider le cache Redis pour que /api/auth/me retourne les quotas à jour
+        await invalidate_user_quota_cache(user_id)
 
         return {
             "success": True,
