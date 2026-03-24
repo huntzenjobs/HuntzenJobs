@@ -692,27 +692,32 @@
     "activeBadge": "Actif",
     "upgradeCta": "Passer à un plan payant",
     "progressTitle": "Ta progression",
-    "dailyUsageTitle": "Utilisation du jour",
+    "dailyUsageTitle": "Quotas journaliers",
+    "generalUsageTitle": "Quotas généraux",
     "resetAtMidnight": "Réinitialisation à minuit",
     "cvAnalysis": "Analyses CV",
     "assistantMessages": "Messages Assistant",
     "jobSearches": "Recherches d'emploi",
     "savedJobs": "Jobs sauvegardés",
+    "perDay": "/jour",
     "unlockTitle": "Débloquez tout le potentiel de HuntZen",
     "unlockDescription": "Passez à un plan payant pour des analyses illimitées, plus de messages coaching, et des fonctionnalités exclusives.",
     "seePlans": "Voir les plans disponibles",
     "tipLabel": "Bon à savoir :",
-    "tipText": "Vos quotas se réinitialisent automatiquement chaque jour à minuit. Passez à un plan supérieur pour augmenter vos limites.",
+    "tipText": "Vos quotas journaliers se réinitialisent automatiquement chaque jour à minuit. Les quotas généraux (sauvegardes) sont permanents.",
     "quota": {
       "usedSingular": "{used}{unit} utilisé",
       "usedPlural": "{used}{unit} utilisés",
       "outOf": "sur {limit}{unit}",
       "unlimited": "Utilisation illimitée",
-      "reached": "Quota atteint pour aujourd'hui"
+      "reached": "Quota atteint pour aujourd'hui",
+      "reachedTotal": "Limite atteinte"
     }
   },
   "usageCounter": {
-    "dailyUsage": "Utilisation du jour",
+    "dailyUsage": "Quotas journaliers",
+    "generalUsage": "Quotas généraux",
+    "perDay": "/jour",
     "features": {
       "jobSearch": {
         "label": "recherches"

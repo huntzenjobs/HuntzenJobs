@@ -155,43 +155,69 @@ async def shutdown(ctx: dict) -> None:
 
 async def notify_expiring_plans(ctx: dict) -> dict:
     """
-    Tâche quotidienne : envoie un email J-7 aux users dont le plan admin_granted
-    expire dans 7 jours. Appelée via cron POST /api/admin/crons/notify-expiring-plans.
+    Tâche quotidienne : envoie un email J-7 et J-1 aux users dont le plan
+    admin_granted expire bientôt. Appelée via cron POST /api/cron/notify-expiring-plans.
     """
     from datetime import UTC, datetime, timedelta
+
     from src.api.deps import get_supabase_client
-    from src.services.email import send_expiring_plan_email
+    from src.services.email import send_expiring_plan_email, send_expiring_plan_tomorrow_email
 
     supabase = get_supabase_client()
     now = datetime.now(UTC)
-    in_7_days_start = now + timedelta(days=7)
-    in_7_days_end = now + timedelta(days=8)
+
+    def _get_plan_name(plan_id: str) -> str:
+        plan_res = supabase.table("subscription_plans").select(
+            "display_name"
+        ).eq("id", plan_id).maybe_single().execute()
+        return (plan_res.data or {}).get("display_name", "Pro")
+
+    sent = 0
 
     try:
-        rows = supabase.table("user_subscriptions").select(
+        # ── J-7 : plan expire dans 7 jours ──
+        j7_start = now + timedelta(days=7)
+        j7_end = now + timedelta(days=8)
+        rows_j7 = supabase.table("user_subscriptions").select(
             "user_id, plan_id, current_period_end, profiles!inner(email, language)"
         ).eq("status", "active").eq("stripe_subscription_id", "admin_granted").gte(
-            "current_period_end", in_7_days_start.isoformat()
+            "current_period_end", j7_start.isoformat()
         ).lt(
-            "current_period_end", in_7_days_end.isoformat()
+            "current_period_end", j7_end.isoformat()
         ).execute()
 
-        sent = 0
-        for row in (rows.data or []):
+        for row in (rows_j7.data or []):
             profile = row.get("profiles") or {}
             email = profile.get("email")
-            language = profile.get("language", "fr")
             if not email:
                 continue
-            # Get plan display name
-            plan_res = supabase.table("subscription_plans").select(
-                "display_name"
-            ).eq("id", row["plan_id"]).maybe_single().execute()
-            plan_name = (plan_res.data or {}).get("display_name", "Pro")
             send_expiring_plan_email(
                 user_email=email,
-                plan_name=plan_name,
-                language=language,
+                plan_name=_get_plan_name(row["plan_id"]),
+                language=profile.get("language", "fr"),
+            )
+            sent += 1
+
+        # ── J-1 : plan expire demain ──
+        j1_start = now + timedelta(days=1)
+        j1_end = now + timedelta(days=2)
+        rows_j1 = supabase.table("user_subscriptions").select(
+            "user_id, plan_id, current_period_end, profiles!inner(email, language)"
+        ).eq("status", "active").eq("stripe_subscription_id", "admin_granted").gte(
+            "current_period_end", j1_start.isoformat()
+        ).lt(
+            "current_period_end", j1_end.isoformat()
+        ).execute()
+
+        for row in (rows_j1.data or []):
+            profile = row.get("profiles") or {}
+            email = profile.get("email")
+            if not email:
+                continue
+            send_expiring_plan_tomorrow_email(
+                user_email=email,
+                plan_name=_get_plan_name(row["plan_id"]),
+                language=profile.get("language", "fr"),
             )
             sent += 1
 

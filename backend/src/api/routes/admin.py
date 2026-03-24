@@ -3851,8 +3851,12 @@ async def test_all_emails(
     # 13. Confirmation formulaire contact
     results["contact_confirmation"] = send_contact_confirmation(to, "Wissem Test", "fr")
 
-    # 14. Plan expire bientot
+    # 14. Plan expire bientot (J-7)
     results["expiring_plan"] = send_expiring_plan_email(to, "Pro", "fr")
+
+    # 14b. Plan expire demain (J-1)
+    from src.services.email import send_expiring_plan_tomorrow_email
+    results["expiring_plan_tomorrow"] = send_expiring_plan_tomorrow_email(to, "Pro", "fr")
 
     # 15. Alertes emploi quotidiennes
     results["job_alerts"] = send_job_alerts(

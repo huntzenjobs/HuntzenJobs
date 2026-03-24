@@ -30,41 +30,51 @@ const featureConfig: Record<FeatureType, FeatureConfig> = {
     icon: <Search className="w-4 h-4" aria-hidden="true" />,
     labelKey: "features.jobSearch.label",
     maxLabel: (max, t) =>
-      max === Infinity ? t("features.unlimited") : `/${max}`,
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
     formatValue: (value, max, t) =>
-      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
   job_view: {
     icon: <Eye className="w-4 h-4" aria-hidden="true" />,
     labelKey: "features.jobView.label",
     maxLabel: (max, t) =>
-      max === Infinity ? t("features.unlimited") : `/${max}`,
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
     formatValue: (value, max, t) =>
-      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
   cv_analysis: {
     icon: <FileText className="w-4 h-4" aria-hidden="true" />,
     labelKey: "features.cvAnalysis.label",
     maxLabel: (max, t) =>
-      max === Infinity ? t("features.unlimited") : `/${max}`,
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
     formatValue: (value, max, t) =>
-      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
   assistant_messages: {
     icon: <Clock className="w-4 h-4" aria-hidden="true" />,
     labelKey: "features.assistantMessages.label",
     maxLabel: (max, t) =>
-      max === Infinity ? t("features.unlimited") : `/${max}`,
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
     formatValue: (value, max, t) =>
-      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
   recruiter_search: {
     icon: <Users className="w-4 h-4" aria-hidden="true" />,
     labelKey: "features.recruiterSearch.label",
     maxLabel: (max, t) =>
-      max === Infinity ? t("features.unlimited") : `/${max}`,
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
     formatValue: (value, max, t) =>
-      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
 };
 
@@ -248,14 +258,19 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
             <UsageCounter feature="job_search" showBar />
             <UsageCounter feature="cv_analysis" showBar />
             <UsageCounter feature="assistant_messages" showBar />
+          </div>
+          <div className="flex items-center gap-1.5 mt-2 mb-3 text-xs text-white/50">
+            <Clock className="w-3 h-3" />
+            <QuotaResetTimer />
+          </div>
+          <h4 className="text-sm font-semibold mb-3 text-white/90">
+            {tUsage("generalUsage")}
+          </h4>
+          <div className="space-y-3">
             <SavedJobsCounter />
           </div>
         </>
       )}
-      <div className="flex items-center gap-1.5 mt-3 text-xs text-white/50">
-        <Clock className="w-3 h-3" />
-        <QuotaResetTimer />
-      </div>
     </div>
   );
 }

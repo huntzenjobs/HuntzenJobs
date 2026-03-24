@@ -522,7 +522,9 @@
     }
   },
   "usageCounter": {
-    "dailyUsage": "Uso do dia",
+    "dailyUsage": "Cotas diárias",
+    "generalUsage": "Cotas gerais",
+    "perDay": "/dia",
     "features": {
       "jobSearch": {
         "label": "buscas"
@@ -2323,22 +2325,25 @@
     "activeBadge": "Active",
     "upgradeCta": "Upgrade to a paid plan",
     "progressTitle": "Your progress",
-    "dailyUsageTitle": "Today's usage",
-    "resetAtMidnight": "Resets at midnight",
-    "cvAnalysis": "CV Analyses",
-    "assistantMessages": "Assistant Messages",
-    "jobSearches": "Job Searches",
-    "unlockTitle": "Unlock HuntZen's full potential",
-    "unlockDescription": "Upgrade to a paid plan for unlimited analyses, more coaching messages, and exclusive features.",
-    "seePlans": "See available plans",
-    "tipLabel": "Good to know:",
-    "tipText": "Your quotas reset automatically every day at midnight. Upgrade to a higher plan to increase your limits.",
+    "dailyUsageTitle": "Cotas diárias",
+    "generalUsageTitle": "Cotas gerais",
+    "resetAtMidnight": "Reinicia à meia-noite",
+    "cvAnalysis": "Análises de CV",
+    "assistantMessages": "Mensagens do Assistente",
+    "jobSearches": "Pesquisas de emprego",
+    "unlockTitle": "Desbloqueie todo o potencial do HuntZen",
+    "unlockDescription": "Mude para um plano pago para análises ilimitadas, mais mensagens de coaching e recursos exclusivos.",
+    "seePlans": "Ver planos disponíveis",
+    "tipLabel": "Bom saber:",
+    "tipText": "Suas cotas são redefinidas automaticamente todos os dias à meia-noite. Mude para um plano superior para aumentar seus limites.",
+    "perDay": "/dia",
     "quota": {
-      "usedSingular": "{used}{unit} used",
-      "usedPlural": "{used}{unit} used",
-      "outOf": "out of {limit}{unit}",
-      "unlimited": "Unlimited usage",
-      "reached": "Quota reached for today"
+      "usedSingular": "{used}{unit} usado",
+      "usedPlural": "{used}{unit} usados",
+      "outOf": "de {limit}{unit}",
+      "unlimited": "Uso ilimitado",
+      "reached": "Cota atingida por hoje",
+      "reachedTotal": "Limite atingido"
     },
     "savedJobs": "Vagas salvas"
   },

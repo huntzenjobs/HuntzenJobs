@@ -51,6 +51,7 @@ export default function UsersTable() {
     reactivateUser,
     deleteUser,
     resetPassword,
+    forcePlan,
     fetchPlans,
     createUser,
     loading,
@@ -104,6 +105,8 @@ export default function UsersTable() {
     if (action === "reactivate") success = await reactivateUser(userId);
     if (action === "delete") success = await deleteUser(userId);
     if (action === "reset-password") await resetPassword(userId);
+    if (action === "force-plan")
+      success = await forcePlan(userId, extra as string);
     if (success) load();
   };
 

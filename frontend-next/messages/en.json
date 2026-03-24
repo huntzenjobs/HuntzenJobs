@@ -534,27 +534,32 @@
     "activeBadge": "Active",
     "upgradeCta": "Upgrade to a paid plan",
     "progressTitle": "Your progress",
-    "dailyUsageTitle": "Today's usage",
+    "dailyUsageTitle": "Daily quotas",
+    "generalUsageTitle": "General quotas",
     "resetAtMidnight": "Resets at midnight",
     "cvAnalysis": "CV Analyses",
     "assistantMessages": "Assistant Messages",
     "jobSearches": "Job Searches",
     "savedJobs": "Saved Jobs",
+    "perDay": "/day",
     "unlockTitle": "Unlock HuntZen's full potential",
     "unlockDescription": "Upgrade to a paid plan for unlimited analyses, more coaching messages, and exclusive features.",
     "seePlans": "See available plans",
     "tipLabel": "Good to know:",
-    "tipText": "Your quotas reset automatically every day at midnight. Upgrade to a higher plan to increase your limits.",
+    "tipText": "Your daily quotas reset automatically every day at midnight. General quotas (saved jobs) are permanent.",
     "quota": {
       "usedSingular": "{used}{unit} used",
       "usedPlural": "{used}{unit} used",
       "outOf": "out of {limit}{unit}",
       "unlimited": "Unlimited usage",
-      "reached": "Quota reached for today"
+      "reached": "Quota reached for today",
+      "reachedTotal": "Limit reached"
     }
   },
   "usageCounter": {
-    "dailyUsage": "Today's usage",
+    "dailyUsage": "Daily quotas",
+    "generalUsage": "General quotas",
+    "perDay": "/day",
     "features": {
       "jobSearch": {
         "label": "searches"

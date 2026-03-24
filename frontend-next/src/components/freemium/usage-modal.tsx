@@ -256,7 +256,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
           <Separator />
           */}
 
-          {/* Quotas Usage */}
+          {/* Daily Quotas */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -273,7 +273,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
             <div className="grid gap-4">
               {/* CV Analysis */}
               <QuotaCard
-                title={t("cvAnalysis")}
+                title={`${t("cvAnalysis")} ${t("perDay")}`}
                 icon={<FileText className="w-4 h-4 text-white" />}
                 used={usage?.cvAnalysesToday || 0}
                 limit={limits.cv_analyses_per_day}
@@ -283,7 +283,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
 
               {/* Assistant Messages */}
               <QuotaCard
-                title={t("assistantMessages")}
+                title={`${t("assistantMessages")} ${t("perDay")}`}
                 icon={<MessageSquare className="w-4 h-4 text-white" />}
                 used={assistantMessagesUsed}
                 limit={assistantMessagesLimit}
@@ -294,16 +294,23 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
 
               {/* Job Searches */}
               <QuotaCard
-                title={t("jobSearches")}
+                title={`${t("jobSearches")} ${t("perDay")}`}
                 icon={<Briefcase className="w-4 h-4 text-white" />}
                 used={usage?.searchesToday || 0}
                 limit={limits.job_searches_per_day}
                 color="bg-green-500"
                 t={t}
               />
+            </div>
+          </div>
 
-              {/* Saved Jobs (total, not daily) */}
-              {savedJobsLimit !== -1 && (
+          {/* General Quotas (total, not daily) */}
+          {savedJobsLimit !== -1 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {t("generalUsageTitle")}
+              </h3>
+              <div className="grid gap-4">
                 <QuotaCard
                   title={t("savedJobs")}
                   icon={<Bookmark className="w-4 h-4 text-white" />}
@@ -312,9 +319,9 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                   color="bg-amber-500"
                   t={t}
                 />
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Upgrade CTA for free users */}
           {isFreePlan && (

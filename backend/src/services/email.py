@@ -1696,6 +1696,16 @@ def send_expiring_plan_email(
             body_line1 = f"Votre accès au plan <strong>{plan_name}</strong> expire dans <strong>7 jours</strong>."
             body_line2 = "Pour continuer à profiter de toutes les fonctionnalités, activez votre abonnement avant la date d'expiration."
             cta = "Activer mon abonnement"
+        elif lang == "es":
+            subject = f"Su acceso {plan_name} expira en 7 días"
+            body_line1 = f"Su acceso al plan <strong>{plan_name}</strong> expira en <strong>7 días</strong>."
+            body_line2 = "Para seguir disfrutando de todas las funcionalidades, active su suscripción antes de la fecha de expiración."
+            cta = "Activar mi suscripción"
+        elif lang == "pt":
+            subject = f"Seu acesso {plan_name} expira em 7 dias"
+            body_line1 = f"Seu acesso ao plano <strong>{plan_name}</strong> expira em <strong>7 dias</strong>."
+            body_line2 = "Para continuar aproveitando todas as funcionalidades, ative sua assinatura antes da data de expiração."
+            cta = "Ativar minha assinatura"
         else:
             subject = f"Your {plan_name} access expires in 7 days"
             body_line1 = f"Your <strong>{plan_name}</strong> plan access expires in <strong>7 days</strong>."
@@ -1732,4 +1742,67 @@ def send_expiring_plan_email(
         return True
     except Exception as e:
         logger.error(f"Failed to send expiry warning to {user_email}: {e}")
+        return False
+
+
+def send_expiring_plan_tomorrow_email(
+    user_email: str,
+    plan_name: str,
+    language: str = "fr",
+) -> bool:
+    """Email J-1 avant expiration d'un plan admin_granted."""
+    try:
+        lang = _lang(language)
+        frontend_url = settings.get_primary_frontend_url()
+        if lang == "fr":
+            subject = f"Dernier jour : votre accès {plan_name} expire demain"
+            body_line1 = f"Votre accès au plan <strong>{plan_name}</strong> expire <strong>demain</strong>."
+            body_line2 = "C'est votre dernière chance pour activer votre abonnement et conserver toutes vos fonctionnalités."
+            cta = "Activer mon abonnement maintenant"
+        elif lang == "es":
+            subject = f"Último día: su acceso {plan_name} expira mañana"
+            body_line1 = f"Su acceso al plan <strong>{plan_name}</strong> expira <strong>mañana</strong>."
+            body_line2 = "Es su última oportunidad para activar su suscripción y conservar todas sus funcionalidades."
+            cta = "Activar mi suscripción ahora"
+        elif lang == "pt":
+            subject = f"Último dia: seu acesso {plan_name} expira amanhã"
+            body_line1 = f"Seu acesso ao plano <strong>{plan_name}</strong> expira <strong>amanhã</strong>."
+            body_line2 = "Esta é sua última chance para ativar sua assinatura e manter todas as funcionalidades."
+            cta = "Ativar minha assinatura agora"
+        else:
+            subject = f"Last day: your {plan_name} access expires tomorrow"
+            body_line1 = f"Your <strong>{plan_name}</strong> plan access expires <strong>tomorrow</strong>."
+            body_line2 = "This is your last chance to activate your subscription and keep all your features."
+            cta = "Activate my subscription now"
+
+        html_content = f"""
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#ef4444,#dc2626);padding:28px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:22px;">🚨 {subject}</h1>
+                </div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p>{body_line1}</p>
+                    <p>{body_line2}</p>
+                    <div style="text-align:center;margin-top:24px;">
+                        <a href="{frontend_url}/pricing" style="display:inline-block;background:linear-gradient(135deg,#ef4444,#dc2626);color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:16px;">
+                            {cta}
+                        </a>
+                    </div>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZen</p>
+            </div>
+        </body></html>
+        """
+        resend.Emails.send({
+            "from": settings.from_email,
+            "to": [user_email],
+            "subject": subject,
+            "html": html_content,
+        })
+        logger.info(f"Expiry J-1 email sent to {user_email} (plan={plan_name})")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send expiry J-1 to {user_email}: {e}")
         return False
