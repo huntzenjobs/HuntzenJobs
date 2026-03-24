@@ -1533,36 +1533,41 @@ def send_support_ticket_reply(
         tr = _T["support_reply"][lang]
         first_name = user_name.split()[0] if user_name else "Utilisateur"
 
+        frontend_url = settings.get_primary_frontend_url()
+        if lang == "fr":
+            cta_label = "Voir mon espace support"
+        elif lang == "es":
+            cta_label = "Ver mi espacio de soporte"
+        elif lang == "pt":
+            cta_label = "Ver meu espaço de suporte"
+        else:
+            cta_label = "View my support area"
+
         html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
-                .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }}
-                .reply-box {{ background: white; border-radius: 8px; padding: 20px; margin: 15px 0; border-left: 4px solid #00d4aa; white-space: pre-wrap; }}
-                .footer {{ color: #888; font-size: 0.9em; margin-top: 20px; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h2>{tr["header_tpl"].format(ticket_id=ticket_id)}</h2>
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#0EA5E9 0%,#2563EB 100%);color:white;padding:28px;text-align:center;border-radius:12px 12px 0 0;">
+                    <h1 style="margin:0;font-size:22px;">💬 {tr["header_tpl"].format(ticket_id=ticket_id)}</h1>
                 </div>
-                <div class="content">
-                    <p>{tr["greeting"]} {first_name},</p>
-                    <p>{tr["intro"]} <strong>{ticket_subject}</strong></p>
-                    <div class="reply-box">{admin_reply}</div>
-                    <p class="footer">
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <p style="margin:0 0 12px;">{tr["greeting"]} {first_name},</p>
+                    <p style="margin:0 0 16px;">{tr["intro"]} <strong>{ticket_subject}</strong></p>
+                    <div style="background:white;border-radius:8px;padding:20px;margin:16px 0;border-left:4px solid #00d4aa;border:1px solid #e2e8f0;border-left:4px solid #00d4aa;">
+                        {admin_reply}
+                    </div>
+                    <div style="text-align:center;margin-top:24px;">
+                        <a href="{frontend_url}/support" style="display:inline-block;background:linear-gradient(135deg,#0EA5E9,#2563EB);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            {cta_label}
+                        </a>
+                    </div>
+                    <p style="color:#94a3b8;font-size:13px;margin-top:20px;">
                         {tr["footer"]}
                     </p>
                 </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZen</p>
             </div>
-        </body>
-        </html>
+        </body></html>
         """
 
         params = {
@@ -1640,31 +1645,29 @@ def send_contact_admin_notification(
     """Notify admin of a new contact form submission."""
     try:
         html_content = f"""
-        <!DOCTYPE html><html><head><meta charset="utf-8">
-        <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-            .header {{ background: linear-gradient(135deg, #0EA5E9, #2563EB); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
-            .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }}
-            .info-box {{ background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #0EA5E9; }}
-            .info-item {{ margin: 8px 0; }}
-            .label {{ font-weight: bold; color: #555; }}
-            .message-box {{ background: white; border-radius: 8px; padding: 20px; margin: 15px 0; border: 1px solid #e5e7eb; white-space: pre-wrap; }}
-        </style></head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h2>Nouveau message de contact</h2>
+        <!DOCTYPE html><html><head><meta charset="utf-8"></head>
+        <body style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;">
+            <div style="max-width:600px;margin:0 auto;padding:20px;">
+                <div style="background:linear-gradient(135deg,#0EA5E9,#2563EB);color:white;padding:28px;text-align:center;border-radius:12px 12px 0 0;">
+                    <h1 style="margin:0;font-size:22px;">📩 Nouveau message de contact</h1>
                 </div>
-                <div class="content">
-                    <div class="info-box">
-                        <div class="info-item"><span class="label">Nom :</span> {full_name}</div>
-                        <div class="info-item"><span class="label">Email :</span> <a href="mailto:{email}">{email}</a></div>
-                        <div class="info-item"><span class="label">Motif :</span> {reason}</div>
+                <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
+                    <div style="background:white;padding:16px 20px;border-radius:8px;margin:0 0 16px;border-left:4px solid #0EA5E9;border:1px solid #e2e8f0;border-left:4px solid #0EA5E9;">
+                        <p style="margin:6px 0;"><strong style="color:#555;">Nom :</strong> {full_name}</p>
+                        <p style="margin:6px 0;"><strong style="color:#555;">Email :</strong> <a href="mailto:{email}" style="color:#0EA5E9;">{email}</a></p>
+                        <p style="margin:6px 0;"><strong style="color:#555;">Motif :</strong> {reason}</p>
                     </div>
-                    <h3>Message</h3>
-                    <div class="message-box">{message}</div>
+                    <h3 style="margin:16px 0 8px;color:#1e293b;">Message</h3>
+                    <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;">
+                        {message}
+                    </div>
+                    <div style="text-align:center;margin-top:24px;">
+                        <a href="mailto:{email}" style="display:inline-block;background:linear-gradient(135deg,#0EA5E9,#2563EB);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                            Répondre à {full_name}
+                        </a>
+                    </div>
                 </div>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZen — Admin</p>
             </div>
         </body></html>
         """
