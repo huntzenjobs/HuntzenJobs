@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
+import { Footer } from "@/components/layout/footer";
 import { useTranslations } from "next-intl";
 
 export default function TermsPage() {
@@ -459,67 +460,7 @@ export default function TermsPage() {
         </motion.div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-black text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-white font-bold text-xl tracking-tight">
-                  HuntZen
-                </span>
-                <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse"></span>
-              </div>
-              <p className="text-white/70 text-sm">
-                {t("footerLinks.tagline")}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold mb-4">
-                {t("footerLinks.importantLinks")}
-              </h3>
-              <ul className="space-y-2 text-sm text-white/70">
-                <li>
-                  <Link
-                    href="/"
-                    className="hover:text-[#00D9FF] transition-colors"
-                  >
-                    {t("footerLinks.home")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/pricing"
-                    className="hover:text-[#00D9FF] transition-colors"
-                  >
-                    {t("footerLinks.pricing")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/privacy"
-                    className="hover:text-[#00D9FF] transition-colors"
-                  >
-                    {t("footerLinks.privacy")}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold mb-4">{t("footerLinks.contact")}</h3>
-              <ul className="space-y-2 text-sm text-white/70">
-                <li>contact@huntzenjobs.com</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-8 border-t border-white/10 text-center text-sm text-white/70">
-            {t("footerLinks.copyright", { year: new Date().getFullYear() })}
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       <style jsx global>{`
         body {

@@ -18,11 +18,7 @@ export function OrganizationSchema() {
     logo: `${SITE_URL}/logo.png`,
     description:
       "Plateforme d'aide à la recherche d'emploi en France - HuntZen Jobs. Des milliers d'offres, analyse CV ATS, coaching IA personnalisé.",
-    sameAs: [
-      "https://www.linkedin.com/company/huntzenjobs",
-      "https://twitter.com/huntzenjobs",
-      "https://www.facebook.com/huntzenjobs",
-    ],
+    sameAs: ["https://www.linkedin.com/company/huntzen/posts/?feedView=all"],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",

@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { Scale, ChevronRight } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
+import { Footer } from "@/components/layout/footer";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
@@ -272,22 +273,7 @@ export default async function LegalPage() {
         </section>
       </div>
 
-      {/* Footer links */}
-      <div className="border-t border-gray-200 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-            <Link href="/privacy" className="hover:text-[#00D9FF]">
-              {t("footerLinks.privacy")}
-            </Link>
-            <Link href="/terms" className="hover:text-[#00D9FF]">
-              {t("footerLinks.terms")}
-            </Link>
-            <Link href="/contact" className="hover:text-[#00D9FF]">
-              {t("footerLinks.contact")}
-            </Link>
-          </div>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 }

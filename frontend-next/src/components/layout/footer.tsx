@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Linkedin, Twitter, Instagram } from "lucide-react";
+import { Linkedin } from "lucide-react";
 
 const PRODUCT_LINKS = [
   { href: "/cv-analysis", key: "cvAnalysis" },
@@ -42,31 +42,13 @@ export function Footer() {
             <p className="text-white/60 text-sm">{t("tagline")}</p>
             <div className="flex items-center gap-3">
               <a
-                href="https://linkedin.com/company/huntzenjobs"
+                href="https://www.linkedin.com/company/huntzen/posts/?feedView=all"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/70 hover:text-white transition-colors"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-4 h-4" />
-              </a>
-              <a
-                href="https://twitter.com/huntzenjobs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 hover:text-white transition-colors"
-                aria-label="Twitter / X"
-              >
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a
-                href="https://instagram.com/huntzenjobs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 hover:text-white transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
               </a>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Mail, MessageSquare, Clock, ChevronRight } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
+import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -278,22 +279,7 @@ export default function ContactPage() {
         </div>
       </div>
 
-      {/* Footer links */}
-      <div className="border-t border-gray-200 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-            <Link href="/privacy" className="hover:text-[#00D9FF]">
-              {t("footerPrivacy")}
-            </Link>
-            <Link href="/terms" className="hover:text-[#00D9FF]">
-              {t("footerTerms")}
-            </Link>
-            <Link href="/legal" className="hover:text-[#00D9FF]">
-              {t("footerLegal")}
-            </Link>
-          </div>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 }
