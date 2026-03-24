@@ -20,7 +20,33 @@ from src.config.settings import settings
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Contact classification keywords
+# Search titles — used for Apollo People Search API
+# ---------------------------------------------------------------------------
+
+PERSON_TITLES_HR = [
+    # Francais
+    "recruteur", "chargé de recrutement", "responsable recrutement",
+    "talent acquisition", "RH", "DRH", "responsable RH",
+    "chargé RH", "HR business partner", "HRBP",
+    "responsable des ressources humaines", "gestionnaire RH",
+    "campus manager", "relations ecoles",
+    # Anglais
+    "recruiter", "talent acquisition manager", "talent acquisition specialist",
+    "HR manager", "HR director", "human resources",
+    "people operations", "hiring manager", "head of talent",
+    "recruitment lead", "staffing specialist",
+    "head of people", "VP people", "chief people officer",
+]
+
+COUNTRY_CODE_TO_NAME = {
+    "fr": "France", "de": "Germany", "gb": "United Kingdom",
+    "us": "United States", "es": "Spain", "it": "Italy",
+    "pt": "Portugal", "nl": "Netherlands", "be": "Belgium",
+    "ch": "Switzerland", "ca": "Canada", "lu": "Luxembourg",
+}
+
+# ---------------------------------------------------------------------------
+# Contact classification keywords (used after search, to classify results)
 # ---------------------------------------------------------------------------
 
 HR_TITLE_KEYWORDS = [
@@ -37,6 +63,8 @@ async def find_recruiters_apollo(
     company_name: str,
     company_domain: str = "",
     job_title: str = "",
+    city: str = "",
+    country_code: str = "fr",
 ) -> dict[str, Any]:
     """
     Find recruiters at a company using Apollo.io People Search API.
@@ -45,6 +73,8 @@ async def find_recruiters_apollo(
         company_name: Name of the company (e.g. "HappyPal")
         company_domain: Domain (e.g. "happypal.fr")
         job_title: The job posting title (for context)
+        city: City for location filtering (e.g. "Paris")
+        country_code: ISO country code for location filtering (e.g. "fr")
 
     Returns:
         dict with keys:
@@ -67,17 +97,17 @@ async def find_recruiters_apollo(
             payload: dict[str, Any] = {
                 "api_key": api_key,
                 "q_organization_name": company_name,
-                "person_titles": [
-                    "recruteur", "recruiter", "talent acquisition",
-                    "RH", "human resources", "DRH", "hiring manager",
-                    "people", "HR manager", "responsable recrutement",
-                ],
+                "person_titles": PERSON_TITLES_HR,
                 "page": 1,
                 "per_page": 10,
             }
 
             if company_domain:
                 payload["q_organization_domains"] = [company_domain]
+
+            if city:
+                country_name = COUNTRY_CODE_TO_NAME.get(country_code, "France")
+                payload["person_locations"] = [f"{city}, {country_name}"]
 
             resp = await client.post(
                 "https://api.apollo.io/api/v1/mixed_people/search",
