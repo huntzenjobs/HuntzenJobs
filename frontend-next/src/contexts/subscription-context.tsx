@@ -331,6 +331,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           ? apiData.quotas[quotaKey].has_access
           : localCanUse;
 
+      // If API shows used=0, quota was reset overnight — trust API immediately
+      // (local state may not have reset yet if app stayed open across midnight)
+      if (quotaKey && apiData.quotas[quotaKey]?.used === 0) return apiCanUse;
+
       // Block if EITHER source says no (most conservative = safest)
       return apiCanUse && localCanUse;
     },
@@ -349,6 +353,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
       const apiRemaining =
         quotaData.remaining === -1 ? Infinity : quotaData.remaining;
+
+      // If API shows used=0, quota was reset overnight — trust API immediately
+      // (local state may not have reset yet if app stayed open across midnight)
+      if (quotaData.used === 0) return apiRemaining;
 
       // Return the lower value: if local was decremented but API hasn't refreshed yet
       return Math.min(apiRemaining, localRemaining);

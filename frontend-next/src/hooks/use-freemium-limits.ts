@@ -333,6 +333,28 @@ export function useFreemiumLimits(userId?: string) {
     setIsLoaded(true);
   }, [userId]);
 
+  // Reset daily usage at midnight for users keeping the app open across days
+  useEffect(() => {
+    const checkMidnightReset = () => {
+      setState((prev) => {
+        if (prev.usage.lastResetDate !== getTodayDate()) {
+          const resetState = {
+            ...prev,
+            usage: {
+              ...getDefaultState().usage,
+              lastResetDate: getTodayDate(),
+            },
+          };
+          saveState(resetState, userIdRef.current);
+          return resetState;
+        }
+        return prev;
+      });
+    };
+    const id = setInterval(checkMidnightReset, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   // Get current plan limits - memoize to prevent reference changes
   const limits = useMemo(() => PLAN_LIMITS[state.plan], [state.plan]);
 
