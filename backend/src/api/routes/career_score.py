@@ -97,22 +97,17 @@ def _calculate_activity_score(supabase, user_id: str) -> int:
         if cv_analyses > 0:
             score += 10
 
-        # Profil complété (≥4 champs sur 5) ?
+        # Profil complété ? (onboarding_completed = vrai indicateur)
         profile_res = (
             supabase.table("profiles")
-            .select("full_name, title, bio, avatar_url, cv_url")
+            .select("full_name, avatar_url, onboarding_completed")
             .eq("id", user_id)
             .maybe_single()
             .execute()
         )
         if profile_res.data:
             p = profile_res.data
-            filled = sum(
-                1
-                for f in ["full_name", "title", "bio", "avatar_url", "cv_url"]
-                if p.get(f)
-            )
-            if filled >= 4:
+            if p.get("onboarding_completed") or (p.get("full_name") and p.get("avatar_url")):
                 score += 10
 
         # Candidature envoyée ?
@@ -174,10 +169,10 @@ def _calculate_ai_score(supabase, user_id: str) -> tuple[int, str]:
     Fallback : (0, "") si pas de CV ou erreur.
     """
     try:
-        # Récupère profil (champs existants uniquement)
+        # Récupère profil (colonnes réelles de la table profiles)
         profile_res = (
             supabase.table("profiles")
-            .select("full_name, title, bio")
+            .select("full_name")
             .eq("id", user_id)
             .maybe_single()
             .execute()
@@ -197,18 +192,18 @@ def _calculate_ai_score(supabase, user_id: str) -> tuple[int, str]:
         cv_text = cv_data.get("cv_text") or ""
         ats_score = cv_data.get("ats_score") or 0
 
-        # Pas de CV ni bio → fallback sans LLM call
-        if not cv_text and not profile.get("bio"):
+        # Pas de CV → fallback sans LLM call
+        if not cv_text:
             return 0, ""
 
         prompt_template = _load_prompt()
         prompt = prompt_template.format(
             full_name=profile.get("full_name") or "Non renseigné",
-            sector=profile.get("title") or "Non renseigné",
+            sector="Non renseigné",
             years_experience="Non renseigné",
             skills="Non renseigné",
             ats_score=ats_score,
-            cv_summary=(cv_text or profile.get("bio") or "")[:500],
+            cv_summary=cv_text[:500],
         )
 
         settings = get_settings()

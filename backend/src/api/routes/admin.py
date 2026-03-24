@@ -16,7 +16,22 @@ from structlog import get_logger
 
 from src.api.deps import AdminUserDep, get_supabase_client
 from src.config.settings import get_settings
-from src.services.email import send_payment_confirmation_email
+from src.services.email import (
+    send_application_confirmation,
+    send_application_status_change,
+    send_contact_confirmation,
+    send_cv_analysis_complete,
+    send_document_generated,
+    send_expiring_plan_email,
+    send_job_alerts,
+    send_payment_confirmation_email,
+    send_payment_failed_email,
+    send_recruiter_request_confirmation,
+    send_subscription_cancelled_email,
+    send_support_ticket_reply,
+    send_weekly_summary,
+    send_welcome,
+)
 
 
 async def _invalidate_user_cache(user_id: str) -> None:
@@ -267,10 +282,13 @@ async def get_user_detail(
         ).eq("user_id", user_id).eq("status", "active").limit(1).execute()
         active_sub = sub.data[0] if sub.data else None
 
-        # Subscription history (last 10) — join plan names
-        history = supabase.table("subscription_history").select(
-            "*, subscription_plans(name, display_name, price_monthly)"
-        ).eq("user_id", user_id).order("created_at", desc=True).limit(10).execute()
+        # Subscription history (last 10) — sans join (FK optionnelle)
+        try:
+            history = supabase.table("subscription_history").select(
+                "id, user_id, action_type, old_values, new_values, notes, created_at"
+            ).eq("user_id", user_id).order("created_at", desc=True).limit(10).execute()
+        except Exception:
+            history = type("R", (), {"data": []})()
 
         # Usage last 30 days (all 30 days)
         thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).date().isoformat()
@@ -2248,13 +2266,13 @@ async def resend_payment_email(
     """Renvoie l'email de confirmation de paiement à un utilisateur ayant un abonnement actif."""
     supabase = get_supabase_client()
 
-    profile = supabase.table("profiles").select("email, full_name").eq("id", user_id).maybe_single().execute()
+    profile = supabase.table("profiles").select("email, full_name, preferred_language").eq("id", user_id).maybe_single().execute()
     if not profile.data:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
 
     sub = (
         supabase.table("user_subscriptions")
-        .select("plan_id, stripe_subscription_id, user_subscriptions.*, subscription_plans(display_name, price_monthly)")
+        .select("*, subscription_plans(display_name, price_monthly)")
         .eq("user_id", user_id)
         .eq("status", "active")
         .maybe_single()
@@ -2268,7 +2286,7 @@ async def resend_payment_email(
     price = plan_info.get("price_monthly")
     amount = f"{price}€/mois" if price else "—"
 
-    language = profile.data.get("language") or "fr"
+    language = profile.data.get("preferred_language") or "fr"
     email_addr = profile.data["email"]
 
     ok = send_payment_confirmation_email(
@@ -3743,3 +3761,123 @@ async def delete_promo_code(promo_id: str, admin: AdminUserDep) -> dict[str, Any
     })
 
     return {"success": True}
+
+
+# ---------------------------------------------------------------------------
+# Test all email templates (admin diagnostic)
+# ---------------------------------------------------------------------------
+
+
+class TestEmailsRequest(BaseModel):
+    to_email: str
+
+
+@router.post("/test-all-emails")
+async def test_all_emails(
+    req: TestEmailsRequest,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """
+    Envoie les 14 templates email de test a une adresse donnee.
+    Aucun effet de bord en DB — appel direct aux fonctions email.
+    Admin uniquement.
+    """
+    to = req.to_email
+    results: dict[str, bool] = {}
+
+    # 1. Bienvenue
+    results["welcome"] = send_welcome(to, "Wissem Test", "fr")
+
+    # 2. Confirmation paiement
+    results["payment_confirmation"] = send_payment_confirmation_email(
+        user_email=to, plan_name="Pro", amount="9.90€/mois", language="fr",
+        invoice_url="https://huntzenjobs.com", billing_reason="subscription_create",
+    )
+
+    # 3. Paiement echoue
+    results["payment_failed"] = send_payment_failed_email(to, "fr")
+
+    # 4. Annulation abonnement
+    results["subscription_cancelled"] = send_subscription_cancelled_email(
+        user_email=to, plan_name="Pro", end_date="30/04/2026", language="fr",
+    )
+
+    # 5. Confirmation candidature
+    results["application_confirmation"] = send_application_confirmation(
+        to_email=to, job_title="Data Engineer", company="TechCorp",
+        job_url="https://huntzenjobs.com/jobs", language="fr",
+    )
+
+    # 6. Changement statut candidature (entretien)
+    results["application_status_interview"] = send_application_status_change(
+        to_email=to, job_title="Data Engineer", company="TechCorp",
+        new_status="interview", language="fr",
+    )
+
+    # 7. Changement statut candidature (offre)
+    results["application_status_offer"] = send_application_status_change(
+        to_email=to, job_title="Data Engineer", company="TechCorp",
+        new_status="offer", language="fr",
+    )
+
+    # 8. Analyse CV terminee
+    results["cv_analysis_complete"] = send_cv_analysis_complete(to, "fr")
+
+    # 9. Document genere (CV adapte)
+    results["document_generated_cv"] = send_document_generated(
+        to_email=to, doc_type="cv", job_title="Data Engineer",
+        company="TechCorp", language="fr",
+    )
+
+    # 10. Document genere (lettre de motivation)
+    results["document_generated_lm"] = send_document_generated(
+        to_email=to, doc_type="cover_letter", job_title="Data Engineer",
+        company="TechCorp", language="fr",
+    )
+
+    # 11. Confirmation consultation recruteur
+    results["recruiter_confirmation"] = send_recruiter_request_confirmation(
+        to_email=to, full_name="Wissem Test", sector="Tech",
+        experience_level="Senior", preferred_date="15/04/2026", language="fr",
+    )
+
+    # 12. Reponse ticket support
+    results["support_reply"] = send_support_ticket_reply(
+        user_email=to, user_name="Wissem Test", ticket_id="TEST-001",
+        ticket_subject="Test ticket", admin_reply="Ceci est une reponse de test.",
+        language="fr",
+    )
+
+    # 13. Confirmation formulaire contact
+    results["contact_confirmation"] = send_contact_confirmation(to, "Wissem Test", "fr")
+
+    # 14. Plan expire bientot
+    results["expiring_plan"] = send_expiring_plan_email(to, "Pro", "fr")
+
+    # 15. Alertes emploi quotidiennes
+    results["job_alerts"] = send_job_alerts(
+        to_email=to, user_name="Wissem",
+        jobs=[
+            {"title": "Data Engineer", "company": "TechCorp", "location": "Paris", "url": "https://huntzenjobs.com/jobs"},
+            {"title": "Backend Developer", "company": "StartupAI", "location": "Lyon", "url": "https://huntzenjobs.com/jobs"},
+        ],
+        language="fr",
+    )
+
+    # 16. Resume hebdomadaire
+    results["weekly_summary"] = send_weekly_summary(
+        to_email=to,
+        stats={"applications": 5, "saved": 12, "documents": 3, "views": 48},
+        language="fr",
+    )
+
+    sent = sum(1 for v in results.values() if v)
+    failed = sum(1 for v in results.values() if not v)
+
+    return {
+        "ok": failed == 0,
+        "sent": sent,
+        "failed": failed,
+        "to": to,
+        "details": results,
+    }

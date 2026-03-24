@@ -85,7 +85,7 @@ async def track_click(request: Request, body: TrackClickRequest):
             .limit(1) \
             .execute()
 
-        if not ref_res.data:
+        if not ref_res or not ref_res.data:
             logger.info(f"[REFERRAL] track_click: code {body.code} not found or inactive")
             return {"ok": False, "error": "invalid_code"}
 
@@ -129,7 +129,7 @@ async def register_referral(request: Request, body: RegisterReferralRequest):
             .maybe_single() \
             .execute()
 
-        if not ref_res.data:
+        if not ref_res or not ref_res.data:
             logger.warning(f"[REFERRAL] Unknown code: {body.code}")
             return {"ok": False, "error": "invalid_code"}
 

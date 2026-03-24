@@ -48,7 +48,7 @@ async def get_plan_distribution():
         supabase = _get_supabase()
         res = (
             supabase.table("user_subscriptions")
-            .select("plan_name")
+            .select("plan_id, subscription_plans(name)")
             .eq("status", "active")
             .execute()
         )
@@ -65,7 +65,7 @@ async def get_plan_distribution():
         else:
             counts: dict[str, int] = {}
             for row in rows:
-                plan = row.get("plan_name", "free")
+                plan = (row.get("subscription_plans") or {}).get("name", "free")
                 counts[plan] = counts.get(plan, 0) + 1
 
             distribution = {
