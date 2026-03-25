@@ -138,7 +138,7 @@ class RecruiterFinderResponse(BaseModel):
 # ============================================================================
 
 
-@router.post("/find", response_model=RecruiterFinderResponse)
+@router.post("/find", response_model=RecruiterFinderResponse, deprecated=True)
 async def find_recruiters(
     body: RecruiterFinderRequest,
     authorization: str | None = Header(default=None),

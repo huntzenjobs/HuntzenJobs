@@ -33,6 +33,7 @@ from src.api.routes.public_coaches import router as public_coaches_router
 from src.api.routes.public_plans import router as public_plans_router
 from src.api.routes.queue import router as queue_router
 from src.api.routes.recruiter import router as recruiter_router
+from src.api.routes.contact_finder import router as contact_finder_router
 from src.api.routes.recruiter_finder import router as recruiter_finder_router
 from src.api.routes.referrals import router as referrals_router
 from src.api.routes.saved_jobs import router as saved_jobs_router
@@ -66,6 +67,7 @@ router.include_router(admin_router, prefix="/api/admin", tags=["Admin"])
 router.include_router(branding_router, prefix="/api/branding", tags=["Personal Branding"])
 router.include_router(health_router, prefix="/api/health", tags=["Health & Monitoring"])
 router.include_router(recruiter_finder_router, prefix="/api/recruiter-finder", tags=["Recruiter Finder"])
+router.include_router(contact_finder_router, prefix="/api/contact-finder", tags=["Contact Finder"])
 router.include_router(documents_router, prefix="/api/documents", tags=["Documents"])
 router.include_router(referrals_router, prefix="/api/referrals", tags=["Referrals"])
 router.include_router(applications_router, tags=["Applications"])
