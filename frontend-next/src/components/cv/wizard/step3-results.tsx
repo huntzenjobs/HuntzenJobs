@@ -23,6 +23,7 @@ import { CVInfoPanel } from "@/components/cv/cv-info-panel";
 import { ResultsAccordion } from "@/components/cv/results-accordion";
 import { CVComparison } from "@/components/cv/cv-comparison";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
+import { FeatureLockOverlay } from "@/components/freemium/feature-lock";
 import type { CVAnalysisResult } from "@/hooks/use-cv-history";
 import { cn } from "@/lib/utils";
 
@@ -139,8 +140,7 @@ export function Step3Results({
   const t = useTranslations("cv");
   const [showComparison, setShowComparison] = useState(false);
   const subscription = useOptionalSubscription();
-  const hasCvDetails =
-    subscription?.hasFeature("has_cv_details" as never) ?? true;
+  const hasCvDetails = subscription?.hasFeature("has_cv_details") ?? true;
 
   // Loading state
   if (loading) {
@@ -227,28 +227,29 @@ export function Step3Results({
         currentScore={result.score}
       />
 
-      {/* Offres recommandées — gated pour free */}
-      {hasCvDetails &&
-        result.recommended_job_titles &&
+      {/* Offres recommandées — verrouillées pour free users */}
+      {result.recommended_job_titles &&
         result.recommended_job_titles.length > 0 && (
-          <div className="space-y-3 pt-2">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              {t("results.recommendedJobs")}
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {result.recommended_job_titles.map((title) => (
-                <button
-                  key={title}
-                  onClick={() =>
-                    router.push(`/jobs?q=${encodeURIComponent(title)}`)
-                  }
-                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors"
-                >
-                  {title} →
-                </button>
-              ))}
+          <FeatureLockOverlay feature="has_cv_details" className="rounded-lg">
+            <div className="space-y-3 pt-2">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t("results.recommendedJobs")}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {result.recommended_job_titles.slice(0, 3).map((title) => (
+                  <button
+                    key={title}
+                    onClick={() =>
+                      router.push(`/jobs?q=${encodeURIComponent(title)}`)
+                    }
+                    className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors"
+                  >
+                    {title} →
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          </FeatureLockOverlay>
         )}
 
       {/* Bottom Actions */}
