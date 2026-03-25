@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
 
@@ -24,7 +24,6 @@ export function ScoreRing({
   const { hasFeature } = useSubscription();
   const hasVisualScore = hasFeature("has_visual_score");
   const cvScorePopup = useConversionPopup("cv_score");
-  const [popupShown, setPopupShown] = useState(false);
 
   const [animatedScore, setAnimatedScore] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -79,7 +78,7 @@ export function ScoreRing({
 
   // Animate score on mount
   useEffect(() => {
-    if (!showAnimation || !hasVisualScore) {
+    if (!showAnimation) {
       setAnimatedScore(score);
       return;
     }
@@ -106,45 +105,26 @@ export function ScoreRing({
     return () => clearInterval(timer);
   }, [score, showAnimation, hasVisualScore, animationDuration]);
 
-  // Show cv_score popup for free users shortly after score is displayed
-  useEffect(() => {
-    if (!hasVisualScore && score > 0 && !popupShown) {
-      const t = setTimeout(() => {
-        setPopupShown(true);
-        cvScorePopup.open();
-      }, 1500);
-      return () => clearTimeout(t);
+  // Open popup on click (not automatically)
+  const handleScoreClick = () => {
+    if (!hasVisualScore) {
+      cvScorePopup.open();
     }
-  }, [score, hasVisualScore, popupShown]);
+  };
 
   // Calculate stroke offset for progress
   const offset = circumference - (animatedScore / 100) * circumference;
 
-  // If user doesn't have visual score feature, show simple text
-  if (!hasVisualScore) {
-    return (
-      <>
-        <div className={`text-center ${className}`}>
-          <div
-            className={`font-bold ${config.fontSize}`}
-            style={{ color: colors.stroke }}
-          >
-            {score}%
-          </div>
-          <p className={`${config.labelSize} text-muted-foreground mt-1`}>
-            {label}
-          </p>
-        </div>
-        <cvScorePopup.PopupComponent />
-      </>
-    );
-  }
-
   return (
     <div className={`relative inline-flex flex-col items-center ${className}`}>
+      {/* Popup rendered for free users (triggered on click) */}
+      {!hasVisualScore && <cvScorePopup.PopupComponent />}
       <div
-        className="relative"
+        className={`relative ${!hasVisualScore ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
         style={{ width: config.container, height: config.container }}
+        onClick={!hasVisualScore ? handleScoreClick : undefined}
+        role={!hasVisualScore ? "button" : undefined}
+        tabIndex={!hasVisualScore ? 0 : undefined}
       >
         {/* Background circle */}
         <svg

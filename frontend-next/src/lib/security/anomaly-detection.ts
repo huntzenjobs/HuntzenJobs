@@ -1,89 +1,13 @@
 /**
  * Anomaly Detection System
- * Uses Upstash Redis for rate limiting and pattern detection
- * Falls back to Supabase for anomaly checks
+ * Uses Supabase for rate limiting and pattern detection
  */
 
 import { createClient } from "@/lib/supabase/client";
 import { logSecurityEvent } from "./logger";
 
-// Configuration
-const UPSTASH_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
-const UPSTASH_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-
 /**
- * Upstash Redis REST API client
- */
-class UpstashClient {
-  private baseUrl: string;
-  private token: string;
-
-  constructor(url: string, token: string) {
-    this.baseUrl = url;
-    this.token = token;
-  }
-
-  async execute(command: string[]): Promise<any> {
-    try {
-      const response = await fetch(this.baseUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(command),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upstash request failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.result;
-    } catch (error) {
-      console.error("Upstash request error:", error);
-      return null;
-    }
-  }
-
-  async incr(key: string): Promise<number | null> {
-    return await this.execute(["INCR", key]);
-  }
-
-  async expire(key: string, seconds: number): Promise<boolean> {
-    return await this.execute(["EXPIRE", key, seconds.toString()]);
-  }
-
-  async get(key: string): Promise<string | null> {
-    return await this.execute(["GET", key]);
-  }
-
-  async set(
-    key: string,
-    value: string,
-    exSeconds?: number,
-  ): Promise<string | null> {
-    if (exSeconds) {
-      return await this.execute([
-        "SET",
-        key,
-        value,
-        "EX",
-        exSeconds.toString(),
-      ]);
-    }
-    return await this.execute(["SET", key, value]);
-  }
-}
-
-// Initialize Upstash client if credentials are available
-const upstash =
-  UPSTASH_REST_URL && UPSTASH_REST_TOKEN
-    ? new UpstashClient(UPSTASH_REST_URL, UPSTASH_REST_TOKEN)
-    : null;
-
-/**
- * Check rate limit using Upstash Redis (or fallback to Supabase)
+ * Check rate limit using Supabase
  */
 export async function checkRateLimit(
   identifier: string, // user ID, IP, email, etc.
@@ -91,47 +15,13 @@ export async function checkRateLimit(
   limit: number,
   windowSeconds: number,
 ): Promise<{ allowed: boolean; remaining: number; resetAt: Date }> {
-  const key = `ratelimit:${action}:${identifier}`;
-
   try {
-    if (upstash) {
-      // Use Upstash Redis
-      const count = await upstash.incr(key);
-
-      if (count === 1) {
-        // First request, set expiration
-        await upstash.expire(key, windowSeconds);
-      }
-
-      const allowed = count !== null && count <= limit;
-      const remaining = Math.max(0, limit - (count || 0));
-      const resetAt = new Date(Date.now() + windowSeconds * 1000);
-
-      if (!allowed) {
-        // Log rate limit exceeded
-        await logSecurityEvent({
-          eventType: "api.rate_limit_exceeded",
-          severity: "warning",
-          metadata: {
-            action,
-            identifier,
-            limit,
-            count,
-            window_seconds: windowSeconds,
-          },
-        });
-      }
-
-      return { allowed, remaining, resetAt };
-    } else {
-      // Fallback to Supabase (less performant but works)
-      return await checkRateLimitSupabase(
-        identifier,
-        action,
-        limit,
-        windowSeconds,
-      );
-    }
+    return await checkRateLimitSupabase(
+      identifier,
+      action,
+      limit,
+      windowSeconds,
+    );
   } catch (error) {
     console.error("Rate limit check failed:", error);
     // Fail open - allow the request
@@ -144,7 +34,7 @@ export async function checkRateLimit(
 }
 
 /**
- * Fallback rate limit check using Supabase
+ * Rate limit check using Supabase
  */
 async function checkRateLimitSupabase(
   identifier: string,
@@ -177,6 +67,20 @@ async function checkRateLimitSupabase(
   const allowed = currentCount < limit;
   const remaining = Math.max(0, limit - currentCount);
   const resetAt = new Date(Date.now() + windowSeconds * 1000);
+
+  if (!allowed) {
+    await logSecurityEvent({
+      eventType: "api.rate_limit_exceeded",
+      severity: "warning",
+      metadata: {
+        action,
+        identifier,
+        limit,
+        count: currentCount,
+        window_seconds: windowSeconds,
+      },
+    });
+  }
 
   return { allowed, remaining, resetAt };
 }
@@ -214,61 +118,32 @@ export async function detectSuspiciousIP(
   uniqueAccountThreshold: number = 3,
   windowMinutes: number = 60,
 ): Promise<boolean> {
-  if (upstash) {
-    // Use Redis sets to track unique accounts per IP
-    const key = `ip:${ipAddress}:accounts`;
-    const accounts = await upstash.get(key);
+  const supabase = createClient();
+  const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
 
-    if (accounts) {
-      const accountList = JSON.parse(accounts);
-      return accountList.length >= uniqueAccountThreshold;
-    }
+  const { data, error } = await supabase
+    .from("security_events")
+    .select("user_id")
+    .eq("event_type", "auth.login_failed")
+    .eq("ip_address", ipAddress)
+    .gte("created_at", windowStart.toISOString());
 
+  if (error || !data) {
     return false;
-  } else {
-    // Fallback to Supabase
-    const supabase = createClient();
-    const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000);
-
-    const { data, error } = await supabase
-      .from("security_events")
-      .select("user_id")
-      .eq("event_type", "auth.login_failed")
-      .eq("ip_address", ipAddress)
-      .gte("created_at", windowStart.toISOString());
-
-    if (error || !data) {
-      return false;
-    }
-
-    const uniqueUsers = new Set(data.map((e) => e.user_id));
-    return uniqueUsers.size >= uniqueAccountThreshold;
   }
+
+  const uniqueUsers = new Set(data.map((e) => e.user_id));
+  return uniqueUsers.size >= uniqueAccountThreshold;
 }
 
 /**
- * Track user account attempt for IP address
+ * Track user account attempt for IP address (no-op, handled by Supabase logs)
  */
 export async function trackIPAccountAttempt(
-  ipAddress: string,
-  userId: string,
+  _ipAddress: string,
+  _userId: string,
 ): Promise<void> {
-  if (!upstash) return;
-
-  const key = `ip:${ipAddress}:accounts`;
-  const windowSeconds = 3600; // 1 hour
-
-  try {
-    const existing = await upstash.get(key);
-    const accounts = existing ? JSON.parse(existing) : [];
-
-    if (!accounts.includes(userId)) {
-      accounts.push(userId);
-      await upstash.set(key, JSON.stringify(accounts), windowSeconds);
-    }
-  } catch (error) {
-    console.error("Failed to track IP account attempt:", error);
-  }
+  // Tracking is handled by security_events table via logSecurityEvent
 }
 
 /**
@@ -324,7 +199,6 @@ export async function checkAndBlockSuspiciousUser(
   const score = await getUserAnomalyScore(userId);
 
   if (score >= 80) {
-    // Very suspicious - log and potentially block
     await logSecurityEvent({
       eventType: "api.unauthorized_access",
       severity: "emergency",
@@ -335,10 +209,6 @@ export async function checkAndBlockSuspiciousUser(
       },
     });
 
-    // NOTE: Blocking mechanism is not yet implemented.
-    // This function logs anomalies but does NOT actually block requests.
-    // Real blocking requires server-side middleware implementation.
-    // For now, just return true to indicate user should be blocked
     return true;
   }
 

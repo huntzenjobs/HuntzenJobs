@@ -35,6 +35,7 @@ interface PlanLimitValues {
   has_coach_history: boolean;
   has_branding: boolean;
   has_cover_letter: boolean;
+  has_cv_details: boolean;
 }
 
 // Hardcoded defaults — last resort if API cache is empty
@@ -55,6 +56,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_coach_history: false,
     has_branding: false,
     has_cover_letter: false,
+    has_cv_details: false,
   },
   starter: {
     job_searches_per_day: Infinity,
@@ -72,6 +74,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_coach_history: true,
     has_branding: false,
     has_cover_letter: false,
+    has_cv_details: true,
   },
   pro: {
     job_searches_per_day: Infinity,
@@ -89,6 +92,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_coach_history: true,
     has_branding: true,
     has_cover_letter: true,
+    has_cv_details: true,
   },
   premium: {
     job_searches_per_day: Infinity,
@@ -106,6 +110,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_coach_history: true,
     has_branding: true,
     has_cover_letter: true,
+    has_cv_details: true,
   },
 };
 
@@ -157,6 +162,7 @@ function buildLimitsFromApi(
     has_coach_history: flag("coach_history", defaults.has_coach_history),
     has_branding: flag("branding", defaults.has_branding),
     has_cover_letter: flag("cover_letter", defaults.has_cover_letter),
+    has_cv_details: flag("cv_details", defaults.has_cv_details),
   };
 }
 

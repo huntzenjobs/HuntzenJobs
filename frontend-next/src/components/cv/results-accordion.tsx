@@ -159,8 +159,7 @@ export function ResultsAccordion({
 }: ResultsAccordionProps) {
   const t = useTranslations("cv.results");
   const subscription = useOptionalSubscription();
-  const hasCvDetails =
-    subscription?.hasFeature("has_cv_details" as never) ?? true;
+  const hasCvDetails = subscription?.hasFeature("has_cv_details") ?? true;
   const openPricingModal = subscription?.openPricingModal || (() => {});
 
   return (

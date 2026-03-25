@@ -25,6 +25,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _mask_email(email: str) -> str:
+    """Masque un email : j***@gmail.com"""
+    if not email or "@" not in email:
+        return email or ""
+    local, domain = email.split("@", 1)
+    if len(local) <= 1:
+        return f"{local}***@{domain}"
+    return f"{local[0]}***@{domain}"
+
+
 # ---------------------------------------------------------------------------
 # GET /api/referrals/my-code
 # ---------------------------------------------------------------------------
@@ -79,7 +89,7 @@ async def track_click(request: Request, body: TrackClickRequest):
             return {"ok": False, "error": "db_unavailable"}
 
         ref_res = supabase.table("referrals") \
-            .select("id, total_clicks") \
+            .select("id") \
             .eq("referral_code", body.code) \
             .eq("is_active", True) \
             .limit(1) \
@@ -89,12 +99,9 @@ async def track_click(request: Request, body: TrackClickRequest):
             logger.info(f"[REFERRAL] track_click: code {body.code} not found or inactive")
             return {"ok": False, "error": "invalid_code"}
 
-        # Increment total_clicks
+        # Increment total_clicks (atomic via RPC)
         ref_id = ref_res.data[0]["id"]
-        old_clicks = ref_res.data[0].get("total_clicks", 0)
-        supabase.table("referrals").update({
-            "total_clicks": old_clicks + 1,
-        }).eq("id", ref_id).execute()
+        supabase.rpc("increment_referral_clicks", {"p_referral_id": ref_id}).execute()
 
         return {"ok": True}
 
@@ -144,14 +151,18 @@ async def register_referral(request: Request, body: RegisterReferralRequest):
                 "referred_user_id": body.new_user_id,
             }).execute()
 
-            # Optimistic locking : update seulement si total_signups n'a pas changé
-            old_signups = ref["total_signups"]
-            supabase.table("referrals").update({
-                "total_signups": old_signups + 1,
-            }).eq("id", ref["id"]).eq("total_signups", old_signups).execute()
+            # Atomic increment via RPC (no race condition)
+            supabase.rpc("increment_referral_signups", {"p_referral_id": ref["id"]}).execute()
+
+            # Re-read total_signups after atomic increment
+            updated_res = supabase.table("referrals") \
+                .select("total_signups") \
+                .eq("id", ref["id"]) \
+                .maybe_single() \
+                .execute()
+            new_signups = (updated_res.data or {}).get("total_signups", ref["total_signups"] + 1)
 
             # Notifier le parrain
-            new_signups = old_signups + 1
             create_notification(
                 supabase,
                 user_id=ref["referrer_id"],
@@ -163,7 +174,7 @@ async def register_referral(request: Request, body: RegisterReferralRequest):
             # Auto-apply tier reward si un nouveau palier est atteint
             await _auto_apply_tier_rewards(supabase, ref["referrer_id"], new_signups)
 
-            logger.info(f"[REFERRAL] User {body.new_user_id} registered via code {body.code}")
+            logger.info(f"[REFERRAL] User {body.new_user_id} registered via code {body.code} (total: {new_signups})")
             return {"ok": True}
 
         except Exception as e:
@@ -330,7 +341,8 @@ async def get_boost_status(current_user: CurrentUserDep):
     )
     stats = stats_res.data[0] if stats_res.data else {}
     referral_id = stats.get("id")
-    total_validated = stats.get("total_conversions", 0)
+    # Paliers basés sur le nombre d'inscriptions (pas les conversions payantes)
+    total_validated = stats.get("total_signups", 0)
 
     # Tiers depuis referral_config
     config_res = (
@@ -365,7 +377,7 @@ async def get_boost_status(current_user: CurrentUserDep):
         logger.warning(f"[REFERRAL] rewards query error for {user_id}: {e}")
         rewards_earned = []
 
-    # 10 derniers filleuls
+    # 10 derniers filleuls (avec email masqué depuis profiles)
     recent_referrals = []
     if referral_id:
         try:
@@ -377,10 +389,29 @@ async def get_boost_status(current_user: CurrentUserDep):
                 .limit(10)
                 .execute()
             )
+            # Fetch profile emails for referred users
+            referred_ids = [s["referred_user_id"] for s in (signups_res.data or []) if s.get("referred_user_id")]
+            email_map: dict[str, str] = {}
+            if referred_ids:
+                try:
+                    profiles_res = (
+                        supabase.table("profiles")
+                        .select("id, email, full_name")
+                        .in_("id", referred_ids)
+                        .execute()
+                    )
+                    for p in (profiles_res.data or []):
+                        email_map[p["id"]] = p.get("email", "")
+                except Exception as e:
+                    logger.warning(f"[REFERRAL] profiles query error: {e}")
+
             for s in (signups_res.data or []):
+                email = email_map.get(s.get("referred_user_id", ""), "")
+                masked = _mask_email(email) if email else None
                 recent_referrals.append({
                     "status": "validated" if s.get("converted_to_paid_at") else "registered",
                     "signed_up_at": s.get("signed_up_at"),
+                    "name": masked,
                 })
         except Exception as e:
             logger.warning(f"[REFERRAL] signups query error for {user_id}: {e}")
