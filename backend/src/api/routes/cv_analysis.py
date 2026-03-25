@@ -213,6 +213,10 @@ async def analyze_cv_async(
     # ✅ CHECK QUOTA BEFORE PROCESSING — blocks if daily limit exceeded
     check_cv_analysis_quota(user_id)
 
+    # ✅ INCREMENT QUOTA IMMEDIATELY (callback Modal n'est pas garanti)
+    await increment_user_cv_quota(user_id)
+    await invalidate_user_quota_cache(user_id)
+
     return await process_cv_async(
         user_id=user_id,
         file=file,
@@ -369,13 +373,12 @@ async def cv_analysis_callback(
 
         logger.info(f"[CALLBACK] Received: cv_id={cv_id}, user_id={user_id}, status={status}")
 
-        # Increment quota only when processing succeeds
+        # Quota already incremented in POST /async — just log and re-invalidate cache
         if status == "completed" and user_id:
-            success = await increment_user_cv_quota(user_id)
             await invalidate_user_quota_cache(user_id)
             logger.info(
-                f"[CALLBACK] ✅ Incremented cv_analysis quota for user {user_id} "
-                f"after successful CV processing: {cv_id} (success={success})"
+                f"[CALLBACK] ✅ CV completed for user {user_id}, "
+                f"quota already tracked in /async: {cv_id}"
             )
             # Tracking événement analyse CV (best-effort)
             if supabase_client:
@@ -423,7 +426,7 @@ async def cv_analysis_callback(
                 logger.warning(f"[CALLBACK] Admin alert failed: {alert_err}")
             return {
                 "success": True,
-                "quota_incremented": success,
+                "quota_incremented": True,
                 "cv_id": cv_id
             }
         elif status == "failed":
