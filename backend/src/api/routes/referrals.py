@@ -7,6 +7,7 @@ POST /api/referrals/track-click     — increment click counter (unauthenticated
 POST /api/referrals/register        — link a newly created user to a referral code
 """
 
+import json
 import logging
 import os
 from datetime import UTC, datetime
@@ -214,25 +215,6 @@ async def _auto_apply_tier_rewards(supabase, referrer_id: str, total_signups: in
             if tier.get("friends", 0) != total_signups:
                 continue
 
-            # Vérifier si ce palier a déjà été récompensé (idempotence)
-            try:
-                existing = (
-                    supabase.table("referral_rewards")
-                    .select("id, reward_value, applied")
-                    .eq("referrer_id", referrer_id)
-                    .execute()
-                )
-                already_applied = False
-                for row in (existing.data or []):
-                    rv = row.get("reward_value") or {}
-                    if rv.get("tier_index") == tier_index and row.get("applied"):
-                        already_applied = True
-                        break
-                if already_applied:
-                    continue
-            except Exception:
-                pass
-
             # Récupérer un signup_id pour la FK
             ref_res = (
                 supabase.table("referrals")
@@ -258,15 +240,29 @@ async def _auto_apply_tier_rewards(supabase, referrer_id: str, total_signups: in
             if not signup_id:
                 continue
 
-            # Insérer la récompense (applied=False)
-            reward_res = supabase.table("referral_rewards").insert({
-                "referral_signup_id": signup_id,
-                "referrer_id": referrer_id,
-                "reward_type": tier.get("reward_type", "quota_bonus"),
-                "reward_value": {**tier, "tier_index": tier_index},
-                "applied": False,
-            }).execute()
-            reward_id = reward_res.data[0]["id"] if reward_res.data else None
+            # Insérer la récompense avec idempotence DB-level via RPC.
+            # insert_tier_reward() utilise ON CONFLICT DO NOTHING (sans cible)
+            # → attrape idx_referral_rewards_tier_unique correctement.
+            # PostgREST upsert cible ON CONFLICT (id) par défaut, ce qui ne
+            # couvre PAS l'index fonctionnel JSONB — d'où le passage par RPC.
+            reward_value = {**tier, "tier_index": tier_index}
+            reward_result = supabase.rpc(
+                "insert_tier_reward",
+                {
+                    "p_referral_signup_id": signup_id,
+                    "p_referrer_id": referrer_id,
+                    "p_reward_type": tier.get("reward_type", "quota_bonus"),
+                    "p_reward_value": json.dumps(reward_value),
+                },
+            ).execute()
+
+            # RPC retourne NULL si ON CONFLICT DO NOTHING a été déclenché
+            reward_id = reward_result.data
+            if not reward_id:
+                logger.info(
+                    f"[REFERRAL] Tier {tier_index} reward already exists for {referrer_id} — skipped"
+                )
+                continue
 
             # Appliquer la récompense
             reward_type_str = tier.get("reward_type", "quota_bonus")

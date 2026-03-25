@@ -5,7 +5,7 @@ Called from handle_checkout_completed() in stripe.py.
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -81,32 +81,21 @@ async def apply_referral_reward(
 
 
 async def _apply_free_days(supabase_client, referrer_id: str, reward_value: dict) -> bool:
-    """Extend the referrer's active subscription by N days."""
+    """Extend the referrer's active subscription by N days (atomic UPDATE)."""
     try:
         # Support both old format {"days": 7} and new format {"reward_value": 7}
         days = int(reward_value.get("days") or reward_value.get("reward_value") or 7)
 
-        sub_res = supabase_client.table("user_subscriptions") \
-            .select("id, current_period_end") \
-            .eq("user_id", referrer_id) \
-            .eq("status", "active") \
-            .order("created_at", desc=True) \
-            .limit(1) \
-            .execute()
+        result = supabase_client.rpc(
+            "extend_subscription_days",
+            {"p_user_id": referrer_id, "p_days": days},
+        ).execute()
 
-        if not sub_res.data:
-            logger.warning(f"[REFERRAL] Referrer {referrer_id} has no active subscription — free_days skipped")
+        if not result.data:
+            logger.warning(
+                f"[REFERRAL] Referrer {referrer_id} has no active subscription — free_days skipped"
+            )
             return False
-
-        sub = sub_res.data[0]
-        current_end_str = sub["current_period_end"].replace("Z", "+00:00")
-        current_end = datetime.fromisoformat(current_end_str)
-        new_end = current_end + timedelta(days=days)
-
-        supabase_client.table("user_subscriptions").update({
-            "current_period_end": new_end.isoformat(),
-            "updated_at": datetime.now(UTC).isoformat(),
-        }).eq("id", sub["id"]).execute()
 
         return True
 
@@ -116,36 +105,25 @@ async def _apply_free_days(supabase_client, referrer_id: str, reward_value: dict
 
 
 async def _apply_quota_bonus(supabase_client, referrer_id: str, reward_value: dict) -> bool:
-    """Add bonus quota credits to the referrer for today."""
+    """Add bonus quota credits to the referrer via DB-level decrement of used counters."""
     try:
-        from datetime import date
-        today = date.today().isoformat()
+        cv_bonus = int(reward_value.get("cv_analyses", 0))
+        coach_bonus = int(reward_value.get("coach_seconds", 0))
+        jobs_bonus = int(reward_value.get("job_searches", 0))
 
-        quota_res = supabase_client.table("usage_quotas") \
-            .select("*") \
-            .eq("user_id", referrer_id) \
-            .eq("date", today) \
-            .execute()
+        if not (cv_bonus or coach_bonus or jobs_bonus):
+            logger.info(f"[REFERRAL] No quota bonus values for {referrer_id} — skipped")
+            return True
 
-        if not quota_res.data:
-            logger.info(f"[REFERRAL] No quota record today for {referrer_id} — bonus skipped")
-            return True  # Not a hard failure
-
-        quota = quota_res.data[0]
-        updates = {}
-
-        if bonus_cv := int(reward_value.get("cv_analyses", 0)):
-            updates["cv_analyses_remaining"] = (quota.get("cv_analyses_remaining") or 0) + bonus_cv
-        if bonus_coach := int(reward_value.get("coach_seconds", 0)):
-            updates["coach_seconds_remaining"] = (quota.get("coach_seconds_remaining") or 0) + bonus_coach
-        if bonus_jobs := int(reward_value.get("job_searches", 0)):
-            updates["job_searches_remaining"] = (quota.get("job_searches_remaining") or 0) + bonus_jobs
-
-        if updates:
-            supabase_client.table("usage_quotas").update(updates) \
-                .eq("user_id", referrer_id) \
-                .eq("date", today) \
-                .execute()
+        supabase_client.rpc(
+            "apply_quota_bonus",
+            {
+                "p_user_id": referrer_id,
+                "p_cv_analyses": cv_bonus,
+                "p_coach_seconds": coach_bonus,
+                "p_job_searches": jobs_bonus,
+            },
+        ).execute()
 
         return True
 
