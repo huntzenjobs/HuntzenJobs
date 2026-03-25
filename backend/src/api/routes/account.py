@@ -9,11 +9,13 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
+import stripe as stripe_lib
 from fastapi import APIRouter, Header, HTTPException, Request, status
 from pydantic import BaseModel
 
 from src.api.deps import get_supabase_client, get_user_info_from_token
 from src.api.middleware import limiter
+from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -80,6 +82,38 @@ async def delete_account(
             {"status": "deleted"}
         ).eq("id", user_id).execute()
         logger.info("Profil soft-delete effectue", extra={"user_id": user_id})
+
+        # 3b. Annuler les subscriptions Stripe actives avant suppression
+        settings = get_settings()
+        stripe_lib.api_key = settings.get_stripe_secret_key()
+        subs_result = supabase.table("user_subscriptions").select(
+            "stripe_subscription_id, status"
+        ).eq("user_id", user_id).in_(
+            "status", ["active", "trialing"]
+        ).execute()
+
+        for sub in subs_result.data or []:
+            sub_id = sub.get("stripe_subscription_id")
+            if not sub_id:
+                continue
+            try:
+                stripe_lib.Subscription.modify(
+                    sub_id,
+                    cancel_at_period_end=True,
+                )
+                logger.info(
+                    "Subscription Stripe annulee (cancel_at_period_end)",
+                    extra={"user_id": user_id, "stripe_subscription_id": sub_id},
+                )
+            except Exception as stripe_err:
+                logger.error(
+                    "Echec annulation Stripe, suppression continue",
+                    extra={
+                        "user_id": user_id,
+                        "stripe_subscription_id": sub_id,
+                        "error": str(stripe_err),
+                    },
+                )
 
         # 4. Suppression des abonnements
         supabase.table("user_subscriptions").delete().eq(
