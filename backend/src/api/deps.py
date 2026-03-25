@@ -419,52 +419,55 @@ async def get_current_user(authorization: str | None = Header(None)) -> dict:
 CurrentUserDep = Annotated[dict, Depends(get_current_user)]
 
 
-def check_assistant_quota(user_id: str) -> None:
+def check_assistant_quota(user_id: str, coach_type: str = "career-coach") -> None:
     """
-    Check if user has remaining assistant messages quota.
+    Check if user has remaining messages for a specific coach type.
+    Uses per-coach quota (10 messages/day per coach for free plan).
     Raises HTTP 429 if quota exceeded.
     """
     try:
         supabase = get_supabase_client()
-        result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        result = supabase.rpc("check_coach_message_quota", {
+            "p_user_id": user_id,
+            "p_coach_type": coach_type,
+        }).execute()
         if not result.data:
             return  # No quota data = allow through
-        for row in result.data:
-            if row.get("feature") == "assistant_messages":
-                if not row.get("has_access", True):
-                    raise HTTPException(
-                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                        detail={
-                            "code": "QUOTA_EXCEEDED",
-                            "feature": "assistant_messages",
-                            "limit": row.get("quota_limit"),
-                            "used": row.get("quota_used"),
-                            "reset_at": str(row.get("reset_at", "")),
-                            "message": "Quota de messages journalier atteint. Passez à un plan supérieur pour continuer."
-                        }
-                    )
-                return
+        row = result.data[0] if result.data else {}
+        if not row.get("has_access", True):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "code": "QUOTA_EXCEEDED",
+                    "feature": "assistant_messages",
+                    "coach_type": coach_type,
+                    "limit": row.get("quota_limit"),
+                    "used": row.get("quota_used"),
+                    "message": f"Quota de messages atteint pour {coach_type}. Passez a un plan superieur pour continuer."
+                }
+            )
     except HTTPException:
         raise
     except Exception as e:
-        logger.warning(f"[quota] check failed for {user_id}, allowing through: {e}")
+        logger.warning(f"[quota] check_coach({coach_type}) failed for {user_id}, allowing through: {e}")
 
 
-def increment_assistant_messages(user_id: str) -> None:
+def increment_assistant_messages(user_id: str, coach_type: str = "career-coach") -> None:
     """
-    Increment assistant_messages usage counter for today.
+    Increment per-coach message counter for today.
+    Also increments the global assistant_messages counter.
     Best-effort: logs warning on failure, does NOT raise.
     """
     try:
         supabase = get_supabase_client()
-        result = supabase.rpc("increment_usage", {
+        result = supabase.rpc("increment_coach_message", {
             "p_user_id": user_id,
-            "p_feature": "assistant_messages",
+            "p_coach_type": coach_type,
             "p_amount": 1,
         }).execute()
-        logger.info(f"[quota] INCREMENT OK: user={user_id} feature=assistant_messages result={result.data}")
+        logger.info(f"[quota] INCREMENT OK: user={user_id} coach={coach_type} result={result.data}")
     except Exception as e:
-        logger.error(f"[quota] INCREMENT FAILED: user={user_id} feature=assistant_messages error={e}", exc_info=True)
+        logger.error(f"[quota] INCREMENT FAILED: user={user_id} coach={coach_type} error={e}", exc_info=True)
 
 
 async def check_quota(user_id: str, feature: str) -> None:

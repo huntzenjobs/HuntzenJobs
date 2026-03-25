@@ -160,7 +160,9 @@ async def job_scout_chat(
     market insights, and personalized recommendations.
     """
     user_id = current_user["id"]
-    check_assistant_quota(user_id)
+    check_assistant_quota(user_id, "job-scout")
+    increment_assistant_messages(user_id, "job-scout")
+    await invalidate_user_quota_cache(user_id)
 
     history = get_session_history(request.session_id)
 
@@ -205,8 +207,6 @@ async def job_scout_chat(
         )
 
     update_session_history(request.session_id, request.message, result["response"])
-    increment_assistant_messages(user_id)
-    await invalidate_user_quota_cache(user_id)
 
     return AssistantResponse(
         success=True,
@@ -230,7 +230,9 @@ async def cv_analyzer_chat(
     Can guide users through the CV optimization process step by step.
     """
     user_id = current_user["id"]
-    check_assistant_quota(user_id)
+    check_assistant_quota(user_id, "cv-analyzer")
+    increment_assistant_messages(user_id, "cv-analyzer")
+    await invalidate_user_quota_cache(user_id)
 
     history = get_session_history(request.session_id)
 
@@ -275,8 +277,6 @@ async def cv_analyzer_chat(
         )
 
     update_session_history(request.session_id, request.message, result["response"])
-    increment_assistant_messages(user_id)
-    await invalidate_user_quota_cache(user_id)
 
     return AssistantResponse(
         success=True,
@@ -300,7 +300,9 @@ async def cv_adapter_chat(
     Guides users through the adaptation process with strategic recommendations.
     """
     user_id = current_user["id"]
-    check_assistant_quota(user_id)
+    check_assistant_quota(user_id, "cv-adapter")
+    increment_assistant_messages(user_id, "cv-adapter")
+    await invalidate_user_quota_cache(user_id)
 
     history = get_session_history(request.session_id)
 
@@ -345,8 +347,6 @@ async def cv_adapter_chat(
         )
 
     update_session_history(request.session_id, request.message, result["response"])
-    increment_assistant_messages(user_id)
-    await invalidate_user_quota_cache(user_id)
 
     return AssistantResponse(
         success=True,
@@ -372,7 +372,9 @@ async def interview_sim_chat(
     """
     user_id = current_user["id"]
     _require_feature_flag_sync(user_id, "interview_sim", "Le simulateur d'entretien necessite un plan superieur.")
-    check_assistant_quota(user_id)
+    check_assistant_quota(user_id, "interview-sim")
+    increment_assistant_messages(user_id, "interview-sim")
+    await invalidate_user_quota_cache(user_id)
 
     history = get_session_history(request.session_id)
 
@@ -417,8 +419,6 @@ async def interview_sim_chat(
         )
 
     update_session_history(request.session_id, request.message, result["response"])
-    increment_assistant_messages(user_id)
-    await invalidate_user_quota_cache(user_id)
 
     return AssistantResponse(
         success=True,
@@ -507,7 +507,9 @@ async def attach_cv_to_chat(
             detail=f"Fichier trop volumineux ({len(pdf_bytes) / 1024 / 1024:.1f}MB, max 10MB)",
         )
 
-    check_assistant_quota(user_id)
+    check_assistant_quota(user_id, assistant_type)
+    increment_assistant_messages(user_id, assistant_type)
+    await invalidate_user_quota_cache(user_id)
 
     try:
         # ── Étape 1 : Extraction texte ────────────────────────────────────────
@@ -565,8 +567,6 @@ async def attach_cv_to_chat(
         # ── Étape 5 : Persister dans l'historique de session ─────────────────
         # CV (user) + réponse IA (assistant) → stockés ensemble.
         # Tous les tours suivants verront le CV via get_session_history().
-        increment_assistant_messages(user_id)
-        await invalidate_user_quota_cache(user_id)
         update_session_history(session_id, cv_message_content, initial_response)
 
         logger.info(
