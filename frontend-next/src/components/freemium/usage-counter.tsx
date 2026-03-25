@@ -76,6 +76,36 @@ const featureConfig: Record<FeatureType, FeatureConfig> = {
         ? t("features.unlimitedShort")
         : `${value}/${max}${t("perDay")}`,
   },
+  cv_adapt: {
+    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.cvAdapt.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  cover_letter: {
+    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.coverLetter.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  coach: {
+    icon: <Clock className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.coach.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
 };
 
 export function UsageCounter({

@@ -40,6 +40,8 @@ interface QuotasData {
   assistant_messages: QuotaData;
   job_view?: QuotaData;
   recruiter_search?: QuotaData;
+  cv_adapt?: QuotaData;
+  cover_letter?: QuotaData;
 }
 
 interface SavedJobsQuota {
