@@ -214,25 +214,6 @@ async def _auto_apply_tier_rewards(supabase, referrer_id: str, total_signups: in
             if tier.get("friends", 0) != total_signups:
                 continue
 
-            # Vérifier si ce palier a déjà été récompensé (idempotence)
-            try:
-                existing = (
-                    supabase.table("referral_rewards")
-                    .select("id, reward_value, applied")
-                    .eq("referrer_id", referrer_id)
-                    .execute()
-                )
-                already_applied = False
-                for row in (existing.data or []):
-                    rv = row.get("reward_value") or {}
-                    if rv.get("tier_index") == tier_index and row.get("applied"):
-                        already_applied = True
-                        break
-                if already_applied:
-                    continue
-            except Exception:
-                pass
-
             # Récupérer un signup_id pour la FK
             ref_res = (
                 supabase.table("referrals")
@@ -258,15 +239,27 @@ async def _auto_apply_tier_rewards(supabase, referrer_id: str, total_signups: in
             if not signup_id:
                 continue
 
-            # Insérer la récompense (applied=False)
-            reward_res = supabase.table("referral_rewards").insert({
-                "referral_signup_id": signup_id,
-                "referrer_id": referrer_id,
-                "reward_type": tier.get("reward_type", "quota_bonus"),
-                "reward_value": {**tier, "tier_index": tier_index},
-                "applied": False,
-            }).execute()
-            reward_id = reward_res.data[0]["id"] if reward_res.data else None
+            # Insérer la récompense avec idempotence DB-level (ON CONFLICT DO NOTHING).
+            # idx_referral_rewards_tier_unique garantit l'unicité (referrer_id, tier_index).
+            reward_res = supabase.table("referral_rewards").upsert(
+                {
+                    "referral_signup_id": signup_id,
+                    "referrer_id": referrer_id,
+                    "reward_type": tier.get("reward_type", "quota_bonus"),
+                    "reward_value": {**tier, "tier_index": tier_index},
+                    "applied": False,
+                },
+                ignore_duplicates=True,
+            ).execute()
+
+            # ON CONFLICT déclenché → le palier a déjà été récompensé
+            if not reward_res.data:
+                logger.info(
+                    f"[REFERRAL] Tier {tier_index} reward already exists for {referrer_id} — skipped"
+                )
+                continue
+
+            reward_id = reward_res.data[0]["id"]
 
             # Appliquer la récompense
             reward_type_str = tier.get("reward_type", "quota_bonus")
