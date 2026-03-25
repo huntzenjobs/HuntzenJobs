@@ -1680,7 +1680,8 @@
     "insiderRetry": "Try again",
     "insiderNewSearch": "New search",
     "insiderProfiles": "{count} profile",
-    "insiderProfilesPlural": "{count} profiles"
+    "insiderProfilesPlural": "{count} profiles",
+    "findContacts": "Find contacts"
   },
   "searchForm": {
     "jobTitlePlaceholder": "Job title or position",
@@ -2879,5 +2880,24 @@
       "q3": "How to develop my personal brand?",
       "q4": "Write me a viral LinkedIn post to create engagement."
     }
+  },
+  "contactFinder": {
+    "title": "Find contacts",
+    "subtitle": "Discover recruiters and colleagues at this company",
+    "companyLabel": "Company name",
+    "companyPlaceholder": "e.g. Societe Generale",
+    "searchButton": "Start search",
+    "searching": "Searching...",
+    "noResultsFallback": "No contacts found for {company}. Try the LinkedIn page below.",
+    "linkedinPageTitle": "Explore the team on LinkedIn",
+    "linkedinPageSubtitle": "See all employees at {company}",
+    "linkedinPageButton": "Open on LinkedIn",
+    "cachedBadge": "Results from {date}",
+    "newSearch": "New search",
+    "emailCopied": "Email copied",
+    "quotaReached": "Search quota reached (3/day on free plan). Upgrade to Pro for unlimited access.",
+    "errorAuth": "Sign in to use this feature",
+    "errorGeneric": "Error searching for contacts",
+    "rgpdDisclaimer": "This information comes from public sources (LinkedIn, company websites). Use responsibly in compliance with GDPR."
   }
 }
