@@ -312,10 +312,14 @@ async def search_jobs(
     # Determine if post-processing filters are needed
     has_post_filters = bool(data.contract_types or data.work_schedule or data.work_days)
 
-    # ✅ CHECK QUOTA AVANT RECHERCHE
+    # ✅ AUTH OBLIGATOIRE + CHECK QUOTA AVANT RECHERCHE
     user_id = get_user_id_from_token(authorization)
-    if user_id:
-        _check_job_search_quota(user_id)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+    _check_job_search_quota(user_id)
 
     # ── Cache Redis : cle basee sur les parametres de recherche ──
     cache_key_data = json.dumps({
@@ -524,8 +528,12 @@ async def search_jobs_get(
         )
 
     user_id = get_user_id_from_token(authorization)
-    if user_id:
-        _check_job_search_quota(user_id)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+    _check_job_search_quota(user_id)
     result = await agent.run(
         job_title=q,
         country_code=country,
