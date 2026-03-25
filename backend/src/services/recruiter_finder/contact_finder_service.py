@@ -7,6 +7,7 @@ with Supabase caching and guaranteed LinkedIn fallback.
 
 import asyncio
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from src.api.deps import get_supabase_client
@@ -36,7 +37,7 @@ async def get_cached_result(company: str, city: str) -> dict | None:
             .select("response_data, created_at") \
             .eq("company_normalized", key_company) \
             .eq("city_normalized", key_city) \
-            .gt("expires_at", "now()") \
+            .gt("expires_at", datetime.now(timezone.utc).isoformat()) \
             .maybe_single() \
             .execute()
         if result.data:

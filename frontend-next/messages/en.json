@@ -2898,6 +2898,12 @@
     "quotaReached": "Search quota reached (3/day on free plan). Upgrade to Pro for unlimited access.",
     "errorAuth": "Sign in to use this feature",
     "errorGeneric": "Error searching for contacts",
-    "rgpdDisclaimer": "This information comes from public sources (LinkedIn, company websites). Use responsibly in compliance with GDPR."
+    "rgpdDisclaimer": "This information comes from public sources (LinkedIn, company websites). Use responsibly in compliance with GDPR.",
+    "copyEmail": "Copy {email}",
+    "category.hr": "Recruiter",
+    "category.pair": "Future colleague",
+    "category.campus": "Campus",
+    "category.tech": "Tech",
+    "category.other": "Contact"
   }
 }

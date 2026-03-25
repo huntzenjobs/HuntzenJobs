@@ -2885,6 +2885,12 @@
     "quotaReached": "Cota de pesquisa atingida (3/dia no plano gratuito). Atualize para Pro para acesso ilimitado.",
     "errorAuth": "Faca login para usar esta funcionalidade",
     "errorGeneric": "Erro ao pesquisar contatos",
-    "rgpdDisclaimer": "Estas informacoes provem de fontes publicas (LinkedIn, sites de empresas). Use de forma responsavel em conformidade com o RGPD."
+    "rgpdDisclaimer": "Estas informacoes provem de fontes publicas (LinkedIn, sites de empresas). Use de forma responsavel em conformidade com o RGPD.",
+    "copyEmail": "Copiar {email}",
+    "category.hr": "Recrutador",
+    "category.pair": "Futuro colega",
+    "category.campus": "Campus",
+    "category.tech": "Tech",
+    "category.other": "Contato"
   }
 }

@@ -2885,6 +2885,12 @@
     "quotaReached": "Cuota de busqueda alcanzada (3/dia en plan gratuito). Actualiza a Pro para acceso ilimitado.",
     "errorAuth": "Inicia sesion para usar esta funcion",
     "errorGeneric": "Error al buscar contactos",
-    "rgpdDisclaimer": "Esta informacion proviene de fuentes publicas (LinkedIn, sitios web de empresas). Usala de manera responsable conforme al RGPD."
+    "rgpdDisclaimer": "Esta informacion proviene de fuentes publicas (LinkedIn, sitios web de empresas). Usala de manera responsable conforme al RGPD.",
+    "copyEmail": "Copiar {email}",
+    "category.hr": "Reclutador",
+    "category.pair": "Futuro colega",
+    "category.campus": "Campus",
+    "category.tech": "Tech",
+    "category.other": "Contacto"
   }
 }

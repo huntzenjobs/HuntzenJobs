@@ -74,17 +74,27 @@ interface ContactFinderDrawerProps {
 // ============================================================================
 
 const SOURCE_NAMES = new Set([
-  "adzuna", "huntzen", "serpapi", "remoteok", "remote ok",
-  "france travail", "indeed", "linkedin", "google jobs",
-  "glassdoor", "monster", "apec", "pole emploi",
+  "adzuna",
+  "huntzen",
+  "serpapi",
+  "remoteok",
+  "remote ok",
+  "france travail",
+  "indeed",
+  "linkedin",
+  "google jobs",
+  "glassdoor",
+  "monster",
+  "apec",
+  "pole emploi",
 ]);
 
-const CATEGORY_CONFIG: Record<string, { label: string; className: string }> = {
-  hr: { label: "Recruteur", className: "bg-blue-100 text-blue-700" },
-  pair: { label: "Futur Collegue", className: "bg-teal-100 text-teal-700" },
-  campus: { label: "Campus", className: "bg-orange-100 text-orange-700" },
-  tech: { label: "Tech", className: "bg-violet-100 text-violet-700" },
-  other: { label: "Contact", className: "bg-gray-100 text-gray-600" },
+const CATEGORY_STYLES: Record<string, string> = {
+  hr: "bg-blue-100 text-blue-700",
+  pair: "bg-teal-100 text-teal-700",
+  campus: "bg-orange-100 text-orange-700",
+  tech: "bg-violet-100 text-violet-700",
+  other: "bg-gray-100 text-gray-600",
 };
 
 // ============================================================================
@@ -124,7 +134,7 @@ function CopyEmailButton({ email }: { email: string }) {
     <button
       onClick={handleCopy}
       className="ml-1 inline-flex items-center text-gray-400 hover:text-blue-600 transition-colors"
-      aria-label={`Copier ${email}`}
+      aria-label={t("copyEmail", { email })}
     >
       {copied ? (
         <CheckCheck className="h-3.5 w-3.5 text-green-500" />
@@ -142,15 +152,16 @@ function ConfidenceBadge({ confidence }: { confidence: number }) {
       : confidence >= 50
         ? "text-orange-500"
         : "text-gray-400";
-  return (
-    <span className={cn("text-xs", color)}>
-      {confidence}%
-    </span>
-  );
+  return <span className={cn("text-xs", color)}>{confidence}%</span>;
 }
 
 function ContactCard({ contact }: { contact: Contact }) {
-  const config = CATEGORY_CONFIG[contact.category] ?? CATEGORY_CONFIG.other;
+  const t = useTranslations("contactFinder");
+  const categoryClass =
+    CATEGORY_STYLES[contact.category] ?? CATEGORY_STYLES.other;
+  const categoryLabel = t(
+    `category.${contact.category}` as Parameters<typeof t>[0],
+  );
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-2 hover:border-blue-300 transition-colors">
@@ -168,10 +179,10 @@ function ContactCard({ contact }: { contact: Contact }) {
         <span
           className={cn(
             "text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
-            config.className
+            categoryClass,
           )}
         >
-          {config.label}
+          {categoryLabel}
         </span>
       </div>
 
@@ -239,7 +250,10 @@ export function ContactFinderDrawer({
     setQuotaError(false);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        "";
       const response = await fetch(`${backendUrl}/api/contact-finder/find`, {
         method: "POST",
         headers: {
@@ -284,7 +298,7 @@ export function ContactFinderDrawer({
       }
       onOpenChange(isOpen);
     },
-    [job.company, onOpenChange]
+    [job.company, onOpenChange],
   );
 
   const handleReset = useCallback(() => {
@@ -300,7 +314,7 @@ export function ContactFinderDrawer({
       acc[key].push(contact);
       return acc;
     },
-    {}
+    {},
   );
 
   const hasResults = (result?.total_found ?? 0) > 0;
@@ -388,15 +402,19 @@ export function ContactFinderDrawer({
                   {["hr", "pair", "campus", "tech", "other"].map((cat) => {
                     const contacts = grouped[cat];
                     if (!contacts?.length) return null;
-                    const config = CATEGORY_CONFIG[cat] ?? CATEGORY_CONFIG.other;
+                    const categoryClass =
+                      CATEGORY_STYLES[cat] ?? CATEGORY_STYLES.other;
                     return (
                       <div key={cat} className="space-y-3">
                         <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                          <Badge className={cn(config.className, "hover:opacity-90")}>
-                            {config.label}
+                          <Badge
+                            className={cn(categoryClass, "hover:opacity-90")}
+                          >
+                            {t(`category.${cat}` as Parameters<typeof t>[0])}
                           </Badge>
                           <span className="text-gray-400 font-normal">
-                            {contacts.length} profil{contacts.length > 1 ? "s" : ""}
+                            {contacts.length} profil
+                            {contacts.length > 1 ? "s" : ""}
                           </span>
                         </h4>
                         {contacts.map((c, i) => (

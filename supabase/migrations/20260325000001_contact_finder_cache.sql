@@ -16,8 +16,7 @@ CREATE TABLE IF NOT EXISTS contact_finder_cache (
 );
 
 CREATE INDEX IF NOT EXISTS idx_contact_finder_cache_lookup
-    ON contact_finder_cache(company_normalized, city_normalized)
-    WHERE expires_at > NOW();
+    ON contact_finder_cache(company_normalized, city_normalized, expires_at);
 
 ALTER TABLE contact_finder_cache ENABLE ROW LEVEL SECURITY;
 
