@@ -1,7 +1,7 @@
 """
 Recruiter Finder API Routes
 ============================
-Expose recruiter contact discovery via Apollo.io (primary) with Hunter.io fallback.
+Expose recruiter contact discovery via Apollo.io (primary) with SerpAPI fallback.
 """
 
 import logging
@@ -12,8 +12,11 @@ from pydantic import BaseModel
 from supabase import Client, create_client
 
 from src.api.deps import get_user_id_from_token
-from src.services.recruiter_finder.apollo import find_recruiters_apollo
-from src.services.recruiter_finder.hunter import extract_domain, find_recruiters_for_job
+from src.services.recruiter_finder import (
+    extract_domain,
+    find_recruiters_apollo,
+    find_recruiters_serpapi,
+)
 from src.services.stripe import invalidate_user_quota_cache
 
 logger = logging.getLogger(__name__)
@@ -144,10 +147,10 @@ async def find_recruiters(
     authorization: str | None = Header(default=None),
 ):
     """
-    Discover recruiter contacts at a company using Hunter.io.
+    Discover recruiter contacts at a company using Apollo (primary) with
+    SerpAPI LinkedIn scraping as fallback.
 
-    Returns HR/recruiter contacts, tech team members, and the email pattern
-    for the company domain.
+    Returns HR/recruiter contacts with LinkedIn URLs (emails suppressed).
 
     Requires authentication. Subject to daily quota (3/day on free plan).
     """
@@ -176,26 +179,24 @@ async def find_recruiters(
         elif body.company_website:
             domain = extract_domain(body.company_website)
 
-        # 1. Try Apollo first (primary source)
+        # 1. Try Apollo first (structured org data)
         result = await find_recruiters_apollo(
             company_name=body.company_name,
             company_domain=domain,
             job_title=body.job_title or "",
         )
 
-        # 2. If Apollo found nothing, fallback to Hunter.io
+        # 2. Fallback to SerpAPI if Apollo found nothing
         if not result.get("recruiters") and not result.get("tech_team"):
-            logger.info("[RecruiterFinder] Apollo found nothing, trying Hunter.io fallback")
-            result = await find_recruiters_for_job(
+            logger.info("[RecruiterFinder] Apollo returned no contacts, using SerpAPI fallback")
+            result = await find_recruiters_serpapi(
                 company_name=body.company_name,
-                company_domain=body.company_domain or "",
-                company_website=body.company_website or "",
+                company_domain=domain,
                 job_title=body.job_title or "",
             )
-            result["source"] = "hunter"
+            result["source"] = "serpapi"
 
-        # 3. Mark email verification status on all contacts
-        _enrich_email_verification(result)
+        _enrich_contact_metadata(result)
 
         # Incrémenter le quota après succès
         increment_recruiter_search_quota(user_id)
@@ -216,17 +217,14 @@ async def find_recruiters(
 # ============================================================================
 
 
-def _enrich_email_verification(result: dict) -> None:
-    """
-    Mark email_verified on all contacts based on source-specific logic.
-    Apollo: email_status == "verified" → True
-    Hunter: confidence >= 80 → True
-    """
-    source = result.get("source", "hunter")
-    for contact in result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", []):
+def _enrich_contact_metadata(result: dict) -> None:
+    """Normalize contact metadata based on source."""
+    source = result.get("source", "serpapi")
+    contacts = result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", [])
+    for contact in contacts:
         if source == "apollo":
             contact["email_verified"] = contact.get("email_status") == "verified"
         else:
-            # Hunter: high confidence = verified
-            contact["email_verified"] = (contact.get("confidence", 0) >= 80)
+            contact["email"] = ""
+            contact["email_verified"] = False
         contact.setdefault("source", source)
