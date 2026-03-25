@@ -62,3 +62,71 @@ class TestLinkedInCompanyUrl:
         from src.services.recruiter_finder.hunter import build_linkedin_company_url
         url = build_linkedin_company_url("LVMH", keywords="recruiter")
         assert "keywords=recruiter" in url
+
+
+class TestDedup:
+    """Verify contact deduplication."""
+
+    def test_dedup_by_linkedin_url(self):
+        from src.services.recruiter_finder.contact_finder_service import dedup_contacts
+        contacts = [
+            {"name": "Jean Dupont", "linkedin_url": "https://linkedin.com/in/jean", "position": "RH"},
+            {"name": "Jean D.", "linkedin_url": "https://linkedin.com/in/jean", "position": "RH Manager"},
+        ]
+        result = dedup_contacts(contacts)
+        assert len(result) == 1
+
+    def test_dedup_by_name_and_position(self):
+        from src.services.recruiter_finder.contact_finder_service import dedup_contacts
+        contacts = [
+            {"name": "Jean Dupont", "linkedin_url": None, "position": "RH Manager"},
+            {"name": "Jean Dupont", "linkedin_url": None, "position": "RH Manager"},
+        ]
+        result = dedup_contacts(contacts)
+        assert len(result) == 1
+
+    def test_dedup_keeps_different_positions(self):
+        from src.services.recruiter_finder.contact_finder_service import dedup_contacts
+        contacts = [
+            {"name": "Jean Dupont", "linkedin_url": None, "position": "RH Manager"},
+            {"name": "Jean Dupont", "linkedin_url": None, "position": "Tech Lead"},
+        ]
+        result = dedup_contacts(contacts)
+        assert len(result) == 2
+
+    def test_dedup_empty_list(self):
+        from src.services.recruiter_finder.contact_finder_service import dedup_contacts
+        assert dedup_contacts([]) == []
+
+
+class TestNormalization:
+    """Verify contact normalization from Apollo and SerpAPI."""
+
+    def test_normalize_apollo_contact(self):
+        from src.services.recruiter_finder.contact_finder_service import _normalize_apollo_contact
+        contact = {
+            "name": "Marie Martin",
+            "position": "Recruiter",
+            "email": "marie@company.com",
+            "email_verified": True,
+            "linkedin": "https://linkedin.com/in/marie",
+            "confidence": 95,
+            "role": "hr",
+        }
+        result = _normalize_apollo_contact(contact)
+        assert result["source"] == "apollo"
+        assert result["category"] == "hr"
+        assert result["linkedin_url"] == "https://linkedin.com/in/marie"
+
+    def test_normalize_insider_contact(self):
+        from src.services.recruiter_finder.contact_finder_service import _normalize_insider_contact
+        contact = {
+            "name": "Pierre Durand",
+            "title": "Data Analyst at Company",
+            "link": "https://linkedin.com/in/pierre",
+            "category": "pair",
+        }
+        result = _normalize_insider_contact(contact)
+        assert result["source"] == "serpapi"
+        assert result["category"] == "pair"
+        assert result["email"] is None
