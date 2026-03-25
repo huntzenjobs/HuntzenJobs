@@ -43,6 +43,40 @@ ON referral_rewards (
 WHERE reward_value->>'tier_index' IS NOT NULL;
 
 -- ============================================================
+-- RC-3 bis: insert_tier_reward — INSERT avec ON CONFLICT DO NOTHING nu.
+-- PostgREST cible ON CONFLICT (id) par défaut, ce qui ne couvre PAS
+-- l'index fonctionnel idx_referral_rewards_tier_unique.
+-- Cette RPC utilise ON CONFLICT DO NOTHING sans cible → attrape TOUTES
+-- les contraintes unique, y compris l'index fonctionnel sur JSONB.
+-- Retourne l'UUID du reward créé, ou NULL si doublon.
+-- ============================================================
+CREATE OR REPLACE FUNCTION insert_tier_reward(
+  p_referral_signup_id UUID,
+  p_referrer_id        UUID,
+  p_reward_type        TEXT,
+  p_reward_value       JSONB
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_reward_id UUID;
+BEGIN
+  INSERT INTO referral_rewards (
+    referral_signup_id, referrer_id, reward_type, reward_value, applied
+  )
+  VALUES (p_referral_signup_id, p_referrer_id, p_reward_type, p_reward_value, FALSE)
+  ON CONFLICT DO NOTHING
+  RETURNING id INTO v_reward_id;
+
+  RETURN v_reward_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION insert_tier_reward(UUID, UUID, TEXT, JSONB) TO service_role;
+
+-- ============================================================
 -- RC-1: Apply quota bonus (decrement used counters)
 -- Remplace l'UPDATE sur des colonnes inexistantes (_remaining).
 -- Utilise GREATEST(0, ...) pour ne jamais passer sous zéro.
