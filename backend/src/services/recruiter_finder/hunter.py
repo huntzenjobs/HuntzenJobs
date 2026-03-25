@@ -149,6 +149,8 @@ async def _check_candidates(client: httpx.AsyncClient, candidates: list[str]) ->
 def build_linkedin_company_url(company_name: str, keywords: str = "recruteur") -> str:
     """Build LinkedIn People URL for a company (guaranteed fallback)."""
     slug = _generate_domain_slug(company_name)
+    if not slug:
+        slug = "unknown"
     return f"https://www.linkedin.com/company/{slug}/people/?keywords={quote(keywords)}"
 
 

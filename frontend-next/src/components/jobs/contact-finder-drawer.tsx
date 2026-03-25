@@ -413,8 +413,7 @@ export function ContactFinderDrawer({
                             {t(`category.${cat}` as Parameters<typeof t>[0])}
                           </Badge>
                           <span className="text-gray-400 font-normal">
-                            {contacts.length} profil
-                            {contacts.length > 1 ? "s" : ""}
+                            {t("profileCount", { count: contacts.length })}
                           </span>
                         </h4>
                         {contacts.map((c, i) => (

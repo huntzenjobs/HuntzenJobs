@@ -10,6 +10,12 @@ from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+
+def _country_to_lang(country_code: str) -> str:
+    """Map country code to language code for SerpAPI hl parameter."""
+    mapping = {"us": "en", "gb": "en", "ca": "en", "au": "en", "ch": "fr", "be": "fr", "lu": "fr"}
+    return mapping.get(country_code, country_code)
+
 class InsiderFinderService:
     """
     Service responsible for orchestrating the discovery of company insiders.
@@ -99,7 +105,7 @@ class InsiderFinderService:
             "q": query_text,
             "api_key": api_key,
             "gl": country_code or "fr",
-            "hl": country_code or "fr",
+            "hl": _country_to_lang(country_code or "fr"),
         }
 
         try:

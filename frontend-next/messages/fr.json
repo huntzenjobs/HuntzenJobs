@@ -2900,6 +2900,7 @@
     "category.pair": "Futur collègue",
     "category.campus": "Campus",
     "category.tech": "Tech",
-    "category.other": "Contact"
+    "category.other": "Contact",
+    "profileCount": "{count} profil(s)"
   }
 }

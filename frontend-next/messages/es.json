@@ -2873,17 +2873,17 @@
     "subtitle": "Descubre reclutadores y colegas en esta empresa",
     "companyLabel": "Nombre de la empresa",
     "companyPlaceholder": "Ej: Societe Generale",
-    "searchButton": "Iniciar busqueda",
+    "searchButton": "Iniciar búsqueda",
     "searching": "Buscando...",
-    "noResultsFallback": "No se encontraron contactos para {company}. Prueba la pagina de LinkedIn abajo.",
+    "noResultsFallback": "No se encontraron contactos para {company}. Prueba la página de LinkedIn abajo.",
     "linkedinPageTitle": "Explorar el equipo en LinkedIn",
     "linkedinPageSubtitle": "Ver todos los empleados de {company}",
     "linkedinPageButton": "Abrir en LinkedIn",
     "cachedBadge": "Resultados del {date}",
-    "newSearch": "Nueva busqueda",
+    "newSearch": "Nueva búsqueda",
     "emailCopied": "Email copiado",
-    "quotaReached": "Cuota de busqueda alcanzada (3/dia en plan gratuito). Actualiza a Pro para acceso ilimitado.",
-    "errorAuth": "Inicia sesion para usar esta funcion",
+    "quotaReached": "Cuota de búsqueda alcanzada (3/dia en plan gratuito). Actualiza a Pro para acceso ilimitado.",
+    "errorAuth": "Inicia sesión para usar esta función",
     "errorGeneric": "Error al buscar contactos",
     "rgpdDisclaimer": "Esta informacion proviene de fuentes publicas (LinkedIn, sitios web de empresas). Usala de manera responsable conforme al RGPD.",
     "copyEmail": "Copiar {email}",
@@ -2891,6 +2891,7 @@
     "category.pair": "Futuro colega",
     "category.campus": "Campus",
     "category.tech": "Tech",
-    "category.other": "Contacto"
+    "category.other": "Contacto",
+    "profileCount": "{count} perfil(es)"
   }
 }
