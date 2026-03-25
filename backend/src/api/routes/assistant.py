@@ -161,8 +161,6 @@ async def job_scout_chat(
     """
     user_id = current_user["id"]
     check_assistant_quota(user_id, "job-scout")
-    increment_assistant_messages(user_id, "job-scout")
-    await invalidate_user_quota_cache(user_id)
 
     history = get_session_history(request.session_id)
 
@@ -184,6 +182,8 @@ async def job_scout_chat(
                     language=request.language,
                     history=history,
                 )
+                increment_assistant_messages(user_id, "job-scout")
+                await invalidate_user_quota_cache(user_id)
                 logger.info(f"[assistant/job-scout] ARQ queued — active={active} job={job.job_id}")
                 return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
             except Exception as e:
@@ -206,6 +206,8 @@ async def job_scout_chat(
             detail=result.get("error", "Job Scout error"),
         )
 
+    increment_assistant_messages(user_id, "job-scout")
+    await invalidate_user_quota_cache(user_id)
     update_session_history(request.session_id, request.message, result["response"])
 
     return AssistantResponse(
@@ -231,8 +233,6 @@ async def cv_analyzer_chat(
     """
     user_id = current_user["id"]
     check_assistant_quota(user_id, "cv-analyzer")
-    increment_assistant_messages(user_id, "cv-analyzer")
-    await invalidate_user_quota_cache(user_id)
 
     history = get_session_history(request.session_id)
 
@@ -254,6 +254,8 @@ async def cv_analyzer_chat(
                     language=request.language,
                     history=history,
                 )
+                increment_assistant_messages(user_id, "cv-analyzer")
+                await invalidate_user_quota_cache(user_id)
                 logger.info(f"[assistant/cv-analyzer] ARQ queued — active={active} job={job.job_id}")
                 return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
             except Exception as e:
@@ -276,6 +278,8 @@ async def cv_analyzer_chat(
             detail=result.get("error", "CV Analyzer error"),
         )
 
+    increment_assistant_messages(user_id, "cv-analyzer")
+    await invalidate_user_quota_cache(user_id)
     update_session_history(request.session_id, request.message, result["response"])
 
     return AssistantResponse(
@@ -301,8 +305,6 @@ async def cv_adapter_chat(
     """
     user_id = current_user["id"]
     check_assistant_quota(user_id, "cv-adapter")
-    increment_assistant_messages(user_id, "cv-adapter")
-    await invalidate_user_quota_cache(user_id)
 
     history = get_session_history(request.session_id)
 
@@ -324,6 +326,8 @@ async def cv_adapter_chat(
                     language=request.language,
                     history=history,
                 )
+                increment_assistant_messages(user_id, "cv-adapter")
+                await invalidate_user_quota_cache(user_id)
                 logger.info(f"[assistant/cv-adapter] ARQ queued — active={active} job={job.job_id}")
                 return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
             except Exception as e:
@@ -346,6 +350,8 @@ async def cv_adapter_chat(
             detail=result.get("error", "CV Adapter error"),
         )
 
+    increment_assistant_messages(user_id, "cv-adapter")
+    await invalidate_user_quota_cache(user_id)
     update_session_history(request.session_id, request.message, result["response"])
 
     return AssistantResponse(
@@ -373,8 +379,6 @@ async def interview_sim_chat(
     user_id = current_user["id"]
     _require_feature_flag_sync(user_id, "interview_sim", "Le simulateur d'entretien necessite un plan superieur.")
     check_assistant_quota(user_id, "interview-sim")
-    increment_assistant_messages(user_id, "interview-sim")
-    await invalidate_user_quota_cache(user_id)
 
     history = get_session_history(request.session_id)
 
@@ -396,6 +400,8 @@ async def interview_sim_chat(
                     language=request.language,
                     history=history,
                 )
+                increment_assistant_messages(user_id, "interview-sim")
+                await invalidate_user_quota_cache(user_id)
                 logger.info(f"[assistant/interview-sim] ARQ queued — active={active} job={job.job_id}")
                 return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
             except Exception as e:
@@ -418,6 +424,8 @@ async def interview_sim_chat(
             detail=result.get("error", "Interview Simulator error"),
         )
 
+    increment_assistant_messages(user_id, "interview-sim")
+    await invalidate_user_quota_cache(user_id)
     update_session_history(request.session_id, request.message, result["response"])
 
     return AssistantResponse(
@@ -508,8 +516,6 @@ async def attach_cv_to_chat(
         )
 
     check_assistant_quota(user_id, assistant_type)
-    increment_assistant_messages(user_id, assistant_type)
-    await invalidate_user_quota_cache(user_id)
 
     try:
         # ── Étape 1 : Extraction texte ────────────────────────────────────────
@@ -573,6 +579,9 @@ async def attach_cv_to_chat(
             f"[attach-cv] Done — session={session_id[:8]}... "
             f"cv={len(cv_text)}chars structured={bool(cv_structured)}"
         )
+
+        increment_assistant_messages(user_id, assistant_type)
+        await invalidate_user_quota_cache(user_id)
 
         return {
             "success": True,

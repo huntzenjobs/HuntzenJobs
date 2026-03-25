@@ -12,7 +12,10 @@ export type FeatureType =
   | "job_view"
   | "cv_analysis"
   | "assistant_messages"
-  | "recruiter_search";
+  | "recruiter_search"
+  | "cv_adapt"
+  | "cover_letter"
+  | "coach";
 
 // ── Plan limits — Dynamic from Supabase via /api/public/plans ──────────────
 // PLAN_LIMITS is a Proxy that reads from the API cache (localStorage).

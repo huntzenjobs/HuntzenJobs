@@ -334,6 +334,11 @@ async def adapt_cv_to_pdf(
 
     Returns a downloadable PDF file with the adapted CV.
     """
+    # Check and increment cv_adapt quota (same as /adapt)
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        await _check_and_increment_quota(user_id, "cv_adapt")
+
     # Resolve CV text — from file or raw text
     if file and file.filename:
         cv_text = await _extract_cv_text_from_file(file)
