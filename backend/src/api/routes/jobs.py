@@ -66,13 +66,14 @@ def _increment_job_search_quota(user_id: str) -> None:
     """Increment job_search usage. Best-effort, never raises."""
     try:
         supabase = get_supabase_client()
-        supabase.rpc("increment_usage", {
+        result = supabase.rpc("increment_usage", {
             "p_user_id": user_id,
             "p_feature": "job_search",
             "p_amount": 1,
         }).execute()
+        logger.info(f"[quota] INCREMENT OK: user={user_id} feature=job_search result={result.data}")
     except Exception as e:
-        logger.warning(f"[quota] job_search increment failed for {user_id}: {e}")
+        logger.error(f"[quota] INCREMENT FAILED: user={user_id} feature=job_search error={e}", exc_info=True)
 
 
 def _extract_salary(job: dict) -> tuple:

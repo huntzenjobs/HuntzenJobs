@@ -701,24 +701,27 @@ export default function JobsPage() {
         throw new Error(t("error.fillRequired"));
       }
 
-      const data = await huntzenApi.searchJobs({
-        job_title: jobSearchParams.query,
-        country_code: jobSearchParams.country,
-        city: jobSearchParams.location,
-        contract_type: effectiveContractType,
-        contract_types: effectiveContractTypes,
-        work_days: effectiveWorkDays,
-        work_schedule: effectiveWorkSchedule,
-        includeRemote: jobSearchParams.includeRemote,
-        from_history: jobSearchParams.fromHistory,
-        // Advanced filters (Premium feature)
-        industries: advancedFilters.industries?.join(","),
-        keywords: advancedFilters.keywords?.join(","),
-        experienceLevel: advancedFilters.experienceLevel,
-        salaryMin: advancedFilters.salaryMin,
-        salaryMax: advancedFilters.salaryMax,
-        companySize: advancedFilters.companySize,
-      });
+      const data = await huntzenApi.searchJobs(
+        {
+          job_title: jobSearchParams.query,
+          country_code: jobSearchParams.country,
+          city: jobSearchParams.location,
+          contract_type: effectiveContractType,
+          contract_types: effectiveContractTypes,
+          work_days: effectiveWorkDays,
+          work_schedule: effectiveWorkSchedule,
+          includeRemote: jobSearchParams.includeRemote,
+          from_history: jobSearchParams.fromHistory,
+          // Advanced filters (Premium feature)
+          industries: advancedFilters.industries?.join(","),
+          keywords: advancedFilters.keywords?.join(","),
+          experienceLevel: advancedFilters.experienceLevel,
+          salaryMin: advancedFilters.salaryMin,
+          salaryMax: advancedFilters.salaryMax,
+          companySize: advancedFilters.companySize,
+        },
+        auth?.session?.access_token,
+      );
 
       return data;
     },

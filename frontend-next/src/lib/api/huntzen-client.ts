@@ -194,25 +194,28 @@ class HuntzenApiClient {
   }
 
   // Job Search
-  async searchJobs(params: {
-    job_title: string;
-    country_code: string;
-    city?: string;
-    contract_type?: string;
-    contract_types?: string[];
-    work_days?: string[];
-    work_schedule?: string[];
-    radiusKm?: number;
-    includeRemote?: boolean;
-    // Advanced filters (Premium feature)
-    industries?: string;
-    keywords?: string;
-    experienceLevel?: string;
-    salaryMin?: number;
-    salaryMax?: number;
-    companySize?: string;
-    from_history?: boolean;
-  }): Promise<{ jobs: Job[]; count: number; corrected_query?: string }> {
+  async searchJobs(
+    params: {
+      job_title: string;
+      country_code: string;
+      city?: string;
+      contract_type?: string;
+      contract_types?: string[];
+      work_days?: string[];
+      work_schedule?: string[];
+      radiusKm?: number;
+      includeRemote?: boolean;
+      // Advanced filters (Premium feature)
+      industries?: string;
+      keywords?: string;
+      experienceLevel?: string;
+      salaryMin?: number;
+      salaryMax?: number;
+      companySize?: string;
+      from_history?: boolean;
+    },
+    token?: string,
+  ): Promise<{ jobs: Job[]; count: number; corrected_query?: string }> {
     // Build query parameters
     const queryParams = new URLSearchParams();
     queryParams.append("q", params.job_title);
@@ -253,7 +256,9 @@ class HuntzenApiClient {
         total_filtered?: number;
         total_before_filters?: number;
       };
-    }>(`/api/jobs/search?${queryParams.toString()}`);
+    }>(`/api/jobs/search?${queryParams.toString()}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
 
     return {
       jobs: response.jobs || [],

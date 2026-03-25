@@ -457,13 +457,14 @@ def increment_assistant_messages(user_id: str) -> None:
     """
     try:
         supabase = get_supabase_client()
-        supabase.rpc("increment_usage", {
+        result = supabase.rpc("increment_usage", {
             "p_user_id": user_id,
             "p_feature": "assistant_messages",
             "p_amount": 1,
         }).execute()
+        logger.info(f"[quota] INCREMENT OK: user={user_id} feature=assistant_messages result={result.data}")
     except Exception as e:
-        logger.warning(f"[quota] increment failed for {user_id}: {e}")
+        logger.error(f"[quota] INCREMENT FAILED: user={user_id} feature=assistant_messages error={e}", exc_info=True)
 
 
 async def check_quota(user_id: str, feature: str) -> None:
@@ -493,13 +494,14 @@ async def increment_quota(user_id: str, feature: str, amount: int = 1) -> None:
     """Increment usage counter. Best-effort, never raises."""
     try:
         supabase = get_supabase_client()
-        supabase.rpc("increment_usage", {
+        result = supabase.rpc("increment_usage", {
             "p_user_id": user_id,
             "p_feature": feature,
             "p_amount": amount,
         }).execute()
+        logger.info(f"[quota] INCREMENT OK: user={user_id} feature={feature} result={result.data}")
     except Exception as e:
-        logger.warning(f"[quota] increment_quota({feature}) failed: {e}")
+        logger.error(f"[quota] INCREMENT FAILED: user={user_id} feature={feature} error={e}", exc_info=True)
 
 
 async def increment_and_invalidate_quota(user_id: str, feature: str, amount: int = 1) -> None:
@@ -510,13 +512,14 @@ async def increment_and_invalidate_quota(user_id: str, feature: str, amount: int
     """
     try:
         supabase = get_supabase_client()
-        supabase.rpc("increment_usage", {
+        result = supabase.rpc("increment_usage", {
             "p_user_id": user_id,
             "p_feature": feature,
             "p_amount": amount,
         }).execute()
+        logger.info(f"[quota] INCREMENT OK: user={user_id} feature={feature} result={result.data}")
     except Exception as e:
-        logger.warning(f"[quota] increment_and_invalidate({feature}) failed for {user_id}: {e}")
+        logger.error(f"[quota] INCREMENT FAILED: user={user_id} feature={feature} error={e}", exc_info=True)
     try:
         from src.services.stripe import invalidate_user_quota_cache
         await invalidate_user_quota_cache(user_id)
