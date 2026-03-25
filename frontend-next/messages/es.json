@@ -1434,7 +1434,8 @@
     "insiderRetry": "Reintentar",
     "insiderNewSearch": "Nueva búsqueda",
     "insiderProfiles": "{count} perfil",
-    "insiderProfilesPlural": "{count} perfiles"
+    "insiderProfilesPlural": "{count} perfiles",
+    "findContacts": "Encontrar contactos"
   },
   "searchForm": {
     "jobTitlePlaceholder": "Profesión o puesto buscado",
@@ -2866,5 +2867,31 @@
       "q3": "¿Cómo desarrollar mi marca personal?",
       "q4": "Hazme un post viral en LinkedIn para crear engagement."
     }
+  },
+  "contactFinder": {
+    "title": "Encontrar contactos",
+    "subtitle": "Descubre reclutadores y colegas en esta empresa",
+    "companyLabel": "Nombre de la empresa",
+    "companyPlaceholder": "Ej: Societe Generale",
+    "searchButton": "Iniciar búsqueda",
+    "searching": "Buscando...",
+    "noResultsFallback": "No se encontraron contactos para {company}. Prueba la página de LinkedIn abajo.",
+    "linkedinPageTitle": "Explorar el equipo en LinkedIn",
+    "linkedinPageSubtitle": "Ver todos los empleados de {company}",
+    "linkedinPageButton": "Abrir en LinkedIn",
+    "cachedBadge": "Resultados del {date}",
+    "newSearch": "Nueva búsqueda",
+    "emailCopied": "Email copiado",
+    "quotaReached": "Cuota de búsqueda alcanzada (3/dia en plan gratuito). Actualiza a Pro para acceso ilimitado.",
+    "errorAuth": "Inicia sesión para usar esta función",
+    "errorGeneric": "Error al buscar contactos",
+    "rgpdDisclaimer": "Esta informacion proviene de fuentes publicas (LinkedIn, sitios web de empresas). Usala de manera responsable conforme al RGPD.",
+    "copyEmail": "Copiar {email}",
+    "category.hr": "Reclutador",
+    "category.pair": "Futuro colega",
+    "category.campus": "Campus",
+    "category.tech": "Tech",
+    "category.other": "Contacto",
+    "profileCount": "{count} perfil(es)"
   }
 }

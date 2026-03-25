@@ -1,4 +1,5 @@
 
+import asyncio
 import logging
 from typing import Any
 
@@ -8,6 +9,12 @@ from src.agents.insider_finder.agent import InsiderFinderAgent
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _country_to_lang(country_code: str) -> str:
+    """Map country code to language code for SerpAPI hl parameter."""
+    mapping = {"us": "en", "gb": "en", "ca": "en", "au": "en", "ch": "fr", "be": "fr", "lu": "fr"}
+    return mapping.get(country_code, country_code)
 
 class InsiderFinderService:
     """
@@ -24,13 +31,14 @@ class InsiderFinderService:
         job_title: str,
         company: str,
         city: str = "",
-        is_alternance: bool = False
+        is_alternance: bool = False,
+        country_code: str = "fr",
     ) -> dict[str, Any]:
         """
         Executes a hunt for insiders for a specific job.
 
         1. Asks the AI for a search strategy.
-        2. Executes queries via SerpAPI.
+        2. Executes queries via SerpAPI in parallel.
         3. Formats and returns the list of potential contacts.
         """
         # Step 1: Get search strategy from Hunter Agent
@@ -53,51 +61,70 @@ class InsiderFinderService:
 
         all_insiders = []
         api_key = settings.get_serpapi_key()
+        seen_links: set[str] = set()
 
-        # Step 2: Execute queries (we can run them in parallel for speed if needed)
-        # For now, let's process them and avoid duplicate links
-        seen_links = set()
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            tasks = [
+                self._execute_query(client, q_obj, api_key, country_code)
+                for q_obj in queries[:5]
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            for q_obj in queries[:3]: # Limit to top 3 strategies to save credits
-                query_text = q_obj.get("query")
-                query_type = q_obj.get("type", "other")
-                label = q_obj.get("label", "Contact")
-
-                params = {
-                    "engine": "google",
-                    "q": query_text,
-                    "api_key": api_key,
-                    "gl": "fr", # Default to France, can be improved to detect country
-                    "hl": "fr"
-                }
-
-                try:
-                    resp = await client.get(self.serpapi_url, params=params)
-                    resp.raise_for_status()
-                    data = resp.json()
-
-                    organic_results = data.get("organic_results", [])
-
-                    for res in organic_results:
-                        link = res.get("link", "")
-                        if "linkedin.com/in/" in link and link not in seen_links:
-                            seen_links.add(link)
-                            all_insiders.append({
-                                "name": res.get("title", "").split(" - ")[0],
-                                "title": res.get("title", ""),
-                                "link": link,
-                                "snippet": res.get("snippet", ""),
-                                "category": query_type,
-                                "label": label
-                            })
-                except Exception as e:
-                    logger.error(f"[InsiderService] Search failed for query '{query_text}': {e}")
+            for r in results:
+                if isinstance(r, Exception):
+                    logger.error(f"[InsiderService] Query failed: {r}")
                     continue
+                if isinstance(r, list):
+                    for insider in r:
+                        link = insider.get("link", "")
+                        if link not in seen_links:
+                            seen_links.add(link)
+                            all_insiders.append(insider)
 
         return {
             "success": True,
             "strategy": strategy_text,
             "insiders": all_insiders,
-            "total_found": len(all_insiders)
+            "total_found": len(all_insiders),
         }
+
+    async def _execute_query(
+        self,
+        client: httpx.AsyncClient,
+        q_obj: dict,
+        api_key: str,
+        country_code: str,
+    ) -> list[dict]:
+        """Execute a single SerpAPI query and return found insiders."""
+        query_text = q_obj.get("query")
+        query_type = q_obj.get("type", "other")
+        label = q_obj.get("label", "Contact")
+
+        params = {
+            "engine": "google",
+            "q": query_text,
+            "api_key": api_key,
+            "gl": country_code or "fr",
+            "hl": _country_to_lang(country_code or "fr"),
+        }
+
+        try:
+            resp = await client.get(self.serpapi_url, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+            results = []
+            for res in data.get("organic_results", []):
+                link = res.get("link", "")
+                if "linkedin.com/in/" in link:
+                    results.append({
+                        "name": res.get("title", "").split(" - ")[0].strip(),
+                        "title": res.get("title", ""),
+                        "link": link,
+                        "snippet": res.get("snippet", ""),
+                        "category": query_type,
+                        "label": label,
+                    })
+            return results
+        except Exception as e:
+            logger.error(f"[InsiderService] Search failed for query '{query_text}': {e}")
+            return []

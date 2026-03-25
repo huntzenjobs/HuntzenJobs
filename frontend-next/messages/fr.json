@@ -1838,7 +1838,8 @@
     "insiderRetry": "Réessayer",
     "insiderNewSearch": "Nouvelle recherche",
     "insiderProfiles": "{count} profil",
-    "insiderProfilesPlural": "{count} profils"
+    "insiderProfilesPlural": "{count} profils",
+    "findContacts": "Trouver les contacts"
   },
   "searchForm": {
     "jobTitlePlaceholder": "Métier ou poste recherché",
@@ -2875,5 +2876,31 @@
       "q3": "Comment développer ma marque personnelle ?",
       "q4": "Fais moi un post LinkedIn viral pour créer de l'engagement."
     }
+  },
+  "contactFinder": {
+    "title": "Trouver les contacts",
+    "subtitle": "Découvrez les recruteurs et collègues de cette entreprise",
+    "companyLabel": "Nom de l'entreprise",
+    "companyPlaceholder": "Ex: Societe Generale",
+    "searchButton": "Lancer la recherche",
+    "searching": "Recherche en cours...",
+    "noResultsFallback": "Aucun contact trouvé pour {company}. Essayez via la page LinkedIn ci-dessous.",
+    "linkedinPageTitle": "Explorer l'équipe sur LinkedIn",
+    "linkedinPageSubtitle": "Voir tous les employés de {company}",
+    "linkedinPageButton": "Ouvrir sur LinkedIn",
+    "cachedBadge": "Résultats du {date}",
+    "newSearch": "Nouvelle recherche",
+    "emailCopied": "Email copié",
+    "quotaReached": "Quota de recherche atteint (3/jour en version gratuite). Passez à Pro pour un accès illimité.",
+    "errorAuth": "Connectez-vous pour utiliser cette fonctionnalité",
+    "errorGeneric": "Erreur lors de la recherche de contacts",
+    "rgpdDisclaimer": "Ces informations proviennent de sources publiques (LinkedIn, sites d'entreprise). Utilisez-les de manière responsable conformément au RGPD.",
+    "copyEmail": "Copier {email}",
+    "category.hr": "Recruteur",
+    "category.pair": "Futur collègue",
+    "category.campus": "Campus",
+    "category.tech": "Tech",
+    "category.other": "Contact",
+    "profileCount": "{count} profil(s)"
   }
 }

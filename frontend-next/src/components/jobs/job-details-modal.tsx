@@ -20,7 +20,6 @@ import {
   Sparkles,
   Info,
   FileText,
-  Mail,
   Download,
   AlertTriangle,
 } from "lucide-react";
@@ -43,8 +42,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { sendXpEvent } from "@/hooks/use-career-score";
 import { toast } from "sonner";
 import { ApplyModal } from "./apply-modal";
-import { InsiderFinderDrawer } from "./insider-finder-drawer";
-import { RecruiterFinderDrawer } from "./recruiter-finder-drawer";
+import { ContactFinderDrawer } from "./contact-finder-drawer";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
@@ -106,8 +104,7 @@ export function JobDetailsModal({
   onApplyPending,
 }: JobDetailsModalProps) {
   const [applyModalOpen, setApplyModalOpen] = React.useState(false);
-  const [insiderDrawerOpen, setInsiderDrawerOpen] = React.useState(false);
-  const [recruiterDrawerOpen, setRecruiterDrawerOpen] = React.useState(false);
+  const [contactDrawerOpen, setContactDrawerOpen] = React.useState(false);
   const [showAppliedConfirm, setShowAppliedConfirm] = React.useState(false);
   const [appliedConfirmed, setAppliedConfirmed] = React.useState(false);
   const confirmTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -519,13 +516,11 @@ export function JobDetailsModal({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-                  onClick={() => setRecruiterDrawerOpen(true)}
+                  onClick={() => setContactDrawerOpen(true)}
                 >
-                  <Mail className="mr-2 h-4 w-4" />
-                  {t("findRecruiter")}
+                  <Users className="mr-2 h-4 w-4" />
+                  {t("findContacts")}
                 </Button>
-                {/* Bouton "Trouver des profils LinkedIn" masqué — redondant avec RecruiterFinderDrawer */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -689,20 +684,11 @@ export function JobDetailsModal({
         />
       )}
 
-      {/* Recruiter Finder — emails recruteurs via Hunter.io */}
+      {/* Contact Finder — recruteurs + contacts internes LinkedIn */}
       {job && (
-        <RecruiterFinderDrawer
-          open={recruiterDrawerOpen}
-          onOpenChange={setRecruiterDrawerOpen}
-          job={job}
-        />
-      )}
-
-      {/* Insider Finder — contacts internes LinkedIn via SerpAPI */}
-      {job && (
-        <InsiderFinderDrawer
-          open={insiderDrawerOpen}
-          onOpenChange={setInsiderDrawerOpen}
+        <ContactFinderDrawer
+          open={contactDrawerOpen}
+          onOpenChange={setContactDrawerOpen}
           job={job}
         />
       )}

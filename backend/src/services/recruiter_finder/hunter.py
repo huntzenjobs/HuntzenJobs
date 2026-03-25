@@ -10,9 +10,12 @@ Pipeline:
 4. Return ranked results with email pattern
 """
 
+import asyncio
 import logging
 import re
+import unicodedata
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -74,6 +77,84 @@ def _classify_contact(contact: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Domain guessing helpers
+# ---------------------------------------------------------------------------
+
+def _generate_domain_slug(company_name: str) -> str:
+    """Generate a domain slug from company name (normalizes accents)."""
+    normalized = unicodedata.normalize("NFKD", company_name)
+    ascii_only = normalized.encode("ascii", "ignore").decode("ascii")
+    slug = re.sub(r'[^a-z0-9-]', '', ascii_only.lower().replace(' ', '-'))
+    slug = re.sub(r'-+', '-', slug).strip('-')
+    return slug
+
+
+def _is_safe_slug(slug: str) -> bool:
+    """SSRF protection: reject if slug looks like an IP address."""
+    if re.match(r'^\d+[-.]?\d+[-.]?\d+[-.]?\d+$', slug):
+        return False
+    if slug in ('localhost', '0', '127-0-0-1'):
+        return False
+    return bool(slug)
+
+
+def _generate_domain_candidates(company_name: str) -> list[str]:
+    """Generate max 6 domain candidates (2 slugs x 3 TLDs)."""
+    slug = _generate_domain_slug(company_name)
+    if not _is_safe_slug(slug):
+        return []
+
+    slug_no_dash = slug.replace('-', '')
+    candidates = []
+    for s in [slug, slug_no_dash]:
+        if not _is_safe_slug(s):
+            continue
+        for tld in [".fr", ".com", ".io"]:
+            candidates.append(f"{s}{tld}")
+    return candidates[:6]
+
+
+async def guess_domain(company_name: str) -> str | None:
+    """
+    Test multiple TLDs and return the first one that responds.
+    Max 6 candidates, 3s/req timeout, 8s global timeout.
+    """
+    candidates = _generate_domain_candidates(company_name)
+    if not candidates:
+        return None
+
+    try:
+        async with httpx.AsyncClient() as client:
+            result = await asyncio.wait_for(
+                _check_candidates(client, candidates),
+                timeout=8,
+            )
+            return result
+    except TimeoutError:
+        logger.warning(f"[DomainGuess] Global timeout for {company_name}")
+        return None
+
+
+async def _check_candidates(client: httpx.AsyncClient, candidates: list[str]) -> str | None:
+    for domain in candidates:
+        try:
+            resp = await client.head(f"https://{domain}", follow_redirects=True, timeout=3)
+            if resp.status_code < 400:
+                return domain
+        except Exception:
+            continue
+    return None
+
+
+def build_linkedin_company_url(company_name: str, keywords: str = "recruteur") -> str:
+    """Build LinkedIn People URL for a company (guaranteed fallback)."""
+    slug = _generate_domain_slug(company_name)
+    if not slug:
+        slug = "unknown"
+    return f"https://www.linkedin.com/company/{slug}/people/?keywords={quote(keywords)}"
+
+
+# ---------------------------------------------------------------------------
 # Main function
 # ---------------------------------------------------------------------------
 
@@ -114,10 +195,13 @@ async def find_recruiters_for_job(
     elif company_website:
         domain = extract_domain(company_website)
     else:
-        # Guess domain from company name (best effort)
-        slug = re.sub(r'[^a-z0-9]', '', company_name.lower())
-        domain = f"{slug}.com"
-        logger.info(f"[RecruiterFinder] Guessing domain: {domain}")
+        # Guess domain from company name (multi-TLD)
+        domain = await guess_domain(company_name)
+        if domain:
+            logger.info(f"[RecruiterFinder] Guessed domain: {domain}")
+        else:
+            logger.info(f"[RecruiterFinder] Could not guess domain for {company_name}")
+            return _empty_result(company_name, "")
 
     if not domain:
         return _empty_result(company_name, "")

@@ -37,7 +37,7 @@ class InsiderSearchRequest(BaseModel):
 # Routes
 # ============================================================================
 
-@router.post("/find")
+@router.post("/find", deprecated=True)
 @limiter.limit("5/minute")
 async def find_insiders(
     http_request: Request,
