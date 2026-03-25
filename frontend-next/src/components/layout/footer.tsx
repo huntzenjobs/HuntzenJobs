@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Linkedin } from "lucide-react";
+import { Linkedin, Instagram } from "lucide-react";
 
 const PRODUCT_LINKS = [
   { href: "/cv-analysis", key: "cvAnalysis" },
@@ -49,6 +49,15 @@ export function Footer() {
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.instagram.com/huntzenjobs?igsh=MXNmZTNtZDUwYWxpdg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/70 hover:text-white transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-4 h-4" />
               </a>
             </div>
           </div>
