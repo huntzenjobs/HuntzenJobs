@@ -18,6 +18,7 @@ import {
 } from "@/hooks/use-freemium-limits";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { useOptionalAuth } from "@/contexts/auth-context";
+import { useOptionalAssistant } from "@/contexts/assistant-context";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { SubscriptionChangedModal } from "@/components/freemium/subscription-changed-modal";
@@ -83,6 +84,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   // Get auth session for inconsistency detection
   const auth = useOptionalAuth();
+
+  // Get currently selected assistant for per-coach quota checks
+  const assistantCtx = useOptionalAssistant();
 
   // NEW: Fetch subscription data from backend API
   const apiData = useSubscriptionApi();
@@ -326,6 +330,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
                   ? "recruiter_search"
                   : null;
 
+      // Per-coach check for assistant_messages
+      if (
+        feature === "assistant_messages" &&
+        apiData.quotas.assistant_messages?.by_coach
+      ) {
+        const selectedCoach = assistantCtx?.selectedAssistant ?? "career-coach";
+        const coachQuota =
+          apiData.quotas.assistant_messages.by_coach[selectedCoach];
+        if (coachQuota) {
+          return coachQuota.has_access;
+        }
+        // Fallback to global if coach not found in by_coach
+      }
+
       const apiCanUse =
         quotaKey && apiData.quotas[quotaKey]
           ? apiData.quotas[quotaKey].has_access
@@ -338,7 +356,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // Block if EITHER source says no (most conservative = safest)
       return apiCanUse && localCanUse;
     },
-    [apiData.quotas, freemium],
+    [apiData.quotas, freemium, assistantCtx?.selectedAssistant],
   );
 
   // getRemaining helper: Get remaining quota based on API data for ALL features
@@ -346,6 +364,19 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     (feature: FeatureType): number => {
       const localRemaining = freemium.getRemaining(feature);
       if (!apiData.quotas) return localRemaining;
+
+      // Per-coach remaining for assistant_messages
+      if (
+        feature === "assistant_messages" &&
+        apiData.quotas.assistant_messages?.by_coach
+      ) {
+        const selectedCoach = assistantCtx?.selectedAssistant ?? "career-coach";
+        const coachQuota =
+          apiData.quotas.assistant_messages.by_coach[selectedCoach];
+        if (coachQuota) {
+          return coachQuota.remaining === -1 ? Infinity : coachQuota.remaining;
+        }
+      }
 
       // Generic lookup for all quota-tracked features
       const quotaData = apiData.quotas[feature];
@@ -361,7 +392,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // Return the lower value: if local was decremented but API hasn't refreshed yet
       return Math.min(apiRemaining, localRemaining);
     },
-    [apiData.quotas, freemium],
+    [apiData.quotas, freemium, assistantCtx?.selectedAssistant],
   );
 
   // incrementUsage: Keep local for now (will be removed when backend tracks all usage)
@@ -369,10 +400,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     (feature: FeatureType, amount?: number) => {
       // Optimistic local update for immediate UI feedback
       freemium.incrementUsage(feature, amount);
-      // Refetch backend data after cache invalidation completes (~1.5s)
-      setTimeout(() => {
-        apiData.refetch();
-      }, 1500);
+      // Direct refetch (no delay) to sync with backend
+      apiData.refetch();
     },
     [freemium, apiData],
   );

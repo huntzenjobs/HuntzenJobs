@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,9 @@ import {
   Paperclip,
   CheckCircle2,
   X,
+  Crown,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { huntzenApi } from "@/lib/api/huntzen-client";
 import type { QueueWaitingState } from "@/lib/api/huntzen-client";
 import { v4 as uuidv4 } from "uuid";
@@ -27,6 +29,7 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { useAssistant } from "@/contexts/assistant-context";
 import {
   getAssistantConfig,
+  getAllAssistants,
   ASSISTANTS_CONFIG,
   ASSISTANT_TO_COACH_ID,
 } from "@/config/assistants";
@@ -98,11 +101,22 @@ export default function AssistantPage() {
   const currentCoachId = ASSISTANT_TO_COACH_ID[selectedAssistant];
   const currentCoach = currentCoachId ? getCoach(currentCoachId) : undefined;
   const [transitioning, setTransitioning] = useState(false);
+  const [showHub, setShowHub] = useState(true);
 
   const triggerTransition = () => {
     setTransitioning(true);
     setTimeout(() => setTransitioning(false), 300);
   };
+
+  // Listen for sidebar re-click on /assistant to return to hub
+  useEffect(() => {
+    const handleHubEvent = () => {
+      setShowHub(true);
+    };
+    window.addEventListener("huntzen:assistant-hub", handleHubEvent);
+    return () =>
+      window.removeEventListener("huntzen:assistant-hub", handleHubEvent);
+  }, []);
 
   // Reset branding state and attached CV when switching assistants
   useEffect(() => {
@@ -396,6 +410,7 @@ export default function AssistantPage() {
     if (messages.length === 0) {
       triggerTransition();
       setSelectedAssistant(newType);
+      setShowHub(true);
       return;
     }
     setPendingAssistant(newType);
@@ -436,14 +451,184 @@ export default function AssistantPage() {
     setSelectedAssistant(pendingAssistant);
     setPendingAssistant(null);
     setMessages([systemMessage]);
+    setShowHub(true);
   };
 
   const handleCancelSwitch = () => {
     setPendingAssistant(null);
   };
 
+  // Handle hub card click — select assistant and go to welcome/chat
+  const handleHubSelect = useCallback(
+    (type: AssistantType) => {
+      const config = getAssistantConfig(type);
+      if (config.isComingSoon) return;
+      if (type !== selectedAssistant) {
+        triggerTransition();
+        setSelectedAssistant(type);
+      }
+      setShowHub(false);
+      setMessages([]);
+      setCurrentConversationId(null);
+      setInput("");
+      setBrandingState(null);
+      setAttachedCV(null);
+      setSessionId(uuidv4());
+    },
+    [selectedAssistant, setSelectedAssistant, setCurrentConversationId],
+  );
+
   // Check if we should show welcome screen (no messages)
   const showWelcome = messages.length === 0;
+
+  // Hub view: grid of assistant cards
+  if (showHub) {
+    const allAssistants = getAllAssistants();
+    return (
+      <PageGate featureFlag="page_assistant">
+        <div className="flex flex-col min-h-screen">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8"
+          >
+            <h1 className="text-3xl font-black text-slate-900 mb-2">
+              {t("hubTitle")}
+            </h1>
+            <p className="text-slate-600">{t("hubSubtitle")}</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {allAssistants.map((assistant, index) => {
+              const coachId = ASSISTANT_TO_COACH_ID[assistant.id];
+              const coach = coachId ? getCoach(coachId) : undefined;
+              const isLocked = assistant.isPremium && isFreePlan;
+              const isComingSoon = !!assistant.isComingSoon;
+              const accent = assistant.accentColor ?? assistant.color;
+
+              return (
+                <motion.div
+                  key={assistant.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.08 }}
+                >
+                  <button
+                    onClick={() => {
+                      if (isComingSoon) return;
+                      if (isLocked) {
+                        openPricingModal();
+                        return;
+                      }
+                      handleHubSelect(assistant.id);
+                    }}
+                    className={cn(
+                      "w-full text-left p-5 rounded-2xl border-2 transition-all duration-200 bg-white hover:shadow-lg group relative overflow-hidden",
+                      isComingSoon
+                        ? "opacity-60 cursor-default border-slate-200"
+                        : isLocked
+                          ? "opacity-70 border-slate-200 hover:border-slate-300"
+                          : "border-slate-200 hover:border-[#00D9FF] hover:shadow-[#00D9FF]/10",
+                    )}
+                  >
+                    {/* Badges */}
+                    <div className="absolute top-3 right-3 flex gap-1.5">
+                      {isComingSoon && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-semibold">
+                          {t("hubComingSoon")}
+                        </span>
+                      )}
+                      {assistant.isPremium && !isComingSoon && (
+                        <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                          <Crown className="w-3 h-3" />
+                          {t("hubPremium")}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Avatar + Name */}
+                    <div className="flex items-center gap-3 mb-3">
+                      {assistant.avatarUrl ? (
+                        <img
+                          src={assistant.avatarUrl}
+                          alt={
+                            assistant.personaName ?? tc(assistant.shortNameKey)
+                          }
+                          className="w-14 h-14 rounded-xl shadow-md"
+                          style={{ backgroundColor: assistant.bgColor }}
+                        />
+                      ) : (
+                        <div
+                          className="w-14 h-14 rounded-xl flex items-center justify-center shadow-md"
+                          style={{ backgroundColor: assistant.bgColor }}
+                        >
+                          <assistant.icon
+                            className="w-7 h-7"
+                            style={{ color: assistant.color }}
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-base">
+                          {assistant.personaName ??
+                            (coach?.short_name || tc(assistant.shortNameKey))}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          {coach?.short_name || tc(assistant.shortNameKey)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                      {coach?.description || tc(assistant.descriptionKey)}
+                    </p>
+
+                    {/* Specialties badges */}
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {(coach?.specialties && coach.specialties.length > 0
+                        ? coach.specialties
+                        : assistant.specialtiesKeys.map((key) => tc(key))
+                      )
+                        .slice(0, 3)
+                        .map((label, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                            style={{
+                              backgroundColor: assistant.bgColor,
+                              color: assistant.color,
+                            }}
+                          >
+                            {label}
+                          </span>
+                        ))}
+                    </div>
+
+                    {/* Response time */}
+                    {assistant.responseTime && (
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <Clock className="w-3 h-3" />
+                        {t("hubResponseTime", { time: assistant.responseTime })}
+                      </div>
+                    )}
+
+                    {/* Locked overlay */}
+                    {isLocked && !isComingSoon && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/40 rounded-2xl">
+                        <Lock className="w-6 h-6 text-slate-400" />
+                      </div>
+                    )}
+                  </button>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </PageGate>
+    );
+  }
 
   return (
     <PageGate featureFlag="page_assistant">

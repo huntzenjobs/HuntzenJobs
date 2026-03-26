@@ -58,7 +58,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     bgColor: "#d1fae5", // emerald-100
     accentColor: "#0D9488", // teal-600
     avatarUrl:
-      "https://api.dicebear.com/9.x/lorelei/svg?seed=Maria&backgroundColor=d1fae5",
+      "https://api.dicebear.com/9.x/avataaars/svg?seed=Maria-pro&backgroundColor=d1fae5&accessories=prescription02&clotheColor=3c4f5c&clothing=blazerAndSweater&eyebrow=default&eyes=happy&facialHair=blank&hairColor=4a312c&mouth=smile&skinColor=light&top=longHairStraight",
     isPremium: false,
     specialtiesKeys: [
       "maria.specialty1",
@@ -156,7 +156,7 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     bgColor: "#dbeafe",
     accentColor: "#DC2626", // red-600
     avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=David&backgroundColor=dbeafe&hair=shortHair&skinColor=light",
+      "https://api.dicebear.com/9.x/avataaars/svg?seed=David-pro&backgroundColor=dbeafe&accessories=blank&clotheColor=3c4f5c&clothing=blazerAndSweater&eyebrow=defaultNatural&eyes=default&facialHair=beardLight&hairColor=2c1b18&mouth=smile&skinColor=light&top=shortHairShortFlat",
     isPremium: false,
     specialtiesKeys: [
       "david.specialty1",

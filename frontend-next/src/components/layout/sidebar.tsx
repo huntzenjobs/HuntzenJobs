@@ -245,6 +245,11 @@ export function Sidebar({ className }: SidebarProps) {
                       e.preventDefault();
                       openPricingModal();
                     }
+                    if (item.href === "/assistant" && isActive) {
+                      window.dispatchEvent(
+                        new CustomEvent("huntzen:assistant-hub"),
+                      );
+                    }
                     if (item.href === "/candidatures" && isCandidaturesNew) {
                       try {
                         localStorage.setItem(

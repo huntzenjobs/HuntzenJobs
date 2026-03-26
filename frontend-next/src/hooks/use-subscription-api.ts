@@ -24,6 +24,12 @@ interface SubscriptionData {
   cancel_at_period_end: boolean;
 }
 
+interface CoachQuotaData {
+  used: number;
+  remaining: number;
+  has_access: boolean;
+}
+
 interface QuotaData {
   limit: number;
   used: number;
@@ -31,6 +37,7 @@ interface QuotaData {
   percentage: number;
   has_access: boolean;
   reset_at: string;
+  by_coach?: Record<string, CoachQuotaData>;
 }
 
 interface QuotasData {
