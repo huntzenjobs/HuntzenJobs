@@ -65,8 +65,7 @@ async function adminPost(path: string, body?: object) {
   } = await supabase.auth.getSession();
   const token = session?.access_token;
   const res = await fetch(`${BACKEND_URL}${path}`, {
-    method:
-      path.includes("/email") && !path.includes("send-email") ? "PUT" : "POST",
+    method: path.endsWith("/email") ? "PUT" : "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
