@@ -656,11 +656,13 @@ async def handle_checkout_completed(session: dict[str, Any]):
                     amount_display = f"{amount_cents / 100:.2f} EUR"
                     # Récupérer l'URL de facture Stripe
                     invoice_url = None
+                    invoice_pdf_url = None
                     try:
                         latest_invoice_id = stripe_subscription.get("latest_invoice")
                         if latest_invoice_id:
                             inv = stripe.Invoice.retrieve(latest_invoice_id)
                             invoice_url = inv.get("hosted_invoice_url") or inv.get("invoice_pdf")
+                            invoice_pdf_url = inv.get("invoice_pdf")
                     except Exception:
                         pass
                     send_payment_confirmation_email(
@@ -668,6 +670,7 @@ async def handle_checkout_completed(session: dict[str, Any]):
                         plan_name=plan_name,
                         amount=amount_display,
                         invoice_url=invoice_url,
+                        invoice_pdf_url=invoice_pdf_url,
                     )
         except Exception as email_err:
             logger.warning(f"[WEBHOOK] Payment confirmation email failed (non-fatal): {email_err}")
@@ -978,6 +981,7 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
             if customer_email and customer_email != "inconnu" and amount > 0:
                 try:
                     invoice_url = invoice.get("hosted_invoice_url") or invoice.get("invoice_pdf")
+                    invoice_pdf_url = invoice.get("invoice_pdf")
                     # Recuperer le nom du plan depuis la DB puis fallback Stripe Product
                     plan_label = ""
                     if supabase_client:
@@ -1005,6 +1009,7 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                         plan_name=plan_label,
                         amount=f"{amount:.2f} {currency}",
                         invoice_url=invoice_url,
+                        invoice_pdf_url=invoice_pdf_url,
                         billing_reason=billing_reason,
                     )
                 except Exception as email_err:

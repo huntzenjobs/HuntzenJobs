@@ -2502,6 +2502,7 @@ async def resend_payment_email(
 
     # Récupérer l'URL de la dernière facture Stripe
     invoice_url = None
+    invoice_pdf_url = None
     stripe_customer_id = sub.data.get("stripe_customer_id")
     if stripe_customer_id:
         try:
@@ -2509,6 +2510,7 @@ async def resend_payment_email(
             invoices = stripe_lib.Invoice.list(customer=stripe_customer_id, limit=1, status="paid")
             if invoices.data:
                 invoice_url = invoices.data[0].hosted_invoice_url or invoices.data[0].invoice_pdf
+                invoice_pdf_url = invoices.data[0].invoice_pdf
         except Exception as e:
             logger.warning(f"Failed to get Stripe invoice: {e}")
 
@@ -2518,6 +2520,7 @@ async def resend_payment_email(
         amount=amount,
         language=language,
         invoice_url=invoice_url,
+        invoice_pdf_url=invoice_pdf_url,
         billing_reason="subscription_create",
     )
     if not ok:

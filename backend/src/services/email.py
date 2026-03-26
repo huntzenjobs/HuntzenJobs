@@ -8,6 +8,7 @@ Supports FR (default) and EN via the `language` parameter on user-facing functio
 import logging
 from datetime import datetime
 
+import httpx
 import resend
 
 from src.config.settings import settings
@@ -1174,6 +1175,7 @@ def send_payment_confirmation_email(
     amount: str,
     language: str = "fr",
     invoice_url: str | None = None,
+    invoice_pdf_url: str | None = None,
     billing_reason: str = "subscription_create",
 ) -> bool:
     """Send payment confirmation email after successful Stripe checkout or renewal."""
@@ -1237,12 +1239,29 @@ def send_payment_confirmation_email(
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        email_payload: dict = {
             "from": settings.from_email,
             "to": [user_email],
             "subject": subject,
             "html": html_content,
-        })
+        }
+
+        # Attacher le PDF de la facture Stripe si disponible
+        if invoice_pdf_url:
+            try:
+                pdf_resp = httpx.get(invoice_pdf_url, timeout=15)
+                if pdf_resp.status_code == 200 and len(pdf_resp.content) > 0:
+                    email_payload["attachments"] = [{
+                        "filename": f"facture-huntzen-{today.replace('/', '-')}.pdf",
+                        "content": list(pdf_resp.content),
+                    }]
+                    logger.info(f"Invoice PDF attached ({len(pdf_resp.content)} bytes)")
+                else:
+                    logger.warning(f"Failed to download invoice PDF: HTTP {pdf_resp.status_code}")
+            except Exception as e:
+                logger.warning(f"Could not attach invoice PDF: {e}")
+
+        resend.Emails.send(email_payload)
         logger.info(f"Payment confirmation email sent to {user_email} (plan={plan_name}, reason={billing_reason})")
         return True
     except Exception as e:
