@@ -63,13 +63,12 @@ class Settings(BaseSettings):
     france_travail_client_secret: str = Field(default="", alias="CLIENT_SECRET", description="France Travail OAuth2 Client Secret")
 
     # --------------------------------------------------------------------------
-    # API Keys - Recruiter Finder (Hunter.io + Apollo)
+    # API Keys - Recruiter Finder (Hunter.io)
     # --------------------------------------------------------------------------
-    hunter_api_key: SecretStr = Field(default=SecretStr(""), description="Hunter.io API Key")
-    apollo_api_key: SecretStr = Field(default=SecretStr(""), description="Apollo.io API Key")
+    #hunter_api_key: SecretStr = Field(default=SecretStr(""), description="Hunter.io API Key")
 
     # --------------------------------------------------------------------------
-    # Database (Optional - Supabase)
+    # Database (Supabase)
     # --------------------------------------------------------------------------
     supabase_url: str = Field(default="", description="Supabase Project URL")
     supabase_key: SecretStr = Field(default=SecretStr(""), description="Supabase Anon Key")
@@ -175,10 +174,6 @@ class Settings(BaseSettings):
     def get_hunter_key(self) -> str:
         """Get Hunter.io API key as string."""
         return self.hunter_api_key.get_secret_value()
-
-    def get_apollo_key(self) -> str:
-        """Get Apollo.io API key as string."""
-        return self.apollo_api_key.get_secret_value()
 
     def get_supabase_key(self) -> str:
         """Get Supabase Anon key as string."""
