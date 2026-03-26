@@ -14,6 +14,7 @@ export default function AdminPlansPage() {
     updateWording,
     updateStripePrice,
     translatePlan,
+    generateWording,
     loading,
   } = useAdminPlans();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -86,6 +87,7 @@ export default function AdminPlansPage() {
                 if (ok) refresh();
                 return ok;
               }}
+              onGenerateWording={generateWording}
             />
           ))}
         </div>
