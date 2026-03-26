@@ -127,10 +127,7 @@ const nextConfig = {
   // Output standalone for Docker deployment
   output: 'standalone',
 
-  // Prevent webpack from bundling packages that use __dirname/fs.readFileSync
-  // isomorphic-dompurify uses jsdom which reads CSS files via readFileSync
-  // This keeps them as runtime require() so __dirname stays correct
-  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
+  // serverExternalPackages moved to experimental below (Next.js 14)
 
   // React Strict Mode pour détecter les problèmes
   reactStrictMode: true,
@@ -218,6 +215,7 @@ const nextConfig = {
   experimental: {
     instrumentationHook: true,
     scrollRestoration: true,
+    serverComponentsExternalPackages: ['isomorphic-dompurify', 'jsdom'],
   },
 
   // Webpack configuration to suppress OpenTelemetry dynamic require warnings
