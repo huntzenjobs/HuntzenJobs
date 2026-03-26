@@ -115,13 +115,13 @@ export function UsageCounter({
   showBar = true,
   compact = false,
 }: UsageCounterProps) {
-  const { getRemaining, limits, isFreePlan } = useSubscription();
+  const { getRemaining, limits, isFreePlan, quotas } = useSubscription();
   const tUsage = useTranslations("usageCounter");
 
   const remaining = getRemaining(feature);
   const config = featureConfig[feature];
 
-  // Get max for this feature
+  // Get max for this feature (from limits or directly from API quotas)
   let max: number;
   switch (feature) {
     case "job_search":
@@ -136,9 +136,21 @@ export function UsageCounter({
     case "assistant_messages":
       max = limits.assistant_messages_per_day;
       break;
-    case "recruiter_search":
-      max = 0;
+    case "recruiter_search": {
+      const q = quotas?.recruiter_search;
+      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
       break;
+    }
+    case "cv_adapt": {
+      const q = quotas?.cv_adapt;
+      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      break;
+    }
+    case "cover_letter": {
+      const q = quotas?.cover_letter;
+      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      break;
+    }
     default:
       max = 0;
   }
@@ -288,6 +300,8 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
             <UsageCounter feature="job_search" showBar />
             <UsageCounter feature="cv_analysis" showBar />
             <UsageCounter feature="assistant_messages" showBar />
+            <UsageCounter feature="cv_adapt" showBar />
+            <UsageCounter feature="cover_letter" showBar />
           </div>
           <div className="flex items-center gap-1.5 mt-2 mb-3 text-xs text-white/50">
             <Clock className="w-3 h-3" />

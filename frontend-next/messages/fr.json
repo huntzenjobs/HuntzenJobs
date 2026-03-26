@@ -737,6 +737,18 @@
       "savedJobs": {
         "label": "sauvegardes"
       },
+      "recruiterSearch": {
+        "label": "recherches recruteur"
+      },
+      "cvAdapt": {
+        "label": "adaptations CV"
+      },
+      "coverLetter": {
+        "label": "lettres de motivation"
+      },
+      "coach": {
+        "label": "messages coach"
+      },
       "unlimited": "illimitées",
       "unlimitedShort": "Illimité"
     },

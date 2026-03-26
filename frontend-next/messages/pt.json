@@ -544,7 +544,19 @@
       "unlimited": "ilimitadas",
       "unlimitedShort": "Ilimitado",
       "savedJobs": {
-        "label": "Cópias de segurança"
+        "label": "salvos"
+      },
+      "recruiterSearch": {
+        "label": "buscas de recrutador"
+      },
+      "cvAdapt": {
+        "label": "adaptacoes CV"
+      },
+      "coverLetter": {
+        "label": "cartas de apresentacao"
+      },
+      "coach": {
+        "label": "mensagens coach"
       }
     },
     "aria": {
