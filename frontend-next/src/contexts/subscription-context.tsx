@@ -60,7 +60,6 @@ interface SubscriptionContextType {
   limits: PlanLimits;
 
   // Raw API quotas (for features not in PlanLimits)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   quotas: Record<string, any> | null;
 
   // Actions
