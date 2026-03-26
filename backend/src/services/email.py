@@ -24,8 +24,8 @@ resend.api_key = settings.get_resend_api_key()
 _T: dict[str, dict[str, dict[str, str]]] = {
     "recruiter_confirmation": {
         "fr": {
-            "subject": "✅ Demande de consultation recruteur confirmée - HuntZen",
-            "header": "🎯 HuntZen - Consultation Recruteur",
+            "subject": "✅ Demande de consultation recruteur confirmée - HuntZenJobs",
+            "header": "🎯 HuntZenJobs - Consultation Recruteur",
             "greeting": "Bonjour",
             "intro": "Nous avons bien reçu votre demande de consultation avec un recruteur expert !",
             "recap_title": "📋 Récapitulatif de votre demande",
@@ -40,11 +40,11 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "tip": "💡 <strong>Conseil :</strong> Préparez votre CV et une liste de questions pour maximiser votre session !",
             "cta": "Voir mes demandes",
             "help": "Besoin d'aide ? Contactez-nous à",
-            "footer": "© 2026 HuntZen - Votre partenaire de recherche d'emploi",
+            "footer": "© 2026 HuntZenJobs - Votre partenaire de recherche d'emploi",
         },
         "en": {
-            "subject": "✅ Recruiter consultation request confirmed - HuntZen",
-            "header": "🎯 HuntZen - Recruiter Consultation",
+            "subject": "✅ Recruiter consultation request confirmed - HuntZenJobs",
+            "header": "🎯 HuntZenJobs - Recruiter Consultation",
             "greeting": "Hello",
             "intro": "We have received your request for a consultation with an expert recruiter!",
             "recap_title": "📋 Summary of your request",
@@ -59,11 +59,11 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "tip": "💡 <strong>Tip:</strong> Prepare your CV and a list of questions to maximize your session!",
             "cta": "View my requests",
             "help": "Need help? Contact us at",
-            "footer": "© 2026 HuntZen - Your job search partner",
+            "footer": "© 2026 HuntZenJobs - Your job search partner",
         },
         "es": {
-            "subject": "✅ Solicitud de consulta con reclutador confirmada - HuntZen",
-            "header": "🎯 HuntZen - Consulta con Reclutador",
+            "subject": "✅ Solicitud de consulta con reclutador confirmada - HuntZenJobs",
+            "header": "🎯 HuntZenJobs - Consulta con Reclutador",
             "greeting": "Hola",
             "intro": "¡Hemos recibido tu solicitud de consulta con un reclutador experto!",
             "recap_title": "📋 Resumen de tu solicitud",
@@ -78,11 +78,11 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "tip": "💡 <strong>Consejo:</strong> ¡Prepara tu CV y una lista de preguntas para aprovechar al máximo tu sesión!",
             "cta": "Ver mis solicitudes",
             "help": "¿Necesitas ayuda? Contáctanos en",
-            "footer": "© 2026 HuntZen - Tu socio en la búsqueda de empleo",
+            "footer": "© 2026 HuntZenJobs - Tu socio en la búsqueda de empleo",
         },
         "pt": {
-            "subject": "✅ Solicitação de consulta com recrutador confirmada - HuntZen",
-            "header": "🎯 HuntZen - Consulta com Recrutador",
+            "subject": "✅ Solicitação de consulta com recrutador confirmada - HuntZenJobs",
+            "header": "🎯 HuntZenJobs - Consulta com Recrutador",
             "greeting": "Olá",
             "intro": "Recebemos sua solicitação de consulta com um recrutador especialista!",
             "recap_title": "📋 Resumo da sua solicitação",
@@ -97,7 +97,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "tip": "💡 <strong>Dica:</strong> Prepare seu CV e uma lista de perguntas para aproveitar ao máximo sua sessão!",
             "cta": "Ver minhas solicitações",
             "help": "Precisa de ajuda? Entre em contato em",
-            "footer": "© 2026 HuntZen - Seu parceiro na busca de emprego",
+            "footer": "© 2026 HuntZenJobs - Seu parceiro na busca de emprego",
         },
     },
     "application_confirmation": {
@@ -105,7 +105,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "subject_prefix": "✅ Candidature confirmée",
             "header": "🎉 Candidature enregistrée !",
             "header_sub": "Bonne chance pour cette opportunité",
-            "intro": "Ta candidature a bien été enregistrée dans HuntZen :",
+            "intro": "Ta candidature a bien été enregistrée dans HuntZenJobs :",
             "tips_title": "💡 Conseils pour maximiser tes chances :",
             "tip1": "Envoie un message LinkedIn au recruteur dans les 24h",
             "tip2": "Si pas de réponse sous 2 semaines, relance poliment",
@@ -120,7 +120,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "subject_prefix": "✅ Application confirmed",
             "header": "🎉 Application recorded!",
             "header_sub": "Good luck with this opportunity",
-            "intro": "Your application has been saved in HuntZen:",
+            "intro": "Your application has been saved in HuntZenJobs:",
             "tips_title": "💡 Tips to maximize your chances:",
             "tip1": "Send a LinkedIn message to the recruiter within 24h",
             "tip2": "If no response within 2 weeks, follow up politely",
@@ -135,7 +135,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "subject_prefix": "✅ Candidatura confirmada",
             "header": "🎉 ¡Candidatura registrada!",
             "header_sub": "Buena suerte con esta oportunidad",
-            "intro": "Tu candidatura ha sido guardada en HuntZen:",
+            "intro": "Tu candidatura ha sido guardada en HuntZenJobs:",
             "tips_title": "💡 Consejos para maximizar tus posibilidades:",
             "tip1": "Envía un mensaje de LinkedIn al reclutador en las próximas 24h",
             "tip2": "Si no hay respuesta en 2 semanas, haz un seguimiento amable",
@@ -150,7 +150,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "subject_prefix": "✅ Candidatura confirmada",
             "header": "🎉 Candidatura registrada!",
             "header_sub": "Boa sorte com esta oportunidade",
-            "intro": "Sua candidatura foi salva no HuntZen:",
+            "intro": "Sua candidatura foi salva no HuntZenJobs:",
             "tips_title": "💡 Dicas para maximizar suas chances:",
             "tip1": "Envie uma mensagem no LinkedIn ao recrutador em 24h",
             "tip2": "Se não houver resposta em 2 semanas, faça um follow-up gentil",
@@ -252,11 +252,11 @@ _T: dict[str, dict[str, dict[str, str]]] = {
     },
     "welcome": {
         "fr": {
-            "subject": "🎯 Bienvenue sur HuntZen — ta recherche d'emploi commence !",
-            "header": "🎯 Bienvenue sur HuntZen !",
+            "subject": "🎯 Bienvenue sur HuntZenJobs — ta recherche d'emploi commence !",
+            "header": "🎯 Bienvenue sur HuntZenJobs !",
             "header_sub": "Ta recherche d'emploi commence maintenant",
             "greeting": "Bonjour",
-            "intro": "Ton compte HuntZen est prêt. Voici ce que tu peux faire dès maintenant :",
+            "intro": "Ton compte HuntZenJobs est prêt. Voici ce que tu peux faire dès maintenant :",
             "feature1": "🔍 <strong>Chercher des offres</strong> adaptées à ton profil",
             "feature2": "📄 <strong>Analyser ton CV</strong> et obtenir un score de matching",
             "feature3": "✉️ <strong>Générer ta lettre de motivation</strong> en 1 clic",
@@ -265,11 +265,11 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "manage": "Gérer mes notifications",
         },
         "en": {
-            "subject": "🎯 Welcome to HuntZen — your job search starts now!",
-            "header": "🎯 Welcome to HuntZen!",
+            "subject": "🎯 Welcome to HuntZenJobs — your job search starts now!",
+            "header": "🎯 Welcome to HuntZenJobs!",
             "header_sub": "Your job search starts now",
             "greeting": "Hello",
-            "intro": "Your HuntZen account is ready. Here's what you can do right now:",
+            "intro": "Your HuntZenJobs account is ready. Here's what you can do right now:",
             "feature1": "🔍 <strong>Search for jobs</strong> tailored to your profile",
             "feature2": "📄 <strong>Analyze your CV</strong> and get a matching score",
             "feature3": "✉️ <strong>Generate your cover letter</strong> in 1 click",
@@ -278,11 +278,11 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "manage": "Manage my notifications",
         },
         "es": {
-            "subject": "🎯 Bienvenido a HuntZen — ¡tu búsqueda de empleo comienza ahora!",
-            "header": "🎯 ¡Bienvenido a HuntZen!",
+            "subject": "🎯 Bienvenido a HuntZenJobs — ¡tu búsqueda de empleo comienza ahora!",
+            "header": "🎯 ¡Bienvenido a HuntZenJobs!",
             "header_sub": "Tu búsqueda de empleo comienza ahora",
             "greeting": "Hola",
-            "intro": "Tu cuenta HuntZen está lista. Esto es lo que puedes hacer ahora:",
+            "intro": "Tu cuenta HuntZenJobs está lista. Esto es lo que puedes hacer ahora:",
             "feature1": "🔍 <strong>Buscar ofertas</strong> adaptadas a tu perfil",
             "feature2": "📄 <strong>Analizar tu CV</strong> y obtener una puntuación de matching",
             "feature3": "✉️ <strong>Generar tu carta de presentación</strong> en 1 clic",
@@ -291,11 +291,11 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "manage": "Gestionar mis notificaciones",
         },
         "pt": {
-            "subject": "🎯 Bem-vindo ao HuntZen — sua busca de emprego começa agora!",
-            "header": "🎯 Bem-vindo ao HuntZen!",
+            "subject": "🎯 Bem-vindo ao HuntZenJobs — sua busca de emprego começa agora!",
+            "header": "🎯 Bem-vindo ao HuntZenJobs!",
             "header_sub": "Sua busca de emprego começa agora",
             "greeting": "Olá",
-            "intro": "Sua conta HuntZen está pronta. Veja o que você pode fazer agora:",
+            "intro": "Sua conta HuntZenJobs está pronta. Veja o que você pode fazer agora:",
             "feature1": "🔍 <strong>Buscar vagas</strong> adaptadas ao seu perfil",
             "feature2": "📄 <strong>Analisar seu CV</strong> e obter uma pontuação de matching",
             "feature3": "✉️ <strong>Gerar sua carta de apresentação</strong> em 1 clique",
@@ -306,7 +306,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
     },
     "cv_analysis": {
         "fr": {
-            "subject": "✅ Ton analyse CV est prête — HuntZen",
+            "subject": "✅ Ton analyse CV est prête — HuntZenJobs",
             "header": "✅ Ton analyse CV est prête !",
             "intro": "Ton CV a été analysé avec succès par notre IA.",
             "intro2": "Tu peux maintenant consulter :",
@@ -317,7 +317,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "manage": "Gérer mes notifications",
         },
         "en": {
-            "subject": "✅ Your CV analysis is ready — HuntZen",
+            "subject": "✅ Your CV analysis is ready — HuntZenJobs",
             "header": "✅ Your CV analysis is ready!",
             "intro": "Your CV has been successfully analyzed by our AI.",
             "intro2": "You can now view:",
@@ -328,7 +328,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "manage": "Manage my notifications",
         },
         "es": {
-            "subject": "✅ Tu análisis de CV está listo — HuntZen",
+            "subject": "✅ Tu análisis de CV está listo — HuntZenJobs",
             "header": "✅ ¡Tu análisis de CV está listo!",
             "intro": "Tu CV ha sido analizado con éxito por nuestra IA.",
             "intro2": "Ahora puedes consultar:",
@@ -339,7 +339,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "manage": "Gestionar mis notificaciones",
         },
         "pt": {
-            "subject": "✅ Sua análise de CV está pronta — HuntZen",
+            "subject": "✅ Sua análise de CV está pronta — HuntZenJobs",
             "header": "✅ Sua análise de CV está pronta!",
             "intro": "Seu CV foi analisado com sucesso pela nossa IA.",
             "intro2": "Agora você pode ver:",
@@ -424,33 +424,33 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "header_tpl": "✅ Réponse à votre ticket #{ticket_id}",
             "greeting": "Bonjour",
             "intro": "Notre équipe a répondu à votre demande :",
-            "footer": "Si vous avez d'autres questions, n'hésitez pas à ouvrir un nouveau ticket depuis votre espace HuntZen.",
+            "footer": "Si vous avez d'autres questions, n'hésitez pas à ouvrir un nouveau ticket depuis votre espace HuntZenJobs.",
         },
         "en": {
             "subject_tpl": "Reply to your ticket #{ticket_id} — {ticket_subject}",
             "header_tpl": "✅ Reply to your ticket #{ticket_id}",
             "greeting": "Hello",
             "intro": "Our team has responded to your request:",
-            "footer": "If you have further questions, feel free to open a new ticket from your HuntZen account.",
+            "footer": "If you have further questions, feel free to open a new ticket from your HuntZenJobs account.",
         },
         "es": {
             "subject_tpl": "Respuesta a tu ticket #{ticket_id} — {ticket_subject}",
             "header_tpl": "✅ Respuesta a tu ticket #{ticket_id}",
             "greeting": "Hola",
             "intro": "Nuestro equipo ha respondido a tu solicitud:",
-            "footer": "Si tienes más preguntas, no dudes en abrir un nuevo ticket desde tu espacio HuntZen.",
+            "footer": "Si tienes más preguntas, no dudes en abrir un nuevo ticket desde tu espacio HuntZenJobs.",
         },
         "pt": {
             "subject_tpl": "Resposta ao seu ticket #{ticket_id} — {ticket_subject}",
             "header_tpl": "✅ Resposta ao seu ticket #{ticket_id}",
             "greeting": "Olá",
             "intro": "Nossa equipe respondeu à sua solicitação:",
-            "footer": "Se tiver mais dúvidas, abra um novo ticket no seu espaço HuntZen.",
+            "footer": "Se tiver mais dúvidas, abra um novo ticket no seu espaço HuntZenJobs.",
         },
     },
     "payment_confirmation": {
         "fr": {
-            "subject": "Paiement confirmé - HuntZen",
+            "subject": "Paiement confirmé - HuntZenJobs",
             "header": "Paiement confirmé !",
             "greeting": "Bonjour",
             "intro": "Votre paiement a été traité avec succès.",
@@ -461,7 +461,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "footer": "Merci de votre confiance !",
         },
         "en": {
-            "subject": "Payment confirmed - HuntZen",
+            "subject": "Payment confirmed - HuntZenJobs",
             "header": "Payment confirmed!",
             "greeting": "Hello",
             "intro": "Your payment has been processed successfully.",
@@ -472,7 +472,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "footer": "Thank you for your trust!",
         },
         "es": {
-            "subject": "Pago confirmado - HuntZen",
+            "subject": "Pago confirmado - HuntZenJobs",
             "header": "¡Pago confirmado!",
             "greeting": "Hola",
             "intro": "Tu pago ha sido procesado con éxito.",
@@ -483,7 +483,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "footer": "¡Gracias por tu confianza!",
         },
         "pt": {
-            "subject": "Pagamento confirmado - HuntZen",
+            "subject": "Pagamento confirmado - HuntZenJobs",
             "header": "Pagamento confirmado!",
             "greeting": "Olá",
             "intro": "Seu pagamento foi processado com sucesso.",
@@ -496,7 +496,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
     },
     "payment_failed": {
         "fr": {
-            "subject": "Paiement échoué - Action requise - HuntZen",
+            "subject": "Paiement échoué - Action requise - HuntZenJobs",
             "header": "Paiement échoué",
             "greeting": "Bonjour",
             "intro": "Votre dernier paiement n'a pas pu être traité.",
@@ -505,7 +505,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "footer": "Si vous avez des questions, contactez-nous à",
         },
         "en": {
-            "subject": "Payment failed - Action required - HuntZen",
+            "subject": "Payment failed - Action required - HuntZenJobs",
             "header": "Payment failed",
             "greeting": "Hello",
             "intro": "Your latest payment could not be processed.",
@@ -514,7 +514,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "footer": "If you have any questions, contact us at",
         },
         "es": {
-            "subject": "Pago fallido - Acción requerida - HuntZen",
+            "subject": "Pago fallido - Acción requerida - HuntZenJobs",
             "header": "Pago fallido",
             "greeting": "Hola",
             "intro": "Tu último pago no ha podido procesarse.",
@@ -523,7 +523,7 @@ _T: dict[str, dict[str, dict[str, str]]] = {
             "footer": "Si tienes alguna pregunta, contáctanos en",
         },
         "pt": {
-            "subject": "Pagamento falhou - Ação necessária - HuntZen",
+            "subject": "Pagamento falhou - Ação necessária - HuntZenJobs",
             "header": "Pagamento falhou",
             "greeting": "Olá",
             "intro": "Seu último pagamento não pôde ser processado.",
@@ -534,81 +534,81 @@ _T: dict[str, dict[str, dict[str, str]]] = {
     },
     "contact_confirmation": {
         "fr": {
-            "subject": "Nous avons bien reçu votre message - HuntZen",
+            "subject": "Nous avons bien reçu votre message - HuntZenJobs",
             "header": "Message bien reçu !",
             "greeting": "Bonjour",
             "body": "Nous avons bien reçu votre message et notre équipe vous répondra sous 48h en semaine.",
             "thanks": "Merci de votre confiance !",
-            "cta": "Retour sur HuntZen",
+            "cta": "Retour sur HuntZenJobsJobs",
         },
         "en": {
-            "subject": "We received your message - HuntZen",
+            "subject": "We received your message - HuntZenJobs",
             "header": "Message received!",
             "greeting": "Hello",
             "body": "We have received your message and our team will respond within 48 hours on business days.",
             "thanks": "Thank you for your trust!",
-            "cta": "Back to HuntZen",
+            "cta": "Back to HuntZenJobsJobs",
         },
         "es": {
-            "subject": "Hemos recibido tu mensaje - HuntZen",
+            "subject": "Hemos recibido tu mensaje - HuntZenJobs",
             "header": "¡Mensaje recibido!",
             "greeting": "Hola",
             "body": "Hemos recibido tu mensaje y nuestro equipo te responderá en 48h en días laborables.",
             "thanks": "¡Gracias por tu confianza!",
-            "cta": "Volver a HuntZen",
+            "cta": "Volver a HuntZenJobs",
         },
         "pt": {
-            "subject": "Recebemos sua mensagem - HuntZen",
+            "subject": "Recebemos sua mensagem - HuntZenJobs",
             "header": "Mensagem recebida!",
             "greeting": "Olá",
             "body": "Recebemos sua mensagem e nossa equipe responderá em até 48h em dias úteis.",
             "thanks": "Obrigado pela sua confiança!",
-            "cta": "Voltar ao HuntZen",
+            "cta": "Voltar ao HuntZenJobs",
         },
     },
     "subscription_cancelled": {
         "fr": {
-            "subject": "Confirmation d'annulation - HuntZen",
+            "subject": "Confirmation d'annulation - HuntZenJobs",
             "header": "Abonnement annulé",
             "greeting": "Bonjour",
             "intro": "Votre annulation a bien été prise en compte.",
             "plan_label": "Plan :",
             "end_date_label": "Accès jusqu'au :",
             "note": "Vous conservez l'accès à toutes les fonctionnalités de votre plan jusqu'à cette date.",
-            "cta": "Retour sur HuntZen",
+            "cta": "Retour sur HuntZenJobsJobs",
             "footer": "Vous pouvez vous réabonner à tout moment depuis votre espace.",
         },
         "en": {
-            "subject": "Cancellation confirmed - HuntZen",
+            "subject": "Cancellation confirmed - HuntZenJobs",
             "header": "Subscription cancelled",
             "greeting": "Hello",
             "intro": "Your cancellation has been confirmed.",
             "plan_label": "Plan:",
             "end_date_label": "Access until:",
             "note": "You will keep access to all features of your plan until this date.",
-            "cta": "Back to HuntZen",
+            "cta": "Back to HuntZenJobsJobs",
             "footer": "You can resubscribe at any time from your dashboard.",
         },
         "es": {
-            "subject": "Cancelación confirmada - HuntZen",
+            "subject": "Cancelación confirmada - HuntZenJobs",
             "header": "Suscripción cancelada",
             "greeting": "Hola",
             "intro": "Tu cancelación ha sido confirmada.",
             "plan_label": "Plan:",
             "end_date_label": "Acceso hasta:",
             "note": "Mantendrás el acceso a todas las funcionalidades de tu plan hasta esta fecha.",
-            "cta": "Volver a HuntZen",
+            "cta": "Volver a HuntZenJobs",
             "footer": "Puedes volver a suscribirte en cualquier momento desde tu espacio.",
         },
         "pt": {
-            "subject": "Cancelamento confirmado - HuntZen",
+            "subject": "Cancelamento confirmado - HuntZenJobs",
             "header": "Assinatura cancelada",
             "greeting": "Olá",
             "intro": "Seu cancelamento foi confirmado.",
             "plan_label": "Plano:",
             "end_date_label": "Acesso até:",
             "note": "Você manterá o acesso a todas as funcionalidades do seu plano até esta data.",
-            "cta": "Voltar ao HuntZen",
+            "cta": "Voltar ao HuntZenJobs",
             "footer": "Você pode se reinscrever a qualquer momento no seu espaço.",
         },
     },
@@ -795,7 +795,7 @@ def send_application_confirmation(
                 </div>
                 <div class="footer">
                     <p>{tr["help"]} <a href="mailto:contact@huntzenjobs.com" style="color:#00D9FF;">contact@huntzenjobs.com</a></p>
-                    <p>© 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a></p>
+                    <p>© 2026 HuntZenJobs · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a></p>
                 </div>
             </div>
         </body>
@@ -873,7 +873,7 @@ def send_job_alerts(
                     </div>
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
+                    © 2026 HuntZenJobs · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
                 </p>
             </div>
         </body></html>
@@ -941,7 +941,7 @@ def send_weekly_summary(
                         </a>
                     </div>
                 </div>
-                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">© 2026 HuntZen</p>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">© 2026 HuntZenJobs</p>
             </div>
         </body></html>
         """
@@ -994,7 +994,7 @@ def send_welcome(to_email: str, full_name: str = "", language: str = "fr") -> bo
                     </div>
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
+                    © 2026 HuntZenJobs · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
                 </p>
             </div>
         </body></html>
@@ -1041,7 +1041,7 @@ def send_cv_analysis_complete(to_email: str, language: str = "fr") -> bool:
                     </div>
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
+                    © 2026 HuntZenJobs · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
                 </p>
             </div>
         </body></html>
@@ -1094,7 +1094,7 @@ def send_document_generated(
                     </div>
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
+                    © 2026 HuntZenJobs · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
                 </p>
             </div>
         </body></html>
@@ -1150,7 +1150,7 @@ def send_application_status_change(
                     </div>
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-                    © 2026 HuntZen · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
+                    © 2026 HuntZenJobs · <a href="{frontend_url}/profile" style="color:#94a3b8;">{tr["manage"]}</a>
                 </p>
             </div>
         </body></html>
@@ -1184,11 +1184,23 @@ def send_payment_confirmation_email(
         today = datetime.now().strftime("%d/%m/%Y")
 
         is_renewal = billing_reason == "subscription_cycle"
-        subject = f"[HuntZen] Renouvellement {plan_name} confirmé" if is_renewal else tr["subject"]
+        renewal_subjects = {
+            "fr": f"[HuntZenJobs] Renouvellement {plan_name} confirmé",
+            "en": f"[HuntZenJobs] {plan_name} renewal confirmed",
+            "es": f"[HuntZenJobs] Renovación {plan_name} confirmada",
+            "pt": f"[HuntZenJobs] Renovação {plan_name} confirmada",
+        }
+        subject = renewal_subjects.get(lang, renewal_subjects["fr"]) if is_renewal else tr["subject"]
 
         invoice_block = ""
         if invoice_url:
-            invoice_label = "Voir ma facture" if lang == "fr" else "View my invoice"
+            invoice_labels = {
+                "fr": "Voir ma facture",
+                "en": "View my invoice",
+                "es": "Ver mi factura",
+                "pt": "Ver minha fatura",
+            }
+            invoice_label = invoice_labels.get(lang, invoice_labels["fr"])
             invoice_block = f"""
                 <div style="text-align:center;margin-top:12px;">
                     <a href="{invoice_url}" style="display:inline-block;background:#f1f5f9;color:#334155;padding:10px 24px;border-radius:8px;text-decoration:none;font-size:14px;border:1px solid #cbd5e1;">
@@ -1220,7 +1232,7 @@ def send_payment_confirmation_email(
                     </div>
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-                    &copy; 2026 HuntZen
+                    &copy; 2026 HuntZenJobs
                 </p>
             </div>
         </body></html>
@@ -1267,7 +1279,7 @@ def send_payment_failed_email(
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
                     {tr["footer"]} <a href="mailto:contact@huntzenjobs.com" style="color:#94a3b8;">contact@huntzenjobs.com</a>
-                    <br/>&copy; 2026 HuntZen
+                    <br/>&copy; 2026 HuntZenJobs
                 </p>
             </div>
         </body></html>
@@ -1320,7 +1332,7 @@ def send_subscription_cancelled_email(
                     <p style="color:#64748b;font-size:13px;margin-top:16px;">{tr["footer"]}</p>
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-                    &copy; 2026 HuntZen
+                    &copy; 2026 HuntZenJobs
                 </p>
             </div>
         </body></html>
@@ -1565,7 +1577,7 @@ def send_support_ticket_reply(
                         {tr["footer"]}
                     </p>
                 </div>
-                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZen</p>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZenJobs</p>
             </div>
         </body></html>
         """
@@ -1617,7 +1629,7 @@ def send_contact_confirmation(to_email: str, full_name: str, language: str = "fr
                     </div>
                 </div>
                 <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">
-                    &copy; 2026 HuntZen
+                    &copy; 2026 HuntZenJobs
                 </p>
             </div>
         </body></html>
@@ -1667,7 +1679,7 @@ def send_contact_admin_notification(
                         </a>
                     </div>
                 </div>
-                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZen — Admin</p>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZenJobs — Admin</p>
             </div>
         </body></html>
         """
@@ -1731,7 +1743,7 @@ def send_expiring_plan_email(
                         </a>
                     </div>
                 </div>
-                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZen</p>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZenJobs</p>
             </div>
         </body></html>
         """
@@ -1794,7 +1806,7 @@ def send_expiring_plan_tomorrow_email(
                         </a>
                     </div>
                 </div>
-                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZen</p>
+                <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px;">&copy; 2026 HuntZenJobs</p>
             </div>
         </body></html>
         """

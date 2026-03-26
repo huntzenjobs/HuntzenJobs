@@ -16,6 +16,7 @@ import {
   AtSign,
   ShieldOff,
   Settings2,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -276,6 +277,15 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
     }
   };
 
+  const handleResendInvoice = async () => {
+    try {
+      await adminPost(`/api/admin/users/${user.id}/resend-payment-email`);
+      toast.success(`Facture renvoyée à ${user.email}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors de l'envoi");
+    }
+  };
+
   const isBanned = user.is_banned === true;
 
   return (
@@ -290,6 +300,10 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
           <DropdownMenuItem onClick={() => setEmailOpen(true)}>
             <Mail className="h-4 w-4 mr-2" />
             Envoyer un email
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleResendInvoice}>
+            <Receipt className="h-4 w-4 mr-2" />
+            Renvoyer la facture
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onAction("reset-password", user.id)}>
             <KeyRound className="h-4 w-4 mr-2" />

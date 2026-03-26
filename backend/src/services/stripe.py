@@ -654,10 +654,20 @@ async def handle_checkout_completed(session: dict[str, Any]):
                         pass
                 if user_email:
                     amount_display = f"{amount_cents / 100:.2f} EUR"
+                    # Récupérer l'URL de facture Stripe
+                    invoice_url = None
+                    try:
+                        latest_invoice_id = stripe_subscription.get("latest_invoice")
+                        if latest_invoice_id:
+                            inv = stripe.Invoice.retrieve(latest_invoice_id)
+                            invoice_url = inv.get("hosted_invoice_url") or inv.get("invoice_pdf")
+                    except Exception:
+                        pass
                     send_payment_confirmation_email(
                         user_email=user_email,
                         plan_name=plan_name,
                         amount=amount_display,
+                        invoice_url=invoice_url,
                     )
         except Exception as email_err:
             logger.warning(f"[WEBHOOK] Payment confirmation email failed (non-fatal): {email_err}")
@@ -968,17 +978,28 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
             if customer_email and customer_email != "inconnu" and amount > 0:
                 try:
                     invoice_url = invoice.get("hosted_invoice_url") or invoice.get("invoice_pdf")
-                    # Recuperer le nom du plan depuis la sub Stripe
-                    plan_label = plan_name if "plan_name" in dir() else "Pro"
-                    try:
-                        items = stripe_sub.get("items", {}).get("data", [])
-                        if items:
-                            prod_id = items[0].get("price", {}).get("product")
-                            if prod_id:
-                                prod = stripe.Product.retrieve(prod_id)
-                                plan_label = prod.get("name", plan_label)
-                    except Exception:
-                        pass
+                    # Recuperer le nom du plan depuis la DB puis fallback Stripe Product
+                    plan_label = ""
+                    if supabase_client:
+                        try:
+                            db_sub = supabase_client.table("user_subscriptions").select(
+                                "subscription_plans(display_name)"
+                            ).eq("stripe_subscription_id", subscription_id).maybe_single().execute()
+                            if db_sub.data:
+                                plan_label = (db_sub.data.get("subscription_plans") or {}).get("display_name", "")
+                        except Exception:
+                            pass
+                    if not plan_label:
+                        try:
+                            items = stripe_sub.get("items", {}).get("data", [])
+                            if items:
+                                prod_id = items[0].get("price", {}).get("product")
+                                if prod_id:
+                                    prod = stripe.Product.retrieve(prod_id)
+                                    plan_label = prod.get("name", "")
+                        except Exception:
+                            pass
+                    plan_label = plan_label or "Abonnement HuntZen"
                     send_payment_confirmation_email(
                         user_email=customer_email,
                         plan_name=plan_label,
