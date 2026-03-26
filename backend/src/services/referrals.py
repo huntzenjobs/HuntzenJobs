@@ -69,9 +69,8 @@ async def apply_referral_reward(
             }).eq("id", reward_id).execute()
             logger.info(f"[REFERRAL] {reward_type} reward applied to referrer {referrer_id}")
         else:
-            # Remove the pending record — no dangling applied=FALSE entries
-            supabase_client.table("referral_rewards").delete().eq("id", reward_id).execute()
-            logger.error(f"[REFERRAL] Reward application failed for referrer {referrer_id}, record removed")
+            # Keep the record for retry — do NOT delete pending rewards
+            logger.warning(f"[REFERRAL] Reward application failed for referrer {referrer_id}, kept as applied=false for retry")
 
         return success
 
@@ -81,20 +80,22 @@ async def apply_referral_reward(
 
 
 async def _apply_free_days(supabase_client, referrer_id: str, reward_value: dict) -> bool:
-    """Extend the referrer's active subscription by N days (atomic UPDATE)."""
+    """Extend or create a subscription for the referrer by N days (atomic)."""
     try:
-        # Support both old format {"days": 7} and new format {"reward_value": 7}
         days = int(reward_value.get("days") or reward_value.get("reward_value") or 7)
+
+        # Resolve plan_id from reward_plan name (default: pro)
+        plan_name = reward_value.get("reward_plan", "pro")
+        plan_ids = {"starter": "d18ddf08-784d-471c-b2d7-7586b4e5472c", "pro": "3f42df0e-6794-414f-9410-97981064fa7e", "premium": "d8fd5402-76f1-4b25-b35c-a6c5384cf817"}
+        plan_id = plan_ids.get(plan_name, plan_ids["pro"])
 
         result = supabase_client.rpc(
             "extend_subscription_days",
-            {"p_user_id": referrer_id, "p_days": days},
+            {"p_user_id": referrer_id, "p_days": days, "p_plan_id": plan_id},
         ).execute()
 
         if not result.data:
-            logger.warning(
-                f"[REFERRAL] Referrer {referrer_id} has no active subscription — free_days skipped"
-            )
+            logger.warning(f"[REFERRAL] extend_subscription_days returned falsy for {referrer_id}")
             return False
 
         return True
