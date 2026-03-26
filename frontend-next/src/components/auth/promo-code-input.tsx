@@ -20,46 +20,57 @@ export interface CodeValidationResult {
 interface PromoCodeInputProps {
   onCodeValidated: (code: string, result: CodeValidationResult) => void;
   initialCode?: string;
+  defaultOpen?: boolean;
   className?: string;
 }
 
-export function PromoCodeInput({ onCodeValidated, initialCode, className }: PromoCodeInputProps) {
+export function PromoCodeInput({
+  onCodeValidated,
+  initialCode,
+  defaultOpen,
+  className,
+}: PromoCodeInputProps) {
   const t = useTranslations("auth.promoCode");
-  const [isOpen, setIsOpen] = useState(!!initialCode);
+  const [isOpen, setIsOpen] = useState(!!initialCode || !!defaultOpen);
   const [code, setCode] = useState(initialCode || "");
-  const [status, setStatus] = useState<"idle" | "loading" | "valid" | "invalid">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "valid" | "invalid"
+  >("idle");
   const [result, setResult] = useState<CodeValidationResult | null>(null);
 
-  const validate = useCallback(async (codeToValidate: string) => {
-    if (!codeToValidate.trim()) return;
-    setStatus("loading");
+  const validate = useCallback(
+    async (codeToValidate: string) => {
+      if (!codeToValidate.trim()) return;
+      setStatus("loading");
 
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
-      const res = await fetch(`${backendUrl}/api/codes/validate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: codeToValidate.trim() }),
-      });
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || "";
+        const res = await fetch(`${backendUrl}/api/codes/validate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: codeToValidate.trim() }),
+        });
 
-      if (!res.ok) {
+        if (!res.ok) {
+          setStatus("invalid");
+          return;
+        }
+
+        const data: CodeValidationResult = await res.json();
+        setResult(data);
+
+        if (data.valid) {
+          setStatus("valid");
+          onCodeValidated(codeToValidate.trim().toUpperCase(), data);
+        } else {
+          setStatus("invalid");
+        }
+      } catch {
         setStatus("invalid");
-        return;
       }
-
-      const data: CodeValidationResult = await res.json();
-      setResult(data);
-
-      if (data.valid) {
-        setStatus("valid");
-        onCodeValidated(codeToValidate.trim().toUpperCase(), data);
-      } else {
-        setStatus("invalid");
-      }
-    } catch {
-      setStatus("invalid");
-    }
-  }, [onCodeValidated]);
+    },
+    [onCodeValidated],
+  );
 
   useEffect(() => {
     if (initialCode) {
@@ -95,7 +106,8 @@ export function PromoCodeInput({ onCodeValidated, initialCode, className }: Prom
           placeholder={t("placeholder")}
           className={cn(
             "h-10 text-sm",
-            status === "valid" && "border-green-500 focus-visible:ring-green-500",
+            status === "valid" &&
+              "border-green-500 focus-visible:ring-green-500",
             status === "invalid" && "border-red-500 focus-visible:ring-red-500",
           )}
           disabled={status === "loading"}

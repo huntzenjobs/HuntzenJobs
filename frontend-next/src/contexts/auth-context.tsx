@@ -178,7 +178,9 @@ export function AuthProvider({
                       localStorage.setItem("huntzen_referral_registered", "1");
                     }
                   })
-                  .catch(() => {});
+                  .catch((err) => {
+                    console.warn("[REFERRAL] register failed:", err);
+                  });
               } else {
                 // Promo code flow (any other format)
                 fetch(`${backendUrl}/api/codes/apply`, {
