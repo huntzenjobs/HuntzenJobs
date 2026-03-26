@@ -8,7 +8,6 @@ Supports FR (default) and EN via the `language` parameter on user-facing functio
 import logging
 from datetime import datetime
 
-import httpx
 import resend
 
 from src.config.settings import settings
@@ -1249,17 +1248,21 @@ def send_payment_confirmation_email(
         # Attacher le PDF de la facture Stripe si disponible
         if invoice_pdf_url:
             try:
-                pdf_resp = httpx.get(invoice_pdf_url, timeout=15)
-                if pdf_resp.status_code == 200 and len(pdf_resp.content) > 0:
+                import base64 as b64
+
+                import httpx
+                pdf_resp = httpx.get(invoice_pdf_url, timeout=10, follow_redirects=True)
+                pdf_bytes = pdf_resp.content
+                if pdf_resp.status_code == 200 and len(pdf_bytes) > 0 and len(pdf_bytes) < 5_000_000:
                     email_payload["attachments"] = [{
                         "filename": f"facture-huntzen-{today.replace('/', '-')}.pdf",
-                        "content": list(pdf_resp.content),
+                        "content": b64.b64encode(pdf_bytes).decode("ascii"),
                     }]
-                    logger.info(f"Invoice PDF attached ({len(pdf_resp.content)} bytes)")
+                    logger.info(f"Invoice PDF attached ({len(pdf_bytes)} bytes)")
                 else:
-                    logger.warning(f"Failed to download invoice PDF: HTTP {pdf_resp.status_code}")
+                    logger.warning(f"Invoice PDF skipped: HTTP {pdf_resp.status_code}, size={len(pdf_bytes)}")
             except Exception as e:
-                logger.warning(f"Could not attach invoice PDF: {e}")
+                logger.warning(f"Could not attach invoice PDF (non-fatal): {e}")
 
         resend.Emails.send(email_payload)
         logger.info(f"Payment confirmation email sent to {user_email} (plan={plan_name}, reason={billing_reason})")
