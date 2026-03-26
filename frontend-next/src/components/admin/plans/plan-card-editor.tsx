@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Save, Zap, Pencil, ToggleRight, Languages } from "lucide-react";
+import {
+  Save,
+  Zap,
+  Pencil,
+  ToggleRight,
+  Languages,
+  Sparkles,
+} from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -98,6 +105,9 @@ interface Props {
     wording: { display_name?: string; description?: string },
   ) => Promise<boolean>;
   onTranslatePlan: (planId: string) => Promise<boolean>;
+  onGenerateWording?: (
+    planId: string,
+  ) => Promise<{ features: string[]; features_excluded: string[] } | null>;
 }
 
 export default function PlanCardEditor({
@@ -108,6 +118,7 @@ export default function PlanCardEditor({
   onUpdateStripePrice,
   onUpdateWording,
   onTranslatePlan,
+  onGenerateWording,
 }: Props) {
   const [limits, setLimits] = useState({
     cv_analyses: plan.limits?.cv_analyses ?? 0,
@@ -574,6 +585,30 @@ export default function PlanCardEditor({
                 {featuresExcludedText.split("\n").filter(Boolean).length}{" "}
                 exclues
               </p>
+              {onGenerateWording && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={saving === "generateWording"}
+                  onClick={async () => {
+                    setSaving("generateWording");
+                    const result = await onGenerateWording(plan.id);
+                    if (result) {
+                      setFeaturesText(result.features.join("\n"));
+                      setFeaturesExcludedText(
+                        result.features_excluded.join("\n"),
+                      );
+                    }
+                    setSaving(null);
+                  }}
+                  className="w-full mt-2"
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                  {saving === "generateWording"
+                    ? "Generation..."
+                    : "Generer automatiquement"}
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"

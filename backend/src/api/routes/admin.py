@@ -3889,3 +3889,244 @@ async def test_all_emails(
         "to": to,
         "details": results,
     }
+
+
+# ============================================================
+# CONVERSION POPUP CONFIGS
+# ============================================================
+
+@router.get("/conversion-popups")
+async def list_conversion_popups(admin: AdminUserDep) -> list[dict[str, Any]]:
+    """List all conversion popup configs."""
+    supabase = get_supabase_client()
+    result = supabase.table("conversion_popup_configs").select("*").order("sort_order").execute()
+    return result.data or []
+
+
+@router.post("/conversion-popups")
+async def create_conversion_popup(
+    body: dict[str, Any],
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Create a new conversion popup config."""
+    supabase = get_supabase_client()
+    required = {"trigger_id", "target_plan", "title", "body", "primary_cta"}
+    if not required.issubset(body.keys()):
+        raise HTTPException(status_code=400, detail=f"Missing required fields: {required - body.keys()}")
+
+    allowed = {
+        "trigger_id", "source_plans", "target_plan", "feature_trigger",
+        "title", "body", "primary_cta", "secondary_cta", "price_override",
+        "discount_percent", "coupon_trigger", "is_active", "sort_order",
+    }
+    data = {k: v for k, v in body.items() if k in allowed}
+    result = supabase.table("conversion_popup_configs").insert(data).execute()
+    _log_admin_action(supabase, admin["id"], "admin.popup_created", None, {"trigger_id": data.get("trigger_id")})
+    return (result.data or [{}])[0]
+
+
+@router.patch("/conversion-popups/{popup_id}")
+async def update_conversion_popup(
+    popup_id: str,
+    body: dict[str, Any],
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Update a conversion popup config."""
+    supabase = get_supabase_client()
+    allowed = {
+        "trigger_id", "source_plans", "target_plan", "feature_trigger",
+        "title", "body", "primary_cta", "secondary_cta", "price_override",
+        "discount_percent", "coupon_trigger", "is_active", "sort_order",
+    }
+    data = {k: v for k, v in body.items() if k in allowed}
+    if not data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+
+    data["updated_at"] = datetime.now(UTC).isoformat()
+    supabase.table("conversion_popup_configs").update(data).eq("id", popup_id).execute()
+    _log_admin_action(supabase, admin["id"], "admin.popup_updated", None, {"popup_id": popup_id, "fields": list(data.keys())})
+    return {"success": True}
+
+
+@router.delete("/conversion-popups/{popup_id}")
+async def delete_conversion_popup(
+    popup_id: str,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Delete a conversion popup config."""
+    supabase = get_supabase_client()
+    supabase.table("conversion_popup_configs").delete().eq("id", popup_id).execute()
+    _log_admin_action(supabase, admin["id"], "admin.popup_deleted", None, {"popup_id": popup_id})
+    return {"success": True}
+
+
+@router.post("/conversion-popups/{popup_id}/translate")
+async def translate_conversion_popup(
+    popup_id: str,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Auto-translate popup texts from French to en/es/pt using Groq LLM."""
+    from groq import Groq
+
+    supabase = get_supabase_client()
+    settings = get_settings()
+
+    popup_result = supabase.table("conversion_popup_configs").select("*").eq("id", popup_id).single().execute()
+    if not popup_result.data:
+        raise HTTPException(status_code=404, detail="Popup not found")
+
+    popup = popup_result.data
+    fr_texts = {
+        "title": (popup.get("title") or {}).get("fr", ""),
+        "body": (popup.get("body") or {}).get("fr", ""),
+        "primary_cta": (popup.get("primary_cta") or {}).get("fr", ""),
+        "secondary_cta": ((popup.get("secondary_cta") or {}).get("fr", "") if popup.get("secondary_cta") else ""),
+        "price_override": ((popup.get("price_override") or {}).get("fr", "") if popup.get("price_override") else ""),
+    }
+
+    groq_client = Groq(api_key=settings.get_groq_key())
+    target_languages = {"en": "English", "es": "Spanish", "pt": "Portuguese"}
+    translations: dict[str, dict[str, str]] = {}
+
+    for lang_code, lang_name in target_languages.items():
+        prompt = (
+            f"Translate these conversion popup texts from French to {lang_name}. "
+            "Return ONLY a valid JSON object with these exact keys: "
+            "title, body, primary_cta, secondary_cta, price_override. "
+            "If a value is empty, keep it empty. Keep it short and persuasive. "
+            "Do not include any text outside the JSON.\n\n"
+            f"French source:\n{json.dumps(fr_texts, ensure_ascii=False, indent=2)}"
+        )
+        try:
+            response = groq_client.chat.completions.create(
+                model=settings.llm_model_powerful,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=1024,
+                response_format={"type": "json_object"},
+            )
+            parsed = json.loads(response.choices[0].message.content or "{}")
+            translations[lang_code] = parsed
+        except Exception as e:
+            logger.warning(f"Failed to translate popup {popup_id} to {lang_code}: {e}")
+            translations[lang_code] = fr_texts
+
+    # Merge translations into existing JSONB fields
+    update_data: dict[str, Any] = {"updated_at": datetime.now(UTC).isoformat()}
+    for field in ["title", "body", "primary_cta", "secondary_cta", "price_override"]:
+        current = popup.get(field) or {}
+        if not isinstance(current, dict):
+            current = {"fr": current} if current else {}
+        for lang_code, texts in translations.items():
+            val = texts.get(field, "")
+            if val:
+                current[lang_code] = val
+        if current:
+            update_data[field] = current
+
+    supabase.table("conversion_popup_configs").update(update_data).eq("id", popup_id).execute()
+    _log_admin_action(supabase, admin["id"], "admin.popup_translated", None, {
+        "popup_id": popup_id,
+        "languages": list(translations.keys()),
+    })
+
+    return {"success": True, "translations": translations}
+
+
+@router.post("/plans/{plan_id}/generate-wording")
+async def generate_plan_wording(
+    plan_id: str,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """
+    Auto-generate features/features_excluded text arrays from plan limits and flags.
+    Returns the generated arrays without saving — admin can review and save manually.
+    """
+    supabase = get_supabase_client()
+    plan_result = supabase.table("subscription_plans").select(
+        "name, limits, feature_flags"
+    ).eq("id", plan_id).single().execute()
+    if not plan_result.data:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    plan = plan_result.data
+    limits = plan.get("limits") or {}
+    flags = plan.get("feature_flags") or {}
+
+    # Mapping limits → wording
+    limit_wording = {
+        "job_searches": ("recherches d'offres par jour", "Recherches illimitees"),
+        "cv_analyses": ("analyses CV par jour", "Analyses CV illimitees"),
+        "assistant_messages": ("messages coaching par jour", "Messages coaching illimites"),
+        "cv_adapt": ("adaptations CV par jour", "Adaptations CV illimitees"),
+        "cover_letter": ("lettres de motivation par jour", "Lettres de motivation illimitees"),
+        "saved_jobs": ("offres sauvegardees", "Sauvegardes illimitees"),
+        "jobs_visible": ("offres visibles par jour", "Toutes les offres visibles"),
+        "job_views": ("vues d'offres par jour", "Vues illimitees"),
+        "recruiter_searches": ("recherches recruteur par jour", "Recherches recruteur illimitees"),
+    }
+
+    # Mapping flags → wording
+    flag_wording = {
+        "has_advanced_filters": "Filtres avances",
+        "has_favorites": "Gestion favoris",
+        "has_visual_score": "Score visuel CV",
+        "has_pdf_export": "Export PDF",
+        "has_cv_history": "Historique CV",
+        "has_interview_sim": "Simulation d'entretien",
+        "has_email_alerts": "Alertes email",
+        "has_personalized_advice": "Conseils personnalises",
+        "has_coach_history": "Historique coach",
+        "has_cover_letter": "Lettre de motivation IA",
+        "has_branding": "Branding personnel",
+        "has_cv_details": "Details CV avances",
+    }
+
+    page_wording = {
+        "page_assistant": "Coach IA",
+        "page_jobs": "Recherche emploi",
+        "page_saved_jobs": "Jobs sauvegardes",
+        "page_cv_analysis": "Analyse CV",
+        "page_documents": "Documents",
+        "page_candidatures": "Candidatures",
+        "page_expat": "Expat",
+        "page_salons": "Salons emploi",
+        "page_profile": "Profil",
+        "page_recruiter_contact": "Contact recruteurs",
+        "page_referral": "Parrainage",
+    }
+
+    features: list[str] = []
+    features_excluded: list[str] = []
+
+    # Generate from limits
+    for key, (limited_tpl, unlimited_text) in limit_wording.items():
+        val = limits.get(key, 0)
+        if val == -1:
+            features.append(unlimited_text)
+        elif val > 0:
+            features.append(f"{val} {limited_tpl}")
+        else:
+            features_excluded.append(unlimited_text)
+
+    # Generate from feature flags
+    for key, text in flag_wording.items():
+        if flags.get(key):
+            features.append(text)
+        else:
+            features_excluded.append(text)
+
+    # Generate from page access flags
+    for key, text in page_wording.items():
+        if flags.get(key):
+            features.append(text)
+        else:
+            features_excluded.append(text)
+
+    features.append("Support standard")
+
+    return {
+        "success": True,
+        "features": features,
+        "features_excluded": features_excluded,
+    }

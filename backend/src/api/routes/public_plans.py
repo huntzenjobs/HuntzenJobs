@@ -100,3 +100,63 @@ async def get_public_plans(
         pass
 
     return plans
+
+
+POPUPS_CACHE_KEY = "conversion_popups"
+POPUPS_CACHE_TTL = 60  # 1 minute
+
+
+@router.get("/conversion-popups")
+async def get_public_conversion_popups(
+    locale: str | None = Query(default=None, description="Language code: fr, en, es, pt"),
+) -> list[dict[str, Any]]:
+    """
+    Returns active conversion popup configs for frontend display.
+    Texts returned in requested locale (falls back to fr).
+    No auth required -- cached in Redis.
+    """
+    effective_locale = locale if locale in SUPPORTED_LOCALES else "fr"
+    cache_key = f"{POPUPS_CACHE_KEY}:{effective_locale}"
+
+    try:
+        from src.utils.cache import get_redis
+        redis = await get_redis()
+        if redis:
+            cached = await redis.get(cache_key)
+            if cached:
+                return json.loads(cached)
+    except Exception:
+        pass
+
+    supabase = get_supabase_client()
+    result = supabase.table("conversion_popup_configs").select("*").eq(
+        "is_active", True
+    ).order("sort_order").execute()
+
+    popups = []
+    for row in result.data or []:
+        popup = {
+            "id": row["id"],
+            "trigger_id": row["trigger_id"],
+            "source_plans": row.get("source_plans", ["free"]),
+            "target_plan": row.get("target_plan", "starter"),
+            "feature_trigger": row.get("feature_trigger"),
+            "discount_percent": float(row["discount_percent"]) if row.get("discount_percent") else None,
+            "coupon_trigger": row.get("coupon_trigger"),
+            "title": (row.get("title") or {}).get(effective_locale, (row.get("title") or {}).get("fr", "")),
+            "body": (row.get("body") or {}).get(effective_locale, (row.get("body") or {}).get("fr", "")),
+            "primary_cta": (row.get("primary_cta") or {}).get(effective_locale, (row.get("primary_cta") or {}).get("fr", "")),
+            "secondary_cta": (row.get("secondary_cta") or {}).get(effective_locale, (row.get("secondary_cta") or {}).get("fr", "")) if row.get("secondary_cta") else None,
+            "price_override": (row.get("price_override") or {}).get(effective_locale, (row.get("price_override") or {}).get("fr", "")) if row.get("price_override") else None,
+        }
+        popups.append(popup)
+
+    try:
+        from src.utils.cache import get_redis
+        redis = await get_redis()
+        if redis:
+            await redis.setex(cache_key, POPUPS_CACHE_TTL, json.dumps(popups))
+    except Exception:
+        pass
+
+    return popups

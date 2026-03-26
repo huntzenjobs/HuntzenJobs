@@ -230,6 +230,33 @@ export function useAdminPlans() {
     }
   }, []);
 
+  const generateWording = useCallback(
+    async (
+      planId: string,
+    ): Promise<{ features: string[]; features_excluded: string[] } | null> => {
+      setLoading(true);
+      try {
+        const result = await adminFetch(
+          `/api/admin/plans/${planId}/generate-wording`,
+          { method: "POST" },
+        );
+        toast.success("Wording généré automatiquement");
+        return {
+          features: result.features || [],
+          features_excluded: result.features_excluded || [],
+        };
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Erreur génération wording",
+        );
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   return {
     loading,
     fetchPlans,
@@ -239,5 +266,6 @@ export function useAdminPlans() {
     updateWording,
     updateStripePrice,
     translatePlan,
+    generateWording,
   };
 }
