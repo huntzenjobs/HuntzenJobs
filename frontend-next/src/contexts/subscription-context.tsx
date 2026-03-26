@@ -59,6 +59,10 @@ interface SubscriptionContextType {
   // Limits
   limits: PlanLimits;
 
+  // Raw API quotas (for features not in PlanLimits)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  quotas: Record<string, any> | null;
+
   // Actions
   setPlan: (plan: PlanType, expiresAt?: string) => void;
 
@@ -472,6 +476,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       savedJobsLimit: apiData.saved_jobs_quota?.limit ?? -1,
 
       limits: limitsFromApi,
+
+      quotas: apiData.quotas ?? null,
 
       setPlan: freemium.setPlan, // KEEP local until Stripe integration
 
