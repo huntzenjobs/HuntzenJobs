@@ -1,11 +1,12 @@
 """
 Recruiter Finder API Routes
 ============================
-Expose recruiter contact discovery via Apollo.io (primary) with SerpAPI fallback.
+Expose recruiter contact discovery via SerpAPI + RapidAPI validation.
 """
 
 import logging
 import os
+from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import BaseModel
@@ -14,7 +15,6 @@ from supabase import Client, create_client
 from src.api.deps import get_user_id_from_token
 from src.services.recruiter_finder import (
     extract_domain,
-    find_recruiters_apollo,
     find_recruiters_serpapi,
 )
 from src.services.stripe import invalidate_user_quota_cache
@@ -133,7 +133,10 @@ class RecruiterFinderResponse(BaseModel):
     tech_team: list[ContactItem]
     all_contacts: list[ContactItem]
     total_found: int
-    source: str = "apollo"
+    source: str = "serpapi"
+    validation_summary: dict[str, Any] | None = None
+    search_strategy: str | None = None
+    search_queries: list[dict[str, Any]] | None = None
 
 
 # ============================================================================
@@ -147,8 +150,7 @@ async def find_recruiters(
     authorization: str | None = Header(default=None),
 ):
     """
-    Discover recruiter contacts at a company using Apollo (primary) with
-    SerpAPI LinkedIn scraping as fallback.
+    Discover recruiter contacts at a company using SerpAPI + RapidAPI validation.
 
     Returns HR/recruiter contacts with LinkedIn URLs (emails suppressed).
 
@@ -179,22 +181,12 @@ async def find_recruiters(
         elif body.company_website:
             domain = extract_domain(body.company_website)
 
-        # 1. Try Apollo first (structured org data)
-        result = await find_recruiters_apollo(
+        result = await find_recruiters_serpapi(
             company_name=body.company_name,
             company_domain=domain,
             job_title=body.job_title or "",
         )
-
-        # 2. Fallback to SerpAPI if Apollo found nothing
-        if not result.get("recruiters") and not result.get("tech_team"):
-            logger.info("[RecruiterFinder] Apollo returned no contacts, using SerpAPI fallback")
-            result = await find_recruiters_serpapi(
-                company_name=body.company_name,
-                company_domain=domain,
-                job_title=body.job_title or "",
-            )
-            result["source"] = "serpapi"
+        result.setdefault("source", "serpapi")
 
         _enrich_contact_metadata(result)
 
