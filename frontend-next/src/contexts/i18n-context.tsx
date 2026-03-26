@@ -9,6 +9,7 @@ import {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 // Supported locales (must match middleware.ts)
 export type Locale = "fr" | "en" | "es" | "pt";
@@ -58,6 +59,21 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       setLocaleState(newLocale);
       setCookie(LOCALE_COOKIE_NAME, newLocale, 365); // 1 year expiry
       setCookie("LOCALE_MANUAL", "1", 365); // Flag: user chose manually, don't override with geo
+
+      // Sync to profiles.preferred_language (fire-and-forget)
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) {
+          supabase
+            .from("profiles")
+            .update({
+              preferred_language: newLocale,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", data.user.id)
+            .then(() => {});
+        }
+      });
 
       // Full reload pour appliquer la traduction partout (y compris jobs, filtres, etc.)
       window.location.reload();

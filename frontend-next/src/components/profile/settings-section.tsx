@@ -36,6 +36,7 @@ import {
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter } from "next/navigation";
 import { useOptionalAuth } from "@/contexts/auth-context";
+import { useLocale } from "@/contexts/i18n-context";
 import { useTranslations } from "next-intl";
 
 interface SettingsSectionProps {
@@ -53,6 +54,7 @@ export function SettingsSection({
 }: SettingsSectionProps) {
   const router = useRouter();
   const auth = useOptionalAuth();
+  const { setLocale: setGlobalLocale } = useLocale();
   const t = useTranslations("profile");
 
   // State for settings
@@ -289,19 +291,23 @@ export function SettingsSection({
           </div>
         </div>
 
-        <Select value={language} onValueChange={setLanguage} disabled>
+        <Select
+          value={language}
+          onValueChange={(val) => {
+            setLanguage(val);
+            setGlobalLocale(val as "fr" | "en" | "es" | "pt");
+          }}
+        >
           <SelectTrigger id="language" className="max-w-xs">
             <SelectValue placeholder={t("settingsLanguagePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="fr">Français</SelectItem>
             <SelectItem value="en">English</SelectItem>
+            <SelectItem value="es">Español</SelectItem>
+            <SelectItem value="pt">Português</SelectItem>
           </SelectContent>
         </Select>
-
-        <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-3">
-          💡 {t("multilingualComingSoon")}
-        </p>
       </div>
 
       {/* Email Notifications */}

@@ -419,6 +419,7 @@ async def invalidate_user_cache(request: Request, authorization: str | None = He
 class WelcomeRequest(BaseModel):
     email: str
     full_name: str = ""
+    language: str = "fr"
 
 
 @router.post("/api/auth/welcome")
@@ -428,7 +429,7 @@ async def send_welcome_email(request: Request, payload: WelcomeRequest):
     from src.services.admin_alerts import send_admin_alert
     from src.services.email import send_welcome
     try:
-        send_welcome(to_email=payload.email, full_name=payload.full_name)
+        send_welcome(to_email=payload.email, full_name=payload.full_name, language=payload.language)
     except Exception as e:
         logger.warning(f"Welcome email failed (non-blocking): {e}")
 

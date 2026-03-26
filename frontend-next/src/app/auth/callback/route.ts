@@ -51,6 +51,27 @@ export async function GET(request: NextRequest) {
       }
 
       const isNewUser = !data.user?.user_metadata?.onboarding_completed;
+
+      // Send welcome email for new users (fire-and-forget)
+      if (isNewUser && data.user?.email) {
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_URL ||
+          process.env.NEXT_PUBLIC_BACKEND_URL ||
+          "";
+        const locale = request.cookies.get("NEXT_LOCALE")?.value || "fr";
+        if (backendUrl) {
+          fetch(`${backendUrl}/api/auth/welcome`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: data.user.email,
+              full_name: data.user.user_metadata?.full_name || "",
+              language: locale,
+            }),
+          }).catch(() => {});
+        }
+      }
+
       let isAdmin = false;
       try {
         const { data: profile } = await supabase
@@ -104,6 +125,26 @@ export async function GET(request: NextRequest) {
 
       // OAuth / email confirmation flow: redirect to final destination
       const isNewUser = !data.user.user_metadata?.onboarding_completed;
+
+      // Send welcome email for new OAuth users (fire-and-forget)
+      if (isNewUser && data.user.email) {
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_URL ||
+          process.env.NEXT_PUBLIC_BACKEND_URL ||
+          "";
+        const locale = request.cookies.get("NEXT_LOCALE")?.value || "fr";
+        if (backendUrl) {
+          fetch(`${backendUrl}/api/auth/welcome`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: data.user.email,
+              full_name: data.user.user_metadata?.full_name || "",
+              language: locale,
+            }),
+          }).catch(() => {});
+        }
+      }
 
       // Check if user is admin
       let isAdmin = false;
