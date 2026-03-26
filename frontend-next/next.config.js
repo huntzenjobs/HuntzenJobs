@@ -132,10 +132,6 @@ const nextConfig = {
   // React Strict Mode pour détecter les problèmes
   reactStrictMode: true,
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Compression (gzip/brotli) automatique
   compress: true,
 
