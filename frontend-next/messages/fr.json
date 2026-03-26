@@ -1100,7 +1100,12 @@
       "attachCV": "Joindre votre CV (PDF)",
       "sendMessage": "Envoyer le message",
       "chatInputLabel": "Votre message",
-      "messageCounter": "Messages restants : {remaining} sur {total}"
+      "messageCounter": "Messages restants : {remaining} sur {total}",
+      "hubTitle": "Votre equipe carriere",
+      "hubSubtitle": "Choisissez un assistant pour commencer",
+      "hubResponseTime": "Reponse {time}",
+      "hubPremium": "Premium",
+      "hubComingSoon": "Bientot disponible"
     },
     "salons": {
       "title": "Salons & Forums",

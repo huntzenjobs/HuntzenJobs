@@ -271,6 +271,45 @@ async def get_current_user_info(
                     "reset_at": quota["reset_at"]
                 }
 
+        # Enrich assistant_messages with per-coach breakdown
+        if "assistant_messages" in quotas:
+            try:
+                from datetime import date
+                today_str = date.today().isoformat()
+                by_coach_response = supabase.table("usage_quotas").select(
+                    "assistant_messages_by_coach"
+                ).eq("user_id", user_id).eq("quota_date", today_str).maybe_single().execute()
+
+                by_coach_raw: dict = {}
+                if by_coach_response.data and by_coach_response.data.get("assistant_messages_by_coach"):
+                    by_coach_raw = by_coach_response.data["assistant_messages_by_coach"]
+
+                am_limit = quotas["assistant_messages"]["limit"]
+                by_coach_detail: dict = {}
+                any_coach_has_access = False
+
+                for coach_type in ["career-coach", "job-scout", "cv-analyzer", "cv-adapter", "interview-sim", "branding"]:
+                    coach_used = by_coach_raw.get(coach_type, 0)
+                    if am_limit == -1:
+                        coach_remaining = -1
+                        coach_has_access = True
+                    else:
+                        coach_remaining = max(0, am_limit - coach_used)
+                        coach_has_access = coach_used < am_limit
+                    by_coach_detail[coach_type] = {
+                        "used": coach_used,
+                        "remaining": coach_remaining,
+                        "has_access": coach_has_access,
+                    }
+                    if coach_has_access:
+                        any_coach_has_access = True
+
+                quotas["assistant_messages"]["by_coach"] = by_coach_detail
+                # Override has_access: true if at least 1 coach still has quota
+                quotas["assistant_messages"]["has_access"] = any_coach_has_access
+            except Exception as e:
+                logger.warning(f"Could not fetch per-coach breakdown for {user_id}: {e}")
+
         # Saved jobs quota (total, not daily)
         saved_jobs_quota = {"used": 0, "limit": -1}
         try:

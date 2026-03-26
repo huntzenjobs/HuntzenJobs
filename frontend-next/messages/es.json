@@ -907,7 +907,12 @@
       "switchDialogDescNoHistory": "Your conversation will be lost, history is not available with your current plan.",
       "cancel": "Cancel",
       "switchAssistant": "Switch assistant",
-      "cvUploadError": "Error analyzing the CV. Please make sure the file is a valid PDF."
+      "cvUploadError": "Error analyzing the CV. Please make sure the file is a valid PDF.",
+      "hubTitle": "Tu equipo de carrera",
+      "hubSubtitle": "Elige un asistente para empezar",
+      "hubResponseTime": "Respuesta {time}",
+      "hubPremium": "Premium",
+      "hubComingSoon": "Proximamente"
     },
     "salons": {
       "title": "Ferias y Foros de Empleo",

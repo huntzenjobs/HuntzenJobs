@@ -942,7 +942,12 @@
       "attachCV": "Attach your CV (PDF)",
       "sendMessage": "Send message",
       "chatInputLabel": "Your message",
-      "messageCounter": "Messages remaining: {remaining} of {total}"
+      "messageCounter": "Messages remaining: {remaining} of {total}",
+      "hubTitle": "Your career team",
+      "hubSubtitle": "Choose an assistant to get started",
+      "hubResponseTime": "Response {time}",
+      "hubPremium": "Premium",
+      "hubComingSoon": "Coming soon"
     },
     "salons": {
       "title": "Job Fairs & Forums",
