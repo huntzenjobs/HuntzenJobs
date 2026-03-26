@@ -417,7 +417,7 @@ async def handle_stripe_webhook(
             raise HTTPException(status_code=400, detail="Webhook parsing failed") from None
 
     event_type = event["type"]
-    event_id = event.get("id", "unknown")
+    event_id = event["id"] if "id" in event else "unknown"
 
     logger.info(f"[WEBHOOK] Received Stripe webhook: {event_type} (ID: {event_id})")
 
@@ -462,7 +462,7 @@ async def handle_stripe_webhook(
                     {
                         "p_event_id": event_id,
                         "p_event_type": event_type,
-                        "p_payload": event
+                        "p_payload": dict(event)
                     }
                 ).execute()
                 logger.info(f"[WEBHOOK] Marked event {event_id} as processed")
@@ -483,16 +483,16 @@ async def handle_stripe_webhook(
 
 async def handle_checkout_completed(session: dict[str, Any]):
     """Handle successful checkout - create or update subscription."""
-    metadata = session.get("metadata", {})
+    metadata = session["metadata"] if "metadata" in session else {}
 
     # Detect type based on metadata
     if "request_id" in metadata:
         await handle_recruiter_checkout(session)
         return
 
-    user_id = metadata.get("user_id")
-    plan_name = metadata.get("plan_name")
-    session_id = session.get("id", "unknown")
+    user_id = metadata.get("user_id") if isinstance(metadata, dict) else getattr(metadata, "user_id", None)
+    plan_name = metadata.get("plan_name") if isinstance(metadata, dict) else getattr(metadata, "plan_name", None)
+    session_id = session["id"] if "id" in session else "unknown"
 
     if not user_id or not plan_name:
         error_msg = "Missing user_id or plan_name in checkout metadata"
@@ -511,12 +511,12 @@ async def handle_checkout_completed(session: dict[str, Any]):
 
         raise HTTPException(status_code=400, detail="Missing metadata")
 
-    stripe_subscription_id = session.get("subscription")
-    stripe_customer_id = session.get("customer")
+    stripe_subscription_id = session["subscription"] if "subscription" in session else None
+    stripe_customer_id = session["customer"] if "customer" in session else None
 
     # 🔧 FIX: Verify subscription ID exists
     if not stripe_subscription_id:
-        logger.error(f"No subscription ID in checkout session {session.get('id')}")
+        logger.error(f"No subscription ID in checkout session {session_id}")
         raise HTTPException(
             status_code=400,
             detail="No subscription found in checkout session"
@@ -589,19 +589,19 @@ async def handle_checkout_completed(session: dict[str, Any]):
         subscription_data = {
             "user_id": user_id,
             "plan_id": plan_id,
-            "status": stripe_subscription.get("status", "active"),
+            "status": getattr(stripe_subscription, "status", "active"),
             "stripe_subscription_id": stripe_subscription_id,
             "stripe_customer_id": stripe_customer_id,
             "stripe_price_id": stripe_subscription["items"]["data"][0]["price"]["id"],
             "current_period_start": datetime.fromtimestamp(
-                stripe_subscription.get("current_period_start", int(datetime.now(UTC).timestamp())),
+                getattr(stripe_subscription, "current_period_start", None) or int(datetime.now(UTC).timestamp()),
                 tz=UTC
             ).isoformat(),
             "current_period_end": datetime.fromtimestamp(
-                stripe_subscription.get("current_period_end", int(datetime.now(UTC).timestamp()) + 2592000),  # +30 days
+                getattr(stripe_subscription, "current_period_end", None) or int(datetime.now(UTC).timestamp()) + 2592000,
                 tz=UTC
             ).isoformat(),
-            "cancel_at_period_end": stripe_subscription.get("cancel_at_period_end", False),
+            "cancel_at_period_end": getattr(stripe_subscription, "cancel_at_period_end", False),
             "updated_at": datetime.now(UTC).isoformat()
         }
 
@@ -642,27 +642,26 @@ async def handle_checkout_completed(session: dict[str, Any]):
         # Email de confirmation de paiement
         amount_str = ""
         try:
-            amount_cents = stripe_subscription["items"]["data"][0]["price"].get("unit_amount", 0)
+            amount_cents = getattr(stripe_subscription["items"]["data"][0]["price"], "unit_amount", 0) or 0
             amount_str = f" ({amount_cents // 100}€/mois)" if amount_cents else ""
             if amount_cents:
-                user_email = session.get("customer_email") or ""
+                user_email = getattr(session, "customer_email", None) or session.get("customer_email", "") if isinstance(session, dict) else getattr(session, "customer_email", "")
                 if not user_email:
                     try:
                         cust = stripe.Customer.retrieve(stripe_customer_id)
-                        user_email = cust.get("email", "")
+                        user_email = getattr(cust, "email", "")
                     except Exception:
                         pass
                 if user_email:
                     amount_display = f"{amount_cents / 100:.2f} EUR"
-                    # Récupérer l'URL de facture Stripe
                     invoice_url = None
                     invoice_pdf_url = None
                     try:
-                        latest_invoice_id = stripe_subscription.get("latest_invoice")
+                        latest_invoice_id = getattr(stripe_subscription, "latest_invoice", None)
                         if latest_invoice_id:
                             inv = stripe.Invoice.retrieve(latest_invoice_id)
-                            invoice_url = inv.get("hosted_invoice_url") or inv.get("invoice_pdf")
-                            invoice_pdf_url = inv.get("invoice_pdf")
+                            invoice_url = getattr(inv, "hosted_invoice_url", None) or getattr(inv, "invoice_pdf", None)
+                            invoice_pdf_url = getattr(inv, "invoice_pdf", None)
                     except Exception:
                         pass
                     send_payment_confirmation_email(
@@ -745,14 +744,14 @@ async def handle_subscription_updated(subscription: dict[str, Any]):
             "status": subscription["status"],
             "stripe_price_id": new_price_id,
             "current_period_start": datetime.fromtimestamp(
-                subscription.get("current_period_start", int(datetime.now(UTC).timestamp())),
+                getattr(subscription, "current_period_start", None) or int(datetime.now(UTC).timestamp()),
                 tz=UTC
             ).isoformat(),
             "current_period_end": datetime.fromtimestamp(
-                subscription.get("current_period_end", int(datetime.now(UTC).timestamp())),
+                getattr(subscription, "current_period_end", None) or int(datetime.now(UTC).timestamp()),
                 tz=UTC
             ).isoformat(),
-            "cancel_at_period_end": subscription.get("cancel_at_period_end", False),
+            "cancel_at_period_end": getattr(subscription, "cancel_at_period_end", False),
             "updated_at": datetime.now(UTC).isoformat()
         }
 
@@ -787,12 +786,12 @@ async def handle_subscription_updated(subscription: dict[str, Any]):
             await invalidate_user_quota_cache(user_id)
 
             # Email d'annulation si cancel_at_period_end vient de passer a True
-            if subscription.get("cancel_at_period_end", False):
+            if getattr(subscription, "cancel_at_period_end", False):
                 try:
-                    customer_id = subscription.get("customer")
+                    customer_id = getattr(subscription, "customer", None)
                     if customer_id:
                         cust = stripe.Customer.retrieve(customer_id)
-                        user_email = cust.get("email", "")
+                        user_email = getattr(cust, "email", "")
                         if user_email:
                             # Resoudre le nom du plan
                             plan_display = "Pro"
@@ -902,21 +901,23 @@ async def handle_payment_failed(invoice: dict[str, Any]):
 
                 # Email de paiement echoue
                 try:
-                    customer_id = invoice.get("customer")
+                    customer_id = invoice["customer"] if "customer" in invoice else None
                     if customer_id:
                         cust = stripe.Customer.retrieve(customer_id)
-                        user_email = cust.get("email", "")
+                        user_email = getattr(cust, "email", "")
                         if user_email:
                             send_payment_failed_email(user_email=user_email)
                 except Exception as email_err:
                     logger.warning(f"[WEBHOOK] Payment failed email error (non-fatal): {email_err}")
 
                 # Alerte admin paiement echoue
+                customer_email_failed = invoice["customer_email"] if "customer_email" in invoice else "inconnu"
+                amount_due = invoice["amount_due"] if "amount_due" in invoice else 0
                 await send_admin_alert(
-                    subject=f"Paiement echoue — {invoice.get('customer_email', 'inconnu')}",
+                    subject=f"Paiement echoue — {customer_email_failed}",
                     body=(
-                        f"Client: {invoice.get('customer_email', 'inconnu')}\n"
-                        f"Montant: {invoice.get('amount_due', 0) / 100:.2f} EUR\n"
+                        f"Client: {customer_email_failed}\n"
+                        f"Montant: {amount_due / 100:.2f} EUR\n"
                         f"Stripe sub: {stripe_subscription_id}"
                     ),
                     severity="error",
@@ -934,11 +935,11 @@ async def handle_payment_failed(invoice: dict[str, Any]):
 async def handle_invoice_paid(invoice: dict[str, Any]):
     """Handle successful invoice payment — update subscription period + notify admin."""
     try:
-        amount = invoice.get("amount_paid", 0) / 100  # cents to euros
-        currency = (invoice.get("currency") or "eur").upper()
-        customer_email = invoice.get("customer_email", "inconnu")
-        billing_reason = invoice.get("billing_reason", "unknown")
-        subscription_id = invoice.get("subscription", "N/A")
+        amount = (invoice["amount_paid"] if "amount_paid" in invoice else 0) / 100  # cents to euros
+        currency = (invoice["currency"] if "currency" in invoice else "eur").upper()
+        customer_email = invoice["customer_email"] if "customer_email" in invoice else "inconnu"
+        billing_reason = invoice["billing_reason"] if "billing_reason" in invoice else "unknown"
+        subscription_id = invoice["subscription"] if "subscription" in invoice else "N/A"
 
         # Update current_period_end on renewal/create/update
         if billing_reason in ("subscription_create", "subscription_cycle", "subscription_update") and subscription_id and subscription_id != "N/A":
@@ -946,11 +947,11 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                 # Fetch fresh subscription data from Stripe
                 stripe_sub = stripe.Subscription.retrieve(subscription_id)
                 new_period_end = datetime.fromtimestamp(
-                    stripe_sub.get("current_period_end", int(datetime.now(UTC).timestamp()) + 2592000),
+                    getattr(stripe_sub, "current_period_end", None) or int(datetime.now(UTC).timestamp()) + 2592000,
                     tz=UTC,
                 )
                 new_period_start = datetime.fromtimestamp(
-                    stripe_sub.get("current_period_start", int(datetime.now(UTC).timestamp())),
+                    getattr(stripe_sub, "current_period_start", None) or int(datetime.now(UTC).timestamp()),
                     tz=UTC,
                 )
 
@@ -980,8 +981,8 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
             # Email client avec lien facture Stripe
             if customer_email and customer_email != "inconnu" and amount > 0:
                 try:
-                    invoice_url = invoice.get("hosted_invoice_url") or invoice.get("invoice_pdf")
-                    invoice_pdf_url = invoice.get("invoice_pdf")
+                    invoice_url = (invoice["hosted_invoice_url"] if "hosted_invoice_url" in invoice else None) or (invoice["invoice_pdf"] if "invoice_pdf" in invoice else None)
+                    invoice_pdf_url = invoice["invoice_pdf"] if "invoice_pdf" in invoice else None
                     # Recuperer le nom du plan depuis la DB puis fallback Stripe Product
                     plan_label = ""
                     if supabase_client:
@@ -995,12 +996,14 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                             pass
                     if not plan_label:
                         try:
-                            items = stripe_sub.get("items", {}).get("data", [])
-                            if items:
-                                prod_id = items[0].get("price", {}).get("product")
+                            sub_items = getattr(stripe_sub, "items", None)
+                            items_data = getattr(sub_items, "data", []) if sub_items else []
+                            if items_data:
+                                price_obj = getattr(items_data[0], "price", None)
+                                prod_id = getattr(price_obj, "product", None) if price_obj else None
                                 if prod_id:
                                     prod = stripe.Product.retrieve(prod_id)
-                                    plan_label = prod.get("name", "")
+                                    plan_label = getattr(prod, "name", "")
                         except Exception:
                             pass
                     plan_label = plan_label or "Abonnement HuntZen"
@@ -1022,7 +1025,7 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                     f"Montant: {amount:.2f} {currency}\n"
                     f"Client: {customer_email}\n"
                     f"Stripe sub: {subscription_id}\n"
-                    f"Invoice ID: {invoice.get('id', 'N/A')}"
+                    f"Invoice ID: {invoice['id'] if 'id' in invoice else 'N/A'}"
                 ),
                 severity="info",
                 skip_throttle=True,
