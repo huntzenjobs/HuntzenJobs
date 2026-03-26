@@ -1,5 +1,27 @@
 import type { CvData } from "@/components/cv-builder/types";
 
+/** Structured 429 quota exceeded detail from backend */
+export interface QuotaDetail {
+  code: "QUOTA_EXCEEDED";
+  feature: string;
+  limit: number;
+  used: number;
+  reset_at?: string;
+  message?: string;
+}
+
+export interface QuotaExceededError extends Error {
+  quotaDetail: QuotaDetail;
+}
+
+export function isQuotaExceededError(err: unknown): err is QuotaExceededError {
+  return (
+    err instanceof Error &&
+    err.message === "QUOTA_EXCEEDED" &&
+    "quotaDetail" in err
+  );
+}
+
 /** Context about a job passed to the interview simulator */
 export interface JobContext {
   title?: string;
@@ -143,7 +165,30 @@ class HuntzenApiClient {
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      let detail: unknown;
+      try {
+        const body = await response.json();
+        detail = body?.detail;
+      } catch {
+        // body not JSON
+      }
+
+      if (
+        response.status === 429 &&
+        detail &&
+        typeof detail === "object" &&
+        (detail as Record<string, unknown>).code === "QUOTA_EXCEEDED"
+      ) {
+        const err = new Error("QUOTA_EXCEEDED");
+        (err as QuotaExceededError).quotaDetail = detail as QuotaDetail;
+        throw err;
+      }
+
+      throw new Error(
+        typeof detail === "string"
+          ? detail
+          : `API Error: ${response.status} ${response.statusText}`,
+      );
     }
 
     return response.json();

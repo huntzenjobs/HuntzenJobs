@@ -49,7 +49,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { huntzenApi, type Job } from "@/lib/api/huntzen-client";
+import {
+  huntzenApi,
+  isQuotaExceededError,
+  type Job,
+} from "@/lib/api/huntzen-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useOptionalAuth } from "@/contexts/auth-context";
@@ -701,34 +705,43 @@ export default function JobsPage() {
         throw new Error(t("error.fillRequired"));
       }
 
-      const data = await huntzenApi.searchJobs(
-        {
-          job_title: jobSearchParams.query,
-          country_code: jobSearchParams.country,
-          city: jobSearchParams.location,
-          contract_type: effectiveContractType,
-          contract_types: effectiveContractTypes,
-          work_days: effectiveWorkDays,
-          work_schedule: effectiveWorkSchedule,
-          includeRemote: jobSearchParams.includeRemote,
-          from_history: jobSearchParams.fromHistory,
-          // Advanced filters (Premium feature)
-          industries: advancedFilters.industries?.join(","),
-          keywords: advancedFilters.keywords?.join(","),
-          experienceLevel: advancedFilters.experienceLevel,
-          salaryMin: advancedFilters.salaryMin,
-          salaryMax: advancedFilters.salaryMax,
-          companySize: advancedFilters.companySize,
-        },
-        auth?.session?.access_token,
-      );
+      try {
+        const data = await huntzenApi.searchJobs(
+          {
+            job_title: jobSearchParams.query,
+            country_code: jobSearchParams.country,
+            city: jobSearchParams.location,
+            contract_type: effectiveContractType,
+            contract_types: effectiveContractTypes,
+            work_days: effectiveWorkDays,
+            work_schedule: effectiveWorkSchedule,
+            includeRemote: jobSearchParams.includeRemote,
+            from_history: jobSearchParams.fromHistory,
+            // Advanced filters (Premium feature)
+            industries: advancedFilters.industries?.join(","),
+            keywords: advancedFilters.keywords?.join(","),
+            experienceLevel: advancedFilters.experienceLevel,
+            salaryMin: advancedFilters.salaryMin,
+            salaryMax: advancedFilters.salaryMax,
+            companySize: advancedFilters.companySize,
+          },
+          auth?.session?.access_token,
+        );
 
-      return data;
+        return data;
+      } catch (err) {
+        if (isQuotaExceededError(err)) {
+          searchLimitPopup.open();
+          return null;
+        }
+        throw err;
+      }
     },
     enabled: !!jobSearchParams,
     staleTime: 1000 * 60 * 30, // 30 min — results stay fresh
     gcTime: 1000 * 60 * 60, // 1h — keep in memory for back navigation
-    retry: 1,
+    retry: (failureCount, error) =>
+      !isQuotaExceededError(error) && failureCount < 1,
   });
 
   /**
