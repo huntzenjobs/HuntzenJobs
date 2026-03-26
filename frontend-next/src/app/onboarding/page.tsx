@@ -22,7 +22,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PromoCodeInput } from "@/components/auth/promo-code-input";
+import {
+  PromoCodeInput,
+  type CodeValidationResult,
+} from "@/components/auth/promo-code-input";
 
 const TOTAL_STEPS = 7;
 
@@ -121,6 +124,9 @@ function OnboardingWizard() {
   // Step 5 - Discovery
   const [discoverySource, setDiscoverySource] = useState("");
 
+  // User ID for referral registration
+  const [userId, setUserId] = useState<string | null>(null);
+
   // Guard: if already onboarded, redirect
   useEffect(() => {
     let cancelled = false;
@@ -135,6 +141,8 @@ function OnboardingWizard() {
           router.replace("/login");
           return;
         }
+
+        if (!cancelled) setUserId(user.id);
 
         if (user.user_metadata?.onboarding_completed) {
           router.replace("/jobs");
@@ -562,9 +570,41 @@ function OnboardingWizard() {
                     </p>
                   </div>
                   <PromoCodeInput
-                    onCodeValidated={(code) => {
+                    defaultOpen
+                    onCodeValidated={(
+                      code: string,
+                      result: CodeValidationResult,
+                    ) => {
+                      // Store as backup (auth-context will retry if POST fails)
                       document.cookie = `huntzen_referral_code=${code}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
                       localStorage.setItem("huntzen_referral_code", code);
+
+                      // Register referral immediately if applicable
+                      if (result.type === "referral" && userId) {
+                        const backendUrl =
+                          process.env.NEXT_PUBLIC_API_URL ||
+                          process.env.NEXT_PUBLIC_BACKEND_URL ||
+                          "";
+                        fetch(`${backendUrl}/api/referrals/register`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ code, new_user_id: userId }),
+                        })
+                          .then((res) => {
+                            if (res.ok) {
+                              localStorage.setItem(
+                                "huntzen_referral_registered",
+                                "true",
+                              );
+                              localStorage.removeItem("huntzen_referral_code");
+                              document.cookie =
+                                "huntzen_referral_code=; path=/; max-age=0; SameSite=Lax";
+                            }
+                          })
+                          .catch(() => {
+                            // Silently continue — auth-context will retry
+                          });
+                      }
                     }}
                     className="[&_input]:bg-white/10 [&_input]:border-white/20 [&_input]:text-white [&_input]:placeholder:text-gray-500"
                   />

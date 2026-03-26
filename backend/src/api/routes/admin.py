@@ -1608,7 +1608,7 @@ async def get_referral_leaderboard(
     admin: AdminUserDep,
     limit: int = Query(default=20, ge=1, le=100),
 ) -> dict[str, Any]:
-    """Top referrers sorted by total_conversions."""
+    """Top referrers sorted by total_conversions, enriched with plan + revenue data."""
     supabase = get_supabase_client()
     result = supabase.table("referrals").select(
         "id, referral_code, total_clicks, total_signups, total_conversions, referrer_id"
@@ -1616,24 +1616,82 @@ async def get_referral_leaderboard(
 
     rows = result.data or []
     referrer_ids = list({r["referrer_id"] for r in rows if r.get("referrer_id")})
+    referral_ids = [r["id"] for r in rows]
+
+    # Profiles
     profiles_map: dict[str, Any] = {}
     if referrer_ids:
         pr = supabase.table("profiles").select("id, email, full_name").in_("id", referrer_ids).execute()
         profiles_map = {p["id"]: {"email": p["email"], "full_name": p.get("full_name")} for p in (pr.data or [])}
 
-    leaderboard = [{**r, "profiles": profiles_map.get(r["referrer_id"])} for r in rows]
+    # Subscriptions (referrer's own plan)
+    subs_map: dict[str, dict[str, str | None]] = {}
+    if referrer_ids:
+        sr = supabase.table("user_subscriptions").select("user_id, plan_name, status").in_("user_id", referrer_ids).eq("status", "active").execute()
+        for s in (sr.data or []):
+            subs_map[s["user_id"]] = {"plan": s.get("plan_name"), "status": s.get("status")}
+
+    # Paying referrals + last signup per referral_id
+    paying_map: dict[str, list[str]] = {}  # referral_id -> list of converted_plan
+    last_signup_map: dict[str, str | None] = {}
+    if referral_ids:
+        sig = supabase.table("referral_signups").select(
+            "referral_id, converted_to_paid_at, converted_plan, signed_up_at"
+        ).in_("referral_id", referral_ids).execute()
+        for s in (sig.data or []):
+            rid = s["referral_id"]
+            if s.get("converted_to_paid_at"):
+                paying_map.setdefault(rid, []).append(s.get("converted_plan") or "unknown")
+            cur = last_signup_map.get(rid)
+            if not cur or (s.get("signed_up_at") and s["signed_up_at"] > cur):
+                last_signup_map[rid] = s.get("signed_up_at")
+
+    leaderboard = []
+    for r in rows:
+        sub = subs_map.get(r["referrer_id"], {})
+        paying = paying_map.get(r["id"], [])
+        plans_count: dict[str, int] = {}
+        for p in paying:
+            plans_count[p] = plans_count.get(p, 0) + 1
+        leaderboard.append({
+            **r,
+            "profiles": profiles_map.get(r["referrer_id"]),
+            "referrer_plan": sub.get("plan"),
+            "referrer_plan_status": sub.get("status"),
+            "paying_referrals": len(paying),
+            "paying_plans": plans_count,
+            "last_signup_at": last_signup_map.get(r["id"]),
+        })
     return {"leaderboard": leaderboard}
 
 
 @router.get("/referrals/stats")
 async def get_referral_stats(admin: AdminUserDep) -> dict[str, Any]:
-    """Global referral program statistics."""
+    """Global referral program statistics with conversion rate and revenue breakdown."""
     supabase = get_supabase_client()
+    total_referrers = supabase.table("referrals").select("id", count="exact").execute().count or 0
+    active_referrers = supabase.table("referrals").select("id", count="exact").eq("is_active", True).execute().count or 0
+    total_signups = supabase.table("referral_signups").select("id", count="exact").execute().count or 0
+    total_conversions = supabase.table("referral_signups").select("id", count="exact").not_.is_("converted_to_paid_at", "null").execute().count or 0
+    total_rewards_applied = supabase.table("referral_rewards").select("id", count="exact").eq("applied", True).execute().count or 0
+
+    # Revenue by plan
+    revenue_by_plan: dict[str, int] = {}
+    if total_conversions > 0:
+        conv_res = supabase.table("referral_signups").select("converted_plan").not_.is_("converted_to_paid_at", "null").execute()
+        for row in (conv_res.data or []):
+            plan = row.get("converted_plan") or "unknown"
+            revenue_by_plan[plan] = revenue_by_plan.get(plan, 0) + 1
+
     return {
-        "total_referrers": supabase.table("referrals").select("id", count="exact").execute().count or 0,
-        "total_signups": supabase.table("referral_signups").select("id", count="exact").execute().count or 0,
-        "total_conversions": supabase.table("referral_signups").select("id", count="exact").not_.is_("converted_to_paid_at", "null").execute().count or 0,
-        "total_rewards_applied": supabase.table("referral_rewards").select("id", count="exact").eq("applied", True).execute().count or 0,
+        "total_referrers": total_referrers,
+        "active_referrers": active_referrers,
+        "inactive_referrers": total_referrers - active_referrers,
+        "total_signups": total_signups,
+        "total_conversions": total_conversions,
+        "total_rewards_applied": total_rewards_applied,
+        "conversion_rate": round(total_conversions / total_signups * 100, 1) if total_signups > 0 else 0.0,
+        "revenue_by_plan": revenue_by_plan,
     }
 
 
@@ -1683,6 +1741,159 @@ async def grant_manual_reward(signup_id: str, admin: AdminUserDep) -> dict[str, 
     )
     _log_admin_action(supabase, admin["id"], "admin.referral_reward_granted", {"signup_id": signup_id})
     return {"ok": success}
+
+
+@router.get("/referrals/signups")
+async def get_referral_signups(
+    admin: AdminUserDep,
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=50, ge=1, le=100),
+) -> dict[str, Any]:
+    """All referral signups with full details for admin."""
+    supabase = get_supabase_client()
+    offset = (page - 1) * per_page
+
+    result = supabase.table("referral_signups").select(
+        "id, referral_id, referred_user_id, signed_up_at, converted_to_paid_at, converted_plan",
+        count="exact",
+    ).order("signed_up_at", desc=True).range(offset, offset + per_page - 1).execute()
+
+    rows = result.data or []
+    total = result.count or 0
+
+    referred_ids = list({r["referred_user_id"] for r in rows if r.get("referred_user_id")})
+    referral_ids = list({r["referral_id"] for r in rows if r.get("referral_id")})
+
+    referred_profiles: dict[str, Any] = {}
+    if referred_ids:
+        pr = supabase.table("profiles").select("id, email, full_name").in_("id", referred_ids).execute()
+        referred_profiles = {p["id"]: p for p in (pr.data or [])}
+
+    referrals_map: dict[str, Any] = {}
+    referrer_ids_set: set[str] = set()
+    if referral_ids:
+        rr = supabase.table("referrals").select("id, referrer_id, referral_code").in_("id", referral_ids).execute()
+        for r in (rr.data or []):
+            referrals_map[r["id"]] = r
+            referrer_ids_set.add(r["referrer_id"])
+
+    referrer_profiles: dict[str, Any] = {}
+    if referrer_ids_set:
+        rp = supabase.table("profiles").select("id, email, full_name").in_("id", list(referrer_ids_set)).execute()
+        referrer_profiles = {p["id"]: p for p in (rp.data or [])}
+
+    signups = []
+    for row in rows:
+        ref = referrals_map.get(row.get("referral_id", ""), {})
+        referred_p = referred_profiles.get(row.get("referred_user_id", ""), {})
+        referrer_p = referrer_profiles.get(ref.get("referrer_id", ""), {})
+        signups.append({
+            "id": row["id"],
+            "referred_email": referred_p.get("email", ""),
+            "referred_name": referred_p.get("full_name"),
+            "referrer_email": referrer_p.get("email", ""),
+            "referrer_name": referrer_p.get("full_name"),
+            "referral_code": ref.get("referral_code", ""),
+            "signed_up_at": row.get("signed_up_at"),
+            "converted_to_paid_at": row.get("converted_to_paid_at"),
+            "converted_plan": row.get("converted_plan"),
+        })
+
+    return {"signups": signups, "total": total, "page": page, "per_page": per_page}
+
+
+@router.get("/referrals/rewards")
+async def get_referral_rewards(
+    admin: AdminUserDep,
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=50, ge=1, le=100),
+) -> dict[str, Any]:
+    """All referral rewards with details for admin."""
+    supabase = get_supabase_client()
+    offset = (page - 1) * per_page
+
+    result = supabase.table("referral_rewards").select(
+        "id, referral_signup_id, referrer_id, reward_type, reward_value, applied, applied_at, created_at",
+        count="exact",
+    ).order("created_at", desc=True).range(offset, offset + per_page - 1).execute()
+
+    rows = result.data or []
+    total = result.count or 0
+
+    referrer_ids = list({r["referrer_id"] for r in rows if r.get("referrer_id")})
+    profiles_map: dict[str, Any] = {}
+    if referrer_ids:
+        pr = supabase.table("profiles").select("id, email, full_name").in_("id", referrer_ids).execute()
+        profiles_map = {p["id"]: p for p in (pr.data or [])}
+
+    rewards = []
+    for row in rows:
+        p = profiles_map.get(row.get("referrer_id", ""), {})
+        rv = row.get("reward_value") or {}
+        rewards.append({
+            "id": row["id"],
+            "referrer_email": p.get("email", ""),
+            "referrer_name": p.get("full_name"),
+            "reward_type": row.get("reward_type", ""),
+            "reward_value": rv,
+            "tier_name": rv.get("name", ""),
+            "tier_index": rv.get("tier_index", -1),
+            "applied": row.get("applied", False),
+            "applied_at": row.get("applied_at"),
+            "created_at": row.get("created_at"),
+            "referral_signup_id": row.get("referral_signup_id", ""),
+        })
+
+    return {"rewards": rewards, "total": total, "page": page, "per_page": per_page}
+
+
+class ManualReferralLink(BaseModel):
+    referrer_email: str
+    referred_email: str
+
+
+@router.post("/referrals/link-manual")
+async def link_referral_manually(body: ManualReferralLink, admin: AdminUserDep) -> dict[str, Any]:
+    """Manually link a referred user to a referrer when auto-flow failed."""
+    supabase = get_supabase_client()
+
+    referrer_res = supabase.table("profiles").select("id").eq("email", body.referrer_email).maybe_single().execute()
+    if not referrer_res.data:
+        raise HTTPException(status_code=404, detail=f"Parrain introuvable : {body.referrer_email}")
+    referrer_user_id = referrer_res.data["id"]
+
+    referred_res = supabase.table("profiles").select("id").eq("email", body.referred_email).maybe_single().execute()
+    if not referred_res.data:
+        raise HTTPException(status_code=404, detail=f"Filleul introuvable : {body.referred_email}")
+    referred_user_id = referred_res.data["id"]
+
+    if referrer_user_id == referred_user_id:
+        raise HTTPException(status_code=400, detail="Auto-parrainage interdit")
+
+    ref_res = supabase.table("referrals").select("id").eq("referrer_id", referrer_user_id).eq("is_active", True).maybe_single().execute()
+    if not ref_res.data:
+        raise HTTPException(status_code=404, detail="Ce parrain n'a pas de code de parrainage actif")
+    referral_id = ref_res.data["id"]
+
+    try:
+        supabase.table("referral_signups").insert({
+            "referral_id": referral_id,
+            "referred_user_id": referred_user_id,
+        }).execute()
+
+        supabase.rpc("increment_referral_signups", {"p_referral_id": referral_id}).execute()
+
+        _log_admin_action(supabase, admin["id"], "admin.referral_manual_link", {
+            "referrer_email": body.referrer_email,
+            "referred_email": body.referred_email,
+        })
+
+        return {"ok": True, "message": f"{body.referred_email} lié à {body.referrer_email}"}
+    except Exception as e:
+        if "duplicate" in str(e).lower() or "unique" in str(e).lower():
+            return {"ok": True, "message": "Déjà lié (doublon)"}
+        logger.error(f"[ADMIN] link_referral_manually error: {e}")
+        raise HTTPException(status_code=500, detail="Échec de la liaison") from e
 
 
 # ============================================================
