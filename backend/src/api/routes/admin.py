@@ -2496,6 +2496,10 @@ ALL_FEATURES = [
     "advanced_filters", "favorites", "ats_score", "pdf_export",
     "cv_history", "interview_sim", "email_alerts", "personalized_advice",
     "coach_history", "cover_letter", "branding",
+    # Page access overrides (per-user)
+    "page_assistant", "page_jobs", "page_saved_jobs", "page_cv_analysis",
+    "page_documents", "page_candidatures", "page_expat", "page_salons",
+    "page_profile", "page_recruiter_contact", "page_referral",
 ]
 
 
