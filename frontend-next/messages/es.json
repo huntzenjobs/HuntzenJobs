@@ -294,66 +294,80 @@
     "plans": {
       "free": {
         "name": "EXPLORACIÓN",
-        "period": "/7 días",
+        "period": "Gratuito",
         "cta": "Comenzar gratis",
         "features": [
-          "3 búsquedas de empleo por día",
-          "10 ofertas de trabajo visibles máximo",
-          "1 análisis de CV por día",
-          "5 minutos de coaching personal",
-          "Soporte estándar"
+          "5 búsquedas de empleo por día",
+          "10 ofertas visibles por día",
+          "5 puntuaciones ATS",
+          "5 matchings oferta y CV",
+          "10 CV personalizados",
+          "5 mensajes de coaching",
+          "10 empleos guardados",
+          "Exportación PDF",
+          "Filtros avanzados"
         ],
         "unavailable": [
-          "Filtros avanzados",
-          "Gestión de favoritos",
-          "Exportación PDF de informes"
+          "Simulación de entrevista",
+          "Alertas por email",
+          "Historial de CV",
+          "Consejos personalizados",
+          "Seguimiento de candidaturas",
+          "Perfil de reclutador"
         ]
       },
       "starter": {
         "name": "BÚSQUEDA ACTIVA",
         "period": "/mes",
-        "cta": "Comenzar con Starter",
+        "cta": "Comenzar con Búsqueda Activa",
         "features": [
-          "Búsquedas ilimitadas",
-          "Acceso a todas las ofertas",
-          "Filtros avanzados (salario, remoto, fecha)",
-          "Gestión de favoritos",
-          "Análisis de CV ilimitados",
-          "Puntuación de compatibilidad detallada",
-          "Coaches de carrera (30 min/día)"
+          "10 búsquedas de empleo por día",
+          "20 ofertas por búsqueda",
+          "10 puntuaciones ATS",
+          "15 matchings oferta y CV",
+          "20 CV personalizados",
+          "20 mensajes de coaching",
+          "30 empleos guardados",
+          "Exportación PDF",
+          "Filtros avanzados",
+          "Historial de CV"
         ],
         "unavailable": [
-          "Exportación PDF de informes",
-          "Simulación de entrevista"
+          "Simulación de entrevista",
+          "Alertas por email",
+          "Consejos personalizados",
+          "Seguimiento de candidaturas",
+          "Perfil de reclutador"
         ]
       },
       "pro": {
-        "name": "Acelerador",
+        "name": "ACELERADOR",
         "period": "/mes",
         "cta": "Comenzar con Acelerador",
         "features": [
-          "Todas las funciones Esencial",
-          "Coaching 24/7 sin límite",
-          "Exportación PDF profesional",
-          "Simulaciones de entrevistas realistas",
-          "Feedback detallado sobre tu desempeño",
-          "Soporte prioritario por email"
+          "Búsquedas ilimitadas",
+          "Ofertas ilimitadas",
+          "Puntuaciones ilimitadas",
+          "CV personalizados ilimitados",
+          "Coaching ilimitado",
+          "Guardados ilimitados",
+          "Exportación PDF",
+          "Filtros avanzados",
+          "Historial de CV"
         ],
         "unavailable": []
       },
       "premium": {
         "name": "CARRERA",
         "period": "/mes",
-        "cta": "Comenzar con Premium",
+        "cta": "Comenzar con Carrera",
         "features": [
-          "Todas las funciones Pro",
-          "Historial ilimitado de análisis",
-          "Consejos personalizados ultra-dirigidos",
-          "Alertas instantáneas por email",
-          "Historial completo de coaching",
-          "Acceso anticipado a nuevas funciones",
-          "Soporte VIP prioritario",
-          "Informes mensuales de progreso"
+          "Todo el Acelerador incluido",
+          "Simulación de entrevista",
+          "Alertas por email",
+          "Consejos personalizados",
+          "Seguimiento de candidaturas",
+          "Perfil de reclutador"
         ],
         "unavailable": []
       }
@@ -535,6 +549,18 @@
       "jobView": {
         "label": "ofertas"
       },
+      "atsScore": {
+        "label": "análisis ATS"
+      },
+      "matchingScore": {
+        "label": "matchings job"
+      },
+      "customCv": {
+        "label": "CV personalizados"
+      },
+      "savedJobs": {
+        "label": "guardados"
+      },
       "cvAnalysis": {
         "label": "análisis"
       },
@@ -543,9 +569,6 @@
       },
       "unlimited": "ilimitadas",
       "unlimitedShort": "Ilimitado",
-      "savedJobs": {
-        "label": "guardados"
-      },
       "recruiterSearch": {
         "label": "busquedas de reclutador"
       },
@@ -557,6 +580,9 @@
       },
       "coach": {
         "label": "mensajes coach"
+      },
+      "jobSearches": {
+        "label": "búsquedas"
       }
     },
     "aria": {
@@ -2345,12 +2371,10 @@
     "activeSubtitle": "Active subscription",
     "activeBadge": "Active",
     "upgradeCta": "Upgrade to a paid plan",
-    "progressTitle": "Your progress",
+    "progressTitle": "Tu progresión",
     "dailyUsageTitle": "Cuotas diarias",
     "generalUsageTitle": "Cuotas generales",
     "resetAtMidnight": "Se restablece a medianoche",
-    "cvAnalysis": "Análisis de CV",
-    "assistantMessages": "Mensajes del Asistente",
     "jobSearches": "Búsquedas de empleo",
     "unlockTitle": "Desbloquea todo el potencial de HuntZen",
     "unlockDescription": "Pasa a un plan de pago para análisis ilimitados, más mensajes de coaching y funciones exclusivas.",
@@ -2366,7 +2390,11 @@
       "reached": "Cuota alcanzada por hoy",
       "reachedTotal": "Límite alcanzado"
     },
-    "savedJobs": "Trabajos guardados"
+    "savedJobs": "Empleos guardados",
+    "assistantMessages": "Mensajes del Asistente",
+    "atsScore": "Score ATS",
+    "matchingScore": "Matching Job",
+    "customCv": "CV personalizado"
   },
   "notifications": {
     "title": "Notifications",

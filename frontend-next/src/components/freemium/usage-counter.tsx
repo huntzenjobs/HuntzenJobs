@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSubscription } from "@/contexts/subscription-context";
 import { FeatureType } from "@/hooks/use-freemium-limits";
-import { Search, FileText, Clock, Eye, Users, Bookmark } from "lucide-react";
+import { Search, FileText, Clock, Eye, Users, Bookmark, Target } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface UsageCounterProps {
@@ -55,6 +55,44 @@ const featureConfig: Record<FeatureType, FeatureConfig> = {
       max === Infinity
         ? t("features.unlimitedShort")
         : `${value}/${max}${t("perDay")}`,
+  },
+  ats_score: {
+    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.atsScore.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  matching_score: {
+    icon: <Target className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.matchingScore.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  custom_cv: {
+    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.customCv.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  saved_jobs: {
+    icon: <Bookmark className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.savedJobs.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}`,
+    formatValue: (value, max, t) =>
+      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
   },
   assistant_messages: {
     icon: <Clock className="w-4 h-4" aria-hidden="true" />,
@@ -133,8 +171,20 @@ export function UsageCounter({
     case "cv_analysis":
       max = limits.cv_analyses_per_day;
       break;
+    case "ats_score":
+      max = limits.ats_scores_per_day;
+      break;
+    case "matching_score":
+      max = limits.matching_scores_per_day;
+      break;
+    case "custom_cv":
+      max = limits.custom_cvs_per_day;
+      break;
     case "assistant_messages":
       max = limits.assistant_messages_per_day;
+      break;
+    case "saved_jobs":
+      max = limits.max_saved_jobs;
       break;
     case "recruiter_search": {
       const q = quotas?.recruiter_search;
@@ -187,7 +237,7 @@ export function UsageCounter({
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getColor()} ${className}`}
       >
         {showIcon && config.icon}
-        {config.formatValue(used, max, tUsage)}
+        {max === Infinity ? tUsage("features.unlimitedShort") : remaining}
       </span>
     );
   }
@@ -233,74 +283,26 @@ interface UsageSummaryProps {
   className?: string;
 }
 
-function SavedJobsCounter() {
-  const { savedJobsUsed, savedJobsLimit } = useSubscription();
-  const tUsage = useTranslations("usageCounter");
-
-  const isUnlimited = savedJobsLimit === -1;
-  if (isUnlimited) return null;
-
-  const remaining = Math.max(0, savedJobsLimit - savedJobsUsed);
-  const percentage =
-    savedJobsLimit > 0
-      ? Math.min(100, (savedJobsUsed / savedJobsLimit) * 100)
-      : 0;
-
-  const getBarColor = () => {
-    const ratio = remaining / savedJobsLimit;
-    if (ratio > 0.5) return "bg-green-500";
-    if (ratio > 0.25) return "bg-orange-500";
-    return "bg-red-500";
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-sm">
-        <span className="flex items-center gap-1.5 text-white/90">
-          <Bookmark className="w-4 h-4" aria-hidden="true" />
-          <span>
-            {`${remaining} ${tUsage("features.savedJobs.label")}`}
-            <span className="text-xs ml-1 text-white/60">
-              /{savedJobsLimit}
-            </span>
-          </span>
-        </span>
-      </div>
-      <div
-        className="h-2 bg-gray-100 rounded-full overflow-hidden"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={savedJobsLimit}
-        aria-valuenow={remaining}
-      >
-        <div
-          className={`h-full transition-all duration-300 ${getBarColor()}`}
-          style={{ width: `${100 - percentage}%` }}
-        />
-      </div>
-    </div>
-  );
-}
 
 export function UsageSummary({ className = "" }: UsageSummaryProps) {
   const { plan, isFreePlan } = useSubscription();
   const tUsage = useTranslations("usageCounter");
 
-  // Plan Carrière (premium) = tout illimité, pas besoin du timer
-  if (plan === "premium") return null;
+  // Paid unlimited plans (pro/premium) don't need the summary
+  if (plan === "pro" || plan === "premium") return null;
 
   return (
     <div className={className}>
-      {(isFreePlan || plan === "starter") && (
-        <>
-          <h4 className="text-sm font-semibold mb-3 text-white/90">
-            {tUsage("dailyUsage")}
-          </h4>
+      <>
+        <h4 className="text-sm font-semibold mb-3 text-white/90">
+          {tUsage("dailyUsage")}
+        </h4>
           <div className="space-y-3">
             <UsageCounter feature="job_search" showBar />
-            <UsageCounter feature="cv_analysis" showBar />
+            <UsageCounter feature="ats_score" showBar />
+            <UsageCounter feature="matching_score" showBar />
+            <UsageCounter feature="custom_cv" showBar />
             <UsageCounter feature="assistant_messages" showBar />
-            <UsageCounter feature="cv_adapt" showBar />
             <UsageCounter feature="cover_letter" showBar />
           </div>
           <div className="flex items-center gap-1.5 mt-2 mb-3 text-xs text-white/50">
@@ -311,10 +313,9 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
             {tUsage("generalUsage")}
           </h4>
           <div className="space-y-3">
-            <SavedJobsCounter />
+            <UsageCounter feature="saved_jobs" showBar />
           </div>
-        </>
-      )}
+      </>
     </div>
   );
 }

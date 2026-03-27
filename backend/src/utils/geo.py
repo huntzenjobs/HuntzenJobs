@@ -343,8 +343,15 @@ async def get_cities_from_nominatim(country_code: str, limit: int = 500) -> list
         >>> await get_cities_from_nominatim("fr")
         ["Paris", "Marseille", "Lyon", ...]
     """
+    if not country_code:
+        return []
+
     try:
         url = "https://nominatim.openstreetmap.org/search"
+        # Note: Nominatim search without 'q' or city/street filter might fail with 400
+        # This function is intended to get "all cities" but Nominatim doesn't support that 
+        # without a generic query or a structured filter.
+        # If no query is provided, we should probably just return empty and let fallback handle it.
         params = {
             "countrycodes": country_code.lower(),
             "format": "json",
