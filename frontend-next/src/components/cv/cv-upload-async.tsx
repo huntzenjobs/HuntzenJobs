@@ -75,8 +75,9 @@ export function CVUploadAsync({
     elapsedTime,
     reset,
   } = useCVAnalysis(() => {
-    // Increment cv_analysis quota when analysis completes successfully
-    incrementUsage("cv_analysis");
+    // Increment appropriate quota when analysis completes successfully
+    const feature: FeatureType = jobDescription ? "matching_score" : "ats_score";
+    incrementUsage(feature);
   });
 
   // ============================================
@@ -86,9 +87,12 @@ export function CVUploadAsync({
   const handleUpload = useCallback(async () => {
     if (!selectedFile) return;
 
-    // Check freemium limit
-    if (!canUse("cv_analysis")) {
-      openPricingModal("cv_analyses_per_day");
+    // Check freemium limit (ATS vs Matching)
+    const feature: FeatureType = jobDescription ? "matching_score" : "ats_score";
+    if (!canUse(feature)) {
+      openPricingModal(
+        jobDescription ? "matching_scores_per_day" : "ats_scores_per_day",
+      );
       return;
     }
 
@@ -151,11 +155,18 @@ export function CVUploadAsync({
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <span>
                   <strong>
-                    {t("freeAnalysisBenefit", {
-                      count: PLAN_LIMITS.free.cv_analyses_per_day,
-                    })}
+                    {PLAN_LIMITS.free.ats_scores_per_day} scores ATS gratuits
                   </strong>{" "}
-                  {t("freeAnalysisBenefitSuffix")}
+                  par jour
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <span>
+                  <strong>
+                    {PLAN_LIMITS.free.matching_scores_per_day} matching jobs
+                  </strong>{" "}
+                  par jour
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -497,11 +508,18 @@ export function CVUploadAsync({
                   <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                   <span>
                     <strong>
-                      {t("freeAnalysisBenefit", {
-                        count: PLAN_LIMITS.free.cv_analyses_per_day,
-                      })}
+                      {PLAN_LIMITS.free.ats_scores_per_day} analyses ATS gratuites
                     </strong>{" "}
-                    {t("freeAnalysisBenefitSuffix")}
+                    par jour
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <span>
+                    <strong>
+                      {PLAN_LIMITS.free.matching_scores_per_day} scores compatibles
+                    </strong>{" "}
+                    par jour
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
@@ -580,12 +598,18 @@ export function CVUploadAsync({
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
                     <span>
-                      Analyses CV <strong>illimitées</strong>
+                      Scores ATS <strong>illimités</strong>
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span>Coach IA 30min/jour</span>
+                    <span>
+                      Scores Matching <strong>illimités</strong>
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span>Coach IA 20 messages/jour</span>
                   </li>
                 </ul>
               </div>
@@ -608,7 +632,7 @@ export function CVUploadAsync({
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                     <span>
-                      Tout Starter + <strong>Coach illimité</strong>
+                      Tout Recherche Active + <strong>Coach illimité</strong>
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -641,7 +665,7 @@ export function CVUploadAsync({
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
                     <span>
-                      Tout Pro + <strong>Historique illimité</strong>
+                      Tout Accélérateur + <strong>Historique illimité</strong>
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
