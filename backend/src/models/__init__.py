@@ -5,9 +5,9 @@ from src.models.schemas import (
     CoachResponse,
     CVAnalysisRequest,
     CVAnalysisResponse,
+    Job,
     JobSearchRequest,
     JobSearchResponse,
-    Job,
 )
 
 __all__ = [

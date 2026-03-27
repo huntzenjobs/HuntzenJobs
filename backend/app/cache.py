@@ -16,7 +16,8 @@ Sprint: 6 - Ticket S6-3
 
 import json
 import os
-from typing import Optional, Dict, Any
+from typing import Any
+
 import redis.asyncio as redis
 from structlog import get_logger
 
@@ -26,25 +27,20 @@ logger = get_logger(__name__)
 # REDIS CLIENT INITIALIZATION
 # ============================================
 
-redis_client: Optional[redis.Redis] = None
+redis_client: redis.Redis | None = None
 
 
 async def init_redis_client() -> None:
     """Initialize Redis client with connection pooling."""
     global redis_client
 
-    redis_url = os.getenv("UPSTASH_REDIS_URL")
+    redis_url = os.getenv("REDIS_URL")
 
     if not redis_url:
-        logger.warning("UPSTASH_REDIS_URL not set - quota caching disabled")
+        logger.warning("REDIS_URL not set - quota caching disabled")
         return
 
-    # Convert redis:// to rediss:// for SSL and change port to 6380
-    if redis_url.startswith("redis://"):
-        redis_url = redis_url.replace("redis://", "rediss://", 1).replace(":6379", ":6380")
-
     try:
-        # Upstash Redis with SSL (rediss:// protocol)
         redis_client = redis.from_url(
             redis_url,
             encoding="utf-8",
@@ -102,7 +98,7 @@ class QuotaCache:
     TTL = 300  # 5 minutes
 
     @staticmethod
-    async def get(user_id: str, feature: str) -> Optional[Dict[str, Any]]:
+    async def get(user_id: str, feature: str) -> dict[str, Any] | None:
         """
         Get cached quota status for user and feature.
 
@@ -132,7 +128,7 @@ class QuotaCache:
             return None
 
     @staticmethod
-    async def set(user_id: str, feature: str, quota_data: Dict[str, Any]) -> bool:
+    async def set(user_id: str, feature: str, quota_data: dict[str, Any]) -> bool:
         """
         Cache quota status for user and feature.
 
@@ -224,7 +220,7 @@ class QuotaCache:
 # HEALTH CHECK
 # ============================================
 
-async def check_redis_health() -> Dict[str, Any]:
+async def check_redis_health() -> dict[str, Any]:
     """
     Check Redis connection health for /health endpoint.
 

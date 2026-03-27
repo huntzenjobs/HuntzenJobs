@@ -5,10 +5,11 @@ Provides health check and monitoring endpoints for system observability.
 Includes webhook failure tracking for alerting and debugging.
 """
 
+from datetime import datetime
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from structlog import get_logger
-from typing import Dict, Any
-from datetime import datetime
 
 logger = get_logger(__name__)
 
@@ -24,7 +25,7 @@ except ImportError as e:
 
 
 @router.get("/webhooks")
-async def get_webhook_health(hours: int = 24) -> Dict[str, Any]:
+async def get_webhook_health(hours: int = 24) -> dict[str, Any]:
     """
     Get webhook processing statistics for monitoring.
 
@@ -150,11 +151,11 @@ async def get_webhook_health(hours: int = 24) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Failed to get webhook health: {e}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}") from None
 
 
 @router.get("/ping")
-async def ping() -> Dict[str, str]:
+async def ping() -> dict[str, str]:
     """
     Simple ping endpoint for basic health checks.
 
@@ -164,5 +165,20 @@ async def ping() -> Dict[str, str]:
     return {
         "status": "ok",
         "service": "huntzen-backend",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@router.get("/pool")
+async def pool_health() -> dict[str, Any]:
+    """
+    DB connection pool metrics pour monitoring Betterstack/Grafana.
+
+    Configurer une alerte si utilization > 0.8 ou requests_waiting > 3.
+    """
+    from app.database import get_pool_stats
+    stats = await get_pool_stats()
+    return {
+        **stats,
         "timestamp": datetime.utcnow().isoformat()
     }

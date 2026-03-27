@@ -10,10 +10,10 @@ Sprint: 6 - Ticket S6-5
 """
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any, Literal
-from pydantic import BaseModel, Field, EmailStr, field_validator, ConfigDict
 from decimal import Decimal
+from typing import Any, Literal
 
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ============================================
 # SUBSCRIPTION SCHEMAS
@@ -41,11 +41,11 @@ class SubscriptionPlan(BaseModel):
     id: str = Field(..., description="Plan UUID")
     name: Literal["free", "starter", "pro", "premium"] = Field(..., description="Plan name")
     display_name: str = Field(..., description="Display name for UI")
-    description: Optional[str] = Field(None, description="Plan description")
+    description: str | None = Field(None, description="Plan description")
     price_monthly: Decimal = Field(..., description="Monthly price in USD")
-    price_yearly: Optional[Decimal] = Field(None, description="Yearly price in USD")
+    price_yearly: Decimal | None = Field(None, description="Yearly price in USD")
     limits: SubscriptionPlanLimits = Field(..., description="Feature limits")
-    features: List[str] = Field(default_factory=list, description="Marketing features list")
+    features: list[str] = Field(default_factory=list, description="Marketing features list")
     is_active: bool = Field(True, description="Whether plan is available")
     sort_order: int = Field(0, description="Display order")
     created_at: datetime
@@ -56,11 +56,11 @@ class SubscriptionPlanPublic(BaseModel):
     """Public subscription plan info for pricing page."""
     name: str
     display_name: str
-    description: Optional[str]
+    description: str | None
     price_monthly: Decimal
-    price_yearly: Optional[Decimal]
+    price_yearly: Decimal | None
     limits: SubscriptionPlanLimits
-    features: List[str]
+    features: list[str]
     sort_order: int
 
 
@@ -75,19 +75,19 @@ class UserSubscription(BaseModel):
     current_period_start: datetime
     current_period_end: datetime
     cancel_at_period_end: bool = False
-    canceled_at: Optional[datetime] = None
+    canceled_at: datetime | None = None
 
     # Stripe fields
-    stripe_subscription_id: Optional[str] = None
-    stripe_customer_id: Optional[str] = None
-    stripe_price_id: Optional[str] = None
+    stripe_subscription_id: str | None = None
+    stripe_customer_id: str | None = None
+    stripe_price_id: str | None = None
 
     # Trial fields
-    trial_start: Optional[datetime] = None
-    trial_end: Optional[datetime] = None
+    trial_start: datetime | None = None
+    trial_end: datetime | None = None
 
     # Metadata
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
 
@@ -101,13 +101,13 @@ class CreateSubscriptionRequest(BaseModel):
     """Request to create/upgrade subscription."""
     plan_name: Literal["free", "starter", "pro", "premium"]
     billing_period: Literal["monthly", "yearly"] = "monthly"
-    stripe_payment_method_id: Optional[str] = Field(None, description="Stripe payment method for paid plans")
+    stripe_payment_method_id: str | None = Field(None, description="Stripe payment method for paid plans")
 
 
 class CancelSubscriptionRequest(BaseModel):
     """Request to cancel subscription."""
     cancel_at_period_end: bool = Field(True, description="Cancel now or at period end")
-    reason: Optional[str] = Field(None, max_length=500, description="Cancellation reason")
+    reason: str | None = Field(None, max_length=500, description="Cancellation reason")
 
 
 # ============================================
@@ -136,8 +136,8 @@ class QuotaStatus(BaseModel):
 class UsageStatsResponse(BaseModel):
     """Response for GET /api/usage-stats."""
     success: bool = True
-    stats: Dict[str, Dict[str, Any]] = Field(..., description="Quota stats per feature")
-    reset_at: Optional[str] = Field(None, description="When quotas reset")
+    stats: dict[str, dict[str, Any]] = Field(..., description="Quota stats per feature")
+    reset_at: str | None = Field(None, description="When quotas reset")
 
 
 class QuotaExceededError(BaseModel):
@@ -158,7 +158,7 @@ class QuotaExceededError(BaseModel):
 class CVAnalysisRequest(BaseModel):
     """Request for CV analysis."""
     cv_text: str = Field(..., min_length=50, max_length=50000, description="CV content")
-    job_description: Optional[str] = Field(None, max_length=10000, description="Optional job description for matching")
+    job_description: str | None = Field(None, max_length=10000, description="Optional job description for matching")
     language: Literal["fr", "en"] = Field("fr", description="Response language")
 
 
@@ -175,12 +175,12 @@ class CVAnalysisResponse(BaseModel):
     """Response from CV analysis."""
     success: bool = True
     ats_score: ATSScore
-    strengths: List[str] = Field(default_factory=list)
-    improvements: List[str] = Field(default_factory=list)
-    missing_sections: List[str] = Field(default_factory=list)
-    keywords_found: List[str] = Field(default_factory=list)
-    keywords_missing: List[str] = Field(default_factory=list)
-    job_match_score: Optional[int] = Field(None, ge=0, le=100, description="Match score if job_description provided")
+    strengths: list[str] = Field(default_factory=list)
+    improvements: list[str] = Field(default_factory=list)
+    missing_sections: list[str] = Field(default_factory=list)
+    keywords_found: list[str] = Field(default_factory=list)
+    keywords_missing: list[str] = Field(default_factory=list)
+    job_match_score: int | None = Field(None, ge=0, le=100, description="Match score if job_description provided")
     analysis_language: Literal["fr", "en"]
     processed_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -201,12 +201,12 @@ class CoachResponse(BaseModel):
     response: str = Field(..., description="Coach response")
     agent: Literal["CareerCoach"] = "CareerCoach"
     session_id: str
-    seconds_used: Optional[int] = Field(None, description="Seconds used for quota tracking")
+    seconds_used: int | None = Field(None, description="Seconds used for quota tracking")
 
 
 class GenerateTitleRequest(BaseModel):
     """Request to generate conversation title."""
-    messages: List[Dict[str, str]] = Field(..., min_items=1, max_items=10, description="First few messages")
+    messages: list[dict[str, str]] = Field(..., min_items=1, max_items=10, description="First few messages")
 
 
 class GenerateTitleResponse(BaseModel):
@@ -223,8 +223,8 @@ class JobSearchRequest(BaseModel):
     """Request for job search."""
     job_title: str = Field(..., min_length=2, max_length=100, description="Job title to search")
     country_code: str = Field(..., pattern=r'^[A-Z]{2}$', description="ISO country code")
-    city: Optional[str] = Field(None, max_length=100, description="City name")
-    contract_type: Optional[str] = Field(None, max_length=50, description="Contract type")
+    city: str | None = Field(None, max_length=100, description="City name")
+    contract_type: str | None = Field(None, max_length=50, description="Contract type")
 
 
 class JobListing(BaseModel):
@@ -233,22 +233,22 @@ class JobListing(BaseModel):
     company: str
     location: str
     url: str
-    description: Optional[str] = None
-    salary: Optional[str] = None
-    contract_type: Optional[str] = None
-    posted_date: Optional[str] = None
+    description: str | None = None
+    salary: str | None = None
+    contract_type: str | None = None
+    posted_date: str | None = None
     source: str = Field(..., description="Data source (adzuna, google_jobs, remoteok)")
 
 
 class JobSearchResponse(BaseModel):
     """Response from job search."""
     success: bool = True
-    jobs: List[JobListing] = Field(default_factory=list)
+    jobs: list[JobListing] = Field(default_factory=list)
     count: int = Field(0, description="Number of jobs found")
-    sources: List[str] = Field(default_factory=list, description="Sources used")
-    query: Dict[str, Any] = Field(default_factory=dict, description="Search query parameters")
-    corrected_query: Optional[str] = Field(None, description="Spell-corrected query if applicable")
-    original_query: Optional[str] = None
+    sources: list[str] = Field(default_factory=list, description="Sources used")
+    query: dict[str, Any] = Field(default_factory=dict, description="Search query parameters")
+    corrected_query: str | None = Field(None, description="Spell-corrected query if applicable")
+    original_query: str | None = None
 
 
 # ============================================
@@ -258,7 +258,7 @@ class JobSearchResponse(BaseModel):
 class RecruiterSearchRequest(BaseModel):
     """Request to search for recruiters."""
     company_name: str = Field(..., min_length=2, max_length=100, description="Company name")
-    location: Optional[str] = Field(None, max_length=100, description="Location")
+    location: str | None = Field(None, max_length=100, description="Location")
 
 
 class RecruiterInfo(BaseModel):
@@ -267,17 +267,17 @@ class RecruiterInfo(BaseModel):
     title: str
     company: str
     linkedin_url: str
-    email: Optional[str] = None
-    location: Optional[str] = None
+    email: str | None = None
+    location: str | None = None
 
 
 class RecruiterSearchResponse(BaseModel):
     """Response from recruiter search."""
     success: bool = True
-    recruiters: List[RecruiterInfo] = Field(default_factory=list)
+    recruiters: list[RecruiterInfo] = Field(default_factory=list)
     count: int = 0
     company: str
-    location: Optional[str] = None
+    location: str | None = None
 
 
 # ============================================
@@ -289,7 +289,7 @@ class HealthCheck(BaseModel):
     status: Literal["healthy", "degraded", "unhealthy"]
     service: str = "huntzen-backend"
     timestamp: float
-    checks: Dict[str, Any] = Field(default_factory=dict, description="Component health checks")
+    checks: dict[str, Any] = Field(default_factory=dict, description="Component health checks")
 
 
 # ============================================
@@ -300,17 +300,17 @@ class ErrorResponse(BaseModel):
     """Generic error response."""
     success: bool = False
     error: str = Field(..., description="Error code or message")
-    detail: Optional[str] = Field(None, description="Additional error details")
+    detail: str | None = Field(None, description="Additional error details")
     status_code: int = Field(..., description="HTTP status code")
 
 
 class ValidationError(BaseModel):
     """Validation error details."""
-    loc: List[str] = Field(..., description="Location of error (field path)")
+    loc: list[str] = Field(..., description="Location of error (field path)")
     msg: str = Field(..., description="Error message")
     type: str = Field(..., description="Error type")
 
 
 class ValidationErrorResponse(BaseModel):
     """Response for 422 validation errors."""
-    detail: List[ValidationError]
+    detail: list[ValidationError]

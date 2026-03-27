@@ -11,33 +11,33 @@ Sub-agents:
 """
 
 import asyncio
-import json
 import logging
 import os
 import tempfile
-from typing import Any, Optional
+from typing import Any
 
 from groq import Groq
-from langchain_groq import ChatGroq
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
-from src.models.schemas import ATSScore, CVAnalysisResponse, TrainingRecommendation
+from src.models.schemas import ATSScore
 
 logger = logging.getLogger(__name__)
+
+HUNTZEN_CV_MARKERS = ["HuntZen Jobs", "Optimisé par HuntZen", "HuntZen ATS", "huntzenjobs.com", "HuntZen ATS Certified"]
 
 
 class CVAnalyzerAgent(BaseAgent):
     """
     CV Analyzer Agent with deep sub-agent architecture.
-    
+
     Orchestrates:
     - ATS scoring for resume optimization
     - Skill extraction and categorization
     - Job matching analysis
     - Improvement recommendations
     """
-    
+
     def __init__(self):
         """Initialize the CV Analyzer with its sub-agents."""
         config = AgentConfig(
@@ -48,16 +48,16 @@ class CVAnalyzerAgent(BaseAgent):
             system_prompt_file="cv_analyzer_context.txt",
         )
         super().__init__(config)
-        
+
         # Groq client for JSON mode
         self.groq_client = Groq(api_key=settings.get_groq_key())
-        
+
         # Docling converter (lazy loaded)
         self._docling_converter = None
-        
+
         # Initialize sub-agents
         self._init_sub_agents()
-    
+
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
         self.ats_scorer = SubAgent(
@@ -68,7 +68,7 @@ class CVAnalyzerAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.ats_scorer)
-        
+
         self.skill_extractor = SubAgent(
             name="SkillExtractor",
             system_prompt=load_prompt("cv_skill_extractor.txt"),
@@ -76,7 +76,7 @@ class CVAnalyzerAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.skill_extractor)
-        
+
         self.job_matcher = SubAgent(
             name="JobMatcher",
             system_prompt=load_prompt("cv_job_matcher.txt"),
@@ -85,7 +85,7 @@ class CVAnalyzerAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.job_matcher)
-        
+
         self.improvement_advisor = SubAgent(
             name="ImprovementAdvisor",
             system_prompt=load_prompt("cv_improvement_advisor.txt"),
@@ -93,56 +93,72 @@ class CVAnalyzerAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.improvement_advisor)
-        
+
         logger.info(f"[{self.name}] Initialized 4 sub-agents")
-    
+
     @property
     def docling_converter(self):
         """Lazy load Docling converter."""
         if self._docling_converter is None:
+            from docling.datamodel.base_models import InputFormat
+            from docling.datamodel.pipeline_options import PdfPipelineOptions
             from docling.document_converter import DocumentConverter
+
             logger.info(f"[{self.name}] Initializing Docling converter...")
-            self._docling_converter = DocumentConverter()
-            logger.info(f"[{self.name}] Docling ready")
+            # CVs are text-based PDFs — OCR is unnecessary and triggers
+            # RapidOCR model downloads that fail in non-root containers
+            pdf_options = PdfPipelineOptions(do_ocr=False)
+            self._docling_converter = DocumentConverter(
+                format_options={InputFormat.PDF: pdf_options}
+            )
+            logger.info(f"[{self.name}] Docling ready (OCR disabled for text-based PDFs)")
         return self._docling_converter
-    
+
     async def run(
         self,
         cv_text: str,
-        job_description: Optional[str] = None,
+        job_description: str | None = None,
         language: str = "fr",
     ) -> dict[str, Any]:
         """
         Execute comprehensive CV analysis.
-        
+
         Args:
             cv_text: CV content as text
             job_description: Optional job description for matching
             language: Response language
-            
+
         Returns:
             Complete analysis results
         """
         try:
+            # Détecter si le CV vient du pipeline HuntZen
+            is_huntzen_optimized = bool(cv_text) and any(marker in cv_text for marker in HUNTZEN_CV_MARKERS)
+
             # Run sub-agents in parallel
             tasks = [
                 self._score_ats(cv_text),
                 self._extract_skills(cv_text),
                 self._get_improvements(cv_text),
             ]
-            
+
             # Add job matching if description provided
             if job_description:
                 tasks.append(self._match_job(cv_text, job_description))
-            
+
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             # Process results
             ats_result = results[0] if isinstance(results[0], dict) else {}
             skills_result = results[1] if isinstance(results[1], dict) else {}
             improvements_result = results[2] if isinstance(results[2], dict) else {}
             job_match_result = results[3] if len(results) > 3 and isinstance(results[3], dict) else {}
-            
+
+            if is_huntzen_optimized:
+                improvements_result = self._filter_improvements_for_certified_cv(improvements_result)
+
+            recommended_titles = self._extract_recommended_titles(skills_result)
+
             # Build response (with score capping to prevent validation errors)
             return {
                 "success": True,
@@ -159,8 +175,9 @@ class CVAnalyzerAgent(BaseAgent):
                 "job_match": job_match_result if job_description else None,
                 "strengths": self._extract_strengths(ats_result, skills_result),
                 "weaknesses": self._extract_weaknesses(ats_result, improvements_result),
+                "recommended_job_titles": recommended_titles,
             }
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Analysis error: {e}")
             return {
@@ -169,140 +186,210 @@ class CVAnalyzerAgent(BaseAgent):
                 "strengths": [],
                 "weaknesses": [],
             }
-    
+
     async def _score_ats(self, cv_text: str) -> dict:
         """Score CV for ATS compatibility."""
         result = await self.ats_scorer.run(task=f"Score this CV:\n\n{cv_text}")
         return self._parse_json(result) or {}
-    
+
     async def _extract_skills(self, cv_text: str) -> dict:
         """Extract skills from CV."""
         result = await self.skill_extractor.run(task=f"Extract skills:\n\n{cv_text}")
         return self._parse_json(result) or {}
-    
+
     async def _match_job(self, cv_text: str, job_description: str) -> dict:
         """Match CV against job description."""
         task = f"CV:\n{cv_text}\n\nJob Description:\n{job_description}"
         result = await self.job_matcher.run(task=task)
         return self._parse_json(result) or {}
-    
+
     async def _get_improvements(self, cv_text: str) -> dict:
         """Get improvement suggestions."""
         result = await self.improvement_advisor.run(task=f"Suggest improvements:\n\n{cv_text}")
         return self._parse_json(result) or {}
-    
+
+    def _extract_recommended_titles(self, skills_result: dict) -> list[str]:
+        """Extraire les titres de poste recommandés depuis l'analyse des skills."""
+        titles = skills_result.get("suggested_job_titles", [])
+        if isinstance(titles, list):
+            return [str(t) for t in titles[:4] if t]
+        return []
+
+    def _filter_improvements_for_certified_cv(self, improvements: dict) -> dict:
+        """Supprimer les suggestions de format ATS pour les CV déjà certifiés HuntZen."""
+        filtered = dict(improvements)
+        ats_format_keywords = [
+            "section", "en-tête", "header", "format", "police", "font",
+            "structure", "template", "mise en page", "layout"
+        ]
+        content = filtered.get("content_improvements", [])
+        if isinstance(content, list):
+            filtered["content_improvements"] = [
+                s for s in content
+                if not any(kw in str(s).lower() for kw in ats_format_keywords)
+            ]
+        return filtered
+
     def _extract_strengths(self, ats_result: dict, skills_result: dict) -> list[str]:
         """Extract strengths from analysis."""
         strengths = []
-        
+
         # From ATS breakdown
         breakdown = ats_result.get("breakdown", {})
-        for key, value in breakdown.items():
+        for _key, value in breakdown.items():
             if any(word in str(value).lower() for word in ["good", "strong", "clear", "well", "excellent"]):
                 strengths.append(value)
-        
+
         # From Soft/Technical Skills (Top ones)
         tech_skills = skills_result.get("technical_skills", [])[:3]
         if tech_skills:
             strengths.append(f"Strong proficiency in: {', '.join(tech_skills)}")
-            
+
         if skills_result.get("certifications"):
             strengths.append(f"Has {len(skills_result['certifications'])} certifications")
-        
+
         return strengths[:5]
-    
+
     def _extract_weaknesses(self, ats_result: dict, improvements_result: dict) -> list[str]:
         """Extract weaknesses from analysis."""
         weaknesses = []
-        
+
         if ats_result.get("total", 100) < 70:
             weaknesses.append(f"ATS score ({ats_result.get('total')}) is below optimal criteria")
-        
+
         missing = improvements_result.get("missing_sections", [])
         if missing:
             weaknesses.extend([f"Missing section: {m}" for m in missing[:2]])
-            
+
         content_tips = improvements_result.get("content_improvements", [])
         if content_tips:
             weaknesses.extend(content_tips[:2])
-        
+
         return weaknesses[:5]
-    
+
     async def extract_text_from_pdf(self, pdf_bytes: bytes) -> str:
         """
-        Extract text from PDF using Docling.
-        
+        Extract text from PDF using Docling, with pypdf fallback.
+
         Args:
             pdf_bytes: PDF file content
-            
+
         Returns:
             Extracted text as markdown
         """
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
             tmp.write(pdf_bytes)
             tmp_path = tmp.name
-        
+
+        docling_text = None
+        docling_exc = None
         try:
             loop = asyncio.get_event_loop()
             doc = await loop.run_in_executor(
                 None,
                 lambda: self.docling_converter.convert(tmp_path).document
             )
-            return doc.export_to_markdown()
+            docling_text = doc.export_to_markdown()
+        except Exception as exc:
+            docling_exc = exc
+            logger.warning(
+                f"[{self.name}] Docling extraction failed ({exc}), falling back to pypdf"
+            )
+
+        # If Docling succeeded but returned insufficient text (< 100 chars),
+        # try pypdf before giving up — Docling with do_ocr=False can silently
+        # return empty/minimal text for design-heavy PDFs.
+        MIN_TEXT_CHARS = 100
+        if docling_text and len(docling_text.strip()) >= MIN_TEXT_CHARS:
+            return docling_text
+
+        if docling_text is not None and len(docling_text.strip()) < MIN_TEXT_CHARS:
+            logger.warning(
+                f"[{self.name}] Docling returned only {len(docling_text.strip())} chars "
+                "(< 100), trying pypdf fallback"
+            )
+
+        # pypdf is a Docling transitive dependency — always available.
+        # It works for text-based PDFs without requiring system libraries.
+        try:
+            import io as _io
+
+            from pypdf import PdfReader
+            reader = PdfReader(_io.BytesIO(pdf_bytes))
+            text = "\n".join(
+                page.extract_text() or "" for page in reader.pages
+            ).strip()
+            if text:
+                return text
+            raise RuntimeError("pypdf returned empty text")
+        except Exception as pypdf_exc:
+            if docling_exc:
+                raise RuntimeError(
+                    f"All PDF extraction methods failed. "
+                    f"Docling: {docling_exc}. pypdf: {pypdf_exc}."
+                ) from None
+            raise RuntimeError(
+                f"Docling returned insufficient text ({len((docling_text or '').strip())} chars). "
+                f"pypdf fallback also failed: {pypdf_exc}. "
+                "The PDF may be image-based (scanned) or use unsupported encoding."
+            ) from None
         finally:
             os.unlink(tmp_path)
-    
+
     async def analyze_ats_only(self, cv_text: str) -> dict:
         """
         Quick ATS-only analysis.
-        
+
         Args:
             cv_text: CV content
-            
+
         Returns:
             ATS score and breakdown
         """
         return await self._score_ats(cv_text)
-    
+
     async def match_with_job(self, cv_text: str, job_description: str) -> dict:
         """
         Match CV against specific job.
-        
+
         Args:
             cv_text: CV content
             job_description: Job posting content
-            
+
         Returns:
             Match analysis
         """
         return await self._match_job(cv_text, job_description)
 
 
-# Singleton instance
-_analyzer_instance: Optional[CVAnalyzerAgent] = None
-
-
 def get_cv_analyzer() -> CVAnalyzerAgent:
-    """Get or create the singleton CVAnalyzer instance."""
-    global _analyzer_instance
-    if _analyzer_instance is None:
-        _analyzer_instance = CVAnalyzerAgent()
-    return _analyzer_instance
+    """
+    Get CVAnalyzer singleton instance.
+
+    DEPRECATED: This function is maintained for backward compatibility only.
+    New code should use src.api.deps.get_cv_analyzer_main() instead, which provides
+    thread-safe singleton initialization.
+
+    Returns:
+        CVAnalyzerAgent singleton instance (thread-safe via deps.py)
+    """
+    from src.api.deps import get_cv_analyzer_main
+    return get_cv_analyzer_main()
 
 
 async def analyze_cv(
     cv_text: str,
-    job_description: Optional[str] = None,
+    job_description: str | None = None,
     language: str = "fr",
 ) -> dict[str, Any]:
     """
     Utility function for CV analysis.
-    
+
     Args:
         cv_text: CV content
         job_description: Optional job description
         language: Response language
-        
+
     Returns:
         Analysis results
     """

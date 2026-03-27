@@ -1,31 +1,41 @@
-import { useState, useEffect } from 'react'
-import { huntzenApi } from '@/lib/api/huntzen-client'
+import { useState, useEffect } from "react";
+import { huntzenApi } from "@/lib/api/huntzen-client";
 
-export function useFullJobDescription(url: string | undefined, source?: string) {
-  const [description, setDescription] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function useFullJobDescription(
+  url: string | undefined,
+  source?: string,
+) {
+  const [description, setDescription] = useState<string | null>(null);
+  const [finalUrl, setFinalUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!url) return
+    setFinalUrl(null);
+    setDescription(null);
+
+    if (!url) return;
 
     const fetchFullDescription = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const fullDesc = await huntzenApi.getJobDescription(url, source)
-        if (fullDesc && fullDesc.length > 100) {
-          setDescription(fullDesc)
+        const result = await huntzenApi.getJobDescription(url, source);
+        if (result && result.description && result.description.length > 100) {
+          setDescription(result.description);
+        }
+        if (result.final_url && result.final_url !== url) {
+          setFinalUrl(result.final_url);
         }
       } catch (err) {
-        console.error('Failed to fetch full description:', err)
-        setError('Impossible de charger la description complète')
+        console.error("Failed to fetch full description:", err);
+        setError("Impossible de charger la description complète");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchFullDescription()
-  }, [url, source])
+    fetchFullDescription();
+  }, [url, source]);
 
-  return { description, loading, error }
+  return { description, finalUrl, loading, error };
 }

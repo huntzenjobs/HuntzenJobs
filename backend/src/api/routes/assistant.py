@@ -5,21 +5,109 @@ Unified endpoints for all assistant types (career-coach, job-scout, cv-analyzer,
 Handles routing to the appropriate agent based on assistant_type parameter.
 """
 
+import logging
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, status
+from arq import create_pool
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from src.api.deps import (
+    BrandingAgentDep,
     CoachAgentDep,
-    ScoutConversationalAgentDep,
-    CVAgentDep,
+    CurrentUserDep,
     CVAdapterAgentDep,
+    CVAgentDep,
     InterviewSimAgentDep,
+    ScoutConversationalAgentDep,
+    _require_feature_flag_sync,
+    check_assistant_quota,
     get_session_history,
+    increment_assistant_messages,
     update_session_history,
 )
+from src.services.cv_chat_extractor import extract_cv_structured
+from src.services.modal_pdf_extractor import extract_text_via_modal, is_modal_pdf_enabled
+from src.services.stripe import invalidate_user_quota_cache
+
+logger = logging.getLogger(__name__)
+
+# ── ARQ queue — soupape de sécurité anti-429 Groq ────────────────────────────
+_arq_pool = None
+_GROQ_ACTIVE_KEY = "groq:active_assistant"
+_GROQ_ACTIVE_TTL = 120  # expire 2min en cas de crash
+ASSISTANT_SYNC_THRESHOLD = 12  # max appels Groq simultanés cross-replicas
+
+
+async def _get_arq_pool():
+    global _arq_pool
+    if _arq_pool is None:
+        try:
+            from src.workers.settings import _get_redis_settings
+            _arq_pool = await create_pool(_get_redis_settings())
+        except Exception as e:
+            logger.warning(f"[assistant] ARQ pool init failed: {e}")
+            _arq_pool = None
+    return _arq_pool
+
+
+async def _incr_active() -> int:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if not redis:
+        return 0
+    count = await redis.incr(_GROQ_ACTIVE_KEY)
+    await redis.expire(_GROQ_ACTIVE_KEY, _GROQ_ACTIVE_TTL)
+    return count
+
+
+async def _decr_active() -> None:
+    from src.utils.cache import get_redis
+    redis = await get_redis()
+    if redis:
+        val = await redis.decr(_GROQ_ACTIVE_KEY)
+        if val < 0:
+            await redis.set(_GROQ_ACTIVE_KEY, 0)
+
+# ── Prompts de réception du CV par assistant ─────────────────────────────────
+# Chaque assistant répond différemment à l'upload d'un CV.
+CV_RECEPTION_PROMPTS: dict[str, str] = {
+    "cv-analyzer": (
+        "L'utilisateur vient de partager son CV. "
+        "Fais une analyse ATS approfondie : identifie le score estimé, les points forts, "
+        "les axes d'amélioration prioritaires, et les mots-clés manquants. "
+        "Sois précis, actionnable et bienveillant. Structure ta réponse avec des sections claires."
+    ),
+    "cv-adapter": (
+        "L'utilisateur vient de partager son CV. "
+        "Résume brièvement son profil (poste, expérience, compétences clés), "
+        "puis demande-lui l'offre d'emploi ou le type de poste visé pour adapter le CV. "
+        "Sois enthousiaste et professionnel."
+    ),
+    "career-coach": (
+        "L'utilisateur vient de partager son CV. "
+        "Analyse son parcours professionnel, identifie ses forces et les opportunités d'évolution, "
+        "puis engage une conversation de coaching personnalisée. "
+        "Pose une question clé sur ses objectifs professionnels."
+    ),
+    "job-scout": (
+        "L'utilisateur vient de partager son CV. "
+        "Analyse son profil et suggère 3-5 types de postes qui correspondent à son expérience. "
+        "Identifie les secteurs porteurs et les mots-clés à utiliser dans sa recherche d'emploi."
+    ),
+    "branding": (
+        "L'utilisateur vient de partager son CV. "
+        "Identifie les éléments les plus forts pour construire son personal branding LinkedIn. "
+        "Propose un titre LinkedIn percutant et une accroche de profil basés sur son parcours réel."
+    ),
+    "interview-sim": (
+        "L'utilisateur vient de partager son CV. "
+        "Présente-toi comme recruteur, confirme avoir pris connaissance de son profil, "
+        "et propose de commencer la simulation d'entretien. "
+        "Commence par une question d'entretien typique basée sur son expérience réelle."
+    ),
+}
 
 router = APIRouter()
 
@@ -63,6 +151,7 @@ class AssistantResponse(BaseModel):
 async def job_scout_chat(
     request: AssistantRequest,
     agent: ScoutConversationalAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the Job Search expert.
@@ -70,15 +159,46 @@ async def job_scout_chat(
     Provides conversational guidance on job search strategies,
     market insights, and personalized recommendations.
     """
-    # Get conversation history
+    user_id = current_user["id"]
+    check_assistant_quota(user_id, "job-scout")
+
     history = get_session_history(request.session_id)
 
-    # Run conversational agent
-    result = await agent.run(
-        message=request.message,
-        history=history,
-        language=request.language,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > ASSISTANT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "assistant_task",
+                    message=request.message,
+                    session_id=request.session_id,
+                    assistant_type="job-scout",
+                    language=request.language,
+                    history=history,
+                )
+                increment_assistant_messages(user_id, "job-scout")
+                await invalidate_user_quota_cache(user_id)
+                logger.info(f"[assistant/job-scout] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[assistant/job-scout] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            message=request.message,
+            history=history,
+            language=request.language,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -86,12 +206,9 @@ async def job_scout_chat(
             detail=result.get("error", "Job Scout error"),
         )
 
-    # Update history
-    update_session_history(
-        request.session_id,
-        request.message,
-        result["response"],
-    )
+    increment_assistant_messages(user_id, "job-scout")
+    await invalidate_user_quota_cache(user_id)
+    update_session_history(request.session_id, request.message, result["response"])
 
     return AssistantResponse(
         success=True,
@@ -106,6 +223,7 @@ async def job_scout_chat(
 async def cv_analyzer_chat(
     request: AssistantRequest,
     agent: CVAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the CV Analysis expert.
@@ -113,15 +231,46 @@ async def cv_analyzer_chat(
     Provides conversational CV analysis, scoring, and improvement recommendations.
     Can guide users through the CV optimization process step by step.
     """
-    # Get conversation history
+    user_id = current_user["id"]
+    check_assistant_quota(user_id, "cv-analyzer")
+
     history = get_session_history(request.session_id)
 
-    # Run conversational agent
-    result = await agent.run(
-        message=request.message,
-        history=history,
-        language=request.language,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > ASSISTANT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "assistant_task",
+                    message=request.message,
+                    session_id=request.session_id,
+                    assistant_type="cv-analyzer",
+                    language=request.language,
+                    history=history,
+                )
+                increment_assistant_messages(user_id, "cv-analyzer")
+                await invalidate_user_quota_cache(user_id)
+                logger.info(f"[assistant/cv-analyzer] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[assistant/cv-analyzer] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            message=request.message,
+            history=history,
+            language=request.language,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -129,12 +278,9 @@ async def cv_analyzer_chat(
             detail=result.get("error", "CV Analyzer error"),
         )
 
-    # Update history
-    update_session_history(
-        request.session_id,
-        request.message,
-        result["response"],
-    )
+    increment_assistant_messages(user_id, "cv-analyzer")
+    await invalidate_user_quota_cache(user_id)
+    update_session_history(request.session_id, request.message, result["response"])
 
     return AssistantResponse(
         success=True,
@@ -149,6 +295,7 @@ async def cv_analyzer_chat(
 async def cv_adapter_chat(
     request: AssistantRequest,
     agent: CVAdapterAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the CV Adaptation specialist.
@@ -156,15 +303,46 @@ async def cv_adapter_chat(
     Provides conversational guidance for adapting CVs to specific job offers.
     Guides users through the adaptation process with strategic recommendations.
     """
-    # Get conversation history
+    user_id = current_user["id"]
+    check_assistant_quota(user_id, "cv-adapter")
+
     history = get_session_history(request.session_id)
 
-    # Run conversational agent
-    result = await agent.run(
-        message=request.message,
-        history=history,
-        language=request.language,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > ASSISTANT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "assistant_task",
+                    message=request.message,
+                    session_id=request.session_id,
+                    assistant_type="cv-adapter",
+                    language=request.language,
+                    history=history,
+                )
+                increment_assistant_messages(user_id, "cv-adapter")
+                await invalidate_user_quota_cache(user_id)
+                logger.info(f"[assistant/cv-adapter] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[assistant/cv-adapter] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            message=request.message,
+            history=history,
+            language=request.language,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -172,12 +350,9 @@ async def cv_adapter_chat(
             detail=result.get("error", "CV Adapter error"),
         )
 
-    # Update history
-    update_session_history(
-        request.session_id,
-        request.message,
-        result["response"],
-    )
+    increment_assistant_messages(user_id, "cv-adapter")
+    await invalidate_user_quota_cache(user_id)
+    update_session_history(request.session_id, request.message, result["response"])
 
     return AssistantResponse(
         success=True,
@@ -192,6 +367,7 @@ async def cv_adapter_chat(
 async def interview_sim_chat(
     request: AssistantRequest,
     agent: InterviewSimAgentDep,
+    current_user: CurrentUserDep,
 ):
     """
     Chat with the Interview Simulation recruiter.
@@ -200,15 +376,47 @@ async def interview_sim_chat(
     Provides realistic interview practice with a professional recruiter simulation.
     Includes behavioral questions, technical questions, and constructive feedback.
     """
-    # Get conversation history
+    user_id = current_user["id"]
+    _require_feature_flag_sync(user_id, "interview_sim", "Le simulateur d'entretien necessite un plan superieur.")
+    check_assistant_quota(user_id, "interview-sim")
+
     history = get_session_history(request.session_id)
 
-    # Run conversational agent
-    result = await agent.run(
-        message=request.message,
-        history=history,
-        language=request.language,
-    )
+    try:
+        active = await _incr_active()
+    except Exception:
+        active = 0
+
+    if active > ASSISTANT_SYNC_THRESHOLD:
+        await _decr_active()
+        pool = await _get_arq_pool()
+        if pool:
+            try:
+                job = await pool.enqueue_job(
+                    "assistant_task",
+                    message=request.message,
+                    session_id=request.session_id,
+                    assistant_type="interview-sim",
+                    language=request.language,
+                    history=history,
+                )
+                increment_assistant_messages(user_id, "interview-sim")
+                await invalidate_user_quota_cache(user_id)
+                logger.info(f"[assistant/interview-sim] ARQ queued — active={active} job={job.job_id}")
+                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+            except Exception as e:
+                logger.warning(f"[assistant/interview-sim] ARQ enqueue failed ({e}) — fallback sync")
+        await _incr_active()
+
+    # Mode synchrone
+    try:
+        result = await agent.run(
+            message=request.message,
+            history=history,
+            language=request.language,
+        )
+    finally:
+        await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -216,12 +424,9 @@ async def interview_sim_chat(
             detail=result.get("error", "Interview Simulator error"),
         )
 
-    # Update history
-    update_session_history(
-        request.session_id,
-        request.message,
-        result["response"],
-    )
+    increment_assistant_messages(user_id, "interview-sim")
+    await invalidate_user_quota_cache(user_id)
+    update_session_history(request.session_id, request.message, result["response"])
 
     return AssistantResponse(
         success=True,
@@ -230,6 +435,175 @@ async def interview_sim_chat(
         language=result.get("language", request.language),
         metadata=result.get("metadata"),
     )
+
+
+async def _extract_pdf_text(pdf_bytes: bytes, filename: str) -> str:
+    """
+    Extrait le texte d'un PDF.
+    Essaie Modal/Docling en premier (meilleure qualité), fallback pypdf.
+    """
+    if is_modal_pdf_enabled():
+        try:
+            logger.info(f"[attach-cv] Trying Modal extraction for {filename}")
+            text = await extract_text_via_modal(pdf_bytes)
+            if text and len(text.strip()) >= 100:
+                logger.info(f"[attach-cv] Modal OK: {len(text)} chars")
+                return text
+        except Exception as e:
+            logger.warning(f"[attach-cv] Modal failed, fallback to pypdf: {e}")
+
+    try:
+        import io
+
+        import pypdf
+
+        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages).strip()
+        if text and len(text) >= 50:
+            logger.info(f"[attach-cv] pypdf OK: {len(text)} chars")
+            return text
+    except Exception as e:
+        logger.error(f"[attach-cv] pypdf also failed: {e}")
+
+    raise RuntimeError(
+        "Impossible d'extraire le texte du PDF. "
+        "Vérifiez que le fichier n'est pas scanné ou protégé par mot de passe."
+    )
+
+
+@router.post("/attach-cv")
+async def attach_cv_to_chat(
+    coach_agent: CoachAgentDep,
+    cv_agent: CVAgentDep,
+    cv_adapter_agent: CVAdapterAgentDep,
+    scout_agent: ScoutConversationalAgentDep,
+    branding_agent: BrandingAgentDep,
+    interview_agent: InterviewSimAgentDep,
+    current_user: CurrentUserDep,
+    file: UploadFile = File(..., description="Fichier PDF du CV"),
+    assistant_type: str = Form(default="career-coach"),
+    session_id: str = Form(..., description="Session ID du chat"),
+    language: str = Form(default="fr"),
+):
+    """
+    Upload et attache un CV à une session de chat assistant.
+
+    Pipeline:
+    1. Validation + extraction texte (Modal/Docling → fallback pypdf)
+    2. Extraction structurée rapide via Groq JSON mode (~1s)
+    3. Injection du CV dans l'historique de session (Supabase)
+    4. Génération d'une première réponse IA contextualisée selon l'assistant actif
+    5. Retour: cv_structured + initial_response
+
+    Le CV persiste dans l'historique pour toute la durée de la session —
+    les agents le voient naturellement à chaque tour via get_session_history().
+    """
+    user_id = current_user["id"]
+
+    # ── Validation ────────────────────────────────────────────────────────────
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Seuls les fichiers PDF sont acceptés",
+        )
+
+    pdf_bytes = await file.read()
+
+    if len(pdf_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Fichier trop volumineux ({len(pdf_bytes) / 1024 / 1024:.1f}MB, max 10MB)",
+        )
+
+    check_assistant_quota(user_id, assistant_type)
+
+    try:
+        # ── Étape 1 : Extraction texte ────────────────────────────────────────
+        logger.info(f"[attach-cv] {file.filename} ({len(pdf_bytes)} bytes), assistant={assistant_type}")
+        cv_text = await _extract_pdf_text(pdf_bytes, file.filename or "cv.pdf")
+
+        # ── Étape 2 : Extraction structurée (Groq JSON mode, ~1s) ────────────
+        cv_structured = await extract_cv_structured(cv_text)
+
+        # ── Étape 3 : Préparer le message CV pour l'historique ────────────────
+        # Formaté pour être lisible par tous les agents dans l'historique.
+        cv_message_content = (
+            f"[CV PARTAGÉ — {file.filename}]\n\n"
+            f"{cv_text}\n\n"
+            f"[FIN DU CV]"
+        )
+
+        # ── Étape 4 : Générer la première réponse contextuelle ────────────────
+        lang_names = {"fr": "French", "en": "English", "es": "Spanish"}
+        lang_name = lang_names.get(language, "French")
+
+        reception_context = CV_RECEPTION_PROMPTS.get(
+            assistant_type, CV_RECEPTION_PROMPTS["career-coach"]
+        )
+
+        # Message synthétique qui déclenche l'analyse du CV par l'agent
+        first_message = (
+            f"[IMPORTANT: Respond in {lang_name}. {reception_context}]\n\n"
+            f"{cv_message_content}"
+        )
+
+        # Sélection de l'agent selon l'assistant actif
+        agent_map = {
+            "cv-analyzer": cv_agent,
+            "cv-adapter": cv_adapter_agent,
+            "job-scout": scout_agent,
+            "branding": branding_agent,
+            "interview-sim": interview_agent,
+            "career-coach": coach_agent,
+        }
+        agent = agent_map.get(assistant_type, coach_agent)
+
+        current_history = get_session_history(session_id)
+        result = await agent.run(
+            message=first_message,
+            history=current_history,
+            language=language,
+        )
+
+        if not result.get("success"):
+            raise RuntimeError(result.get("error", "Erreur lors de l'analyse du CV"))
+
+        initial_response = result["response"]
+
+        # ── Étape 5 : Persister dans l'historique de session ─────────────────
+        # CV (user) + réponse IA (assistant) → stockés ensemble.
+        # Tous les tours suivants verront le CV via get_session_history().
+        update_session_history(session_id, cv_message_content, initial_response)
+
+        logger.info(
+            f"[attach-cv] Done — session={session_id[:8]}... "
+            f"cv={len(cv_text)}chars structured={bool(cv_structured)}"
+        )
+
+        increment_assistant_messages(user_id, assistant_type)
+        await invalidate_user_quota_cache(user_id)
+
+        return {
+            "success": True,
+            "filename": file.filename,
+            "char_count": len(cv_text),
+            "cv_structured": cv_structured,
+            "initial_response": initial_response,
+        }
+
+    except HTTPException:
+        raise
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from None
+    except Exception as e:
+        logger.error(f"[attach-cv] Unexpected error: {type(e).__name__}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors du traitement du CV",
+        ) from None
 
 
 @router.post("/new-session")

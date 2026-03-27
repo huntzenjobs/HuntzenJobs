@@ -12,11 +12,9 @@ Pipeline:
 Author: HuntZen
 """
 
-import asyncio
 import json
 import logging
-import re
-from typing import Any, Optional
+from typing import Any
 
 from groq import Groq
 
@@ -29,14 +27,14 @@ logger = logging.getLogger(__name__)
 class CVAdapterAgent(BaseAgent):
     """
     CV Adapter Agent with deep sub-agent architecture.
-    
+
     Transforms a CV to match a specific job offer while:
     - Keeping all content truthful (no invention)
     - Using the job's exact vocabulary
     - Prioritizing relevant experience
     - Targeting 1-page output
     """
-    
+
     def __init__(self):
         """Initialize the CV Adapter with its sub-agents."""
         config = AgentConfig(
@@ -47,13 +45,13 @@ class CVAdapterAgent(BaseAgent):
             system_prompt_file="cv_adapter_main.txt",
         )
         super().__init__(config)
-        
+
         # Groq client for JSON mode
         self.groq_client = Groq(api_key=settings.get_groq_key())
-        
+
         # Initialize sub-agents
         self._init_sub_agents()
-    
+
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
         # Job Analyzer - Extracts requirements from job posting
@@ -65,7 +63,7 @@ class CVAdapterAgent(BaseAgent):
             max_tokens=2048,
         )
         self.register_sub_agent(self.job_analyzer)
-        
+
         # CV Mapper - Maps CV to job requirements
         self.cv_mapper = SubAgent(
             name="CVMapper",
@@ -75,7 +73,7 @@ class CVAdapterAgent(BaseAgent):
             max_tokens=2048,
         )
         self.register_sub_agent(self.cv_mapper)
-        
+
         # CV Rewriter - Rewrites CV content
         self.cv_rewriter = SubAgent(
             name="CVRewriter",
@@ -85,7 +83,7 @@ class CVAdapterAgent(BaseAgent):
             max_tokens=4096,
         )
         self.register_sub_agent(self.cv_rewriter)
-        
+
         # Fact Checker - Validates no hallucinations
         self.fact_checker = SubAgent(
             name="FactChecker",
@@ -95,9 +93,9 @@ class CVAdapterAgent(BaseAgent):
             max_tokens=1024,
         )
         self.register_sub_agent(self.fact_checker)
-        
+
         logger.info(f"[{self.name}] Initialized 4 sub-agents")
-    
+
     async def run(
         self,
         cv_text: str,
@@ -108,57 +106,61 @@ class CVAdapterAgent(BaseAgent):
     ) -> dict[str, Any]:
         """
         Adapt CV to match a job offer using HYBRID approach.
-        
+
         HYBRID APPROACH:
         1. Extract factual data from original CV (dates, companies, schools - NEVER modified)
         2. LLM rewrites ONLY bullet points and summary
         3. Merge: factual data + improved bullets = perfect CV
-        
+
         This prevents ALL hallucinations on dates and company names.
         """
         try:
             logger.info(f"[{self.name}] Starting CV adaptation pipeline (HYBRID MODE)")
-            
+
             # Phase 1: Extract FACTUAL data from original CV (IMMUTABLE)
             logger.info(f"[{self.name}] Phase 1: Extracting factual data from original CV...")
             original_data = await self._extract_factual_data(cv_text, language)
-            
+
             if not original_data.get("success"):
                 return {"success": False, "error": "Failed to extract CV data"}
-            
+
             # Phase 2: Analyze job requirements
             logger.info(f"[{self.name}] Phase 2: Analyzing job requirements...")
             job_analysis = await self._analyze_job(job_description, language)
-            
+
             if not job_analysis.get("success"):
                 return {"success": False, "error": "Failed to analyze job description"}
-            
+
             # Phase 3: Map CV to job requirements
             logger.info(f"[{self.name}] Phase 3: Mapping CV to requirements...")
             cv_mapping = await self._map_cv_to_job(cv_text, job_analysis, language)
-            
+
             if not cv_mapping.get("success"):
                 return {"success": False, "error": "Failed to map CV to job"}
-            
+
             # Phase 4: Rewrite ONLY bullet points and summary (NOT factual data)
             logger.info(f"[{self.name}] Phase 4: Rewriting bullet points...")
             rewritten_content = await self._rewrite_bullets_only(
                 original_data, job_analysis, cv_mapping, language
             )
-            
+
             if not rewritten_content.get("success"):
                 return {"success": False, "error": "Failed to rewrite content"}
-            
+
             # Phase 5: MERGE - Combine factual data with rewritten content
             logger.info(f"[{self.name}] Phase 5: Merging factual data with improved content...")
             final_cv = self._merge_cv_data(original_data, rewritten_content, job_analysis, cv_mapping)
-            
+
+            # Mark CV as HuntZen-certified (used by PDF template + ATS scorer)
+            final_cv["huntzen_certified"] = True
+
             # Calculate match score
             match_score = self._calculate_match_score(job_analysis, cv_mapping)
-            
+
             return {
                 "success": True,
                 "cv_data": final_cv,
+                "huntzen_certified": True,
                 "job_analysis": job_analysis,
                 "cv_mapping": cv_mapping,
                 "match_score": match_score,
@@ -166,15 +168,15 @@ class CVAdapterAgent(BaseAgent):
                 "template": template,
                 "language": language,
             }
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Adaptation failed: {e}")
             return {"success": False, "error": str(e)}
-    
+
     async def _extract_factual_data(self, cv_text: str, language: str) -> dict[str, Any]:
         """
         Extract FACTUAL data from CV that MUST NEVER be modified.
-        
+
         This includes:
         - Personal info (name, email, phone, etc.)
         - Experience dates, companies, locations
@@ -261,15 +263,15 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
                 temperature=0.0,  # Zero temperature for exact extraction
                 response_format={"type": "json_object"},
             )
-            
+
             result = json.loads(response.choices[0].message.content)
             result["success"] = True
             return result
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Factual data extraction failed: {e}")
             return {"success": False, "error": str(e)}
-    
+
     async def _rewrite_bullets_only(
         self,
         original_data: dict,
@@ -279,21 +281,21 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
     ) -> dict[str, Any]:
         """
         Rewrite ONLY bullet points and summary.
-        
+
         CRITICAL: This function NEVER touches:
         - Dates
         - Company names
         - School names
         - Personal info
         - Project names
-        
+
         It ONLY improves the textual descriptions.
         """
         try:
             keywords = job_analysis.get("keywords", [])
             tone = job_analysis.get("tone", "professional")
-            skills_coverage = cv_mapping.get("skills_coverage", {})
-            
+            _skills_coverage = cv_mapping.get("skills_coverage", {})
+
             # Prepare experiences for rewriting
             original_experiences = original_data.get("experiences", [])
             exp_for_rewrite = []
@@ -304,7 +306,7 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
                     "company": exp.get("company", ""),
                     "original_bullets": exp.get("bullets", [])
                 })
-            
+
             # Prepare projects for rewriting
             original_projects = original_data.get("projects", [])
             proj_for_rewrite = []
@@ -314,13 +316,13 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
                     "name": proj.get("name", ""),
                     "original_description": proj.get("description", "")
                 })
-            
+
             # Check for career change
             is_career_change = cv_mapping.get("is_career_change", False)
             career_change_info = cv_mapping.get("career_change_info", {})
             suggested_title = career_change_info.get("suggested_title", "")
             transferable_skills = career_change_info.get("transferable_skills", [])
-            
+
             career_change_instructions = ""
             if is_career_change:
                 career_change_instructions = f"""
@@ -340,7 +342,7 @@ SUMMARY MUST BE HONEST:
 
 DO NOT PRETEND the candidate is already an expert in the new field!
 """
-            
+
             task = f"""Rewrite ONLY the bullet points and descriptions for this CV.
 {career_change_instructions}
 
@@ -398,15 +400,15 @@ Return JSON:
                 temperature=0.4,
                 response_format={"type": "json_object"},
             )
-            
+
             result = json.loads(response.choices[0].message.content)
             result["success"] = True
             return result
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Bullet rewriting failed: {e}")
             return {"success": False, "error": str(e)}
-    
+
     def _merge_cv_data(
         self,
         original_data: dict,
@@ -416,7 +418,7 @@ Return JSON:
     ) -> dict:
         """
         Merge original FACTUAL data with rewritten TEXTUAL content.
-        
+
         FACTUAL DATA (from original, IMMUTABLE):
         - All dates
         - Company names
@@ -424,7 +426,7 @@ Return JSON:
         - Personal info (email, phone, etc.)
         - Certification names and issuers
         - Project names and URLs
-        
+
         REWRITTEN CONTENT (from LLM):
         - Bullet points
         - Summary
@@ -441,20 +443,20 @@ Return JSON:
             "skills": dict(original_data.get("skills", {})),
             "interests": list(original_data.get("interests", [])),
         }
-        
+
         # Update professional title with adapted version
         if rewritten_content.get("adapted_title"):
             final_cv["personal_info"]["title"] = rewritten_content["adapted_title"]
-        
+
         # Add summary
         final_cv["summary"] = rewritten_content.get("summary", "")
-        
+
         # Merge experiences: original facts + improved bullets
         original_experiences = original_data.get("experiences", [])
         improved_bullets_map = {}
         for item in rewritten_content.get("experience_bullets", []):
             improved_bullets_map[item.get("index", -1)] = item.get("improved_bullets", [])
-        
+
         for i, exp in enumerate(original_experiences):
             merged_exp = {
                 "title": exp.get("title", ""),
@@ -467,13 +469,13 @@ Return JSON:
                 "bullets": improved_bullets_map.get(i, exp.get("bullets", []))
             }
             final_cv["experiences"].append(merged_exp)
-        
+
         # Merge projects: original facts + improved descriptions
         original_projects = original_data.get("projects", [])
         improved_desc_map = {}
         for item in rewritten_content.get("project_descriptions", []):
             improved_desc_map[item.get("index", -1)] = item.get("improved_description", "")
-        
+
         for i, proj in enumerate(original_projects):
             merged_proj = {
                 "name": proj.get("name", ""),
@@ -483,14 +485,14 @@ Return JSON:
                 "description": improved_desc_map.get(i, proj.get("description", ""))
             }
             final_cv["projects"].append(merged_proj)
-        
+
         # Inject missing skills (this is the only "addition" we allow)
         final_cv = self._inject_missing_skills(final_cv, cv_mapping, job_analysis)
-        
+
         logger.info(f"[{self.name}] Merged CV with {len(final_cv['experiences'])} experiences, {len(final_cv['projects'])} projects")
-        
+
         return final_cv
-    
+
     async def _analyze_job(self, job_description: str, language: str) -> dict[str, Any]:
         """Extract requirements, keywords, and tone from job posting."""
         try:
@@ -526,15 +528,15 @@ Return a JSON object with:
                 temperature=0.1,
                 response_format={"type": "json_object"},
             )
-            
+
             result = json.loads(response.choices[0].message.content)
             result["success"] = True
             return result
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Job analysis failed: {e}")
             return {"success": False, "error": str(e)}
-    
+
     async def _map_cv_to_job(
         self, cv_text: str, job_analysis: dict, language: str
     ) -> dict[str, Any]:
@@ -543,7 +545,7 @@ Return a JSON object with:
             required_skills = job_analysis.get("required_skills", [])
             nice_to_have = job_analysis.get("nice_to_have_skills", [])
             keywords = job_analysis.get("keywords", [])
-            
+
             task = f"""Map this CV to the job requirements.
 
 CV CONTENT:
@@ -603,15 +605,15 @@ Return a JSON object with:
                 temperature=0.1,
                 response_format={"type": "json_object"},
             )
-            
+
             result = json.loads(response.choices[0].message.content)
             result["success"] = True
             return result
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] CV mapping failed: {e}")
             return {"success": False, "error": str(e)}
-    
+
     async def _rewrite_cv(
         self,
         cv_text: str,
@@ -625,15 +627,15 @@ Return a JSON object with:
             tone = job_analysis.get("tone", "professional")
             experiences = cv_mapping.get("experiences", [])
             skills_coverage = cv_mapping.get("skills_coverage", {})
-            
+
             # Extract skill categories
             matched_skills = skills_coverage.get("matched", [])
             missing_skills = skills_coverage.get("missing", [])
             transferable_skills = skills_coverage.get("transferable", [])
-            
+
             # Sort experiences by priority
             sorted_exp = sorted(experiences, key=lambda x: x.get("order_priority", 10))
-            
+
             task = f"""Rewrite this CV for the target job to MAXIMIZE ATS SCORE.
 
 ORIGINAL CV:
@@ -660,7 +662,7 @@ CRITICAL RULES:
 
 2. **ADD MISSING SKILLS STRATEGICALLY**:
    - ADD all transferable skills to the skills section
-   - For missing skills that are IMPLICIT in the candidate's work (e.g., Docker if they use GCP, 
+   - For missing skills that are IMPLICIT in the candidate's work (e.g., Docker if they use GCP,
      CI/CD if they build pipelines), ADD THEM - they likely know these!
    - If candidate does Data Engineering → they know SQL, ETL, data pipelines
    - If candidate does ML/AI → they likely know Docker, MLflow basics, model deployment
@@ -754,77 +756,88 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
                 temperature=0.4,
                 response_format={"type": "json_object"},
             )
-            
+
             cv_data = json.loads(response.choices[0].message.content)
-            
+
             # FORCE ADD missing skills - LLM won't do it, so we do it ourselves
             cv_data = self._inject_missing_skills(cv_data, cv_mapping, job_analysis)
-            
+
             return {"success": True, "cv_data": cv_data}
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] CV rewriting failed: {e}")
             return {"success": False, "error": str(e)}
-    
+
+    @staticmethod
+    def _skill_to_str(skill: Any) -> str:
+        """Normalize a skill to a plain string regardless of LLM output format.
+
+        The LLM sometimes returns dicts like {"name": "Python", "level": "expert"}
+        instead of plain strings, causing 'dict' object has no attribute 'lower'.
+        """
+        if isinstance(skill, dict):
+            return skill.get("name", "") or skill.get("skill", "") or ""
+        return str(skill)
+
     def _inject_missing_skills(
         self, cv_data: dict, cv_mapping: dict, job_analysis: dict
     ) -> dict:
         """
         DYNAMICALLY categorize and inject ALL missing and required skills.
-        
+
         The categories are created based on the JOB TYPE, not hardcoded!
         """
         skills_coverage = cv_mapping.get("skills_coverage", {})
-        missing_skills = skills_coverage.get("missing", [])
-        transferable_skills = skills_coverage.get("transferable", [])
-        required_skills = job_analysis.get("required_skills", [])
-        nice_to_have = job_analysis.get("nice_to_have_skills", [])
+        missing_skills = [self._skill_to_str(s) for s in skills_coverage.get("missing", [])]
+        transferable_skills = [self._skill_to_str(s) for s in skills_coverage.get("transferable", [])]
+        required_skills = [self._skill_to_str(s) for s in job_analysis.get("required_skills", [])]
+        nice_to_have = [self._skill_to_str(s) for s in job_analysis.get("nice_to_have_skills", [])]
         job_title = job_analysis.get("job_title", "")
         industry = job_analysis.get("industry", "")
-        
+
         # Get current skills (flat list from all categories)
         current_skills = cv_data.get("skills", {})
         if not isinstance(current_skills, dict):
             current_skills = {}
-        
+
         all_current_skills = []
-        for category, skills_list in current_skills.items():
+        for _category, skills_list in current_skills.items():
             if isinstance(skills_list, list):
-                all_current_skills.extend(skills_list)
-        
-        all_current_lower = set(s.lower() for s in all_current_skills)
-        
+                all_current_skills.extend(self._skill_to_str(s) for s in skills_list)
+
+        all_current_lower = {s.lower() for s in all_current_skills if s}
+
         # Collect ALL skills to add
         skills_to_add = []
-        
+
         # 1. Add transferable skills
         for skill in transferable_skills:
             skill_name = skill.split("(")[0].strip() if "(" in skill else skill
             if skill_name.lower() not in all_current_lower:
                 skills_to_add.append(skill_name)
-        
+
         # 2. Add ALL missing skills
         for skill in missing_skills:
             skill_name = skill.split("(")[0].strip() if "(" in skill else skill
             if skill_name.lower() not in all_current_lower and skill_name not in skills_to_add:
                 skills_to_add.append(skill_name)
-        
+
         # 3. Add ALL required skills from job posting
         for skill in required_skills:
             if skill.lower() not in all_current_lower and skill not in skills_to_add:
                 skills_to_add.append(skill)
-        
+
         # 4. Add nice-to-have skills
         for skill in nice_to_have:
             if skill.lower() not in all_current_lower and skill not in skills_to_add:
                 skills_to_add.append(skill)
-        
+
         if skills_to_add:
             logger.info(f"[{self.name}] Injecting skills: {skills_to_add}")
-        
+
         # Combine all skills
         all_skills = all_current_skills + skills_to_add
-        
+
         # Now categorize ALL skills dynamically using LLM
         categorized_skills = self._categorize_skills_dynamically(
             all_skills=all_skills,
@@ -832,10 +845,10 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
             industry=industry,
             required_skills=required_skills
         )
-        
+
         cv_data["skills"] = categorized_skills
         return cv_data
-    
+
     def _categorize_skills_dynamically(
         self,
         all_skills: list,
@@ -886,11 +899,11 @@ Return JSON with category names as keys and skill arrays as values:
                 temperature=0.2,
                 response_format={"type": "json_object"},
             )
-            
+
             categorized = json.loads(response.choices[0].message.content)
             logger.info(f"[{self.name}] Skills categorized into: {list(categorized.keys())}")
             return categorized
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Skills categorization failed: {e}")
             # Fallback to simple categorization
@@ -898,11 +911,11 @@ Return JSON with category names as keys and skill arrays as values:
                 "Compétences": all_skills[:15],
                 "Langues": [s for s in all_skills if s.lower() in ["français", "anglais", "arabe", "espagnol", "allemand", "french", "english"]]
             }
-    
+
     async def _fact_check(self, original_cv: str, adapted_cv: dict) -> dict[str, Any]:
         """
         Verify adapted CV doesn't contain hallucinated content.
-        
+
         IMPORTANT: We do NOT check skills because:
         1. Skills are strategically added to maximize ATS score
         2. Skills represent what the candidate should know/learn
@@ -952,23 +965,23 @@ Return a JSON object:
                 temperature=0.0,
                 response_format={"type": "json_object"},
             )
-            
+
             return json.loads(response.choices[0].message.content)
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Fact check failed: {e}")
             return {"valid": True, "issues": [], "error": str(e)}
-    
+
     def _calculate_match_score(self, job_analysis: dict, cv_mapping: dict) -> dict:
         """Calculate overall match score."""
         skills_coverage = cv_mapping.get("skills_coverage", {})
         matched = len(skills_coverage.get("matched", []))
-        missing = len(skills_coverage.get("missing", []))
+        _missing = len(skills_coverage.get("missing", []))
         total_required = len(job_analysis.get("required_skills", []))
-        
+
         skills_score = (matched / max(total_required, 1)) * 100 if total_required > 0 else 50
         overall_fit = cv_mapping.get("overall_fit_score", 50)
-        
+
         return {
             "overall": round((skills_score + overall_fit) / 2),
             "skills_match": round(skills_score),
@@ -979,7 +992,7 @@ Return a JSON object:
             "strengths": cv_mapping.get("strengths", []),
             "gaps": cv_mapping.get("gaps", []),
         }
-    
+
     async def quick_adapt(
         self,
         cv_text: str,
@@ -988,7 +1001,7 @@ Return a JSON object:
     ) -> dict[str, Any]:
         """
         Quick adaptation without full fact-checking (faster but less safe).
-        
+
         Use for previews or when speed is critical.
         """
         try:
@@ -1014,13 +1027,13 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
                 temperature=0.3,
                 response_format={"type": "json_object"},
             )
-            
+
             cv_data = json.loads(response.choices[0].message.content)
             return {"success": True, "cv_data": cv_data}
-            
+
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     async def generate_cover_letter(
         self,
         cv_data: dict,
@@ -1030,53 +1043,61 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
     ) -> dict[str, Any]:
         """
         Generate a personalized cover letter from CV data and job description.
-        
+
         Args:
             cv_data: Adapted CV data (from run() method)
             job_description: The job posting text
             language: 'fr' or 'en'
             company_name: Optional company name override
-        
+
         Returns:
             dict with cover letter content ready for PDF generation
         """
         try:
             logger.info(f"[{self.name}] Generating cover letter in {language}")
-            
+
             # Extract key info from CV
             personal_info = cv_data.get("personal_info", {})
             experiences = cv_data.get("experiences", [])
             projects = cv_data.get("projects", [])
             skills = cv_data.get("skills", {})
             summary = cv_data.get("summary", "")
-            
+
             # Build context from CV
+            education = cv_data.get("education", [])
+
             experience_summary = ""
             for exp in experiences[:3]:  # Top 3 most relevant
-                exp_bullets = exp.get("bullets", [])[:2]
-                experience_summary += f"- {exp.get('title')} at {exp.get('company')}: {'; '.join(exp_bullets)}\n"
-            
+                exp_bullets = exp.get("bullets", [])[:3]  # 3 bullets for richer context
+                period = f"{exp.get('start_date', '')}–{exp.get('end_date', '')}"
+                experience_summary += f"- {exp.get('title')} at {exp.get('company')} ({period}): {'; '.join(exp_bullets)}\n"
+
             project_summary = ""
             for proj in projects[:3]:
                 proj_url = f" ({proj.get('url')})" if proj.get('url') else ""
-                project_summary += f"- {proj.get('name')}{proj_url}: {proj.get('description', '')}\n"
-            
+                proj_techs = f" [{', '.join(proj.get('technologies', [])[:4])}]" if proj.get('technologies') else ""
+                project_summary += f"- {proj.get('name')}{proj_url}{proj_techs}: {proj.get('description', '')}\n"
+
+            education_summary = ""
+            for edu in education[:2]:
+                education_summary += f"- {edu.get('degree', '')} — {edu.get('institution', '')} ({edu.get('end_date', '')})\n"
+
             # Get today's date in proper format
-            from datetime import datetime
             import locale
-            
+            from datetime import datetime
+
             if language == "fr":
                 try:
                     locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
-                except:
+                except Exception:
                     pass
                 today = datetime.now()
                 date_str = today.strftime("%d %B %Y").lstrip("0")  # "5 février 2025"
             else:
                 today = datetime.now()
                 date_str = today.strftime("%B %d, %Y")  # "February 5, 2025"
-            
-            task = f"""Generate a personalized cover letter.
+
+            task = f"""Generate a personalized cover letter using ALL the candidate data below.
 
 ═══ CANDIDATE INFO ═══
 Name: {personal_info.get('name', 'Candidate')}
@@ -1086,14 +1107,17 @@ Phone: {personal_info.get('phone', '')}
 Address: {personal_info.get('address', '')}
 City: {personal_info.get('city', personal_info.get('location', ''))}
 
+═══ EDUCATION ═══
+{education_summary if education_summary else 'N/A'}
+
 ═══ SUMMARY ═══
 {summary}
 
-═══ KEY EXPERIENCES ═══
-{experience_summary}
+═══ KEY EXPERIENCES (use real titles, companies, achievements) ═══
+{experience_summary if experience_summary else 'N/A'}
 
-═══ KEY PROJECTS ═══
-{project_summary}
+═══ KEY PROJECTS (mention by name, include URLs and tech stack) ═══
+{project_summary if project_summary else 'N/A'}
 
 ═══ SKILLS ═══
 {json.dumps(skills, ensure_ascii=False)}
@@ -1102,12 +1126,12 @@ City: {personal_info.get('city', personal_info.get('location', ''))}
 {job_description}
 
 ═══ REQUIREMENTS ═══
-- Language: {language.upper()}
+- Language: {language.upper()} (match the job posting language exactly)
 - Company: {company_name if company_name else 'Extract from job description'}
 - Date: {date_str}
-- Keep it under 400 words
-- Be specific, mention actual projects and skills
-- Match the job requirements precisely
+- STRICT: max 280 words for the 3 paragraphs combined — ONE PAGE ONLY
+- Use real project names, real numbers, real technologies from the data above
+- Every sentence must be specific to THIS candidate and THIS job — no generic phrases
 
 Return a JSON object with the cover letter content."""
 
@@ -1120,13 +1144,13 @@ Return a JSON object with the cover letter content."""
                 temperature=0.5,
                 response_format={"type": "json_object"},
             )
-            
+
             result = json.loads(response.choices[0].message.content)
-            
+
             # Override header with user-provided info (LLM might not use them correctly)
             if "header" not in result:
                 result["header"] = {}
-            
+
             # Force user-provided values
             if personal_info.get("name"):
                 result["header"]["name"] = personal_info["name"]
@@ -1140,10 +1164,10 @@ Return a JSON object with the cover letter content."""
                 result["header"]["city"] = personal_info["city"]
             elif personal_info.get("location"):
                 result["header"]["city"] = personal_info["location"]
-            
+
             result["success"] = True
             return result
-            
+
         except Exception as e:
             logger.error(f"[{self.name}] Cover letter generation failed: {e}")
             return {"success": False, "error": str(e)}

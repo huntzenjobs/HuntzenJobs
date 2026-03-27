@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y \
 # Copy pyproject.toml for dependencies
 COPY pyproject.toml .
 
-# Install PyTorch CPU and dependencies from pyproject.toml
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+# Install PyTorch CPU and torchvision from the same index (ensures operator compatibility)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir -e .
 
 # Stage 2: Production
@@ -45,8 +45,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Install PyTorch CPU first
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+# Install PyTorch CPU + torchvision from the same index (ensures operator compatibility)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # Copy pyproject.toml and install dependencies
 COPY pyproject.toml .
@@ -57,15 +57,26 @@ RUN pip install --no-cache-dir -e .
 RUN mkdir -p /usr/local/lib/python3.11/site-packages/static && \
     chmod -R 777 /usr/local/lib/python3.11/site-packages/static
 
+# Make all installed package files readable by non-root user (huntzen)
+# Docling uses rapidocr whose .pth model files default to root-only permissions
+RUN chmod -R a+rX /usr/local/lib/python3.11/site-packages/
+
 # Copy NEW application structure
 COPY --chown=huntzen:huntzen src/ ./src/
 COPY --chown=huntzen:huntzen app/ ./app/
 COPY --chown=huntzen:huntzen prompts/ ./prompts/
+COPY --chown=huntzen:huntzen templates/ ./templates/
 # Note: pyproject.toml already copied above
 
 # Create cache directory for Marker models with proper permissions
 RUN mkdir -p /home/huntzen/.cache && \
     chown -R huntzen:huntzen /home/huntzen/.cache
+
+# Donner ownership de /app à huntzen — nécessaire pour Gunicorn 25.x control server socket
+# Sans ça : [Errno 13] Permission denied au démarrage → master crash → workers meurent
+RUN chown huntzen:huntzen /app && \
+    mkdir -p /app/templates/cv_pdf && \
+    chown -R huntzen:huntzen /app/templates
 
 # Switch to non-root user
 USER huntzen
@@ -76,16 +87,18 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Production command with Gunicorn multi-worker (16x capacity increase)
-# Signal Handling: --graceful-timeout 30 allows workers to finish requests before shutdown
-CMD ["gunicorn", "src.main:app", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--workers", "4", \
-     "--bind", "0.0.0.0:8000", \
-     "--timeout", "120", \
-     "--graceful-timeout", "30", \
-     "--keep-alive", "5", \
-     "--max-requests", "1000", \
-     "--max-requests-jitter", "50", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+# Production command with Gunicorn multi-worker
+# ${WORKERS:-4} : scalable via Railway env var, défaut 4
+# --worker-tmp-dir /dev/shm : évite Permission denied (socket Unix) avec user non-root
+CMD gunicorn src.main:app \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --workers ${WORKERS:-4} \
+    --worker-tmp-dir /dev/shm \
+    --bind 0.0.0.0:${PORT:-8000} \
+    --timeout 120 \
+    --graceful-timeout 30 \
+    --keep-alive 5 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
+    --access-logfile - \
+    --error-logfile -

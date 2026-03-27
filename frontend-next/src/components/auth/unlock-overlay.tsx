@@ -1,25 +1,25 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import { Lock, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { motion } from "framer-motion";
+import { Lock, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 interface UnlockOverlayProps {
   /** Title of the feature being locked */
-  title: string
+  title: string;
   /** Description of what this feature does */
-  description: string
+  description: string;
   /** Features/benefits list */
-  features: string[]
+  features: string[];
   /** Icon to display */
-  icon?: React.ReactNode
+  icon?: React.ReactNode;
   /** Custom CTA text */
-  ctaText?: string
+  ctaText?: string;
   /** Redirect path after authentication */
-  redirectPath?: string
+  redirectPath?: string;
   /** Position mode: 'fullscreen' covers entire page, 'right-side' only covers right portion */
-  position?: 'fullscreen' | 'right-side'
+  position?: "fullscreen" | "right-side";
 }
 
 export function UnlockOverlay({
@@ -29,19 +29,21 @@ export function UnlockOverlay({
   icon,
   ctaText = "Se connecter pour débloquer",
   redirectPath = "/cv-analysis",
-  position = 'fullscreen'
+  position = "fullscreen",
 }: UnlockOverlayProps) {
-  const router = useRouter()
+  const router = useRouter();
 
-  const handleUnlock = (mode: 'login' | 'signup') => {
-    const path = mode === 'login' ? '/login' : '/signup'
-    router.push(`${path}?redirectTo=${encodeURIComponent(redirectPath)}`)
-  }
+  const handleUnlock = (mode: "login" | "signup") => {
+    const path = mode === "login" ? "/login" : "/signup";
+    router.push(`${path}?redirectTo=${encodeURIComponent(redirectPath)}`);
+  };
 
-  const isRightSide = position === 'right-side'
+  const isRightSide = position === "right-side";
 
   return (
-    <div className={`unlock-overlay ${isRightSide ? 'unlock-overlay-right' : ''}`}>
+    <div
+      className={`unlock-overlay ${isRightSide ? "unlock-overlay-right" : ""}`}
+    >
       {/* Backdrop with blur and gradient */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -50,9 +52,15 @@ export function UnlockOverlay({
         className="unlock-backdrop"
       >
         {/* Animated gradient orbs - adjusted for right-side mode */}
-        <div className={`unlock-orb unlock-orb-1 ${isRightSide ? 'unlock-orb-right' : ''}`} />
-        <div className={`unlock-orb unlock-orb-2 ${isRightSide ? 'unlock-orb-right' : ''}`} />
-        <div className={`unlock-orb unlock-orb-3 ${isRightSide ? 'unlock-orb-right' : ''}`} />
+        <div
+          className={`unlock-orb unlock-orb-1 ${isRightSide ? "unlock-orb-right" : ""}`}
+        />
+        <div
+          className={`unlock-orb unlock-orb-2 ${isRightSide ? "unlock-orb-right" : ""}`}
+        />
+        <div
+          className={`unlock-orb unlock-orb-3 ${isRightSide ? "unlock-orb-right" : ""}`}
+        />
       </motion.div>
 
       {/* Main card with glassmorphism */}
@@ -63,7 +71,7 @@ export function UnlockOverlay({
           transition={{
             duration: 0.6,
             ease: [0.16, 1, 0.3, 1],
-            delay: 0.1
+            delay: 0.1,
           }}
           className="unlock-card"
         >
@@ -75,7 +83,7 @@ export function UnlockOverlay({
               duration: 0.5,
               delay: 0.3,
               type: "spring",
-              stiffness: 200
+              stiffness: 200,
             }}
             className="unlock-icon-wrapper"
           >
@@ -84,13 +92,13 @@ export function UnlockOverlay({
                 boxShadow: [
                   "0 0 0 0 rgba(59, 130, 246, 0.4)",
                   "0 0 0 20px rgba(59, 130, 246, 0)",
-                  "0 0 0 0 rgba(59, 130, 246, 0)"
-                ]
+                  "0 0 0 0 rgba(59, 130, 246, 0)",
+                ],
               }}
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                repeatDelay: 1
+                repeatDelay: 1,
               }}
               className="unlock-icon-pulse"
             >
@@ -142,7 +150,7 @@ export function UnlockOverlay({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{
                   duration: 0.4,
-                  delay: 0.9 + (index * 0.1)
+                  delay: 0.9 + index * 0.1,
                 }}
                 className="unlock-feature-item"
               >
@@ -160,7 +168,7 @@ export function UnlockOverlay({
             className="unlock-actions"
           >
             <Button
-              onClick={() => handleUnlock('signup')}
+              onClick={() => handleUnlock("signup")}
               className="unlock-btn unlock-btn-primary group"
               size="lg"
             >
@@ -169,7 +177,7 @@ export function UnlockOverlay({
             </Button>
 
             <Button
-              onClick={() => handleUnlock('login')}
+              onClick={() => handleUnlock("login")}
               variant="ghost"
               className="unlock-btn unlock-btn-secondary"
               size="lg"
@@ -186,13 +194,13 @@ export function UnlockOverlay({
             className="unlock-badge"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Accès gratuit pendant 14 jours</span>
+            <span>Sans engagement, annulation a tout moment</span>
           </motion.div>
         </motion.div>
       </div>
 
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+        @import url("https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap");
 
         .unlock-overlay {
           position: fixed;
@@ -238,13 +246,12 @@ export function UnlockOverlay({
           inset: 0;
           backdrop-filter: blur(24px) saturate(150%);
           -webkit-backdrop-filter: blur(24px) saturate(150%);
-          background:
-            linear-gradient(
-              135deg,
-              rgba(15, 23, 42, 0.92) 0%,
-              rgba(30, 41, 59, 0.88) 50%,
-              rgba(51, 65, 85, 0.85) 100%
-            );
+          background: linear-gradient(
+            135deg,
+            rgba(15, 23, 42, 0.92) 0%,
+            rgba(30, 41, 59, 0.88) 50%,
+            rgba(51, 65, 85, 0.85) 100%
+          );
         }
 
         .unlock-orb {
@@ -258,7 +265,11 @@ export function UnlockOverlay({
         .unlock-orb-1 {
           width: 500px;
           height: 500px;
-          background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, transparent 70%);
+          background: radial-gradient(
+            circle,
+            rgba(59, 130, 246, 0.6) 0%,
+            transparent 70%
+          );
           top: -10%;
           left: -10%;
           animation-delay: 0s;
@@ -267,7 +278,11 @@ export function UnlockOverlay({
         .unlock-orb-2 {
           width: 400px;
           height: 400px;
-          background: radial-gradient(circle, rgba(147, 51, 234, 0.5) 0%, transparent 70%);
+          background: radial-gradient(
+            circle,
+            rgba(147, 51, 234, 0.5) 0%,
+            transparent 70%
+          );
           bottom: -5%;
           right: -5%;
           animation-delay: -7s;
@@ -276,7 +291,11 @@ export function UnlockOverlay({
         .unlock-orb-3 {
           width: 350px;
           height: 350px;
-          background: radial-gradient(circle, rgba(236, 72, 153, 0.4) 0%, transparent 70%);
+          background: radial-gradient(
+            circle,
+            rgba(236, 72, 153, 0.4) 0%,
+            transparent 70%
+          );
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
@@ -303,7 +322,8 @@ export function UnlockOverlay({
         }
 
         @keyframes float {
-          0%, 100% {
+          0%,
+          100% {
             transform: translate(0, 0) scale(1);
           }
           33% {
@@ -341,7 +361,7 @@ export function UnlockOverlay({
         }
 
         .unlock-card::before {
-          content: '';
+          content: "";
           position: absolute;
           top: 0;
           left: 0;
@@ -358,8 +378,13 @@ export function UnlockOverlay({
         }
 
         @keyframes shimmer {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 1; }
+          0%,
+          100% {
+            opacity: 0.3;
+          }
+          50% {
+            opacity: 1;
+          }
         }
 
         .unlock-icon-wrapper {
@@ -388,7 +413,7 @@ export function UnlockOverlay({
         }
 
         .unlock-title {
-          font-family: 'Spectral', serif;
+          font-family: "Spectral", serif;
           font-size: 2.5rem;
           font-weight: 700;
           line-height: 1.2;
@@ -406,7 +431,7 @@ export function UnlockOverlay({
         }
 
         .unlock-description {
-          font-family: 'DM Sans', sans-serif;
+          font-family: "DM Sans", sans-serif;
           font-size: 1.125rem;
           line-height: 1.7;
           text-align: center;
@@ -429,7 +454,7 @@ export function UnlockOverlay({
           display: flex;
           align-items: center;
           gap: 0.875rem;
-          font-family: 'DM Sans', sans-serif;
+          font-family: "DM Sans", sans-serif;
           font-size: 1rem;
           color: rgba(255, 255, 255, 0.9);
           font-weight: 500;
@@ -443,7 +468,7 @@ export function UnlockOverlay({
         }
 
         .unlock-btn {
-          font-family: 'DM Sans', sans-serif;
+          font-family: "DM Sans", sans-serif;
           font-weight: 600;
           width: 100%;
           font-size: 1.0625rem;
@@ -464,7 +489,7 @@ export function UnlockOverlay({
         }
 
         .unlock-btn-primary::before {
-          content: '';
+          content: "";
           position: absolute;
           inset: 0;
           background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
@@ -506,7 +531,7 @@ export function UnlockOverlay({
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          font-family: 'DM Sans', sans-serif;
+          font-family: "DM Sans", sans-serif;
           font-size: 0.875rem;
           font-weight: 600;
           color: #fbbf24;
@@ -566,5 +591,5 @@ export function UnlockOverlay({
         }
       `}</style>
     </div>
-  )
+  );
 }

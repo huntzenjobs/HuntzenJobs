@@ -1,0 +1,192 @@
+{
+  "countries": [
+    {
+      "code": "CA", "name": "Canada", "flag": "🇨🇦", "currency": "CAD", "eurRate": 0.68,
+      "costOfLiving": { "rent1br": 1200, "transport": 95, "food": 380, "globalIndex": 82 },
+      "salaries": { "tech": 75000, "marketing": 55000, "finance": 68000, "health": 72000, "sales": 58000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Work visa (PVT or work permit)", "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada.html" },
+        { "id": "residence", "label": "Permanent residence permit", "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html" },
+        { "id": "diploma", "label": "Diploma equivalency (WES)", "url": "https://www.wes.org/ca/" },
+        { "id": "healthcare", "label": "Provincial health card", "url": "https://www.canada.ca/en/health-canada.html" },
+        { "id": "bank", "label": "Bank account opening", "url": "https://www.canada.ca/en/financial-consumer-agency/services/financial-planning/bank-accounts.html" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.service-public.fr/particuliers/vosdroits/N105" }
+      ]
+    },
+    {
+      "code": "DE", "name": "Germany", "flag": "🇩🇪", "currency": "EUR", "eurRate": 1,
+      "costOfLiving": { "rent1br": 950, "transport": 85, "food": 320, "globalIndex": 75 },
+      "salaries": { "tech": 65000, "marketing": 48000, "finance": 62000, "health": 58000, "sales": 52000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Work visa / Niederlassungserlaubnis", "url": "https://www.make-it-in-germany.com/en/visa" },
+        { "id": "residence", "label": "Residence permit (Aufenthaltstitel)", "url": "https://www.bamf.de" },
+        { "id": "diploma", "label": "Diploma recognition (anabin)", "url": "https://anabin.kmk.org" },
+        { "id": "healthcare", "label": "Health insurance (Krankenversicherung)", "url": "https://www.krankenkassen.de" },
+        { "id": "bank", "label": "Bank account (N26, Deutsche Bank)", "url": "https://n26.com" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "CH", "name": "Switzerland", "flag": "🇨🇭", "currency": "CHF", "eurRate": 1.04,
+      "costOfLiving": { "rent1br": 1800, "transport": 80, "food": 600, "globalIndex": 130 },
+      "salaries": { "tech": 110000, "marketing": 85000, "finance": 120000, "health": 100000, "sales": 90000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Work permit B/L", "url": "https://www.sem.admin.ch/sem/en/home/themen/arbeit.html" },
+        { "id": "residence", "label": "Residence permit", "url": "https://www.ch.ch/en/living-in-switzerland" },
+        { "id": "diploma", "label": "Diploma recognition (SERI)", "url": "https://www.sbfi.admin.ch" },
+        { "id": "healthcare", "label": "Mandatory health insurance (LAMal)", "url": "https://www.bag.admin.ch" },
+        { "id": "bank", "label": "Bank account (PostFinance, UBS)", "url": "https://www.postfinance.ch" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "GB", "name": "United Kingdom", "flag": "🇬🇧", "currency": "GBP", "eurRate": 1.17,
+      "costOfLiving": { "rent1br": 1400, "transport": 160, "food": 380, "globalIndex": 95 },
+      "salaries": { "tech": 65000, "marketing": 48000, "finance": 72000, "health": 40000, "sales": 50000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Skilled Worker Visa", "url": "https://www.gov.uk/skilled-worker-visa" },
+        { "id": "residence", "label": "Settlement (ILR)", "url": "https://www.gov.uk/indefinite-leave-to-remain" },
+        { "id": "diploma", "label": "Diploma equivalency (UK ENIC)", "url": "https://www.enic.org.uk" },
+        { "id": "healthcare", "label": "NHS Number + Health Surcharge", "url": "https://www.nhs.uk" },
+        { "id": "bank", "label": "Bank account (Monzo, HSBC)", "url": "https://monzo.com" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "US", "name": "United States", "flag": "🇺🇸", "currency": "USD", "eurRate": 0.92,
+      "costOfLiving": { "rent1br": 1600, "transport": 120, "food": 450, "globalIndex": 100 },
+      "salaries": { "tech": 120000, "marketing": 70000, "finance": 95000, "health": 85000, "sales": 75000 },
+      "adminDocs": [
+        { "id": "visa", "label": "H-1B or O-1 Visa", "url": "https://www.uscis.gov/working-in-the-united-states" },
+        { "id": "residence", "label": "Green Card", "url": "https://www.uscis.gov/green-card" },
+        { "id": "diploma", "label": "Diploma equivalency (WES)", "url": "https://www.wes.org" },
+        { "id": "healthcare", "label": "Private health insurance", "url": "https://www.healthcare.gov" },
+        { "id": "bank", "label": "Bank account (Chase, Bank of America)", "url": "https://www.chase.com" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "AE", "name": "Dubai (UAE)", "flag": "🇦🇪", "currency": "AED", "eurRate": 0.25,
+      "costOfLiving": { "rent1br": 1500, "transport": 80, "food": 300, "globalIndex": 90 },
+      "salaries": { "tech": 300000, "marketing": 200000, "finance": 280000, "health": 250000, "sales": 220000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Work visa / Freelance Visa", "url": "https://u.ae/en/information-and-services/visa-and-emirates-id/work-visa" },
+        { "id": "residence", "label": "Emirates ID", "url": "https://icp.gov.ae" },
+        { "id": "diploma", "label": "Diploma attestation (MOFA)", "url": "https://mofa.gov.ae" },
+        { "id": "healthcare", "label": "Health insurance (DHA)", "url": "https://www.dha.gov.ae" },
+        { "id": "bank", "label": "Bank account (Emirates NBD, Mashreq)", "url": "https://www.emiratesnbd.com" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "NL", "name": "Netherlands", "flag": "🇳🇱", "currency": "EUR", "eurRate": 1,
+      "costOfLiving": { "rent1br": 1300, "transport": 90, "food": 350, "globalIndex": 88 },
+      "salaries": { "tech": 70000, "marketing": 52000, "finance": 68000, "health": 55000, "sales": 56000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Highly Skilled Migrant Visa", "url": "https://ind.nl" },
+        { "id": "residence", "label": "Residence permit (MVV)", "url": "https://ind.nl" },
+        { "id": "diploma", "label": "Diploma equivalency (IDW)", "url": "https://www.idw.nl" },
+        { "id": "healthcare", "label": "Health insurance (Zorgverzekering)", "url": "https://www.government.nl/topics/health-insurance" },
+        { "id": "bank", "label": "Bank account (ING, ABN AMRO)", "url": "https://www.ing.nl" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "BE", "name": "Belgium", "flag": "🇧🇪", "currency": "EUR", "eurRate": 1,
+      "costOfLiving": { "rent1br": 900, "transport": 50, "food": 300, "globalIndex": 78 },
+      "salaries": { "tech": 58000, "marketing": 45000, "finance": 62000, "health": 50000, "sales": 48000 },
+      "adminDocs": [
+        { "id": "visa", "label": "EU residence card (free movement)", "url": "https://dofi.ibz.be" },
+        { "id": "residence", "label": "E/E+ card", "url": "https://www.belgium.be/en/family/residence" },
+        { "id": "diploma", "label": "Diploma equivalency (NARIC)", "url": "https://www.naricvlaanderen.be" },
+        { "id": "healthcare", "label": "Health insurance (Mutualité)", "url": "https://www.riziv.fgov.be" },
+        { "id": "bank", "label": "Bank account (BNP Paribas Fortis, ING)", "url": "https://www.bnpparibasfortis.be" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "ES", "name": "Spain", "flag": "🇪🇸", "currency": "EUR", "eurRate": 1,
+      "costOfLiving": { "rent1br": 750, "transport": 55, "food": 280, "globalIndex": 65 },
+      "salaries": { "tech": 38000, "marketing": 28000, "finance": 42000, "health": 32000, "sales": 30000 },
+      "adminDocs": [
+        { "id": "visa", "label": "NIE + EU residence card", "url": "https://www.interior.gob.es" },
+        { "id": "residence", "label": "Residence certificate", "url": "https://www.exteriores.gob.es" },
+        { "id": "diploma", "label": "Diploma homologation (MECD)", "url": "https://www.educacion.gob.es" },
+        { "id": "healthcare", "label": "European Health Card + insurance", "url": "https://www.seg-social.es" },
+        { "id": "bank", "label": "Bank account (Santander, BBVA)", "url": "https://www.santander.es" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "PT", "name": "Portugal", "flag": "🇵🇹", "currency": "EUR", "eurRate": 1,
+      "costOfLiving": { "rent1br": 900, "transport": 45, "food": 260, "globalIndex": 62 },
+      "salaries": { "tech": 32000, "marketing": 24000, "finance": 35000, "health": 28000, "sales": 26000 },
+      "adminDocs": [
+        { "id": "visa", "label": "NIF + EU residence card", "url": "https://www.sef.pt" },
+        { "id": "residence", "label": "Residence authorization", "url": "https://www.sef.pt" },
+        { "id": "diploma", "label": "Diploma equivalency (DGES)", "url": "https://www.dges.gov.pt" },
+        { "id": "healthcare", "label": "SNS (National Health Service)", "url": "https://www.sns.gov.pt" },
+        { "id": "bank", "label": "Bank account (Millenium BCP, Revolut)", "url": "https://www.millenniumbcp.pt" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "LU", "name": "Luxembourg", "flag": "🇱🇺", "currency": "EUR", "eurRate": 1,
+      "costOfLiving": { "rent1br": 1400, "transport": 0, "food": 360, "globalIndex": 100 },
+      "salaries": { "tech": 85000, "marketing": 65000, "finance": 95000, "health": 70000, "sales": 72000 },
+      "adminDocs": [
+        { "id": "visa", "label": "EU residence card", "url": "https://guichet.public.lu" },
+        { "id": "residence", "label": "Arrival declaration at city hall", "url": "https://guichet.public.lu" },
+        { "id": "diploma", "label": "Diploma recognition (MENJE)", "url": "https://men.public.lu" },
+        { "id": "healthcare", "label": "CNS (National Health Fund)", "url": "https://www.cns.lu" },
+        { "id": "bank", "label": "Bank account (BGL BNP, Banque de Luxembourg)", "url": "https://www.bgl.lu" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "AU", "name": "Australia", "flag": "🇦🇺", "currency": "AUD", "eurRate": 0.59,
+      "costOfLiving": { "rent1br": 1300, "transport": 110, "food": 400, "globalIndex": 85 },
+      "salaries": { "tech": 100000, "marketing": 75000, "finance": 90000, "health": 80000, "sales": 70000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Skilled visa (482/186)", "url": "https://immi.homeaffairs.gov.au" },
+        { "id": "residence", "label": "Permanent residence", "url": "https://immi.homeaffairs.gov.au" },
+        { "id": "diploma", "label": "Skills assessment", "url": "https://www.aitsl.edu.au" },
+        { "id": "healthcare", "label": "Medicare + supplementary", "url": "https://www.servicesaustralia.gov.au/medicare" },
+        { "id": "bank", "label": "Bank account (ANZ, CommBank)", "url": "https://www.anz.com.au" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "SG", "name": "Singapore", "flag": "🇸🇬", "currency": "SGD", "eurRate": 0.68,
+      "costOfLiving": { "rent1br": 2000, "transport": 90, "food": 350, "globalIndex": 115 },
+      "salaries": { "tech": 85000, "marketing": 60000, "finance": 90000, "health": 65000, "sales": 65000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Employment Pass (EP)", "url": "https://www.mom.gov.sg/passes-and-permits/employment-pass" },
+        { "id": "residence", "label": "Permanent Resident (PR)", "url": "https://www.ica.gov.sg" },
+        { "id": "diploma", "label": "Diploma verification (MOE)", "url": "https://www.moe.gov.sg" },
+        { "id": "healthcare", "label": "MediShield Life + Medisave", "url": "https://www.cpf.gov.sg" },
+        { "id": "bank", "label": "Bank account (DBS, OCBC)", "url": "https://www.dbs.com.sg" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "MA", "name": "Morocco", "flag": "🇲🇦", "currency": "MAD", "eurRate": 0.093,
+      "costOfLiving": { "rent1br": 400, "transport": 25, "food": 180, "globalIndex": 35 },
+      "salaries": { "tech": 180000, "marketing": 120000, "finance": 200000, "health": 150000, "sales": 130000 },
+      "adminDocs": [
+        { "id": "visa", "label": "Long-stay visa / Residence card", "url": "https://www.service-public.ma" },
+        { "id": "residence", "label": "Registration card", "url": "https://www.interieur.gov.ma" },
+        { "id": "diploma", "label": "Diploma legalization (MENFPESRS)", "url": "https://www.men.gov.ma" },
+        { "id": "healthcare", "label": "AMO or private insurance", "url": "https://www.cnops.org.ma" },
+        { "id": "bank", "label": "Bank account (Attijariwafa, CIH)", "url": "https://www.attijariwafabank.com" },
+        { "id": "consulate", "label": "Consular registration", "url": "https://www.diplomatie.gouv.fr" }
+      ]
+    },
+    {
+      "code": "FR", "name": "France (reference)", "flag": "🇫🇷", "currency": "EUR", "eurRate": 1,
+      "costOfLiving": { "rent1br": 800, "transport": 75, "food": 300, "globalIndex": 100 },
+      "salaries": { "tech": 45000, "marketing": 35000, "finance": 48000, "health": 38000, "sales": 38000 },
+      "adminDocs": []
+    }
+  ]
+}

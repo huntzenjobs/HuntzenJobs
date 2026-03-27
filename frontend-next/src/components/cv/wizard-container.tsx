@@ -3,20 +3,24 @@
  * Manages: state, navigation, Framer Motion transitions, API integration
  */
 
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { WizardSteps } from '@/components/cv/wizard-steps'
-import { Step1Upload } from '@/components/cv/wizard/step1-upload'
-import { Step2AnalysisType } from '@/components/cv/wizard/step2-analysis-type'
-import { Step3Results } from '@/components/cv/wizard/step3-results'
-import { CVHistoryDrawer } from '@/components/cv/cv-history-drawer'
-import { useCVHistory } from '@/hooks/use-cv-history'
-import type { CVAnalysisResult } from '@/hooks/use-cv-history'
-import type { Suggestion } from '@/components/cv/actionable-suggestions'
-import type { BreakdownItem } from '@/components/cv/score-breakdown-v2'
-import { cn } from '@/lib/utils'
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { WizardSteps } from "@/components/cv/wizard-steps";
+import { Step1Upload } from "@/components/cv/wizard/step1-upload";
+import { Step2AnalysisType } from "@/components/cv/wizard/step2-analysis-type";
+import { Step3Results } from "@/components/cv/wizard/step3-results";
+import { CVHistoryDrawer } from "@/components/cv/cv-history-drawer";
+import { useCVHistory } from "@/hooks/use-cv-history";
+// Dynamic import: @react-pdf/renderer est lourd (~200KB), chargé uniquement au clic export
+const lazyExportCVAnalysisToPDF = () =>
+  import("@/utils/export-cv-pdf").then((mod) => mod.exportCVAnalysisToPDF);
+import type { CVAnalysisResult } from "@/hooks/use-cv-history";
+import type { Suggestion } from "@/components/cv/actionable-suggestions";
+import type { BreakdownItem } from "@/components/cv/score-breakdown-v2";
+import type { CvInfo } from "@/components/cv/cv-info-panel";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -26,34 +30,34 @@ interface WizardContainerProps {
   onAnalyze: (
     file: File | null,
     cvText: string,
-    jobOffer: string
+    jobOffer: string,
   ) => Promise<{
-    score: number
-    breakdown: BreakdownItem[]
-    strengths: string[]
-    weaknesses: string[]
-    suggestions: any[]
-    rawAnalysis?: string
-    cv_info?: any
-  }>
-  onOpenPricingModal: (feature: string) => void
+    score: number;
+    breakdown: BreakdownItem[];
+    strengths: string[];
+    weaknesses: string[];
+    suggestions: (string | Suggestion)[];
+    rawAnalysis?: string;
+    cv_info?: CvInfo;
+  }>;
+  onOpenPricingModal: (feature: string) => void;
   hasFeatures: {
-    hasCVHistory: boolean
-    hasPDFExport: boolean
-  }
-  className?: string
+    hasCVHistory: boolean;
+    hasPDFExport: boolean;
+  };
+  className?: string;
 }
 
 interface WizardState {
-  currentStep: 1 | 2 | 3
-  uploadMethod: 'file' | 'text'
-  file: File | null
-  cvText: string
-  analysisType: 'global' | 'match' | null
-  jobOffer: string
-  loading: boolean
-  result: CVAnalysisResult | null
-  error: string | null
+  currentStep: 1 | 2 | 3;
+  uploadMethod: "file" | "text";
+  file: File | null;
+  cvText: string;
+  analysisType: "global" | "match" | null;
+  jobOffer: string;
+  loading: boolean;
+  result: CVAnalysisResult | null;
+  error: string | null;
 }
 
 // ============================================================================
@@ -63,8 +67,8 @@ interface WizardState {
 const stepVariants = {
   enter: { opacity: 0, x: 100 },
   center: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -100 }
-}
+  exit: { opacity: 0, x: -100 },
+};
 
 // ============================================================================
 // MAIN COMPONENT
@@ -74,34 +78,34 @@ export function WizardContainer({
   onAnalyze,
   onOpenPricingModal,
   hasFeatures,
-  className
+  className,
 }: WizardContainerProps) {
-  const { history, saveAnalysis } = useCVHistory()
-  const [showHistory, setShowHistory] = useState(false)
+  const { history, saveAnalysis } = useCVHistory();
+  const [showHistory, setShowHistory] = useState(false);
 
   const [wizardState, setWizardState] = useState<WizardState>({
     currentStep: 1,
-    uploadMethod: 'file',
+    uploadMethod: "file",
     file: null,
-    cvText: '',
+    cvText: "",
     analysisType: null,
-    jobOffer: '',
+    jobOffer: "",
     loading: false,
     result: null,
-    error: null
-  })
+    error: null,
+  });
 
   // ============================================================================
   // HANDLERS
   // ============================================================================
 
   const handleStep1Next = () => {
-    setWizardState((prev) => ({ ...prev, currentStep: 2 }))
-  }
+    setWizardState((prev) => ({ ...prev, currentStep: 2 }));
+  };
 
   const handleStep2Back = () => {
-    setWizardState((prev) => ({ ...prev, currentStep: 1 }))
-  }
+    setWizardState((prev) => ({ ...prev, currentStep: 1 }));
+  };
 
   const handleStep2Next = async () => {
     // Move to step 3 and start loading
@@ -109,69 +113,84 @@ export function WizardContainer({
       ...prev,
       currentStep: 3,
       loading: true,
-      error: null
-    }))
+      error: null,
+    }));
 
     try {
       // Call API
       const response = await onAnalyze(
         wizardState.file,
         wizardState.cvText,
-        wizardState.jobOffer
-      )
+        wizardState.jobOffer,
+      );
 
       // Transform suggestions
-      const transformedSuggestions: Suggestion[] = (response.suggestions || []).map((suggestion: any) => ({
-        text: typeof suggestion === 'string' ? suggestion : suggestion.text || '',
-        impact: suggestion.impact || 5,
-        category: suggestion.category || 'other',
-        actionable: suggestion.actionable !== false
-      }))
+      const transformedSuggestions: Suggestion[] = (
+        response.suggestions || []
+      ).map((suggestion: string | Suggestion): Suggestion => {
+        if (typeof suggestion === "string") {
+          return {
+            text: suggestion,
+            impact: 5,
+            category: "other",
+            actionable: true,
+          };
+        }
+        return {
+          text: suggestion.text || "",
+          impact: suggestion.impact || 5,
+          category: suggestion.category || "other",
+          actionable: suggestion.actionable !== false,
+        };
+      });
 
       // Create analysis data (without id and analyzedAt - saveAnalysis will add them)
       const analysisData = {
-        fileName: wizardState.file?.name || 'CV (texte collé)',
+        fileName: wizardState.file?.name || "CV (texte collé)",
         score: response.score,
         breakdown: response.breakdown,
         strengths: response.strengths,
         weaknesses: response.weaknesses,
         suggestions: transformedSuggestions,
         rawAnalysis: response.rawAnalysis,
-        cv_info: response.cv_info
-      }
+        cv_info: response.cv_info,
+      };
 
       // Save to history (returns complete CVAnalysisResult with id and analyzedAt)
-      const savedAnalysis = saveAnalysis(analysisData)
+      const savedAnalysis = saveAnalysis(analysisData);
 
       // Update state
       setWizardState((prev) => ({
         ...prev,
         loading: false,
-        result: savedAnalysis
-      }))
-    } catch (error: any) {
-      console.error('Analysis error:', error)
+        result: savedAnalysis,
+      }));
+    } catch (error) {
+      console.error("Analysis error:", error);
       setWizardState((prev) => ({
         ...prev,
         loading: false,
-        error: error.message || 'Une erreur est survenue lors de l\'analyse'
-      }))
+        error:
+          error instanceof Error
+            ? error.message
+            : "Une erreur est survenue lors de l'analyse",
+      }));
     }
-  }
+  };
 
   const handleReset = () => {
     setWizardState({
       currentStep: 1,
-      uploadMethod: 'file',
+      uploadMethod: "file",
       file: null,
-      cvText: '',
+      cvText: "",
       analysisType: null,
-      jobOffer: '',
+      jobOffer: "",
       loading: false,
       result: null,
-      error: null
-    })
-  }
+      error: null,
+    });
+  };
 
   const handleLoadFromHistory = (analysis: CVAnalysisResult) => {
     setWizardState((prev) => ({
@@ -179,15 +198,19 @@ export function WizardContainer({
       currentStep: 3,
       result: analysis,
       loading: false,
-      error: null
-    }))
-    setShowHistory(false)
-  }
+      error: null,
+    }));
+    setShowHistory(false);
+  };
 
-  const handleExportPDF = () => {
-    // TODO: Implement PDF export
-    console.log('Export PDF not yet implemented')
-  }
+  const handleExportPDF = async () => {
+    if (!wizardState.result) return;
+    const fileName = wizardState.file?.name
+      ? `cv-analysis-${wizardState.file.name.replace(/\.[^.]+$/, "")}.pdf`
+      : undefined;
+    const exportCVAnalysisToPDF = await lazyExportCVAnalysisToPDF();
+    await exportCVAnalysisToPDF(wizardState.result, fileName);
+  };
 
   // ============================================================================
   // RENDER STEP
@@ -214,7 +237,7 @@ export function WizardContainer({
             onNext={handleStep1Next}
             historyCount={history.length}
           />
-        )
+        );
 
       case 2:
         return (
@@ -230,7 +253,7 @@ export function WizardContainer({
             onBack={handleStep2Back}
             onNext={handleStep2Next}
           />
-        )
+        );
 
       case 3:
         return (
@@ -244,15 +267,15 @@ export function WizardContainer({
             onExportPDF={handleExportPDF}
             onOpenPricingModal={onOpenPricingModal}
           />
-        )
+        );
 
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
-    <div className={cn('space-y-8', className)}>
+    <div className={cn("space-y-8", className)}>
       {/* Wizard Steps Indicator */}
       <WizardSteps currentStep={wizardState.currentStep} />
 
@@ -265,7 +288,7 @@ export function WizardContainer({
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             {renderCurrentStep()}
           </motion.div>
@@ -280,5 +303,5 @@ export function WizardContainer({
         onSelectAnalysis={handleLoadFromHistory}
       />
     </div>
-  )
+  );
 }

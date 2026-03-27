@@ -3,48 +3,50 @@
  * Features: tier-based limits, CRUD operations, auto-cleanup
  */
 
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback } from 'react'
-import { useSubscription } from '@/contexts/subscription-context'
-import type { BreakdownItem } from '@/components/cv/score-breakdown-v2'
-import type { Suggestion } from '@/components/cv/actionable-suggestions'
+import { useState, useEffect, useCallback } from "react";
+import { useSubscription } from "@/contexts/subscription-context";
+import type { BreakdownItem } from "@/components/cv/score-breakdown-v2";
+import type { Suggestion } from "@/components/cv/actionable-suggestions";
+import type { CvInfo } from "@/components/cv/cv-info-panel";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface CVAnalysisResult {
-  id: string
-  fileName: string
-  analyzedAt: Date
-  score: number
-  breakdown: BreakdownItem[]
-  strengths: string[]
-  weaknesses: string[]
-  suggestions: Suggestion[]
-  rawAnalysis?: string // Optional raw analysis text
-  error?: string // Optional error message
-  cv_info?: any // Optional CV info (name, email, phone, skills)
+  id: string;
+  fileName: string;
+  analyzedAt: Date;
+  score: number;
+  breakdown: BreakdownItem[];
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: Suggestion[];
+  rawAnalysis?: string; // Optional raw analysis text
+  error?: string; // Optional error message
+  cv_info?: CvInfo; // Optional CV info (name, email, phone, skills)
+  recommended_job_titles?: string[]; // Suggested job titles based on skills
 }
 
 // Serialized version for localStorage (Date → string)
 interface CVAnalysisResultSerialized {
-  id: string
-  fileName: string
-  analyzedAt: string
-  score: number
-  breakdown: BreakdownItem[]
-  strengths: string[]
-  weaknesses: string[]
-  suggestions: Suggestion[]
+  id: string;
+  fileName: string;
+  analyzedAt: string;
+  score: number;
+  breakdown: BreakdownItem[];
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: Suggestion[];
 }
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const STORAGE_KEY = 'cv_analysis_history'
+const STORAGE_KEY = "cv_analysis_history";
 
 // Max history items by subscription tier
 const MAX_HISTORY_BY_TIER: Record<string, number> = {
@@ -52,34 +54,34 @@ const MAX_HISTORY_BY_TIER: Record<string, number> = {
   starter: 5,
   pro: 20,
   premium: 100,
-}
+};
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
 function generateId(): string {
-  return `cv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  return `cv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 function serializeHistory(history: CVAnalysisResult[]): string {
   const serialized: CVAnalysisResultSerialized[] = history.map((item) => ({
     ...item,
     analyzedAt: item.analyzedAt.toISOString(),
-  }))
-  return JSON.stringify(serialized)
+  }));
+  return JSON.stringify(serialized);
 }
 
 function deserializeHistory(data: string): CVAnalysisResult[] {
   try {
-    const parsed: CVAnalysisResultSerialized[] = JSON.parse(data)
+    const parsed: CVAnalysisResultSerialized[] = JSON.parse(data);
     return parsed.map((item) => ({
       ...item,
       analyzedAt: new Date(item.analyzedAt),
-    }))
+    }));
   } catch (error) {
-    console.error('Failed to deserialize CV history:', error)
-    return []
+    console.error("Failed to deserialize CV history:", error);
+    return [];
   }
 }
 
@@ -88,104 +90,104 @@ function deserializeHistory(data: string): CVAnalysisResult[] {
 // ============================================================================
 
 export function useCVHistory() {
-  const { plan } = useSubscription()
-  const [history, setHistory] = useState<CVAnalysisResult[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { plan } = useSubscription();
+  const [history, setHistory] = useState<CVAnalysisResult[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Get max history limit for current tier
-  const maxHistory = MAX_HISTORY_BY_TIER[plan] || MAX_HISTORY_BY_TIER.free
+  const maxHistory = MAX_HISTORY_BY_TIER[plan] || MAX_HISTORY_BY_TIER.free;
 
   // Load history from localStorage on mount
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const loadedHistory = deserializeHistory(stored)
+        const loadedHistory = deserializeHistory(stored);
         // Enforce tier limit on load
-        const limitedHistory = loadedHistory.slice(0, maxHistory)
-        setHistory(limitedHistory)
+        const limitedHistory = loadedHistory.slice(0, maxHistory);
+        setHistory(limitedHistory);
 
         // If we had to trim, update localStorage
         if (limitedHistory.length < loadedHistory.length) {
-          localStorage.setItem(STORAGE_KEY, serializeHistory(limitedHistory))
+          localStorage.setItem(STORAGE_KEY, serializeHistory(limitedHistory));
         }
       }
     } catch (error) {
-      console.error('Failed to load CV history:', error)
+      console.error("Failed to load CV history:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [maxHistory])
+  }, [maxHistory]);
 
   // Save analysis to history
   const saveAnalysis = useCallback(
-    (result: Omit<CVAnalysisResult, 'id' | 'analyzedAt'>) => {
+    (result: Omit<CVAnalysisResult, "id" | "analyzedAt">) => {
       const newAnalysis: CVAnalysisResult = {
         ...result,
         id: generateId(),
         analyzedAt: new Date(),
-      }
+      };
 
       setHistory((prev) => {
         // Add new analysis at the beginning
-        const newHistory = [newAnalysis, ...prev]
+        const newHistory = [newAnalysis, ...prev];
 
         // Enforce tier limit
-        const limitedHistory = newHistory.slice(0, maxHistory)
+        const limitedHistory = newHistory.slice(0, maxHistory);
 
         // Save to localStorage
         try {
-          localStorage.setItem(STORAGE_KEY, serializeHistory(limitedHistory))
+          localStorage.setItem(STORAGE_KEY, serializeHistory(limitedHistory));
         } catch (error) {
-          console.error('Failed to save CV history:', error)
+          console.error("Failed to save CV history:", error);
         }
 
-        return limitedHistory
-      })
+        return limitedHistory;
+      });
 
-      return newAnalysis
+      return newAnalysis;
     },
-    [maxHistory]
-  )
+    [maxHistory],
+  );
 
   // Delete analysis by ID
   const deleteAnalysis = useCallback((id: string) => {
     setHistory((prev) => {
-      const newHistory = prev.filter((item) => item.id !== id)
+      const newHistory = prev.filter((item) => item.id !== id);
 
       try {
-        localStorage.setItem(STORAGE_KEY, serializeHistory(newHistory))
+        localStorage.setItem(STORAGE_KEY, serializeHistory(newHistory));
       } catch (error) {
-        console.error('Failed to delete CV analysis:', error)
+        console.error("Failed to delete CV analysis:", error);
       }
 
-      return newHistory
-    })
-  }, [])
+      return newHistory;
+    });
+  }, []);
 
   // Clear all history
   const clearHistory = useCallback(() => {
-    setHistory([])
+    setHistory([]);
     try {
-      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-      console.error('Failed to clear CV history:', error)
+      console.error("Failed to clear CV history:", error);
     }
-  }, [])
+  }, []);
 
   // Get analysis by ID
   const getAnalysis = useCallback(
     (id: string): CVAnalysisResult | undefined => {
-      return history.find((item) => item.id === id)
+      return history.find((item) => item.id === id);
     },
-    [history]
-  )
+    [history],
+  );
 
   // Check if can save more analyses
-  const canSave = history.length < maxHistory
+  const canSave = history.length < maxHistory;
 
   // Get remaining slots
-  const remainingSlots = Math.max(0, maxHistory - history.length)
+  const remainingSlots = Math.max(0, maxHistory - history.length);
 
   return {
     history,
@@ -197,5 +199,5 @@ export function useCVHistory() {
     deleteAnalysis,
     clearHistory,
     getAnalysis,
-  }
+  };
 }

@@ -6,9 +6,9 @@ Common utility functions and decorators.
 
 import asyncio
 import hashlib
-import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
 from cachetools import TTLCache
 from tenacity import (
@@ -29,13 +29,13 @@ def async_retry(
 ) -> Callable:
     """
     Decorator for async functions with exponential backoff retry.
-    
+
     Args:
         max_attempts: Maximum number of retry attempts
         min_wait: Minimum wait time between retries (seconds)
         max_wait: Maximum wait time between retries (seconds)
         exceptions: Tuple of exceptions to catch and retry
-        
+
     Returns:
         Decorated function
     """
@@ -50,17 +50,17 @@ def async_retry(
 def timed_lru_cache(seconds: int = 3600, maxsize: int = 128) -> Callable:
     """
     LRU cache with TTL expiration.
-    
+
     Args:
         seconds: Time-to-live in seconds
         maxsize: Maximum cache size
-        
+
     Returns:
         Decorated function with caching
     """
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         cache: TTLCache = TTLCache(maxsize=maxsize, ttl=seconds)
-        
+
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
             key = _make_cache_key(args, kwargs)
@@ -69,7 +69,7 @@ def timed_lru_cache(seconds: int = 3600, maxsize: int = 128) -> Callable:
             result = await func(*args, **kwargs)
             cache[key] = result
             return result
-        
+
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> T:
             key = _make_cache_key(args, kwargs)
@@ -78,11 +78,11 @@ def timed_lru_cache(seconds: int = 3600, maxsize: int = 128) -> Callable:
             result = func(*args, **kwargs)
             cache[key] = result
             return result
-        
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
-    
+
     return decorator
 
 

@@ -11,14 +11,14 @@ Architecture avec Groq Models spécialisés:
 """
 import json
 import logging
-import asyncio
-from typing import Optional, Dict, Any, List
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+
 from app.state import HuntZenState
-from job_finder.api_tools import search_jobs_aggregated, find_recruiter_linkedin, find_email_hunter
-from app.database import normalize_search_key, check_job_cache, save_job_cache
+from job_finder.api_tools import find_recruiter_linkedin, search_jobs_aggregated
 from job_finder.config import get_settings
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_groq import ChatGroq
+
+from app.database import check_job_cache, normalize_search_key, save_job_cache
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -80,35 +80,35 @@ async def supervisor_node(state: HuntZenState) -> dict:
     try:
         if not state.get("messages"):
             return {"next_agent": "CareerCoach", "user_language": "fr"}
-        
+
         user_msg = state["messages"][-1].content
-        
+
         # Appel LLM rapide
         response = await fast_llm.ainvoke([
             SystemMessage(content=SUPERVISOR_PROMPT),
             HumanMessage(content=user_msg[:500])  # Limiter pour vitesse
         ])
-        
+
         # Parser la réponse
         content = response.content.strip()
         if content.startswith("```"):
             content = content.split("```")[1].replace("json", "").strip()
-        
+
         data = json.loads(content)
-        
+
         valid_agents = ["JobScout", "TheDetective", "MatchMaker", "CareerCoach", "SecurityGuard"]
         next_agent = data.get("next_agent", "CareerCoach")
         if next_agent not in valid_agents:
             next_agent = "CareerCoach"
-        
+
         user_language = data.get("user_language", "fr")
         if user_language not in ["fr", "en", "es", "de", "it", "pt"]:
             user_language = "fr"
-        
+
         logger.info(f"[SUPERVISOR] Routing to: {next_agent} (lang: {user_language})")
-        
+
         return {"next_agent": next_agent, "user_language": user_language}
-        
+
     except Exception as e:
         logger.error(f"[SUPERVISOR] Error: {e}")
         return {"next_agent": "CareerCoach", "user_language": "fr"}
@@ -134,20 +134,20 @@ async def job_scout_node(state: HuntZenState) -> dict:
     try:
         if not state.get("messages"):
             return {"messages": [AIMessage(content="📍 Quel poste cherchez-vous ?")], "next_agent": "END"}
-        
+
         user_msg = state["messages"][-1].content
         lang = state.get("user_language", "fr")
-        
+
         # Extraction rapide des paramètres
         extraction = await fast_llm.ainvoke([
             SystemMessage(content=JOB_EXTRACTION_PROMPT),
             HumanMessage(content=user_msg)
         ])
-        
+
         content = extraction.content.strip()
         if content.startswith("```"):
             content = content.split("```")[1].replace("json", "").strip()
-        
+
         try:
             params = json.loads(content)
             job_title = params.get("job_title")
@@ -155,49 +155,49 @@ async def job_scout_node(state: HuntZenState) -> dict:
             country_code = params.get("country_code") or state.get("country_code", "fr")
         except json.JSONDecodeError:
             job_title, city, country_code = None, None, "fr"
-        
+
         # Utiliser les paramètres précédents si manquants
         if not job_title:
             job_title = state.get("job_title")
         if not city:
             city = state.get("location")
-        
+
         if not job_title or not city:
             msg = "📍 Précisez le **poste** et la **ville** de votre recherche." if lang == "fr" else "📍 Please specify the **job title** and **city**."
             return {"messages": [AIMessage(content=msg)], "next_agent": "END"}
-        
+
         logger.info(f"[JOBSCOUT] Searching: {job_title} in {city}, {country_code}")
-        
+
         # Vérifier le cache d'abord
         cache_key = normalize_search_key(job_title, city)
         jobs = check_job_cache(cache_key)
         from_cache = bool(jobs)
-        
+
         if not jobs:
             # Recherche multi-sources en parallèle
             result = await search_jobs_aggregated(job_title, city, country_code)
             jobs = result.get("jobs", [])
-            
+
             if jobs:
                 save_job_cache(cache_key, {"title": job_title, "city": city}, jobs)
-        
+
         # Construire la réponse
         if jobs:
             count = len(jobs)
-            source = "cache" if from_cache else "live"
+            _source = "cache" if from_cache else "live"
             msg = f"🚀 **{count} offres trouvées** pour **{job_title}** à **{city}** ({country_code.upper()})\n\n"
-            
+
             # Top 3 preview
             for i, job in enumerate(jobs[:3], 1):
                 title = job.get("title", "Sans titre")[:50]
                 company = job.get("company", "Entreprise non spécifiée")[:30]
                 msg += f"{i}. **{title}** - {company}\n"
-            
+
             if count > 3:
                 msg += f"\n... et {count - 3} autres offres"
         else:
             msg = f"😔 Aucune offre trouvée pour **{job_title}** à **{city}**. Essayez une autre ville ou reformulez le poste."
-        
+
         return {
             "messages": [AIMessage(content=msg)],
             "search_results": jobs[:15],  # Limiter à 15
@@ -206,7 +206,7 @@ async def job_scout_node(state: HuntZenState) -> dict:
             "country_code": country_code,
             "next_agent": "END"
         }
-        
+
     except Exception as e:
         logger.error(f"[JOBSCOUT] Error: {e}")
         return {
@@ -230,65 +230,65 @@ async def detective_node(state: HuntZenState) -> dict:
     try:
         lang = state.get("user_language", "fr")
         company = state.get("company_name")
-        
+
         if not company and state.get("messages"):
             user_msg = state["messages"][-1].content
-            
+
             extraction = await fast_llm.ainvoke([
                 SystemMessage(content=COMPANY_EXTRACTION_PROMPT),
                 HumanMessage(content=user_msg)
             ])
-            
+
             content = extraction.content.strip()
             if content.startswith("```"):
                 content = content.split("```")[1].replace("json", "").strip()
-            
+
             try:
                 data = json.loads(content)
                 company = data.get("company")
             except json.JSONDecodeError:
                 company = None
-        
+
         if not company:
             msg = "🔍 De quelle **entreprise** souhaitez-vous trouver le recruteur ?" if lang == "fr" else "🔍 Which **company's** recruiter would you like to find?"
             return {"messages": [AIMessage(content=msg)], "next_agent": "END"}
-        
+
         logger.info(f"[DETECTIVE] Searching recruiter at: {company}")
-        
+
         # Recherche du recruteur
         try:
             recruiter_info = find_recruiter_linkedin(company)
-            
+
             if recruiter_info:
                 name = recruiter_info.get("name", "N/A")
                 title = recruiter_info.get("title", "Recruteur")
                 url = recruiter_info.get("profile_url", "#")
                 email = recruiter_info.get("email", "")
-                
+
                 msg = f"""🎯 **Recruteur trouvé chez {company}**
 
 👤 **{name}**
 💼 {title}
 🔗 [Profil LinkedIn]({url})"""
-                
+
                 if email:
                     msg += f"\n📧 {email}"
             else:
                 msg = f"😔 Aucun recruteur trouvé pour **{company}**. Essayez avec le nom complet de l'entreprise ou une autre entreprise."
                 recruiter_info = None
-                
+
         except Exception as e:
             logger.error(f"[DETECTIVE] Search error: {e}")
             msg = f"🚫 Erreur lors de la recherche pour **{company}**."
             recruiter_info = None
-        
+
         return {
             "messages": [AIMessage(content=msg)],
             "company_name": company,
             "recruiter_info": recruiter_info,
             "next_agent": "END"
         }
-        
+
     except Exception as e:
         logger.error(f"[DETECTIVE] Error: {e}")
         return {
@@ -300,7 +300,6 @@ async def detective_node(state: HuntZenState) -> dict:
 # ==========================================
 # 4. MATCHMAKER - Analyse CV (importé)
 # ==========================================
-from app.agents.cv_analyzer_agent_legacy import matchmaker_node_enhanced as matchmaker_node
 
 
 # ==========================================
@@ -332,34 +331,34 @@ async def career_coach_node(state: HuntZenState) -> dict:
     """
     try:
         lang = state.get("user_language", "fr")
-        
+
         if not state.get("messages"):
             greeting = "👋 Bonjour ! Je suis votre coach carrière. Comment puis-je vous aider ?" if lang == "fr" else "👋 Hello! I'm your career coach. How can I help?"
             return {"messages": [AIMessage(content=greeting)], "next_agent": "END"}
-        
+
         user_msg = state["messages"][-1].content
-        
+
         # Construire le contexte avec l'historique récent
         recent_msgs = state["messages"][-5:]  # 5 derniers messages
         context = "\n".join([f"{'User' if isinstance(m, HumanMessage) else 'Coach'}: {m.content[:200]}" for m in recent_msgs])
-        
+
         prompt = f"""Contexte de la conversation:
 {context}
 
 Dernière question de l'utilisateur: {user_msg}
 
 Réponds en tant que Career Coach dans la langue: {lang}"""
-        
+
         response = await powerful_llm.ainvoke([
             SystemMessage(content=CAREER_COACH_PROMPT),
             HumanMessage(content=prompt)
         ])
-        
+
         return {
             "messages": [AIMessage(content=response.content)],
             "next_agent": "END"
         }
-        
+
     except Exception as e:
         logger.error(f"[CAREER_COACH] Error: {e}")
         fallback = "Désolé, je rencontre une difficulté. Pouvez-vous reformuler ?" if state.get("user_language") == "fr" else "Sorry, I'm having trouble. Can you rephrase?"
@@ -377,7 +376,7 @@ async def security_guard_node(state: HuntZenState) -> dict:
     Agent de sécurité - bloque les requêtes malveillantes.
     """
     lang = state.get("user_language", "fr")
-    
+
     msg = """🚫 **Alerte Sécurité**
 
 Cette requête a été identifiée comme hors-sujet ou potentiellement malveillante.
@@ -399,5 +398,5 @@ HuntZen is a career assistant. I can help with:
 - 💡 Career advice
 
 How can I assist with your job search?"""
-    
+
     return {"messages": [AIMessage(content=msg)], "next_agent": "END"}

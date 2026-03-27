@@ -3,35 +3,37 @@
  * Refined micro-interactions for natural, organic feel
  */
 
-'use client'
+"use client";
 
-import * as React from 'react'
-import { cn } from '@/lib/utils'
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export interface ExpandableTextareaProps
-  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange'> {
+export interface ExpandableTextareaProps extends Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "onChange"
+> {
   /** Minimum height in pixels */
-  minHeight?: number
+  minHeight?: number;
   /** Maximum height in pixels */
-  maxHeight?: number
+  maxHeight?: number;
   /** Current value */
-  value?: string
+  value?: string;
   /** Change handler */
-  onChange?: (value: string) => void
+  onChange?: (value: string) => void;
   /** Error state */
-  error?: boolean
+  error?: boolean;
   /** Helper text */
-  helperText?: string
+  helperText?: string;
   /** Label */
-  label?: string
+  label?: string;
   /** Show character count */
-  showCount?: boolean
+  showCount?: boolean;
   /** Maximum character count */
-  maxLength?: number
+  maxLength?: number;
 }
 
 // ============================================================================
@@ -46,7 +48,7 @@ export const ExpandableTextarea = React.forwardRef<
     {
       minHeight = 44,
       maxHeight = 200,
-      value = '',
+      value = "",
       onChange,
       error = false,
       helperText,
@@ -55,46 +57,46 @@ export const ExpandableTextarea = React.forwardRef<
       maxLength,
       className,
       disabled,
-      placeholder = 'Tapez votre message...',
+      placeholder = "Tapez votre message...",
       ...props
     },
-    ref
+    ref,
   ) => {
-    const [height, setHeight] = React.useState<number>(minHeight)
-    const [isFocused, setIsFocused] = React.useState(false)
-    const textareaRef = React.useRef<HTMLTextAreaElement | null>(null)
-    const shadowRef = React.useRef<HTMLDivElement | null>(null)
+    const [height, setHeight] = React.useState<number>(minHeight);
+    const [isFocused, setIsFocused] = React.useState(false);
+    const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+    const shadowRef = React.useRef<HTMLDivElement | null>(null);
 
     // Combine refs
-    React.useImperativeHandle(ref, () => textareaRef.current!)
+    React.useImperativeHandle(ref, () => textareaRef.current!);
 
     // Calculate height based on content
     const calculateHeight = React.useCallback(() => {
-      if (!textareaRef.current) return
+      if (!textareaRef.current) return;
 
       // Reset height to get accurate scrollHeight
-      textareaRef.current.style.height = `${minHeight}px`
+      textareaRef.current.style.height = `${minHeight}px`;
 
-      const scrollHeight = textareaRef.current.scrollHeight
-      const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight)
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
 
-      setHeight(newHeight)
-    }, [minHeight, maxHeight])
+      setHeight(newHeight);
+    }, [minHeight, maxHeight]);
 
     // Recalculate on value change
     React.useEffect(() => {
-      calculateHeight()
-    }, [value, calculateHeight])
+      calculateHeight();
+    }, [value, calculateHeight]);
 
     // Handle textarea change
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newValue = e.target.value
-      onChange?.(newValue)
-    }
+      const newValue = e.target.value;
+      onChange?.(newValue);
+    };
 
     // Character count
-    const characterCount = value.length
-    const isNearLimit = maxLength && characterCount > maxLength * 0.9
+    const characterCount = value.length;
+    const isNearLimit = maxLength && characterCount > maxLength * 0.9;
 
     return (
       <div className="w-full space-y-1.5">
@@ -102,9 +104,9 @@ export const ExpandableTextarea = React.forwardRef<
         {label && (
           <label
             className={cn(
-              'block text-sm font-semibold transition-colors',
-              error ? 'text-error' : 'text-gray-700',
-              disabled && 'opacity-60'
+              "block text-sm font-semibold transition-colors",
+              error ? "text-error" : "text-gray-700",
+              disabled && "opacity-60",
             )}
           >
             {label}
@@ -126,50 +128,50 @@ export const ExpandableTextarea = React.forwardRef<
             placeholder={placeholder}
             style={{
               height: `${height}px`,
-              resize: 'none',
+              resize: "none",
             }}
             className={cn(
               // Base styles
-              'w-full px-4 py-3',
-              'rounded-xl',
-              'font-normal text-base leading-relaxed',
-              'transition-all duration-250 ease-smooth',
-              'outline-none',
+              "w-full px-4 py-3",
+              "rounded-xl",
+              "font-normal text-base leading-relaxed",
+              "transition-all duration-250 ease-smooth",
+              "outline-none",
 
               // Border states
-              'border-2',
+              "border-2",
               error
-                ? 'border-error-light focus:border-error'
+                ? "border-error-light focus:border-error"
                 : disabled
-                ? 'border-gray-200'
-                : isFocused
-                ? 'border-ocean-500'
-                : 'border-gray-200 hover:border-gray-300',
+                  ? "border-gray-200"
+                  : isFocused
+                    ? "border-ocean-500"
+                    : "border-gray-200 hover:border-gray-300",
 
               // Background
-              disabled ? 'bg-gray-50' : 'bg-white',
+              disabled ? "bg-gray-50" : "bg-white",
 
               // Text color
-              disabled ? 'text-gray-400' : 'text-gray-900',
+              disabled ? "text-gray-400" : "text-gray-900",
 
               // Placeholder
-              'placeholder:text-gray-400',
+              "placeholder:text-gray-400",
 
               // Focus ring
               !error &&
                 !disabled &&
-                'focus:ring-4 focus:ring-ocean-100',
+                "focus-visible:ring-2 focus-visible:ring-ring",
 
               // Error ring
-              error && 'focus:ring-4 focus:ring-error-light',
+              error && "focus:ring-4 focus:ring-error-light",
 
               // Disabled cursor
-              disabled && 'cursor-not-allowed',
+              disabled && "cursor-not-allowed",
 
               // Smooth scrollbar
-              'scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent',
+              "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent",
 
-              className
+              className,
             )}
             {...props}
           />
@@ -178,11 +180,11 @@ export const ExpandableTextarea = React.forwardRef<
           {isFocused && !error && !disabled && (
             <div
               className={cn(
-                'absolute inset-0 -z-10',
-                'rounded-xl',
-                'bg-ocean-500/5',
-                'animate-fade-in',
-                'pointer-events-none'
+                "absolute inset-0 -z-10",
+                "rounded-xl",
+                "bg-ocean-500/5",
+                "animate-fade-in",
+                "pointer-events-none",
               )}
               aria-hidden="true"
             />
@@ -192,15 +194,15 @@ export const ExpandableTextarea = React.forwardRef<
           {showCount && maxLength && (
             <div
               className={cn(
-                'absolute bottom-2 right-3',
-                'text-xs font-medium tabular-nums',
-                'transition-colors duration-150',
+                "absolute bottom-2 right-3",
+                "text-xs font-medium tabular-nums",
+                "transition-colors duration-150",
                 isNearLimit
-                  ? 'text-warning'
+                  ? "text-warning"
                   : characterCount === maxLength
-                  ? 'text-error'
-                  : 'text-gray-400',
-                'pointer-events-none select-none'
+                    ? "text-error"
+                    : "text-gray-400",
+                "pointer-events-none select-none",
               )}
               aria-live="polite"
               aria-atomic="true"
@@ -214,11 +216,11 @@ export const ExpandableTextarea = React.forwardRef<
         {helperText && (
           <p
             className={cn(
-              'text-xs',
-              error ? 'text-error' : 'text-gray-500',
-              'transition-colors'
+              "text-xs",
+              error ? "text-error" : "text-gray-500",
+              "transition-colors",
             )}
-            role={error ? 'alert' : undefined}
+            role={error ? "alert" : undefined}
           >
             {helperText}
           </p>
@@ -228,8 +230,8 @@ export const ExpandableTextarea = React.forwardRef<
         {height >= maxHeight && !disabled && (
           <div
             className={cn(
-              'flex items-center gap-1.5 text-xs text-gray-500',
-              'animate-fade-in'
+              "flex items-center gap-1.5 text-xs text-gray-500",
+              "animate-fade-in",
             )}
           >
             <svg
@@ -245,12 +247,14 @@ export const ExpandableTextarea = React.forwardRef<
                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span>Limite de hauteur atteinte. Le contenu défile automatiquement.</span>
+            <span>
+              Limite de hauteur atteinte. Le contenu défile automatiquement.
+            </span>
           </div>
         )}
       </div>
-    )
-  }
-)
+    );
+  },
+);
 
-ExpandableTextarea.displayName = 'ExpandableTextarea'
+ExpandableTextarea.displayName = "ExpandableTextarea";

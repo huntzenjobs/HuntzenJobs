@@ -1,9 +1,9 @@
-import '@testing-library/jest-dom'
-import { vi } from 'vitest'
-import React from 'react'
+import "@testing-library/jest-dom";
+import { vi } from "vitest";
+import React from "react";
 
 // Mock Next.js router
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -12,41 +12,78 @@ vi.mock('next/navigation', () => ({
     forward: vi.fn(),
     refresh: vi.fn(),
   }),
-  usePathname: () => '/',
+  usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({}),
-}))
+}));
 
 // Mock Next.js Image component (without JSX)
-vi.mock('next/image', () => ({
+vi.mock("next/image", () => ({
   default: function MockImage(props: Record<string, unknown>) {
-    return React.createElement('img', props)
+    return React.createElement("img", props);
   },
-}))
+}));
+
+// Mock next-intl
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => "fr",
+  useMessages: () => ({}),
+  useNow: () => new Date(),
+  useTimeZone: () => "Europe/Paris",
+  useFormatter: () => ({
+    number: (n: number) => String(n),
+    dateTime: (d: Date) => d.toISOString(),
+    relativeTime: (d: Date) => "",
+  }),
+  NextIntlClientProvider: function MockNextIntlProvider({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
+    return children;
+  },
+}));
+
+vi.mock("next-intl/server", () => ({
+  getTranslations: () => Promise.resolve((key: string) => key),
+  getLocale: () => Promise.resolve("fr"),
+  getMessages: () => Promise.resolve({}),
+  getNow: () => Promise.resolve(new Date()),
+  getTimeZone: () => Promise.resolve("Europe/Paris"),
+}));
 
 // Mock next-themes
-vi.mock('next-themes', () => ({
+vi.mock("next-themes", () => ({
   useTheme: () => ({
-    theme: 'light',
+    theme: "light",
     setTheme: vi.fn(),
-    resolvedTheme: 'light',
-    themes: ['light', 'dark'],
+    resolvedTheme: "light",
+    themes: ["light", "dark"],
   }),
-  ThemeProvider: function MockThemeProvider({ children }: { children: React.ReactNode }) {
-    return children
+  ThemeProvider: function MockThemeProvider({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
+    return children;
   },
-}))
+}));
 
 // Mock Supabase client
-vi.mock('@/lib/supabase/client', () => ({
+vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      getSession: vi
+        .fn()
+        .mockResolvedValue({ data: { session: null }, error: null }),
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
       signInWithPassword: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(),
-      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
     },
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
@@ -57,10 +94,10 @@ vi.mock('@/lib/supabase/client', () => ({
       single: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
   }),
-}))
+}));
 
 // Mock window.matchMedia for responsive tests
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
@@ -72,14 +109,14 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
-})
+});
 
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
-}))
+}));
 
 // Mock IntersectionObserver
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
@@ -87,9 +124,9 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   unobserve: vi.fn(),
   disconnect: vi.fn(),
   root: null,
-  rootMargin: '',
+  rootMargin: "",
   thresholds: [],
-}))
+}));
 
 // Suppress console errors during tests (optional)
 // vi.spyOn(console, 'error').mockImplementation(() => {})

@@ -267,6 +267,26 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         # Get markdown content
         markdown_text = result.document.export_to_markdown()
 
+        # pypdf fallback — same pattern as main_agent.py:extract_text_from_pdf()
+        # Docling with do_ocr=False can silently return minimal text for design-heavy PDFs
+        if not markdown_text or len(markdown_text.strip()) < 100:
+            print(f"⚠️ Docling returned only {len((markdown_text or '').strip())} chars, trying pypdf fallback")
+            try:
+                from pypdf import PdfReader  # transitive dep of docling — always available
+                reader = PdfReader(pdf_path)
+                fallback_text = "\n".join(
+                    page.extract_text() or "" for page in reader.pages
+                ).strip()
+                if fallback_text and len(fallback_text) >= 50:
+                    elapsed = time.time() - start_time
+                    print(f"✅ pypdf fallback succeeded: {len(fallback_text)} chars in {elapsed:.2f}s")
+                    return fallback_text
+                raise RuntimeError(f"pypdf also returned insufficient text ({len(fallback_text)} chars)")
+            except Exception as pypdf_exc:
+                raise RuntimeError(
+                    f"All extraction failed. Docling: {len((markdown_text or '').strip())} chars. pypdf: {pypdf_exc}."
+                )
+
         elapsed = time.time() - start_time
         word_count = len(markdown_text.split())
 
@@ -377,95 +397,144 @@ Réponds UNIQUEMENT avec le JSON, sans texte additionnel."""
 
 def analyze_cv_with_groq(cv_text: str, job_description: Optional[str] = None) -> Dict[str, Any]:
     """
-    Analyze CV using Groq LLM (llama-3.3-70b-versatile).
+    Analyze CV using Groq LLM with detailed per-score explanations.
 
-    This function performs comprehensive CV analysis:
-    - ATS scoring (formatting, keywords, structure, readability)
-    - Strengths identification
-    - Improvement suggestions
-    - Missing sections detection
-    - Keyword analysis
-    - Job matching (if job_description provided)
+    Forces the LLM to justify each score with specific CV content references
+    (company names, technologies, dates, numbers found in the CV text).
+
+    Returns per-score _explanation fields for display as tooltips in the frontend.
 
     Args:
         cv_text: Extracted CV text (markdown)
-        job_description: Optional job description for matching
+        job_description: Optional job description for matching analysis
 
     Returns:
-        Analysis results dictionary
+        Analysis results dictionary with explanations
     """
     from groq import Groq
 
     print(f"🤖 Analyzing CV with Groq (length: {len(cv_text)} chars)")
     start_time = time.time()
 
-    # Initialize Groq client
     groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
         raise ValueError("GROQ_API_KEY not found in Modal secrets")
 
     client = Groq(api_key=groq_api_key)
 
-    # Build analysis prompt
-    prompt = f"""Tu es un expert en analyse de CV et recrutement. Analyse le CV suivant et fournis une évaluation détaillée.
+    job_match_section = ""
+    if job_description:
+        job_match_section = f"""
+Offre d'emploi à matcher :
+---
+{job_description}
+---
+"""
 
-CV:
-{cv_text}
-
-{"Job Description: " + job_description if job_description else ""}
-
-Fournis ton analyse au format JSON avec la structure suivante:
-{{
-    "ats_score": {{
-        "overall_score": <0-100>,
-        "formatting_score": <0-100>,
-        "keywords_score": <0-100>,
-        "structure_score": <0-100>,
-        "readability_score": <0-100>
-    }},
-    "strengths": [<liste de 3-5 points forts>],
-    "improvements": [<liste de 3-5 suggestions d'amélioration>],
-    "missing_sections": [<sections manquantes importantes>],
-    "keywords_found": [<mots-clés pertinents trouvés>],
-    "keywords_missing": [<mots-clés importants manquants>],
-    "job_match_score": <0-100 si job_description fourni, sinon null>
-}}
-
-Réponds UNIQUEMENT avec le JSON, sans texte additionnel."""
-
-    try:
-        # Call Groq API
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": "Tu es un expert en analyse de CV. Tu réponds toujours en JSON valide."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=2000
+    job_match_json_fields = '"job_match_score": null,\n    "job_match_explanation": null'
+    if job_description:
+        job_match_json_fields = (
+            '"job_match_score": <entier 0-100 basé sur la correspondance avec l\'offre>,\n'
+            '    "job_match_explanation": "<2-3 phrases : score global, '
+            'compétences du CV qui matchent l\'offre, compétences requises par l\'offre mais absentes du CV>"'
         )
 
-        # Parse JSON response
-        result_text = response.choices[0].message.content.strip()
+    prompt = f"""Tu es un expert ATS (Applicant Tracking System) et recruteur senior avec 15 ans d'expérience.
 
-        # Remove markdown code blocks if present
-        if result_text.startswith("```json"):
-            result_text = result_text[7:]
-        if result_text.startswith("```"):
-            result_text = result_text[3:]
-        if result_text.endswith("```"):
-            result_text = result_text[:-3]
+MISSION : Analyser ce CV avec rigueur et précision.
 
-        result = json.loads(result_text.strip())
+RÈGLE ABSOLUE : Chaque explication DOIT citer le contenu réel du CV (noms d'entreprises, technologies, dates, chiffres trouvés dans le texte). Les phrases génériques comme "votre CV est bien structuré" sont INTERDITES.
 
-        elapsed = time.time() - start_time
-        print(f"✅ Analysis completed in {elapsed:.2f}s (score: {result['ats_score']['overall_score']}/100)")
+Pour suggested_job_titles : propose 3 titres de postes que le candidat devrait cibler, en te basant sur ses compétences et son niveau d'expérience. Utilise des formats standards (ex: "Développeur Full-Stack React/Node.js", "Data Scientist Python", "Chef de Projet IT").
 
-        return result
+CV à analyser :
+---
+{cv_text}
+---
+{job_match_section}
+Réponds UNIQUEMENT avec le JSON suivant. Aucun texte avant ou après. Aucun bloc markdown.
 
-    except Exception as e:
-        print(f"❌ Groq analysis failed: {e}")
-        raise
+{{
+    "ats_score": {{
+        "overall_score": <entier 0-100 : moyenne pondérée des 4 scores (format 25%, keywords 30%, structure 25%, readability 20%)>,
+        "formatting_score": <entier 0-100>,
+        "formatting_explanation": "<1-2 phrases citant des éléments CONCRETS du CV : nommer les sections présentes/absentes, commenter l'uniformité des dates, la longueur du CV en pages>",
+        "keywords_score": <entier 0-100>,
+        "keywords_explanation": "<1-2 phrases listant les mots-clés techniques TROUVÉS dans le CV et les mots-clés IMPORTANTS qui manquent pour ce profil>",
+        "structure_score": <entier 0-100>,
+        "structure_explanation": "<1-2 phrases sur la logique de la chronologie, l'ordre des sections, les sections présentes ou manquantes (ex: résumé professionnel, réalisations)>",
+        "readability_score": <entier 0-100>,
+        "readability_explanation": "<1-2 phrases sur la qualité des bullet points : utilisent-ils des verbes d'action + résultats chiffrés, ou sont-ce des descriptions de tâches vagues ?>"
+    }},
+    "strengths": [
+        "<point fort 1 : cite un FAIT précis du CV — ex: 'Certification AWS Solutions Architect obtenue en 2023, très valorisée par les recruteurs tech'>",
+        "<point fort 2 : cite un FAIT précis — ex: 'Résultat quantifié fort : réduction de 40% du temps de traitement batch chez [Entreprise] (2024)'>",
+        "<point fort 3 : cite un FAIT précis du CV>"
+    ],
+    "improvements": [
+        "<amélioration 1 : actionnable et spécifique — cite la section ou l'élément concerné ex: 'Ajouter un résumé professionnel de 3-4 lignes en tête : les ATS lisent ce bloc en priorité'>",
+        "<amélioration 2 : cite la section problématique — ex: 'Les postes [dates] chez [Entreprise] décrivent des tâches sans verbes d'action ni métriques'>",
+        "<amélioration 3 : mots-clés manquants — ex: '[Technologie1], [Technologie2] sont absents alors qu'ils apparaissent dans la majorité des offres pour ce profil'>"
+    ],
+    "missing_sections": ["<sections ATS standard absentes du CV, ex: Résumé professionnel, Liens GitHub/Portfolio, Certifications>"],
+    "keywords_found": ["<liste des mots-clés techniques pertinents TROUVÉS dans le CV>"],
+    "keywords_missing": ["<liste des mots-clés importants ABSENTS du CV pour ce type de profil>"],
+    "suggested_job_titles": ["<titre poste 1 : format standard ex: 'Développeur Full-Stack React/Node.js'>", "<titre poste 2>", "<titre poste 3>"],
+    {job_match_json_fields}
+}}"""
+
+    result_text = ""
+    last_error = None
+
+    for attempt in range(1, 3):  # 2 tentatives max (cold JSON fail → retry)
+        try:
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "Tu es un expert ATS et recruteur senior. "
+                            "Tu analyses des CV avec précision et citant toujours des éléments concrets du CV. "
+                            "Tu réponds toujours en JSON valide, sans markdown, sans texte additionnel."
+                        )
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=3000,
+                response_format={"type": "json_object"},  # Force JSON mode — évite json_validate_failed
+            )
+
+            result_text = response.choices[0].message.content.strip()
+
+            # Strip markdown code blocks if present
+            if result_text.startswith("```json"):
+                result_text = result_text[7:]
+            if result_text.startswith("```"):
+                result_text = result_text[3:]
+            if result_text.endswith("```"):
+                result_text = result_text[:-3]
+
+            result = json.loads(result_text.strip())
+
+            elapsed = time.time() - start_time
+            print(f"✅ Analysis completed in {elapsed:.2f}s (attempt {attempt}, score: {result['ats_score']['overall_score']}/100)")
+
+            return result
+
+        except json.JSONDecodeError as e:
+            last_error = e
+            print(f"⚠️ JSON parse error (attempt {attempt}/2): {e}")
+            print(f"   Raw response: {result_text[:500]}")
+            if attempt < 2:
+                print("   Retrying...")
+                continue
+            raise RuntimeError(f"Groq returned invalid JSON after 2 attempts: {e}") from e
+
+        except Exception as e:
+            print(f"❌ Groq analysis failed (attempt {attempt}): {e}")
+            raise
 
 
 # ============================================
@@ -683,8 +752,9 @@ async def process_cv_webhook(request_body: dict) -> dict:
         job_description = request_body.get("job_description")
         language = request_body.get("language", "fr")
 
-        # Call main processing function using .local() to run in same container
-        result = await process_cv_analysis.local(
+        # .spawn() — container dédié, retourne en <1s au lieu de bloquer 15s
+        # Railway worker libéré immédiatement — callback /api/cv-analysis/callback déjà en place
+        process_cv_analysis.spawn(
             cv_id=cv_id,
             user_id=user_id,
             pdf_url=pdf_url,
@@ -695,7 +765,8 @@ async def process_cv_webhook(request_body: dict) -> dict:
 
         return {
             "success": True,
-            "result": result
+            "message": "processing_spawned",
+            "cv_id": cv_id
         }
 
     except Exception as e:

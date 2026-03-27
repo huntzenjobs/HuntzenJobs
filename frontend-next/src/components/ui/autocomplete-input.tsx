@@ -3,53 +3,62 @@
  * Solves z-index issues, adds loading states, improves accessibility
  */
 
-'use client'
+"use client";
 
-import * as React from 'react'
-import * as PopoverPrimitive from '@radix-ui/react-popover'
-import { Command as CommandPrimitive } from 'cmdk'
-import { Check, ChevronDown, Loader2, Search, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import * as React from "react";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { Command as CommandPrimitive } from "cmdk";
+import { Check, ChevronDown, Loader2, Search, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface AutocompleteOption {
-  value: string
-  label: string
-  description?: string
+  value: string;
+  label: string;
+  description?: string;
+  icon?: React.ReactNode;
 }
 
 export interface AutocompleteInputProps {
   /** Input label */
-  label?: string
+  label?: string;
   /** Current value */
-  value: string
+  value: string;
   /** Change handler */
-  onChange: (value: string) => void
+  onChange: (value: string) => void;
   /** Options to display */
-  options?: AutocompleteOption[]
+  options?: AutocompleteOption[];
   /** Loading state */
-  loading?: boolean
+  loading?: boolean;
   /** Error state */
-  error?: boolean
+  error?: boolean;
   /** Helper text */
-  helperText?: string
+  helperText?: string;
   /** Placeholder */
-  placeholder?: string
+  placeholder?: string;
   /** Disabled state */
-  disabled?: boolean
+  disabled?: boolean;
   /** Required field */
-  required?: boolean
+  required?: boolean;
   /** Icon to display */
-  icon?: React.ReactNode
-  /** Empty state message */
-  emptyMessage?: string
+  icon?: React.ReactNode;
+  /** Empty state message (when user typed but no results found) */
+  emptyMessage?: string;
+  /** Prompt shown when input is empty (before user types anything) */
+  typingPromptMessage?: string;
   /** Fetch options function (for async) */
-  onSearch?: (query: string) => Promise<AutocompleteOption[]>
+  onSearch?: (query: string) => Promise<AutocompleteOption[]>;
   /** Debounce delay for search (ms) */
-  debounceMs?: number
+  debounceMs?: number;
+  /**
+   * Called on blur when no option could be auto-selected from current results.
+   * Receives the raw typed text; return a resolved option to auto-select it,
+   * or null to leave the field as-is. Useful for fuzzy/typo correction.
+   */
+  onBlurResolve?: (text: string) => Promise<AutocompleteOption | null>;
 }
 
 // ============================================================================
@@ -69,100 +78,109 @@ export const AutocompleteInput = React.forwardRef<
       loading: externalLoading = false,
       error = false,
       helperText,
-      placeholder = 'Rechercher...',
+      placeholder = "Rechercher...",
       disabled = false,
       required = false,
       icon,
-      emptyMessage = 'Aucun résultat trouvé',
+      emptyMessage = "Aucun résultat trouvé",
+      typingPromptMessage,
       onSearch,
       debounceMs = 300,
+      onBlurResolve,
     },
-    ref
+    ref,
   ) => {
-    const [open, setOpen] = React.useState(false)
-    const [search, setSearch] = React.useState(value)
+    const [open, setOpen] = React.useState(false);
+    const [search, setSearch] = React.useState(value);
     const [internalOptions, setInternalOptions] = React.useState<
       AutocompleteOption[]
-    >([])
-    const [internalLoading, setInternalLoading] = React.useState(false)
-    const inputRef = React.useRef<HTMLInputElement>(null)
-    const debounceRef = React.useRef<NodeJS.Timeout>()
-    const isSelectionRef = React.useRef(false)
+    >([]);
+    const [internalLoading, setInternalLoading] = React.useState(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    const debounceRef = React.useRef<NodeJS.Timeout>();
+    const isSelectionRef = React.useRef(false);
+    // Tracks whether a click-selection already handled this blur event
+    const blurHandledRef = React.useRef(false);
+    // Always-fresh reference to current search value (for stale closures)
+    const searchRef = React.useRef(search);
+    searchRef.current = search;
 
     // Combine refs
-    React.useImperativeHandle(ref, () => inputRef.current!)
+    React.useImperativeHandle(ref, () => inputRef.current!);
 
     // Use external options or internal fetched options
-    const options = externalOptions.length > 0 ? externalOptions : internalOptions
-    const loading = externalLoading || internalLoading
+    const options =
+      externalOptions.length > 0 ? externalOptions : internalOptions;
+    const loading = externalLoading || internalLoading;
 
     // Sync search with value (sauf si c'est une sélection)
     React.useEffect(() => {
       if (!isSelectionRef.current) {
-        setSearch(value)
+        setSearch(value);
       }
-      isSelectionRef.current = false
-    }, [value])
+      isSelectionRef.current = false;
+    }, [value]);
 
     // Debounced search
     React.useEffect(() => {
-      if (!onSearch) return
+      if (!onSearch) return;
       if (search.length === 0) {
-        setInternalOptions([])
-        return
+        setInternalOptions([]);
+        return;
       }
 
       // Clear previous timeout
       if (debounceRef.current) {
-        clearTimeout(debounceRef.current)
+        clearTimeout(debounceRef.current);
       }
 
       // Set new timeout
       debounceRef.current = setTimeout(async () => {
-        setInternalLoading(true)
+        setInternalLoading(true);
         try {
-          const results = await onSearch(search)
-          setInternalOptions(results)
+          const results = await onSearch(search);
+          setInternalOptions(results);
         } catch (error) {
-          console.error('Autocomplete search error:', error)
-          setInternalOptions([])
+          console.error("Autocomplete search error:", error);
+          setInternalOptions([]);
         } finally {
-          setInternalLoading(false)
+          setInternalLoading(false);
         }
-      }, debounceMs)
+      }, debounceMs);
 
       return () => {
         if (debounceRef.current) {
-          clearTimeout(debounceRef.current)
+          clearTimeout(debounceRef.current);
         }
-      }
-    }, [search, onSearch, debounceMs])
+      };
+    }, [search, onSearch, debounceMs]);
 
     // Handle input change
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = e.target.value
-      setSearch(newValue)
-      onChange(newValue)
-      if (!open) setOpen(true)
-    }
+      const newValue = e.target.value;
+      setSearch(newValue);
+      onChange(newValue);
+      if (!open) setOpen(true);
+    };
 
     // Handle option select
     const handleSelect = (selectedValue: string) => {
-      const selectedOption = options.find((opt) => opt.value === selectedValue)
+      const selectedOption = options.find((opt) => opt.value === selectedValue);
       if (selectedOption) {
-        isSelectionRef.current = true
-        setSearch(selectedOption.label)
-        onChange(selectedOption.value)
-        setOpen(false)
+        blurHandledRef.current = true; // Prevent blur handler from re-running fuzzy
+        isSelectionRef.current = true;
+        setSearch(selectedOption.label);
+        onChange(selectedOption.value);
+        setOpen(false);
       }
-    }
+    };
 
     // Clear input
     const handleClear = () => {
-      setSearch('')
-      onChange('')
-      inputRef.current?.focus()
-    }
+      setSearch("");
+      onChange("");
+      inputRef.current?.focus();
+    };
 
     return (
       <div className="w-full space-y-1.5">
@@ -170,9 +188,9 @@ export const AutocompleteInput = React.forwardRef<
         {label && (
           <label
             className={cn(
-              'block text-sm font-semibold transition-colors',
-              error ? 'text-error' : 'text-gray-700',
-              disabled && 'opacity-60'
+              "block text-sm font-semibold transition-colors",
+              error ? "text-error" : "text-gray-700",
+              disabled && "opacity-60",
             )}
           >
             {label}
@@ -198,47 +216,97 @@ export const AutocompleteInput = React.forwardRef<
                 value={search}
                 onChange={handleInputChange}
                 onFocus={() => {
-                  if (search.length > 0 || options.length > 0) {
-                    setOpen(true)
+                  if (
+                    search.length > 0 ||
+                    options.length > 0 ||
+                    !!typingPromptMessage
+                  ) {
+                    setOpen(true);
                   }
+                }}
+                onBlur={() => {
+                  // Wait 150ms so a suggestion click (mouseup) fires before this runs
+                  setTimeout(async () => {
+                    // If a click-selection already handled this blur, skip
+                    if (blurHandledRef.current) {
+                      blurHandledRef.current = false;
+                      return;
+                    }
+                    const currentSearch = searchRef.current;
+                    if (!currentSearch.trim()) return;
+
+                    // 1. Single option available → auto-select it
+                    if (options.length === 1) {
+                      const opt = options[0];
+                      isSelectionRef.current = true;
+                      setSearch(opt.label);
+                      onChange(opt.value);
+                      setOpen(false);
+                      return;
+                    }
+
+                    // 2. Exact match in current options → auto-select
+                    const exact = options.find(
+                      (o) =>
+                        o.label.toLowerCase() === currentSearch.toLowerCase(),
+                    );
+                    if (exact) {
+                      isSelectionRef.current = true;
+                      setSearch(exact.label);
+                      onChange(exact.value);
+                      setOpen(false);
+                      return;
+                    }
+
+                    // 3. Delegate to parent for fuzzy / external resolution
+                    if (onBlurResolve) {
+                      const resolved = await onBlurResolve(currentSearch);
+                      if (resolved) {
+                        isSelectionRef.current = true;
+                        setSearch(resolved.label);
+                        onChange(resolved.value);
+                        setOpen(false);
+                      }
+                    }
+                  }, 150);
                 }}
                 disabled={disabled}
                 placeholder={placeholder}
                 className={cn(
                   // Base styles
-                  'w-full h-11 px-4',
-                  icon && 'pl-10',
-                  (search.length > 0 || loading) && 'pr-20',
-                  'rounded-xl',
-                  'font-normal text-base',
-                  'transition-all duration-250 ease-smooth',
-                  'outline-none',
+                  "w-full h-11 px-4",
+                  icon && "pl-10",
+                  (search.length > 0 || loading) && "pr-20",
+                  "rounded-xl",
+                  "font-normal text-base",
+                  "transition-all duration-250 ease-smooth",
+                  "outline-none",
 
                   // Border states
-                  'border-2',
+                  "border-2",
                   error
-                    ? 'border-error-light focus:border-error'
+                    ? "border-error-light focus:border-error"
                     : disabled
-                    ? 'border-gray-200'
-                    : 'border-gray-200 hover:border-gray-300 focus:border-ocean-500',
+                      ? "border-gray-200"
+                      : "border-gray-200 hover:border-gray-300 focus:border-ocean-500",
 
                   // Background
-                  disabled ? 'bg-gray-100' : 'bg-white',
+                  disabled ? "bg-gray-100" : "bg-white",
 
                   // Text color
-                  disabled ? 'text-gray-400' : 'text-gray-900',
+                  disabled ? "text-gray-400" : "text-gray-900",
 
                   // Placeholder
-                  'placeholder:text-gray-400',
+                  "placeholder:text-gray-400",
 
                   // Focus ring
-                  !error && !disabled && 'focus:ring-4 focus:ring-ocean-100',
+                  !error && !disabled && "focus:ring-4 focus:ring-ocean-100",
 
                   // Error ring
-                  error && 'focus:ring-4 focus:ring-error-light',
+                  error && "focus:ring-4 focus:ring-error-light",
 
                   // Disabled cursor
-                  disabled && 'cursor-not-allowed'
+                  disabled && "cursor-not-allowed",
                 )}
                 aria-label={label}
                 aria-expanded={open}
@@ -262,9 +330,9 @@ export const AutocompleteInput = React.forwardRef<
                     type="button"
                     onClick={handleClear}
                     className={cn(
-                      'p-0.5 rounded hover:bg-gray-100',
-                      'text-gray-400 hover:text-gray-600',
-                      'transition-colors'
+                      "p-0.5 rounded hover:bg-gray-100",
+                      "text-gray-400 hover:text-gray-600",
+                      "transition-colors",
                     )}
                     aria-label="Effacer"
                   >
@@ -274,8 +342,8 @@ export const AutocompleteInput = React.forwardRef<
 
                 <ChevronDown
                   className={cn(
-                    'size-4 text-gray-400 transition-transform duration-200',
-                    open && 'rotate-180'
+                    "size-4 text-gray-400 transition-transform duration-200",
+                    open && "rotate-180",
                   )}
                   aria-hidden="true"
                 />
@@ -290,14 +358,14 @@ export const AutocompleteInput = React.forwardRef<
               align="start"
               sideOffset={4}
               className={cn(
-                'z-popover w-[var(--radix-popover-trigger-width)]',
-                'bg-white rounded-xl border-2 border-gray-200',
-                'shadow-lg',
-                'p-1',
-                'animate-scale-in origin-top',
-                'max-h-[300px] overflow-auto',
+                "z-popover w-[var(--radix-popover-trigger-width)]",
+                "bg-white rounded-xl border-2 border-gray-200",
+                "shadow-lg",
+                "p-1",
+                "animate-scale-in origin-top",
+                "max-h-[300px] overflow-auto",
                 // Custom scrollbar
-                'scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'
+                "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent",
               )}
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
@@ -313,7 +381,9 @@ export const AutocompleteInput = React.forwardRef<
                   ) : options.length === 0 ? (
                     <div className="py-6 text-center text-sm text-gray-500">
                       <Search className="size-5 mx-auto mb-2 text-gray-400" />
-                      {emptyMessage}
+                      {search.length === 0 && typingPromptMessage
+                        ? typingPromptMessage
+                        : emptyMessage}
                     </div>
                   ) : (
                     <CommandPrimitive.Group>
@@ -323,15 +393,20 @@ export const AutocompleteInput = React.forwardRef<
                           value={option.value}
                           onSelect={handleSelect}
                           className={cn(
-                            'relative flex items-center gap-2 px-3 py-2.5',
-                            'rounded-lg cursor-pointer',
-                            'text-sm text-gray-900',
-                            'transition-colors',
-                            'hover:bg-ocean-50',
-                            'data-[selected=true]:bg-ocean-100',
-                            'outline-none'
+                            "relative flex items-center gap-2 px-3 py-2.5",
+                            "rounded-lg cursor-pointer",
+                            "text-sm text-gray-900",
+                            "transition-colors",
+                            "hover:bg-ocean-50",
+                            "data-[selected=true]:bg-ocean-100",
+                            "outline-none",
                           )}
                         >
+                          {option.icon && (
+                            <span className="shrink-0 w-5 h-4 overflow-hidden flex items-center">
+                              {option.icon}
+                            </span>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">
                               {option.label}
@@ -363,18 +438,18 @@ export const AutocompleteInput = React.forwardRef<
         {helperText && (
           <p
             className={cn(
-              'text-xs',
-              error ? 'text-error' : 'text-gray-500',
-              'transition-colors'
+              "text-xs",
+              error ? "text-error" : "text-gray-500",
+              "transition-colors",
             )}
-            role={error ? 'alert' : undefined}
+            role={error ? "alert" : undefined}
           >
             {helperText}
           </p>
         )}
       </div>
-    )
-  }
-)
+    );
+  },
+);
 
-AutocompleteInput.displayName = 'AutocompleteInput'
+AutocompleteInput.displayName = "AutocompleteInput";

@@ -22,21 +22,27 @@
  * @sprint 6 - Ticket S6-6
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useAuthenticatedFetch } from '@/hooks/use-authenticated-fetch';
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
+import { useLocale } from "@/contexts/i18n-context";
+import { sendXpEvent } from "@/hooks/use-career-score";
 
 // ============================================
 // TYPES
 // ============================================
 
-interface CVAnalysisResult {
+export interface CVAnalysisApiResult {
   ats_score: {
     overall_score: number;
     formatting_score: number;
+    formatting_explanation?: string;
     keywords_score: number;
+    keywords_explanation?: string;
     structure_score: number;
+    structure_explanation?: string;
     readability_score: number;
+    readability_explanation?: string;
   };
   strengths: string[];
   improvements: string[];
@@ -44,15 +50,18 @@ interface CVAnalysisResult {
   keywords_found: string[];
   keywords_missing: string[];
   job_match_score?: number;
-  analysis_language: 'fr' | 'en';
+  job_match_explanation?: string;
+  suggested_job_titles?: string[];
+  cv_info?: Record<string, unknown>;
+  analysis_language: "fr" | "en";
   processed_at: string;
   processing_time_seconds?: number;
 }
 
 interface CVAnalysisStatus {
   cv_id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  result?: CVAnalysisResult;
+  status: "pending" | "processing" | "completed" | "failed";
+  result?: CVAnalysisApiResult;
   error?: string;
   created_at: string;
   completed_at?: string;
@@ -70,12 +79,20 @@ interface UploadResponse {
 
 interface UseCVAnalysisReturn {
   // Upload functions
-  uploadCV: (file: File, jobDescription?: string, language?: 'fr' | 'en') => Promise<void>;
-  uploadCVText: (cvText: string, jobDescription?: string, language?: 'fr' | 'en') => Promise<void>;
+  uploadCV: (
+    file: File,
+    jobDescription?: string,
+    language?: "fr" | "en",
+  ) => Promise<void>;
+  uploadCVText: (
+    cvText: string,
+    jobDescription?: string,
+    language?: "fr" | "en",
+  ) => Promise<void>;
 
   // State
-  status: CVAnalysisStatus['status'];
-  result: CVAnalysisResult | null;
+  status: CVAnalysisStatus["status"];
+  result: CVAnalysisApiResult | null;
   error: string | null;
   isUploading: boolean;
   isPolling: boolean;
@@ -102,25 +119,24 @@ const ESTIMATED_PROCESSING_TIME = 15; // seconds (from S6-6 docs)
 // HOOK
 // ============================================
 
-export function useCVAnalysis(): UseCVAnalysisReturn {
+export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
   // Get auth session from context (instead of calling Supabase directly)
   const { session } = useAuth();
 
   // Get authenticated fetch with automatic token refresh
   const { authenticatedFetch } = useAuthenticatedFetch();
 
-  // ⚠️ VALIDATION: This hook requires authentication
-  // If you're seeing this error, ensure the component using this hook is protected
-  // with an authentication check (e.g., redirecting to /login or /signup)
-  if (!session) {
-    throw new Error('useCVAnalysis requires authentication. User must be logged in to analyze CV.');
-  }
+  // Get current locale for API calls
+  const { locale } = useLocale();
 
-  // State
+  // State — ALL hooks called unconditionally before any auth check (Rules of Hooks).
+  // Auth validation happens inside async callbacks, not during render.
+  // Throwing here caused React error #310 (state update during render) when session
+  // expired: 3 hooks ran before the throw, 14 hooks ran on the previous render.
   const [cvId, setCvId] = useState<string | null>(null);
   const [anonymousId, setAnonymousId] = useState<string | null>(null);
-  const [status, setStatus] = useState<CVAnalysisStatus['status']>('pending');
-  const [result, setResult] = useState<CVAnalysisResult | null>(null);
+  const [status, setStatus] = useState<CVAnalysisStatus["status"]>("pending");
+  const [result, setResult] = useState<CVAnalysisApiResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
@@ -128,10 +144,17 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
   // Progress tracking
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(ESTIMATED_PROCESSING_TIME);
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(
+    ESTIMATED_PROCESSING_TIME,
+  );
   const [progress, setProgress] = useState(0);
 
   // Refs for cleanup
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -159,7 +182,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
   // ============================================
 
   useEffect(() => {
-    if (startTime && (status === 'pending' || status === 'processing')) {
+    if (startTime && (status === "pending" || status === "processing")) {
       elapsedTimerRef.current = setInterval(() => {
         if (isMountedRef.current) {
           const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -168,7 +191,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
           // Update progress (0-100%)
           const progressPercent = Math.min(
             Math.floor((elapsed / ESTIMATED_PROCESSING_TIME) * 100),
-            95 // Cap at 95% until actually complete
+            95, // Cap at 95% until actually complete
           );
           setProgress(progressPercent);
 
@@ -194,293 +217,307 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
   // POLLING LOGIC
   // ============================================
 
-  const startPolling = useCallback((cvAnalysisId: string, anonymousSessionId?: string) => {
-    setIsPolling(true);
-    const pollStart = Date.now();
+  const startPolling = useCallback(
+    (cvAnalysisId: string, anonymousSessionId?: string) => {
+      setIsPolling(true);
+      const pollStart = Date.now();
 
-    const poll = async () => {
-      try {
-        // Safety: Stop polling after max duration
-        if (Date.now() - pollStart > MAX_POLLING_DURATION) {
-          console.warn('Polling timeout reached (2 minutes)');
-          setError('Processing timeout - please check status later');
-          setStatus('failed');
-          setIsPolling(false);
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-          }
-          return;
-        }
-
-        // Build headers (auth optional for anonymous users)
-        // Build URL with anonymous_id query param if needed
-        let url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/status/${cvAnalysisId}`;
-        if (anonymousSessionId) {
-          url += `?anonymous_id=${encodeURIComponent(anonymousSessionId)}`;
-        }
-
-        // Use authenticatedFetch with automatic token refresh on 401
-        const response = await authenticatedFetch(url);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data: CVAnalysisStatus = await response.json();
-
-        if (!isMountedRef.current) return;
-
-        // Update status
-        setStatus(data.status);
-
-        // Handle completion
-        if (data.status === 'completed') {
-          setResult(data.result || null);
-          setProgress(100);
-          setIsPolling(false);
-          setEstimatedTimeRemaining(0);
-
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
+      const poll = async () => {
+        try {
+          // Safety: Stop polling after max duration
+          if (Date.now() - pollStart > MAX_POLLING_DURATION) {
+            console.warn("Polling timeout reached (2 minutes)");
+            setError("Processing timeout - please check status later");
+            setStatus("failed");
+            setIsPolling(false);
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+            }
+            return;
           }
 
-          console.log('✅ CV analysis completed', {
-            cv_id: cvAnalysisId,
-            processing_time: data.processing_time_seconds,
-          });
-        }
-
-        // Handle failure
-        else if (data.status === 'failed') {
-          setError(data.error || 'CV analysis failed');
-          setIsPolling(false);
-
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
+          // Build headers (auth optional for anonymous users)
+          // Build URL with anonymous_id query param if needed
+          let url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/status/${cvAnalysisId}`;
+          if (anonymousSessionId) {
+            url += `?anonymous_id=${encodeURIComponent(anonymousSessionId)}`;
           }
 
-          console.error('❌ CV analysis failed', {
-            cv_id: cvAnalysisId,
-            error: data.error,
-          });
-        }
-      } catch (err) {
-        console.error('Polling error:', err);
+          // Use authenticatedFetch with automatic token refresh on 401
+          const response = await authenticatedFetch(url);
 
-        if (isMountedRef.current) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch CV status');
-          setIsPolling(false);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
 
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
+          const data: CVAnalysisStatus = await response.json();
+
+          if (!isMountedRef.current) return;
+
+          // Update status
+          setStatus(data.status);
+
+          // Handle completion
+          if (data.status === "completed") {
+            setResult(data.result || null);
+            setProgress(100);
+            setIsPolling(false);
+            setEstimatedTimeRemaining(0);
+
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+            }
+
+            sendXpEvent(session?.access_token ?? "", "cv_analysis");
+            onCompleteRef.current?.();
+          }
+
+          // Handle failure
+          else if (data.status === "failed") {
+            setError(data.error || "CV analysis failed");
+            setIsPolling(false);
+
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+            }
+
+            console.error("❌ CV analysis failed", {
+              cv_id: cvAnalysisId,
+              error: data.error,
+            });
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+
+          if (isMountedRef.current) {
+            setError(
+              err instanceof Error ? err.message : "Failed to fetch CV status",
+            );
+            setIsPolling(false);
+
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+            }
           }
         }
-      }
-    };
+      };
 
-    // Initial poll
-    poll();
+      // Initial poll
+      poll();
 
-    // Set up interval
-    pollingIntervalRef.current = setInterval(poll, POLLING_INTERVAL);
-  }, [authenticatedFetch, session]);
+      // Set up interval
+      pollingIntervalRef.current = setInterval(poll, POLLING_INTERVAL);
+    },
+    [authenticatedFetch, session],
+  );
 
   // ============================================
   // UPLOAD FUNCTION
   // ============================================
 
-  const uploadCV = useCallback(async (
-    file: File,
-    jobDescription?: string,
-    language: 'fr' | 'en' = 'fr'
-  ) => {
-    // Reset state
-    setError(null);
-    setResult(null);
-    setStatus('pending');
-    setProgress(0);
-    setElapsedTime(0);
-    setEstimatedTimeRemaining(ESTIMATED_PROCESSING_TIME);
-    setIsUploading(true);
-
-    try {
-      // Validate file type
-      if (!file.name.toLowerCase().endsWith('.pdf')) {
-        throw new Error('Seuls les fichiers PDF sont supportés pour le traitement asynchrone');
+  const uploadCV = useCallback(
+    async (
+      file: File,
+      jobDescription?: string,
+      language?: "fr" | "en" | "es" | "pt",
+    ) => {
+      if (!session) {
+        setError("Session expirée - veuillez vous reconnecter");
+        return;
       }
+      // Use provided language or default to user's detected locale
+      const finalLanguage = language || locale;
+      // Reset state
+      setError(null);
+      setResult(null);
+      setStatus("pending");
+      setProgress(0);
+      setElapsedTime(0);
+      setEstimatedTimeRemaining(ESTIMATED_PROCESSING_TIME);
+      setIsUploading(true);
+      setStartTime(Date.now()); // Démarrer le timer immédiatement
 
-      // Validate file size (max 10MB)
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-      if (file.size > MAX_FILE_SIZE) {
-        throw new Error('Le fichier est trop volumineux (max 10MB)');
-      }
-
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('file', file);
-      if (jobDescription) {
-        formData.append('job_description', jobDescription);
-      }
-      formData.append('language', language);
-
-      console.log('🚀 Uploading CV:', {
-        filename: file.name,
-        size: file.size,
-        hasJobDescription: !!jobDescription,
-        authenticated: !!session?.access_token,
-      });
-
-      // Upload to backend with automatic token refresh on 401
-      const response = await authenticatedFetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/async`,
-        {
-          method: 'POST',
-          body: formData,
-          // Don't set Content-Type for FormData - browser will set it with boundary
+      try {
+        // Validate file type
+        if (!file.name.toLowerCase().endsWith(".pdf")) {
+          throw new Error(
+            "Seuls les fichiers PDF sont supportés pour le traitement asynchrone",
+          );
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        // Validate file size (max 10MB)
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error("Le fichier est trop volumineux (max 10MB)");
+        }
 
-        // Handle quota exceeded (429) with specific error types
-        if (response.status === 429) {
-          // Check if it's anonymous rate limit exceeded
-          if (errorData.detail?.error === 'anonymous_rate_limit_exceeded') {
-            throw new Error('ANONYMOUS_RATE_LIMIT_EXCEEDED');
+        // Prepare form data
+        const formData = new FormData();
+        formData.append("file", file);
+        if (jobDescription) {
+          formData.append("job_description", jobDescription);
+        }
+        formData.append("language", finalLanguage);
+
+        // Upload to backend with automatic token refresh on 401
+        const response = await authenticatedFetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/async`,
+          {
+            method: "POST",
+            body: formData,
+            // Don't set Content-Type for FormData - browser will set it with boundary
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+
+          // Handle quota exceeded (429) with specific error types
+          if (response.status === 429) {
+            // Check if it's anonymous rate limit exceeded
+            if (errorData.detail?.error === "anonymous_rate_limit_exceeded") {
+              throw new Error("ANONYMOUS_RATE_LIMIT_EXCEEDED");
+            }
+            // Otherwise, it's a regular quota exceeded
+            throw new Error("QUOTA_EXCEEDED");
           }
-          // Otherwise, it's a regular quota exceeded
-          throw new Error('QUOTA_EXCEEDED');
+
+          throw new Error(
+            errorData.detail ||
+              `HTTP ${response.status}: ${response.statusText}`,
+          );
         }
 
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+        const data: UploadResponse = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || "Upload failed");
+        }
+
+        // Store cv_id and start polling
+        setCvId(data.cv_id);
+        if (data.anonymous_id) {
+          setAnonymousId(data.anonymous_id);
+        }
+        setStatus("pending");
+
+        // Start polling (pass anonymous_id if available)
+        startPolling(data.cv_id, data.anonymous_id);
+      } catch (err) {
+        console.error("Upload error:", err);
+        setError(err instanceof Error ? err.message : "Upload failed");
+        setStatus("failed");
+      } finally {
+        setIsUploading(false);
       }
-
-      const data: UploadResponse = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || 'Upload failed');
-      }
-
-      console.log('✅ Upload successful, starting polling:', data.cv_id);
-
-      // Store cv_id, anonymous_id (if provided), and start tracking
-      setCvId(data.cv_id);
-      if (data.anonymous_id) {
-        setAnonymousId(data.anonymous_id);
-      }
-      setStartTime(Date.now());
-      setStatus('pending');
-
-      // Start polling (pass anonymous_id if available)
-      startPolling(data.cv_id, data.anonymous_id);
-
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Upload failed');
-      setStatus('failed');
-    } finally {
-      setIsUploading(false);
-    }
-  }, [authenticatedFetch, session, startPolling]);
+    },
+    [authenticatedFetch, session, startPolling],
+  );
 
   // ============================================
   // UPLOAD CV TEXT FUNCTION
   // ============================================
 
-  const uploadCVText = useCallback(async (
-    cvText: string,
-    jobDescription?: string,
-    language: 'fr' | 'en' = 'fr'
-  ) => {
-    // Reset state
-    setError(null);
-    setResult(null);
-    setStatus('pending');
-    setProgress(0);
-    setElapsedTime(0);
-    setEstimatedTimeRemaining(ESTIMATED_PROCESSING_TIME);
-    setIsUploading(true);
-
-    try {
-      // Validate text length
-      if (cvText.trim().length < 100) {
-        throw new Error('Le texte du CV est trop court (minimum 100 caractères)');
+  const uploadCVText = useCallback(
+    async (
+      cvText: string,
+      jobDescription?: string,
+      language?: "fr" | "en" | "es" | "pt",
+    ) => {
+      if (!session) {
+        setError("Session expirée - veuillez vous reconnecter");
+        return;
       }
+      // Use provided language or default to user's detected locale
+      const finalLanguage = language || locale;
+      // Reset state
+      setError(null);
+      setResult(null);
+      setStatus("pending");
+      setProgress(0);
+      setElapsedTime(0);
+      setEstimatedTimeRemaining(ESTIMATED_PROCESSING_TIME);
+      setIsUploading(true);
+      setStartTime(Date.now()); // Démarrer le timer immédiatement
 
-      if (cvText.length > 50000) {
-        throw new Error('Le texte du CV est trop long (maximum 50 000 caractères)');
-      }
-
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('cv_text', cvText);
-      if (jobDescription) {
-        formData.append('job_description', jobDescription);
-      }
-      formData.append('language', language);
-
-      console.log('🚀 Uploading CV text:', {
-        textLength: cvText.length,
-        hasJobDescription: !!jobDescription,
-        authenticated: !!session?.access_token,
-      });
-
-      // Upload to backend with automatic token refresh on 401
-      const response = await authenticatedFetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/async`,
-        {
-          method: 'POST',
-          body: formData,
-          // Don't set Content-Type for FormData - browser will set it with boundary
+      try {
+        // Validate text length
+        if (cvText.trim().length < 100) {
+          throw new Error(
+            "Le texte du CV est trop court (minimum 100 caractères)",
+          );
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        if (cvText.length > 50000) {
+          throw new Error(
+            "Le texte du CV est trop long (maximum 50 000 caractères)",
+          );
+        }
 
-        // Handle quota exceeded (429) with specific error types
-        if (response.status === 429) {
-          // Check if it's anonymous rate limit exceeded
-          if (errorData.detail?.error === 'anonymous_rate_limit_exceeded') {
-            throw new Error('ANONYMOUS_RATE_LIMIT_EXCEEDED');
+        // Prepare form data
+        const formData = new FormData();
+        formData.append("cv_text", cvText);
+        if (jobDescription) {
+          formData.append("job_description", jobDescription);
+        }
+        formData.append("language", finalLanguage);
+
+        // Upload to backend with automatic token refresh on 401
+        const response = await authenticatedFetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cv-analysis/async`,
+          {
+            method: "POST",
+            body: formData,
+            // Don't set Content-Type for FormData - browser will set it with boundary
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+
+          // Handle quota exceeded (429) with specific error types
+          if (response.status === 429) {
+            // Check if it's anonymous rate limit exceeded
+            if (errorData.detail?.error === "anonymous_rate_limit_exceeded") {
+              throw new Error("ANONYMOUS_RATE_LIMIT_EXCEEDED");
+            }
+            // Otherwise, it's a regular quota exceeded
+            throw new Error("QUOTA_EXCEEDED");
           }
-          // Otherwise, it's a regular quota exceeded
-          throw new Error('QUOTA_EXCEEDED');
+
+          throw new Error(
+            errorData.detail ||
+              `HTTP ${response.status}: ${response.statusText}`,
+          );
         }
 
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+        const data: UploadResponse = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || "Upload failed");
+        }
+
+        // Store cv_id and start polling
+        setCvId(data.cv_id);
+        if (data.anonymous_id) {
+          setAnonymousId(data.anonymous_id);
+        }
+        setStatus("pending");
+
+        // Start polling (pass anonymous_id if available)
+        startPolling(data.cv_id, data.anonymous_id);
+      } catch (err) {
+        console.error("Text upload error:", err);
+        setError(err instanceof Error ? err.message : "Upload failed");
+        setStatus("failed");
+      } finally {
+        setIsUploading(false);
       }
+    },
+    [authenticatedFetch, session, startPolling, locale],
+  );
 
-      const data: UploadResponse = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || 'Upload failed');
-      }
-
-      console.log('✅ Text upload successful, starting polling:', data.cv_id);
-
-      // Store cv_id, anonymous_id (if provided), and start tracking
-      setCvId(data.cv_id);
-      if (data.anonymous_id) {
-        setAnonymousId(data.anonymous_id);
-      }
-      setStartTime(Date.now());
-      setStatus('pending');
-
-      // Start polling (pass anonymous_id if available)
-      startPolling(data.cv_id, data.anonymous_id);
-
-    } catch (err) {
-      console.error('Text upload error:', err);
-      setError(err instanceof Error ? err.message : 'Upload failed');
-      setStatus('failed');
-    } finally {
-      setIsUploading(false);
-    }
-  }, [authenticatedFetch, session, startPolling]);
-
-  // ============================================
+  // ============================================================================
   // CONTROL FUNCTIONS
   // ============================================
 
@@ -500,7 +537,7 @@ export function useCVAnalysis(): UseCVAnalysisReturn {
     cancelPolling();
     setCvId(null);
     setAnonymousId(null);
-    setStatus('pending');
+    setStatus("pending");
     setResult(null);
     setError(null);
     setProgress(0);

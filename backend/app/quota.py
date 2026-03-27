@@ -19,11 +19,13 @@ Date: 2026-01-28
 Sprint: 6 - Ticket S6-3
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
+
 from fastapi import HTTPException
 from structlog import get_logger
-from app.database import get_db
+
 from app.cache import QuotaCache
+from app.database import get_db
 
 logger = get_logger(__name__)
 
@@ -219,7 +221,7 @@ async def increment_user_usage(
 # ============================================
 
 
-async def get_user_quota_status(user_id: str) -> Dict[str, Any]:
+async def get_user_quota_status(user_id: str) -> dict[str, Any]:
     """
     Get detailed quota status for all features for a user.
 

@@ -13,9 +13,9 @@ import logging
 import os
 from functools import lru_cache
 
+import geonamescache
 import httpx
 import pycountry
-import geonamescache
 
 logger = logging.getLogger(__name__)
 
@@ -142,15 +142,90 @@ def format_location_query(
     return f"{query} in {location}"
 
 
+@lru_cache(maxsize=4)
+def _get_fr_subdivisions() -> tuple:
+    """
+    Build French regions and departments from pycountry ISO 3166-2 data.
+    Cached — parsed once at startup.
+
+    Returns:
+        (regions, departments) — each item is a dict with "name" and "type" keys.
+        Departments also include "code" (e.g., "75" for Paris).
+    """
+    regions = []
+    departments = []
+    region_types = {"Metropolitan region", "Overseas region"}
+    dept_types = {
+        "Metropolitan department", "Overseas department",
+        "Overseas territorial collectivity", "Territorial collectivity",
+        "Metropolitan collectivity with special status",
+    }
+
+    for sub in pycountry.subdivisions.get(country_code="FR"):
+        # "FR-75" → "75"
+        code = sub.code.split("-", 1)[-1]
+
+        if sub.type in region_types:
+            regions.append({"name": sub.name, "type": "region"})
+        elif sub.type in dept_types:
+            departments.append({"name": sub.name, "code": code, "type": "department"})
+
+    return tuple(regions), tuple(departments)
+
+
+def search_french_locations(query: str, limit: int = 5) -> list[dict]:
+    """
+    Search French regions and departments using pycountry ISO 3166-2 data.
+
+    Matches on name (contains, case-insensitive) and department code (startswith).
+    Regions are returned before departments.
+
+    Args:
+        query: Search query (e.g., "bre", "31", "île")
+        limit: Maximum number of results (default: 5)
+
+    Returns:
+        List of matching locations with "name", "type", and optionally "code"
+
+    Examples:
+        >>> search_french_locations("bre")
+        [{"name": "Bretagne", "type": "region"}, ...]
+        >>> search_french_locations("31")
+        [{"name": "Haute-Garonne", "code": "31", "type": "department"}]
+    """
+    query_lower = query.lower().strip()
+    if not query_lower:
+        return []
+
+    regions, departments = _get_fr_subdivisions()
+    results: list[dict] = []
+    seen: set[str] = set()
+
+    for region in regions:
+        if query_lower in region["name"].lower() and region["name"].lower() not in seen:
+            results.append(region)
+            seen.add(region["name"].lower())
+
+    for dept in departments:
+        name_match = query_lower in dept["name"].lower()
+        code_match = dept["code"].lower().startswith(query_lower)
+        if (name_match or code_match) and dept["name"].lower() not in seen:
+            results.append(dept)
+            seen.add(dept["name"].lower())
+
+    return results[:limit]
+
+
 async def search_cities_nominatim(
     query: str,
     country_code: str,
     limit: int = 10
 ) -> list[str]:
     """
-    Search cities dynamically using OpenStreetMap Nominatim API.
+    Search cities dynamically using Nominatim + geonames hybrid approach.
 
-    Real-time search as user types. This is the CORRECT way to search cities.
+    For short queries (< 4 chars), combines Nominatim with local geonames
+    to improve results. This fixes the "Par" → Paris issue.
 
     Args:
         query: City name search query (e.g., "Garges", "Paris")
@@ -166,9 +241,13 @@ async def search_cities_nominatim(
         >>> await search_cities_nominatim("Par", "fr")
         ["Paris", "Paray-le-Monial", "Paray-Vieille-Poste"]
     """
-    if not query or len(query) < 1:
+    if not query or len(query) < 2:
         return []
 
+    cities = []
+    seen = set()
+
+    # Step 1: Try Nominatim first
     try:
         url = "https://nominatim.openstreetmap.org/search"
         params = {
@@ -176,8 +255,7 @@ async def search_cities_nominatim(
             "countrycodes": country_code.lower(),
             "format": "json",
             "addressdetails": 1,
-            "limit": limit,
-            "featuretype": "city",  # Filter for cities only
+            "limit": limit * 2,  # Get more to filter later
         }
         headers = {
             "User-Agent": "HuntZen/3.0 (job search platform)"
@@ -188,12 +266,112 @@ async def search_cities_nominatim(
             response.raise_for_status()
             data = response.json()
 
-        # Extract city names from results
-        cities = []
-        seen = set()  # Deduplicate
+        # Extract city names from Nominatim results
+        # Prioritize results of type "administrative" (real cities)
+        admin_cities = []
+        other_cities = []
 
         for item in data:
-            # Try to get city name from address details
+            address = item.get("address", {})
+            city = (
+                address.get("city")
+                or address.get("town")
+                or address.get("village")
+                or address.get("municipality")
+            )
+
+            if city and city not in seen:
+                seen.add(city)
+                if item.get("type") == "administrative":
+                    admin_cities.append(city)
+                else:
+                    other_cities.append(city)
+
+        # Combine: administrative first, then others
+        cities = admin_cities + other_cities
+
+        logger.info(f"[GEO] Nominatim search '{query}' in {country_code}: {len(cities)} results")
+
+    except httpx.TimeoutException:
+        logger.warning(f"[GEO] Nominatim timeout for query '{query}'")
+    except Exception as e:
+        logger.error(f"[GEO] Nominatim search failed: {e}")
+
+    # Step 2: For short queries (< 4 chars), ALWAYS add geonames for better accuracy
+    if len(query) < 4:
+        logger.info(f"[GEO] Short query '{query}', adding geonames for better accuracy")
+
+        try:
+            # Get all cities from geonames
+            all_cities = get_cities_from_geonames(country_code, limit=500)
+
+            # Filter cities that start with query (case-insensitive)
+            query_lower = query.lower()
+            matching_cities = [
+                city for city in all_cities
+                if city.lower().startswith(query_lower) and city not in seen
+            ]
+
+            # Prioritize geonames matches (they start with the query) over Nominatim
+            # Geonames first, then Nominatim results
+            cities = matching_cities + cities
+
+            logger.info(f"[GEO] Geonames added {len(matching_cities)} matching cities")
+
+        except Exception as e:
+            logger.error(f"[GEO] Geonames fallback failed: {e}")
+
+    return cities[:limit]
+
+
+async def get_cities_from_nominatim(country_code: str, limit: int = 500) -> list[str]:
+    """
+    Get all cities for a country from OpenStreetMap Nominatim API.
+
+    Fetches major cities from Nominatim without a specific query.
+
+    Args:
+        country_code: ISO 3166-1 alpha-2 country code
+        limit: Maximum number of cities to return (default: 500)
+
+    Returns:
+        List of city names
+
+    Examples:
+        >>> await get_cities_from_nominatim("km")  # Comores
+        ["Moroni", "Mutsamudu", "Fomboni", ...]
+        >>> await get_cities_from_nominatim("fr")
+        ["Paris", "Marseille", "Lyon", ...]
+    """
+    if not country_code:
+        return []
+
+    try:
+        url = "https://nominatim.openstreetmap.org/search"
+        # Note: Nominatim search without 'q' or city/street filter might fail with 400
+        # This function is intended to get "all cities" but Nominatim doesn't support that 
+        # without a generic query or a structured filter.
+        # If no query is provided, we should probably just return empty and let fallback handle it.
+        params = {
+            "countrycodes": country_code.lower(),
+            "format": "json",
+            "addressdetails": 1,
+            "limit": min(limit, 100),  # Nominatim max limit
+        }
+        headers = {
+            "User-Agent": "HuntZen/3.0 (job search platform)"
+        }
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+
+        # Extract city names from results
+        cities = []
+        seen = set()
+
+        for item in data:
             address = item.get("address", {})
             city = (
                 address.get("city")
@@ -207,14 +385,14 @@ async def search_cities_nominatim(
                 cities.append(city)
                 seen.add(city)
 
-        logger.info(f"[GEO] Nominatim search '{query}' in {country_code}: {len(cities)} results")
-        return cities[:limit]
+        logger.info(f"[GEO] Nominatim found {len(cities)} cities for {country_code}")
+        return cities
 
     except httpx.TimeoutException:
-        logger.warning(f"[GEO] Nominatim timeout for query '{query}'")
+        logger.warning(f"[GEO] Nominatim timeout for country {country_code}")
         return []
     except Exception as e:
-        logger.error(f"[GEO] Nominatim search failed: {e}")
+        logger.error(f"[GEO] Nominatim failed for {country_code}: {e}")
         return []
 
 

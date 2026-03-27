@@ -1,0 +1,180 @@
+{
+  "version": "1.0",
+  "entries": [
+    {
+      "keywords": ["analyser cv", "analyse cv", "score cv", "comment analyser mon cv", "noter cv", "évaluer cv"],
+      "question": "Comment analyser mon CV ?",
+      "answer": "Allez dans **Analyse CV** depuis le menu latéral. Uploadez votre PDF (max 5MB). L'analyse prend 30 à 60 secondes et vous donne un score détaillé avec des recommandations personnalisées.",
+      "links": [{"label": "Aller à Analyse CV", "href": "/cv-analysis"}],
+      "category": "cv"
+    },
+    {
+      "keywords": ["améliorer score cv", "augmenter score cv", "optimiser cv", "score bas cv", "mauvais score"],
+      "question": "Comment améliorer mon score CV ?",
+      "answer": "Suivez les recommandations affichées après l'analyse. Les points les plus impactants sont : ajouter des mots-clés du poste visé, quantifier vos réalisations (ex: \"augmenté les ventes de 30%\"), et structurer clairement vos expériences.",
+      "links": [{"label": "Analyser mon CV", "href": "/cv-analysis"}],
+      "category": "cv"
+    },
+    {
+      "keywords": ["format cv accepté", "type fichier cv", "pdf cv", "docx cv", "taille fichier cv", "upload cv"],
+      "question": "Quel format de fichier est accepté pour le CV ?",
+      "answer": "HuntZen accepte les fichiers **PDF** et **DOCX** (Word). Taille maximum : **5MB**. Le PDF est recommandé pour une meilleure analyse. Si votre fichier est trop lourd, compressez-le d'abord.",
+      "links": [],
+      "category": "cv"
+    },
+    {
+      "keywords": ["adapter cv offre", "cv adapté", "cv personnalisé", "adapter cv emploi", "générer cv"],
+      "question": "Comment adapter mon CV à une offre d'emploi ?",
+      "answer": "Depuis la page **Jobs**, cliquez sur une offre puis sur \"Adapter mon CV\". HuntZen génère automatiquement une version de votre CV optimisée pour cette offre avec les bons mots-clés.",
+      "links": [{"label": "Rechercher des offres", "href": "/jobs"}],
+      "category": "cv"
+    },
+    {
+      "keywords": ["lettre motivation", "cover letter", "générer lettre", "rédiger lettre"],
+      "question": "Comment générer une lettre de motivation ?",
+      "answer": "Dans la page **Jobs**, sélectionnez une offre et cliquez sur \"Générer une lettre\". Un LM personnalisée est créée en quelques secondes. Vous pouvez la télécharger en PDF depuis **Mes Documents**.",
+      "links": [{"label": "Mes documents", "href": "/documents"}],
+      "category": "cv"
+    },
+    {
+      "keywords": ["choisir coach", "quel coach", "différence coach", "nova maria sofia lucas jeff", "coach ia"],
+      "question": "Quel coach IA choisir ?",
+      "answer": "HuntZen propose 5 coaches IA avec des personnalités différentes :\n- **Nova** — stratégique et analytique\n- **Maria** — empathique et motivante\n- **Sofia** — directe et pragmatique\n- **Lucas** — créatif et innovant\n- **Jeff** — orienté résultats\n\nChoisissez selon votre style préféré ou testez-les tous !",
+      "links": [{"label": "Aller au Coach", "href": "/assistant"}],
+      "category": "coach"
+    },
+    {
+      "keywords": ["combien sessions coach", "limite messages coach", "quota coach", "sessions gratuites"],
+      "question": "Combien de sessions de coaching ai-je ?",
+      "answer": "Avec le plan **Gratuit**, vous avez accès à des sessions limitées par jour. Avec le plan **Pro**, les sessions sont illimitées. Consultez votre tableau de bord pour voir votre quota restant.",
+      "links": [{"label": "Voir mon abonnement", "href": "/profile"}],
+      "category": "coach"
+    },
+    {
+      "keywords": ["historique conversation", "retrouver discussion", "relire échange coach"],
+      "question": "Comment retrouver mes conversations avec le coach ?",
+      "answer": "Dans la page **Coach**, cliquez sur l'icône d'historique (⏱) en haut à droite. Toutes vos conversations sont sauvegardées et accessibles par date.",
+      "links": [{"label": "Aller au Coach", "href": "/assistant"}],
+      "category": "coach"
+    },
+    {
+      "keywords": ["simulateur entretien", "préparer entretien", "entraîner entretien"],
+      "question": "Comment préparer un entretien avec le coach ?",
+      "answer": "Dites simplement au coach : \"Aide-moi à préparer un entretien pour [poste]\". Le coach vous posera des questions types et vous donnera des retours constructifs sur vos réponses.",
+      "links": [{"label": "Aller au Coach", "href": "/assistant"}],
+      "category": "coach"
+    },
+    {
+      "keywords": ["rechercher emploi", "chercher offre", "trouver job", "comment rechercher"],
+      "question": "Comment rechercher des offres d'emploi ?",
+      "answer": "Allez dans **Jobs** et tapez votre poste ou mots-clés. Utilisez les filtres pour affiner par localisation, contrat (CDI/CDD/freelance) et secteur. Activez les **Alertes emploi** pour recevoir des offres par email chaque jour.",
+      "links": [{"label": "Rechercher des offres", "href": "/jobs"}],
+      "category": "jobs"
+    },
+    {
+      "keywords": ["sauvegarder offre", "enregistrer job", "favoris emploi", "saved jobs"],
+      "question": "Comment sauvegarder une offre d'emploi ?",
+      "answer": "Cliquez sur l'icône ♡ (cœur) sur n'importe quelle offre pour la sauvegarder. Retrouvez toutes vos offres sauvegardées dans **Offres sauvegardées** dans le menu.",
+      "links": [{"label": "Mes offres sauvegardées", "href": "/saved-jobs"}],
+      "category": "jobs"
+    },
+    {
+      "keywords": ["alertes emploi", "notification emploi", "email offre", "recevoir offres"],
+      "question": "Comment configurer des alertes emploi ?",
+      "answer": "Dans la page **Jobs**, sauvegardez des offres avec vos critères. HuntZen vous envoie automatiquement un email quotidien avec les nouvelles offres correspondant à vos jobs sauvegardés.",
+      "links": [{"label": "Jobs", "href": "/jobs"}],
+      "category": "jobs"
+    },
+    {
+      "keywords": ["affiner recherche", "filtrer offres", "recherche avancée"],
+      "question": "Comment affiner ma recherche d'emploi ?",
+      "answer": "Cliquez sur **Filtres avancés** dans la page Jobs. Vous pouvez filtrer par : contrat (CDI/CDD/Freelance), niveau d'expérience, secteur, localisation et salaire.",
+      "links": [{"label": "Jobs", "href": "/jobs"}],
+      "category": "jobs"
+    },
+    {
+      "keywords": ["différence gratuit pro", "plan gratuit pro", "que contient pro", "avantages pro", "premium"],
+      "question": "Quelle est la différence entre le plan Gratuit et Pro ?",
+      "answer": "**Plan Gratuit** :\n- Coach IA (sessions limitées)\n- Analyse CV (limitée)\n- Recherche d'emploi de base\n\n**Plan Pro** :\n- Coach IA illimité (5 personas)\n- Analyses CV illimitées\n- Adaptation CV + LM automatique\n- Toutes les offres d'emploi\n- Suivi candidatures avancé\n- Support prioritaire",
+      "links": [{"label": "Voir les tarifs", "href": "/pricing"}],
+      "category": "subscription"
+    },
+    {
+      "keywords": ["upgrader pro", "passer pro", "souscrire pro", "acheter pro", "comment payer"],
+      "question": "Comment passer au plan Pro ?",
+      "answer": "Cliquez sur **Passer Pro** dans le menu ou allez sur la page **Tarifs**. Le paiement est sécurisé via Stripe. Après confirmation, votre accès Pro est activé immédiatement.",
+      "links": [{"label": "Voir les tarifs", "href": "/pricing"}],
+      "category": "subscription"
+    },
+    {
+      "keywords": ["annuler abonnement", "résilier abonnement", "annuler pro", "stopper paiement"],
+      "question": "Comment annuler mon abonnement Pro ?",
+      "answer": "Allez dans **Profil** puis **Abonnement**. Cliquez sur \"Gérer mon abonnement\" pour annuler via le portail Stripe. Votre accès Pro reste actif jusqu'à la fin de la période payée.",
+      "links": [{"label": "Mon profil", "href": "/profile"}],
+      "category": "subscription"
+    },
+    {
+      "keywords": ["facture paiement", "reçu abonnement", "télécharger facture"],
+      "question": "Comment télécharger ma facture ?",
+      "answer": "Allez dans **Profil** > **Abonnement** puis cliquez sur \"Gérer mon abonnement\". Le portail Stripe vous permet de télécharger toutes vos factures.",
+      "links": [{"label": "Mon profil", "href": "/profile"}],
+      "category": "subscription"
+    },
+    {
+      "keywords": ["code promo", "coupon réduction", "promotion", "code de réduction"],
+      "question": "Comment utiliser un code promo ?",
+      "answer": "Lors du paiement sur la page Tarifs, vous verrez un champ pour entrer votre code promo. Entrez-le avant de confirmer le paiement pour bénéficier de la réduction.",
+      "links": [{"label": "Tarifs", "href": "/pricing"}],
+      "category": "subscription"
+    },
+    {
+      "keywords": ["suivre candidature", "status candidature", "tracker candidature", "où en est candidature"],
+      "question": "Comment suivre mes candidatures ?",
+      "answer": "Allez dans **Candidatures** depuis le menu. Vous y trouvez toutes vos candidatures classées par statut : En attente, Entretien, Offre, Refus. Vous pouvez mettre à jour le statut manuellement.",
+      "links": [{"label": "Mes candidatures", "href": "/candidatures"}],
+      "category": "candidatures"
+    },
+    {
+      "keywords": ["ajouter candidature", "enregistrer candidature", "créer candidature"],
+      "question": "Comment ajouter une candidature ?",
+      "answer": "Depuis la page **Jobs**, cliquez sur \"Postuler\" sur une offre pour créer automatiquement une entrée dans vos candidatures. Vous pouvez aussi ajouter une candidature manuellement dans la page **Candidatures**.",
+      "links": [{"label": "Mes candidatures", "href": "/candidatures"}],
+      "category": "candidatures"
+    },
+    {
+      "keywords": ["modifier profil", "changer nom", "mettre à jour profil", "éditer profil"],
+      "question": "Comment modifier mon profil ?",
+      "answer": "Allez dans **Profil** depuis le menu en bas à gauche. Vous pouvez y modifier votre nom complet, votre photo de profil, et vos préférences de notifications.",
+      "links": [{"label": "Mon profil", "href": "/profile"}],
+      "category": "account"
+    },
+    {
+      "keywords": ["changer mot de passe", "réinitialiser mot de passe", "mot de passe oublié"],
+      "question": "Comment changer mon mot de passe ?",
+      "answer": "Allez dans **Profil** puis cliquez sur \"Changer mon mot de passe\". Vous recevrez un email de réinitialisation. Si vous avez oublié votre mot de passe, utilisez le lien \"Mot de passe oublié\" sur la page de connexion.",
+      "links": [{"label": "Mon profil", "href": "/profile"}],
+      "category": "account"
+    },
+    {
+      "keywords": ["supprimer compte", "fermer compte", "effacer données", "rgpd données"],
+      "question": "Comment supprimer mon compte ?",
+      "answer": "Pour supprimer votre compte et toutes vos données, contactez notre support via ce widget (onglet Ticket Support). Votre compte sera supprimé dans les 72h conformément au RGPD.",
+      "links": [],
+      "category": "account"
+    },
+    {
+      "keywords": ["parrainer ami", "programme parrainage", "referral", "huntzen boost", "inviter ami"],
+      "question": "Comment fonctionne le programme de parrainage ?",
+      "answer": "Allez dans **HuntZen Boost** dans le menu. Partagez votre lien de parrainage unique. Pour chaque ami qui souscrit au plan Pro, vous recevez une récompense (jours Pro offerts ou bonus de quota).",
+      "links": [{"label": "HuntZen Boost", "href": "/referral"}],
+      "category": "account"
+    },
+    {
+      "keywords": ["notifications", "désactiver notifications", "trop emails", "ne plus recevoir"],
+      "question": "Comment gérer mes notifications ?",
+      "answer": "Allez dans **Profil** puis **Notifications**. Vous pouvez activer ou désactiver séparément : alertes emploi, résumé hebdomadaire, et emails de réengagement.",
+      "links": [{"label": "Mon profil", "href": "/profile"}],
+      "category": "account"
+    }
+  ]
+}

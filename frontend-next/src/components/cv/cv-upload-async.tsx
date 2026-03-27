@@ -13,15 +13,24 @@
  * @sprint 6 - Ticket S6-6
  */
 
-'use client';
+"use client";
 
-import React, { useState, useCallback } from 'react';
-import { Upload, FileText, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'next/navigation';
-import { useCVAnalysis } from '@/hooks/use-cv-analysis';
-import { useSubscriptionApi } from '@/hooks/use-subscription-api';
-import type { FeatureType } from '@/hooks/use-freemium-limits';
+import React, { useState, useCallback } from "react";
+import {
+  Upload,
+  FileText,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Clock,
+} from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { useCVAnalysis } from "@/hooks/use-cv-analysis";
+import { useSubscriptionApi } from "@/hooks/use-subscription-api";
+import { type FeatureType, PLAN_LIMITS } from "@/hooks/use-freemium-limits";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 // ============================================
 // TYPES
@@ -37,16 +46,83 @@ interface CVUploadAsyncProps {
 // COMPONENT
 // ============================================
 
-export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUploadAsyncProps) {
+export function CVUploadAsync({
+  canUse,
+  incrementUsage,
+  openPricingModal,
+}: CVUploadAsyncProps) {
   const { session, user } = useAuth();
   const router = useRouter();
+  const t = useTranslations("cv");
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [jobDescription, setJobDescription] = useState('');
+  const [jobDescription, setJobDescription] = useState("");
   const [isDragging, setIsDragging] = useState(false);
 
   // Hook to refetch subscription data after CV upload
   const { refetch: refetchSubscription } = useSubscriptionApi();
+
+  // All hooks must be called before any conditional return (Rules of Hooks)
+  const {
+    uploadCV,
+    status,
+    result,
+    error,
+    isUploading,
+    isPolling,
+    progress,
+    estimatedTimeRemaining,
+    elapsedTime,
+    reset,
+  } = useCVAnalysis(() => {
+    // Increment appropriate quota when analysis completes successfully
+    const feature: FeatureType = jobDescription ? "matching_score" : "ats_score";
+    incrementUsage(feature);
+  });
+
+  // ============================================
+  // UPLOAD (declared before early return to respect rules-of-hooks)
+  // ============================================
+
+  const handleUpload = useCallback(async () => {
+    if (!selectedFile) return;
+
+    // Check freemium limit (ATS vs Matching)
+    const feature: FeatureType = jobDescription ? "matching_score" : "ats_score";
+    if (!canUse(feature)) {
+      openPricingModal(
+        jobDescription ? "matching_scores_per_day" : "ats_scores_per_day",
+      );
+      return;
+    }
+
+    try {
+      await uploadCV(selectedFile, jobDescription || undefined, "fr");
+
+      // Force refresh subscription data to get updated usage from backend
+      // (Backend increments usage after successful upload, so we fetch fresh data)
+      await refetchSubscription();
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
+  }, [
+    selectedFile,
+    jobDescription,
+    uploadCV,
+    canUse,
+    refetchSubscription,
+    openPricingModal,
+  ]);
+
+  // ============================================
+  // RESET
+  // ============================================
+
+  const handleReset = () => {
+    setSelectedFile(null);
+    setJobDescription("");
+    reset();
+  };
 
   // ============================================
   // AUTH CHECK - Force authentication for CV analysis
@@ -71,23 +147,45 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
 
           {/* Benefits */}
           <div className="bg-white rounded-xl p-6 mb-6">
-            <h4 className="font-bold text-gray-900 mb-4">Ce que vous obtenez gratuitement :</h4>
+            <h4 className="font-bold text-gray-900 mb-4">
+              Ce que vous obtenez gratuitement :
+            </h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span><strong>1 analyse CV gratuite</strong> par jour</span>
+                <span>
+                  <strong>
+                    {PLAN_LIMITS.free.ats_scores_per_day} scores ATS gratuits
+                  </strong>{" "}
+                  par jour
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span><strong>Score ATS détaillé</strong> avec recommandations</span>
+                <span>
+                  <strong>
+                    {PLAN_LIMITS.free.matching_scores_per_day} matching jobs
+                  </strong>{" "}
+                  par jour
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span><strong>Analyse de compatibilité</strong> avec offres d'emploi</span>
+                <span>
+                  <strong>Score ATS détaillé</strong> avec recommandations
+                </span>
               </li>
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span><strong>Sauvegarde de vos analyses</strong> et historique</span>
+                <span>
+                  <strong>Analyse de compatibilité</strong> avec offres d'emploi
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <span>
+                  <strong>Sauvegarde de vos analyses</strong> et historique
+                </span>
               </li>
             </ul>
           </div>
@@ -95,13 +193,21 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => router.push('/signup?redirectTo=' + encodeURIComponent('/cv-analysis'))}
+              onClick={() =>
+                router.push(
+                  "/signup?redirectTo=" + encodeURIComponent("/cv-analysis"),
+                )
+              }
               className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
             >
               Créer un compte gratuit
             </button>
             <button
-              onClick={() => router.push('/login?redirectTo=' + encodeURIComponent('/cv-analysis'))}
+              onClick={() =>
+                router.push(
+                  "/login?redirectTo=" + encodeURIComponent("/cv-analysis"),
+                )
+              }
               className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-blue-500 transition-all"
             >
               J'ai déjà un compte
@@ -123,19 +229,6 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
       </div>
     );
   }
-
-  const {
-    uploadCV,
-    status,
-    result,
-    error,
-    isUploading,
-    isPolling,
-    progress,
-    estimatedTimeRemaining,
-    elapsedTime,
-    reset,
-  } = useCVAnalysis();
 
   // ============================================
   // FILE SELECTION
@@ -162,52 +255,18 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
     setIsDragging(false);
 
     const file = e.dataTransfer.files[0];
-    if (file && file.name.toLowerCase().endsWith('.pdf')) {
+    if (file && file.name.toLowerCase().endsWith(".pdf")) {
       setSelectedFile(file);
     } else {
-      alert('Seuls les fichiers PDF sont acceptés');
+      toast.error(t("toasts.pdfOnlyAccepted"));
     }
-  };
-
-  // ============================================
-  // UPLOAD
-  // ============================================
-
-  const handleUpload = useCallback(async () => {
-    if (!selectedFile) return;
-
-    // Check freemium limit
-    if (!canUse('cv_analysis')) {
-      openPricingModal('cv_analyses_per_day');
-      return;
-    }
-
-    try {
-      await uploadCV(selectedFile, jobDescription || undefined, 'fr');
-
-      // Force refresh subscription data to get updated usage from backend
-      // (Backend increments usage after successful upload, so we fetch fresh data)
-      await refetchSubscription();
-    } catch (error) {
-      console.error('Upload error:', error);
-    }
-  }, [selectedFile, jobDescription, uploadCV, canUse, refetchSubscription, openPricingModal]);
-
-  // ============================================
-  // RESET
-  // ============================================
-
-  const handleReset = () => {
-    setSelectedFile(null);
-    setJobDescription('');
-    reset();
   };
 
   // ============================================
   // RENDER: FILE UPLOAD (NO FILE SELECTED)
   // ============================================
 
-  if (!selectedFile && !isUploading && status === 'pending' && !result) {
+  if (!selectedFile && !isUploading && status === "pending" && !result) {
     return (
       <div>
         {/* Drag & Drop Zone */}
@@ -217,7 +276,7 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
           onDrop={handleDrop}
           className={`
             border-2 border-dashed rounded-lg p-12 text-center transition-colors
-            ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+            ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
           `}
         >
           <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400" />
@@ -246,11 +305,12 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Collez la description du poste pour obtenir un score de compatibilité..."
+            placeholder={t("placeholders.pasteJobDescription")}
             className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Si fourni, vous obtiendrez également un score de compatibilité avec le poste.
+            Si fourni, vous obtiendrez également un score de compatibilité avec
+            le poste.
           </p>
         </div>
       </div>
@@ -261,7 +321,7 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
   // RENDER: FILE SELECTED (READY TO ANALYZE)
   // ============================================
 
-  if (selectedFile && !isUploading && status === 'pending' && !result) {
+  if (selectedFile && !isUploading && status === "pending" && !result) {
     return (
       <div>
         {/* Selected File Preview */}
@@ -270,7 +330,9 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
             <div className="flex items-center gap-3">
               <FileText className="w-8 h-8 text-blue-600" />
               <div>
-                <p className="font-semibold text-gray-900">{selectedFile.name}</p>
+                <p className="font-semibold text-gray-900">
+                  {selectedFile.name}
+                </p>
                 <p className="text-sm text-gray-600">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
@@ -293,11 +355,12 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Collez la description du poste pour obtenir un score de compatibilité..."
+            placeholder={t("placeholders.pasteJobDescription")}
             className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Si fourni, vous obtiendrez également un score de compatibilité avec le poste.
+            Si fourni, vous obtiendrez également un score de compatibilité avec
+            le poste.
           </p>
         </div>
 
@@ -318,7 +381,7 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
   // RENDER: UPLOADING / PROCESSING
   // ============================================
 
-  if (isUploading || status === 'pending' || status === 'processing') {
+  if (isUploading || status === "pending" || status === "processing") {
     return (
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg p-8">
@@ -327,10 +390,10 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
             <FileText className="w-8 h-8 text-blue-600" />
             <div>
               <h3 className="text-lg font-semibold">
-                {selectedFile?.name || 'CV en cours d\'analyse'}
+                {selectedFile?.name || "CV en cours d'analyse"}
               </h3>
               <p className="text-sm text-gray-500">
-                {isUploading ? 'Téléchargement...' : 'Traitement en cours avec Modal Labs'}
+                {isUploading ? "Téléchargement..." : "Traitement en cours..."}
               </p>
             </div>
           </div>
@@ -361,23 +424,23 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              {status === 'pending' ? (
+              {status === "pending" ? (
                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-              ) : status === 'processing' ? (
+              ) : status === "processing" ? (
                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
               ) : (
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
               )}
-              <span>Extraction du texte avec Docling (IBM)</span>
+              <span>Extraction du texte</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              {status === 'processing' ? (
+              {status === "processing" ? (
                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
               ) : (
                 <Clock className="w-4 h-4 text-gray-400" />
               )}
-              <span>Analyse avec Groq (llama-3.3-70b)</span>
+              <span>Analyse du contenu</span>
             </div>
           </div>
 
@@ -398,8 +461,7 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
 
           {/* Info */}
           <p className="text-xs text-gray-500 mt-4 text-center">
-            Le traitement se fait en arrière-plan sur Modal Labs. Vous pouvez fermer cette page,
-            les résultats seront sauvegardés.
+            Vous pouvez fermer cette page, les résultats seront sauvegardés.
           </p>
         </div>
       </div>
@@ -410,11 +472,13 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
   // RENDER: ERROR
   // ============================================
 
-  if (status === 'failed' || error) {
+  if (status === "failed" || error) {
     // Check if error is anonymous rate limit exceeded
-    const isAnonymousRateLimitExceeded = error === 'ANONYMOUS_RATE_LIMIT_EXCEEDED';
+    const isAnonymousRateLimitExceeded =
+      error === "ANONYMOUS_RATE_LIMIT_EXCEEDED";
     // Check if error is quota exceeded
-    const isQuotaExceeded = error === 'QUOTA_EXCEEDED' || error?.includes('429');
+    const isQuotaExceeded =
+      error === "QUOTA_EXCEEDED" || error?.includes("429");
 
     if (isAnonymousRateLimitExceeded) {
       return (
@@ -429,17 +493,34 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
                 Limite gratuite atteinte
               </h3>
               <p className="text-gray-600 text-lg">
-                Vous avez utilisé votre analyse CV gratuite du jour. Créez un compte pour des analyses illimitées !
+                Vous avez utilisé votre analyse CV gratuite du jour. Créez un
+                compte pour des analyses illimitées !
               </p>
             </div>
 
             {/* Benefits of signing up */}
             <div className="bg-white rounded-xl p-6 mb-6">
-              <h4 className="font-bold text-gray-900 mb-4">En créant un compte gratuit :</h4>
+              <h4 className="font-bold text-gray-900 mb-4">
+                En créant un compte gratuit :
+              </h4>
               <ul className="space-y-3">
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  <span><strong>1 analyse CV gratuite</strong> par jour</span>
+                  <span>
+                    <strong>
+                      {PLAN_LIMITS.free.ats_scores_per_day} analyses ATS gratuites
+                    </strong>{" "}
+                    par jour
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <span>
+                    <strong>
+                      {PLAN_LIMITS.free.matching_scores_per_day} scores compatibles
+                    </strong>{" "}
+                    par jour
+                  </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
@@ -455,13 +536,13 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => window.location.href = '/signup'}
+                onClick={() => router.push("/signup")}
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
               >
                 Créer un compte gratuit
               </button>
               <button
-                onClick={() => window.location.href = '/pricing'}
+                onClick={() => router.push("/pricing")}
                 className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-orange-500 transition-all"
               >
                 Voir les plans payants
@@ -495,7 +576,8 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
                 Quota d'analyses gratuit épuisé
               </h3>
               <p className="text-gray-600 text-lg">
-                Passez à un plan payant pour continuer vos analyses de CV sans limite
+                Passez à un plan payant pour continuer vos analyses de CV sans
+                limite
               </p>
             </div>
 
@@ -515,11 +597,19 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span>Analyses CV <strong>illimitées</strong></span>
+                    <span>
+                      Scores ATS <strong>illimités</strong>
+                    </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span>Coach IA 30min/jour</span>
+                    <span>
+                      Scores Matching <strong>illimités</strong>
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span>Coach IA 20 messages/jour</span>
                   </li>
                 </ul>
               </div>
@@ -541,15 +631,21 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                    <span>Tout Starter + <strong>Coach illimité</strong></span>
+                    <span>
+                      Tout Recherche Active + <strong>Coach illimité</strong>
+                    </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                    <span><strong>Export PDF</strong> professionnel</span>
+                    <span>
+                      <strong>Export PDF</strong> professionnel
+                    </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                    <span><strong>Simulations d'entretien</strong> IA</span>
+                    <span>
+                      <strong>Simulations d'entretien</strong> IA
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -568,11 +664,15 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span>Tout Pro + <strong>Historique illimité</strong></span>
+                    <span>
+                      Tout Accélérateur + <strong>Historique illimité</strong>
+                    </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span><strong>Alertes email</strong> instantanées</span>
+                    <span>
+                      <strong>Alertes email</strong> instantanées
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -581,7 +681,7 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
             {/* CTA Buttons */}
             <div className="flex gap-4">
               <button
-                onClick={() => openPricingModal('cv_analyses_per_day')}
+                onClick={() => openPricingModal("cv_analyses_per_day")}
                 className="flex-1 px-8 py-4 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-violet-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🚀 Voir les plans
@@ -602,7 +702,7 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
-                <span>14 jours satisfait ou remboursé</span>
+                <span>Sans engagement, annulation a tout moment</span>
               </div>
             </div>
           </div>
@@ -622,7 +722,7 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
           </div>
 
           <p className="text-red-700 mb-6">
-            {error || 'Une erreur est survenue lors de l\'analyse du CV'}
+            {error || "Une erreur est survenue lors de l'analyse du CV"}
           </p>
 
           <button
@@ -640,7 +740,7 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
   // RENDER: COMPLETED (RESULTS)
   // ============================================
 
-  if (status === 'completed' && result) {
+  if (status === "completed" && result) {
     const { ats_score, strengths, improvements, job_match_score } = result;
 
     return (
@@ -653,9 +753,6 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
               Analyse terminée !
             </h3>
           </div>
-          <p className="text-green-700">
-            Traitement effectué en {result.processing_time_seconds || elapsedTime} secondes
-          </p>
         </div>
 
         {/* ATS Score */}
@@ -669,14 +766,20 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
             <ScoreCard label="Structure" score={ats_score.structure_score} />
             <ScoreCard label="Lisibilité" score={ats_score.readability_score} />
             {job_match_score && (
-              <ScoreCard label="Compatibilité Job" score={job_match_score} highlight />
+              <ScoreCard
+                label="Compatibilité Job"
+                score={job_match_score}
+                highlight
+              />
             )}
           </div>
         </div>
 
         {/* Strengths */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h4 className="text-lg font-semibold mb-4 text-green-700">Points forts</h4>
+          <h4 className="text-lg font-semibold mb-4 text-green-700">
+            Points forts
+          </h4>
           <ul className="space-y-2">
             {strengths.map((strength, idx) => (
               <li key={idx} className="flex items-start gap-2">
@@ -689,7 +792,9 @@ export function CVUploadAsync({ canUse, incrementUsage, openPricingModal }: CVUp
 
         {/* Improvements */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h4 className="text-lg font-semibold mb-4 text-orange-700">Suggestions d'amélioration</h4>
+          <h4 className="text-lg font-semibold mb-4 text-orange-700">
+            Suggestions d'amélioration
+          </h4>
           <ul className="space-y-2">
             {improvements.map((improvement, idx) => (
               <li key={idx} className="flex items-start gap-2">
@@ -728,20 +833,22 @@ interface ScoreCardProps {
 
 function ScoreCard({ label, score, highlight }: ScoreCardProps) {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
+    if (score >= 80) return "text-green-600 bg-green-100";
+    if (score >= 60) return "text-yellow-600 bg-yellow-100";
+    return "text-red-600 bg-red-100";
   };
 
   return (
-    <div className={`p-4 rounded-lg border ${highlight ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}>
+    <div
+      className={`p-4 rounded-lg border ${highlight ? "border-blue-300 bg-blue-50" : "border-gray-200"}`}
+    >
       <p className="text-sm text-gray-600 mb-1">{label}</p>
-      <p className={`text-3xl font-bold ${getScoreColor(score).split(' ')[0]}`}>
+      <p className={`text-3xl font-bold ${getScoreColor(score).split(" ")[0]}`}>
         {score}
       </p>
       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
         <div
-          className={`h-full rounded-full ${getScoreColor(score).split(' ')[1]}`}
+          className={`h-full rounded-full ${getScoreColor(score).split(" ")[1]}`}
           style={{ width: `${score}%` }}
         />
       </div>

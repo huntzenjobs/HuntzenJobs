@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { User, Crown, Loader2, AlertCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { createClient } from '@/lib/supabase/client'
+import { useAuthenticatedFetch } from '@/hooks/use-authenticated-fetch'
 
 interface UserData {
   user: {
@@ -82,7 +82,7 @@ function QuotaBar({ feature, quota }: QuotaBarProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-gray-700 dark:text-gray-300">
+        <span className="font-medium text-gray-700">
           {FEATURE_LABELS[feature] || feature}
         </span>
         <span className={`font-semibold ${getTextColor()}`}>
@@ -91,7 +91,7 @@ function QuotaBar({ feature, quota }: QuotaBarProps) {
       </div>
 
       {limit !== -1 && (
-        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
             className={`h-full transition-all duration-300 ${getBarColor()}`}
             style={{ width: `${Math.min(percentage, 100)}%` }}
@@ -105,7 +105,7 @@ function QuotaBar({ feature, quota }: QuotaBarProps) {
       )}
 
       {remaining === 0 && limit !== -1 && (
-        <p className="text-xs text-red-600 dark:text-red-400">
+        <p className="text-xs text-red-600">
           Quota atteint pour aujourd'hui
         </p>
       )}
@@ -118,7 +118,8 @@ interface UserProfileWidgetProps {
 }
 
 export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
-  const { user, session } = useAuth()
+  const { session } = useAuth()
+  const { authenticatedFetch } = useAuthenticatedFetch()
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -139,50 +140,11 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
           throw new Error('NEXT_PUBLIC_BACKEND_URL is not configured')
         }
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        })
+        const response = await authenticatedFetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`
+        )
 
         if (!response.ok) {
-          // Handle 401 specifically - expired or invalid token
-          if (response.status === 401) {
-            console.warn('[UserProfile] Token expired (401), trying to refresh session...')
-
-            // Try to refresh the session
-            const supabase = createClient()
-            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
-
-            if (refreshError || !refreshData.session) {
-              console.error('[UserProfile] Session refresh failed:', refreshError)
-              throw new Error('Session expirée - veuillez vous reconnecter')
-            }
-
-            console.log('[UserProfile] Session refreshed successfully, retrying...')
-
-            // Retry with new token
-            const retryResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
-              headers: {
-                'Authorization': `Bearer ${refreshData.session.access_token}`,
-                'Content-Type': 'application/json'
-              }
-            })
-
-            if (!retryResponse.ok) {
-              throw new Error(`Erreur ${retryResponse.status} après refresh: ${retryResponse.statusText}`)
-            }
-
-            const retryData = await retryResponse.json()
-            if (!retryData.success) {
-              throw new Error(retryData.error || 'Erreur lors du chargement des données')
-            }
-
-            setUserData(retryData)
-            return
-          }
-
           throw new Error(`Erreur ${response.status}: ${response.statusText}`)
         }
 
@@ -202,7 +164,7 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
     }
 
     fetchUserData()
-  }, [session?.access_token])
+  }, [session, authenticatedFetch])
 
   if (loading) {
     return (
@@ -254,33 +216,33 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
         </div>
 
         <div className="flex-1">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-gray-900">
             {profile.full_name || 'Utilisateur'}
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600">
             {profile.email}
           </p>
         </div>
       </div>
 
       {/* Subscription Info */}
-      <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-blue-200 dark:border-blue-800">
+      <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Crown className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <Crown className="w-5 h-5 text-blue-600" />
+            <h3 className="font-semibold text-gray-900">
               Plan {subscription.plan_display_name}
             </h3>
           </div>
           {subscription.price_monthly > 0 && (
-            <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+            <span className="text-lg font-bold text-blue-600">
               {subscription.price_monthly}€<span className="text-sm font-normal">/mois</span>
             </span>
           )}
         </div>
 
         {subscription.current_period_end && (
-          <p className="text-xs text-gray-600 dark:text-gray-400">
+          <p className="text-xs text-gray-600">
             Renouvellement le {new Date(subscription.current_period_end).toLocaleDateString('fr-FR')}
           </p>
         )}
@@ -288,10 +250,10 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
 
       {/* Quotas */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
           <span>Utilisation du jour</span>
           {quotas.cv_analysis?.reset_at && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+            <span className="text-xs text-gray-500 font-normal">
               (réinitialisation à minuit)
             </span>
           )}
@@ -303,8 +265,8 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
       </div>
 
       {/* Account Info */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+      <div className="pt-4 border-t border-gray-200">
+        <p className="text-xs text-gray-500">
           Membre depuis {profile.created_at ? new Date(profile.created_at).toLocaleDateString('fr-FR', {
             year: 'numeric',
             month: 'long',

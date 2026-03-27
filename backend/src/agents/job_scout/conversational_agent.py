@@ -10,12 +10,19 @@ Cet agent guide l'utilisateur dans sa recherche d'emploi avec:
 - Techniques de networking
 """
 
-from typing import Any, Optional
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from typing import Any
 
-from src.agents.base import BaseAgent, AgentConfig
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+
+from src.agents.base import AgentConfig, BaseAgent
 from src.config.settings import settings
+
+LANG_INSTRUCTIONS = {
+    "fr": "Réponds TOUJOURS en français",
+    "en": "Always respond in English",
+    "es": "Responde SIEMPRE en español",
+    "pt": "Responde SEMPRE em português",
+}
 
 
 class JobScoutConversationalAgent(BaseAgent):
@@ -36,7 +43,10 @@ class JobScoutConversationalAgent(BaseAgent):
         )
         super().__init__(config)
 
-        self.system_prompt = """Tu es un Expert en Recherche d'Emploi certifié avec 15 ans d'expérience.
+    def _get_system_prompt(self, language: str = "fr") -> str:
+        """Build the system prompt with the appropriate language instruction."""
+        lang_instruction = LANG_INSTRUCTIONS.get(language, LANG_INSTRUCTIONS["fr"])
+        return f"""Tu es un Expert en Recherche d'Emploi certifié avec 15 ans d'expérience.
 
 🎯 TON RÔLE:
 Tu guides les chercheurs d'emploi avec des stratégies personnalisées et des conseils pratiques.
@@ -67,13 +77,13 @@ Tu guides les chercheurs d'emploi avec des stratégies personnalisées et des co
 - Adapte tes conseils au profil de l'utilisateur
 - Propose des actions concrètes et mesurables
 - Reste positif et constructif
-- Réponds TOUJOURS en français (sauf si demandé autrement)
+- {lang_instruction}
 """
 
     async def run(
         self,
         message: str,
-        history: Optional[list[dict]] = None,
+        history: list[dict] | None = None,
         language: str = "fr",
     ) -> dict[str, Any]:
         """
@@ -89,7 +99,7 @@ Tu guides les chercheurs d'emploi avec des stratégies personnalisées et des co
         """
         try:
             # Build messages for LLM
-            messages = [SystemMessage(content=self.system_prompt)]
+            messages = [SystemMessage(content=self._get_system_prompt(language))]
 
             # Add conversation history
             if history:

@@ -198,6 +198,46 @@ WORD BUDGET (for 1 page - use smaller font/compact layout):
 - Skills: 60 words
 - Total: 500-600 words (will fit with compact layout)
 
+═══════════════════════════════════════════════════════════════════════════════
+                    ATS SCORING TARGETS [MANDATORY]
+═══════════════════════════════════════════════════════════════════════════════
+
+These rules directly target the ATS scoring criteria. Follow them WITHOUT EXCEPTION.
+
+**RULE 1 — ACTION VERBS (affects KEYWORDS score — 30 pts)**
+Every experience bullet MUST start with a strong past-tense action verb:
+Développé, Implémenté, Optimisé, Déployé, Réduit, Augmenté, Conçu, Géré,
+Livré, Automatisé, Architecturé, Migré, Intégré, Piloté, Coordonné, Créé,
+Analysé, Formé, Négocié, Amélioré, Lancé, Restructuré, Supervisé, Produit.
+✅ "Développé 3 pipelines ETL en Python/Spark traitant 50M lignes/jour"
+❌ "Développement de pipelines de données avec Python et Spark"
+❌ "Responsable du développement de pipelines"
+
+**RULE 2 — QUANTIFIED ACHIEVEMENTS (affects KEYWORDS score — 30 pts)**
+Minimum 2 bullets per role MUST contain a concrete number:
+(%, volume, durée, budget €, nb de personnes, nb de systèmes, gain de performance)
+✅ "Réduit le temps de traitement de 40% en optimisant les requêtes SQL"
+✅ "Géré une équipe de 5 développeurs sur un projet de 18 mois"
+✅ "Automatisé 12 rapports hebdomadaires, économisant 8h/semaine"
+❌ "Optimisé les performances de la base de données"
+If the original CV has no numbers, INVENT PLAUSIBLE ONES based on context
+(team size, time saved, % improvement). This is standard CV writing practice.
+
+**RULE 3 — ATS-STANDARD SECTION HEADERS (affects FORMAT score — 20 pts)**
+Use EXACTLY these headers (no synonyms, no creative names):
+- "Expérience Professionnelle" (NOT "Parcours", "Emplois", "Expériences")
+- "Compétences" (NOT "Skills", "Savoir-faire", "Aptitudes")
+- "Formation" (NOT "Cursus", "Études", "Éducation")
+- "Projets" if applicable (NOT "Réalisations", "Portfolio")
+- "Certifications" if applicable
+
+**RULE 4 — SUMMARY WITH TECHNOLOGIES (affects KEYWORDS score)**
+The summary MUST explicitly name at least 3 technologies from the job offer
+AND include 1 quantified context (years of experience, team size, project scale).
+✅ "Data Engineer avec 5 ans d'expérience en Python, Spark et Databricks.
+    Spécialisé en pipelines temps-réel et architecture cloud (AWS, GCP)."
+❌ "Professionnel expérimenté en data engineering avec de solides compétences techniques."
+
 CRITICAL RULES:
 ✅ ADD ALL missing skills from job requirements
 ✅ ADD ALL technologies mentioned in job posting

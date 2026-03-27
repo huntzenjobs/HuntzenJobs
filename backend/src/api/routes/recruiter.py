@@ -6,20 +6,23 @@ Handles recruiter consultation requests and Stripe payment processing.
 Sprint 3: 50€ one-time payment for 30-minute consultation with expert recruiter.
 """
 
+import logging
 import uuid
-from typing import Optional
-from datetime import date, datetime
+from datetime import date
 
-from fastapi import APIRouter, HTTPException, status, Request, Header
-from pydantic import BaseModel, EmailStr, Field
 import stripe
-from supabase import create_client, Client
+from fastapi import APIRouter, Header, HTTPException, Request, status
+from pydantic import BaseModel, EmailStr, Field
+from supabase import Client, create_client
 
+from src.api.deps import get_user_id_from_token
 from src.config.settings import get_settings
 from src.services.email import (
     send_recruiter_request_confirmation,
     send_recruiter_request_notification,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
@@ -42,11 +45,11 @@ class RecruiterRequestCreate(BaseModel):
     """Create a new recruiter consultation request."""
     full_name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
-    phone: Optional[str] = Field(None, max_length=20)
+    phone: str | None = Field(None, max_length=20)
     sector: str = Field(..., description="Professional sector")
     experience_level: str = Field(..., description="Years of experience level")
     message: str = Field(..., min_length=10, max_length=1000)
-    preferred_date: Optional[date] = None
+    preferred_date: date | None = None
 
 
 class RecruiterRequestResponse(BaseModel):
@@ -73,23 +76,19 @@ class RecruiterRequestStatus(BaseModel):
     payment_status: str
     request_status: str
     created_at: str
-    scheduled_at: Optional[str] = None
+    scheduled_at: str | None = None
 
 
 # ============================================================================
 # Helper Functions
 # ============================================================================
 
-def get_user_id_from_header(authorization: Optional[str] = Header(None)) -> Optional[str]:
+def get_user_id_from_header(authorization: str | None = Header(None)) -> str | None:
     """
-    Extract user ID from Authorization header.
-
-    For now, returns None as we need to implement proper auth.
-    TODO: Implement proper JWT token validation with Supabase auth.
+    Extract user ID from Authorization Bearer token via Supabase JWT validation.
+    Returns None for anonymous/unauthenticated requests (allowed for recruiter contact).
     """
-    # Placeholder - In production, decode JWT and extract user_id
-    # For testing, we can accept requests without auth
-    return None
+    return get_user_id_from_token(authorization)
 
 
 # ============================================================================
@@ -99,7 +98,7 @@ def get_user_id_from_header(authorization: Optional[str] = Header(None)) -> Opti
 @router.post("/request", response_model=RecruiterRequestResponse)
 async def create_recruiter_request(
     request: RecruiterRequestCreate,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     Create a new recruiter consultation request.
@@ -147,13 +146,13 @@ async def create_recruiter_request(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating request: {str(e)}",
-        )
+        ) from None
 
 
 @router.post("/create-payment", response_model=PaymentSessionResponse)
 async def create_payment_session(
     payment: PaymentSessionCreate,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     Create a Stripe checkout session for recruiter consultation payment.
@@ -221,18 +220,18 @@ async def create_payment_session(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Stripe error: {str(e)}"
-        )
+        ) from None
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating payment session: {str(e)}",
-        )
+        ) from None
 
 
 @router.get("/status/{request_id}", response_model=RecruiterRequestStatus)
 async def get_request_status(
     request_id: str,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     Get status of a recruiter consultation request.
@@ -268,7 +267,7 @@ async def get_request_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching status: {str(e)}",
-        )
+        ) from None
 
 
 @router.post("/webhook")
@@ -332,7 +331,7 @@ async def stripe_webhook(request: Request):
                         preferred_date=request_data.get("preferred_date"),
                     )
 
-                    print(f"✅ Payment confirmed for request {request_id} - Emails sent")
+                    logger.info(f"✅ Payment confirmed for request {request_id} - Emails sent")
 
         return {"status": "success"}
 
@@ -340,9 +339,9 @@ async def stripe_webhook(request: Request):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid signature: {str(e)}"
-        )
+        ) from None
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Webhook error: {str(e)}",
-        )
+        ) from None

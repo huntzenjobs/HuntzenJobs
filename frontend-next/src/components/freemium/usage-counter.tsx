@@ -1,116 +1,234 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useSubscription } from '@/contexts/subscription-context'
-import { FeatureType } from '@/hooks/use-freemium-limits'
-import { Search, FileText, Clock, Eye } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { useSubscription } from "@/contexts/subscription-context";
+import { FeatureType } from "@/hooks/use-freemium-limits";
+import { Search, FileText, Clock, Eye, Users, Bookmark, Target } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface UsageCounterProps {
-  feature: FeatureType
-  className?: string
-  showIcon?: boolean
-  showBar?: boolean
-  compact?: boolean
+  feature: FeatureType;
+  className?: string;
+  showIcon?: boolean;
+  showBar?: boolean;
+  compact?: boolean;
 }
 
-const featureConfig: Record<
-  FeatureType,
-  {
-    icon: React.ReactNode
-    label: string
-    maxLabel: (max: number) => string
-    formatValue: (value: number, max: number) => string
-  }
-> = {
+interface FeatureConfig {
+  icon: React.ReactNode;
+  labelKey: string;
+  maxLabel: (max: number, t: (key: string) => string) => string;
+  formatValue: (
+    value: number,
+    max: number,
+    t: (key: string) => string,
+  ) => string;
+}
+
+const featureConfig: Record<FeatureType, FeatureConfig> = {
   job_search: {
     icon: <Search className="w-4 h-4" aria-hidden="true" />,
-    label: 'recherches',
-    maxLabel: (max) => (max === Infinity ? 'illimitees' : `/${max}`),
-    formatValue: (value, max) =>
-      max === Infinity ? 'Illimite' : `${value}/${max}`,
+    labelKey: "features.jobSearch.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
   job_view: {
     icon: <Eye className="w-4 h-4" aria-hidden="true" />,
-    label: 'offres',
-    maxLabel: (max) => (max === Infinity ? 'illimitees' : `/${max}`),
-    formatValue: (value, max) =>
-      max === Infinity ? 'Illimite' : `${value}/${max}`,
+    labelKey: "features.jobView.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
   cv_analysis: {
     icon: <FileText className="w-4 h-4" aria-hidden="true" />,
-    label: 'analyses',
-    maxLabel: (max) => (max === Infinity ? 'illimitees' : `/${max}`),
-    formatValue: (value, max) =>
-      max === Infinity ? 'Illimite' : `${value}/${max}`,
+    labelKey: "features.cvAnalysis.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
-  coach_time: {
+  ats_score: {
+    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.atsScore.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  matching_score: {
+    icon: <Target className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.matchingScore.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  custom_cv: {
+    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.customCv.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  saved_jobs: {
+    icon: <Bookmark className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.savedJobs.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}`,
+    formatValue: (value, max, t) =>
+      max === Infinity ? t("features.unlimitedShort") : `${value}/${max}`,
+  },
+  assistant_messages: {
     icon: <Clock className="w-4 h-4" aria-hidden="true" />,
-    label: 'restantes',
-    maxLabel: () => '',
-    formatValue: (seconds) => {
-      if (seconds === Infinity || seconds > 3600 * 24) return 'Illimite'
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
-      return `${mins}:${secs.toString().padStart(2, '0')}`
-    },
+    labelKey: "features.assistantMessages.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
   },
-}
+  recruiter_search: {
+    icon: <Users className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.recruiterSearch.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  cv_adapt: {
+    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.cvAdapt.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  cover_letter: {
+    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.coverLetter.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+  coach: {
+    icon: <Clock className="w-4 h-4" aria-hidden="true" />,
+    labelKey: "features.coach.label",
+    maxLabel: (max, t) =>
+      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
+    formatValue: (value, max, t) =>
+      max === Infinity
+        ? t("features.unlimitedShort")
+        : `${value}/${max}${t("perDay")}`,
+  },
+};
 
 export function UsageCounter({
   feature,
-  className = '',
+  className = "",
   showIcon = true,
   showBar = true,
   compact = false,
 }: UsageCounterProps) {
-  const { getRemaining, limits, isFreePlan } = useSubscription()
+  const { getRemaining, limits, isFreePlan, quotas } = useSubscription();
+  const tUsage = useTranslations("usageCounter");
 
-  const remaining = getRemaining(feature)
-  const config = featureConfig[feature]
+  const remaining = getRemaining(feature);
+  const config = featureConfig[feature];
 
-  // Get max for this feature
-  let max: number
+  // Get max for this feature (from limits or directly from API quotas)
+  let max: number;
   switch (feature) {
-    case 'job_search':
-      max = limits.job_searches_per_day
-      break
-    case 'job_view':
-      max = limits.jobs_visible
-      break
-    case 'cv_analysis':
-      max = limits.cv_analyses_per_day
-      break
-    case 'coach_time':
-      max = limits.coach_minutes_per_day * 60
-      break
+    case "job_search":
+      max = limits.job_searches_per_day;
+      break;
+    case "job_view":
+      max = limits.jobs_visible;
+      break;
+    case "cv_analysis":
+      max = limits.cv_analyses_per_day;
+      break;
+    case "ats_score":
+      max = limits.ats_scores_per_day;
+      break;
+    case "matching_score":
+      max = limits.matching_scores_per_day;
+      break;
+    case "custom_cv":
+      max = limits.custom_cvs_per_day;
+      break;
+    case "assistant_messages":
+      max = limits.assistant_messages_per_day;
+      break;
+    case "saved_jobs":
+      max = limits.max_saved_jobs;
+      break;
+    case "recruiter_search": {
+      const q = quotas?.recruiter_search;
+      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      break;
+    }
+    case "cv_adapt": {
+      const q = quotas?.cv_adapt;
+      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      break;
+    }
+    case "cover_letter": {
+      const q = quotas?.cover_letter;
+      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      break;
+    }
     default:
-      max = 0
+      max = 0;
   }
 
   // Calculate percentage
-  const used = max - remaining
-  const percentage = max === Infinity ? 0 : Math.min(100, (used / max) * 100)
+  const used = max - remaining;
+  const percentage = max === Infinity ? 0 : Math.min(100, (used / max) * 100);
 
   // Determine color based on remaining
   const getColor = () => {
-    if (max === Infinity) return 'text-green-600 bg-green-100'
-    const ratio = remaining / max
-    if (ratio > 0.5) return 'text-green-600 bg-green-100'
-    if (ratio > 0.25) return 'text-orange-600 bg-orange-100'
-    return 'text-red-600 bg-red-100'
-  }
+    if (max === Infinity) return "text-green-600 bg-green-100";
+    const ratio = remaining / max;
+    if (ratio > 0.5) return "text-green-600 bg-green-100";
+    if (ratio > 0.25) return "text-orange-600 bg-orange-100";
+    return "text-red-600 bg-red-100";
+  };
 
   const getBarColor = () => {
-    if (max === Infinity) return 'bg-green-500'
-    const ratio = remaining / max
-    if (ratio > 0.5) return 'bg-green-500'
-    if (ratio > 0.25) return 'bg-orange-500'
-    return 'bg-red-500'
-  }
+    if (max === Infinity) return "bg-green-500";
+    const ratio = remaining / max;
+    if (ratio > 0.5) return "bg-green-500";
+    if (ratio > 0.25) return "bg-orange-500";
+    return "bg-red-500";
+  };
 
   if (!isFreePlan && max === Infinity) {
     // Don't show counter for unlimited features
-    return null
+    return null;
   }
 
   if (compact) {
@@ -119,28 +237,21 @@ export function UsageCounter({
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getColor()} ${className}`}
       >
         {showIcon && config.icon}
-        {config.formatValue(
-          feature === 'coach_time' ? remaining : used,
-          max
-        )}
+        {max === Infinity ? tUsage("features.unlimitedShort") : remaining}
       </span>
-    )
+    );
   }
 
   return (
     <div className={`space-y-1.5 ${className}`}>
       <div className="flex items-center justify-between text-sm">
-        <span className="flex items-center gap-1.5 text-white/70">
+        <span className="flex items-center gap-1.5 text-white/90">
           {showIcon && config.icon}
           <span>
-            {feature === 'coach_time'
-              ? config.formatValue(remaining, max)
-              : `${remaining} ${config.label}`}
-            {feature !== 'coach_time' && (
-              <span className="text-xs ml-1 text-white/50">
-                {config.maxLabel(max)}
-              </span>
-            )}
+            {`${remaining} ${tUsage(config.labelKey)}`}
+            <span className="text-xs ml-1 text-white/60">
+              {config.maxLabel(max, tUsage)}
+            </span>
           </span>
         </span>
       </div>
@@ -152,7 +263,11 @@ export function UsageCounter({
           aria-valuemin={0}
           aria-valuemax={max}
           aria-valuenow={remaining}
-          aria-label={`${config.label}: ${remaining} restant(e)s sur ${max}`}
+          aria-label={tUsage("aria.remaining", {
+            label: tUsage(config.labelKey),
+            remaining: String(remaining),
+            max: String(max),
+          })}
         >
           <div
             className={`h-full transition-all duration-300 ${getBarColor()}`}
@@ -161,126 +276,67 @@ export function UsageCounter({
         </div>
       )}
     </div>
-  )
-}
-
-interface CoachTimerProps {
-  className?: string
-  size?: 'sm' | 'md' | 'lg'
-}
-
-export function CoachTimer({ className = '', size = 'md' }: CoachTimerProps) {
-  const { isCoachSessionActive, limits, coachTimeRemaining } = useSubscription()
-
-  // Utiliser le temps du context (pour tests) ou calculer depuis localStorage
-  const [localTimeRemaining, setLocalTimeRemaining] = useState(coachTimeRemaining || 0)
-
-  // Calculer le temps restant localement
-  useEffect(() => {
-    // Si le context fournit la valeur, l'utiliser directement
-    if (coachTimeRemaining !== undefined && coachTimeRemaining !== null) {
-      setLocalTimeRemaining(coachTimeRemaining)
-      return
-    }
-
-    const calculateTimeRemaining = () => {
-      try {
-        const stored = localStorage.getItem('huntzen_freemium_state')
-        if (!stored) return 0
-
-        const state = JSON.parse(stored)
-        const totalAllowed = limits.coach_minutes_per_day * 60
-        let used = state.usage?.coachSecondsUsedToday || 0
-
-        // Ajouter le temps de la session active
-        if (state.usage?.coachSessionStartTime !== null && state.usage?.coachSessionStartTime !== undefined) {
-          used += Math.floor((Date.now() - state.usage.coachSessionStartTime) / 1000)
-        }
-
-        return Math.max(0, totalAllowed - used)
-      } catch {
-        return 0
-      }
-    }
-
-    // Calculer immédiatement
-    setLocalTimeRemaining(calculateTimeRemaining())
-
-    // Si session active, mettre à jour chaque seconde
-    if (isCoachSessionActive) {
-      const interval = setInterval(() => {
-        setLocalTimeRemaining(calculateTimeRemaining())
-      }, 1000)
-
-      return () => clearInterval(interval)
-    }
-  }, [isCoachSessionActive, limits.coach_minutes_per_day, coachTimeRemaining])
-
-  const maxSeconds = limits.coach_minutes_per_day * 60
-  const percentage =
-    maxSeconds === Infinity
-      ? 100
-      : Math.min(100, (localTimeRemaining / maxSeconds) * 100)
-
-  const formatTime = (seconds: number) => {
-    if (seconds === Infinity || seconds > 3600 * 24) return 'Illimite'
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const getColor = () => {
-    if (maxSeconds === Infinity) return 'text-green-600'
-    if (percentage > 50) return 'text-green-600'
-    if (percentage > 20) return 'text-orange-600'
-    return 'text-red-600'
-  }
-
-  const sizeClasses = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-lg',
-  }
-
-  return (
-    <div
-      className={`flex items-center gap-2 ${sizeClasses[size]} ${className}`}
-    >
-      <Clock
-        className={`${
-          size === 'sm' ? 'w-4 h-4' : size === 'lg' ? 'w-6 h-6' : 'w-5 h-5'
-        } ${isCoachSessionActive ? 'animate-pulse' : ''} ${getColor()}`}
-        aria-hidden="true"
-      />
-      <span className={`font-mono font-medium ${getColor()}`}>
-        {formatTime(localTimeRemaining)}
-      </span>
-      {isCoachSessionActive && (
-        <span className="text-xs text-muted-foreground">(en cours)</span>
-      )}
-    </div>
-  )
+  );
 }
 
 interface UsageSummaryProps {
-  className?: string
+  className?: string;
 }
 
-export function UsageSummary({ className = '' }: UsageSummaryProps) {
-  const { plan, isFreePlan } = useSubscription()
 
-  if (!isFreePlan) {
-    return null
-  }
+export function UsageSummary({ className = "" }: UsageSummaryProps) {
+  const { plan, isFreePlan } = useSubscription();
+  const tUsage = useTranslations("usageCounter");
+
+  // Paid unlimited plans (pro/premium) don't need the summary
+  if (plan === "pro" || plan === "premium") return null;
 
   return (
     <div className={className}>
-      <h4 className="text-sm font-semibold mb-3 text-white/90">Utilisation du jour</h4>
-      <div className="space-y-3">
-        <UsageCounter feature="job_search" showBar />
-        <UsageCounter feature="cv_analysis" showBar />
-        <UsageCounter feature="coach_time" showBar />
-      </div>
+      <>
+        <h4 className="text-sm font-semibold mb-3 text-white/90">
+          {tUsage("dailyUsage")}
+        </h4>
+          <div className="space-y-3">
+            <UsageCounter feature="job_search" showBar />
+            <UsageCounter feature="ats_score" showBar />
+            <UsageCounter feature="matching_score" showBar />
+            <UsageCounter feature="custom_cv" showBar />
+            <UsageCounter feature="assistant_messages" showBar />
+            <UsageCounter feature="cover_letter" showBar />
+          </div>
+          <div className="flex items-center gap-1.5 mt-2 mb-3 text-xs text-white/50">
+            <Clock className="w-3 h-3" />
+            <QuotaResetTimer />
+          </div>
+          <h4 className="text-sm font-semibold mb-3 text-white/90">
+            {tUsage("generalUsage")}
+          </h4>
+          <div className="space-y-3">
+            <UsageCounter feature="saved_jobs" showBar />
+          </div>
+      </>
     </div>
-  )
+  );
+}
+
+export function QuotaResetTimer({ className = "" }: { className?: string }) {
+  const [label, setLabel] = useState("");
+
+  useEffect(() => {
+    const compute = () => {
+      const now = new Date();
+      const next = new Date();
+      next.setUTCHours(24, 0, 0, 0);
+      const diff = next.getTime() - now.getTime();
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      setLabel(`Recharge dans ${h}h ${m}m`);
+    };
+    compute();
+    const id = setInterval(compute, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  return <span className={className}>{label}</span>;
 }

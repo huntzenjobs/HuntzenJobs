@@ -3,37 +3,47 @@
  * Features: animated loading, score ring, CV info panel, accordion results, actions
  */
 
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Download, GitCompare, Sparkles, RotateCcw, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { ScoreRing } from '@/components/cv/score-ring'
-import { CVInfoPanel } from '@/components/cv/cv-info-panel'
-import { ResultsAccordion } from '@/components/cv/results-accordion'
-import { CVComparison } from '@/components/cv/cv-comparison'
-import type { CVAnalysisResult } from '@/hooks/use-cv-history'
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import {
+  Download,
+  GitCompare,
+  Sparkles,
+  RotateCcw,
+  AlertCircle,
+  Lock,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ScoreRing } from "@/components/cv/score-ring";
+import { CVInfoPanel } from "@/components/cv/cv-info-panel";
+import { ResultsAccordion } from "@/components/cv/results-accordion";
+import { CVComparison } from "@/components/cv/cv-comparison";
+import { useOptionalSubscription } from "@/contexts/subscription-context";
+import { FeatureLockOverlay } from "@/components/freemium/feature-lock";
+import type { CVAnalysisResult } from "@/hooks/use-cv-history";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 interface Step3ResultsProps {
-  loading: boolean
-  result: CVAnalysisResult | null
-  error: string | null
-  history: CVAnalysisResult[]
+  loading: boolean;
+  result: CVAnalysisResult | null;
+  error: string | null;
+  history: CVAnalysisResult[];
   hasFeatures: {
-    hasCVHistory: boolean
-    hasPDFExport: boolean
-  }
-  onReset: () => void
-  onExportPDF: () => void
-  onOpenPricingModal: (feature: string) => void
-  className?: string
+    hasCVHistory: boolean;
+    hasPDFExport: boolean;
+  };
+  onReset: () => void;
+  onExportPDF: () => void;
+  onOpenPricingModal: (feature: string) => void;
+  className?: string;
 }
 
 // ============================================================================
@@ -41,26 +51,26 @@ interface Step3ResultsProps {
 // ============================================================================
 
 const LOADING_MESSAGES = [
-  'Analyse en cours...',
-  'Extraction des informations...',
-  'Calcul du score ATS...',
-  'Génération des recommandations...'
-]
+  "Analyse en cours...",
+  "Extraction des informations...",
+  "Calcul du score ATS...",
+  "Génération des recommandations...",
+];
 
 // ============================================================================
 // SUB-COMPONENTS
 // ============================================================================
 
 function LoadingAnimation() {
-  const [messageIndex, setMessageIndex] = useState(0)
+  const [messageIndex, setMessageIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length)
-    }, 1500)
+      setMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+    }, 1500);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center py-16">
@@ -72,7 +82,7 @@ function LoadingAnimation() {
             className="w-4 h-4 rounded-full bg-huntzen-blue animate-pulse"
             style={{
               animationDelay: `${index * 0.2}s`,
-              animationDuration: '1s'
+              animationDuration: "1s",
             }}
           />
         ))}
@@ -86,10 +96,16 @@ function LoadingAnimation() {
         Cela peut prendre quelques secondes
       </p>
     </div>
-  )
+  );
 }
 
-function ErrorState({ error, onReset }: { error: string; onReset: () => void }) {
+function ErrorState({
+  error,
+  onReset,
+}: {
+  error: string;
+  onReset: () => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
@@ -102,7 +118,7 @@ function ErrorState({ error, onReset }: { error: string; onReset: () => void }) 
         Réessayer
       </Button>
     </div>
-  )
+  );
 }
 
 // ============================================================================
@@ -118,37 +134,44 @@ export function Step3Results({
   onReset,
   onExportPDF,
   onOpenPricingModal,
-  className
+  className,
 }: Step3ResultsProps) {
-  const router = useRouter()
-  const [showComparison, setShowComparison] = useState(false)
+  const router = useRouter();
+  const t = useTranslations("cv");
+  const [showComparison, setShowComparison] = useState(false);
+  const subscription = useOptionalSubscription();
+  const hasCvDetails = subscription?.hasFeature("has_cv_details") ?? true;
 
   // Loading state
   if (loading) {
-    return <LoadingAnimation />
+    return <LoadingAnimation />;
   }
 
   // Error state
   if (error) {
-    return <ErrorState error={error} onReset={onReset} />
+    return <ErrorState error={error} onReset={onReset} />;
   }
 
   // No result yet
   if (!result) {
-    return null
+    return null;
   }
 
-  const canCompare = history.length >= 2 && hasFeatures.hasCVHistory
+  const canCompare = history.length >= 2 && hasFeatures.hasCVHistory;
 
   return (
-    <div className={cn('space-y-8', className)}>
+    <div className={cn("space-y-8", className)}>
       {/* Header with Score Ring + CV Info */}
       <div className="grid md:grid-cols-[1fr_300px] gap-6">
         {/* Score Ring */}
         <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-violet-50 rounded-xl border-2 border-blue-200">
           <ScoreRing score={result.score} size={140} animationDuration={750} />
           <p className="text-sm text-gray-600 mt-4">
-            Votre CV obtient un score de <span className="font-bold text-huntzen-blue">{result.score}%</span>
+            Votre CV obtient un score de{" "}
+            <span className="font-bold text-huntzen-blue">{result.score}%</span>
+          </p>
+          <p className="text-xs text-muted-foreground mt-2 max-w-xs text-center">
+            {t("atsScoreAsterisk")}
           </p>
         </div>
 
@@ -164,15 +187,15 @@ export function Step3Results({
           size="sm"
           onClick={() => {
             if (!hasFeatures.hasPDFExport) {
-              onOpenPricingModal('has_pdf_export')
+              onOpenPricingModal("has_pdf_export");
             } else {
-              onExportPDF()
+              onExportPDF();
             }
           }}
           className="gap-2"
         >
           <Download className="h-4 w-4" />
-          Exporter PDF
+          {t("results.exportPdf")}
           {!hasFeatures.hasPDFExport && (
             <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded">
               PRO
@@ -189,7 +212,7 @@ export function Step3Results({
             className="gap-2"
           >
             <GitCompare className="h-4 w-4" />
-            Comparer
+            {t("results.compare")}
           </Button>
         )}
       </div>
@@ -197,12 +220,37 @@ export function Step3Results({
       {/* Results Accordion */}
       <ResultsAccordion
         breakdown={result.breakdown}
-        strengths={result.strengths}
-        weaknesses={result.weaknesses}
-        suggestions={result.suggestions}
+        strengths={result.strengths || []}
+        weaknesses={result.weaknesses || []}
+        suggestions={result.suggestions || []}
         rawAnalysis={result.rawAnalysis}
         currentScore={result.score}
       />
+
+      {/* Offres recommandées — verrouillées pour free users */}
+      {result.recommended_job_titles &&
+        result.recommended_job_titles.length > 0 && (
+          <FeatureLockOverlay feature="has_cv_details" className="rounded-lg">
+            <div className="space-y-3 pt-2">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t("results.recommendedJobs")}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {result.recommended_job_titles.slice(0, 3).map((title) => (
+                  <button
+                    key={title}
+                    onClick={() =>
+                      router.push(`/jobs?q=${encodeURIComponent(title)}`)
+                    }
+                    className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors"
+                  >
+                    {title} →
+                  </button>
+                ))}
+              </div>
+            </div>
+          </FeatureLockOverlay>
+        )}
 
       {/* Bottom Actions */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t-2 border-gray-200">
@@ -213,17 +261,28 @@ export function Step3Results({
           className="gap-2 w-full sm:w-auto"
         >
           <RotateCcw className="h-4 w-4" />
-          Nouvelle analyse
+          {t("results.newAnalysis")}
         </Button>
 
-        <Button
-          size="lg"
-          onClick={() => router.push('/coach')}
-          className="gap-2 w-full sm:w-auto bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:shadow-lg transition-all"
-        >
-          <Sparkles className="h-4 w-4" />
-          Améliorer avec Coach IA
-        </Button>
+        {hasCvDetails ? (
+          <Button
+            size="lg"
+            onClick={() => router.push("/coach")}
+            className="gap-2 w-full sm:w-auto bg-gradient-to-r from-huntzen-blue to-huntzen-turquoise hover:shadow-lg transition-all"
+          >
+            <Sparkles className="h-4 w-4" />
+            {t("results.improveWithCoach")}
+          </Button>
+        ) : (
+          <Button
+            size="lg"
+            onClick={() => onOpenPricingModal?.("has_cv_details")}
+            className="gap-2 w-full sm:w-auto bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg"
+          >
+            <Lock className="h-4 w-4" />
+            {t("results.lockedCta")}
+          </Button>
+        )}
       </div>
 
       {/* Comparison Dialog */}
@@ -235,5 +294,5 @@ export function Step3Results({
         </Dialog>
       )}
     </div>
-  )
+  );
 }

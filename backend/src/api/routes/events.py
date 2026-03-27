@@ -4,14 +4,14 @@ Job Fairs / Events API Routes
 Endpoints for searching job fairs and employment events.
 """
 
-from typing import Optional
 from fastapi import APIRouter, Query
+
 from src.services.events.provider import search_job_fairs
 
 router = APIRouter()
 
 
-@router.get("/search", response_model=dict)
+@router.get("/search")
 async def search_events(
     region: str = Query(default="", description="Filter by region"),
     sector: str = Query(default="", description="Filter by sector"),
@@ -44,7 +44,7 @@ async def search_events(
     }
 
 
-@router.post("/search", response_model=dict)
+@router.post("/search")
 async def search_events_post(data: dict):
     """
     Search for professional events (POST version).
@@ -77,7 +77,7 @@ async def search_events_post(data: dict):
     }
 
 
-@router.get("/regions", response_model=dict)
+@router.get("/regions")
 async def get_regions():
     """
     Get list of available French regions for filtering.
@@ -100,7 +100,7 @@ async def get_regions():
     return {"success": True, "regions": regions, "count": len(regions)}
 
 
-@router.get("/sectors", response_model=dict)
+@router.get("/sectors")
 async def get_sectors():
     """
     Get list of available job sectors for filtering.
@@ -121,7 +121,7 @@ async def get_sectors():
     return {"success": True, "sectors": sectors, "count": len(sectors)}
 
 
-@router.get("/event-types", response_model=dict)
+@router.get("/event-types")
 async def get_event_types():
     """
     Get list of available event types.

@@ -11,8 +11,12 @@ from typing import Any
 import httpx
 
 from src.config.settings import settings
-from src.services.job_providers.base import BaseJobProvider
-from src.utils.geo import country_code_to_name, country_code_to_language
+from src.services.job_providers.base import (
+    BaseJobProvider,
+    handle_provider_errors,
+    normalize_contract_type,
+)
+from src.utils.geo import country_code_to_language, country_code_to_name
 
 logger = logging.getLogger(__name__)
 
@@ -20,19 +24,20 @@ logger = logging.getLogger(__name__)
 class SerpAPIProvider(BaseJobProvider):
     """
     SerpAPI Google Jobs provider.
-    
+
     Features:
     - Access to Google Jobs aggregator
     - Worldwide coverage
     - Structured data
     - Paid API (100 free searches/month)
     """
-    
+
     name = "google_jobs"
     supported_countries = set()  # All countries
-    
+
     BASE_URL = "https://serpapi.com/search"
-    
+
+    @handle_provider_errors
     async def search(
         self,
         query: str,
@@ -75,41 +80,35 @@ class SerpAPIProvider(BaseJobProvider):
             "hl": country_code_to_language(country_code),
             "api_key": api_key,
         }
-        
-        try:
-            async with httpx.AsyncClient(timeout=20.0) as client:
-                response = await client.get(self.BASE_URL, params=params)
-                response.raise_for_status()
-                data = response.json()
-            
-            jobs = []
-            for item in data.get("jobs_results", [])[:max_results]:
-                jobs.append(self._normalize_serpapi_job(item))
-            
-            logger.info(f"[{self.name}] Found {len(jobs)} jobs for '{query}'")
-            return jobs
-            
-        except httpx.TimeoutException:
-            logger.warning(f"[{self.name}] Request timeout")
-            return []
-        except httpx.HTTPStatusError as e:
-            logger.error(f"[{self.name}] HTTP error: {e.response.status_code}")
-            return []
-        except Exception as e:
-            logger.error(f"[{self.name}] Error: {e}")
-            return []
-    
+
+        # Enrichissement query si alternance
+        contract_type = kwargs.get("contract_type", "")
+        if contract_type in ("alternance", "apprentissage"):
+            params["q"] = f"{params['q']} alternance"
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.get(self.BASE_URL, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+        jobs = []
+        for item in data.get("jobs_results", [])[:max_results]:
+            jobs.append(self._normalize_serpapi_job(item))
+
+        logger.info(f"[{self.name}] Found {len(jobs)} jobs for '{query}'")
+        return jobs
+
     def _normalize_serpapi_job(self, item: dict) -> dict[str, Any]:
         """Normalize SerpAPI job response."""
         # Extract apply link
         apply_options = item.get("apply_options", [])
         url = apply_options[0].get("link") if apply_options else None
-        
+
         # Extract salary
         salary = None
         if "salary" in item.get("detected_extensions", {}):
             salary = item["detected_extensions"]["salary"]
-        
+
         return {
             "id": f"google_{hash(item.get('title', '') + item.get('company_name', ''))}",
             "title": item.get("title", ""),
@@ -122,10 +121,15 @@ class SerpAPIProvider(BaseJobProvider):
             "source": self.name,
             "posted_date": item.get("detected_extensions", {}).get("posted_at"),
         }
-    
-    def _extract_contract_type(self, item: dict) -> str | None:
-        """Extract contract type from extensions."""
+
+    def _extract_contract_type(self, item: dict) -> str:
+        """Extract and normalize contract type from extensions."""
         extensions = item.get("detected_extensions", {})
-        if extensions.get("schedule_type"):
-            return extensions["schedule_type"]
-        return None
+        schedule = extensions.get("schedule_type", "") or ""
+        if schedule:
+            return normalize_contract_type(schedule)
+        # Fallback : verifier le titre
+        title = (item.get("title") or "").lower()
+        if "alternance" in title or "apprenti" in title:
+            return "Alternance"
+        return ""

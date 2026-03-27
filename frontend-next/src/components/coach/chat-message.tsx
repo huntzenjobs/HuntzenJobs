@@ -1,12 +1,15 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { cn } from '@/lib/utils'
-import { User, Sparkles } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { formatDistanceToNow } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { User, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { formatDistanceToNow } from "date-fns";
+import { fr, enUS, es, pt, type Locale } from "date-fns/locale";
+import { useTranslations, useLocale } from "next-intl";
+
+const DATE_LOCALES: Record<string, Locale> = { fr, en: enUS, es, pt };
 
 /**
  * ChatMessage - Message bubble component for Coach chat
@@ -25,22 +28,28 @@ import { fr } from 'date-fns/locale'
  */
 
 export interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date | string
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date | string;
+  /** Message système (ex: notification de changement d'assistant) */
+  isSystem?: boolean;
 }
 
 export interface ChatMessageProps {
-  message: Message
+  message: Message;
   /** Show avatar (default: true) */
-  showAvatar?: boolean
+  showAvatar?: boolean;
   /** Show timestamp on hover (default: true) */
-  showTimestamp?: boolean
+  showTimestamp?: boolean;
   /** Enable copy button (default: true) */
-  enableCopy?: boolean
+  enableCopy?: boolean;
   /** Custom className */
-  className?: string
+  className?: string;
+  /** URL avatar Dicebear de l'assistant actif */
+  assistantAvatarUrl?: string;
+  /** Couleur hex de l'assistant pour le fallback */
+  assistantColor?: string;
 }
 
 export function ChatMessage({
@@ -49,44 +58,49 @@ export function ChatMessage({
   showTimestamp = true,
   enableCopy = true,
   className,
+  assistantAvatarUrl,
+  assistantColor,
 }: ChatMessageProps) {
-  const [showCopyButton, setShowCopyButton] = React.useState(false)
-  const [copied, setCopied] = React.useState(false)
+  const t = useTranslations("coach");
+  const locale = useLocale();
+  const [showCopyButton, setShowCopyButton] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
 
-  const isUser = message.role === 'user'
-  const timestamp = typeof message.timestamp === 'string' 
-    ? new Date(message.timestamp) 
-    : message.timestamp
+  const isUser = message.role === "user";
+  const timestamp =
+    typeof message.timestamp === "string"
+      ? new Date(message.timestamp)
+      : message.timestamp;
 
   // Copy to clipboard
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(message.content)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error)
+      console.error("Failed to copy:", error);
     }
-  }
+  };
 
   // Relative time
   const relativeTime = React.useMemo(() => {
     try {
       return formatDistanceToNow(timestamp, {
         addSuffix: true,
-        locale: fr,
-      })
+        locale: DATE_LOCALES[locale] ?? fr,
+      });
     } catch (error) {
-      return 'à l\'instant'
+      return t("justNow");
     }
-  }, [timestamp])
+  }, [timestamp, locale, t]);
 
   return (
     <div
       className={cn(
-        'group flex gap-3 animate-fade-in',
-        isUser ? 'justify-end' : 'justify-start',
-        className
+        "group flex gap-3 animate-fade-in",
+        isUser ? "justify-end" : "justify-start",
+        className,
       )}
       onMouseEnter={() => setShowCopyButton(true)}
       onMouseLeave={() => setShowCopyButton(false)}
@@ -94,12 +108,32 @@ export function ChatMessage({
       {/* Avatar (assistant only, on left) */}
       {!isUser && showAvatar && (
         <div className="flex-shrink-0">
-          <div className="relative size-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md">
-            <Sparkles className="size-4 text-white animate-pulse" />
-            
-            {/* Animated glow */}
-            <div className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping" 
-                 style={{ animationDuration: '3s' }} />
+          <div
+            className="relative size-8 rounded-full overflow-hidden flex items-center justify-center shadow-md"
+            style={{
+              backgroundColor: assistantAvatarUrl
+                ? undefined
+                : assistantColor || "#7c3aed",
+              background: assistantAvatarUrl
+                ? undefined
+                : `linear-gradient(135deg, ${assistantColor || "#7c3aed"}, ${assistantColor || "#6d28d9"})`,
+            }}
+          >
+            {assistantAvatarUrl ? (
+              <img
+                src={assistantAvatarUrl}
+                alt="assistant"
+                className="size-8 rounded-full object-cover"
+              />
+            ) : (
+              <>
+                <Sparkles className="size-4 text-white animate-pulse" />
+                <div
+                  className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping"
+                  style={{ animationDuration: "3s" }}
+                />
+              </>
+            )}
           </div>
         </div>
       )}
@@ -107,29 +141,29 @@ export function ChatMessage({
       {/* Message bubble */}
       <div
         className={cn(
-          'flex flex-col gap-1 max-w-[80%]',
-          isUser ? 'items-end' : 'items-start'
+          "flex flex-col gap-1 max-w-[80%]",
+          isUser ? "items-end" : "items-start",
         )}
       >
         {/* Bubble content */}
         <div
           className={cn(
-            'relative px-4 py-3 rounded-2xl',
-            'transition-all duration-200',
+            "relative px-4 py-3 rounded-2xl",
+            "transition-all duration-200",
             isUser
               ? [
-                  'bg-gradient-to-br from-blue-500 to-blue-600',
-                  'text-white',
-                  'rounded-br-md', // Sharp corner bottom-right
-                  'shadow-md hover:shadow-lg',
+                  "bg-gradient-to-br from-blue-500 to-blue-600",
+                  "text-white",
+                  "rounded-br-md", // Sharp corner bottom-right
+                  "shadow-md hover:shadow-lg",
                 ]
               : [
-                  'bg-white',
-                  'text-gray-900',
-                  'border-2 border-gray-200',
-                  'rounded-bl-md', // Sharp corner bottom-left
-                  'shadow-sm hover:shadow-md',
-                ]
+                  "bg-white",
+                  "text-gray-900",
+                  "border-2 border-gray-200",
+                  "rounded-bl-md", // Sharp corner bottom-left
+                  "shadow-sm hover:shadow-md",
+                ],
           )}
         >
           {/* User: plain text */}
@@ -147,37 +181,49 @@ export function ChatMessage({
                 components={{
                   // Customize markdown rendering
                   p: ({ children }) => (
-                    <p className="mb-2 last:mb-0 leading-relaxed text-gray-900">
+                    <p className="mb-2 last:mb-0 leading-relaxed text-gray-800">
                       {children}
                     </p>
                   ),
                   ul: ({ children }) => (
-                    <ul className="mb-2 pl-4 space-y-1 list-disc">{children}</ul>
+                    <ul className="mb-2 pl-4 space-y-1 list-disc">
+                      {children}
+                    </ul>
                   ),
                   ol: ({ children }) => (
-                    <ol className="mb-2 pl-4 space-y-1 list-decimal">{children}</ol>
+                    <ol className="mb-2 pl-4 space-y-1 list-decimal">
+                      {children}
+                    </ol>
                   ),
                   li: ({ children }) => (
-                    <li className="text-gray-900">{children}</li>
+                    <li className="text-gray-800">{children}</li>
                   ),
-                  code: ({ inline, children, ...props }: any) =>
-                    inline ? (
-                      <code
-                        className="px-1.5 py-0.5 bg-gray-100 text-violet-600 rounded text-xs font-mono"
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    ) : (
+                  code: ({
+                    children,
+                    className,
+                    ...props
+                  }: React.ComponentPropsWithoutRef<"code">) => {
+                    const isBlock = className?.startsWith("language-");
+                    return isBlock ? (
                       <code
                         className="block p-3 bg-gray-50 rounded-lg text-xs font-mono overflow-x-auto"
                         {...props}
                       >
                         {children}
                       </code>
-                    ),
+                    ) : (
+                      <code
+                        className="px-1.5 py-0.5 bg-gray-100 text-violet-600 rounded text-xs font-mono"
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    );
+                  },
                   strong: ({ children }) => (
-                    <strong className="font-semibold text-gray-900">{children}</strong>
+                    <strong className="font-semibold text-gray-800">
+                      {children}
+                    </strong>
                   ),
                   a: ({ children, href }) => (
                     <a
@@ -201,23 +247,43 @@ export function ChatMessage({
             <button
               onClick={handleCopy}
               className={cn(
-                'absolute -top-2 -right-2',
-                'size-6 rounded-full',
-                'bg-gray-800 hover:bg-gray-900',
-                'flex items-center justify-center',
-                'shadow-md',
-                'transition-all duration-150',
-                'opacity-0 group-hover:opacity-100'
+                "absolute -top-2 -right-2",
+                "size-6 rounded-full",
+                "bg-[#0D1F3C] hover:bg-[#0D1F3C]/90",
+                "flex items-center justify-center",
+                "shadow-md",
+                "transition-all duration-150",
+                "opacity-0 group-hover:opacity-100",
               )}
               aria-label="Copier le message"
             >
               {copied ? (
-                <svg className="size-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="size-3.5 text-green-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               ) : (
-                <svg className="size-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <svg
+                  className="size-3.5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
                 </svg>
               )}
             </button>
@@ -228,10 +294,10 @@ export function ChatMessage({
         {showTimestamp && (
           <div
             className={cn(
-              'text-xs text-gray-400',
-              'opacity-0 group-hover:opacity-100',
-              'transition-opacity duration-150',
-              'px-2'
+              "text-xs text-gray-400",
+              "opacity-0 group-hover:opacity-100",
+              "transition-opacity duration-150",
+              "px-2",
             )}
           >
             {relativeTime}
@@ -248,7 +314,7 @@ export function ChatMessage({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 /**
@@ -261,22 +327,30 @@ export function TypingIndicator() {
       <div className="flex-shrink-0">
         <div className="relative size-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md">
           <Sparkles className="size-4 text-white animate-pulse" />
-          <div className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping" 
-               style={{ animationDuration: '3s' }} />
+          <div
+            className="absolute inset-0 rounded-full bg-violet-400/30 animate-ping"
+            style={{ animationDuration: "3s" }}
+          />
         </div>
       </div>
 
       {/* Typing dots */}
       <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white border-2 border-gray-200 shadow-sm">
         <div className="flex gap-1">
-          <div className="size-2 rounded-full bg-gray-400 animate-bounce" 
-               style={{ animationDelay: '0ms', animationDuration: '1s' }} />
-          <div className="size-2 rounded-full bg-gray-400 animate-bounce" 
-               style={{ animationDelay: '200ms', animationDuration: '1s' }} />
-          <div className="size-2 rounded-full bg-gray-400 animate-bounce" 
-               style={{ animationDelay: '400ms', animationDuration: '1s' }} />
+          <div
+            className="size-2 rounded-full bg-gray-400 animate-bounce"
+            style={{ animationDelay: "0ms", animationDuration: "1s" }}
+          />
+          <div
+            className="size-2 rounded-full bg-gray-400 animate-bounce"
+            style={{ animationDelay: "200ms", animationDuration: "1s" }}
+          />
+          <div
+            className="size-2 rounded-full bg-gray-400 animate-bounce"
+            style={{ animationDelay: "400ms", animationDuration: "1s" }}
+          />
         </div>
       </div>
     </div>
-  )
+  );
 }

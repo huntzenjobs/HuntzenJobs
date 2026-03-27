@@ -18,12 +18,13 @@ Sprint: 6 - Ticket S6-6
 
 import os
 import uuid
+from datetime import datetime
+from typing import Any
+
 import httpx
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
+from fastapi import HTTPException, UploadFile
 from structlog import get_logger
-from fastapi import UploadFile, HTTPException
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 logger = get_logger(__name__)
 
@@ -36,7 +37,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     logger.warning("Supabase credentials not configured - Modal integration disabled")
-    supabase_client: Optional[Client] = None
+    supabase_client: Client | None = None
 else:
     supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
     logger.info("Supabase client initialized for Modal integration")
@@ -104,7 +105,7 @@ async def upload_cv_to_storage(
         logger.info(f"Uploading CV to Supabase Storage: {unique_filename}")
 
         # Upload to Supabase Storage bucket 'cvs'
-        response = supabase_client.storage.from_("cvs").upload(
+        supabase_client.storage.from_("cvs").upload(
             path=unique_filename,
             file=file_content,
             file_options={"content-type": "application/pdf"}
@@ -118,7 +119,7 @@ async def upload_cv_to_storage(
 
     except Exception as e:
         logger.error(f"Failed to upload CV to storage: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to upload CV: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload CV: {str(e)}") from None
 
 
 # ============================================
@@ -127,10 +128,10 @@ async def upload_cv_to_storage(
 
 async def create_cv_analysis_record(
     user_id: str,  # ✅ Maintenant OBLIGATOIRE (pas Optional)
-    pdf_url: Optional[str] = None,
-    cv_text: Optional[str] = None,
-    filename: Optional[str] = None,
-    job_description: Optional[str] = None,
+    pdf_url: str | None = None,
+    cv_text: str | None = None,
+    filename: str | None = None,
+    job_description: str | None = None,
     language: str = "fr"
 ) -> str:
     """
@@ -178,14 +179,14 @@ async def create_cv_analysis_record(
 
         logger.info(f"Creating CV analysis record: {cv_id} (mode: {'text' if cv_text else 'file'}, user_id: {user_id})")
 
-        response = supabase_client.table("cv_analyses").insert(data).execute()
+        supabase_client.table("cv_analyses").insert(data).execute()
 
         logger.info(f"CV analysis record created successfully: {cv_id}")
         return cv_id
 
     except Exception as e:
         logger.error(f"Failed to create CV analysis record: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create analysis record: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create analysis record: {str(e)}") from None
 
 
 # ============================================
@@ -194,10 +195,10 @@ async def create_cv_analysis_record(
 
 async def spawn_modal_cv_processing(
     cv_id: str,
-    user_id: Optional[str] = None,
-    pdf_url: Optional[str] = None,
-    cv_text: Optional[str] = None,
-    job_description: Optional[str] = None,
+    user_id: str | None = None,
+    pdf_url: str | None = None,
+    cv_text: str | None = None,
+    job_description: str | None = None,
     language: str = "fr"
 ) -> bool:
     """
@@ -293,11 +294,11 @@ async def spawn_modal_cv_processing(
 
 async def process_cv_async(
     user_id: str,  # ✅ Maintenant OBLIGATOIRE (pas Optional)
-    file: Optional[UploadFile] = None,
-    cv_text: Optional[str] = None,
-    job_description: Optional[str] = None,
+    file: UploadFile | None = None,
+    cv_text: str | None = None,
+    job_description: str | None = None,
     language: str = "fr"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Main workflow for async CV processing with Modal.
 
@@ -378,7 +379,7 @@ async def process_cv_async(
         raise
     except Exception as e:
         logger.error(f"CV async processing failed: {e}")
-        raise HTTPException(status_code=500, detail=f"CV processing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"CV processing failed: {str(e)}") from None
 
 
 # ============================================
@@ -387,9 +388,9 @@ async def process_cv_async(
 
 async def get_cv_analysis_status(
     cv_id: str,
-    user_id: Optional[str] = None,
-    anonymous_id: Optional[str] = None
-) -> Dict[str, Any]:
+    user_id: str | None = None,
+    anonymous_id: str | None = None
+) -> dict[str, Any]:
     """
     Get CV analysis status for polling.
 
@@ -430,7 +431,7 @@ async def get_cv_analysis_status(
         # Use maybeSingle() instead of single() to handle "not found" gracefully
         response = query.maybe_single().execute()
 
-        if not response.data:
+        if response is None or not response.data:
             raise HTTPException(status_code=404, detail="CV analysis not found")
 
         data = response.data
@@ -456,7 +457,7 @@ async def get_cv_analysis_status(
         raise
     except Exception as e:
         logger.error(f"Failed to get CV status: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}") from None
 
 
 # ============================================
@@ -467,7 +468,7 @@ async def list_user_cv_analyses(
     user_id: str,
     limit: int = 20,
     offset: int = 0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     List all CV analyses for a user.
 
@@ -500,13 +501,22 @@ async def list_user_cv_analyses(
                 completed = datetime.fromisoformat(row["completed_at"].replace("Z", "+00:00"))
                 processing_time = (completed - created).total_seconds()
 
+            # Extract summary fields from result JSON for history display
+            result_data = row.get("result") or {}
+            ats_score = result_data.get("ats_score") or {}
+
             analyses.append({
                 "cv_id": row["id"],
                 "status": row["status"],
                 "created_at": row["created_at"],
                 "completed_at": row.get("completed_at"),
                 "processing_time_seconds": processing_time,
-                "has_result": bool(row.get("result"))
+                "has_result": bool(result_data),
+                # Summary fields for history drawer display
+                "score": ats_score.get("overall_score"),
+                "strengths": result_data.get("strengths", []),
+                "weaknesses": result_data.get("improvements", result_data.get("weaknesses", [])),
+                "suggestions": [],
             })
 
         return {
@@ -517,4 +527,4 @@ async def list_user_cv_analyses(
 
     except Exception as e:
         logger.error(f"Failed to list CV analyses: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to list analyses: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list analyses: {str(e)}") from None

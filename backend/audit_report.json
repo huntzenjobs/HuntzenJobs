@@ -1,0 +1,208 @@
+{
+  "audit_date": "2026-02-11T11:43:39.835934",
+  "supabase_url": "https://ngiakfikbuyugqfqtfwp.supabase.co",
+  "test_user_id": "3abda780-30fb-46c8-a5c3-5bfa7938d688",
+  "tables": {
+    "user_subscriptions": {
+      "total_rows": 8,
+      "test_user": {
+        "total": 8,
+        "active": 1,
+        "canceled": 7,
+        "active_subscription": {
+          "id": "d5a81c1a-aca3-4fbf-8016-35d938673ca2",
+          "user_id": "3abda780-30fb-46c8-a5c3-5bfa7938d688",
+          "plan_id": "d18ddf08-784d-471c-b2d7-7586b4e5472c",
+          "status": "active",
+          "current_period_start": "2026-02-11T09:46:48.96709+00:00",
+          "current_period_end": "2026-03-13T09:55:12.026801+00:00",
+          "cancel_at_period_end": false,
+          "stripe_subscription_id": "sub_test_manual_insert",
+          "stripe_customer_id": null,
+          "created_at": "2026-02-11T09:46:49.191371+00:00",
+          "updated_at": "2026-02-11T09:46:48.967242+00:00",
+          "stripe_price_id": null,
+          "trial_start": null,
+          "trial_end": null,
+          "canceled_at": null
+        }
+      },
+      "structure": [
+        "id",
+        "user_id",
+        "plan_id",
+        "status",
+        "current_period_start",
+        "current_period_end",
+        "cancel_at_period_end",
+        "stripe_subscription_id",
+        "stripe_customer_id",
+        "created_at",
+        "updated_at",
+        "stripe_price_id",
+        "trial_start",
+        "trial_end",
+        "canceled_at"
+      ]
+    },
+    "subscription_plans": {
+      "total_rows": 4,
+      "plans": [
+        {
+          "name": "free",
+          "id": "2e18728e-7db0-4385-a6fe-8cd16ae26f05",
+          "price_monthly": 0.0,
+          "limits": {
+            "job_views": 10,
+            "cv_analyses": 1,
+            "job_searches": 3,
+            "coach_seconds": 300
+          },
+          "active": true
+        },
+        {
+          "name": "starter",
+          "id": "d18ddf08-784d-471c-b2d7-7586b4e5472c",
+          "price_monthly": 8.9,
+          "limits": {
+            "job_views": -1,
+            "cv_analyses": 5,
+            "job_searches": -1,
+            "coach_seconds": 1800
+          },
+          "active": true,
+          "stripe_price_ids": [
+            "price_1SwkaNF7q8KRoF9a8cVsijpc"
+          ]
+        },
+        {
+          "name": "pro",
+          "id": "3f42df0e-6794-414f-9410-97981064fa7e",
+          "price_monthly": 13.9,
+          "limits": {
+            "job_views": -1,
+            "cv_analyses": 20,
+            "job_searches": -1,
+            "coach_seconds": -1
+          },
+          "active": true,
+          "stripe_price_ids": [
+            "price_1SwkeQF7q8KRoF9azQdPo1o6"
+          ]
+        },
+        {
+          "name": "premium",
+          "id": "d8fd5402-76f1-4b25-b35c-a6c5384cf817",
+          "price_monthly": 19.9,
+          "limits": {
+            "job_views": -1,
+            "cv_analyses": -1,
+            "job_searches": -1,
+            "coach_seconds": -1
+          },
+          "active": true,
+          "stripe_price_ids": [
+            "price_1SwlC1F7q8KRoF9a8FXeooCj"
+          ]
+        }
+      ]
+    },
+    "usage_quotas": {
+      "total_rows": 2,
+      "test_user": {
+        "entries": 2,
+        "latest_date": "2026-02-03",
+        "latest_reset": "2026-02-03T18:19:39.266003+00:00"
+      }
+    },
+    "profiles": {
+      "test_user_exists": true,
+      "deprecated_fields": {
+        "stripe_customer_id": null,
+        "stripe_subscription_id": null,
+        "subscription_tier": "free"
+      },
+      "migration_complete": false
+    },
+    "stripe_webhook_events": {
+      "total_rows": 25,
+      "processed": 25,
+      "unprocessed": 0,
+      "event_types": {
+        "customer.subscription.created": 9,
+        "checkout.session.completed": 7,
+        "invoice.payment_succeeded": 9
+      }
+    },
+    "webhook_failures": {
+      "total_rows": 3,
+      "unresolved": 3,
+      "error_types": {
+        "400: Missing user_id in session metadata": 1,
+        "current_period_start": 1,
+        "'current_period_start'": 1
+      }
+    }
+  },
+  "issues": [
+    {
+      "severity": "medium",
+      "table": "user_subscriptions",
+      "issue": "User has 7 canceled subscriptions",
+      "recommendation": "Implement cleanup job to archive canceled subs after 90 days"
+    },
+    {
+      "severity": "high",
+      "table": "usage_quotas",
+      "issue": "Quotas not updated for 8 days (latest: 2026-02-03)",
+      "recommendation": "Check Vercel cron job /api/cron/reset-quotas is running"
+    },
+    {
+      "severity": "low",
+      "table": "profiles",
+      "issue": "Deprecated subscription fields still present",
+      "recommendation": "Monitor usage for 14 days then DROP COLUMN"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "action": "Fix webhook KeyError 'current_period_start'",
+      "file": "src/services/stripe.py line 566-589",
+      "details": "Add null checks before accessing subscription fields"
+    },
+    {
+      "priority": "high",
+      "action": "Fix webhook Missing user_id",
+      "file": "src/services/subscription_service.py",
+      "details": "Ensure all checkout sessions include metadata.user_id"
+    },
+    {
+      "priority": "medium",
+      "action": "Add stripe_price_id to subscription_plans",
+      "file": "migrations/",
+      "details": "ALTER TABLE subscription_plans ADD COLUMN stripe_monthly_price_id TEXT"
+    },
+    {
+      "priority": "medium",
+      "action": "Verify Vercel cron job is running",
+      "file": "vercel.json",
+      "details": "Check /api/cron/reset-quotas runs daily at midnight"
+    },
+    {
+      "priority": "low",
+      "action": "Cleanup canceled subscriptions",
+      "file": "New cron job",
+      "details": "Archive user_subscriptions with status=canceled AND canceled_at < NOW() - INTERVAL '90 days'"
+    }
+  ],
+  "summary": {
+    "total_issues": 3,
+    "critical_issues": 0,
+    "high_issues": 1,
+    "medium_issues": 1,
+    "low_issues": 1,
+    "total_recommendations": 5,
+    "health_status": "degraded"
+  }
+}

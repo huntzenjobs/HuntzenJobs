@@ -1,24 +1,26 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
+import { huntzenApi } from "@/lib/api/huntzen-client";
+import {} from "@/components/ui/select";
 import {
   Users,
   CheckCircle2,
@@ -31,84 +33,91 @@ import {
   Calendar,
   ArrowRight,
   X,
-} from 'lucide-react'
-import { useOptionalAuth } from '@/contexts/auth-context'
-import { useRouter } from 'next/navigation'
+} from "lucide-react";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 interface RecruiterContactModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
   /**
    * Context from which the modal was opened
    * Used to customize the experience
    */
-  source?: 'job-listing' | 'cv-analysis' | 'sidebar' | 'assistant'
+  source?: "job-listing" | "cv-analysis" | "sidebar" | "assistant";
 }
 
 export function RecruiterContactModal({
   isOpen,
   onClose,
-  source = 'sidebar',
+  source = "sidebar",
 }: RecruiterContactModalProps) {
-  const router = useRouter()
-  const auth = useOptionalAuth()
-  const user = auth?.user
+  const router = useRouter();
+  const auth = useOptionalAuth();
+  const t = useTranslations("dashboard.recruiterContact.modal");
+  const user = auth?.user;
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: user?.user_metadata?.full_name || '',
-    email: user?.email || '',
-    phone: '',
-    sector: '',
-    experienceLevel: '',
-    message: '',
-    preferredDate: '',
-  })
+    fullName: user?.user_metadata?.full_name || "",
+    email: user?.email || "",
+    phone: "",
+    sector: "",
+    experienceLevel: "",
+    message: "",
+    preferredDate: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!user) {
-      onClose()
-      router.push('/login?redirectTo=' + encodeURIComponent('/recruiter-contact'))
-      return
+      onClose();
+      router.push(
+        "/login?redirectTo=" + encodeURIComponent("/recruiter-contact"),
+      );
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      // TODO: Implement API call to create recruiter request
-      // const response = await huntzenApi.createRecruiterRequest(formData)
-      // const checkoutUrl = response.checkoutUrl
+      // Create recruiter request
+      const response = await huntzenApi.createRecruiterRequest(formData);
 
-      // For now, just show success
-      alert('Demande envoyée ! Redirection vers le paiement...')
+      // Create Stripe payment session
+      const paymentResponse = await huntzenApi.createRecruiterPayment(
+        response.request_id,
+      );
 
-      // onClose()
-      // router.push(checkoutUrl)
+      // Redirect to Stripe checkout
+      if (paymentResponse.checkout_url) {
+        window.location.href = paymentResponse.checkout_url;
+      }
     } catch (error) {
-      console.error('Error submitting request:', error)
-      alert('Une erreur est survenue. Veuillez réessayer.')
+      toast.error(t("toastError"));
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const getContextMessage = () => {
     switch (source) {
-      case 'job-listing':
-        return 'Cette offre vous intéresse ? Un recruteur peut vous aider à maximiser vos chances !'
-      case 'cv-analysis':
-        return 'Besoin de conseils personnalisés pour optimiser votre CV ?'
-      case 'assistant':
-        return 'Passez à l\'étape supérieure avec l\'expertise d\'un recruteur professionnel'
+      case "job-listing":
+        return "Cette offre vous intéresse ? Un recruteur peut vous aider à maximiser vos chances !";
+      case "cv-analysis":
+        return "Besoin de conseils personnalisés pour optimiser votre CV ?";
+      case "assistant":
+        return "Passez à l'étape supérieure avec l'expertise d'un recruteur professionnel";
       default:
-        return 'Obtenez des conseils personnalisés d\'un recruteur expert'
+        return "Obtenez des conseils personnalisés d'un recruteur expert";
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -133,8 +142,12 @@ export function RecruiterContactModal({
                   <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Session vidéo 30 min</p>
-                  <p className="text-sm text-gray-600">Échange en direct avec un expert</p>
+                  <p className="font-medium text-gray-900">
+                    Session vidéo 30 min
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Échange en direct avec un expert
+                  </p>
                 </div>
               </div>
 
@@ -143,8 +156,12 @@ export function RecruiterContactModal({
                   <Star className="w-5 h-5 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Expertise professionnelle</p>
-                  <p className="text-sm text-gray-600">10+ ans d'expérience en recrutement</p>
+                  <p className="font-medium text-gray-900">
+                    Expertise professionnelle
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    10+ ans d'expérience en recrutement
+                  </p>
                 </div>
               </div>
 
@@ -183,57 +200,65 @@ export function RecruiterContactModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-3">
                 <div>
-                  <Label htmlFor="modal-fullName" className="text-sm">Nom complet *</Label>
+                  <Label htmlFor="modal-fullName" className="text-sm">
+                    Nom complet *
+                  </Label>
                   <Input
                     id="modal-fullName"
-                    placeholder="Jean Dupont"
+                    placeholder={t("fullNamePlaceholder")}
                     value={formData.fullName}
-                    onChange={(e) => handleChange('fullName', e.target.value)}
+                    onChange={(e) => handleChange("fullName", e.target.value)}
                     required
                     className="h-10"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="modal-email" className="text-sm">Email *</Label>
+                  <Label htmlFor="modal-email" className="text-sm">
+                    Email *
+                  </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                     <Input
                       id="modal-email"
                       type="email"
-                      placeholder="jean.dupont@example.com"
+                      placeholder={t("emailPlaceholder")}
                       className="pl-10 h-10"
                       value={formData.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
+                      onChange={(e) => handleChange("email", e.target.value)}
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="modal-phone" className="text-sm">Téléphone</Label>
+                  <Label htmlFor="modal-phone" className="text-sm">
+                    Téléphone
+                  </Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                     <Input
                       id="modal-phone"
                       type="tel"
-                      placeholder="+33 6 12 34 56 78"
+                      placeholder={t("phonePlaceholder")}
                       className="pl-10 h-10"
                       value={formData.phone}
-                      onChange={(e) => handleChange('phone', e.target.value)}
+                      onChange={(e) => handleChange("phone", e.target.value)}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="modal-sector" className="text-sm">Secteur *</Label>
+                  <Label htmlFor="modal-sector" className="text-sm">
+                    Secteur *
+                  </Label>
                   <Select
                     value={formData.sector}
-                    onValueChange={(value) => handleChange('sector', value)}
+                    onValueChange={(value) => handleChange("sector", value)}
                     required
                   >
                     <SelectTrigger id="modal-sector" className="h-10">
-                      <SelectValue placeholder="Sélectionnez" />
+                      <SelectValue placeholder={t("sectorPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="tech">Tech / IT</SelectItem>
@@ -248,18 +273,24 @@ export function RecruiterContactModal({
                 </div>
 
                 <div>
-                  <Label htmlFor="modal-experience" className="text-sm">Expérience *</Label>
+                  <Label htmlFor="modal-experience" className="text-sm">
+                    Expérience *
+                  </Label>
                   <Select
                     value={formData.experienceLevel}
-                    onValueChange={(value) => handleChange('experienceLevel', value)}
+                    onValueChange={(value) =>
+                      handleChange("experienceLevel", value)
+                    }
                     required
                   >
                     <SelectTrigger id="modal-experience" className="h-10">
-                      <SelectValue placeholder="Sélectionnez" />
+                      <SelectValue placeholder={t("experiencePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="junior">Junior (0-3 ans)</SelectItem>
-                      <SelectItem value="confirmed">Confirmé (3-7 ans)</SelectItem>
+                      <SelectItem value="confirmed">
+                        Confirmé (3-7 ans)
+                      </SelectItem>
                       <SelectItem value="senior">Senior (7-12 ans)</SelectItem>
                       <SelectItem value="expert">Expert (12+ ans)</SelectItem>
                     </SelectContent>
@@ -267,13 +298,15 @@ export function RecruiterContactModal({
                 </div>
 
                 <div>
-                  <Label htmlFor="modal-message" className="text-sm">Message *</Label>
+                  <Label htmlFor="modal-message" className="text-sm">
+                    Message *
+                  </Label>
                   <Textarea
                     id="modal-message"
-                    placeholder="Décrivez votre situation..."
+                    placeholder={t("messagePlaceholder")}
                     rows={3}
                     value={formData.message}
-                    onChange={(e) => handleChange('message', e.target.value)}
+                    onChange={(e) => handleChange("message", e.target.value)}
                     required
                   />
                 </div>
@@ -285,7 +318,7 @@ export function RecruiterContactModal({
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  'Traitement...'
+                  "Traitement..."
                 ) : (
                   <>
                     Réserver (50€)
@@ -302,5 +335,5 @@ export function RecruiterContactModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

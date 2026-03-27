@@ -14,18 +14,18 @@ Date: 2026-02-08
 Sprint: 6 - Modal Integration
 """
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Header, Request, Query, Body
-from typing import Optional, Dict, Any
 import os
-from supabase import create_client, Client
-from structlog import get_logger
+from typing import Any
 
-from src.modal_integration import (
-    process_cv_async,
-    get_cv_analysis_status,
-    list_user_cv_analyses
-)
+from fastapi import APIRouter, Body, File, Form, Header, HTTPException, Query, Request, UploadFile
+from structlog import get_logger
+from supabase import Client, create_client
+
 from src.api.deps import get_user_id_from_token
+from src.api.middleware import limiter
+from src.modal_integration import get_cv_analysis_status, list_user_cv_analyses, process_cv_async
+from src.services.stripe import invalidate_user_quota_cache
+from src.services.user_events import log_event
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -38,7 +38,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 if SUPABASE_URL and SUPABASE_KEY:
-    supabase_client: Optional[Client] = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase_client: Client | None = create_client(SUPABASE_URL, SUPABASE_KEY)
 else:
     supabase_client = None
     logger.warning("Supabase not configured for quota management")
@@ -47,6 +47,38 @@ else:
 # ============================================
 # QUOTA INCREMENT HELPER
 # ============================================
+
+def check_cv_analysis_quota(user_id: str) -> None:
+    """
+    Check if user has remaining CV analysis quota.
+    Raises HTTP 429 if quota exceeded. Mirrors check_assistant_quota() in deps.py.
+    """
+    if not supabase_client:
+        return  # No Supabase = allow through (dev mode)
+    try:
+        result = supabase_client.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if not result.data:
+            return
+        for row in result.data:
+            if row.get("feature") == "cv_analysis":
+                if not row.get("has_access", True):
+                    raise HTTPException(
+                        status_code=429,
+                        detail={
+                            "code": "QUOTA_EXCEEDED",
+                            "feature": "cv_analysis",
+                            "limit": row.get("quota_limit"),
+                            "used": row.get("quota_used"),
+                            "reset_at": str(row.get("reset_at", "")),
+                            "message": "Quota d'analyses CV journalier atteint. Passez à un plan supérieur pour continuer."
+                        }
+                    )
+                return
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"[quota] CV check failed for {user_id}, allowing through: {e}")
+
 
 async def increment_user_cv_quota(user_id: str) -> bool:
     """
@@ -90,12 +122,14 @@ async def increment_user_cv_quota(user_id: str) -> bool:
 
 
 @router.post("/async")
+@limiter.limit("10/minute")
 async def analyze_cv_async(
-    file: Optional[UploadFile] = File(None),
-    cv_text: Optional[str] = Form(None),
-    job_description: Optional[str] = Form(None),
+    request: Request,
+    file: UploadFile | None = File(None),
+    cv_text: str | None = Form(None),
+    job_description: str | None = Form(None),
     language: str = Form("fr"),
-    authorization: Optional[str] = Header(default=None)
+    authorization: str | None = Header(default=None)
 ):
     """
     Upload CV for async processing with Modal Labs.
@@ -144,6 +178,45 @@ async def analyze_cv_async(
             detail="Please provide either a file or cv_text parameter"
         )
 
+    # ── File validation (extension, size, MIME type) ───────────────────────
+    if file:
+        ALLOWED_EXTENSIONS = (".pdf", ".doc", ".docx")
+        ALLOWED_MIME_TYPES = (
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+        filename = file.filename or ""
+        if not filename.lower().endswith(ALLOWED_EXTENSIONS):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Type de fichier non supporté. Extensions acceptées : {', '.join(ALLOWED_EXTENSIONS)}",
+            )
+
+        if file.content_type and file.content_type not in ALLOWED_MIME_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Type MIME non supporté : {file.content_type}. Acceptés : PDF, DOC, DOCX",
+            )
+
+        # Read file to check size, then reset position for downstream processing
+        file_bytes = await file.read()
+        if len(file_bytes) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Fichier trop volumineux ({len(file_bytes) / 1024 / 1024:.1f}MB, max 10MB)",
+            )
+        await file.seek(0)
+
+    # ✅ CHECK QUOTA BEFORE PROCESSING — blocks if daily limit exceeded
+    check_cv_analysis_quota(user_id)
+
+    # ✅ INCREMENT QUOTA IMMEDIATELY (callback Modal n'est pas garanti)
+    await increment_user_cv_quota(user_id)
+    await invalidate_user_quota_cache(user_id)
+
     return await process_cv_async(
         user_id=user_id,
         file=file,
@@ -156,8 +229,8 @@ async def analyze_cv_async(
 @router.get("/status/{cv_id}")
 async def get_analysis_status(
     cv_id: str,
-    authorization: Optional[str] = Header(default=None),
-    anonymous_id: Optional[str] = Query(None)
+    authorization: str | None = Header(default=None),
+    anonymous_id: str | None = Query(None)
 ):
     """
     Poll CV analysis status.
@@ -197,7 +270,7 @@ async def get_analysis_status(
 
 @router.get("/list")
 async def list_analyses(
-    authorization: Optional[str] = Header(default=None),
+    authorization: str | None = Header(default=None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0)
 ):
@@ -252,7 +325,7 @@ async def list_analyses(
 @router.post("/callback")
 async def cv_analysis_callback(
     request: Request,
-    callback_data: Dict[str, Any] = Body(...)
+    callback_data: dict[str, Any] = Body(...)
 ):
     """
     Callback endpoint for Modal to report CV processing completion.
@@ -300,16 +373,60 @@ async def cv_analysis_callback(
 
         logger.info(f"[CALLBACK] Received: cv_id={cv_id}, user_id={user_id}, status={status}")
 
-        # Only increment quota if processing succeeded AND user is authenticated
+        # Quota already incremented in POST /async — just log and re-invalidate cache
         if status == "completed" and user_id:
-            success = await increment_user_cv_quota(user_id)
+            await invalidate_user_quota_cache(user_id)
             logger.info(
-                f"[CALLBACK] ✅ Incremented cv_analysis quota for user {user_id} "
-                f"after successful CV processing: {cv_id}"
+                f"[CALLBACK] ✅ CV completed for user {user_id}, "
+                f"quota already tracked in /async: {cv_id}"
             )
+            # Tracking événement analyse CV (best-effort)
+            if supabase_client:
+                log_event(
+                    supabase_client,
+                    event_name="cv_analyzed",
+                    event_label="Un utilisateur a analysé son CV",
+                    category="action",
+                    user_id=user_id,
+                    feature="cv_analysis",
+                    severity="info",
+                    properties={"cv_id": cv_id},
+                )
+            user_email = None
+            try:
+                import httpx
+                r = httpx.get(
+                    f"{SUPABASE_URL}/auth/v1/admin/users/{user_id}",
+                    headers={"Authorization": f"Bearer {SUPABASE_KEY}", "apikey": SUPABASE_KEY},
+                    timeout=5,
+                )
+                if r.status_code == 200:
+                    user_email = r.json().get("email")
+                    if user_email:
+                        from src.services.email import send_cv_analysis_complete
+                        send_cv_analysis_complete(user_email)
+            except Exception as email_err:
+                logger.warning(f"[CALLBACK] Email notification failed (non-blocking): {email_err}")
+
+            # Notifier l'admin
+            try:
+                from src.services.admin_alerts import send_admin_alert
+                await send_admin_alert(
+                    subject=f"CV analyse : {user_email or user_id}",
+                    body=(
+                        f"Utilisateur : {user_email or user_id}\n"
+                        f"CV ID : {cv_id}\n"
+                        f"Statut : termine avec succes"
+                    ),
+                    severity="info",
+                    skip_throttle=True,
+                    category="cv_analysis_completed",
+                )
+            except Exception as alert_err:
+                logger.warning(f"[CALLBACK] Admin alert failed: {alert_err}")
             return {
                 "success": True,
-                "quota_incremented": success,
+                "quota_incremented": True,
                 "cv_id": cv_id
             }
         elif status == "failed":
@@ -337,4 +454,4 @@ async def cv_analysis_callback(
         raise
     except Exception as e:
         logger.error(f"[CALLBACK] Error processing callback: {e}")
-        raise HTTPException(status_code=500, detail=f"Callback processing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Callback processing failed: {str(e)}") from None

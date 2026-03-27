@@ -14,15 +14,16 @@ Date: 2026-01-27
 
 import os
 from contextlib import asynccontextmanager
-from typing import Optional, Dict, Any
-from psycopg_pool import AsyncConnectionPool
-from psycopg.rows import dict_row
+from typing import Any
+
 import structlog
+from psycopg.rows import dict_row
+from psycopg_pool import AsyncConnectionPool
 
 logger = structlog.get_logger(__name__)
 
 # Global connection pool instance
-pool: Optional[AsyncConnectionPool] = None
+pool: AsyncConnectionPool | None = None
 
 
 async def init_connection_pool_async() -> None:
@@ -50,13 +51,21 @@ async def init_connection_pool_async() -> None:
         return
 
     try:
+        async def no_reset(conn):
+            pass  # PgBouncer transaction mode : chaque transaction repart d'une connexion fraîche, RESET ALL inutile et cassant
+
         pool = AsyncConnectionPool(
             conninfo=database_url,
-            min_size=10,
-            max_size=50,
+            min_size=3,
+            max_size=10,  # 10/worker × 4 workers × 2 replicas = 80 clients PgBouncer → 60 conn Postgres max
             timeout=30,
             max_idle=300,  # 5 minutes
-            kwargs={"row_factory": dict_row}
+            reset=no_reset,  # empêche RESET ALL → rejeté par PgBouncer transaction mode
+            kwargs={
+                "row_factory": dict_row,
+                "prepare_threshold": None,  # désactive prepared statements → non supporté en transaction mode
+                "autocommit": True,         # chaque requête = transaction autonome → PgBouncer libère immédiatement la connexion serveur
+            }
         )
 
         # Open the pool (async operation)
@@ -64,8 +73,8 @@ async def init_connection_pool_async() -> None:
 
         logger.info(
             "connection_pool_initialized",
-            min_size=10,
-            max_size=50,
+            min_size=5,
+            max_size=10,
             timeout=30,
             max_idle=300
         )
@@ -153,7 +162,7 @@ async def get_db():
         yield conn
 
 
-async def get_pool_stats() -> Dict[str, Any]:
+async def get_pool_stats() -> dict[str, Any]:
     """
     Get connection pool statistics for monitoring and health checks.
 
@@ -221,9 +230,8 @@ async def get_pool_stats() -> Dict[str, Any]:
 # Will be migrated to async in Sprint 7
 # ============================================
 
-import re
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict
+import re  # noqa: E402
+from datetime import datetime, timedelta  # noqa: E402
 
 
 def normalize_search_key(job_title: str, location: str) -> str:
@@ -237,7 +245,7 @@ def normalize_search_key(job_title: str, location: str) -> str:
     return "_".join(words)
 
 
-def check_job_cache(cache_key: str) -> Optional[List[Dict]]:
+def check_job_cache(cache_key: str) -> list[dict] | None:
     """
     LEGACY: Check job cache using old psycopg2 connection.
     Will be migrated to async in Sprint 7.
@@ -267,8 +275,8 @@ def save_job_cache(cache_key: str, query_params: dict, results: list):
     LEGACY: Save job cache using old psycopg2 connection.
     Will be migrated to async in Sprint 7.
     """
-    from job_finder.config import get_settings
     import psycopg2.extras
+    from job_finder.config import get_settings
 
     conn = get_db_connection()
     if not conn:
@@ -305,7 +313,6 @@ def get_db_connection():
     Will be removed in Sprint 7.
     """
     import psycopg2
-    from psycopg2.extras import RealDictCursor
     from job_finder.config import get_settings
 
     logger.warning(

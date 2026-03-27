@@ -10,9 +10,10 @@ When both return data, combine for a more reliable range.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
+
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ class AdzunaProvider:
     @classmethod
     async def get_salary(
         cls, job_title: str, country_code: str = "fr", location: str = ""
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         app_id = settings.adzuna_app_id
         app_key = settings.get_adzuna_key()
 
@@ -100,7 +101,7 @@ class JSearchProvider:
     @classmethod
     async def get_salary(
         cls, job_title: str, country_code: str = "fr", location: str = ""
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         rapidapi_key = settings.get_rapidapi_key()
 
         if not rapidapi_key:
@@ -179,7 +180,7 @@ class SalaryService:
         job_title: str,
         country_code: str = "fr",
         location: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         cc = country_code.lower()
 
         # Try both providers
@@ -248,6 +249,6 @@ class SalaryService:
         }
 
 
-async def get_realtime_salary(title: str, country: str = "fr", location: str = "") -> Dict[str, Any]:
+async def get_realtime_salary(title: str, country: str = "fr", location: str = "") -> dict[str, Any]:
     """Helper function for salary lookup."""
     return await SalaryService.get_salary_stats(title, country, location)

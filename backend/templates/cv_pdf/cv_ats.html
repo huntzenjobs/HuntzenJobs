@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page {
+    size: A4;
+    margin: 1.2cm 1.6cm 1.4cm 1.6cm;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: {{ '9.5pt' if compact else '10pt' }};
+    line-height: 1.45;
+    color: #1c1c1c;
+  }
+
+  /* ─── Header ──────────────────────────────────────── */
+  .header {
+    padding-bottom: 0.45cm;
+    border-bottom: 2.5px solid #1a3a5c;
+    margin-bottom: 0.5cm;
+  }
+
+  .header-top { display: block; }
+
+  .header-left { display: block; }
+
+  h1 {
+    font-size: {{ '18pt' if compact else '21pt' }};
+    font-weight: 700;
+    color: #1a3a5c;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }
+
+  .job-title {
+    font-size: {{ '10.5pt' if compact else '12pt' }};
+    font-weight: 400;
+    color: #4a6fa5;
+    margin-top: 0.1cm;
+  }
+
+  .contacts {
+    margin-top: 0.3cm;
+    font-size: {{ '8pt' if compact else '8.5pt' }};
+    color: #444;
+  }
+
+  .contacts span {
+    margin-right: 0.4cm;
+    white-space: nowrap;
+  }
+
+  /* ─── Section ─────────────────────────────────────── */
+  .section {
+    margin-bottom: {{ '0.35cm' if compact else '0.48cm' }};
+  }
+
+  .section-title {
+    font-size: {{ '8pt' if compact else '8.5pt' }};
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #1a3a5c;
+    border-bottom: 1.5px solid #1a3a5c;
+    padding-bottom: 0.07cm;
+    margin-bottom: 0.22cm;
+    page-break-after: avoid;
+  }
+
+  /* ─── Profil ──────────────────────────────────────── */
+  .summary {
+    font-size: {{ '9.5pt' if compact else '10pt' }};
+    color: #333;
+    line-height: 1.55;
+    text-align: justify;
+  }
+
+  /* ─── Expériences ─────────────────────────────────── */
+  .exp-item {
+    margin-bottom: {{ '0.28cm' if compact else '0.38cm' }};
+    page-break-inside: avoid;
+  }
+
+  .exp-row { display: table; width: 100%; }
+
+  .exp-title {
+    display: table-cell;
+    font-weight: 700;
+    font-size: {{ '9.5pt' if compact else '10pt' }};
+    color: #1c1c1c;
+  }
+
+  .exp-dates {
+    display: table-cell;
+    font-size: {{ '8pt' if compact else '8.5pt' }};
+    color: #666;
+    text-align: right;
+    white-space: nowrap;
+    padding-left: 0.3cm;
+    font-style: italic;
+  }
+
+  .exp-company {
+    font-size: {{ '8.5pt' if compact else '9pt' }};
+    color: #4a6fa5;
+    font-weight: 500;
+    margin-top: 0.03cm;
+  }
+
+  .exp-bullets {
+    margin-top: 0.1cm;
+    padding-left: 0.45cm;
+    list-style: disc;
+  }
+
+  .exp-bullets li {
+    font-size: {{ '9pt' if compact else '9.5pt' }};
+    color: #2a2a2a;
+    margin-bottom: {{ '0.04cm' if compact else '0.06cm' }};
+    line-height: 1.4;
+  }
+
+  /* ─── Formation ───────────────────────────────────── */
+  .edu-item {
+    margin-bottom: {{ '0.2cm' if compact else '0.28cm' }};
+    page-break-inside: avoid;
+  }
+
+  .edu-row { display: table; width: 100%; }
+
+  .edu-degree {
+    display: table-cell;
+    font-weight: 700;
+    font-size: {{ '9.5pt' if compact else '10pt' }};
+    color: #1c1c1c;
+  }
+
+  .edu-year {
+    display: table-cell;
+    font-size: {{ '8pt' if compact else '8.5pt' }};
+    color: #666;
+    text-align: right;
+    white-space: nowrap;
+    padding-left: 0.3cm;
+    font-style: italic;
+  }
+
+  .edu-school {
+    font-size: {{ '8.5pt' if compact else '9pt' }};
+    color: #4a6fa5;
+    font-weight: 500;
+  }
+
+  .edu-details {
+    font-size: {{ '8.5pt' if compact else '9pt' }};
+    color: #555;
+    margin-top: 0.04cm;
+    font-style: italic;
+  }
+
+  /* ─── Compétences ─────────────────────────────────── */
+  .skill-row {
+    margin-bottom: {{ '0.1cm' if compact else '0.14cm' }};
+    font-size: {{ '9pt' if compact else '9.5pt' }};
+    line-height: 1.4;
+  }
+
+  .skill-cat {
+    font-weight: 700;
+    color: #1a3a5c;
+  }
+
+  .skill-values { color: #2a2a2a; }
+
+  /* ─── Projets ─────────────────────────────────────── */
+  .proj-item {
+    margin-bottom: {{ '0.2cm' if compact else '0.28cm' }};
+    page-break-inside: avoid;
+  }
+
+  .proj-name {
+    font-weight: 700;
+    font-size: {{ '9.5pt' if compact else '10pt' }};
+    color: #1c1c1c;
+  }
+
+  .proj-tech {
+    font-size: {{ '8.5pt' if compact else '9pt' }};
+    color: #4a6fa5;
+    font-style: italic;
+  }
+
+  .proj-desc {
+    font-size: {{ '9pt' if compact else '9.5pt' }};
+    color: #333;
+    margin-top: 0.05cm;
+    line-height: 1.4;
+  }
+
+  /* ─── Certifications ──────────────────────────────── */
+  .cert-item {
+    font-size: {{ '9pt' if compact else '9.5pt' }};
+    margin-bottom: 0.1cm;
+    page-break-inside: avoid;
+  }
+
+  /* ─── Centres d'intérêt ───────────────────────────── */
+  .interests {
+    font-size: {{ '9pt' if compact else '9.5pt' }};
+    color: #2a2a2a;
+  }
+
+  /* ─── Utilitaires ─────────────────────────────────── */
+  a { color: inherit; text-decoration: none; }
+
+  /* ─── HuntZen Certified Footer ────────────────────── */
+  .hz-certified-footer {
+    font-size: 6pt;
+    color: #d0d0d0;
+    text-align: center;
+    margin-top: 10px;
+    font-family: Arial, sans-serif;
+    letter-spacing: 0.02em;
+  }
+</style>
+{% if cv.huntzen_certified %}
+<meta name="generator" content="HuntZen Jobs ATS Optimizer">
+{% endif %}
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <h1>{{ cv.personal_info.name | upper }}</h1>
+      {% if cv.personal_info.title %}
+      <div class="job-title">{{ cv.personal_info.title }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="contacts">
+    {# email peut être une liste ou une string #}
+    {% if cv.personal_info.email %}
+      {% if cv.personal_info.email is string %}
+        <span>{{ cv.personal_info.email }}</span>
+      {% else %}
+        <span>{{ cv.personal_info.email | first }}</span>
+      {% endif %}
+    {% endif %}
+    {% if cv.personal_info.phone %}<span>{{ cv.personal_info.phone }}</span>{% endif %}
+    {% if cv.personal_info.location %}<span>{{ cv.personal_info.location }}</span>{% endif %}
+    {% if cv.personal_info.linkedin %}<span>LinkedIn: {{ cv.personal_info.linkedin }}</span>{% endif %}
+    {% if cv.personal_info.github %}<span>GitHub: {{ cv.personal_info.github }}</span>{% endif %}
+    {% if cv.personal_info.portfolio %}<span>{{ cv.personal_info.portfolio }}</span>{% endif %}
+  </div>
+</div>
+
+<!-- PROFIL -->
+{% if cv.summary %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Profil{% else %}Summary{% endif %}</div>
+  <div class="summary">{{ cv.summary }}</div>
+</div>
+{% endif %}
+
+<!-- EXPÉRIENCES -->
+{% if cv.experiences %}
+<div class="section">
+  <div class="section-title">
+    {% if language == 'fr' %}Expériences professionnelles{% else %}Work Experience{% endif %}
+  </div>
+  {% for exp in cv.experiences %}
+  <div class="exp-item">
+    <div class="exp-row">
+      <span class="exp-title">
+        {{ exp.title }}{% if exp.type and exp.type != '' %} – {{ exp.type }}{% endif %}
+      </span>
+      {% if exp.start_date or exp.end_date %}
+      <span class="exp-dates">{{ exp.start_date }} – {{ exp.end_date }}</span>
+      {% endif %}
+    </div>
+    {% if exp.company %}
+    <div class="exp-company">
+      {{ exp.company }}{% if exp.location and exp.location != '' %}, {{ exp.location }}{% endif %}
+    </div>
+    {% endif %}
+    {% if exp.bullets %}
+    <ul class="exp-bullets">
+      {% for bullet in exp.bullets %}
+      {% if bullet and bullet.strip() != '' %}
+      <li>{{ bullet }}</li>
+      {% endif %}
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- FORMATION -->
+{% if cv.education %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Formation{% else %}Education{% endif %}</div>
+  {% for edu in cv.education %}
+  <div class="edu-item">
+    <div class="edu-row">
+      <span class="edu-degree">{{ edu.degree }}</span>
+      {% if edu.year %}<span class="edu-year">{{ edu.year }}</span>{% endif %}
+    </div>
+    {% if edu.school %}
+    <div class="edu-school">
+      {{ edu.school }}{% if edu.location and edu.location != '' %}, {{ edu.location }}{% endif %}
+    </div>
+    {% endif %}
+    {% if edu.details and edu.details != '' %}
+    <div class="edu-details">{{ edu.details }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- COMPÉTENCES -->
+{% if cv.skills %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Compétences{% else %}Skills{% endif %}</div>
+  {% for category, items in cv.skills.items() %}
+  {% if items %}
+  <div class="skill-row">
+    <span class="skill-cat">{{ category | capitalize }} :</span>
+    <span class="skill-values">
+      {% if items is string %}
+        {{ items }}
+      {% else %}
+        {{ items | join(' • ') }}
+      {% endif %}
+    </span>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- PROJETS -->
+{% if cv.projects %}
+<div class="section">
+  <div class="section-title">{% if language == 'fr' %}Projets{% else %}Projects{% endif %}</div>
+  {% for proj in cv.projects %}
+  <div class="proj-item">
+    <span class="proj-name">{{ proj.name }}</span>
+    {% if proj.technologies and proj.technologies != '' %}
+    <span class="proj-tech"> — {{ proj.technologies }}</span>
+    {% endif %}
+    {% if proj.url and proj.url != '' %}
+    <span style="font-size:8pt; color:#888;"> | {{ proj.url }}</span>
+    {% endif %}
+    {% if proj.description and proj.description != '' %}
+    <div class="proj-desc">{{ proj.description }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- CERTIFICATIONS -->
+{% if cv.certifications %}
+<div class="section">
+  <div class="section-title">Certifications</div>
+  {% for cert in cv.certifications %}
+  <div class="cert-item">
+    <strong>{{ cert.name }}</strong>
+    {% if cert.issuer and cert.issuer != '' %} – {{ cert.issuer }}{% endif %}
+    {% if cert.year and cert.year != '' %} ({{ cert.year }}){% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- CENTRES D'INTÉRÊT -->
+{% if cv.interests %}
+<div class="section">
+  <div class="section-title">
+    {% if language == 'fr' %}Centres d'intérêt{% else %}Interests{% endif %}
+  </div>
+  <div class="interests">
+    {% if cv.interests is string %}
+      {{ cv.interests }}
+    {% else %}
+      {{ cv.interests | join(' • ') }}
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if cv.huntzen_certified %}
+<!-- Texte visible discret -->
+<div class="hz-certified-footer">Optimisé par HuntZen Jobs · ATS Certified</div>
+<!-- Texte invisible pour extraction fiable par les parsers PDF (hors écran, dans le flux DOM) -->
+<span style="font-size:1pt;color:white;position:absolute;left:-9999px;">HuntZen ATS Certified huntzenjobs.com Optimisé par HuntZen</span>
+{% endif %}
+
+</body>
+</html>

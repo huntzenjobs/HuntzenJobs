@@ -10,7 +10,12 @@ from functools import lru_cache
 import pycountry
 from fastapi import APIRouter, Query
 
-from src.utils.geo import country_code_to_name, get_cities_for_country, search_cities_nominatim
+from src.utils.geo import (
+    country_code_to_name,
+    get_cities_for_country,
+    search_cities_nominatim,
+    search_french_locations,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -76,14 +81,32 @@ async def search_cities(
         GET /api/cities/search?q=Par&country_code=fr
         → ["Paris", "Paray-le-Monial", ...]
     """
-    cities = await search_cities_nominatim(q, country_code, limit)
+    if country_code.lower() == "fr":
+        # France: régions + départements (pycountry ISO 3166-2) + villes (Nominatim)
+        admin = search_french_locations(q, limit=5)
+        cities_raw = await search_cities_nominatim(q, country_code, limit)
+        cities = [{"name": c, "type": "city"} for c in cities_raw]
+
+        # Admin results first, then cities — deduplicate by lowercase name
+        seen: set[str] = set()
+        merged: list[dict] = []
+        for item in admin + cities:
+            key = item["name"].lower()
+            if key not in seen:
+                seen.add(key)
+                merged.append(item)
+
+        data = merged[:limit]
+    else:
+        cities_raw = await search_cities_nominatim(q, country_code, limit)
+        data = [{"name": c, "type": "city"} for c in cities_raw]
 
     return {
         "success": True,
-        "data": cities,
+        "data": data,
         "query": q,
         "country_code": country_code,
-        "count": len(cities)
+        "count": len(data)
     }
 
 
@@ -152,9 +175,49 @@ async def get_contract_types():
             {"id": "cdd", "label": "CDD", "label_en": "Fixed-term Contract"},
             {"id": "stage", "label": "Stage", "label_en": "Internship"},
             {"id": "alternance", "label": "Alternance", "label_en": "Work-study"},
+            {"id": "apprentissage", "label": "Apprentissage", "label_en": "Apprenticeship"},
             {"id": "freelance", "label": "Freelance", "label_en": "Freelance"},
-            {"id": "interim", "label": "Intérim", "label_en": "Temporary"},
+            {"id": "interim", "label": "Interim", "label_en": "Temporary"},
+            {"id": "cdi_partial", "label": "CDI temps partiel", "label_en": "Part-time Permanent"},
+            {"id": "cdd_partial", "label": "CDD temps partiel", "label_en": "Part-time Fixed-term"},
             {"id": "contrat_pro", "label": "Contrat pro", "label_en": "Professional Contract"},
             {"id": "vie", "label": "VIE", "label_en": "International Volunteer"},
+        ]
+    }
+
+
+@router.get("/api/work-schedules")
+async def get_work_schedules():
+    """
+    Get list of available work schedules.
+
+    Returns:
+        List of work schedule objects with id, label (FR), and label_en (EN)
+    """
+    return {
+        "success": True,
+        "data": [
+            {"id": "temps_plein", "label": "Temps plein", "label_en": "Full-time"},
+            {"id": "matin", "label": "Matin", "label_en": "Morning"},
+            {"id": "journee", "label": "Journee", "label_en": "Day shift"},
+            {"id": "soir", "label": "Soir", "label_en": "Evening"},
+            {"id": "nuit", "label": "Nuit", "label_en": "Night shift"},
+        ]
+    }
+
+
+@router.get("/api/work-days")
+async def get_work_days():
+    """
+    Get list of available work day options.
+
+    Returns:
+        List of work day objects with id, label (FR), and label_en (EN)
+    """
+    return {
+        "success": True,
+        "data": [
+            {"id": "semaine", "label": "En semaine", "label_en": "Weekdays"},
+            {"id": "weekend", "label": "Week-end", "label_en": "Weekend"},
         ]
     }

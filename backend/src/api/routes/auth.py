@@ -4,12 +4,18 @@ Auth API Routes
 User authentication and profile management.
 """
 
-from typing import Optional
-from fastapi import APIRouter, Header, HTTPException, status, Request
-from supabase import create_client, Client
+import json
+import logging
+
+from fastapi import APIRouter, Header, HTTPException, Request, status
+from pydantic import BaseModel
+from supabase import Client, create_client
 
 from src.api.middleware import limiter
 from src.config.settings import get_settings
+from src.utils.cache import get_redis
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
@@ -17,12 +23,39 @@ settings = get_settings()
 
 @router.get("/api/auth/test-debug")
 async def test_debug():
-    """Test endpoint to verify deployment."""
+    """Test endpoint to verify deployment. Returns minimal info only."""
+    import os
     return {
         "status": "ok",
-        "message": "Debug logs deployed successfully",
-        "commit": "df2ef1f"
+        "version": os.getenv("APP_VERSION", settings.app_version),
     }
+
+
+@router.post("/api/auth/test-email")
+async def test_email(authorization: str | None = Header(None)):
+    """Diagnostic Resend — admin only via token."""
+    user = get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Auth requise")
+    supabase = get_supabase_client()
+    profile = supabase.table("profiles").select("is_admin").eq("id", user["id"]).maybe_single().execute()
+    if not profile or not profile.data or not profile.data.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin requis")
+    try:
+        import resend as resend_lib
+        resend_lib.api_key = settings.get_resend_api_key()
+        key = settings.get_resend_api_key()
+        key_preview = (key[:8] + "...") if key else "MISSING"
+        result = resend_lib.Emails.send({
+            "from": settings.from_email,
+            "to": [settings.admin_email],
+            "subject": "HuntZen — Test Resend",
+            "html": "<p>Resend fonctionne ✅</p>",
+        })
+        return {"success": True, "resend_id": str(result), "to": settings.admin_email, "api_key_preview": key_preview}
+    except Exception as e:
+        key = settings.get_resend_api_key()
+        return {"success": False, "error": str(e), "api_key_preview": (key[:8] + "...") if key else "MISSING"}
 
 
 def get_supabase_client() -> Client:
@@ -33,7 +66,7 @@ def get_supabase_client() -> Client:
     )
 
 
-def get_user_from_token(authorization: Optional[str]) -> Optional[dict]:
+def get_user_from_token(authorization: str | None) -> dict | None:
     """
     Extract user from Authorization header.
 
@@ -59,7 +92,7 @@ def get_user_from_token(authorization: Optional[str]) -> Optional[dict]:
                 "user_metadata": response.user.user_metadata,
             }
     except Exception as e:
-        print(f"Error getting user from token: {e}")
+        logger.error(f"Error getting user from token: {e}")
 
     return None
 
@@ -68,7 +101,7 @@ def get_user_from_token(authorization: Optional[str]) -> Optional[dict]:
 @limiter.limit("60/minute")
 async def get_current_user_info(
     request: Request,
-    authorization: Optional[str] = Header(None)
+    authorization: str | None = Header(None)
 ):
     """
     Get current authenticated user information with subscription and quotas.
@@ -94,6 +127,16 @@ async def get_current_user_info(
 
     user_id = user["id"]
 
+    # Cache Redis TTL 30s (réduit la charge Supabase ×10 sous charge)
+    try:
+        redis = await get_redis()
+        if redis:
+            cached = await redis.get(f"auth_me:{user_id}")
+            if cached:
+                return json.loads(cached)
+    except Exception:
+        pass
+
     try:
         # Get Supabase client
         supabase = get_supabase_client()
@@ -102,8 +145,8 @@ async def get_current_user_info(
         profile_response = supabase.table("profiles").select(
             "id, email, full_name, avatar_url, created_at"
         ).eq("id", user_id).execute()
-
-        if not profile_response.data or len(profile_response.data) == 0:
+ 
+        if not profile_response or not profile_response.data or len(profile_response.data) == 0:
             raise HTTPException(
                 status_code=404,
                 detail="User profile not found"
@@ -112,10 +155,9 @@ async def get_current_user_info(
         profile = profile_response.data[0]
 
         # 🔍 DEBUG: Log user info before RPC call
-        print(f"\n{'='*70}")
-        print(f"[AUTH_ME DEBUG] User ID: {user_id}")
-        print(f"[AUTH_ME DEBUG] Email: {profile.get('email')}")
-        print(f"{'='*70}\n")
+        logger.debug("="*70)
+        logger.debug("[AUTH_ME DEBUG] Fetching subscription for user")
+        logger.debug("="*70)
 
         # Get user's active subscription using RPC (with ORDER BY fix)
         # This ensures we always get the highest-priority plan (paid > free)
@@ -125,12 +167,12 @@ async def get_current_user_info(
         ).execute()
 
         # 🔍 DEBUG: Log raw RPC response
-        print(f"\n{'='*70}")
-        print(f"[AUTH_ME DEBUG] RPC get_user_current_subscription Response:")
-        print(f"  - Data: {subscription_response.data}")
-        print(f"  - Type: {type(subscription_response.data)}")
-        print(f"  - Length: {len(subscription_response.data) if subscription_response.data else 0}")
-        print(f"{'='*70}\n")
+        logger.debug("="*70)
+        logger.debug("[AUTH_ME DEBUG] RPC get_user_current_subscription Response:")
+        logger.debug(f"  - Data: {subscription_response.data}")
+        logger.debug(f"  - Type: {type(subscription_response.data)}")
+        logger.debug(f"  - Length: {len(subscription_response.data) if subscription_response.data else 0}")
+        logger.debug("="*70)
 
         # Default to free plan if no active subscription
         subscription_data = {
@@ -138,37 +180,79 @@ async def get_current_user_info(
             "plan_display_name": "Free",
             "price_monthly": 0,
             "status": "active",
-            "current_period_end": None
+            "current_period_end": None,
+            "cancel_at_period_end": False,
         }
 
-        if subscription_response.data and len(subscription_response.data) > 0:
+        if subscription_response and subscription_response.data and len(subscription_response.data) > 0:
             sub = subscription_response.data[0]
 
             # 🔍 DEBUG: Log subscription object details
-            print(f"\n{'='*70}")
-            print(f"[AUTH_ME DEBUG] ✅ Subscription FOUND:")
-            print(f"  - plan_name: {sub.get('plan_name')}")
-            print(f"  - plan_display_name: {sub.get('plan_display_name')}")
-            print(f"  - subscription_status: {sub.get('subscription_status')}")
-            print(f"  - current_period_end: {sub.get('current_period_end')}")
-            print(f"  - stripe_subscription_id: {sub.get('stripe_subscription_id')}")
-            print(f"{'='*70}\n")
+            logger.debug("="*70)
+            logger.debug("[AUTH_ME DEBUG] ✅ Subscription FOUND:")
+            logger.debug(f"  - plan_name: {sub.get('plan_name')}")
+            logger.debug(f"  - plan_display_name: {sub.get('plan_display_name')}")
+            logger.debug(f"  - subscription_status: {sub.get('subscription_status')}")
+            logger.debug(f"  - current_period_end: {sub.get('current_period_end')}")
+            logger.debug(f"  - stripe_subscription_id: {sub.get('stripe_subscription_id')}")
+            logger.debug("="*70)
 
-            # Extract price from plan_limits JSONB (subscription_plans doesn't have price_monthly in RPC)
-            # For now, map plan names to prices (will be fixed in Phase 1 with stripe_prices table)
-            plan_prices = {"free": 0, "starter": 8.90, "pro": 13.90, "premium": 19.90}
+            # Fetch plan prices dynamically from subscription_plans table
+            try:
+                plans_response = supabase.table("subscription_plans")\
+                    .select("name, price_monthly")\
+                    .execute()
+
+                plan_prices = {
+                    plan["name"]: plan["price_monthly"]
+                    for plan in plans_response.data if plans_response and plans_response.data
+                }
+            except Exception as e:
+                logger.error(f"Failed to fetch plan prices: {e}")
+                plan_prices = {}
             subscription_data = {
                 "plan_name": sub.get("plan_name", "free"),
                 "plan_display_name": sub.get("plan_display_name", "Free"),
-                "price_monthly": plan_prices.get(sub.get("plan_name", "free"), 0),
+                "price_monthly": plan_prices.get(sub.get("plan_name", "free")),
                 "status": sub.get("subscription_status", "active"),
-                "current_period_end": sub.get("current_period_end")
+                "current_period_end": sub.get("current_period_end"),
+                "cancel_at_period_end": sub.get("cancel_at_period_end", False),
             }
         else:
             # 🔍 DEBUG: No subscription found
-            print(f"\n{'='*70}")
-            print(f"[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
-            print(f"{'='*70}\n")
+            logger.debug("="*70)
+            logger.debug("[AUTH_ME DEBUG] ⚠️ NO SUBSCRIPTION FOUND - Defaulting to FREE")
+
+            # Check if user has stripe_subscription_id in profiles but no active subscription
+            # This would indicate a desync between Stripe and Supabase
+            try:
+                profile_check = supabase.table("profiles") \
+                    .select("stripe_subscription_id, stripe_customer_id") \
+                    .eq("id", user_id) \
+                    .maybe_single() \
+                    .execute()
+
+                if profile_check.data:
+                    stripe_sub_id = profile_check.data.get("stripe_subscription_id")
+                    stripe_customer_id = profile_check.data.get("stripe_customer_id")
+
+                    if stripe_sub_id:
+                        logger.warning("🚨 DESYNC DETECTED:")
+                        logger.warning(f"   - Stripe Subscription ID in profiles: {stripe_sub_id}")
+                        logger.warning(f"   - Stripe Customer ID: {stripe_customer_id}")
+                        logger.warning("   - BUT no active subscription in user_subscriptions table!")
+                        logger.warning("   - This indicates a webhook failure or manual DB modification")
+                        logger.warning("Possible causes:")
+                        logger.warning("   1. Stripe webhook failed to process subscription.created")
+                        logger.warning("   2. user_subscriptions.status is not 'active' or 'trialing'")
+                        logger.warning("   3. user_subscriptions.current_period_end has expired")
+                        logger.warning("   4. Manual deletion from user_subscriptions table")
+                    else:
+                        logger.debug("ℹ️ No Stripe subscription IDs in profiles (user never subscribed)")
+            except Exception as check_error:
+                logger.error(f"⚠️ Failed to check profiles for Stripe IDs: {check_error}")
+
+            logger.debug("="*70)
 
         # Get quota status using Supabase RPC
         quota_response = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
@@ -187,6 +271,94 @@ async def get_current_user_info(
                     "reset_at": quota["reset_at"]
                 }
 
+        # Enrich assistant_messages with per-coach breakdown
+        if "assistant_messages" in quotas:
+            try:
+                from datetime import date
+                today_str = date.today().isoformat()
+                by_coach_response = supabase.table("usage_quotas").select(
+                    "assistant_messages_by_coach"
+                ).eq("user_id", user_id).eq("quota_date", today_str).maybe_single().execute()
+
+                by_coach_raw: dict = {}
+                if by_coach_response and by_coach_response.data and by_coach_response.data.get("assistant_messages_by_coach"):
+                    by_coach_raw = by_coach_response.data["assistant_messages_by_coach"]
+
+                am_limit = quotas["assistant_messages"]["limit"]
+                by_coach_detail: dict = {}
+                any_coach_has_access = False
+
+                for coach_type in ["career-coach", "job-scout", "cv-analyzer", "cv-adapter", "interview-sim", "branding"]:
+                    coach_used = by_coach_raw.get(coach_type, 0)
+                    if am_limit == -1:
+                        coach_remaining = -1
+                        coach_has_access = True
+                    else:
+                        coach_remaining = max(0, am_limit - coach_used)
+                        coach_has_access = coach_used < am_limit
+                    by_coach_detail[coach_type] = {
+                        "used": coach_used,
+                        "remaining": coach_remaining,
+                        "has_access": coach_has_access,
+                    }
+                    if coach_has_access:
+                        any_coach_has_access = True
+
+                quotas["assistant_messages"]["by_coach"] = by_coach_detail
+                # Override has_access: true if at least 1 coach still has quota
+                quotas["assistant_messages"]["has_access"] = any_coach_has_access
+            except Exception as e:
+                logger.warning(f"Could not fetch per-coach breakdown for {user_id}: {e}")
+
+        # Saved jobs quota (now part of quotas from get_quota_status RPC)
+        # We keep this for backward compatibility in the frontend root response
+        saved_jobs_quota = {"used": 0, "limit": -1}
+        if "saved_jobs" in quotas:
+            saved_jobs_quota["used"] = quotas["saved_jobs"]["used"]
+            saved_jobs_quota["limit"] = quotas["saved_jobs"]["limit"]
+        else:
+            # Fallback for old DB versions or transition period
+            try:
+                sj_count = supabase.table("saved_jobs").select(
+                    "id", count="exact"
+                ).eq("user_id", user_id).execute()
+                saved_jobs_quota["used"] = sj_count.count or 0
+                # Get limit from plan
+                plan_name_for_limit = subscription_data.get("plan_name", "free")
+                plan_limits_res = supabase.table("subscription_plans").select(
+                    "limits"
+                ).eq("name", plan_name_for_limit).single().execute()
+                if plan_limits_res and plan_limits_res.data:
+                    saved_jobs_quota["limit"] = (plan_limits_res.data.get("limits") or {}).get("saved_jobs", -1)
+            except Exception as e:
+                logger.warning(f"Could not fetch saved_jobs fallback quota for {user_id}: {e}")
+
+        # Fetch individual feature overrides set by admin
+        feature_overrides = {}
+        try:
+            overrides_res = supabase.table("user_feature_overrides") \
+                .select("feature_name, enabled") \
+                .eq("user_id", user_id) \
+                .execute()
+            if overrides_res.data:
+                feature_overrides = {r["feature_name"]: r["enabled"] for r in overrides_res.data}
+        except Exception as e:
+            logger.warning(f"Could not fetch feature overrides for {user_id}: {e}")
+
+        # Fetch plan-level feature flags from DB (dynamic, set by admin)
+        plan_feature_flags: dict = {}
+        try:
+            plan_name = subscription_data.get("plan_name", "free")
+            flags_res = supabase.table("subscription_plans") \
+                .select("feature_flags") \
+                .eq("name", plan_name) \
+                .single() \
+                .execute()
+            if flags_res and flags_res.data and flags_res.data.get("feature_flags"):
+                plan_feature_flags = flags_res.data["feature_flags"]
+        except Exception as e:
+            logger.warning(f"Could not fetch plan feature_flags for {user_id}: {e}")
+
         # Build response
         response_data = {
             "success": True,
@@ -198,24 +370,154 @@ async def get_current_user_info(
                 "created_at": profile.get("created_at")
             },
             "subscription": subscription_data,
-            "quotas": quotas
+            "quotas": quotas,
+            "saved_jobs_quota": saved_jobs_quota,
+            "feature_overrides": feature_overrides,
+            "plan_feature_flags": plan_feature_flags,
         }
 
         # 🔍 DEBUG: Log final response
-        print(f"\n{'='*70}")
-        print(f"[AUTH_ME DEBUG] 📤 FINAL RESPONSE to frontend:")
-        print(f"  - subscription.plan_name: {subscription_data.get('plan_name')}")
-        print(f"  - subscription.plan_display_name: {subscription_data.get('plan_display_name')}")
-        print(f"  - subscription.status: {subscription_data.get('status')}")
-        print(f"{'='*70}\n")
+        logger.debug("="*70)
+        logger.debug("[AUTH_ME DEBUG] 📤 FINAL RESPONSE to frontend:")
+        logger.debug(f"  - subscription.plan_name: {subscription_data.get('plan_name')}")
+        logger.debug(f"  - subscription.plan_display_name: {subscription_data.get('plan_display_name')}")
+        logger.debug(f"  - subscription.status: {subscription_data.get('status')}")
+        logger.debug("="*70)
+
+        try:
+            redis = await get_redis()
+            if redis:
+                await redis.setex(f"auth_me:{user_id}", 30, json.dumps(response_data))
+        except Exception:
+            pass
 
         return response_data
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[AUTH_ME] Error: {e}")
+        logger.error(f"[AUTH_ME] Error: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get user info: {str(e)}"
+        ) from None
+
+
+@router.post("/api/auth/invalidate-cache")
+@limiter.limit("30/minute")
+async def invalidate_user_cache(request: Request, authorization: str | None = Header(None)):
+    """
+    Invalidate the Redis cache for the current user's /api/auth/me response.
+    Call after direct Supabase writes (saved jobs, etc.) to force fresh data on next fetch.
+    """
+    user = get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    try:
+        redis = await get_redis()
+        if redis:
+            await redis.delete(f"auth_me:{user['id']}")
+    except Exception:
+        pass
+    return {"success": True}
+
+
+class WelcomeRequest(BaseModel):
+    email: str
+    full_name: str = ""
+    language: str = "fr"
+
+
+@router.post("/api/auth/welcome")
+@limiter.limit("3/minute")
+async def send_welcome_email(request: Request, payload: WelcomeRequest):
+    """Send welcome email after signup. Rate limited to 3/min to prevent email abuse."""
+    from src.services.admin_alerts import send_admin_alert
+    from src.services.email import send_welcome
+    try:
+        send_welcome(to_email=payload.email, full_name=payload.full_name, language=payload.language)
+    except Exception as e:
+        logger.warning(f"Welcome email failed (non-blocking): {e}")
+
+    # Notifier l'admin en temps reel
+    try:
+        await send_admin_alert(
+            subject=f"Nouvel inscrit : {payload.email}",
+            body=(
+                f"Nom : {payload.full_name or 'Non renseigne'}\n"
+                f"Email : {payload.email}\n"
+                f"Date : maintenant"
+            ),
+            severity="info",
+            skip_throttle=True,
+            category="new_user",
         )
+    except Exception as e:
+        logger.warning(f"Admin alert new_user failed: {e}")
+
+    return {"success": True}
+
+
+class OnboardingDataRequest(BaseModel):
+    first_name: str = ""
+    last_name: str = ""
+    situation: str = ""
+    job_title: str = ""
+    location: str = ""
+    experience: str = ""
+    discovery_source: str = ""
+
+
+@router.post("/api/auth/onboarding-data")
+@limiter.limit("10/minute")
+async def save_onboarding_data(
+    request: Request,
+    payload: OnboardingDataRequest,
+    authorization: str | None = Header(None),
+):
+    """
+    Save onboarding wizard data for admin analytics.
+    Stores all fields as JSONB in profiles.onboarding_data.
+    """
+    user = get_user_from_token(authorization)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+
+    user_id = user["id"]
+
+    try:
+        supabase = get_supabase_client()
+
+        onboarding_data = {
+            "first_name": payload.first_name,
+            "last_name": payload.last_name,
+            "situation": payload.situation,
+            "job_title": payload.job_title,
+            "location": payload.location,
+            "experience": payload.experience,
+            "discovery_source": payload.discovery_source,
+        }
+
+        # Update profiles table with onboarding data
+        full_name = f"{payload.first_name} {payload.last_name}".strip()
+        update_data: dict = {"onboarding_data": json.dumps(onboarding_data)}
+        if full_name:
+            update_data["full_name"] = full_name
+
+        supabase.table("profiles").update(update_data).eq("id", user_id).execute()
+
+        logger.info(f"Onboarding data saved for user {user_id}")
+
+        return {"success": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save onboarding data for user {user_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save onboarding data"
+        ) from None

@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* Fonts chargées via next/font/google dans layout.tsx pour performance optimale */
 
 /* =========================================
    HUNTZEN DESIGN SYSTEM - CSS VARIABLES
@@ -82,26 +82,66 @@
     --ring: 221.2 83.2% 53.3%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+  /* =========================================
+     DASHBOARD: always light, regardless of theme
+     Overrides .dark CSS vars for the dashboard subtree
+     ========================================= */
+  .dashboard-force-light {
+    color-scheme: light;
+    /* Re-evaluate color properties so children don't inherit dark color from body */
+    color: hsl(222.2 84% 4.9%);
+    background-color: #ffffff;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+  }
+
+  .dark {
+    /* HuntZen Dark Mode - Slate palette pour cohérence */
+    --background: 222 47% 11%; /* #0f172a - Slate-900 */
+    --foreground: 210 40% 98%; /* #f8fafc - Slate-50 */
+
+    --card: 217 33% 17%; /* #1e293b - Slate-800 */
+    --card-foreground: 210 40% 98%; /* #f8fafc - Slate-50 */
+
+    --popover: 217 33% 17%; /* #1e293b - Slate-800 */
+    --popover-foreground: 210 40% 98%; /* #f8fafc - Slate-50 */
+
+    /* Primary = HuntZen Blue (plus clair pour dark) */
+    --primary: 199 89% 48%; /* #06b6d4 - Cyan-500 */
+    --primary-foreground: 210 40% 98%; /* #f8fafc */
+
+    --secondary: 215 25% 27%; /* #334155 - Slate-700 */
+    --secondary-foreground: 210 40% 98%; /* #f8fafc */
+
+    --muted: 215 25% 27%; /* #334155 - Slate-700 */
+    --muted-foreground: 215 16% 47%; /* #64748b - Slate-500 */
+
+    --accent: 215 25% 27%; /* #334155 - Slate-700 */
+    --accent-foreground: 210 40% 98%; /* #f8fafc */
+
+    --destructive: 0 63% 31%; /* #991b1b - Red-800 */
+    --destructive-foreground: 210 40% 98%; /* #f8fafc */
+
+    --border: 215 25% 27%; /* #334155 - Slate-700 */
+    --input: 215 20% 20%; /* #1e293b + darker */
+    --ring: 199 89% 48%; /* #06b6d4 - Cyan (HuntZen) */
   }
 
   * {
@@ -117,7 +157,13 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -134,23 +180,44 @@
    ========================================= */
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes typingBounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-8px); }
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+  }
 }
 
 @keyframes cardReveal {
@@ -176,23 +243,42 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(5deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
 }
 
 @keyframes gradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* =========================================
@@ -427,12 +513,24 @@
     opacity: 0;
   }
 
-  .result-card:nth-child(1) { animation-delay: 0ms; }
-  .result-card:nth-child(2) { animation-delay: 60ms; }
-  .result-card:nth-child(3) { animation-delay: 120ms; }
-  .result-card:nth-child(4) { animation-delay: 180ms; }
-  .result-card:nth-child(5) { animation-delay: 240ms; }
-  .result-card:nth-child(6) { animation-delay: 300ms; }
+  .result-card:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .result-card:nth-child(2) {
+    animation-delay: 60ms;
+  }
+  .result-card:nth-child(3) {
+    animation-delay: 120ms;
+  }
+  .result-card:nth-child(4) {
+    animation-delay: 180ms;
+  }
+  .result-card:nth-child(5) {
+    animation-delay: 240ms;
+  }
+  .result-card:nth-child(6) {
+    animation-delay: 300ms;
+  }
 
   .result-card:hover {
     transform: translateY(-4px) scale(1.01);
@@ -512,8 +610,12 @@
     animation: typingBounce 1.4s ease infinite;
   }
 
-  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
 }
 
 /* =========================================
@@ -584,7 +686,11 @@
 @layer components {
   .info-banner {
     @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sm;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(0, 212, 170, 0.08));
+    background: linear-gradient(
+      135deg,
+      rgba(37, 99, 235, 0.08),
+      rgba(0, 212, 170, 0.08)
+    );
     border: 1px solid rgba(37, 99, 235, 0.15);
     color: var(--text-dark);
   }
@@ -760,5 +866,26 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================
+   MOBILE SAFE AREA — iPhone notch + home bar
+   ========================================= */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
   }
 }

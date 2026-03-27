@@ -1,80 +1,84 @@
-'use client'
+"use client";
 
 /**
  * Login Page - Modern Design
  * Email/Password + Google OAuth sign in
  */
 
-import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { useAuth } from '@/contexts/auth-context'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Mail, Lock as LockIcon } from 'lucide-react'
-import { AuthLayout } from '@/components/auth/auth-layout'
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Mail, Lock as LockIcon, Eye, EyeOff } from "lucide-react";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import { useTranslations } from "next-intl";
 
 // Separate component that uses useSearchParams (must be wrapped in Suspense)
 function LoginForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { user, signInWithGoogle, signInWithEmail, error, clearError } = useAuth()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, signInWithGoogle, signInWithEmail, error, clearError } =
+    useAuth();
+  const t = useTranslations("auth.login");
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check for success/error messages in URL
   useEffect(() => {
-    const msg = searchParams.get('message')
-    const err = searchParams.get('error')
+    const msg = searchParams.get("message");
+    const err = searchParams.get("error");
 
-    if (msg) setMessage(msg)
-    if (err) setMessage(err)
+    if (msg) setMessage(msg);
+    if (err) setMessage(err);
 
     // Auto-clear après 5s
     if (msg || err) {
       const timer = setTimeout(() => {
-        setMessage(null)
+        setMessage(null);
         // Nettoyer URL sans reload
-        window.history.replaceState({}, '', window.location.pathname)
-      }, 5000)
+        window.history.replaceState({}, "", window.location.pathname);
+      }, 5000);
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   const handleGoogleSignIn = async () => {
     try {
-      setLoading(true)
-      clearError()
-      await signInWithGoogle()
+      setLoading(true);
+      clearError();
+      await signInWithGoogle();
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      setLoading(true)
-      clearError()
-      await signInWithEmail(email, password)
+      setLoading(true);
+      clearError();
+      await signInWithEmail(email, password);
 
       // Reset form après succès
-      setEmail('')
-      setPassword('')
+      setEmail("");
+      setPassword("");
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <AuthLayout type="login">
+    <AuthLayout>
       <div className="space-y-8">
         {/* Header */}
         <div>
@@ -84,7 +88,7 @@ function LoginForm() {
             transition={{ duration: 0.5 }}
             className="text-3xl font-bold text-gray-900 mb-2"
           >
-            Bon retour !
+            {t("title")}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: -10 }}
@@ -92,7 +96,7 @@ function LoginForm() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-gray-600"
           >
-            Connectez-vous pour accéder à votre espace
+            {t("subtitle")}
           </motion.p>
         </div>
 
@@ -153,7 +157,7 @@ function LoginForm() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                <span className="font-medium">Continuer avec Google</span>
+                <span className="font-medium">{t("googleCta")}</span>
               </>
             )}
           </Button>
@@ -165,7 +169,9 @@ function LoginForm() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-gray-50 text-gray-500 font-medium">Ou avec email</span>
+            <span className="px-4 bg-white text-gray-500 font-medium">
+              {t("divider")}
+            </span>
           </div>
         </div>
 
@@ -178,64 +184,82 @@ function LoginForm() {
           className="space-y-5"
         >
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-              Adresse email
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700"
+            >
+              {t("emailLabel")}
             </Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="vous@example.com"
+                placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 h-12 bg-white border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Mot de passe
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700"
+              >
+                {t("passwordLabel")}
               </Label>
               <Link
                 href="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="text-sm text-[#00D9FF] hover:text-[#00C4EA] font-medium transition-colors"
               >
-                Mot de passe oublié ?
+                {t("forgotPassword")}
               </Link>
             </div>
             <div className="relative">
               <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 pr-10 h-12 bg-white border-gray-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
             </div>
           </div>
 
           <Button
             type="submit"
-            className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all"
+            className="w-full h-12 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold shadow-lg shadow-[#00D9FF]/30 transition-all rounded-xl"
             size="lg"
             disabled={loading}
           >
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Connexion en cours...
+                {t("loading")}
               </>
             ) : (
-              'Se connecter'
+              t("cta")
             )}
           </Button>
         </motion.form>
@@ -247,9 +271,12 @@ function LoginForm() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="text-center text-sm text-gray-600"
         >
-          Pas encore de compte ?{' '}
-          <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
-            Créer un compte gratuitement
+          {t("noAccount")}{" "}
+          <Link
+            href="/signup"
+            className="text-[#00D9FF] hover:text-[#00C4EA] font-semibold transition-colors"
+          >
+            {t("signupLink")}
           </Link>
         </motion.p>
 
@@ -260,18 +287,24 @@ function LoginForm() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="text-center text-xs text-gray-500 pt-4"
         >
-          En continuant, vous acceptez nos{' '}
-          <Link href="/terms" className="underline hover:text-gray-700 transition-colors">
-            Conditions d'utilisation
-          </Link>{' '}
-          et notre{' '}
-          <Link href="/privacy" className="underline hover:text-gray-700 transition-colors">
-            Politique de confidentialité
+          {t("termsPrefix")}{" "}
+          <Link
+            href="/terms"
+            className="underline hover:text-gray-700 transition-colors"
+          >
+            {t("terms")}
+          </Link>{" "}
+          {t("and")}{" "}
+          <Link
+            href="/privacy"
+            className="underline hover:text-gray-700 transition-colors"
+          >
+            {t("privacy")}
           </Link>
         </motion.p>
       </div>
     </AuthLayout>
-  )
+  );
 }
 
 // Main page component with Suspense boundary
@@ -280,11 +313,11 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#00D9FF]" />
         </div>
       }
     >
       <LoginForm />
     </Suspense>
-  )
+  );
 }
