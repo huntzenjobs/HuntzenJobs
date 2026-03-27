@@ -59,7 +59,7 @@ def get_session_history(session_id: str) -> list[dict]:
             .limit(1)
             .execute()
         )
-        if result.data and result.data[0].get("messages"):
+        if result and result.data and result.data[0].get("messages"):
             messages = result.data[0]["messages"]
             # Return last 20 messages (10 exchanges)
             return messages[-20:] if len(messages) > 20 else messages
@@ -431,7 +431,7 @@ def check_assistant_quota(user_id: str, coach_type: str = "career-coach") -> Non
             "p_user_id": user_id,
             "p_coach_type": coach_type,
         }).execute()
-        if not result.data:
+        if not (result and result.data):
             return  # No quota data = allow through
         row = result.data[0] if result.data else {}
         if not row.get("has_access", True):
@@ -542,7 +542,7 @@ async def get_current_admin(current_user: dict = Depends(get_current_user)) -> d
 
     try:
         result = supabase.table("profiles").select("is_admin").eq("id", user_id).single().execute()
-        if not result.data or not result.data.get("is_admin"):
+        if not (result and result.data) or not result.data.get("is_admin"):
             # Log unauthorized admin access attempt
             try:
                 supabase.rpc("log_security_event", {
@@ -607,7 +607,7 @@ async def check_feature_flag(user_id: str, feature: str) -> bool:
             .maybe_single()
             .execute()
         )
-        if sub.data:
+        if sub and sub.data:
             flags = (sub.data.get("subscription_plans") or {}).get("feature_flags", {})
             return flags.get(feature, False)
     except Exception as e:
@@ -663,7 +663,7 @@ def _require_feature_flag_sync(
             .maybe_single()
             .execute()
         )
-        if override.data:
+        if override and override.data:
             allowed = override.data["enabled"]
             if not allowed:
                 raise HTTPException(
@@ -691,7 +691,7 @@ def _require_feature_flag_sync(
             .maybe_single()
             .execute()
         )
-        if sub.data:
+        if sub and sub.data:
             flags = (sub.data.get("subscription_plans") or {}).get("feature_flags", {})
             allowed = flags.get(feature, False)
     except Exception as e:

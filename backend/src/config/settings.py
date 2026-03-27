@@ -118,7 +118,7 @@ class Settings(BaseSettings):
     # Security
     # --------------------------------------------------------------------------
     cors_origins_str: str = Field(
-        default="https://huntzenjobs.com,https://www.huntzenjobs.com",
+        default="http://localhost:3000,https://huntzenjobs.com,https://www.huntzenjobs.com",
         description="Allowed CORS origins (comma-separated string)",
         validation_alias="CORS_ORIGINS"
     )

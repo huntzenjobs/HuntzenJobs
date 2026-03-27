@@ -39,7 +39,7 @@ async def test_email(authorization: str | None = Header(None)):
         raise HTTPException(status_code=401, detail="Auth requise")
     supabase = get_supabase_client()
     profile = supabase.table("profiles").select("is_admin").eq("id", user["id"]).maybe_single().execute()
-    if not (profile.data and profile.data.get("is_admin")):
+    if not profile or not profile.data or not profile.data.get("is_admin"):
         raise HTTPException(status_code=403, detail="Admin requis")
     try:
         import resend as resend_lib
@@ -145,8 +145,8 @@ async def get_current_user_info(
         profile_response = supabase.table("profiles").select(
             "id, email, full_name, avatar_url, created_at"
         ).eq("id", user_id).execute()
-
-        if not profile_response.data or len(profile_response.data) == 0:
+ 
+        if not profile_response or not profile_response.data or len(profile_response.data) == 0:
             raise HTTPException(
                 status_code=404,
                 detail="User profile not found"
@@ -184,7 +184,7 @@ async def get_current_user_info(
             "cancel_at_period_end": False,
         }
 
-        if subscription_response.data and len(subscription_response.data) > 0:
+        if subscription_response and subscription_response.data and len(subscription_response.data) > 0:
             sub = subscription_response.data[0]
 
             # 🔍 DEBUG: Log subscription object details
@@ -205,7 +205,7 @@ async def get_current_user_info(
 
                 plan_prices = {
                     plan["name"]: plan["price_monthly"]
-                    for plan in plans_response.data
+                    for plan in plans_response.data if plans_response and plans_response.data
                 }
             except Exception as e:
                 logger.error(f"Failed to fetch plan prices: {e}")
@@ -281,7 +281,7 @@ async def get_current_user_info(
                 ).eq("user_id", user_id).eq("quota_date", today_str).maybe_single().execute()
 
                 by_coach_raw: dict = {}
-                if by_coach_response.data and by_coach_response.data.get("assistant_messages_by_coach"):
+                if by_coach_response and by_coach_response.data and by_coach_response.data.get("assistant_messages_by_coach"):
                     by_coach_raw = by_coach_response.data["assistant_messages_by_coach"]
 
                 am_limit = quotas["assistant_messages"]["limit"]
@@ -310,22 +310,28 @@ async def get_current_user_info(
             except Exception as e:
                 logger.warning(f"Could not fetch per-coach breakdown for {user_id}: {e}")
 
-        # Saved jobs quota (total, not daily)
+        # Saved jobs quota (now part of quotas from get_quota_status RPC)
+        # We keep this for backward compatibility in the frontend root response
         saved_jobs_quota = {"used": 0, "limit": -1}
-        try:
-            sj_count = supabase.table("saved_jobs").select(
-                "id", count="exact"
-            ).eq("user_id", user_id).execute()
-            saved_jobs_quota["used"] = sj_count.count or 0
-            # Get limit from plan
-            plan_name_for_limit = subscription_data.get("plan_name", "free")
-            plan_limits_res = supabase.table("subscription_plans").select(
-                "limits"
-            ).eq("name", plan_name_for_limit).single().execute()
-            if plan_limits_res.data:
-                saved_jobs_quota["limit"] = (plan_limits_res.data.get("limits") or {}).get("saved_jobs", -1)
-        except Exception as e:
-            logger.warning(f"Could not fetch saved_jobs quota for {user_id}: {e}")
+        if "saved_jobs" in quotas:
+            saved_jobs_quota["used"] = quotas["saved_jobs"]["used"]
+            saved_jobs_quota["limit"] = quotas["saved_jobs"]["limit"]
+        else:
+            # Fallback for old DB versions or transition period
+            try:
+                sj_count = supabase.table("saved_jobs").select(
+                    "id", count="exact"
+                ).eq("user_id", user_id).execute()
+                saved_jobs_quota["used"] = sj_count.count or 0
+                # Get limit from plan
+                plan_name_for_limit = subscription_data.get("plan_name", "free")
+                plan_limits_res = supabase.table("subscription_plans").select(
+                    "limits"
+                ).eq("name", plan_name_for_limit).single().execute()
+                if plan_limits_res and plan_limits_res.data:
+                    saved_jobs_quota["limit"] = (plan_limits_res.data.get("limits") or {}).get("saved_jobs", -1)
+            except Exception as e:
+                logger.warning(f"Could not fetch saved_jobs fallback quota for {user_id}: {e}")
 
         # Fetch individual feature overrides set by admin
         feature_overrides = {}
@@ -348,7 +354,7 @@ async def get_current_user_info(
                 .eq("name", plan_name) \
                 .single() \
                 .execute()
-            if flags_res.data and flags_res.data.get("feature_flags"):
+            if flags_res and flags_res.data and flags_res.data.get("feature_flags"):
                 plan_feature_flags = flags_res.data["feature_flags"]
         except Exception as e:
             logger.warning(f"Could not fetch plan feature_flags for {user_id}: {e}")
