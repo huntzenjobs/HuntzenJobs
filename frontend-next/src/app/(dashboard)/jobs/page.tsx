@@ -625,11 +625,13 @@ export default function JobsPage() {
       salaryMin: filters.salaryMin || 0,
       salaryMax: filters.salaryMax || 0,
       companySize: filters.companySize || "",
-      contracts: [...(params.contractTypes || [])].sort(),
+      contracts: [...(params.contractTypes || [])].map(c => typeof c === 'string' ? c : (c as any).id || (c as any).value || String(c)).sort(),
+      days: quickFilters.maxDays || 0,
+      remote: params.includeRemote || false
     };
     
     return JSON.stringify(cleanObject);
-  }, []);
+  }, [quickFilters.maxDays]);
 
   // Combined search state hash for stable comparisons
   const currentSearchHash = useMemo(
@@ -838,6 +840,7 @@ export default function JobsPage() {
    * - ✅ Count on first successful NEW fetch only
    * - ❌ Don't count on cache hits / page reloads / cache restoration
    * - ❌ Don't count on API errors (isSuccess check)
+   * - ❌ Don't count during initialization (first 2s of mount)
    */
   useEffect(() => {
     if (
@@ -863,6 +866,7 @@ export default function JobsPage() {
       } catch (e) {}
 
       // If we reach here, it's a genuinely new search
+      console.log("[QUOTA] Incrementing job_search quota for hash:", billedHash);
       incrementUsage("job_search");
       hasIncrementedQuotaRef.current = true;
       lastFetchTimeRef.current = searchQuery.dataUpdatedAt;

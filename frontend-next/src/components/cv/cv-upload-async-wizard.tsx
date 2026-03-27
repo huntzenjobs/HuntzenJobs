@@ -216,7 +216,9 @@ export function CVUploadAsyncWizard({
     elapsedTime,
     reset: resetAnalysis,
   } = useCVAnalysis(() => {
-    incrementUsage("cv_analysis");
+    // Increment appropriate quota when analysis completes successfully
+    const feature: FeatureType = wizardState.analysisType === "match" ? "matching_score" : "ats_score";
+    incrementUsage(feature);
   });
 
   // Hook to refetch subscription data after CV upload
@@ -613,6 +615,8 @@ export function CVUploadAsyncWizard({
           lmPdfBlob: lmPdfBlob ?? undefined,
           language: adaptLang,
         }).catch(() => {});
+        // Success: Increment "Adapt" quota
+        incrementUsage("cv_adapt");
       } catch (err) {
         setAdaptError(
           err instanceof Error ? err.message : "Une erreur est survenue",
@@ -624,8 +628,11 @@ export function CVUploadAsyncWizard({
     }
 
     // Check freemium limit (ATS / matching only)
-    if (!canUse("cv_analysis")) {
-      openPricingModal("cv_analyses_per_day");
+    const feature: FeatureType = wizardState.analysisType === "match" ? "matching_score" : "ats_score";
+    if (!canUse(feature)) {
+      openPricingModal(
+        wizardState.analysisType === "match" ? "matching_scores_per_day" : "ats_scores_per_day"
+      );
       return;
     }
 
@@ -1468,13 +1475,15 @@ export function CVUploadAsyncWizard({
             </div>
           </div>
 
-          {/* Score Ring */}
-          <div className="flex justify-center mb-8">
-            <ScoreRing
-              score={displayResult.ats_score.overall_score}
-              size={200}
-            />
-          </div>
+          {/* Score Ring - Only for ATS Analysis (Not for matching as it can be confusing) */}
+          {wizardState.analysisType !== "match" && (
+            <div className="flex justify-center mb-8">
+              <ScoreRing
+                score={displayResult.ats_score.overall_score}
+                size={200}
+              />
+            </div>
+          )}
 
           {displayResult.job_match_score != null && (
             <div className="mx-auto max-w-lg mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
@@ -1500,32 +1509,36 @@ export function CVUploadAsyncWizard({
 
           {/* Results Accordion */}
           <ResultsAccordion
-            breakdown={[
-              {
-                label: "Format",
-                value: displayResult.ats_score.formatting_score,
-                max: 100,
-                explanation: displayResult.ats_score.formatting_explanation,
-              },
-              {
-                label: "Mots-clés",
-                value: displayResult.ats_score.keywords_score,
-                max: 100,
-                explanation: displayResult.ats_score.keywords_explanation,
-              },
-              {
-                label: "Structure",
-                value: displayResult.ats_score.structure_score,
-                max: 100,
-                explanation: displayResult.ats_score.structure_explanation,
-              },
-              {
-                label: "Lisibilité",
-                value: displayResult.ats_score.readability_score,
-                max: 100,
-                explanation: displayResult.ats_score.readability_explanation,
-              },
-            ]}
+            breakdown={
+              wizardState.analysisType === "match"
+                ? [] // Hide ATS breakdown in match mode
+                : [
+                    {
+                      label: "Format",
+                      value: displayResult.ats_score.formatting_score,
+                      max: 100,
+                      explanation: displayResult.ats_score.formatting_explanation,
+                    },
+                    {
+                      label: "Mots-clés",
+                      value: displayResult.ats_score.keywords_score,
+                      max: 100,
+                      explanation: displayResult.ats_score.keywords_explanation,
+                    },
+                    {
+                      label: "Structure",
+                      value: displayResult.ats_score.structure_score,
+                      max: 100,
+                      explanation: displayResult.ats_score.structure_explanation,
+                    },
+                    {
+                      label: "Lisibilité",
+                      value: displayResult.ats_score.readability_score,
+                      max: 100,
+                      explanation: displayResult.ats_score.readability_explanation,
+                    },
+                  ]
+            }
             strengths={displayResult.strengths || []}
             weaknesses={displayResult.improvements || []}
             suggestions={transformedSuggestions}

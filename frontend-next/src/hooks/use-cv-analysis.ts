@@ -150,6 +150,11 @@ export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
   const [progress, setProgress] = useState(0);
 
   // Refs for cleanup
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -264,7 +269,7 @@ export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
             }
 
             sendXpEvent(session?.access_token ?? "", "cv_analysis");
-            onComplete?.();
+            onCompleteRef.current?.();
           }
 
           // Handle failure
