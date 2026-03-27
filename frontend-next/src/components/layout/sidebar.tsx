@@ -126,7 +126,7 @@ export function Sidebar({ className }: SidebarProps) {
       name: t("nav.savedJobs"),
       href: "/saved-jobs",
       icon: Bookmark,
-      premium: true,
+      premium: false,
       pageFlag: "page_saved_jobs",
     },
     {
@@ -234,12 +234,12 @@ export function Sidebar({ className }: SidebarProps) {
                   )
                 : false;
             const isLocked =
-              isPageBlocked || (item.premium && (!user || isFreePlan));
+              isPageBlocked || (item.premium && (!user || isFreePlan)) || !user;
 
             return (
               <div key={item.name}>
                 <Link
-                  href={isLocked ? (user ? "#" : "/login") : item.href}
+                  href={item.href}
                   onClick={(e) => {
                     if (isLocked && user) {
                       e.preventDefault();
@@ -320,8 +320,8 @@ export function Sidebar({ className }: SidebarProps) {
           )}
         </div>
 
-        {/* Usage summary for free users - only show if logged in */}
-        {user && isFreePlan && (
+        {/* Usage summary for non-unlimited users (Free & Starter) */}
+        {user && plan !== "pro" && plan !== "premium" && (
           <div className="px-4 mt-6">
             <UsageSummary className="p-4 rounded-xl bg-white/5 border border-white/10" />
           </div>
