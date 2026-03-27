@@ -299,66 +299,74 @@
     "plans": {
       "free": {
         "name": "EXPLORATION",
-        "period": "/7 days",
+        "period": "Free",
         "cta": "Start for free",
         "features": [
-          "3 job searches per day",
-          "10 job listings visible maximum",
-          "1 CV analysis per day",
-          "5 minutes personal coaching",
-          "Standard support"
+          "5 job searches per day",
+          "10 job listings visible per day",
+          "5 ATS compatibility scores",
+          "5 Offer & CV matching scores",
+          "10 Custom CV generations",
+          "5 coaching messages per day",
+          "10 Job saves",
+          "PDF export",
+          "Advanced filters"
         ],
         "unavailable": [
-          "Advanced filters",
-          "Favorites management",
-          "PDF report export"
+          "Email alerts",
+          "CV History",
+          "Interview simulation"
         ]
       },
       "starter": {
         "name": "ACTIVE SEARCH",
         "period": "/month",
-        "cta": "Start with Starter",
+        "cta": "Start with Active Search",
         "features": [
-          "Unlimited job searches",
-          "Access to all job listings",
-          "Advanced filters (salary, remote, date)",
-          "Manage your favorites",
-          "Unlimited CV analyses",
-          "Detailed compatibility score",
-          "Career coaches (30 min/day)"
+          "10 job searches per day",
+          "20 job listings visible per search",
+          "10 ATS compatibility scores",
+          "15 Offer & CV matching scores",
+          "20 Custom CV generations",
+          "20 coaching messages per day",
+          "30 Job saves",
+          "PDF export",
+          "Advanced filters",
+          "CV History"
         ],
         "unavailable": [
-          "PDF report export",
-          "Interview simulation"
+          "Interview simulation",
+          "Email alerts"
         ]
       },
       "pro": {
-        "name": "Accelerator",
+        "name": "ACCELERATOR",
         "period": "/month",
         "cta": "Start with Accelerator",
         "features": [
-          "All Essential features",
-          "24/7 unlimited coaching",
-          "Professional PDF export",
-          "Realistic interview simulations",
-          "Detailed performance feedback",
-          "Priority email support"
+          "Unlimited searches",
+          "Unlimited job listings",
+          "Unlimited scores",
+          "Unlimited custom CVs",
+          "Unlimited coaching",
+          "Unlimited saves",
+          "PDF export",
+          "Advanced filters",
+          "CV History"
         ],
         "unavailable": []
       },
       "premium": {
         "name": "CAREER",
         "period": "/month",
-        "cta": "Start with Premium",
+        "cta": "Start with Career",
         "features": [
-          "All Pro features",
-          "Unlimited analysis history",
-          "Ultra-targeted personalized advice",
-          "Instant email alerts",
-          "Complete coaching history",
-          "Early access to new features",
-          "Priority VIP support",
-          "Monthly progress reports"
+          "All Accelerator included",
+          "Interview simulation",
+          "Email alerts",
+          "Personalized advice",
+          "Application tracking",
+          "Recruiter profile"
         ],
         "unavailable": []
       }
@@ -540,10 +548,11 @@
     "dailyUsageTitle": "Daily quotas",
     "generalUsageTitle": "General quotas",
     "resetAtMidnight": "Resets at midnight",
-    "cvAnalysis": "CV Analyses",
-    "assistantMessages": "Assistant Messages",
-    "jobSearches": "Job Searches",
+    "atsScore": "ATS Score",
+    "matchingScore": "Job Matching",
+    "customCv": "Custom CV",
     "savedJobs": "Saved Jobs",
+    "assistantMessages": "Assistant Messages",
     "perDay": "/day",
     "unlockTitle": "Unlock HuntZen's full potential",
     "unlockDescription": "Upgrade to a paid plan for unlimited analyses, more coaching messages, and exclusive features.",
@@ -569,6 +578,15 @@
       },
       "jobView": {
         "label": "offers"
+      },
+      "atsScore": {
+        "label": "ATS analyses"
+      },
+      "matchingScore": {
+        "label": "job matchings"
+      },
+      "customCv": {
+        "label": "custom CVs"
       },
       "cvAnalysis": {
         "label": "analyses"
