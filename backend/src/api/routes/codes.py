@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from src.api.deps import get_supabase_client, get_user_id_from_token
 from src.api.middleware import limiter
 from src.services.referrals import _apply_free_days
+from src.services.stripe import invalidate_user_quota_cache
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -321,6 +322,12 @@ async def apply_code(
                     )
     except Exception as e:
         logger.error(f"[codes] Failed to apply promo side effects for {user_id}: {e}")
+
+    # Invalider le cache /api/auth/me pour que le frontend voie le nouveau plan
+    try:
+        await invalidate_user_quota_cache(user_id)
+    except Exception as e:
+        logger.warning(f"[codes] Failed to invalidate auth_me cache for {user_id}: {e}")
 
     logger.info(f"[codes] User {user_id} applied promo code {code} (promo_id={promo_id})")
     return {"ok": True, "message": "Code promo applique avec succes."}
