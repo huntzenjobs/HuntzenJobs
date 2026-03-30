@@ -39,6 +39,18 @@ def _safe_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _as_list(value: Any) -> list[str]:
+    """Normalize any value to a list of strings for frontend safety."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(v) for v in value if v is not None]
+    if isinstance(value, (tuple, set)):
+        return [str(v) for v in value if v is not None]
+    # If payload accidentally sends a single string/object, wrap it
+    return [str(value)]
+
+
 def _normalize_analysis_result(raw_result: Any) -> dict[str, Any]:
     """
     Normalize CV analysis payload to frontend-compatible schema.
@@ -117,15 +129,16 @@ def _normalize_analysis_result(raw_result: Any) -> dict[str, Any]:
                 else None
             ),
         },
-        "strengths": raw_result.get("strengths") or [],
-        "improvements": raw_result.get("improvements") or raw_result.get("weaknesses") or [],
-        "missing_sections": raw_result.get("missing_sections") or [],
-        "keywords_found": raw_result.get("keywords_found") or [],
-        "keywords_missing": raw_result.get("keywords_missing") or [],
-        "suggested_job_titles": (
+        "strengths": _as_list(raw_result.get("strengths")),
+        "improvements": _as_list(
+            raw_result.get("improvements") or raw_result.get("weaknesses")
+        ),
+        "missing_sections": _as_list(raw_result.get("missing_sections")),
+        "keywords_found": _as_list(raw_result.get("keywords_found")),
+        "keywords_missing": _as_list(raw_result.get("keywords_missing")),
+        "suggested_job_titles": _as_list(
             raw_result.get("suggested_job_titles")
             or raw_result.get("recommended_job_titles")
-            or []
         ),
     }
 
