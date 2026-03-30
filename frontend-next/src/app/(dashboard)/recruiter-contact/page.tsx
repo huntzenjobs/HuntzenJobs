@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { PageGate } from "@/components/auth/page-gate";
+import { FAQSection } from "@/components/recruiter/faq-section";
+import { HeroSection } from "@/components/recruiter/hero-section";
+import { ProcessSteps } from "@/components/recruiter/process-steps";
+import { TestimonialsSection } from "@/components/recruiter/testimonials-section";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,28 +22,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { huntzenApi } from "@/lib/api/huntzen-client";
+import { motion } from "framer-motion";
 import {
+  ArrowRight,
+  Calendar,
   CheckCircle2,
-  Star,
   Clock,
+  Loader2,
+  Mail,
+  Phone,
   Shield,
   Sparkles,
-  Phone,
-  Mail,
-  Calendar,
-  ArrowRight,
-  Loader2,
+  Star,
 } from "lucide-react";
-import { huntzenApi } from "@/lib/api/huntzen-client";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useOptionalAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { HeroSection } from "@/components/recruiter/hero-section";
-import { ProcessSteps } from "@/components/recruiter/process-steps";
-import { TestimonialsSection } from "@/components/recruiter/testimonials-section";
-import { FAQSection } from "@/components/recruiter/faq-section";
-import { PageGate } from "@/components/auth/page-gate";
 
 export default function RecruiterContactPage() {
   const t = useTranslations("dashboard.recruiterContact");
@@ -181,9 +181,7 @@ export default function RecruiterContactPage() {
             transition={{ delay: 0.4 }}
             className="text-center p-6 bg-white rounded-xl border-2 border-turquoise-100 hover:border-[#00D9FF] hover:shadow-lg transition-all"
           >
-            <div className="text-4xl font-black text-[#00D9FF] mb-2">
-              127
-            </div>
+            <div className="text-4xl font-black text-[#00D9FF] mb-2">127</div>
             <p className="text-sm text-gray-600">{t("stats.consultations")}</p>
           </motion.div>
           <motion.div
@@ -192,9 +190,7 @@ export default function RecruiterContactPage() {
             transition={{ delay: 0.5 }}
             className="text-center p-6 bg-white rounded-xl border-2 border-turquoise-100 hover:border-[#00D9FF] hover:shadow-lg transition-all"
           >
-            <div className="text-4xl font-black text-[#00D9FF] mb-2">
-              4.9/5
-            </div>
+            <div className="text-4xl font-black text-[#00D9FF] mb-2">4.9/5</div>
             <p className="text-sm text-gray-600">{t("stats.satisfaction")}</p>
           </motion.div>
           <motion.div
@@ -203,9 +199,7 @@ export default function RecruiterContactPage() {
             transition={{ delay: 0.6 }}
             className="text-center p-6 bg-white rounded-xl border-2 border-turquoise-100 hover:border-[#00D9FF] hover:shadow-lg transition-all"
           >
-            <div className="text-4xl font-black text-[#00D9FF] mb-2">
-              48h
-            </div>
+            <div className="text-4xl font-black text-[#00D9FF] mb-2">48h</div>
             <p className="text-sm text-gray-600">{t("stats.delay")}</p>
           </motion.div>
         </motion.div>
@@ -558,7 +552,7 @@ export default function RecruiterContactPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-bold bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/30 hover:shadow-[#00D9FF]/20 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                  className="w-full h-12 text-base font-bold bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:shadow-lg hover:shadow-[#00D9FF]/30 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                   disabled={
                     isSubmitting || !formData.fullName || !formData.email
                   }

@@ -1,41 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
-import { TextLogo } from "@/components/ui/adaptive-logo";
-import {
-  Briefcase,
-  FileText,
-  FolderOpen,
-  MessageSquare,
-  Bookmark,
-  User,
-  Menu,
-  X,
-  Lock,
-  Sparkles,
-  Crown,
-  LogIn,
-  LogOut,
-  Calendar,
-  Activity,
-  Users,
-  Send,
-  Gift,
-  Globe,
-} from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
-import { useOptionalSubscription } from "@/contexts/subscription-context";
-import { useOptionalAuth } from "@/contexts/auth-context";
 import { UsageSummary } from "@/components/freemium/usage-counter";
 import { UsageModal } from "@/components/freemium/usage-modal";
-import { useTranslations } from "next-intl";
-import { NotificationBell } from "@/components/notifications/notification-bell";
 import { LanguageSwitcherCompact } from "@/components/language-switcher";
-import { createClient } from "@/lib/supabase/client";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { TextLogo } from "@/components/ui/adaptive-logo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +15,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { useOptionalSubscription } from "@/contexts/subscription-context";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Activity,
+  Bookmark,
+  Briefcase,
+  Calendar,
+  Crown,
+  FileText,
+  FolderOpen,
+  Gift,
+  Globe,
+  Lock,
+  LogIn,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Send,
+  Sparkles,
+  User,
+  Users,
+  X,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface SidebarProps {
   className?: string;
@@ -120,7 +120,9 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/salons",
       icon: Calendar,
       premium: false,
+      badge: t("badges.soon"),
       pageFlag: "page_salons",
+      comingSoon: true,
     },
     {
       name: t("nav.savedJobs"),
@@ -150,6 +152,13 @@ export function Sidebar({ className }: SidebarProps) {
       icon: Gift,
       premium: false,
       pageFlag: "page_referral",
+    },
+    {
+      name: t("nav.recruiterFinder"),
+      href: "/recruiter-finder",
+      icon: Users,
+      premium: false,
+      pageFlag: "page_recruiter_finder",
     },
     {
       name: t("nav.recruiterContact"),
@@ -234,13 +243,22 @@ export function Sidebar({ className }: SidebarProps) {
                   )
                 : false;
             const isLocked =
-              isPageBlocked || (item.premium && (!user || isFreePlan)) || !user;
+              item.comingSoon ||
+              isPageBlocked ||
+              (item.premium && (!user || isFreePlan)) ||
+              !user;
 
             return (
               <div key={item.name}>
                 <Link
                   href={item.href}
                   onClick={(e) => {
+                    if (item.comingSoon) {
+                      e.preventDefault();
+                      toast.info(t("soonMessage"));
+                      return;
+                    }
+
                     if (isLocked && user) {
                       e.preventDefault();
                       openPricingModal();
@@ -293,7 +311,7 @@ export function Sidebar({ className }: SidebarProps) {
                   <span className="nav-label flex-1">{item.name}</span>
                   {/* Badge (ex: "50€" pour contact recruteur) */}
                   {"badge" in item && item.badge && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-200">
+                    <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-200 text-[10px] leading-tight">
                       {item.badge}
                     </span>
                   )}

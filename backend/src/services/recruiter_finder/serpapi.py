@@ -43,6 +43,11 @@ QUERY_TEMPLATES = [
 _strategy_agent: RecruiterFinderAgent | None = None
 
 
+class SerpApiOutOfCreditsError(Exception):
+    """Raised when SerpAPI returns a 429 'out of searches' error."""
+    pass
+
+
 def extract_domain(url_or_domain: str) -> str:
     """Extract clean domain from URL or raw domain string."""
     if not url_or_domain:
@@ -73,12 +78,17 @@ def _default_result(company_name: str, domain: str) -> dict[str, Any]:
     }
 
 
-def _fallback_queries(company: str, job_title: str | None) -> list[str]:
+def _fallback_queries(company: str, job_title: str | None, city: str | None) -> list[str]:
     queries: list[str] = []
     cleaned_company = company.strip()
     cleaned_job = (job_title or "recruitment").strip()
+    cleaned_city = (city or "").strip()
     for template in QUERY_TEMPLATES:
-        queries.append(template.format(company=cleaned_company, job_title=cleaned_job))
+                base_query = template.format(company=cleaned_company, job_title=cleaned_job)
+                if cleaned_city:
+                    queries.append(f"{base_query} \"{cleaned_city}\"")
+                else:
+                    queries.append(base_query)
     return queries
 
 
@@ -110,10 +120,11 @@ async def _build_queries(
     company: str,
     job_title: str | None,
     country_code: str,
+    city: str | None,
 ) -> tuple[list[str], dict[str, Any] | None]:
     agent = _get_strategy_agent()
     if not agent:
-        return _fallback_queries(company, job_title), None
+        return _fallback_queries(company, job_title, city), None
 
     try:
         language = "fr" if country_code.lower() == "fr" else "en"
@@ -122,10 +133,11 @@ async def _build_queries(
             job_title=job_title or "",
             country=country_code.upper(),
             language=language,
+            city=city or "",
         )
     except Exception as exc:  # pragma: no cover - LLM failures handled gracefully
         logger.warning("[serpapi] Recruiter strategy agent failed: %s", exc)
-        return _fallback_queries(company, job_title), None
+        return _fallback_queries(company, job_title, city), None
 
     queries: list[str] = []
     for item in agent_result.get("queries", []):
@@ -135,7 +147,7 @@ async def _build_queries(
 
     if not queries:
         logger.warning("[serpapi] Strategy agent returned no usable queries, falling back")
-        return _fallback_queries(company, job_title), None
+        return _fallback_queries(company, job_title, city), None
 
     return queries, agent_result
 
@@ -154,6 +166,11 @@ async def _get_cached_recruiters(slug: str) -> dict[str, Any] | None:
             return None
         
         row = result.data[0]
+        recruiters = row.get("recruiters") or []
+        # If cache contains no recruiters, treat as a miss so we can refresh
+        if not recruiters:
+            logger.info("[serpapi] Cache empty for %s, treating as miss", slug)
+            return None
         # Check expiry
         expires_at = datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00"))
         if expires_at < datetime.now(timezone.utc):
@@ -162,7 +179,7 @@ async def _get_cached_recruiters(slug: str) -> dict[str, Any] | None:
             
         logger.info("[serpapi] Cache HIT for %s", slug)
         return {
-            "recruiters": row.get("recruiters") or [],
+            "recruiters": recruiters,
             "strategy": row.get("strategy_summary"),
             "queries": row.get("search_queries") or [],
             "source": "cache",
@@ -199,10 +216,15 @@ async def find_recruiters_serpapi(
     job_title: str = "",
     country_code: str = "fr",
     max_contacts: int = 15,
+    city: str = "",
 ) -> dict[str, Any]:
     """Search LinkedIn profiles via SerpAPI for recruiter-style contacts (checked against Cache first)."""
     
     slug = generate_company_slug(company_name)
+    if city:
+        city_slug = FreshLinkedInProfileValidator._normalize(city)
+        if city_slug:
+            slug = f"{slug}__{city_slug}"
     if not slug:
         return _default_result(company_name, company_domain)
 
@@ -224,7 +246,7 @@ async def find_recruiters_serpapi(
         logger.warning("[serpapi] Missing SERPAPI_KEY — returning empty result")
         return _default_result(company_name, company_domain)
 
-    queries, strategy_info = await _build_queries(company_name, job_title, country_code)
+    queries, strategy_info = await _build_queries(company_name, job_title, country_code, city)
     seen_links: set[str] = set()
     contacts: list[dict[str, Any]] = []
 
@@ -240,10 +262,24 @@ async def find_recruiters_serpapi(
                 "hl": "fr",
                 "num": "10",
             }
+            location = (city or "").strip()
+            if location:
+                params["location"] = f"{location}, {country_code.upper()}"
             try:
                 resp = await client.get("https://serpapi.com/search", params=params)
                 resp.raise_for_status()
             except httpx.HTTPStatusError as exc:
+                # SerpAPI account has no remaining credits
+                if (
+                    exc.response.status_code == 429
+                    and "out of searches" in (exc.response.text or "")
+                ):
+                    logger.warning(
+                        "[serpapi] Out of credits for query '%s': %s",
+                        query,
+                        exc.response.text[:200],
+                    )
+                    raise SerpApiOutOfCreditsError() from exc
                 logger.warning(
                     "[serpapi] Request failed (%s) for query '%s': %s",
                     exc.response.status_code,
@@ -301,7 +337,10 @@ async def find_recruiters_serpapi(
 
     # 3. Save to Cache for future users
     if validated or len(contacts) > 0:
-        await _save_to_cache(slug, company_name, validated, strategy_info)
+        # If no validated contacts but we still found raw LinkedIn contacts,
+        # cache those so future users don't see an empty cache hit.
+        recruiters_to_cache: list[dict[str, Any]] = validated if validated else contacts
+        await _save_to_cache(slug, company_name, recruiters_to_cache, strategy_info)
 
     if rejected and summary.get("enabled"):
         result["validation_summary"]["rejected_examples"] = [

@@ -464,7 +464,8 @@
       "salons": "Salons & Forums",
       "savedJobs": "Jobs sauvegardés",
       "candidatures": "Mes Candidatures",
-      "recruiterContact": "Contact Recruteur",
+      "recruiterContact": "Contact expert",
+      "recruiterFinder": "Contact recruteur",
       "documents": "Mes documents",
       "myUsage": "Mon Utilisation",
       "referral": "HuntZen Boost",
@@ -500,8 +501,10 @@
     },
     "badges": {
       "new": "Nouveau",
-      "recruiterPrice": "50€"
+      "recruiterPrice": "50€",
+      "soon": "Bientôt disponible"
     },
+    "soonMessage": "Cette fonctionnalité arrive bientôt 🚀",
     "aria": {
       "close": "Fermer le menu de navigation",
       "open": "Ouvrir le menu de navigation",
@@ -708,6 +711,8 @@
     "matchingScore": "Matching Job",
     "cvAdapt": "Adaptation CV",
     "customCv": "CV personnalisé",
+    "cvAdapt": "Adaptation de CV",
+    "recruiterSearch": "Recherches recruteur (LinkedIn)",
     "jobSearches": "Recherches d'emploi",
     "savedJobs": "Jobs sauvegardés",
     "assistantMessages": "Messages Assistant",
@@ -1410,7 +1415,17 @@
       },
       "finder": {
         "companyPlaceholder": "Nom de l'entreprise",
-        "quotaReached": "Quota atteint ({count} recherches/jour en version gratuite). Passez à Pro pour un accès illimité."
+        "cityPlaceholder": "Ville (optionnel)",
+        "quotaReached": "Quota atteint ({count} recherches/jour en version gratuite). Passez à Pro pour un accès illimité.",
+        "searchTab": "Recherche",
+        "savedTab": "Contacts sauvegardés",
+        "noResults": "Aucun contact trouvé pour cette entreprise.",
+        "save": "Sauvegarder",
+        "saved": "Sauvegardé",
+        "savedEmpty": "Vous n'avez encore sauvegardé aucun contact.",
+        "loginRequired": "Connectez-vous pour sauvegarder vos contacts.",
+        "loadingSaved": "Chargement de vos contacts sauvegardés...",
+        "remove": "Supprimer"
       }
     }
   },

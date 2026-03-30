@@ -110,6 +110,7 @@ class RecruiterFinderRequest(BaseModel):
     company_website: str | None = ""
     company_domain: str | None = ""
     job_title: str | None = ""
+    city: str | None = ""
 
 
 class ContactItem(BaseModel):
@@ -185,6 +186,7 @@ async def find_recruiters(
             company_name=body.company_name,
             company_domain=domain,
             job_title=body.job_title or "",
+            city=(body.city or ""),
         )
         result.setdefault("source", "serpapi")
 
@@ -214,9 +216,11 @@ def _enrich_contact_metadata(result: dict) -> None:
     source = result.get("source", "serpapi")
     contacts = result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", [])
     for contact in contacts:
+        # Preserve any email provided by the underlying source.
+        # For Apollo, mark verification status based on email_status.
         if source == "apollo":
             contact["email_verified"] = contact.get("email_status") == "verified"
         else:
-            contact["email"] = ""
-            contact["email_verified"] = False
+            # Non-Apollo sources don't guarantee verification.
+            contact.setdefault("email_verified", False)
         contact.setdefault("source", source)
