@@ -103,6 +103,10 @@ async def notify_fastapi_callback(cv_id: str, status: str) -> bool:
                 json={"cv_id": str(cv_id), "user_id": user_id, "status": str(status)},
                 headers={"X-Modal-Secret": modal_secret}
             )
+            if response.status_code == 200:
+                print(f"✅ CALLBACK SUCCESS: Analysis {cv_id} sent to backend.")
+            else:
+                print(f"❌ CALLBACK FAILED: Backend returned {response.status_code} - {response.text}")
             return response.status_code == 200
     except Exception as e:
         print(f"❌ Callback failed: {e}")
