@@ -227,9 +227,14 @@ class CVAnalyzerAgent(BaseAgent):
             match_verdict = job_match_result.get("verdict", "") if job_description else ""
 
             ats_total = min(ats_result.get("total", 0), 100)
+            match_total = job_match_result.get("match_score") if job_description else None
+            match_verdict = job_match_result.get("verdict", "") if job_description else ""
+
             return {
                 "success": True,
-                "ats_score": {
+                "ats_score": ats_total,
+                "overall_score": match_total if job_description else ats_total,
+                "ats_details": {
                     "total": ats_total,
                     "overall_score": ats_total,
                     "format_score": min(ats_result.get("format_score", 0), 20),
