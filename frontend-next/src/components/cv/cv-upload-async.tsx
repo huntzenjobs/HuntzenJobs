@@ -13,9 +13,9 @@
  * @sprint 6 - Ticket S6-6
  */
 
-"use client";
+'use client';
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 import {
   Upload,
   FileText,
@@ -23,14 +23,14 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-} from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "next/navigation";
-import { useCVAnalysis } from "@/hooks/use-cv-analysis";
-import { useSubscriptionApi } from "@/hooks/use-subscription-api";
-import { type FeatureType, PLAN_LIMITS } from "@/hooks/use-freemium-limits";
-import { useTranslations } from "next-intl";
-import { toast } from "sonner";
+} from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
+import { useCVAnalysis } from '@/hooks/use-cv-analysis';
+import { useSubscriptionApi } from '@/hooks/use-subscription-api';
+import { type FeatureType, PLAN_LIMITS } from '@/hooks/use-freemium-limits';
+import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 // ============================================
 // TYPES
@@ -53,10 +53,10 @@ export function CVUploadAsync({
 }: CVUploadAsyncProps) {
   const { session, user } = useAuth();
   const router = useRouter();
-  const t = useTranslations("cv");
+  const t = useTranslations('cv');
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [jobDescription, setJobDescription] = useState("");
+  const [jobDescription, setJobDescription] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
   // Hook to refetch subscription data after CV upload
@@ -76,7 +76,9 @@ export function CVUploadAsync({
     reset,
   } = useCVAnalysis(() => {
     // Increment appropriate quota when analysis completes successfully
-    const feature: FeatureType = jobDescription ? "matching_score" : "ats_score";
+    const feature: FeatureType = jobDescription
+      ? 'matching_score'
+      : 'ats_score';
     incrementUsage(feature);
   });
 
@@ -88,22 +90,24 @@ export function CVUploadAsync({
     if (!selectedFile) return;
 
     // Check freemium limit (ATS vs Matching)
-    const feature: FeatureType = jobDescription ? "matching_score" : "ats_score";
+    const feature: FeatureType = jobDescription
+      ? 'matching_score'
+      : 'ats_score';
     if (!canUse(feature)) {
       openPricingModal(
-        jobDescription ? "matching_scores_per_day" : "ats_scores_per_day",
+        jobDescription ? 'matching_scores_per_day' : 'ats_scores_per_day',
       );
       return;
     }
 
     try {
-      await uploadCV(selectedFile, jobDescription || undefined, "fr");
+      await uploadCV(selectedFile, jobDescription || undefined, 'fr');
 
       // Force refresh subscription data to get updated usage from backend
       // (Backend increments usage after successful upload, so we fetch fresh data)
       await refetchSubscription();
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error('Upload error:', error);
     }
   }, [
     selectedFile,
@@ -120,7 +124,7 @@ export function CVUploadAsync({
 
   const handleReset = () => {
     setSelectedFile(null);
-    setJobDescription("");
+    setJobDescription('');
     reset();
   };
 
@@ -156,7 +160,7 @@ export function CVUploadAsync({
                 <span>
                   <strong>
                     {PLAN_LIMITS.free.ats_scores_per_day} scores ATS gratuits
-                  </strong>{" "}
+                  </strong>{' '}
                   par jour
                 </span>
               </li>
@@ -165,7 +169,7 @@ export function CVUploadAsync({
                 <span>
                   <strong>
                     {PLAN_LIMITS.free.matching_scores_per_day} matching jobs
-                  </strong>{" "}
+                  </strong>{' '}
                   par jour
                 </span>
               </li>
@@ -195,7 +199,7 @@ export function CVUploadAsync({
             <button
               onClick={() =>
                 router.push(
-                  "/signup?redirectTo=" + encodeURIComponent("/cv-analysis"),
+                  '/signup?redirectTo=' + encodeURIComponent('/cv-analysis'),
                 )
               }
               className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
@@ -205,7 +209,7 @@ export function CVUploadAsync({
             <button
               onClick={() =>
                 router.push(
-                  "/login?redirectTo=" + encodeURIComponent("/cv-analysis"),
+                  '/login?redirectTo=' + encodeURIComponent('/cv-analysis'),
                 )
               }
               className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-blue-500 transition-all"
@@ -255,10 +259,10 @@ export function CVUploadAsync({
     setIsDragging(false);
 
     const file = e.dataTransfer.files[0];
-    if (file && file.name.toLowerCase().endsWith(".pdf")) {
+    if (file && file.name.toLowerCase().endsWith('.pdf')) {
       setSelectedFile(file);
     } else {
-      toast.error(t("toasts.pdfOnlyAccepted"));
+      toast.error(t('toasts.pdfOnlyAccepted'));
     }
   };
 
@@ -266,7 +270,7 @@ export function CVUploadAsync({
   // RENDER: FILE UPLOAD (NO FILE SELECTED)
   // ============================================
 
-  if (!selectedFile && !isUploading && status === "pending" && !result) {
+  if (!selectedFile && !isUploading && status === 'pending' && !result) {
     return (
       <div>
         {/* Drag & Drop Zone */}
@@ -276,7 +280,7 @@ export function CVUploadAsync({
           onDrop={handleDrop}
           className={`
             border-2 border-dashed rounded-lg p-12 text-center transition-colors
-            ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
+            ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
           `}
         >
           <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400" />
@@ -305,7 +309,7 @@ export function CVUploadAsync({
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            placeholder={t("placeholders.pasteJobDescription")}
+            placeholder={t('placeholders.pasteJobDescription')}
             className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -321,7 +325,7 @@ export function CVUploadAsync({
   // RENDER: FILE SELECTED (READY TO ANALYZE)
   // ============================================
 
-  if (selectedFile && !isUploading && status === "pending" && !result) {
+  if (selectedFile && !isUploading && status === 'pending' && !result) {
     return (
       <div>
         {/* Selected File Preview */}
@@ -355,7 +359,7 @@ export function CVUploadAsync({
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            placeholder={t("placeholders.pasteJobDescription")}
+            placeholder={t('placeholders.pasteJobDescription')}
             className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -381,7 +385,7 @@ export function CVUploadAsync({
   // RENDER: UPLOADING / PROCESSING
   // ============================================
 
-  if (isUploading || status === "pending" || status === "processing") {
+  if (isUploading || status === 'pending' || status === 'processing') {
     return (
       <div className="max-w-2xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg p-8">
@@ -393,7 +397,7 @@ export function CVUploadAsync({
                 {selectedFile?.name || "CV en cours d'analyse"}
               </h3>
               <p className="text-sm text-gray-500">
-                {isUploading ? "Téléchargement..." : "Traitement en cours..."}
+                {isUploading ? 'Téléchargement...' : 'Traitement en cours...'}
               </p>
             </div>
           </div>
@@ -424,9 +428,9 @@ export function CVUploadAsync({
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              {status === "pending" ? (
+              {status === 'pending' ? (
                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-              ) : status === "processing" ? (
+              ) : status === 'processing' ? (
                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
               ) : (
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -435,7 +439,7 @@ export function CVUploadAsync({
             </div>
 
             <div className="flex items-center gap-2 text-sm">
-              {status === "processing" ? (
+              {status === 'processing' ? (
                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
               ) : (
                 <Clock className="w-4 h-4 text-gray-400" />
@@ -472,13 +476,13 @@ export function CVUploadAsync({
   // RENDER: ERROR
   // ============================================
 
-  if (status === "failed" || error) {
+  if (status === 'failed' || error) {
     // Check if error is anonymous rate limit exceeded
     const isAnonymousRateLimitExceeded =
-      error === "ANONYMOUS_RATE_LIMIT_EXCEEDED";
+      error === 'ANONYMOUS_RATE_LIMIT_EXCEEDED';
     // Check if error is quota exceeded
     const isQuotaExceeded =
-      error === "QUOTA_EXCEEDED" || error?.includes("429");
+      error === 'QUOTA_EXCEEDED' || error?.includes('429');
 
     if (isAnonymousRateLimitExceeded) {
       return (
@@ -508,8 +512,9 @@ export function CVUploadAsync({
                   <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                   <span>
                     <strong>
-                      {PLAN_LIMITS.free.ats_scores_per_day} analyses ATS gratuites
-                    </strong>{" "}
+                      {PLAN_LIMITS.free.ats_scores_per_day} analyses ATS
+                      gratuites
+                    </strong>{' '}
                     par jour
                   </span>
                 </li>
@@ -517,8 +522,9 @@ export function CVUploadAsync({
                   <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                   <span>
                     <strong>
-                      {PLAN_LIMITS.free.matching_scores_per_day} scores compatibles
-                    </strong>{" "}
+                      {PLAN_LIMITS.free.matching_scores_per_day} scores
+                      compatibles
+                    </strong>{' '}
                     par jour
                   </span>
                 </li>
@@ -536,13 +542,13 @@ export function CVUploadAsync({
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => router.push("/signup")}
+                onClick={() => router.push('/signup')}
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all transform hover:scale-105"
               >
                 Créer un compte gratuit
               </button>
               <button
-                onClick={() => router.push("/pricing")}
+                onClick={() => router.push('/pricing')}
                 className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-orange-500 transition-all"
               >
                 Voir les plans payants
@@ -681,7 +687,7 @@ export function CVUploadAsync({
             {/* CTA Buttons */}
             <div className="flex gap-4">
               <button
-                onClick={() => openPricingModal("ats_scores_per_day")}
+                onClick={() => openPricingModal('ats_scores_per_day')}
                 className="flex-1 px-8 py-4 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-violet-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🚀 Voir les plans
@@ -740,7 +746,7 @@ export function CVUploadAsync({
   // RENDER: COMPLETED (RESULTS)
   // ============================================
 
-  if (status === "completed" && result) {
+  if (status === 'completed' && result) {
     const { ats_score, strengths, improvements, job_match_score } = result;
 
     return (
@@ -795,14 +801,22 @@ export function CVUploadAsync({
           <h4 className="text-lg font-semibold mb-4 text-orange-700">
             Suggestions d'amélioration
           </h4>
-          <ul className="space-y-2">
-            {improvements.map((improvement, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-orange-600 mt-0.5 flex-shrink-0">→</span>
-                <span>{improvement}</span>
-              </li>
-            ))}
-          </ul>
+          {improvements.length === 0 ? (
+            <p className="text-sm text-gray-600">
+              Aucune suggestion détectée pour ce CV.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {improvements.map((improvement, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-orange-600 mt-0.5 flex-shrink-0">
+                    →
+                  </span>
+                  <span>{improvement}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Actions */}
@@ -833,22 +847,22 @@ interface ScoreCardProps {
 
 function ScoreCard({ label, score, highlight }: ScoreCardProps) {
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600 bg-green-100";
-    if (score >= 60) return "text-yellow-600 bg-yellow-100";
-    return "text-red-600 bg-red-100";
+    if (score >= 80) return 'text-green-600 bg-green-100';
+    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
+    return 'text-red-600 bg-red-100';
   };
 
   return (
     <div
-      className={`p-4 rounded-lg border ${highlight ? "border-blue-300 bg-blue-50" : "border-gray-200"}`}
+      className={`p-4 rounded-lg border ${highlight ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}
     >
       <p className="text-sm text-gray-600 mb-1">{label}</p>
-      <p className={`text-3xl font-bold ${getScoreColor(score).split(" ")[0]}`}>
+      <p className={`text-3xl font-bold ${getScoreColor(score).split(' ')[0]}`}>
         {score}
       </p>
       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
         <div
-          className={`h-full rounded-full ${getScoreColor(score).split(" ")[1]}`}
+          className={`h-full rounded-full ${getScoreColor(score).split(' ')[1]}`}
           style={{ width: `${score}%` }}
         />
       </div>
