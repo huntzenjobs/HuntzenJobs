@@ -222,6 +222,7 @@ class BaseAgent(ABC):
             # Try direct parse first
             return json.loads(text)
         except json.JSONDecodeError:
+            logger.debug(f"[{self.name}] Direct JSON parse failed, trying regex extraction...")
             pass
 
         # Try to extract JSON from markdown code blocks
@@ -240,7 +241,7 @@ class BaseAgent(ABC):
             except json.JSONDecodeError:
                 pass
 
-        logger.warning(f"[{self.name}] Failed to parse JSON from response")
+        logger.error(f"[{self.name}] Failed to parse JSON from response. Raw text: {text[:500]}...")
         return None
 
     def _parse_json_response(self, text: str) -> dict | None:
