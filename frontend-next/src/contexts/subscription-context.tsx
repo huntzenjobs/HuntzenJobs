@@ -45,6 +45,7 @@ interface SubscriptionContextType {
     savedJobsCount: number;
     cvAdaptsUsedToday: number;
     coverLettersUsedToday: number;
+    recruiterSearchesUsedToday: number;
     lastResetDate: string;
   };
 

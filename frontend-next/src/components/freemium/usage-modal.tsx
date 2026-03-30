@@ -1,35 +1,35 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { QuotaResetTimer } from "@/components/freemium/usage-counter";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useSubscription } from "@/contexts/subscription-context";
-import { QuotaResetTimer } from "@/components/freemium/usage-counter";
-import {
-  Crown,
-  Sparkles,
-  Zap,
-  Gift,
-  TrendingUp,
-  FileText,
-  MessageSquare,
-  Briefcase,
-  Bookmark,
-  Clock,
-  RefreshCw,
-} from "lucide-react";
-import { CareerScoreCard } from "@/components/career-score/career-score-card";
-import { cn } from "@/lib/utils";
 import { usePlansConfig } from "@/hooks/use-plans-config";
+import { cn } from "@/lib/utils";
+import {
+  Bookmark,
+  Briefcase,
+  Clock,
+  Crown,
+  FileText,
+  Gift,
+  MessageSquare,
+  RefreshCw,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useRef } from "react";
 
 interface UsageModalProps {
   isOpen: boolean;
@@ -184,6 +184,9 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
   const cvAdaptsUsed = usage?.cvAdaptsUsedToday ?? 0;
   const cvAdaptsLimit = limits.cv_adapt_per_day;
 
+  const recruiterSearchesUsed = usage?.recruiterSearchesUsedToday ?? 0;
+  const recruiterSearchesLimit = limits.recruiter_searches_per_day;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
@@ -322,6 +325,16 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 used={usage?.searchesToday || 0}
                 limit={limits.job_searches_per_day}
                 color="bg-green-500"
+                t={t}
+              />
+
+              {/* Recruiter searches (LinkedIn contact finder) */}
+              <QuotaCard
+                title={`${t("recruiterSearch")} ${t("perDay")}`}
+                icon={<Users className="w-4 h-4 text-white" />}
+                used={recruiterSearchesUsed}
+                limit={recruiterSearchesLimit}
+                color="bg-sky-500"
                 t={t}
               />
             </div>

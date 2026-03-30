@@ -382,7 +382,8 @@
       "salons": "Ferias & Foros",
       "savedJobs": "Empleos guardados",
       "candidatures": "Mis Candidaturas",
-      "recruiterContact": "Contacto Reclutador",
+      "recruiterContact": "Contacto experto",
+      "recruiterFinder": "Contactar reclutador",
       "documents": "Mis documentos",
       "myUsage": "Mi Uso",
       "referral": "HuntZen Boost",
@@ -1150,7 +1151,17 @@
       },
       "finder": {
         "companyPlaceholder": "Company name",
-        "quotaReached": "Cuota alcanzada ({count} búsquedas/día en plan gratuito). Pasa a Pro para acceso ilimitado."
+        "cityPlaceholder": "Ciudad (opcional)",
+        "quotaReached": "Cuota alcanzada ({count} búsquedas/día en plan gratuito). Pasa a Pro para acceso ilimitado.",
+        "searchTab": "Búsqueda",
+        "savedTab": "Contactos guardados",
+        "noResults": "Ningún contacto encontrado para esta empresa.",
+        "save": "Guardar",
+        "saved": "Guardado",
+        "savedEmpty": "Todavía no has guardado ningún contacto.",
+        "loginRequired": "Inicia sesión para guardar tus contactos de reclutador.",
+        "loadingSaved": "Cargando tus contactos guardados...",
+        "remove": "Eliminar"
       }
     },
     "documents": {
@@ -2376,6 +2387,10 @@
     "dailyUsageTitle": "Cuotas diarias",
     "generalUsageTitle": "Cuotas generales",
     "resetAtMidnight": "Se restablece a medianoche",
+    "atsScore": "Puntuación ATS",
+    "matchingScore": "Matching de empleo",
+    "customCv": "CV personalizado",
+    "recruiterSearch": "Búsquedas de reclutador (LinkedIn)",
     "jobSearches": "Búsquedas de empleo",
     "unlockTitle": "Desbloquea todo el potencial de HuntZen",
     "unlockDescription": "Pasa a un plan de pago para análisis ilimitados, más mensajes de coaching y funciones exclusivas.",

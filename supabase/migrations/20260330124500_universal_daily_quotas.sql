@@ -15,6 +15,7 @@ SET limits = limits || '{
   "assistant_messages_per_day": 5,
   "saved_jobs_per_day": 10,
   "cv_adapt_per_day": 10,
+  "recruiter_searches_per_day": 3,
   "cover_letter_per_day": 10
 }'::jsonb
 WHERE name = 'free';
@@ -30,6 +31,7 @@ SET limits = limits || '{
   "assistant_messages_per_day": 20,
   "saved_jobs_per_day": 30,
   "cv_adapt_per_day": 30,
+  "recruiter_searches_per_day": 10,
   "cover_letter_per_day": 30
 }'::jsonb
 WHERE name = 'starter';
@@ -45,6 +47,7 @@ SET limits = limits || '{
   "assistant_messages_per_day": -1,
   "saved_jobs_per_day": -1,
   "cv_adapt_per_day": -1,
+  "recruiter_searches_per_day": 10,
   "cover_letter_per_day": -1
 }'::jsonb
 WHERE name IN ('pro', 'premium');
@@ -141,6 +144,7 @@ BEGIN
     SELECT 'assistant_messages', 'assistant_messages_per_day', u.assistant_messages_used FROM effective_plan ep LEFT JOIN user_usage u ON TRUE UNION ALL
     SELECT 'cv_adapt', 'cv_adapt_per_day', u.cv_adapt_used FROM effective_plan ep LEFT JOIN user_usage u ON TRUE UNION ALL
     SELECT 'cover_letter', 'cover_letter_per_day', u.cover_letter_used FROM effective_plan ep LEFT JOIN user_usage u ON TRUE UNION ALL
+    SELECT 'recruiter_search', 'recruiter_searches_per_day', u.recruiter_searches_used FROM effective_plan ep LEFT JOIN user_usage u ON TRUE UNION ALL
     SELECT 'saved_jobs', 'saved_jobs_per_day', u.saved_jobs_used FROM effective_plan ep LEFT JOIN user_usage u ON TRUE
   ) f CROSS JOIN effective_plan ep;
 END; $$ LANGUAGE plpgsql SECURITY DEFINER;

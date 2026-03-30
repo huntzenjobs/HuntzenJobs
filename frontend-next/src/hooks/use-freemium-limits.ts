@@ -56,6 +56,7 @@ interface PlanLimitValues {
   page_expat: boolean;
   page_referral: boolean;
   page_recruiter_contact: boolean;
+  page_recruiter_finder: boolean;
   page_documents: boolean;
   page_profile: boolean;
 }
@@ -90,10 +91,11 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     page_assistant: true,
     page_salons: true,
     page_saved_jobs: true,
-    page_candidatures: false,
+    page_candidatures: true,
     page_expat: true,
     page_referral: true,
     page_recruiter_contact: true,
+    page_recruiter_finder: false,
     page_documents: true,
     page_profile: true,
   },
@@ -129,6 +131,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     page_expat: true,
     page_referral: true,
     page_recruiter_contact: true,
+    page_recruiter_finder: true,
     page_documents: true,
     page_profile: true,
   },
@@ -139,7 +142,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     matching_scores_per_day: Infinity,
     assistant_messages_per_day: Infinity,
     saved_jobs_per_day: Infinity,
-    recruiter_searches_per_day: Infinity,
+    recruiter_searches_per_day: 10,
     cv_adapt_per_day: Infinity,
     cover_letter_per_day: Infinity,
     has_advanced_filters: true,
@@ -164,6 +167,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     page_expat: true,
     page_referral: true,
     page_recruiter_contact: true,
+    page_recruiter_finder: true,
     page_documents: true,
     page_profile: true,
   },
@@ -174,7 +178,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     matching_scores_per_day: Infinity,
     assistant_messages_per_day: Infinity,
     saved_jobs_per_day: Infinity,
-    recruiter_searches_per_day: Infinity,
+    recruiter_searches_per_day: 10,
     cv_adapt_per_day: Infinity,
     cover_letter_per_day: Infinity,
     has_advanced_filters: true,
@@ -199,6 +203,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     page_expat: true,
     page_referral: true,
     page_recruiter_contact: true,
+    page_recruiter_finder: true,
     page_documents: true,
     page_profile: true,
   },
@@ -285,6 +290,10 @@ function buildLimitsFromApi(
     page_recruiter_contact: flag(
       "page_recruiter_contact",
       defaults.page_recruiter_contact,
+    ),
+    page_recruiter_finder: flag(
+      "page_recruiter_finder",
+      defaults.page_recruiter_finder,
     ),
     page_documents: flag("page_documents", defaults.page_documents),
     page_profile: flag("page_profile", defaults.page_profile),

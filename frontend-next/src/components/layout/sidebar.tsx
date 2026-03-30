@@ -154,6 +154,13 @@ export function Sidebar({ className }: SidebarProps) {
       pageFlag: "page_referral",
     },
     {
+      name: t("nav.recruiterFinder"),
+      href: "/recruiter-finder",
+      icon: Users,
+      premium: false,
+      pageFlag: "page_recruiter_finder",
+    },
+    {
       name: t("nav.recruiterContact"),
       href: "/recruiter-contact",
       icon: Users,

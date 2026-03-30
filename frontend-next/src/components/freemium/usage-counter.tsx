@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useSubscription } from "@/contexts/subscription-context";
 import { FeatureType } from "@/hooks/use-freemium-limits";
-import { Search, FileText, Clock, Eye, Users, Bookmark, Target } from "lucide-react";
+import {
+  Bookmark,
+  Clock,
+  Eye,
+  FileText,
+  Search,
+  Target,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 
 interface UsageCounterProps {
   feature: FeatureType;
@@ -162,7 +170,11 @@ export function UsageCounter({
       break;
     case "recruiter_search": {
       const q = quotas?.recruiter_search;
-      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      if (q) {
+        max = q.limit === -1 ? Infinity : q.limit;
+      } else {
+        max = limits.recruiter_searches_per_day;
+      }
       break;
     }
     case "cv_adapt": {
@@ -180,8 +192,10 @@ export function UsageCounter({
   }
 
   // Calculate percentage
-  const used = (max && remaining !== undefined) ? Math.max(0, max - remaining) : 0;
-  const percentage = (max === Infinity || !max) ? 0 : Math.min(100, (used / max) * 100);
+  const used =
+    max && remaining !== undefined ? Math.max(0, max - remaining) : 0;
+  const percentage =
+    max === Infinity || !max ? 0 : Math.min(100, (used / max) * 100);
 
   // Determine color based on remaining
   const getColor = () => {
@@ -257,7 +271,6 @@ interface UsageSummaryProps {
   className?: string;
 }
 
-
 export function UsageSummary({ className = "" }: UsageSummaryProps) {
   const { plan, isFreePlan } = useSubscription();
   const tUsage = useTranslations("usageCounter");
@@ -271,24 +284,25 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
         <h4 className="text-sm font-semibold mb-3 text-white/90">
           {tUsage("dailyUsage")}
         </h4>
-          <div className="space-y-3">
-            <UsageCounter feature="job_search" showBar />
-            <UsageCounter feature="ats_score" showBar />
-            <UsageCounter feature="matching_score" showBar />
-            <UsageCounter feature="cv_adapt" showBar />
-            <UsageCounter feature="assistant_messages" showBar />
-            <UsageCounter feature="cover_letter" showBar />
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 mb-3 text-xs text-white/50">
-            <Clock className="w-3 h-3" />
-            <QuotaResetTimer />
-          </div>
-          <h4 className="text-sm font-semibold mb-3 text-white/90">
-            {tUsage("generalUsage")}
-          </h4>
-          <div className="space-y-3">
-            <UsageCounter feature="saved_jobs" showBar />
-          </div>
+        <div className="space-y-3">
+          <UsageCounter feature="job_search" showBar />
+          <UsageCounter feature="ats_score" showBar />
+          <UsageCounter feature="matching_score" showBar />
+          <UsageCounter feature="cv_adapt" showBar />
+          <UsageCounter feature="assistant_messages" showBar />
+          <UsageCounter feature="recruiter_search" showBar />
+          <UsageCounter feature="cover_letter" showBar />
+        </div>
+        <div className="flex items-center gap-1.5 mt-2 mb-3 text-xs text-white/50">
+          <Clock className="w-3 h-3" />
+          <QuotaResetTimer />
+        </div>
+        <h4 className="text-sm font-semibold mb-3 text-white/90">
+          {tUsage("generalUsage")}
+        </h4>
+        <div className="space-y-3">
+          <UsageCounter feature="saved_jobs" showBar />
+        </div>
       </>
     </div>
   );

@@ -374,7 +374,8 @@
       "salons": "Job Fairs & Forums",
       "savedJobs": "Saved Jobs",
       "candidatures": "My Applications",
-      "recruiterContact": "Contact Recruiter",
+      "recruiterContact": "Expert Contact",
+      "recruiterFinder": "Contact Recruiter",
       "documents": "My Documents",
       "myUsage": "My Usage",
       "referral": "HuntZen Boost",
@@ -546,6 +547,7 @@
     "atsScore": "ATS Score",
     "matchingScore": "Job Matching",
     "customCv": "Custom CV",
+    "recruiterSearch": "LinkedIn recruiter searches",
     "savedJobs": "Saved Jobs",
     "assistantMessages": "Assistant Messages",
     "perDay": "/day",
@@ -1184,7 +1186,17 @@
       },
       "finder": {
         "companyPlaceholder": "Company name",
-        "quotaReached": "Quota reached ({count} searches/day on free plan). Upgrade to Pro for unlimited access."
+        "cityPlaceholder": "City (optional)",
+        "quotaReached": "Quota reached ({count} searches/day on free plan). Upgrade to Pro for unlimited access.",
+        "searchTab": "Search",
+        "savedTab": "Saved contacts",
+        "noResults": "No contact found for this company.",
+        "save": "Save",
+        "saved": "Saved",
+        "savedEmpty": "You haven't saved any contacts yet.",
+        "loginRequired": "Sign in to save your recruiter contacts.",
+        "loadingSaved": "Loading your saved contacts...",
+        "remove": "Remove"
       }
     },
     "documents": {

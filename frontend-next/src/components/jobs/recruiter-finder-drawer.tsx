@@ -7,33 +7,31 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
+import type { Job } from "@/lib/api/huntzen-client";
 import {
-  Users,
-  Mail,
-  Linkedin,
-  Copy,
+  AlertTriangle,
+  AtSign,
   CheckCheck,
+  Copy,
+  Linkedin,
   Loader2,
   SearchX,
-  AtSign,
-  AlertTriangle,
-  ShieldCheck,
-  ShieldAlert,
+  Users,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { useAuth } from "@/contexts/auth-context";
-import type { Job } from "@/lib/api/huntzen-client";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // ============================================================================
 // TYPES
@@ -178,6 +176,7 @@ export function RecruiterFinderDrawer({
 }: RecruiterFinderDrawerProps) {
   const tJobs = useTranslations("jobs");
   const { session } = useAuth();
+  const { openPricingModal } = useSubscription();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FinderResult | null>(null);
   const [searched, setSearched] = useState(false);
@@ -218,7 +217,7 @@ export function RecruiterFinderDrawer({
       if (response.status === 429) {
         setQuotaError(true);
         setSearched(false);
-        toast.error(tJobs("toasts.quotaReachedRecruiter"));
+        openPricingModal("recruiter_searches_per_day");
         return;
       }
 
@@ -288,11 +287,6 @@ export function RecruiterFinderDrawer({
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              {quotaError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                  {tJobs("toasts.quotaReachedRecruiter")}
-                </div>
-              )}
               {!quotaError && (
                 <p className="text-sm text-gray-500">
                   {tJobs("recruiterFinderDescription")}
