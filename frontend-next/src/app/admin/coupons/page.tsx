@@ -36,6 +36,8 @@ import { toast } from "sonner";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
+const PLAN_ALL_VALUE = "all"; // valeur interne pour "tous les plans"
+
 async function adminFetch(path: string, options?: RequestInit) {
   const supabase = createClient();
   const {
@@ -387,16 +389,21 @@ export default function CouponsPage() {
               <div className="space-y-1.5">
                 <Label>Plan cible</Label>
                 <Select
-                  value={promoForm.plan}
+                  value={promoForm.plan || PLAN_ALL_VALUE}
                   onValueChange={(v) =>
-                    setPromoForm((f) => ({ ...f, plan: v }))
+                    setPromoForm((f) => ({
+                      ...f,
+                      plan: v === PLAN_ALL_VALUE ? "" : v,
+                    }))
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Tous" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tous les plans</SelectItem>
+                    <SelectItem value={PLAN_ALL_VALUE}>
+                      Tous les plans
+                    </SelectItem>
                     <SelectItem value="starter">Starter</SelectItem>
                     <SelectItem value="pro">Pro</SelectItem>
                     <SelectItem value="premium">Premium</SelectItem>
