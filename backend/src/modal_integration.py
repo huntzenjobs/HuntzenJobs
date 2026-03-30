@@ -28,6 +28,107 @@ from supabase import Client, create_client
 
 logger = get_logger(__name__)
 
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    """Convert value to int safely with fallback."""
+    try:
+        if value is None:
+            return default
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _normalize_analysis_result(raw_result: Any) -> dict[str, Any]:
+    """
+    Normalize CV analysis payload to frontend-compatible schema.
+
+    Handles legacy/new payload variants where:
+    - result may be non-dict
+    - ats_score may be a number or an object
+    - fields can have different names (recommended_job_titles, weaknesses, etc.)
+    """
+    if not isinstance(raw_result, dict):
+        score = _safe_int(raw_result, 0) if isinstance(raw_result, int | float | str) else 0
+        return {
+            "ats_score": {
+                "overall_score": max(0, min(100, score)),
+                "formatting_score": 0,
+                "keywords_score": 0,
+                "structure_score": 0,
+                "readability_score": 0,
+            },
+            "strengths": [],
+            "improvements": [],
+            "missing_sections": [],
+            "keywords_found": [],
+            "keywords_missing": [],
+            "suggested_job_titles": [],
+        }
+
+    ats_raw = raw_result.get("ats_score")
+    ats_details = raw_result.get("ats_details") or {}
+
+    if isinstance(ats_raw, dict):
+        overall = _safe_int(
+            ats_raw.get("overall_score", ats_raw.get("total", 0)),
+            0,
+        )
+        formatting = _safe_int(
+            ats_raw.get("formatting_score", ats_raw.get("format_score", 0)),
+            0,
+        )
+        keywords = _safe_int(ats_raw.get("keywords_score", 0), 0)
+        structure = _safe_int(ats_raw.get("structure_score", ats_raw.get("experience_score", 0)), 0)
+        readability = _safe_int(ats_raw.get("readability_score", ats_raw.get("skills_score", 0)), 0)
+    else:
+        overall = _safe_int(ats_raw if ats_raw is not None else raw_result.get("overall_score"), 0)
+        formatting = _safe_int(ats_details.get("formatting_score", ats_details.get("format_score", 0)), 0)
+        keywords = _safe_int(ats_details.get("keywords_score", 0), 0)
+        structure = _safe_int(ats_details.get("structure_score", ats_details.get("experience_score", 0)), 0)
+        readability = _safe_int(ats_details.get("readability_score", ats_details.get("skills_score", 0)), 0)
+
+    return {
+        **raw_result,
+        "ats_score": {
+            "overall_score": max(0, min(100, overall)),
+            "formatting_score": max(0, min(100, formatting)),
+            "formatting_explanation": (
+                raw_result.get("ats_score", {}).get("formatting_explanation")
+                if isinstance(raw_result.get("ats_score"), dict)
+                else None
+            ),
+            "keywords_score": max(0, min(100, keywords)),
+            "keywords_explanation": (
+                raw_result.get("ats_score", {}).get("keywords_explanation")
+                if isinstance(raw_result.get("ats_score"), dict)
+                else None
+            ),
+            "structure_score": max(0, min(100, structure)),
+            "structure_explanation": (
+                raw_result.get("ats_score", {}).get("structure_explanation")
+                if isinstance(raw_result.get("ats_score"), dict)
+                else None
+            ),
+            "readability_score": max(0, min(100, readability)),
+            "readability_explanation": (
+                raw_result.get("ats_score", {}).get("readability_explanation")
+                if isinstance(raw_result.get("ats_score"), dict)
+                else None
+            ),
+        },
+        "strengths": raw_result.get("strengths") or [],
+        "improvements": raw_result.get("improvements") or raw_result.get("weaknesses") or [],
+        "missing_sections": raw_result.get("missing_sections") or [],
+        "keywords_found": raw_result.get("keywords_found") or [],
+        "keywords_missing": raw_result.get("keywords_missing") or [],
+        "suggested_job_titles": (
+            raw_result.get("suggested_job_titles")
+            or raw_result.get("recommended_job_titles")
+            or []
+        ),
+    }
+
 # ============================================
 # SUPABASE CLIENT
 # ============================================
@@ -436,6 +537,8 @@ async def get_cv_analysis_status(
 
         data = response.data
 
+        normalized_result = _normalize_analysis_result(data.get("result")) if data.get("result") else None
+
         # Calculate processing time if completed
         processing_time = None
         if data.get("completed_at") and data.get("created_at"):
@@ -446,7 +549,7 @@ async def get_cv_analysis_status(
         return {
             "cv_id": cv_id,
             "status": data["status"],
-            "result": data.get("result"),
+            "result": normalized_result,
             "error": data.get("error_message"),
             "created_at": data["created_at"],
             "completed_at": data.get("completed_at"),
@@ -502,8 +605,14 @@ async def list_user_cv_analyses(
                 processing_time = (completed - created).total_seconds()
 
             # Extract summary fields from result JSON for history display
-            result_data = row.get("result") or {}
-            ats_score = result_data.get("ats_score") or {}
+            result_data = _normalize_analysis_result(row.get("result"))
+            
+            # Defensive score extraction (handles both old dict and new int formats)
+            ats_score_raw = result_data.get("ats_score")
+            if isinstance(ats_score_raw, dict):
+                score_val = ats_score_raw.get("total") or ats_score_raw.get("overall_score")
+            else:
+                score_val = ats_score_raw
 
             analyses.append({
                 "cv_id": row["id"],
@@ -513,7 +622,7 @@ async def list_user_cv_analyses(
                 "processing_time_seconds": processing_time,
                 "has_result": bool(result_data),
                 # Summary fields for history drawer display
-                "score": ats_score.get("overall_score"),
+                "score": score_val,
                 "strengths": result_data.get("strengths", []),
                 "weaknesses": result_data.get("improvements", result_data.get("weaknesses", [])),
                 "suggestions": [],
