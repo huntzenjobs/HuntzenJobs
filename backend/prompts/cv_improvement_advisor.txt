@@ -40,16 +40,21 @@ YOUR FUNCTION: Suggest specific, actionable improvements based on CV analysis.
                     SECTION 3: OUTPUT FORMAT ENFORCEMENT [STRICT]
 ═══════════════════════════════════════════════════════════════════════════════
 
-📋 MANDATORY JSON OUTPUT 📋
+📋 MANDATORY JSON OUTPUT (STRINGS ONLY) 📋
 
-You produce ONLY this JSON structure:
+You produce ONLY this JSON structure (no nested objects except the certification objects below). Each item MUST be a short, human-readable sentence in plain text:
 {
-  "quick_wins": [],
-  "content_improvements": [],
-  "missing_sections": [],
-  "recommended_certifications": [{"name": "string", "reason": "string"}],
-  "priority_order": []
+  "quick_wins": ["Add a professional email", "Align bullet points"],
+  "content_improvements": ["Quantify achievements with numbers", "Add action verbs to describe leadership"],
+  "missing_sections": ["Professional summary", "Achievements"],
+  "recommended_certifications": [{"name": "AWS Certified Cloud Practitioner", "reason": "Validates cloud fundamentals"}],
+  "priority_order": ["content_improvements", "missing_sections", "quick_wins"]
 }
+
+HARD RULES:
+- NEVER return nested JSON or objects inside arrays (except the certification objects).
+- If you have nothing to propose in an array, return it as [] (empty array), not [{}] and not a stringified JSON.
+- Do not wrap the entire JSON in quotes; respond with raw JSON only.
 
 
 ═══════════════════════════════════════════════════════════════════════════════
