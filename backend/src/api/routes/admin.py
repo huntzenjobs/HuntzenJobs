@@ -1960,6 +1960,24 @@ async def update_recruiter_request_status(
     return result.data[0]
 
 
+@router.delete("/recruiter-requests/{request_id}")
+async def delete_recruiter_request(
+    request_id: str,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Delete a recruiter consultation request."""
+    supabase = get_supabase_client()
+    supabase.table("recruiter_requests").delete().eq("id", request_id).execute()
+    _log_admin_action(
+        supabase,
+        admin["id"],
+        "admin.recruiter_request_deleted",
+        None,
+        {"request_id": request_id},
+    )
+    return {"success": True}
+
+
 # ============================================================
 # WEBHOOK FAILURE RESOLUTION
 # ============================================================
