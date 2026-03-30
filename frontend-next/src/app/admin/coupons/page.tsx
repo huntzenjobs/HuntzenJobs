@@ -1,27 +1,5 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +10,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tag, Plus, Trash2, RefreshCw, Gift } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { createClient } from "@/lib/supabase/client";
+import { Gift, Plus, RefreshCw, Tag, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -124,12 +124,12 @@ export default function CouponsPage() {
   const [promoForm, setPromoForm] = useState({
     code: "",
     description: "",
-    discount_type: "percent",
+    discount_type: "free_days", // toujours jours gratuits
     discount_value: "",
     plan: "",
     stripe_coupon_id: "",
     max_uses: "",
-    expires_at: "",
+    validity_days: "",
     campaign: "",
   });
 
@@ -279,8 +279,14 @@ export default function CouponsPage() {
       if (promoForm.stripe_coupon_id)
         body.stripe_coupon_id = promoForm.stripe_coupon_id;
       if (promoForm.max_uses) body.max_uses = parseInt(promoForm.max_uses);
-      if (promoForm.expires_at)
-        body.expires_at = new Date(promoForm.expires_at).toISOString();
+      const validityDays = parseInt(promoForm.validity_days || "0", 10);
+      if (!Number.isNaN(validityDays) && validityDays > 0) {
+        const now = new Date();
+        const expires = new Date(
+          now.getTime() + validityDays * 24 * 60 * 60 * 1000,
+        );
+        body.expires_at = expires.toISOString();
+      }
       if (promoForm.campaign) body.campaign = promoForm.campaign;
 
       await adminFetch("/api/admin/promo-codes", {
@@ -292,12 +298,12 @@ export default function CouponsPage() {
       setPromoForm({
         code: "",
         description: "",
-        discount_type: "percent",
+        discount_type: "free_days",
         discount_value: "",
         plan: "",
         stripe_coupon_id: "",
         max_uses: "",
-        expires_at: "",
+        validity_days: "",
         campaign: "",
       });
       loadPromos();
@@ -513,6 +519,9 @@ export default function CouponsPage() {
                   Campagne
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  Expire le
+                </th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">
                   Statut
                 </th>
                 <th className="px-4 py-3" />
@@ -522,7 +531,7 @@ export default function CouponsPage() {
               {promoLoading ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-8 text-center text-muted-foreground"
                   >
                     Chargement...
@@ -531,7 +540,7 @@ export default function CouponsPage() {
               ) : promoCodes.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-8 text-center text-muted-foreground"
                   >
                     Aucun code promo.
@@ -564,6 +573,9 @@ export default function CouponsPage() {
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {p.campaign || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {p.expires_at ? formatDate(p.expires_at) : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <Badge
@@ -822,24 +834,10 @@ export default function CouponsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Type</Label>
-                <Select
-                  value={promoForm.discount_type}
-                  onValueChange={(v) =>
-                    setPromoForm((f) => ({ ...f, discount_type: v }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percent">Pourcentage (%)</SelectItem>
-                    <SelectItem value="free_days">Jours gratuits</SelectItem>
-                    <SelectItem value="fixed_amount">Montant fixe</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input value="Jours gratuits" disabled className="bg-muted" />
               </div>
               <div className="space-y-1.5">
-                <Label>Valeur</Label>
+                <Label>Nombre de jours offerts</Label>
                 <Input
                   type="number"
                   placeholder="20"
@@ -910,12 +908,16 @@ export default function CouponsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Expiration</Label>
+                <Label>Validité du code (jours, optionnel)</Label>
                 <Input
-                  type="date"
-                  value={promoForm.expires_at}
+                  type="number"
+                  placeholder="30"
+                  value={promoForm.validity_days}
                   onChange={(e) =>
-                    setPromoForm((f) => ({ ...f, expires_at: e.target.value }))
+                    setPromoForm((f) => ({
+                      ...f,
+                      validity_days: e.target.value,
+                    }))
                   }
                 />
               </div>

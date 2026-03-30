@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
 import {
-  Search,
-  Download,
+  Briefcase,
   Calendar,
   CheckCircle2,
-  XCircle,
   Clock,
-  User,
+  Download,
+  Euro,
   Mail,
   Phone,
-  Briefcase,
-  Euro,
+  Search,
+  Trash2,
+  User,
+  XCircle,
 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -140,6 +141,28 @@ export default function RecruiterRequestsAdminPage() {
       }
     } catch (error) {
       toast.error("Erreur lors de la mise à jour du statut");
+    }
+  };
+
+  const deleteRequest = async (requestId: string) => {
+    if (
+      !window.confirm(
+        "Supprimer définitivement cette demande de consultation ? Cette action est irréversible.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await adminFetch(`/api/admin/recruiter-requests/${requestId}`, {
+        method: "DELETE",
+      });
+      toast.success("Demande supprimée");
+      setSelectedRequest((prev) =>
+        prev && prev.id === requestId ? null : prev,
+      );
+      await fetchRequests();
+    } catch (error) {
+      toast.error("Erreur lors de la suppression de la demande");
     }
   };
 
@@ -426,24 +449,38 @@ export default function RecruiterRequestsAdminPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <select
-                          value={request.status}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            updateRequestStatus(
-                              request.id,
-                              e.target.value as RequestStatus,
-                            );
-                          }}
-                          className="px-2 py-1 text-xs bg-card border rounded text-foreground focus:outline-none focus:border-primary"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <option value="new">Nouveau</option>
-                          <option value="assigned">Assigné</option>
-                          <option value="scheduled">Planifié</option>
-                          <option value="completed">Complété</option>
-                          <option value="cancelled">Annulé</option>
-                        </select>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={request.status}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              updateRequestStatus(
+                                request.id,
+                                e.target.value as RequestStatus,
+                              );
+                            }}
+                            className="px-2 py-1 text-xs bg-card border rounded text-foreground focus:outline-none focus:border-primary"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <option value="new">Nouveau</option>
+                            <option value="assigned">Assigné</option>
+                            <option value="scheduled">Planifié</option>
+                            <option value="completed">Complété</option>
+                            <option value="cancelled">Annulé</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteRequest(request.id);
+                            }}
+                            className="p-1 rounded-md text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                            aria-label="Supprimer la demande"
+                            title="Supprimer la demande"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -462,12 +499,20 @@ export default function RecruiterRequestsAdminPage() {
                   <h2 className="text-2xl font-bold text-foreground">
                     Détails de la demande
                   </h2>
-                  <button
-                    onClick={() => setSelectedRequest(null)}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <XCircle className="w-6 h-6" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => deleteRequest(selectedRequest.id)}
+                      className="px-3 py-1.5 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                    >
+                      Supprimer
+                    </button>
+                    <button
+                      onClick={() => setSelectedRequest(null)}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <XCircle className="w-6 h-6" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-6">
