@@ -418,7 +418,8 @@
     },
     "badges": {
       "new": "Novo",
-      "recruiterPrice": "50€"
+      "recruiterPrice": "50€",
+      "soon": "Em breve"
     },
     "aria": {
       "close": "Fechar o menu de navegação",

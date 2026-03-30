@@ -312,11 +312,7 @@
           "PDF export",
           "Advanced filters"
         ],
-        "unavailable": [
-          "Email alerts",
-          "CV History",
-          "Interview simulation"
-        ]
+        "unavailable": ["Email alerts", "CV History", "Interview simulation"]
       },
       "starter": {
         "name": "ACTIVE SEARCH",
@@ -334,10 +330,7 @@
           "Advanced filters",
           "CV History"
         ],
-        "unavailable": [
-          "Interview simulation",
-          "Email alerts"
-        ]
+        "unavailable": ["Interview simulation", "Email alerts"]
       },
       "pro": {
         "name": "ACCELERATOR",
@@ -417,8 +410,10 @@
     },
     "badges": {
       "new": "New",
-      "recruiterPrice": "€50"
+      "recruiterPrice": "€50",
+      "soon": "Coming soon"
     },
+    "soonMessage": "This feature is coming soon 🚀",
     "aria": {
       "close": "Close navigation menu",
       "open": "Open navigation menu",
