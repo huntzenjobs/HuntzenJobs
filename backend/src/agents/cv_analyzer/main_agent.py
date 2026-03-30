@@ -144,6 +144,48 @@ class CVAnalyzerAgent(BaseAgent):
             Complete analysis results
         """
         try:
+            # ── BASIC GUARD: reject non-CV or too-short content ─────────────────
+            minimal_len = 500
+            cv_lower = (cv_text or "").lower()
+            cv_keywords = [
+                "experience",
+                "expérience",
+                "work",
+                "emploi",
+                "employment",
+                "education",
+                "formation",
+                "skills",
+                "compétence",
+            ]
+
+            if len(cv_lower) < minimal_len or not any(k in cv_lower for k in cv_keywords):
+                msg = "Document non reconnu comme CV (texte trop court ou sections clés absentes)."
+                return {
+                    "success": False,
+                    "error": msg,
+                    "ats_score": 0,
+                    "overall_score": 0,
+                    "ats_details": {
+                        "total": 0,
+                        "overall_score": 0,
+                        "format_score": 0,
+                        "keywords_score": 0,
+                        "experience_score": 0,
+                        "skills_score": 0,
+                        "education_score": 0,
+                    },
+                    "skills": {},
+                    "improvements": {"content_improvements": [msg]},
+                    "cv_info": {},
+                    "job_match": None,
+                    "job_match_score": None,
+                    "verdict": msg,
+                    "strengths": [],
+                    "weaknesses": [msg],
+                    "recommended_job_titles": [],
+                }
+
             # Détecter si le CV vient du pipeline HuntZen
             is_huntzen_optimized = bool(cv_text) and any(marker in cv_text for marker in HUNTZEN_CV_MARKERS)
 
