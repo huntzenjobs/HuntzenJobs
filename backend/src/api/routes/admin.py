@@ -4020,11 +4020,39 @@ async def update_promo_code(promo_id: str, body: UpdatePromoCodeRequest, admin: 
 async def delete_promo_code(promo_id: str, admin: AdminUserDep) -> dict[str, Any]:
     """Delete a promo code."""
     supabase = get_supabase_client()
+    # Ne pas autoriser la suppression si le code a deja ete utilise
+    try:
+        links = (
+            supabase.table("user_promo_codes")
+            .select("id")
+            .eq("promo_code_id", promo_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as e:
+        logger.error(f"Failed to check user_promo_codes for promo {promo_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de la verification des utilisations du code promo.",
+        ) from None
+
+    if links.data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Impossible de supprimer ce code promo car il a deja ete utilise par au moins un utilisateur.",
+        )
+
     supabase.table("promo_codes").delete().eq("id", promo_id).execute()
 
-    _log_admin_action(supabase, admin["id"], "admin.promo_code_deleted", None, {
-        "promo_id": promo_id,
-    })
+    _log_admin_action(
+        supabase,
+        admin["id"],
+        "admin.promo_code_deleted",
+        None,
+        {
+            "promo_id": promo_id,
+        },
+    )
 
     return {"success": True}
 
