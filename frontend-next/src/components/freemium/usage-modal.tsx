@@ -181,6 +181,9 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
   const assistantMessagesUsed = usage?.assistantMessagesUsedToday ?? 0;
   const assistantMessagesLimit = limits.assistant_messages_per_day;
 
+  const cvAdaptsUsed = usage?.cvAdaptsUsedToday ?? 0;
+  const cvAdaptsLimit = limits.cv_adapt_per_day;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
@@ -291,12 +294,12 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 t={t}
               />
 
-              {/* Custom CVs */}
+              {/* CV Adaptation (Personalization) */}
               <QuotaCard
-                title={t("customCv")}
+                title={t("cvAdapt")}
                 icon={<FileText className="w-4 h-4 text-white" />}
-                used={usage?.customCvsUsedToday || 0}
-                limit={limits.custom_cvs_per_day}
+                used={cvAdaptsUsed}
+                limit={cvAdaptsLimit}
                 color="bg-purple-500"
                 t={t}
               />
@@ -334,7 +337,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 title={t("savedJobs")}
                 icon={<Bookmark className="w-4 h-4 text-white" />}
                 used={usage?.savedJobsCount || 0}
-                limit={limits.max_saved_jobs}
+                limit={limits.saved_jobs_per_day}
                 color="bg-amber-500"
                 t={t}
               />

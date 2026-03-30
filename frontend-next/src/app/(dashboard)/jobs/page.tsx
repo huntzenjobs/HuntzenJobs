@@ -614,20 +614,20 @@ export default function JobsPage() {
   const generateSearchHash = useCallback((params: SearchParams | null, filters: AdvancedFilters) => {
     if (!params) return "";
     
-    // Create a clean, sorted object
+    // Create a clean, alphabetically sorted object for deterministic hashing
     const cleanObject = {
-      q: params.query?.trim().toLowerCase() || "",
+      companySize: filters.companySize?.toLowerCase() || "",
+      contracts: [...(params.contractTypes || [])].map(c => typeof c === 'string' ? c.toLowerCase() : (c as any).id || (c as any).value || String(c)).sort(),
       country: params.country?.toLowerCase() || "",
-      location: params.location?.toLowerCase() || "",
-      industries: [...(filters.industries || [])].sort(),
-      keywords: [...(filters.keywords || [])].sort(),
-      experience: filters.experienceLevel || "",
-      salaryMin: filters.salaryMin || 0,
-      salaryMax: filters.salaryMax || 0,
-      companySize: filters.companySize || "",
-      contracts: [...(params.contractTypes || [])].map(c => typeof c === 'string' ? c : (c as any).id || (c as any).value || String(c)).sort(),
       days: quickFilters.maxDays || 0,
-      remote: params.includeRemote || false
+      experience: filters.experienceLevel?.toLowerCase() || "",
+      industries: [...(filters.industries || [])].map(i => i.toLowerCase()).sort(),
+      keywords: [...(filters.keywords || [])].map(k => k.toLowerCase()).sort(),
+      location: params.location?.toLowerCase() || "",
+      q: params.query?.trim().toLowerCase() || "",
+      remote: params.includeRemote ?? true, // Consistent default
+      salaryMax: filters.salaryMax || 0,
+      salaryMin: filters.salaryMin || 0
     };
     
     return JSON.stringify(cleanObject);
@@ -684,6 +684,9 @@ export default function JobsPage() {
       ...(companySize ? { companySize } : {}),
     };
 
+    const remoteParam = searchParams.get("remote");
+    const initialIncludeRemote = remoteParam !== null ? remoteParam === "true" : undefined;
+
     // Try to restore from localStorage (works even without URL params)
     try {
       const raw = localStorage.getItem("huntzen_jobs_cache");
@@ -725,11 +728,15 @@ export default function JobsPage() {
         }
         setAdvancedFilters(restoreFilters);
         setJobs(cachedJobs);
+        const restoreIncludeRemote = initialIncludeRemote !== undefined ? initialIncludeRemote : (query.includeRemote !== undefined ? query.includeRemote : true);
+
         setJobSearchParams({
           query: restoreTitle,
           country: restoreCountry || "",
           location: restoreCity || "",
           contractTypes: restoreContractTypes.map((c: any) => typeof c === 'string' ? c : (c as any).id || (c as any).value),
+          includeRemote: restoreIncludeRemote,
+          fromHistory: true, // Mark as restoration to avoid re-billing
         });
         // Sync URL if it was missing params
         if (!q) {
@@ -821,8 +828,10 @@ export default function JobsPage() {
       }
     },
     enabled: !!jobSearchParams,
-    staleTime: 1000 * 60 * 30, // 30 min — results stay fresh
+    staleTime: 1000 * 60 * 5, // 5 min — avoid redundant identical searches
     gcTime: 1000 * 60 * 60, // 1h — keep in memory for back navigation
+    refetchOnWindowFocus: false, // CRITICAL: Prevent billing on focus
+    refetchOnReconnect: false, // Prevent billing on reconnect
     retry: (failureCount, error) =>
       !isQuotaExceededError(error) && failureCount < 1,
   });
@@ -867,7 +876,9 @@ export default function JobsPage() {
 
       // If we reach here, it's a genuinely new search
       console.log("[QUOTA] Incrementing job_search quota for hash:", billedHash);
-      incrementUsage("job_search");
+      // NO MORE MANUAL INCREMENT HERE — backend handles it automatically in the /search route.
+      // We just refetch to sync the UI limits.
+      refreshQuotas();
       hasIncrementedQuotaRef.current = true;
       lastFetchTimeRef.current = searchQuery.dataUpdatedAt;
 
@@ -901,6 +912,7 @@ export default function JobsPage() {
               jobTitle: jobSearchParams?.query || "",
               selectedCountry: jobSearchParams?.country || "",
               selectedCity: jobSearchParams?.location || "",
+              includeRemote: jobSearchParams?.includeRemote ?? true,
             },
             timestamp: Date.now(),
           }),
@@ -926,6 +938,9 @@ export default function JobsPage() {
     if (params.query) urlParams.set("q", params.query);
     if (params.country) urlParams.set("country", params.country);
     if (params.location) urlParams.set("city", params.location);
+    if (params.includeRemote !== undefined) {
+      urlParams.set("remote", params.includeRemote ? "true" : "false");
+    }
     router.replace(`/jobs?${urlParams.toString()}`, { scroll: false });
 
     // Save to search history (last 5, deduplicated)
@@ -1325,10 +1340,11 @@ export default function JobsPage() {
         >
           {featureFlags.useJobsV2 ? (
             <SearchFormInline
+              initialQuery={jobTitle || popularQuery}
+              initialIncludeRemote={jobSearchParams?.includeRemote}
               onSearch={handleSearch}
               isLoading={searchQuery.isFetching}
               disabled={false}
-              initialQuery={popularQuery}
             />
           ) : (
             <Card className="shadow-sm border-2 border-slate-200 bg-white">

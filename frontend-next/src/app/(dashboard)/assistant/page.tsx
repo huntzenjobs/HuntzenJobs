@@ -135,6 +135,7 @@ export default function AssistantPage() {
     openPricingModal,
     isFreePlan,
     incrementUsage,
+    refreshQuotas,
   } = useSubscription();
 
   // History state
@@ -285,7 +286,9 @@ export default function AssistantPage() {
       setQueueState(null);
 
       // Incrémenter le quota assistant_messages après message réussi
-      incrementUsage("assistant_messages");
+      // QUOTA: Le backend (assistant.py) incrémente déjà le quota assistant_messages.
+      // On se contente de rafraîchir les limites locales pour l'UI.
+      refreshQuotas();
     } catch (error) {
       const errorMessage: ChatMessageType = {
         id: uuidv4(),

@@ -103,6 +103,7 @@ interface SearchFormInlineProps {
   isLoading?: boolean;
   disabled?: boolean;
   initialQuery?: string;
+  initialIncludeRemote?: boolean;
 }
 
 export interface SearchParams {
@@ -122,6 +123,7 @@ export function SearchFormInline({
   isLoading = false,
   disabled = false,
   initialQuery,
+  initialIncludeRemote = true,
 }: SearchFormInlineProps) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [location, setLocation] = useState("");
@@ -133,7 +135,7 @@ export function SearchFormInline({
   const [selectedWorkSchedule, setSelectedWorkSchedule] = useState<string[]>(
     [],
   );
-  const [includeRemote, setIncludeRemote] = useState(true);
+  const [includeRemote, setIncludeRemote] = useState(initialIncludeRemote);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const t = useTranslations("searchForm");
@@ -279,12 +281,18 @@ export function SearchFormInline({
     setErrors({});
   };
 
-  // Sync initialQuery prop
+  // Sync initialQuery and initialIncludeRemote props
   useEffect(() => {
     if (initialQuery !== undefined && initialQuery !== "") {
       setQuery(initialQuery);
     }
   }, [initialQuery]);
+
+  useEffect(() => {
+    if (initialIncludeRemote !== undefined) {
+      setIncludeRemote(initialIncludeRemote);
+    }
+  }, [initialIncludeRemote]);
 
   // Clear errors when user types or selects filters
   useEffect(() => {

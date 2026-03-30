@@ -236,7 +236,6 @@ async def adapt_cv(
 
     Returns structured CV data with match analysis.
     """
-    # Check and increment cv_adapt quota
     user_id = get_user_id_from_token(authorization)
     if user_id:
         await _check_and_increment_quota(user_id, "cv_adapt")
@@ -334,7 +333,6 @@ async def adapt_cv_to_pdf(
 
     Returns a downloadable PDF file with the adapted CV.
     """
-    # Check and increment cv_adapt quota (same as /adapt)
     user_id = get_user_id_from_token(authorization)
     if user_id:
         await _check_and_increment_quota(user_id, "cv_adapt")
@@ -417,12 +415,17 @@ async def adapt_cv_from_file(
     language: str = Form(default="en"),
     template: str = Form(default="ats"),
     output_format: str = Form(default="json", description="Output: json or pdf"),
+    authorization: str | None = Header(default=None),
 ):
     """
     Upload CV file and adapt it to a job offer.
 
     Supports PDF and DOCX formats.
     """
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        await _check_and_increment_quota(user_id, "cv_adapt")
+
     from src.api.deps import get_cv_analyzer_main
 
     # Validate file
@@ -557,12 +560,17 @@ async def quick_adapt_cv(
     cv_text: str = Form(...),
     job_description: str = Form(...),
     language: str = Form(default="en"),
+    authorization: str | None = Header(default=None),
 ):
     """
     Quick CV adaptation without full fact-checking.
 
     Faster but less thorough. Good for previews.
     """
+    user_id = get_user_id_from_token(authorization)
+    if user_id:
+        await _check_and_increment_quota(user_id, "cv_adapt")
+
     agent = get_adapter_agent()
 
     result = await agent.quick_adapt(

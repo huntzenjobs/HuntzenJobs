@@ -1,27 +1,27 @@
 "use client";
 
+import { SubscriptionChangedModal } from "@/components/freemium/subscription-changed-modal";
+import { useOptionalAssistant } from "@/contexts/assistant-context";
+import { useOptionalAuth } from "@/contexts/auth-context";
 import {
-  createContext,
-  useContext,
-  ReactNode,
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from "react";
-import {
-  useFreemiumLimits,
-  PlanType,
   FeatureType,
   PLAN_LIMITS,
+  PlanType,
+  useFreemiumLimits,
 } from "@/hooks/use-freemium-limits";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
-import { useOptionalAuth } from "@/contexts/auth-context";
-import { useOptionalAssistant } from "@/contexts/assistant-context";
-import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { SubscriptionChangedModal } from "@/components/freemium/subscription-changed-modal";
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { toast } from "sonner";
 
 type PlanLimits = (typeof PLAN_LIMITS)[PlanType];
 
@@ -39,12 +39,12 @@ interface SubscriptionContextType {
   usage: {
     searchesToday: number;
     jobsViewedToday: number;
-    cvAnalysesToday: number; // Legacy
     atsScoresUsedToday: number;
     matchingScoresUsedToday: number;
-    customCvsUsedToday: number;
     assistantMessagesUsedToday: number;
     savedJobsCount: number;
+    cvAdaptsUsedToday: number;
+    coverLettersUsedToday: number;
     lastResetDate: string;
   };
 
@@ -99,6 +99,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   // NEW: Fetch subscription data from backend API
   const apiData = useSubscriptionApi();
+  const userId = auth?.user?.id;
 
   // KEEP: Local state for setPlan() and coach session until Stripe integration
   // Scoped by userId to prevent cross-user quota leakage
@@ -262,44 +263,75 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       "job_search",
       "ats_score",
       "matching_score",
-      "custom_cv",
       "assistant_messages",
-      "saved_jobs"
+      "saved_jobs",
+      "cv_adapt",
+      "cover_letter",
+      "recruiter_search",
     ];
 
-    trackedFeatures.forEach(feature => {
+    trackedFeatures.forEach((feature) => {
       let q = (apiData.quotas as any)[feature];
       if (!q) return;
 
       // Find local usage value
       let localUsed = 0;
-      switch(feature) {
-        case "job_search": localUsed = freemium.usage.searchesToday; break;
-        case "saved_jobs": localUsed = freemium.usage.savedJobsCount; break;
-        case "ats_score": localUsed = freemium.usage.atsScoresUsedToday; break;
-        case "matching_score": localUsed = freemium.usage.matchingScoresUsedToday; break;
-        case "custom_cv": localUsed = freemium.usage.customCvsUsedToday; break;
-        case "assistant_messages": localUsed = freemium.usage.assistantMessagesUsedToday; break;
-        case "cv_adapt": localUsed = freemium.usage.cvAdaptsUsedToday; break;
-        case "cover_letter": localUsed = freemium.usage.coverLettersUsedToday; break;
-        case "recruiter_search": localUsed = freemium.usage.recruiterSearchesUsedToday; break;
+      switch (feature) {
+        case "job_search":
+          localUsed = freemium.usage.searchesToday;
+          break;
+        case "saved_jobs":
+          localUsed = freemium.usage.savedJobsCount;
+          break;
+        case "ats_score":
+          localUsed = freemium.usage.atsScoresUsedToday;
+          break;
+        case "matching_score":
+          localUsed = freemium.usage.matchingScoresUsedToday;
+          break;
+        case "assistant_messages":
+          localUsed = freemium.usage.assistantMessagesUsedToday;
+          break;
+        case "cv_adapt":
+          localUsed = freemium.usage.cvAdaptsUsedToday;
+          break;
+        case "cover_letter":
+          localUsed = freemium.usage.coverLettersUsedToday;
+          break;
+        case "recruiter_search":
+          localUsed = freemium.usage.recruiterSearchesUsedToday;
+          break;
       }
-        
+
       if (q.used === 0 && localUsed > 0) {
         // API shows reset, but we have local usage
-        // Check if we JUST incremented this locally (5 minutes protection window)
-        const lastIncrement = freemium.usage.lastIncrementTimestamps?.[feature] || 0;
+        // Check if we JUST incremented this locally (short protection window)
+        const lastIncrement =
+          freemium.usage.lastIncrementTimestamps?.[feature] || 0;
         const timeSinceIncrement = Date.now() - lastIncrement;
-        
-        if (timeSinceIncrement > 300000) { // 5 minutes protection
-          console.log(`[SUBSCRIPTION] Sync: Resetting local usage for ${feature} (API is 0 and no recent local increment)`);
+
+        // Use a small window (5 seconds) to avoid fighting with in-flight requests,
+        // but allow admin/daily resets to propagate quickly.
+        if (timeSinceIncrement > 5000) {
+          console.log(
+            `[SUBSCRIPTION] Sync: Resetting local usage for ${feature} (API is 0 and no recent local increment)`,
+          );
           freemium.resetUsage(feature);
         }
-      } else if (q.used > localUsed) {
-        // API is ahead of local state
-        // We sync local state UP to match API
-        console.log(`[SUBSCRIPTION] Sync: Updating local usage for ${feature} from API (${localUsed} -> ${q.used})`);
-        freemium.syncUsage(feature, q.used);
+      } else if (q.used !== localUsed) {
+        // API differs from local state (usually we sync UP, but we must also heal DOWN)
+        // Check if we JUST incremented this locally (5 seconds protection window for in-flight requests)
+        const lastIncrement =
+          freemium.usage.lastIncrementTimestamps?.[feature] || 0;
+        const timeSinceIncrement = Date.now() - lastIncrement;
+
+        if (timeSinceIncrement > 5000 || q.used > localUsed) {
+          // Sync local state down if bugged, up if API is ahead
+          console.log(
+            `[SUBSCRIPTION] Sync: Correcting local usage for ${feature} from API (${localUsed} -> ${q.used})`,
+          );
+          freemium.syncUsage(feature, q.used);
+        }
       }
     });
   }, [apiData.quotas, freemium.usage]);
@@ -328,16 +360,43 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     return {
       ...baseLimits,
       // Override with API data if available, otherwise use hardcoded defaults
-      job_searches_per_day: apiData.quotas.job_search?.limit === -1 ? Infinity : apiData.quotas.job_search?.limit ?? baseLimits.job_searches_per_day,
-      ats_scores_per_day: apiData.quotas.ats_score?.limit === -1 ? Infinity : apiData.quotas.ats_score?.limit ?? baseLimits.ats_scores_per_day,
-      matching_scores_per_day: apiData.quotas.matching_score?.limit === -1 ? Infinity : apiData.quotas.matching_score?.limit ?? baseLimits.matching_scores_per_day,
-      custom_cvs_per_day: apiData.quotas.custom_cv?.limit === -1 ? Infinity : apiData.quotas.custom_cv?.limit ?? baseLimits.custom_cvs_per_day,
-      max_saved_jobs: apiData.quotas.saved_jobs?.limit === -1 ? Infinity : apiData.quotas.saved_jobs?.limit ?? baseLimits.max_saved_jobs,
-      cv_analyses_per_day: apiData.quotas.cv_analysis?.limit === -1 ? Infinity : apiData.quotas.cv_analysis?.limit ?? baseLimits.cv_analyses_per_day,
-      assistant_messages_per_day: apiData.quotas.assistant_messages?.limit === -1 ? Infinity : apiData.quotas.assistant_messages?.limit ?? baseLimits.assistant_messages_per_day,
-      recruiter_searches_per_day: apiData.quotas.recruiter_search?.limit === -1 ? Infinity : apiData.quotas.recruiter_search?.limit ?? baseLimits.recruiter_searches_per_day,
-      cv_adapt_per_day: apiData.quotas.cv_adapt?.limit === -1 ? Infinity : apiData.quotas.cv_adapt?.limit ?? baseLimits.cv_adapt_per_day,
-      cover_letter_per_day: apiData.quotas.cover_letter?.limit === -1 ? Infinity : apiData.quotas.cover_letter?.limit ?? baseLimits.cover_letter_per_day,
+      job_searches_per_day:
+        apiData.quotas.job_search?.limit === -1
+          ? Infinity
+          : (apiData.quotas.job_search?.limit ??
+            baseLimits.job_searches_per_day),
+      ats_scores_per_day:
+        apiData.quotas.ats_score?.limit === -1
+          ? Infinity
+          : (apiData.quotas.ats_score?.limit ?? baseLimits.ats_scores_per_day),
+      matching_scores_per_day:
+        apiData.quotas.matching_score?.limit === -1
+          ? Infinity
+          : (apiData.quotas.matching_score?.limit ??
+            baseLimits.matching_scores_per_day),
+      saved_jobs_per_day:
+        apiData.quotas.saved_jobs?.limit === -1
+          ? Infinity
+          : (apiData.quotas.saved_jobs?.limit ?? baseLimits.saved_jobs_per_day),
+      assistant_messages_per_day:
+        apiData.quotas.assistant_messages?.limit === -1
+          ? Infinity
+          : (apiData.quotas.assistant_messages?.limit ??
+            baseLimits.assistant_messages_per_day),
+      recruiter_searches_per_day:
+        apiData.quotas.recruiter_search?.limit === -1
+          ? Infinity
+          : (apiData.quotas.recruiter_search?.limit ??
+            baseLimits.recruiter_searches_per_day),
+      cv_adapt_per_day:
+        apiData.quotas.cv_adapt?.limit === -1
+          ? Infinity
+          : (apiData.quotas.cv_adapt?.limit ?? baseLimits.cv_adapt_per_day),
+      cover_letter_per_day:
+        apiData.quotas.cover_letter?.limit === -1
+          ? Infinity
+          : (apiData.quotas.cover_letter?.limit ??
+            baseLimits.cover_letter_per_day),
     } as PlanLimits;
   }, [apiData.quotas, plan]);
 
@@ -345,54 +404,73 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const usageFromApi = useMemo(
     () => ({
       // Use the higher value between API and local for EACH feature to ensure conservative tracking
-      searchesToday: Math.max(apiData.quotas?.job_search?.used ?? 0, freemium.usage.searchesToday),
-      cvAnalysesToday: apiData.quotas?.cv_analysis?.used ?? 0, // Keep separate if available, otherwise 0
-      atsScoresUsedToday: Math.max(apiData.quotas?.ats_score?.used ?? 0, freemium.usage.atsScoresUsedToday),
-      matchingScoresUsedToday: Math.max(apiData.quotas?.matching_score?.used ?? 0, freemium.usage.matchingScoresUsedToday),
-      customCvsUsedToday: Math.max(apiData.quotas?.custom_cv?.used ?? 0, freemium.usage.customCvsUsedToday),
-      assistantMessagesUsedToday: Math.max(apiData.quotas?.assistant_messages?.used ?? 0, freemium.usage.assistantMessagesUsedToday),
+      searchesToday: Math.max(
+        apiData.quotas?.job_search?.used ?? 0,
+        freemium.usage.searchesToday,
+      ),
+      atsScoresUsedToday: Math.max(
+        apiData.quotas?.ats_score?.used ?? 0,
+        freemium.usage.atsScoresUsedToday,
+      ),
+      matchingScoresUsedToday: Math.max(
+        apiData.quotas?.matching_score?.used ?? 0,
+        freemium.usage.matchingScoresUsedToday,
+      ),
+      assistantMessagesUsedToday: Math.max(
+        apiData.quotas?.assistant_messages?.used ?? 0,
+        freemium.usage.assistantMessagesUsedToday,
+      ),
       savedJobsCount: Math.max(
         apiData.quotas?.saved_jobs?.used ?? apiData.saved_jobs_quota?.used ?? 0,
         freemium.usage.savedJobsCount,
       ),
-      cvAdaptsUsedToday: Math.max(apiData.quotas?.cv_adapt?.used ?? 0, freemium.usage.cvAdaptsUsedToday),
-      coverLettersUsedToday: Math.max(apiData.quotas?.cover_letter?.used ?? 0, freemium.usage.coverLettersUsedToday),
-      recruiterSearchesUsedToday: Math.max(apiData.quotas?.recruiter_search?.used ?? 0, freemium.usage.recruiterSearchesUsedToday),
-      jobsViewedToday: apiData.quotas?.job_view?.used ?? freemium.usage.jobsViewedToday,
-      lastResetDate: apiData.quotas?.cv_analysis?.reset_at ?? freemium.usage.lastResetDate,
+      cvAdaptsUsedToday: Math.max(
+        apiData.quotas?.cv_adapt?.used ?? 0,
+        freemium.usage.cvAdaptsUsedToday,
+      ),
+      coverLettersUsedToday: Math.max(
+        apiData.quotas?.cover_letter?.used ?? 0,
+        freemium.usage.coverLettersUsedToday,
+      ),
+      recruiterSearchesUsedToday: Math.max(
+        apiData.quotas?.recruiter_search?.used ?? 0,
+        freemium.usage.recruiterSearchesUsedToday,
+      ),
+      jobsViewedToday:
+        apiData.quotas?.job_view?.used ?? freemium.usage.jobsViewedToday,
+      lastResetDate:
+        apiData.quotas?.ats_score?.reset_at ?? freemium.usage.lastResetDate,
     }),
-    [
-      apiData.quotas,
-      freemium.usage,
-    ],
+    [apiData.quotas, freemium.usage],
   );
 
   // canUse helper: Check if user can use a feature based on API quotas + local state
   const canUse = useCallback(
     (feature: FeatureType): boolean => {
-      // Check local optimistic state first (catches immediate post-action state)
+      // 1. Check local optimistic state (fast path for guest/offline)
       const localCanUse = freemium.canUse(feature);
 
+      // 2. If no API data yet, rely on local state
       if (!apiData.quotas) {
-        // API not loaded yet — use local state (conservative)
         return localCanUse;
       }
 
-      // Check API quotas for ALL features with quota tracking
-      const apiCanUse =
-        apiData.quotas[feature as keyof typeof apiData.quotas]
-          ? (apiData.quotas[feature as keyof typeof apiData.quotas] as any).has_access
-          : localCanUse;
-
-      // If API shows used=0, quota was reset overnight — trust API immediately
-      // (local state may not have reset yet if app stayed open across midnight)
+      // 3. Extract API access flag
       const q = apiData.quotas[feature as keyof typeof apiData.quotas];
-      if (q && q.used === 0) return apiCanUse;
+      const apiCanUse = q ? (q as any).has_access : localCanUse;
 
-      // Block if EITHER source says no (most conservative = safest)
+      // 4. IMPORTANT: If user is authenticated and API says YES, trust it.
+      // This allows custom_limits (set in DB) to override local plan defaults.
+      if (userId && apiCanUse) return true;
+
+      // 5. If API says NO and used > 0, trust API (exhausted).
+      // (Exception: if used is 0, it might be a refresh delay, so we check local too)
+      if (userId && !apiCanUse && q && q.used > 0) return false;
+
+      // 6. Default to conservative (both must agree)
       return apiCanUse && localCanUse;
     },
-    [apiData.quotas, freemium, assistantCtx?.selectedAssistant],
+    [apiData.quotas, freemium, userId],
   );
 
   // getRemaining helper: Get remaining quota based on API data for ALL features
@@ -416,11 +494,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
       // Special case: saved_jobs (prefer the most aggressive used count)
       if (feature === "saved_jobs") {
-        const apiUsed = apiData.quotas?.saved_jobs?.used ?? apiData.saved_jobs_quota?.used ?? 0;
+        const apiUsed =
+          apiData.quotas?.saved_jobs?.used ??
+          apiData.saved_jobs_quota?.used ??
+          0;
         const localUsed = freemium.usage.savedJobsCount;
         const mostUsed = Math.max(apiUsed, localUsed);
-        
-        const limit = apiData.saved_jobs_quota?.limit ?? PLAN_LIMITS[plan].max_saved_jobs;
+
+        const limit =
+          apiData.saved_jobs_quota?.limit ??
+          PLAN_LIMITS[plan].saved_jobs_per_day;
         if (limit === Infinity || limit === -1) return Infinity;
         return Math.max(0, limit - mostUsed);
       }
@@ -434,14 +517,24 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       if (limit === -1 || limit === Infinity) return Infinity;
 
       // Use usageFromApi which already incorporates Math.max(api, local)
-      const used = (usageFromApi as any)[
-        feature === "job_search" ? "searchesToday" :
-        feature === "ats_score" ? "atsScoresUsedToday" :
-        feature === "matching_score" ? "matchingScoresUsedToday" :
-        feature === "custom_cv" ? "customCvsUsedToday" :
-        feature === "assistant_messages" ? "assistantMessagesUsedToday" :
-        "cvAnalysesToday" // fallback
-      ] ?? quotaData.used;
+      const used =
+        (usageFromApi as any)[
+          feature === "job_search"
+            ? "searchesToday"
+            : feature === "ats_score"
+              ? "atsScoresUsedToday"
+              : feature === "matching_score"
+                ? "matchingScoresUsedToday"
+                : feature === "cv_adapt"
+                  ? "cvAdaptsUsedToday"
+                  : feature === "cover_letter"
+                    ? "coverLettersUsedToday"
+                    : feature === "assistant_messages"
+                      ? "assistantMessagesUsedToday"
+                      : feature === "recruiter_search"
+                        ? "recruiterSearchesUsedToday"
+                        : "searchesToday" // fallback
+        ] ?? quotaData.used;
 
       return Math.max(0, limit - used);
     },
@@ -531,7 +624,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
       savedJobsUsed: Math.max(
         apiData.quotas?.saved_jobs?.used ?? apiData.saved_jobs_quota?.used ?? 0,
-        freemium.usage.savedJobsCount
+        freemium.usage.savedJobsCount,
       ),
       savedJobsLimit: apiData.saved_jobs_quota?.limit ?? -1,
 
