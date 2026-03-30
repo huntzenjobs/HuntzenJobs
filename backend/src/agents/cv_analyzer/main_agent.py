@@ -268,6 +268,22 @@ class CVAnalyzerAgent(BaseAgent):
             match_total = job_match_result.get("match_score") if job_description else None
             match_verdict = job_match_result.get("verdict", "") if job_description else ""
 
+            # ── SIMPLE CV/JD ALIGNMENT CHECK ──
+            if job_description:
+                jd_words = {w.strip(' ,.;:\n\t').lower() for w in job_description.split() if len(w) > 3}
+                tech_skills = skills_result.get("technical_skills") or []
+                extracted_skills = {str(s).lower() for s in tech_skills if s}
+                overlap = jd_words.intersection(extracted_skills)
+                if not overlap:
+                    msg = (
+                        "CV et offre semblent peu alignés : ajoutez les compétences clés de l'offre "
+                        "(ex: CI/CD, cloud provider, IaC, monitoring, sécurité)."
+                    )
+                    if isinstance(improvements_result, dict):
+                        improvements_result.setdefault("content_improvements", [])
+                        if msg not in improvements_result["content_improvements"]:
+                            improvements_result["content_improvements"].append(msg)
+
             ats_total = min(ats_result.get("total", 0), 100)
             match_total = job_match_result.get("match_score") if job_description else None
             match_verdict = job_match_result.get("verdict", "") if job_description else ""
