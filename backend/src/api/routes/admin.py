@@ -3945,8 +3945,13 @@ async def create_promo_code(body: CreatePromoCodeRequest, admin: AdminUserDep) -
     supabase = get_supabase_client()
 
     # Check code doesn't already exist
-    existing = supabase.table("promo_codes").select("id").eq("code", body.code.upper()).maybe_single().execute()
-    if existing.data:
+    existing_res = (
+        supabase.table("promo_codes")
+        .select("id")
+        .eq("code", body.code.upper())
+        .execute()
+    )
+    if existing_res.data:
         raise HTTPException(status_code=409, detail="Un code avec ce nom existe deja")
 
     data: dict[str, Any] = {
@@ -3967,10 +3972,16 @@ async def create_promo_code(body: CreatePromoCodeRequest, admin: AdminUserDep) -
 
     result = supabase.table("promo_codes").insert(data).execute()
 
-    _log_admin_action(supabase, admin["id"], "admin.promo_code_created", None, {
-        "code": body.code.upper(),
-        "campaign": body.campaign,
-    })
+    _log_admin_action(
+        supabase,
+        admin["id"],
+        "admin.promo_code_created",
+        None,
+        {
+            "code": body.code.upper(),
+            "campaign": body.campaign,
+        },
+    )
 
     return result.data[0] if result.data else {}
 
