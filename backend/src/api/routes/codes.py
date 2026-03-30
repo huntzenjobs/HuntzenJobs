@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from src.api.deps import get_supabase_client, get_user_id_from_token
 from src.api.middleware import limiter
+from src.services.referrals import _apply_free_days
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -210,7 +211,9 @@ async def apply_code(
     try:
         promo_res = (
             supabase.table("promo_codes")
-            .select("id, code, is_active, max_uses, current_uses, expires_at, starts_at")
+            .select(
+                "id, code, is_active, max_uses, current_uses, expires_at, starts_at, discount_type, discount_value, plan",
+            )
             .eq("code", code)
             .limit(1)
             .execute()
@@ -296,6 +299,28 @@ async def apply_code(
         }).eq("id", promo_id).execute()
     except Exception as e:
         logger.warning(f"[codes] Failed to increment current_uses for promo {promo_id}: {e}")
+
+    # --- Appliquer l'effet du code promo (jours gratuits) ---
+    try:
+        if promo.get("discount_type") == "free_days":
+            try:
+                days = int(promo.get("discount_value") or 0)
+            except (TypeError, ValueError):
+                days = 0
+
+            if days > 0:
+                reward_value = {
+                    "days": days,
+                    # par defaut on offre le plan pro si aucun plan n'est defini
+                    "reward_plan": promo.get("plan") or "pro",
+                }
+                success = await _apply_free_days(supabase, user_id, reward_value)
+                if not success:
+                    logger.error(
+                        f"[codes] _apply_free_days failed for user {user_id} and promo {promo_id}",
+                    )
+    except Exception as e:
+        logger.error(f"[codes] Failed to apply promo side effects for {user_id}: {e}")
 
     logger.info(f"[codes] User {user_id} applied promo code {code} (promo_id={promo_id})")
     return {"ok": True, "message": "Code promo applique avec succes."}
