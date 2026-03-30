@@ -43,6 +43,13 @@ def _as_list(value: Any) -> list[str]:
     """Normalize any value to a list of strings for frontend safety."""
     if value is None:
         return []
+    # If we receive a dict like {"content_improvements": [...]}, unwrap common key
+    if isinstance(value, dict):
+        for key in ("content_improvements", "items", "values"):
+            if key in value and isinstance(value[key], (list, tuple, set)):
+                return [str(v) for v in value[key] if v is not None]
+        # Otherwise fall back to stringification
+        return [str(value)]
     if isinstance(value, list):
         return [str(v) for v in value if v is not None]
     if isinstance(value, (tuple, set)):
