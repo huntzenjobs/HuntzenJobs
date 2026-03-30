@@ -46,16 +46,6 @@ const featureConfig: Record<FeatureType, FeatureConfig> = {
         ? t("features.unlimitedShort")
         : `${value}/${max}${t("perDay")}`,
   },
-  cv_analysis: {
-    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
-    labelKey: "features.cvAnalysis.label",
-    maxLabel: (max, t) =>
-      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
-    formatValue: (value, max, t) =>
-      max === Infinity
-        ? t("features.unlimitedShort")
-        : `${value}/${max}${t("perDay")}`,
-  },
   ats_score: {
     icon: <FileText className="w-4 h-4" aria-hidden="true" />,
     labelKey: "features.atsScore.label",
@@ -69,16 +59,6 @@ const featureConfig: Record<FeatureType, FeatureConfig> = {
   matching_score: {
     icon: <Target className="w-4 h-4" aria-hidden="true" />,
     labelKey: "features.matchingScore.label",
-    maxLabel: (max, t) =>
-      max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
-    formatValue: (value, max, t) =>
-      max === Infinity
-        ? t("features.unlimitedShort")
-        : `${value}/${max}${t("perDay")}`,
-  },
-  custom_cv: {
-    icon: <FileText className="w-4 h-4" aria-hidden="true" />,
-    labelKey: "features.customCv.label",
     maxLabel: (max, t) =>
       max === Infinity ? t("features.unlimited") : `/${max}${t("perDay")}`,
     formatValue: (value, max, t) =>
@@ -168,23 +148,17 @@ export function UsageCounter({
     case "job_view":
       max = limits.jobs_visible;
       break;
-    case "cv_analysis":
-      max = limits.cv_analyses_per_day;
-      break;
     case "ats_score":
       max = limits.ats_scores_per_day;
       break;
     case "matching_score":
       max = limits.matching_scores_per_day;
       break;
-    case "custom_cv":
-      max = limits.custom_cvs_per_day;
-      break;
     case "assistant_messages":
       max = limits.assistant_messages_per_day;
       break;
     case "saved_jobs":
-      max = limits.max_saved_jobs;
+      max = limits.saved_jobs_per_day;
       break;
     case "recruiter_search": {
       const q = quotas?.recruiter_search;
@@ -206,8 +180,8 @@ export function UsageCounter({
   }
 
   // Calculate percentage
-  const used = max - remaining;
-  const percentage = max === Infinity ? 0 : Math.min(100, (used / max) * 100);
+  const used = (max && remaining !== undefined) ? Math.max(0, max - remaining) : 0;
+  const percentage = (max === Infinity || !max) ? 0 : Math.min(100, (used / max) * 100);
 
   // Determine color based on remaining
   const getColor = () => {
@@ -301,7 +275,7 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
             <UsageCounter feature="job_search" showBar />
             <UsageCounter feature="ats_score" showBar />
             <UsageCounter feature="matching_score" showBar />
-            <UsageCounter feature="custom_cv" showBar />
+            <UsageCounter feature="cv_adapt" showBar />
             <UsageCounter feature="assistant_messages" showBar />
             <UsageCounter feature="cover_letter" showBar />
           </div>

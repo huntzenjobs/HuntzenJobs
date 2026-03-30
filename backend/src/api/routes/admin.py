@@ -2078,14 +2078,20 @@ async def reset_user_usage(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
     today = datetime.now(UTC).date().isoformat()
 
     supabase.table("usage_quotas").update({
+        # Core usage counters
+        "job_searches_used": 0,
+        "job_views_used": 0,
         "cv_analyses_used": 0,
+        "ats_scores_used": 0,
+        "matching_scores_used": 0,
         "assistant_messages_used": 0,
         "coach_seconds_used": 0,
-        "job_searches_used": 0,
+        "recruiter_searches_used": 0,
         "cv_adapt_used": 0,
         "cover_letter_used": 0,
-        "job_views_used": 0,
-        "recruiter_searches_used": 0,
+        "saved_jobs_used": 0,
+        # Detailed assistant breakdown (career coach & co)
+        "assistant_messages_by_coach": {},
     }).eq("user_id", user_id).eq("quota_date", today).execute()
 
     _log_admin_action(

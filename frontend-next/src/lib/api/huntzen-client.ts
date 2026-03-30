@@ -15,11 +15,24 @@ export interface QuotaExceededError extends Error {
 }
 
 export function isQuotaExceededError(err: unknown): err is QuotaExceededError {
-  return (
-    err instanceof Error &&
-    err.message === "QUOTA_EXCEEDED" &&
-    "quotaDetail" in err
-  );
+  if (err instanceof Error && err.message === "QUOTA_EXCEEDED" && "quotaDetail" in err) {
+    return true;
+  }
+  
+  // Also check if the string error message mentions quotas implicitly,
+  // but DO NOT return true for generic 429 or "Too Many Requests" as those are Rate Limits!
+  const msg = typeof err === "string" ? err : (err as Error)?.message || (err as any)?.detail || "";
+  if (
+    msg.includes("Quota atteint") ||
+    msg.includes("Limite atteinte") ||
+    msg.includes("passez à un plan supérieur") ||
+    msg.includes("limite journalière") ||
+    msg.includes("Pas assez de crédits")
+  ) {
+    return true;
+  }
+  
+  return false;
 }
 
 /** Context about a job passed to the interview simulator */

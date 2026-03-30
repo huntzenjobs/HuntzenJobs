@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getClientId } from "@/lib/utils/client-id";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Plan types
 export type PlanType = "free" | "starter" | "pro" | "premium";
@@ -10,10 +10,8 @@ export type PlanType = "free" | "starter" | "pro" | "premium";
 export type FeatureType =
   | "job_search"
   | "job_view"
-  | "cv_analysis"
   | "ats_score"
   | "matching_score"
-  | "custom_cv"
   | "assistant_messages"
   | "recruiter_search"
   | "cv_adapt"
@@ -29,12 +27,10 @@ export type FeatureType =
 interface PlanLimitValues {
   job_searches_per_day: number;
   jobs_visible: number;
-  cv_analyses_per_day: number; // Legacy, kept for compatibility
   ats_scores_per_day: number;
   matching_scores_per_day: number;
-  custom_cvs_per_day: number;
   assistant_messages_per_day: number;
-  max_saved_jobs: number;
+  saved_jobs_per_day: number;
   recruiter_searches_per_day: number;
   cv_adapt_per_day: number;
   cover_letter_per_day: number;
@@ -61,6 +57,7 @@ interface PlanLimitValues {
   page_referral: boolean;
   page_recruiter_contact: boolean;
   page_documents: boolean;
+  page_profile: boolean;
 }
 
 // Hardcoded defaults — last resort if API cache is empty
@@ -68,15 +65,13 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
   free: {
     job_searches_per_day: 5,
     jobs_visible: 10,
-    cv_analyses_per_day: 1,
     ats_scores_per_day: 5,
     matching_scores_per_day: 5,
-    custom_cvs_per_day: 10,
     assistant_messages_per_day: 5,
-    max_saved_jobs: 10,
+    saved_jobs_per_day: 10,
     recruiter_searches_per_day: 3,
     cv_adapt_per_day: 5,
-    cover_letter_per_day: 5,
+    cover_letter_per_day: 10,
     has_advanced_filters: true,
     has_favorites: true,
     has_email_alerts: false,
@@ -87,7 +82,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_personalized_advice: false,
     has_coach_history: false,
     has_branding: false,
-    has_cover_letter: false,
+    has_cover_letter: true,
     has_cv_details: false,
     has_matching_score: true,
     page_jobs: true,
@@ -100,16 +95,15 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     page_referral: true,
     page_recruiter_contact: true,
     page_documents: true,
+    page_profile: true,
   },
   starter: {
     job_searches_per_day: 10,
     jobs_visible: 20,
-    cv_analyses_per_day: 5,
     ats_scores_per_day: 10,
     matching_scores_per_day: 15,
-    custom_cvs_per_day: 20,
     assistant_messages_per_day: 20,
-    max_saved_jobs: 30,
+    saved_jobs_per_day: 30,
     recruiter_searches_per_day: 10,
     cv_adapt_per_day: 10,
     cover_letter_per_day: 10,
@@ -123,7 +117,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_personalized_advice: false,
     has_coach_history: true,
     has_branding: false,
-    has_cover_letter: false,
+    has_cover_letter: true,
     has_cv_details: true,
     has_matching_score: true,
     page_jobs: true,
@@ -136,16 +130,15 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     page_referral: true,
     page_recruiter_contact: true,
     page_documents: true,
+    page_profile: true,
   },
   pro: {
     job_searches_per_day: Infinity,
     jobs_visible: Infinity,
-    cv_analyses_per_day: Infinity,
     ats_scores_per_day: Infinity,
     matching_scores_per_day: Infinity,
-    custom_cvs_per_day: Infinity,
     assistant_messages_per_day: Infinity,
-    max_saved_jobs: Infinity,
+    saved_jobs_per_day: Infinity,
     recruiter_searches_per_day: Infinity,
     cv_adapt_per_day: Infinity,
     cover_letter_per_day: Infinity,
@@ -172,16 +165,15 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     page_referral: true,
     page_recruiter_contact: true,
     page_documents: true,
+    page_profile: true,
   },
   premium: {
     job_searches_per_day: Infinity,
     jobs_visible: Infinity,
-    cv_analyses_per_day: Infinity,
     ats_scores_per_day: Infinity,
     matching_scores_per_day: Infinity,
-    custom_cvs_per_day: Infinity,
     assistant_messages_per_day: Infinity,
-    max_saved_jobs: Infinity,
+    saved_jobs_per_day: Infinity,
     recruiter_searches_per_day: Infinity,
     cv_adapt_per_day: Infinity,
     cover_letter_per_day: Infinity,
@@ -208,6 +200,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     page_referral: true,
     page_recruiter_contact: true,
     page_documents: true,
+    page_profile: true,
   },
 };
 
@@ -235,23 +228,33 @@ function buildLimitsFromApi(
   };
 
   return {
-    job_searches_per_day: num("job_searches_per_day", defaults.job_searches_per_day),
+    job_searches_per_day: num(
+      "job_searches_per_day",
+      defaults.job_searches_per_day,
+    ),
     jobs_visible: num("jobs_visible", defaults.jobs_visible),
-    cv_analyses_per_day: num("cv_analyses_per_day", defaults.cv_analyses_per_day),
     ats_scores_per_day: num("ats_scores_per_day", defaults.ats_scores_per_day),
     matching_scores_per_day: num(
       "matching_scores_per_day",
       defaults.matching_scores_per_day,
     ),
-    custom_cvs_per_day: num("custom_cvs_per_day", defaults.custom_cvs_per_day),
     assistant_messages_per_day: num(
       "assistant_messages_per_day",
       defaults.assistant_messages_per_day,
     ),
-    max_saved_jobs: num("max_saved_jobs", defaults.max_saved_jobs),
-    recruiter_searches_per_day: num("recruiter_searches_per_day", defaults.recruiter_searches_per_day),
+    saved_jobs_per_day: num(
+      "saved_jobs_per_day",
+      defaults.saved_jobs_per_day || 10,
+    ),
+    recruiter_searches_per_day: num(
+      "recruiter_searches_per_day",
+      defaults.recruiter_searches_per_day,
+    ),
     cv_adapt_per_day: num("cv_adapt_per_day", defaults.cv_adapt_per_day),
-    cover_letter_per_day: num("cover_letter_per_day", defaults.cover_letter_per_day),
+    cover_letter_per_day: num(
+      "cover_letter_per_day",
+      defaults.cover_letter_per_day,
+    ),
     has_advanced_filters: flag(
       "advanced_filters",
       defaults.has_advanced_filters,
@@ -279,8 +282,12 @@ function buildLimitsFromApi(
     page_candidatures: flag("page_candidatures", defaults.page_candidatures),
     page_expat: flag("page_expat", defaults.page_expat),
     page_referral: flag("page_referral", defaults.page_referral),
-    page_recruiter_contact: flag("page_recruiter_contact", defaults.page_recruiter_contact),
+    page_recruiter_contact: flag(
+      "page_recruiter_contact",
+      defaults.page_recruiter_contact,
+    ),
     page_documents: flag("page_documents", defaults.page_documents),
+    page_profile: flag("page_profile", defaults.page_profile),
   };
 }
 
@@ -334,7 +341,7 @@ function loadApiPlansCache(): Record<PlanType, PlanLimitValues> | null {
 /**
  * PLAN_LIMITS — Proxy that reads from API cache, falls back to hardcoded defaults.
  *
- * Usage unchanged: PLAN_LIMITS["free"].cv_analyses_per_day
+ * Usage unchanged: PLAN_LIMITS["free"].ats_scores_per_day
  * Type unchanged: typeof PLAN_LIMITS is Record<PlanType, PlanLimitValues>
  *
  * When usePlansConfig() fetches /api/public/plans and writes to localStorage,
@@ -361,7 +368,6 @@ interface UsageLimits {
   jobsViewedToday: number;
   atsScoresUsedToday: number;
   matchingScoresUsedToday: number;
-  customCvsUsedToday: number;
   assistantMessagesUsedToday: number;
   savedJobsCount: number;
   cvAdaptsUsedToday: number;
@@ -397,7 +403,6 @@ function getDefaultState(): FreemiumState {
       jobsViewedToday: 0,
       atsScoresUsedToday: 0,
       matchingScoresUsedToday: 0,
-      customCvsUsedToday: 0,
       assistantMessagesUsedToday: 0,
       savedJobsCount: 0,
       cvAdaptsUsedToday: 0,
@@ -515,7 +520,6 @@ export function useFreemiumLimits(userId?: string) {
             currentLimits.job_searches_per_day
           );
         case "ats_score":
-        case "cv_analysis":
           return (
             currentState.usage.atsScoresUsedToday <
             currentLimits.ats_scores_per_day
@@ -525,22 +529,20 @@ export function useFreemiumLimits(userId?: string) {
             currentState.usage.matchingScoresUsedToday <
             currentLimits.matching_scores_per_day
           );
-        case "custom_cv":
+        case "cv_adapt":
           return (
-            currentState.usage.customCvsUsedToday <
-            currentLimits.custom_cvs_per_day
-          );
-        case "assistant_messages":
-          return (
-            currentState.usage.assistantMessagesUsedToday <
-            currentLimits.assistant_messages_per_day
+            currentState.usage.cvAdaptsUsedToday <
+            currentLimits.cv_adapt_per_day
           );
         case "saved_jobs":
-          return currentState.usage.savedJobsCount < currentLimits.max_saved_jobs;
-        case "cv_adapt":
+          return (
+            currentState.usage.savedJobsCount < currentLimits.saved_jobs_per_day
+          );
         case "cover_letter":
-          // These are usually handled via API quotas or hasFeature
-          return true;
+          return (
+            currentState.usage.coverLettersUsedToday <
+            currentLimits.cover_letter_per_day
+          );
         default:
           return false;
       }
@@ -567,7 +569,6 @@ export function useFreemiumLimits(userId?: string) {
             currentLimits.jobs_visible - currentState.usage.jobsViewedToday,
           );
         case "ats_score":
-        case "cv_analysis":
           return Math.max(
             0,
             currentLimits.ats_scores_per_day -
@@ -579,26 +580,24 @@ export function useFreemiumLimits(userId?: string) {
             currentLimits.matching_scores_per_day -
               currentState.usage.matchingScoresUsedToday,
           );
-        case "custom_cv":
+        case "cv_adapt":
           return Math.max(
             0,
-            currentLimits.custom_cvs_per_day -
-              currentState.usage.customCvsUsedToday,
-          );
-        case "assistant_messages":
-          return Math.max(
-            0,
-            currentLimits.assistant_messages_per_day -
-              currentState.usage.assistantMessagesUsedToday,
+            currentLimits.cv_adapt_per_day -
+              currentState.usage.cvAdaptsUsedToday,
           );
         case "saved_jobs":
           return Math.max(
             0,
-            currentLimits.max_saved_jobs - currentState.usage.savedJobsCount,
+            currentLimits.saved_jobs_per_day -
+              currentState.usage.savedJobsCount,
           );
-        case "cv_adapt":
         case "cover_letter":
-          return 10; // Placeholder for legacy local tracking
+          return Math.max(
+            0,
+            currentLimits.cover_letter_per_day -
+              currentState.usage.coverLettersUsedToday,
+          );
         default:
           return 0;
       }
@@ -607,46 +606,72 @@ export function useFreemiumLimits(userId?: string) {
   );
 
   // Sync usage for a feature from external source (e.g. API)
-  const syncUsage = useCallback(
-    (feature: FeatureType, value: number): void => {
-      setState((prev) => {
-        // Only sync if API value is different
-        let localUsed = 0;
-        switch (feature) {
-          case "job_search": localUsed = prev.usage.searchesToday; break;
-          case "ats_score": localUsed = prev.usage.atsScoresUsedToday; break;
-          case "matching_score": localUsed = prev.usage.matchingScoresUsedToday; break;
-          case "custom_cv": localUsed = prev.usage.customCvsUsedToday; break;
-          case "assistant_messages": localUsed = prev.usage.assistantMessagesUsedToday; break;
-          case "saved_jobs": localUsed = prev.usage.savedJobsCount; break;
-        }
+  const syncUsage = useCallback((feature: FeatureType, value: number): void => {
+    setState((prev) => {
+      // Only sync if API value is different
+      let localUsed = 0;
+      switch (feature) {
+        case "job_search":
+          localUsed = prev.usage.searchesToday;
+          break;
+        case "ats_score":
+          localUsed = prev.usage.atsScoresUsedToday;
+          break;
+        case "matching_score":
+          localUsed = prev.usage.matchingScoresUsedToday;
+          break;
+        case "assistant_messages":
+          localUsed = prev.usage.assistantMessagesUsedToday;
+          break;
+        case "saved_jobs":
+          localUsed = prev.usage.savedJobsCount;
+          break;
+        case "cv_adapt":
+          localUsed = prev.usage.cvAdaptsUsedToday;
+          break;
+        case "cover_letter":
+          localUsed = prev.usage.coverLettersUsedToday;
+          break;
+      }
 
-        if (localUsed === value) return prev;
+      if (localUsed === value) return prev;
 
-        const newState = {
-          ...prev,
-          usage: {
-            ...prev.usage,
-          },
-        };
+      const newState = {
+        ...prev,
+        usage: {
+          ...prev.usage,
+        },
+      };
 
-        switch (feature) {
-          case "job_search": newState.usage.searchesToday = value; break;
-          case "ats_score":
-          case "cv_analysis": newState.usage.atsScoresUsedToday = value; break;
-          case "matching_score": newState.usage.matchingScoresUsedToday = value; break;
-          case "custom_cv": newState.usage.customCvsUsedToday = value; break;
-          case "assistant_messages": newState.usage.assistantMessagesUsedToday = value; break;
-          case "saved_jobs": newState.usage.savedJobsCount = value; break;
-        }
+      switch (feature) {
+        case "job_search":
+          newState.usage.searchesToday = value;
+          break;
+        case "ats_score":
+          newState.usage.atsScoresUsedToday = value;
+          break;
+        case "matching_score":
+          newState.usage.matchingScoresUsedToday = value;
+          break;
+        case "assistant_messages":
+          newState.usage.assistantMessagesUsedToday = value;
+          break;
+        case "saved_jobs":
+          newState.usage.savedJobsCount = value;
+          break;
+        case "cv_adapt":
+          newState.usage.cvAdaptsUsedToday = value;
+          break;
+        case "cover_letter":
+          newState.usage.coverLettersUsedToday = value;
+          break;
+      }
 
-        stateRef.current = newState;
-        saveState(newState, userIdRef.current);
-        return newState;
-      });
-    },
-    [],
-  );
+      stateRef.current = newState;
+      saveState(newState, userIdRef.current);
+      return newState;
+    });
+  }, []);
 
   // Increment usage for a feature
   const incrementUsage = useCallback(
@@ -676,8 +701,11 @@ export function useFreemiumLimits(userId?: string) {
           case "matching_score":
             newState.usage.matchingScoresUsedToday += amount;
             break;
-          case "custom_cv":
-            newState.usage.customCvsUsedToday += amount;
+          case "cv_adapt":
+            newState.usage.cvAdaptsUsedToday += amount;
+            break;
+          case "cover_letter":
+            newState.usage.coverLettersUsedToday += amount;
             break;
           case "assistant_messages":
             newState.usage.assistantMessagesUsedToday += amount;
@@ -704,15 +732,12 @@ export function useFreemiumLimits(userId?: string) {
   );
 
   // Get required plan for a feature
-  const getRequiredPlan = useCallback(
-    (feature: keyof (typeof PLAN_LIMITS)["free"]): PlanType => {
-      if (PLAN_LIMITS.free[feature]) return "free";
-      if (PLAN_LIMITS.starter[feature]) return "starter";
-      if (PLAN_LIMITS.pro[feature]) return "pro";
-      return "premium";
-    },
-    [],
-  );
+  const getRequiredPlan = useCallback((feature: string): PlanType => {
+    if ((PLAN_LIMITS.free as any)[feature]) return "free";
+    if ((PLAN_LIMITS.starter as any)[feature]) return "starter";
+    if ((PLAN_LIMITS.pro as any)[feature]) return "pro";
+    return "premium";
+  }, []);
 
   // Upgrade plan (for testing or when user subscribes)
   const setPlan = useCallback((plan: PlanType, expiresAt?: string): void => {
@@ -735,7 +760,6 @@ export function useFreemiumLimits(userId?: string) {
       state.usage.jobsViewedToday,
       state.usage.atsScoresUsedToday,
       state.usage.matchingScoresUsedToday,
-      state.usage.customCvsUsedToday,
       state.usage.assistantMessagesUsedToday,
       state.usage.savedJobsCount,
       state.usage.cvAdaptsUsedToday,
@@ -747,45 +771,45 @@ export function useFreemiumLimits(userId?: string) {
   );
 
   // Reset usage for a feature (e.g. when API shows a reset)
-  const resetUsage = useCallback(
-    (feature: FeatureType): void => {
-      setState((prev) => {
-        const newState = {
-          ...prev,
-          usage: { ...prev.usage },
-        };
-        switch (feature) {
-          case "job_search":
-            newState.usage.searchesToday = 0;
-            break;
-          case "job_view":
-            newState.usage.jobsViewedToday = 0;
-            break;
-          case "ats_score":
-            newState.usage.atsScoresUsedToday = 0;
-            break;
-          case "matching_score":
-            newState.usage.matchingScoresUsedToday = 0;
-            break;
-          case "custom_cv":
-            newState.usage.customCvsUsedToday = 0;
-            break;
-          case "assistant_messages":
-            newState.usage.assistantMessagesUsedToday = 0;
-            break;
-          case "saved_jobs":
-            newState.usage.savedJobsCount = 0;
-            break;
-          case "cv_adapt":
-          case "cover_letter":
-            break;
-        }
-        saveState(newState, userIdRef.current);
-        return newState;
-      });
-    },
-    [],
-  );
+  const resetUsage = useCallback((feature: FeatureType): void => {
+    setState((prev) => {
+      const newState = {
+        ...prev,
+        usage: { ...prev.usage },
+      };
+      switch (feature) {
+        case "job_search":
+          newState.usage.searchesToday = 0;
+          break;
+        case "job_view":
+          newState.usage.jobsViewedToday = 0;
+          break;
+        case "ats_score":
+          newState.usage.atsScoresUsedToday = 0;
+          break;
+        case "matching_score":
+          newState.usage.matchingScoresUsedToday = 0;
+          break;
+        case "assistant_messages":
+          newState.usage.assistantMessagesUsedToday = 0;
+          break;
+        case "saved_jobs":
+          newState.usage.savedJobsCount = 0;
+          break;
+        case "cv_adapt":
+          newState.usage.cvAdaptsUsedToday = 0;
+          break;
+        case "cover_letter":
+          newState.usage.coverLettersUsedToday = 0;
+          break;
+        case "recruiter_search":
+          newState.usage.recruiterSearchesUsedToday = 0;
+          break;
+      }
+      saveState(newState, userIdRef.current);
+      return newState;
+    });
+  }, []);
 
   return {
     // State

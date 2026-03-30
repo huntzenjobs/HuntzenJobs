@@ -613,8 +613,17 @@ async def check_feature_flag(user_id: str, feature: str) -> bool:
     except Exception as e:
         logger.warning(f"[feature_flag] plan check failed for {user_id}/{feature}: {e}")
 
-    # 3. Fallback: free plan flags (all false by default)
-    return False
+    # 3. Fallback: free plan flags
+    FREE_PLAN_DEFAULTS = {
+        "pdf_export": True,
+        "cover_letter": True,
+        "matching_score": True,
+        "visual_score": True,
+        "advanced_filters": True,
+        "favorites": True,
+        "cv_history": False,  # Keep history locked for free by default
+    }
+    return FREE_PLAN_DEFAULTS.get(feature, False)
 
 
 def require_feature_flag(user_id: str, feature: str, feature_label: str | None = None) -> None:
@@ -696,6 +705,17 @@ def _require_feature_flag_sync(
             allowed = flags.get(feature, False)
     except Exception as e:
         logger.warning(f"[feature_flag] sync plan check failed: {e}")
+
+    if not allowed:
+        # Fallback: free plan flags
+        allowed = {
+            "pdf_export": True,
+            "cover_letter": True,
+            "matching_score": True,
+            "visual_score": True,
+            "advanced_filters": True,
+            "favorites": True,
+        }.get(feature, False)
 
     if not allowed:
         raise HTTPException(

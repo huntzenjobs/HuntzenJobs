@@ -681,7 +681,7 @@ export function CVUploadAsync({
             {/* CTA Buttons */}
             <div className="flex gap-4">
               <button
-                onClick={() => openPricingModal("cv_analyses_per_day")}
+                onClick={() => openPricingModal("ats_scores_per_day")}
                 className="flex-1 px-8 py-4 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-violet-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🚀 Voir les plans

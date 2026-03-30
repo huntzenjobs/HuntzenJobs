@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProfilePageClient } from "./profile-client";
-import { PageGate } from "@/components/auth/page-gate";
 
 export default async function ProfilePage() {
   // Get user from Supabase (server-side)
@@ -36,15 +35,13 @@ export default async function ProfilePage() {
   };
 
   return (
-    <PageGate featureFlag="page_profile">
-      <ProfilePageClient
-        user={{
-          id: user.id,
-          email: user.email!,
-          emailVerified: !!user.email_confirmed_at,
-        }}
-        profile={profileData}
-      />
-    </PageGate>
+    <ProfilePageClient
+      user={{
+        id: user.id,
+        email: user.email!,
+        emailVerified: !!user.email_confirmed_at,
+      }}
+      profile={profileData}
+    />
   );
 }
