@@ -312,11 +312,7 @@
           "PDF export",
           "Advanced filters"
         ],
-        "unavailable": [
-          "Email alerts",
-          "CV History",
-          "Interview simulation"
-        ]
+        "unavailable": ["Email alerts", "CV History", "Interview simulation"]
       },
       "starter": {
         "name": "ACTIVE SEARCH",
@@ -334,10 +330,7 @@
           "Advanced filters",
           "CV History"
         ],
-        "unavailable": [
-          "Interview simulation",
-          "Email alerts"
-        ]
+        "unavailable": ["Interview simulation", "Email alerts"]
       },
       "pro": {
         "name": "ACCELERATOR",
@@ -550,6 +543,7 @@
     "resetAtMidnight": "Resets at midnight",
     "atsScore": "ATS Score",
     "matchingScore": "Job Matching",
+    "cvAdapt": "CV Adaptation",
     "customCv": "Custom CV",
     "savedJobs": "Saved Jobs",
     "assistantMessages": "Assistant Messages",
