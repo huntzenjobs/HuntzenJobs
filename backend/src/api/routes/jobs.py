@@ -896,8 +896,8 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
         "job_title": "Full Stack Developer"   // for context
     }
 
-    Returns recruiters (HR/managers), tech team, email pattern, and LinkedIn URLs.
-    Requires authentication — calls Hunter.io API (paid service).
+    Returns recruiters (HR/managers) via Apollo with SerpAPI fallback.
+    Requires authentication — Apollo credits first, SerpAPI only when needed.
     """
     user_id = get_user_id_from_token(authorization)
     if not user_id:
@@ -919,8 +919,8 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
                 detail="At least company_name or company_domain is required",
             )
 
-        from src.services.recruiter_finder.apollo import find_recruiters_apollo
-        from src.services.recruiter_finder.hunter import extract_domain, find_recruiters_for_job
+        from src.services.recruiter_finder import find_recruiters_apollo
+        from src.services.recruiter_finder.serpapi import extract_domain, find_recruiters_serpapi
 
         # Resolve domain
         domain = ""
@@ -929,32 +929,22 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
         elif company_website:
             domain = extract_domain(company_website)
 
-        # 1. Try Apollo first (primary source)
         result = await find_recruiters_apollo(
             company_name=company_name,
             company_domain=domain,
             job_title=job_title,
         )
 
-        # 2. If Apollo found nothing, fallback to Hunter.io
         if not result.get("recruiters") and not result.get("tech_team"):
-            logger.info("[find-recruiter] Apollo found nothing, trying Hunter.io fallback")
-            result = await find_recruiters_for_job(
+            logger.info("[find-recruiter] Apollo empty result, using SerpAPI fallback")
+            result = await find_recruiters_serpapi(
                 company_name=company_name,
-                company_domain=company_domain,
-                company_website=company_website,
+                company_domain=domain,
                 job_title=job_title,
             )
-            result["source"] = "hunter"
+            result["source"] = "serpapi"
 
-        # 3. Mark email verification status
-        source = result.get("source", "hunter")
-        for contact in result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", []):
-            if source == "apollo":
-                contact["email_verified"] = contact.get("email_status") == "verified"
-            else:
-                contact["email_verified"] = (contact.get("confidence", 0) >= 80)
-            contact.setdefault("source", source)
+        _enrich_recruiter_contacts(result)
 
         await increment_quota(user_id, "recruiter_search")
         await invalidate_user_quota_cache(user_id)
@@ -975,3 +965,15 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
             "tech_team": [],
             "total_found": 0,
         }
+
+
+def _enrich_recruiter_contacts(result: dict) -> None:
+    source = result.get("source", "serpapi")
+    contacts = result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", [])
+    for contact in contacts:
+        if source == "apollo":
+            contact["email_verified"] = contact.get("email_status") == "verified"
+        else:
+            contact["email"] = ""
+            contact["email_verified"] = False
+        contact.setdefault("source", source)

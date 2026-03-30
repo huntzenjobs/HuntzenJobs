@@ -11,10 +11,14 @@ Sub-agents:
 """
 
 import asyncio
+import hashlib
+import json
 import logging
 import os
 import tempfile
 from typing import Any
+
+from src.utils.cache import get_redis
 
 from groq import Groq
 
@@ -135,16 +139,49 @@ class CVAnalyzerAgent(BaseAgent):
             # Détecter si le CV vient du pipeline HuntZen
             is_huntzen_optimized = bool(cv_text) and any(marker in cv_text for marker in HUNTZEN_CV_MARKERS)
 
-            # Run sub-agents in parallel
-            tasks = [
-                self._score_ats(cv_text),
-                self._extract_skills(cv_text),
-                self._get_improvements(cv_text),
-            ]
+            # ── CACHE LAYER (POINT 6) ──
+            # Generate a stable key for this CV content
+            cv_hash = hashlib.md5(cv_text.encode()).hexdigest()
+            cache_key = f"cv:analysis:{cv_hash}"
+            
+            redis = await get_redis()
+            cached_data = None
+            if redis:
+                try:
+                    raw = await redis.get(cache_key)
+                    if raw:
+                        cached_data = json.loads(raw)
+                        logger.info(f"[{self.name}] Cache HIT for CV analysis")
+                except Exception as e:
+                    logger.warning(f"[{self.name}] Cache read error: {e}")
 
-            # Add job matching if description provided
+            # Run sub-agents in parallel (using cache if available)
+            tasks = []
+            
+            # 1. ATS Scoring (Always run or cache?)
+            if cached_data and "ats_result" in cached_data:
+                ats_task = asyncio.create_task(asyncio.sleep(0, cached_data["ats_result"]))
+            else:
+                ats_task = self._score_ats(cv_text, language)
+            tasks.append(ats_task)
+
+            # 2. Skill Extraction (Very cacheable)
+            if cached_data and "skills_result" in cached_data:
+                skills_task = asyncio.create_task(asyncio.sleep(0, cached_data["skills_result"]))
+            else:
+                skills_task = self._extract_skills(cv_text, language)
+            tasks.append(skills_task)
+
+            # 3. Improvements
+            if cached_data and "improvements_result" in cached_data:
+                imp_task = asyncio.create_task(asyncio.sleep(0, cached_data["improvements_result"]))
+            else:
+                imp_task = self._get_improvements(cv_text, language)
+            tasks.append(imp_task)
+
+            # 4. Job matching (NEVER CACHED by CV alone, depends on JD)
             if job_description:
-                tasks.append(self._match_job(cv_text, job_description))
+                tasks.append(self._match_job(cv_text, job_description, language))
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -154,10 +191,28 @@ class CVAnalyzerAgent(BaseAgent):
             improvements_result = results[2] if isinstance(results[2], dict) else {}
             job_match_result = results[3] if len(results) > 3 and isinstance(results[3], dict) else {}
 
+            # ── SAVE TO CACHE (POINT 6) ──
+            if redis and not cached_data:
+                try:
+                    to_cache = {
+                        "ats_result": ats_result,
+                        "skills_result": skills_result,
+                        "improvements_result": improvements_result,
+                    }
+                    # Cache duration: 24h (CV is static enough)
+                    await redis.setex(cache_key, 86400, json.dumps(to_cache))
+                    logger.info(f"[{self.name}] Analysis saved to cache: {cache_key[:30]}...")
+                except Exception as e:
+                    logger.warning(f"[{self.name}] Cache write error: {e}")
+
             if is_huntzen_optimized:
                 improvements_result = self._filter_improvements_for_certified_cv(improvements_result)
 
             recommended_titles = self._extract_recommended_titles(skills_result)
+
+            # Extract scores and verdict for the root response (Backward compatibility)
+            match_total = job_match_result.get("match_score") if job_description else None
+            match_verdict = job_match_result.get("verdict", "") if job_description else ""
 
             # Build response (with score capping to prevent validation errors)
             return {
@@ -173,6 +228,9 @@ class CVAnalyzerAgent(BaseAgent):
                 "skills": skills_result,
                 "improvements": improvements_result,
                 "job_match": job_match_result if job_description else None,
+                # ROOT LEVEL MAPPING - IMPORTANT FOR FRONTEND COMPATIBILITY
+                "job_match_score": match_total,
+                "verdict": match_verdict,
                 "strengths": self._extract_strengths(ats_result, skills_result),
                 "weaknesses": self._extract_weaknesses(ats_result, improvements_result),
                 "recommended_job_titles": recommended_titles,
@@ -187,25 +245,28 @@ class CVAnalyzerAgent(BaseAgent):
                 "weaknesses": [],
             }
 
-    async def _score_ats(self, cv_text: str) -> dict:
+    async def _score_ats(self, cv_text: str, language: str = "en") -> dict:
         """Score CV for ATS compatibility."""
-        result = await self.ats_scorer.run(task=f"Score this CV:\n\n{cv_text}")
+        task = f"Score this CV in {language}:\n\n{cv_text}"
+        result = await self.ats_scorer.run(task=task)
         return self._parse_json(result) or {}
 
-    async def _extract_skills(self, cv_text: str) -> dict:
+    async def _extract_skills(self, cv_text: str, language: str = "en") -> dict:
         """Extract skills from CV."""
-        result = await self.skill_extractor.run(task=f"Extract skills:\n\n{cv_text}")
+        task = f"Extract skills in {language}:\n\n{cv_text}"
+        result = await self.skill_extractor.run(task=task)
         return self._parse_json(result) or {}
 
-    async def _match_job(self, cv_text: str, job_description: str) -> dict:
+    async def _match_job(self, cv_text: str, job_description: str, language: str = "en") -> dict:
         """Match CV against job description."""
-        task = f"CV:\n{cv_text}\n\nJob Description:\n{job_description}"
+        task = f"Respond in {language}.\n\nCV:\n{cv_text}\n\nJob Description:\n{job_description}"
         result = await self.job_matcher.run(task=task)
         return self._parse_json(result) or {}
 
-    async def _get_improvements(self, cv_text: str) -> dict:
+    async def _get_improvements(self, cv_text: str, language: str = "en") -> dict:
         """Get improvement suggestions."""
-        result = await self.improvement_advisor.run(task=f"Suggest improvements:\n\n{cv_text}")
+        task = f"Suggest improvements in {language}:\n\n{cv_text}"
+        result = await self.improvement_advisor.run(task=task)
         return self._parse_json(result) or {}
 
     def _extract_recommended_titles(self, skills_result: dict) -> list[str]:
