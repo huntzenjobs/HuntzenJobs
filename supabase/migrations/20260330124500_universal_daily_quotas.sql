@@ -10,12 +10,12 @@ SET limits = limits || '{
   "job_searches_per_day": 5, 
   "cv_analyses_per_day": 1, 
   "ats_scores_per_day": 5, 
-  "matching_scores_per_day": 5,
+  "matching_scores_per_day": 10,
   "custom_cvs_per_day": 10,
   "assistant_messages_per_day": 5,
   "saved_jobs_per_day": 10,
   "cv_adapt_per_day": 10,
-  "recruiter_searches_per_day": 3,
+  "recruiter_searches_per_day": 10,
   "cover_letter_per_day": 10
 }'::jsonb
 WHERE name = 'free';
@@ -26,12 +26,12 @@ SET limits = limits || '{
   "job_searches_per_day": 10, 
   "cv_analyses_per_day": 5, 
   "ats_scores_per_day": 10, 
-  "matching_scores_per_day": 15,
+  "matching_scores_per_day": 30,
   "custom_cvs_per_day": 20,
   "assistant_messages_per_day": 20,
   "saved_jobs_per_day": 30,
   "cv_adapt_per_day": 30,
-  "recruiter_searches_per_day": 10,
+  "recruiter_searches_per_day": 20,
   "cover_letter_per_day": 30
 }'::jsonb
 WHERE name = 'starter';
@@ -47,7 +47,7 @@ SET limits = limits || '{
   "assistant_messages_per_day": -1,
   "saved_jobs_per_day": -1,
   "cv_adapt_per_day": -1,
-  "recruiter_searches_per_day": 10,
+  "recruiter_searches_per_day": -1,
   "cover_letter_per_day": -1
 }'::jsonb
 WHERE name IN ('pro', 'premium');
