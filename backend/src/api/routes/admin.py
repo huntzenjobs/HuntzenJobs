@@ -1245,19 +1245,6 @@ async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
 
             paying_count = len(paying_user_ids)
 
-            for p in last_by_sub.values():
-                amount_paid = float(p.get("amount_paid") or 0)
-                interval = (p.get("interval") or "month")
-                interval_count = int(p.get("interval_count") or 1)
-                if amount_paid <= 0:
-                    continue
-                # Normalise to monthly revenue
-                if interval == "year" or interval == "yearly":
-                    monthly_amount = amount_paid / (12 * max(interval_count, 1))
-                else:
-                    monthly_amount = amount_paid / max(interval_count, 1)
-                mrr += monthly_amount
-
     # New users
     new_today = supabase.table("profiles").select("id", count="exact").gte("created_at", today).execute()
     new_7d = supabase.table("profiles").select("id", count="exact").gte("created_at", week_ago).execute()
