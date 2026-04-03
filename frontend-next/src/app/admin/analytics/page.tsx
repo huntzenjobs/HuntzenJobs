@@ -222,7 +222,7 @@ export default function AdminAnalyticsPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <KpiCard
                 title="MRR"
-                value={`€${revenue.mrr.toFixed(0)}`}
+                value={`€${revenue.mrr.toFixed(2)}`}
                 subtitle="Revenu mensuel récurrent"
                 icon={DollarSign}
               />
@@ -417,7 +417,7 @@ export default function AdminAnalyticsPage() {
                     <DollarSign className="h-4 w-4 text-primary" />
                     Tendance MRR
                     <span className="ml-auto text-xs text-muted-foreground font-normal">
-                      actuel €{revenue?.mrr.toFixed(0)}
+                      actuel €{revenue?.mrr.toFixed(2)}
                     </span>
                   </CardTitle>
                 </CardHeader>
@@ -445,7 +445,7 @@ export default function AdminAnalyticsPage() {
                               />
                               <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[10px] px-1.5 py-0.5 rounded shadow-md opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">
                                 {m.date.slice(5)}:{" "}
-                                <strong>€{m.mrr.toFixed(0)}</strong>
+                                <strong>€{m.mrr.toFixed(2)}</strong>
                               </div>
                             </div>
                           );
@@ -755,7 +755,7 @@ export default function AdminAnalyticsPage() {
                       {/* Current MRR bar */}
                       <div className="flex flex-col items-center gap-1 flex-1">
                         <span className="text-xs font-semibold">
-                          €{forecast.current_mrr?.toFixed(0)}
+                          €{forecast.current_mrr?.toFixed(2)}
                         </span>
                         <div
                           className="w-full bg-primary rounded-t-sm"
@@ -782,7 +782,7 @@ export default function AdminAnalyticsPage() {
                               className="flex flex-col items-center gap-1 flex-1"
                             >
                               <span className="text-xs font-semibold">
-                                €{f.mrr_projected?.toFixed(0)}
+                                €{f.mrr_projected?.toFixed(2)}
                               </span>
                               <div
                                 className="w-full rounded-t-sm border-2 border-dashed border-primary/60 bg-primary/20"
