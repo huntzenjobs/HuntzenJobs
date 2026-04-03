@@ -1168,15 +1168,60 @@ async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
     users_res = supabase.table("profiles").select("id", count="exact").execute()
     webhooks_res = supabase.table("webhook_failures").select("id", count="exact").eq("resolved", False).execute()
 
-    # Active subscriptions + MRR
+    # Active paid subscriptions + MRR (based on real Stripe payments)
+    # NB: all users have at least a "free" plan in user_subscriptions.
+    # Here we only want paying users (non-free / non-zero plans), and
+    # MRR comes from the last paid invoice per active subscription.
     active_subs = supabase.table("user_subscriptions").select(
-        "subscription_plans(price_monthly)", count="exact"
+        "id, user_id, subscription_plans(name, price_monthly), stripe_subscription_id",
     ).eq("status", "active").execute()
-    paying_count = active_subs.count or 0
-    mrr = sum(
-        (s.get("subscription_plans") or {}).get("price_monthly", 0)
-        for s in (active_subs.data or [])
-    )
+
+    subs_data = active_subs.data or []
+
+    # Filter out free / zero-priced plans
+    paid_subs = []
+    for s in subs_data:
+        plan = s.get("subscription_plans") or {}
+        monthly_price = float(plan.get("price_monthly") or 0)
+        if monthly_price <= 0:
+            continue
+        paid_subs.append(s)
+
+    # Paying users = users on a non-free, non-zero-priced plan
+    paying_count = len(paid_subs)
+
+    # MRR based on last paid invoice per subscription (Stripe source of truth)
+    mrr = 0.0
+    if paid_subs:
+        sub_ids = [s["stripe_subscription_id"] for s in paid_subs if s.get("stripe_subscription_id")]
+        if sub_ids:
+            payments_res = supabase.table("stripe_payments").select(
+                "stripe_subscription_id, amount_paid, interval, interval_count, created_at",
+            ).in_("stripe_subscription_id", sub_ids).order("created_at", desc=True).execute()
+            payments = payments_res.data or []
+
+            # Keep last payment per subscription
+            last_by_sub: dict[str, dict] = {}
+            for p in payments:
+                sub_id = p.get("stripe_subscription_id")
+                if not sub_id:
+                    continue
+                if sub_id in last_by_sub:
+                    continue
+                last_by_sub[sub_id] = p
+
+            for p in last_by_sub.values():
+                amount_paid = float(p.get("amount_paid") or 0)
+                interval = (p.get("interval") or "month")
+                interval_count = int(p.get("interval_count") or 1)
+                if amount_paid <= 0:
+                    continue
+                # Normalise to monthly revenue
+                if interval == "year" or interval == "yearly":
+                    monthly_amount = amount_paid / (12 * max(interval_count, 1))
+                else:
+                    monthly_amount = amount_paid / max(interval_count, 1)
+                mrr += monthly_amount
 
     # New users
     new_today = supabase.table("profiles").select("id", count="exact").gte("created_at", today).execute()
