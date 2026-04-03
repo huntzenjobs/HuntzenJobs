@@ -940,6 +940,17 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
         customer_email = invoice["customer_email"] if "customer_email" in invoice else "inconnu"
         billing_reason = invoice["billing_reason"] if "billing_reason" in invoice else "unknown"
         subscription_id = invoice["subscription"] if "subscription" in invoice else "N/A"
+        invoice_id = invoice["id"] if "id" in invoice else "N/A"
+
+        user_id_value: str | None = None
+        stripe_customer_id = invoice.get("customer") if isinstance(invoice, dict) else None
+
+        # For analytics: we may also need recurring interval and period
+        stripe_sub: Any | None = None
+        new_period_start: datetime | None = None
+        new_period_end: datetime | None = None
+        interval: str | None = None
+        interval_count: int | None = None
 
         # Update current_period_end on renewal/create/update
         if billing_reason in ("subscription_create", "subscription_cycle", "subscription_update") and subscription_id and subscription_id != "N/A":
@@ -955,7 +966,25 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                     tz=UTC,
                 )
 
+                # Extract recurring interval from Stripe subscription (if available)
+                try:
+                    items = getattr(stripe_sub, "items", None)
+                    data = getattr(items, "data", []) if items else []
+                    if data:
+                        price_obj = getattr(data[0], "price", None)
+                        recurring = getattr(price_obj, "recurring", None) if price_obj else None
+                        if recurring:
+                            interval = getattr(recurring, "interval", None)
+                            interval_count = getattr(recurring, "interval_count", None)
+                except Exception:
+                    pass
+
                 if supabase_client:
+                    # Update subscription dates/status
+                    sub_row = supabase_client.table("user_subscriptions").select(
+                        "user_id"
+                    ).eq("stripe_subscription_id", subscription_id).maybe_single().execute()
+
                     supabase_client.table("user_subscriptions").update({
                         "current_period_start": new_period_start.isoformat(),
                         "current_period_end": new_period_end.isoformat(),
@@ -964,11 +993,10 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
 
                     logger.info(f"[WEBHOOK] Updated period_end={new_period_end.isoformat()} for sub={subscription_id}")
 
-                    # Invalidate cache so user sees updated quotas immediately
-                    # Find user_id from subscription
-                    sub_row = supabase_client.table("user_subscriptions").select("user_id").eq("stripe_subscription_id", subscription_id).maybe_single().execute()
                     if sub_row.data:
-                        await invalidate_user_quota_cache(sub_row.data["user_id"])
+                        user_id_value = sub_row.data.get("user_id")
+                        # Invalidate cache so user sees updated quotas immediately
+                        await invalidate_user_quota_cache(user_id_value)
             except Exception as e:
                 logger.error(f"[WEBHOOK] Failed to update period_end for {subscription_id}: {e}")
 
@@ -1032,6 +1060,26 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                 category="payment_received",
             )
             logger.info(f"[WEBHOOK] Invoice paid: {amount} {currency} from {customer_email} ({reason_label})")
+
+        # Log payment in stripe_payments for analytics (best effort)
+        try:
+            if supabase_client and amount > 0 and invoice_id != "N/A":
+                supabase_client.table("stripe_payments").upsert({
+                    "stripe_invoice_id": invoice_id,
+                    "user_id": user_id_value,
+                    "stripe_customer_id": stripe_customer_id,
+                    "stripe_subscription_id": subscription_id if subscription_id != "N/A" else None,
+                    "billing_reason": billing_reason,
+                    "amount_paid": amount,
+                    "currency": currency,
+                    "interval": interval,
+                    "interval_count": interval_count,
+                    "period_start": new_period_start.isoformat() if new_period_start else None,
+                    "period_end": new_period_end.isoformat() if new_period_end else None,
+                    "raw_invoice": invoice,
+                }, on_conflict="stripe_invoice_id").execute()
+        except Exception as e:
+            logger.warning(f"[WEBHOOK] Failed to log stripe payment: {e}")
 
     except Exception as e:
         logger.warning(f"[WEBHOOK] handle_invoice_paid non-fatal error: {e}")
