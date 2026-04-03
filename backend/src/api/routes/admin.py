@@ -1180,15 +1180,20 @@ async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
 
     # Filter out free / zero-priced plans
     paid_subs = []
+    sub_to_user: dict[str, str] = {}
     for s in subs_data:
         plan = s.get("subscription_plans") or {}
         monthly_price = float(plan.get("price_monthly") or 0)
         if monthly_price <= 0:
             continue
         paid_subs.append(s)
+        sub_id = s.get("stripe_subscription_id")
+        user_id = s.get("user_id")
+        if sub_id and user_id:
+            sub_to_user[sub_id] = user_id
 
-    # Paying users = users on a non-free, non-zero-priced plan
-    paying_count = len(paid_subs)
+    # Paying users will be computed from stripe_payments (unique users with at least one real payment)
+    paying_count = 0
 
     # MRR based on last paid invoice per subscription (Stripe source of truth)
     mrr = 0.0
@@ -1196,7 +1201,7 @@ async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
         sub_ids = [s["stripe_subscription_id"] for s in paid_subs if s.get("stripe_subscription_id")]
         if sub_ids:
             payments_res = supabase.table("stripe_payments").select(
-                "stripe_subscription_id, amount_paid, interval, interval_count, created_at",
+                "stripe_subscription_id, stripe_customer_id, amount_paid, interval, interval_count, created_at",
             ).in_("stripe_subscription_id", sub_ids).order("created_at", desc=True).execute()
             payments = payments_res.data or []
 
@@ -1209,6 +1214,36 @@ async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
                 if sub_id in last_by_sub:
                     continue
                 last_by_sub[sub_id] = p
+
+            # Unique paying users = users (or Stripe customers) that have at least one paid invoice
+            paying_user_ids: set[str] = set()
+
+            for sub_id, p in last_by_sub.items():
+                amount_paid = float(p.get("amount_paid") or 0)
+                interval = (p.get("interval") or "month")
+                interval_count = int(p.get("interval_count") or 1)
+                if amount_paid <= 0:
+                    continue
+
+                # Track unique user IDs when possible, else fallback to customer or subscription
+                user_id = sub_to_user.get(sub_id)
+                if user_id:
+                    paying_user_ids.add(user_id)
+                else:
+                    cust_id = p.get("stripe_customer_id")
+                    if cust_id:
+                        paying_user_ids.add(f"cus:{cust_id}")
+                    else:
+                        paying_user_ids.add(sub_id)
+
+                # Normalise to monthly revenue
+                if interval == "year" or interval == "yearly":
+                    monthly_amount = amount_paid / (12 * max(interval_count, 1))
+                else:
+                    monthly_amount = amount_paid / max(interval_count, 1)
+                mrr += monthly_amount
+
+            paying_count = len(paying_user_ids)
 
             for p in last_by_sub.values():
                 amount_paid = float(p.get("amount_paid") or 0)
