@@ -132,7 +132,7 @@ class JobScoutAgent(BaseAgent):
         city: str = "",
         contract_type: str = "",
         max_results: int = 200,
-        max_days: int = 7,
+        max_days: int = 120,
         radius_km: int | None = None,
         include_remote: bool = True,
         include_insights: bool = True,
@@ -390,10 +390,11 @@ class JobScoutAgent(BaseAgent):
         unique = []
 
         for job in jobs:
-            # Create fingerprint
+            # Create fingerprint (full title + location for stricter dedup)
             title = (job.get("title") or "").lower()
             company = (job.get("company") or "").lower()
-            fingerprint = f"{title[:30]}|{company[:20]}"
+            location = (job.get("location") or "").lower()
+            fingerprint = f"{title}|{company[:20]}|{location[:20]}"
 
             if fingerprint not in seen:
                 seen.add(fingerprint)
@@ -435,8 +436,6 @@ class JobScoutAgent(BaseAgent):
             # Check 2: Fuzzy match (partial word match like "boulang" in "boulangerie")
             has_fuzzy = False
             for qw in query_words:
-                if len(qw) < 3:
-                    continue
                 for tw in title_words:
                     if qw in tw or tw in qw:
                         has_fuzzy = True
@@ -486,9 +485,10 @@ class JobScoutAgent(BaseAgent):
             # Check 1: known school company name
             is_school = any(kw in company for kw in _SCHOOL_COMPANY_KEYWORDS)
 
-            # Check 2: content patterns (one strong signal is enough)
+            # Check 2: content patterns (require 2+ signals to avoid false positives)
             if not is_school:
-                is_school = any(pattern in content for pattern in _SCHOOL_CONTENT_PATTERNS)
+                signal_count = sum(1 for pattern in _SCHOOL_CONTENT_PATTERNS if pattern in content)
+                is_school = signal_count >= 2
 
             if is_school:
                 removed_count += 1

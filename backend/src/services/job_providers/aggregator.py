@@ -66,9 +66,8 @@ async def aggregate_jobs(
                 "country_code": country_code,
                 "max_results": max_per_provider,
             }
-            # Adzuna supporte max_days — conserver ce comportement spécifique
-            if hasattr(provider, 'name') and provider.name == 'adzuna':
-                kwargs["max_days"] = max_days
+            # Passer max_days à tous les providers (chacun l'ignore si non supporté via **kwargs)
+            kwargs["max_days"] = max_days
 
             # Transmettre contract_type à TOUS les providers via **kwargs
             if contract_type:
