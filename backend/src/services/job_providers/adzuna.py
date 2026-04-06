@@ -87,10 +87,10 @@ class AdzunaProvider(BaseJobProvider):
         }
 
         # Map contract types to Adzuna values
-        if contract_type in ("alternance", "apprentissage"):
-            # Adzuna n'a pas de type natif alternance — enrichir la query
-            params["what"] = f"{params['what']} alternance".strip()
-        elif contract_type:
+        # Alternance : on ne touche PAS la query. Le post-filtre dans
+        # aggregator.py (_is_alternance_job) se charge de filtrer après.
+        # Enrichir avec "alternance" retournait souvent 0 résultats.
+        if contract_type and contract_type not in ("alternance", "apprentissage"):
             contract_map = {
                 "cdi": "permanent",
                 "cdd": "contract",

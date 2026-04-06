@@ -184,7 +184,7 @@ def apply_advanced_filters(
                 )
             ]
 
-    # Filter by multiple contract types (exact match on normalized contract_type)
+    # Filter by multiple contract types (exact match + text signal scan)
     if contract_types:
         filter_to_normalized: dict[str, str] = {
             "cdi": "CDI",
@@ -199,6 +199,18 @@ def apply_advanced_filters(
             "cdd_partial": "Temps partiel",
         }
 
+        # Signaux textuels par type normalisé
+        contract_text_signals: dict[str, list[str]] = {
+            "CDI": ["cdi", "contrat à durée indéterminée", "permanent"],
+            "CDD": ["cdd", "contrat à durée déterminée", "fixed-term"],
+            "Freelance": ["freelance", "indépendant", "mission freelance"],
+            "Stage": ["stage", "internship", "stagiaire"],
+            "Alternance": ["alternance", "apprentissage", "contrat pro",
+                           "contrat d'apprentissage", "work-study", "apprenti"],
+            "Interim": ["intérim", "interim", "travail temporaire"],
+            "Temps partiel": ["temps partiel", "part-time", "mi-temps"],
+        }
+
         target_types: set[str] = set()
         for ct in contract_types:
             normalized = filter_to_normalized.get(ct.lower().strip())
@@ -206,11 +218,21 @@ def apply_advanced_filters(
                 target_types.add(normalized)
 
         if target_types:
-            filtered = [
-                job for job in filtered
-                if job.get("contract_type", "") in target_types
-                or not job.get("contract_type")  # Include jobs with unknown type
-            ]
+            def _matches_contract(job: dict) -> bool:
+                ct = job.get("contract_type", "")
+                # Niveau 1 : match exact sur le type normalisé
+                if ct in target_types:
+                    return True
+                # Niveau 2 : si type vide, scanner titre + description
+                if not ct:
+                    text = f"{job.get('title', '')} {job.get('description', '') or ''}".lower()
+                    for t in target_types:
+                        signals = contract_text_signals.get(t, [])
+                        if any(s in text for s in signals):
+                            return True
+                return False
+
+            filtered = [job for job in filtered if _matches_contract(job)]
 
     # Filter by work schedule (heuristic on text)
     if work_schedule:
