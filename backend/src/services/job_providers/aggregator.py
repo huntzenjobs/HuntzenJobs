@@ -25,7 +25,7 @@ def _is_alternance_job(job: dict) -> bool:
     """Retourne True si l'offre présente un signal alternance clair."""
     text = f"{job.get('title', '')} {job.get('description', '') or ''}".lower()
     return (
-        job.get("contract_type") == "alternance"
+        (job.get("contract_type") or "").lower() == "alternance"
         or any(signal in text for signal in ALTERNANCE_SIGNALS)
     )
 
