@@ -112,7 +112,7 @@ interface UseCVAnalysisReturn {
 // ============================================
 
 const POLLING_INTERVAL = 2000; // 2 seconds
-const MAX_POLLING_DURATION = 120000; // 2 minutes (safety)
+const MAX_POLLING_DURATION = 300000; // 5 minutes (Modal cold starts & large PDFs)
 const ESTIMATED_PROCESSING_TIME = 15; // seconds (from S6-6 docs)
 
 // ============================================
@@ -150,6 +150,11 @@ export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
   const [progress, setProgress] = useState(0);
 
   // Refs for cleanup
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -221,7 +226,7 @@ export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
         try {
           // Safety: Stop polling after max duration
           if (Date.now() - pollStart > MAX_POLLING_DURATION) {
-            console.warn("Polling timeout reached (2 minutes)");
+            console.warn("Polling timeout reached (5 minutes)");
             setError("Processing timeout - please check status later");
             setStatus("failed");
             setIsPolling(false);
@@ -264,7 +269,7 @@ export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
             }
 
             sendXpEvent(session?.access_token ?? "", "cv_analysis");
-            onComplete?.();
+            onCompleteRef.current?.();
           }
 
           // Handle failure

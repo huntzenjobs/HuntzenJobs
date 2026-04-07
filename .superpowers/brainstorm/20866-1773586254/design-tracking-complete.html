@@ -1,0 +1,246 @@
+<h2>Tout ce qui sera tracké et affiché dans ton admin</h2>
+<p class="subtitle">Liste complète — coche ou signale ce qui manque</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+
+  <!-- BLOC 1: PAGE LIVE -->
+  <div style="grid-column:span 2;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:10px;padding:16px">
+    <div class="label" style="color:#22c55e">⚡ PAGE /admin/live — Centre de contrôle temps réel</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px">
+
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px">
+        <div class="label">👥 Qui est là maintenant</div>
+        <ul style="font-size:12px;color:#a1a1aa;margin-top:8px;line-height:2">
+          <li>Nombre total d'utilisateurs actifs</li>
+          <li>Par page : Jobs / Coach / CV / Assistant</li>
+          <li>Par feature : Coach IA / Analyse CV / etc.</li>
+          <li>Utilisateurs anonymes vs connectés</li>
+          <li>Rafraîchissement toutes les 10 secondes</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px">
+        <div class="label">📡 Fil d'événements live</div>
+        <ul style="font-size:12px;color:#a1a1aa;margin-top:8px;line-height:2">
+          <li>14:31:07 — Thomas s'est inscrit (Gratuit)</li>
+          <li>14:30:44 — Marie a utilisé Coach Nova</li>
+          <li>14:30:12 — Ahmed a atteint sa limite</li>
+          <li>14:29:55 — Karim — analyse CV score 72</li>
+          <li>14:29:12 — Sarah passe au plan Pro</li>
+          <li>14:28:44 — Lucas cherche "développeur Paris"</li>
+          <li style="color:#ef4444">14:28:01 — Erreur IA pour Mohamed</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px">
+        <div class="label" style="color:#f59e0b">🔧 Santé du service</div>
+        <ul style="font-size:12px;color:#a1a1aa;margin-top:8px;line-height:2">
+          <li>🟢 Coach IA — Groq actif (3 req/sec)</li>
+          <li>🟢 Analyse CV — Modal opérationnel</li>
+          <li>🟢 Base de données — Connexions : 12/60</li>
+          <li>🟢 File d'attente ARQ — 0 jobs en attente</li>
+          <li>🟢 Redis — Connecté</li>
+          <li>🔴 Stripe Webhook — 2 échecs non résolus</li>
+          <li>Taux d'erreur dernière heure : 0.3%</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOC 2: DASHBOARD ENRICHI -->
+  <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:16px">
+    <div class="label" style="color:#60a5fa">📊 DASHBOARD — Nouveaux blocs ajoutés</div>
+    <ul style="font-size:12px;color:#a1a1aa;margin-top:10px;line-height:2.2">
+      <li>🟢 <strong>X utilisateurs actifs maintenant</strong> (cliquable → /admin/live)</li>
+      <li>Derniers 3 événements en temps réel (mini-fil)</li>
+      <li>Taux d'erreur dernière heure</li>
+      <li>Feature la plus utilisée aujourd'hui</li>
+      <li>Nombre de jobs lancés dans la file ARQ</li>
+    </ul>
+  </div>
+
+  <!-- BLOC 3: PROFIL USER ENRICHI -->
+  <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.25);border-radius:10px;padding:16px">
+    <div class="label" style="color:#c084fc">👤 PAGE USER — Onglet "Activité" (nouveau)</div>
+    <ul style="font-size:12px;color:#a1a1aa;margin-top:10px;line-height:2.2">
+      <li>Historique complet de ses actions en français</li>
+      <li>Date/heure précise de chaque action</li>
+      <li>Toutes ses erreurs avec le contexte</li>
+      <li>Ses recherches d'emploi (mots-clés tapés)</li>
+      <li>Ses sessions Coach (durée, nb questions)</li>
+      <li>Ses analyses CV (scores obtenus)</li>
+      <li>Ses tentatives de paiement (Stripe)</li>
+      <li>Ses limites atteintes (feature + heure)</li>
+      <li>Ses connexions/déconnexions</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- TABLEAU COMPLET DES EVENTS -->
+<div style="margin-top:20px;background:rgba(255,255,255,0.03);border-radius:10px;padding:16px">
+  <div class="label">📋 Liste complète des événements trackés — Source → Admin</div>
+  <div style="overflow-x:auto;margin-top:12px">
+    <table style="width:100%;font-size:11px;border-collapse:collapse">
+      <tr style="color:#6b7280;border-bottom:1px solid rgba(255,255,255,0.1)">
+        <th style="text-align:left;padding:6px 8px">Événement</th>
+        <th style="text-align:left;padding:6px 8px">Affiché comme</th>
+        <th style="text-align:left;padding:6px 8px">Source</th>
+        <th style="text-align:left;padding:6px 8px">Où dans l'admin</th>
+      </tr>
+
+      <!-- INSCRIPTION & AUTH -->
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Inscription</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Thomas vient de s'inscrire (plan Gratuit)</td>
+        <td style="padding:6px 8px"><span style="background:rgba(59,130,246,0.2);padding:2px 6px;border-radius:4px">Frontend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#a1a1aa">Connexion</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Marie s'est connectée</td>
+        <td style="padding:6px 8px"><span style="background:rgba(59,130,246,0.2);padding:2px 6px;border-radius:4px">Frontend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#a1a1aa">Déconnexion</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Lucas s'est déconnecté</td>
+        <td style="padding:6px 8px"><span style="background:rgba(59,130,246,0.2);padding:2px 6px;border-radius:4px">Frontend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">User</td>
+      </tr>
+
+      <!-- FEATURES IA -->
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Coach IA — session</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Marie a utilisé le Coach Nova — 4 questions, 3 min</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Analyse CV</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Karim a analysé son CV — score 72/100</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Adaptation CV</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Sarah a adapté son CV pour une offre développeur</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Lettre de motivation</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Ahmed a généré une lettre de motivation</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Recherche d'emploi</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Lucas a cherché "développeur React Paris" — 34 résultats</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Offre sauvegardée</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Marie a sauvegardé une offre chez Société Générale</td>
+        <td style="padding:6px 8px"><span style="background:rgba(59,130,246,0.2);padding:2px 6px;border-radius:4px">Frontend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Score carrière calculé</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Thomas a calculé son score carrière — 68/100</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+
+      <!-- PAIEMENTS -->
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#f59e0b">Paiement réussi</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Sarah vient de passer au plan Pro (29€/mois) 🎉</td>
+        <td style="padding:6px 8px"><span style="background:rgba(168,85,247,0.2);padding:2px 6px;border-radius:4px">Stripe</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#ef4444">Paiement échoué</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Paiement refusé pour Lucas (carte invalide)</td>
+        <td style="padding:6px 8px"><span style="background:rgba(168,85,247,0.2);padding:2px 6px;border-radius:4px">Stripe</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#ef4444">Résiliation</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Ahmed a annulé son abonnement Pro</td>
+        <td style="padding:6px 8px"><span style="background:rgba(168,85,247,0.2);padding:2px 6px;border-radius:4px">Stripe</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#a1a1aa">Page prix visitée</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Marie a consulté la page tarifs</td>
+        <td style="padding:6px 8px"><span style="background:rgba(59,130,246,0.2);padding:2px 6px;border-radius:4px">Frontend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#f59e0b">Pop-up upgrade cliquée</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Thomas a cliqué sur "Passer au Pro" (pop-up quota)</td>
+        <td style="padding:6px 8px"><span style="background:rgba(59,130,246,0.2);padding:2px 6px;border-radius:4px">Frontend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+
+      <!-- LIMITES & ERREURS -->
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#f59e0b">Quota atteint</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Ahmed a atteint sa limite de messages Coach (plan Gratuit)</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#ef4444">Erreur IA</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Erreur IA pour Mohamed (service temporairement indisponible)</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#ef4444">Erreur PDF</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Échec de lecture du CV de Karim (fichier corrompu)</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#ef4444">Erreur Stripe Webhook</td>
+        <td style="padding:6px 8px;color:#a1a1aa">⚠ Webhook Stripe échoué — paiement Sarah non traité</td>
+        <td style="padding:6px 8px"><span style="background:rgba(168,85,247,0.2);padding:2px 6px;border-radius:4px">Stripe</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + Logs</td>
+      </tr>
+
+      <!-- PARRAINAGE -->
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Parrainage utilisé</td>
+        <td style="padding:6px 8px;color:#a1a1aa">Nouveau inscrit via le lien de parrainage de Thomas</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live + User</td>
+      </tr>
+
+      <!-- SANTÉ SERVEUR -->
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#ef4444">Groq surchargé</td>
+        <td style="padding:6px 8px;color:#a1a1aa">⚠ Le Coach IA est saturé — 45 personnes en attente</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live (santé)</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:6px 8px;color:#22c55e">Service restauré</td>
+        <td style="padding:6px 8px;color:#a1a1aa">✅ Coach IA revenu à la normale</td>
+        <td style="padding:6px 8px"><span style="background:rgba(234,179,8,0.2);padding:2px 6px;border-radius:4px">Backend</span></td>
+        <td style="padding:6px 8px;color:#a1a1aa">Live (santé)</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- LEGENDE -->
+<div style="display:flex;gap:16px;margin-top:16px;font-size:12px">
+  <span><span style="background:rgba(59,130,246,0.2);padding:2px 8px;border-radius:4px">Frontend</span> — Déclenché dans Next.js</span>
+  <span><span style="background:rgba(234,179,8,0.2);padding:2px 8px;border-radius:4px">Backend</span> — Déclenché dans FastAPI</span>
+  <span><span style="background:rgba(168,85,247,0.2);padding:2px 8px;border-radius:4px">Stripe</span> — Via webhook Stripe</span>
+  <span style="color:#a1a1aa">Live = /admin/live · User = page profil · Logs = /admin/logs</span>
+</div>

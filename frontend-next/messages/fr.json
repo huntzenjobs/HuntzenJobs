@@ -383,12 +383,15 @@
         "period": "Gratuit",
         "cta": "Commencer gratuitement",
         "features": [
-          "5 analyses de CV par jour",
-          "10 messages par coach",
-          "Offres d'emploi illimitées",
-          "Gestion des favoris illimitée",
-          "2 exports CV par jour",
-          "2-3 suivis de candidatures"
+          "5 recherches d’offres par jour",
+          "10 offres visibles par jour",
+          "5 Score de compatibilité ATS",
+          "5 Score matching offre et cv",
+          "10 Génération de cv personnalisé",
+          "5 messages coaching par jour",
+          "10 Sauvegardes d'offres",
+          "Export pdf",
+          "Filtres avancés"
         ],
         "unavailable": [
           "Coach illimité",
@@ -402,13 +405,16 @@
         "period": "/mois",
         "cta": "Commencer avec Recherche Active",
         "features": [
-          "5 analyses de CV par jour",
-          "20 messages coach par jour",
-          "Offres d'emploi illimitées",
-          "Suivi candidatures illimité",
-          "Page documents (CV & LM)",
-          "Analyse détaillée ATS",
-          "2 exports CV par jour"
+          "10 recherches d’offres par jour",
+          "20 offres visibles par recherche",
+          "10 Score de compatibilité ATS",
+          "15 Score matching offre et cv",
+          "20 Génération de cv personnalisé",
+          "20 messages coaching par jour",
+          "30 Sauvegardes d'offres",
+          "Export pdf",
+          "Filtres avancés",
+          "Historique CV"
         ],
         "unavailable": [
           "Coach illimité",
@@ -421,14 +427,15 @@
         "period": "/mois",
         "cta": "Commencer avec Accélérateur",
         "features": [
-          "20 analyses de CV par jour",
-          "Coach IA illimité 24/7",
-          "Export PDF illimité",
-          "Contact recruteur (email + LinkedIn)",
-          "Amélioration automatique CV (ATS)",
-          "Historique conversations par thème",
-          "Coaching expatriation & négociation",
-          "Support prioritaire"
+          "Recherches illimitées",
+          "Offres illimitées",
+          "Scores illimités",
+          "CV personnalisés illimités",
+          "Coaching illimité",
+          "Sauvegardes illimitées",
+          "Export pdf",
+          "Filtres avancés",
+          "Historique CV"
         ],
         "unavailable": []
       },
@@ -438,12 +445,11 @@
         "cta": "Commencer avec Carrière",
         "features": [
           "Tout Accélérateur inclus",
-          "Simulateur d'entretien (voicebot)",
-          "Guide Expatriation (+15 pays)",
-          "Coaching avancé : voicebot, négociation, branding",
-          "Historique complet & sauvegarde auto",
-          "Accès anticipé nouvelles fonctionnalités",
-          "Support VIP prioritaire"
+          "Simulation d'entretien",
+          "Alertes email",
+          "Conseils personnalisés",
+          "Suivi des candidatures",
+          "Profil recruteur"
         ],
         "unavailable": []
       }
@@ -458,7 +464,8 @@
       "salons": "Salons & Forums",
       "savedJobs": "Jobs sauvegardés",
       "candidatures": "Mes Candidatures",
-      "recruiterContact": "Contact Recruteur",
+      "recruiterContact": "Contact expert",
+      "recruiterFinder": "Contact recruteur",
       "documents": "Mes documents",
       "myUsage": "Mon Utilisation",
       "referral": "HuntZen Boost",
@@ -467,7 +474,7 @@
     "plans": {
       "free": "Exploration",
       "starter": "Recherche Active",
-      "pro": "Carrière",
+      "pro": "Accélérateur",
       "premium": "Carrière"
     },
     "user": {
@@ -494,8 +501,10 @@
     },
     "badges": {
       "new": "Nouveau",
-      "recruiterPrice": "50€"
+      "recruiterPrice": "50€",
+      "soon": "Bientôt disponible"
     },
+    "soonMessage": "Cette fonctionnalité arrive bientôt 🚀",
     "aria": {
       "close": "Fermer le menu de navigation",
       "open": "Ouvrir le menu de navigation",
@@ -698,10 +707,15 @@
     "dailyUsageTitle": "Quotas journaliers",
     "generalUsageTitle": "Quotas généraux",
     "resetAtMidnight": "Réinitialisation à minuit",
-    "cvAnalysis": "Analyses CV",
-    "assistantMessages": "Messages Assistant",
+    "atsScore": "Score ATS",
+    "matchingScore": "Matching Job",
+    "cvAdapt": "Adaptation CV",
+    "customCv": "CV personnalisé",
+    "cvAdapt": "Adaptation de CV",
+    "recruiterSearch": "Recherches recruteur (LinkedIn)",
     "jobSearches": "Recherches d'emploi",
     "savedJobs": "Jobs sauvegardés",
+    "assistantMessages": "Messages Assistant",
     "perDay": "/jour",
     "unlockTitle": "Débloquez tout le potentiel de HuntZen",
     "unlockDescription": "Passez à un plan payant pour des analyses illimitées, plus de messages coaching, et des fonctionnalités exclusives.",
@@ -727,6 +741,15 @@
       },
       "jobView": {
         "label": "offres"
+      },
+      "atsScore": {
+        "label": "analyses ATS"
+      },
+      "matchingScore": {
+        "label": "matchings job"
+      },
+      "customCv": {
+        "label": "CV personnalisés"
       },
       "cvAnalysis": {
         "label": "analyses"
@@ -1392,7 +1415,17 @@
       },
       "finder": {
         "companyPlaceholder": "Nom de l'entreprise",
-        "quotaReached": "Quota atteint ({count} recherches/jour en version gratuite). Passez à Pro pour un accès illimité."
+        "cityPlaceholder": "Ville (optionnel)",
+        "quotaReached": "Quota atteint ({count} recherches/jour en version gratuite). Passez à Pro pour un accès illimité.",
+        "searchTab": "Recherche",
+        "savedTab": "Contacts sauvegardés",
+        "noResults": "Aucun contact trouvé pour cette entreprise.",
+        "save": "Sauvegarder",
+        "saved": "Sauvegardé",
+        "savedEmpty": "Vous n'avez encore sauvegardé aucun contact.",
+        "loginRequired": "Connectez-vous pour sauvegarder vos contacts.",
+        "loadingSaved": "Chargement de vos contacts sauvegardés...",
+        "remove": "Supprimer"
       }
     }
   },

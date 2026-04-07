@@ -1,27 +1,27 @@
 "use client";
 
+import { SubscriptionChangedModal } from "@/components/freemium/subscription-changed-modal";
+import { useOptionalAssistant } from "@/contexts/assistant-context";
+import { useOptionalAuth } from "@/contexts/auth-context";
 import {
-  createContext,
-  useContext,
-  ReactNode,
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from "react";
-import {
-  useFreemiumLimits,
-  PlanType,
   FeatureType,
   PLAN_LIMITS,
+  PlanType,
+  useFreemiumLimits,
 } from "@/hooks/use-freemium-limits";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
-import { useOptionalAuth } from "@/contexts/auth-context";
-import { useOptionalAssistant } from "@/contexts/assistant-context";
-import { toast } from "sonner";
 import { useTranslations } from "next-intl";
-import { SubscriptionChangedModal } from "@/components/freemium/subscription-changed-modal";
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { toast } from "sonner";
 
 type PlanLimits = (typeof PLAN_LIMITS)[PlanType];
 
@@ -39,8 +39,13 @@ interface SubscriptionContextType {
   usage: {
     searchesToday: number;
     jobsViewedToday: number;
-    cvAnalysesToday: number;
+    atsScoresUsedToday: number;
+    matchingScoresUsedToday: number;
     assistantMessagesUsedToday: number;
+    savedJobsCount: number;
+    cvAdaptsUsedToday: number;
+    coverLettersUsedToday: number;
+    recruiterSearchesUsedToday: number;
     lastResetDate: string;
   };
 
@@ -78,6 +83,8 @@ interface SubscriptionContextType {
   reconcileSubscription: () => Promise<void>;
   // Silent refresh (no toast) — use when opening usage modal
   refreshQuotas: () => Promise<void>;
+  // Clear local optimistic state for a feature
+  resetUsage: (feature: FeatureType) => void;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | null>(null);
@@ -93,6 +100,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   // NEW: Fetch subscription data from backend API
   const apiData = useSubscriptionApi();
+  const userId = auth?.user?.id;
 
   // KEEP: Local state for setPlan() and coach session until Stripe integration
   // Scoped by userId to prevent cross-user quota leakage
@@ -247,6 +255,88 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("token-expired", handleTokenExpired);
   }, []);
 
+  // Sync local state with API quotas
+  // Handles resets (administrative/daily) and "catch-up" scenarios
+  useEffect(() => {
+    if (!apiData.quotas) return;
+
+    const trackedFeatures: FeatureType[] = [
+      "job_search",
+      "ats_score",
+      "matching_score",
+      "assistant_messages",
+      "saved_jobs",
+      "cv_adapt",
+      "cover_letter",
+      "recruiter_search",
+    ];
+
+    trackedFeatures.forEach((feature) => {
+      let q = (apiData.quotas as any)[feature];
+      if (!q) return;
+
+      // Find local usage value
+      let localUsed = 0;
+      switch (feature) {
+        case "job_search":
+          localUsed = freemium.usage.searchesToday;
+          break;
+        case "saved_jobs":
+          localUsed = freemium.usage.savedJobsCount;
+          break;
+        case "ats_score":
+          localUsed = freemium.usage.atsScoresUsedToday;
+          break;
+        case "matching_score":
+          localUsed = freemium.usage.matchingScoresUsedToday;
+          break;
+        case "assistant_messages":
+          localUsed = freemium.usage.assistantMessagesUsedToday;
+          break;
+        case "cv_adapt":
+          localUsed = freemium.usage.cvAdaptsUsedToday;
+          break;
+        case "cover_letter":
+          localUsed = freemium.usage.coverLettersUsedToday;
+          break;
+        case "recruiter_search":
+          localUsed = freemium.usage.recruiterSearchesUsedToday;
+          break;
+      }
+
+      if (q.used === 0 && localUsed > 0) {
+        // API shows reset, but we have local usage
+        // Check if we JUST incremented this locally (short protection window)
+        const lastIncrement =
+          freemium.usage.lastIncrementTimestamps?.[feature] || 0;
+        const timeSinceIncrement = Date.now() - lastIncrement;
+
+        // Use a small window (5 seconds) to avoid fighting with in-flight requests,
+        // but allow admin/daily resets to propagate quickly.
+        if (timeSinceIncrement > 5000) {
+          console.log(
+            `[SUBSCRIPTION] Sync: Resetting local usage for ${feature} (API is 0 and no recent local increment)`,
+          );
+          freemium.resetUsage(feature);
+        }
+      } else if (q.used !== localUsed) {
+        // API differs from local state (usually we sync UP, but we must also heal DOWN)
+        // Check if we JUST incremented this locally (5 seconds protection window for in-flight requests)
+        const lastIncrement =
+          freemium.usage.lastIncrementTimestamps?.[feature] || 0;
+        const timeSinceIncrement = Date.now() - lastIncrement;
+
+        if (timeSinceIncrement > 5000 || q.used > localUsed) {
+          // Sync local state down if bugged, up if API is ahead
+          console.log(
+            `[SUBSCRIPTION] Sync: Correcting local usage for ${feature} from API (${localUsed} -> ${q.used})`,
+          );
+          freemium.syncUsage(feature, q.used);
+        }
+      }
+    });
+  }, [apiData.quotas, freemium.usage]);
+
   // Listen for subscription-downgraded event (403 interceptor)
   useEffect(() => {
     const handler = () => {
@@ -270,96 +360,118 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     // Override numeric limits from API, keep feature flags from PLAN_LIMITS
     return {
       ...baseLimits,
-      // Override with API data
-      cv_analyses_per_day:
-        apiData.quotas.cv_analysis.limit === -1
-          ? Infinity
-          : apiData.quotas.cv_analysis.limit,
-      assistant_messages_per_day: apiData.quotas.assistant_messages
-        ? apiData.quotas.assistant_messages.limit === -1
-          ? Infinity
-          : apiData.quotas.assistant_messages.limit
-        : PLAN_LIMITS[plan].assistant_messages_per_day,
+      // Override with API data if available, otherwise use hardcoded defaults
       job_searches_per_day:
-        apiData.quotas.job_search.limit === -1
+        apiData.quotas.job_search?.limit === -1
           ? Infinity
-          : apiData.quotas.job_search.limit,
+          : (apiData.quotas.job_search?.limit ??
+            baseLimits.job_searches_per_day),
+      ats_scores_per_day:
+        apiData.quotas.ats_score?.limit === -1
+          ? Infinity
+          : (apiData.quotas.ats_score?.limit ?? baseLimits.ats_scores_per_day),
+      matching_scores_per_day:
+        apiData.quotas.matching_score?.limit === -1
+          ? Infinity
+          : (apiData.quotas.matching_score?.limit ??
+            baseLimits.matching_scores_per_day),
+      saved_jobs_per_day:
+        apiData.quotas.saved_jobs?.limit === -1
+          ? Infinity
+          : (apiData.quotas.saved_jobs?.limit ?? baseLimits.saved_jobs_per_day),
+      assistant_messages_per_day:
+        apiData.quotas.assistant_messages?.limit === -1
+          ? Infinity
+          : (apiData.quotas.assistant_messages?.limit ??
+            baseLimits.assistant_messages_per_day),
+      recruiter_searches_per_day:
+        apiData.quotas.recruiter_search?.limit === -1
+          ? Infinity
+          : (apiData.quotas.recruiter_search?.limit ??
+            baseLimits.recruiter_searches_per_day),
+      cv_adapt_per_day:
+        apiData.quotas.cv_adapt?.limit === -1
+          ? Infinity
+          : (apiData.quotas.cv_adapt?.limit ?? baseLimits.cv_adapt_per_day),
+      cover_letter_per_day:
+        apiData.quotas.cover_letter?.limit === -1
+          ? Infinity
+          : (apiData.quotas.cover_letter?.limit ??
+            baseLimits.cover_letter_per_day),
     } as PlanLimits;
   }, [apiData.quotas, plan]);
 
-  // Build usage from API quotas (source of truth)
+  // Build unified usage (combines API source of truth with local optimistic updates)
   const usageFromApi = useMemo(
     () => ({
-      // From API backend (using ?? to avoid treating 0 as falsy)
-      searchesToday: apiData.quotas?.job_search.used ?? 0,
-      cvAnalysesToday: apiData.quotas?.cv_analysis.used ?? 0,
-      assistantMessagesUsedToday: apiData.quotas?.assistant_messages?.used ?? 0,
-
-      // From API backend (fallback to localStorage if not tracked)
+      // Use the higher value between API and local for EACH feature to ensure conservative tracking
+      searchesToday: Math.max(
+        apiData.quotas?.job_search?.used ?? 0,
+        freemium.usage.searchesToday,
+      ),
+      atsScoresUsedToday: Math.max(
+        apiData.quotas?.ats_score?.used ?? 0,
+        freemium.usage.atsScoresUsedToday,
+      ),
+      matchingScoresUsedToday: Math.max(
+        apiData.quotas?.matching_score?.used ?? 0,
+        freemium.usage.matchingScoresUsedToday,
+      ),
+      assistantMessagesUsedToday: Math.max(
+        apiData.quotas?.assistant_messages?.used ?? 0,
+        freemium.usage.assistantMessagesUsedToday,
+      ),
+      savedJobsCount: Math.max(
+        apiData.quotas?.saved_jobs?.used ?? apiData.saved_jobs_quota?.used ?? 0,
+        freemium.usage.savedJobsCount,
+      ),
+      cvAdaptsUsedToday: Math.max(
+        apiData.quotas?.cv_adapt?.used ?? 0,
+        freemium.usage.cvAdaptsUsedToday,
+      ),
+      coverLettersUsedToday: Math.max(
+        apiData.quotas?.cover_letter?.used ?? 0,
+        freemium.usage.coverLettersUsedToday,
+      ),
+      recruiterSearchesUsedToday: Math.max(
+        apiData.quotas?.recruiter_search?.used ?? 0,
+        freemium.usage.recruiterSearchesUsedToday,
+      ),
       jobsViewedToday:
         apiData.quotas?.job_view?.used ?? freemium.usage.jobsViewedToday,
       lastResetDate:
-        apiData.quotas?.cv_analysis.reset_at ?? freemium.usage.lastResetDate,
+        apiData.quotas?.ats_score?.reset_at ?? freemium.usage.lastResetDate,
     }),
-    [
-      apiData.quotas,
-      freemium.usage.jobsViewedToday,
-      freemium.usage.lastResetDate,
-    ],
+    [apiData.quotas, freemium.usage],
   );
 
   // canUse helper: Check if user can use a feature based on API quotas + local state
   const canUse = useCallback(
     (feature: FeatureType): boolean => {
-      // Check local optimistic state first (catches immediate post-action state)
+      // 1. Check local optimistic state (fast path for guest/offline)
       const localCanUse = freemium.canUse(feature);
 
+      // 2. If no API data yet, rely on local state
       if (!apiData.quotas) {
-        // API not loaded yet — use local state (conservative)
         return localCanUse;
       }
 
-      // Check API quotas for ALL features with quota tracking
-      const quotaKey =
-        feature === "cv_analysis"
-          ? "cv_analysis"
-          : feature === "job_search"
-            ? "job_search"
-            : feature === "assistant_messages"
-              ? "assistant_messages"
-              : feature === "job_view"
-                ? "job_view"
-                : feature === "recruiter_search"
-                  ? "recruiter_search"
-                  : null;
+      // 3. Extract API access flag
+      const q = apiData.quotas[feature as keyof typeof apiData.quotas];
+      const apiCanUse = q ? (q as any).has_access : localCanUse;
 
-      // Per-coach check for assistant_messages
-      if (
-        feature === "assistant_messages" &&
-        apiData.quotas.assistant_messages?.by_coach
-      ) {
-        const selectedCoach = assistantCtx?.selectedAssistant ?? "career-coach";
-        const coachQuota =
-          apiData.quotas.assistant_messages.by_coach[selectedCoach];
-        if (coachQuota) {
-          return coachQuota.has_access;
-        }
-        // Fallback to global if coach not found in by_coach
-      }
+      // 4. IMPORTANT: If user is authenticated and API says YES, trust it.
+      // This allows custom_limits (set in DB) to override local plan defaults.
+      if (userId && apiCanUse) return true;
 
-      const apiCanUse =
-        quotaKey && apiData.quotas[quotaKey]
-          ? apiData.quotas[quotaKey].has_access
-          : localCanUse;
+      // 5. If API says NO and used > 0, trust API (exhausted).
+      // (Exception: if used is 0, it might be a refresh delay, so we check local too)
+      if (userId && !apiCanUse && q && q.used > 0) return false;
 
-      // If API shows used=0, quota was reset overnight — trust API immediately
-      // (local state may not have reset yet if app stayed open across midnight)
-      if (quotaKey && apiData.quotas[quotaKey]?.used === 0) return apiCanUse;
-
-      // Block if EITHER source says no (most conservative = safest)
+      // 6. Default to conservative (both must agree)
       return apiCanUse && localCanUse;
     },
-    [apiData.quotas, freemium, assistantCtx?.selectedAssistant],
+    [apiData.quotas, freemium, userId],
   );
 
   // getRemaining helper: Get remaining quota based on API data for ALL features
@@ -381,32 +493,72 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Generic lookup for all quota-tracked features
-      const quotaData = apiData.quotas[feature];
+      // Special case: saved_jobs (prefer the most aggressive used count)
+      if (feature === "saved_jobs") {
+        const apiUsed =
+          apiData.quotas?.saved_jobs?.used ??
+          apiData.saved_jobs_quota?.used ??
+          0;
+        const localUsed = freemium.usage.savedJobsCount;
+        const mostUsed = Math.max(apiUsed, localUsed);
+
+        const limit =
+          apiData.saved_jobs_quota?.limit ??
+          PLAN_LIMITS[plan].saved_jobs_per_day;
+        if (limit === Infinity || limit === -1) return Infinity;
+        return Math.max(0, limit - mostUsed);
+      }
+
+      // Generic lookup for all other quota-tracked features
+      const quotaData = apiData.quotas[feature as keyof typeof apiData.quotas];
       if (!quotaData) return localRemaining;
 
-      const apiRemaining =
-        quotaData.remaining === -1 ? Infinity : quotaData.remaining;
+      // Calculate remaining based on API limit minus unified usage
+      const limit = (quotaData as any).limit;
+      if (limit === -1 || limit === Infinity) return Infinity;
 
-      // If API shows used=0, quota was reset overnight — trust API immediately
-      // (local state may not have reset yet if app stayed open across midnight)
-      if (quotaData.used === 0) return apiRemaining;
+      // Use usageFromApi which already incorporates Math.max(api, local)
+      const used =
+        (usageFromApi as any)[
+          feature === "job_search"
+            ? "searchesToday"
+            : feature === "ats_score"
+              ? "atsScoresUsedToday"
+              : feature === "matching_score"
+                ? "matchingScoresUsedToday"
+                : feature === "cv_adapt"
+                  ? "cvAdaptsUsedToday"
+                  : feature === "cover_letter"
+                    ? "coverLettersUsedToday"
+                    : feature === "assistant_messages"
+                      ? "assistantMessagesUsedToday"
+                      : feature === "recruiter_search"
+                        ? "recruiterSearchesUsedToday"
+                        : "searchesToday" // fallback
+        ] ?? quotaData.used;
 
-      // Return the lower value: if local was decremented but API hasn't refreshed yet
-      return Math.min(apiRemaining, localRemaining);
+      return Math.max(0, limit - used);
     },
     [apiData.quotas, freemium, assistantCtx?.selectedAssistant],
   );
 
-  // incrementUsage: Keep local for now (will be removed when backend tracks all usage)
+  // Refs to keep incrementUsage stable across renders (prevents downstream effect re-runs)
+  const freemiumRef = useRef(freemium);
+  const apiDataRef = useRef(apiData);
+  useEffect(() => {
+    freemiumRef.current = freemium;
+    apiDataRef.current = apiData;
+  }, [freemium, apiData]);
+
+  // incrementUsage: Stable reference to prevent billing loops in components
   const incrementUsage = useCallback(
     (feature: FeatureType, amount?: number) => {
       // Optimistic local update for immediate UI feedback
-      freemium.incrementUsage(feature, amount);
+      freemiumRef.current.incrementUsage(feature, amount);
       // Direct refetch (no delay) to sync with backend
-      apiData.refetch();
+      apiDataRef.current.refetch();
     },
-    [freemium, apiData],
+    [], // Stable dependency array
   );
 
   // hasFeature: Check feature availability — admin overrides take priority over plan
@@ -471,7 +623,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       assistantMessagesRemaining,
       assistantMessagesLimit,
 
-      savedJobsUsed: apiData.saved_jobs_quota?.used ?? 0,
+      savedJobsUsed: Math.max(
+        apiData.quotas?.saved_jobs?.used ?? apiData.saved_jobs_quota?.used ?? 0,
+        freemium.usage.savedJobsCount,
+      ),
       savedJobsLimit: apiData.saved_jobs_quota?.limit ?? -1,
 
       limits: limitsFromApi,
@@ -489,6 +644,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
       reconcileSubscription,
       refreshQuotas: apiData.refetch,
+      resetUsage: freemium.resetUsage,
     }),
     [
       // Plan data from API
@@ -514,6 +670,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // Saved jobs quota
       apiData.saved_jobs_quota?.used,
       apiData.saved_jobs_quota?.limit,
+      freemium.usage.savedJobsCount,
 
       // Loading states
       apiData.isLoading,

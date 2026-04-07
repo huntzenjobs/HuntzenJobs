@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "scenario": "cv_stress",
+    "mode": "burst",
+    "users": 20,
+    "date": "2026-03-14T17:38:09.297626",
+    "duration_s": 90.6
+  },
+  "steps": {
+    "cv_cover_letter": {
+      "p50": 39.091,
+      "p95": 59.534,
+      "p99": 59.534,
+      "success_rate": 1.0,
+      "count": 14,
+      "errors": {}
+    },
+    "cv_adapt": {
+      "p50": 39.835,
+      "p95": 82.228,
+      "p99": 82.228,
+      "success_rate": 0.8,
+      "count": 16,
+      "errors": {
+        "cv_adapt_timeout": 4
+      }
+    },
+    "cv_upload": {
+      "p50": 18.008,
+      "p95": 18.008,
+      "p99": 18.008,
+      "success_rate": 0.048,
+      "count": 1,
+      "errors": {
+        "cv_upload_502": 1,
+        "cv_upload_error": 19
+      }
+    }
+  },
+  "breakdown_level": 20,
+  "bottleneck": "cv_adapt",
+  "error_rate": 0.492,
+  "recommendations": [
+    "Taux d'erreur 49% > 20% à 20 users — seuil de rupture identifié."
+  ]
+}

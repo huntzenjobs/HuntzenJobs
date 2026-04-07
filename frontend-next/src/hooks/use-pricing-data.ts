@@ -32,7 +32,7 @@ function enrichPlan(plan: PlanConfig): PricingPlanBase {
     features_excluded: plan.features_excluded ?? [],
     icon: meta.icon,
     color: meta.color,
-    isPopular: plan.name === "starter",
+    isPopular: plan.name === "pro",
   };
 }
 

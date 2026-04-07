@@ -1,35 +1,35 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { QuotaResetTimer } from "@/components/freemium/usage-counter";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useSubscription } from "@/contexts/subscription-context";
-import { QuotaResetTimer } from "@/components/freemium/usage-counter";
-import {
-  Crown,
-  Sparkles,
-  Zap,
-  Gift,
-  TrendingUp,
-  FileText,
-  MessageSquare,
-  Briefcase,
-  Bookmark,
-  Clock,
-  RefreshCw,
-} from "lucide-react";
-import { CareerScoreCard } from "@/components/career-score/career-score-card";
-import { cn } from "@/lib/utils";
 import { usePlansConfig } from "@/hooks/use-plans-config";
+import { cn } from "@/lib/utils";
+import {
+  Bookmark,
+  Briefcase,
+  Clock,
+  Crown,
+  FileText,
+  Gift,
+  MessageSquare,
+  RefreshCw,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useRef } from "react";
 
 interface UsageModalProps {
   isOpen: boolean;
@@ -181,6 +181,12 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
   const assistantMessagesUsed = usage?.assistantMessagesUsedToday ?? 0;
   const assistantMessagesLimit = limits.assistant_messages_per_day;
 
+  const cvAdaptsUsed = usage?.cvAdaptsUsedToday ?? 0;
+  const cvAdaptsLimit = limits.cv_adapt_per_day;
+
+  const recruiterSearchesUsed = usage?.recruiterSearchesUsedToday ?? 0;
+  const recruiterSearchesLimit = limits.recruiter_searches_per_day;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto bg-white text-gray-900">
@@ -271,13 +277,33 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
             </div>
 
             <div className="grid gap-4">
-              {/* CV Analysis */}
+              {/* ATS Scores */}
               <QuotaCard
-                title={`${t("cvAnalysis")} ${t("perDay")}`}
+                title={t("atsScore")}
                 icon={<FileText className="w-4 h-4 text-white" />}
-                used={usage?.cvAnalysesToday || 0}
-                limit={limits.cv_analyses_per_day}
+                used={usage?.atsScoresUsedToday || 0}
+                limit={limits.ats_scores_per_day}
                 color="bg-blue-500"
+                t={t}
+              />
+
+              {/* Matching Scores */}
+              <QuotaCard
+                title={t("matchingScore")}
+                icon={<TrendingUp className="w-4 h-4 text-white" />}
+                used={usage?.matchingScoresUsedToday || 0}
+                limit={limits.matching_scores_per_day}
+                color="bg-indigo-500"
+                t={t}
+              />
+
+              {/* CV Adaptation (Personalization) */}
+              <QuotaCard
+                title={t("cvAdapt")}
+                icon={<FileText className="w-4 h-4 text-white" />}
+                used={cvAdaptsUsed}
+                limit={cvAdaptsLimit}
+                color="bg-purple-500"
                 t={t}
               />
 
@@ -301,27 +327,35 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
                 color="bg-green-500"
                 t={t}
               />
+
+              {/* Recruiter searches (LinkedIn contact finder) */}
+              <QuotaCard
+                title={`${t("recruiterSearch")} ${t("perDay")}`}
+                icon={<Users className="w-4 h-4 text-white" />}
+                used={recruiterSearchesUsed}
+                limit={recruiterSearchesLimit}
+                color="bg-sky-500"
+                t={t}
+              />
             </div>
           </div>
 
           {/* General Quotas (total, not daily) */}
-          {savedJobsLimit !== -1 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {t("generalUsageTitle")}
-              </h3>
-              <div className="grid gap-4">
-                <QuotaCard
-                  title={t("savedJobs")}
-                  icon={<Bookmark className="w-4 h-4 text-white" />}
-                  used={savedJobsUsed}
-                  limit={savedJobsLimit}
-                  color="bg-amber-500"
-                  t={t}
-                />
-              </div>
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {t("generalUsageTitle")}
+            </h3>
+            <div className="grid gap-4">
+              <QuotaCard
+                title={t("savedJobs")}
+                icon={<Bookmark className="w-4 h-4 text-white" />}
+                used={usage?.savedJobsCount || 0}
+                limit={limits.saved_jobs_per_day}
+                color="bg-amber-500"
+                t={t}
+              />
             </div>
-          )}
+          </div>
 
           {/* Upgrade CTA for free users */}
           {isFreePlan && (

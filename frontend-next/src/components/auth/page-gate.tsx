@@ -26,12 +26,12 @@ export function PageGate({ featureFlag, children }: PageGateProps) {
 
   // Cast necessaire : les page flags (page_*) sont dynamiques depuis la DB
   // et ne font pas partie du type PlanLimitValues statique
+  const isLoggedIn = !!auth?.user;
   const hasAccess = subscription.hasFeature(
     featureFlag as keyof typeof subscription.limits,
   );
 
-  if (!hasAccess) {
-    const isLoggedIn = !!auth?.user;
+  if (!isLoggedIn || !hasAccess) {
 
     // Utilisateur non connecté : inviter à se connecter
     if (!isLoggedIn) {

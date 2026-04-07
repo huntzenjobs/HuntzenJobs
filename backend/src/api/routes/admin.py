@@ -1168,15 +1168,82 @@ async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
     users_res = supabase.table("profiles").select("id", count="exact").execute()
     webhooks_res = supabase.table("webhook_failures").select("id", count="exact").eq("resolved", False).execute()
 
-    # Active subscriptions + MRR
+    # Active paid subscriptions + MRR (based on real Stripe payments)
+    # NB: all users have at least a "free" plan in user_subscriptions.
+    # Here we only want paying users (non-free / non-zero plans), and
+    # MRR comes from the last paid invoice per active subscription.
     active_subs = supabase.table("user_subscriptions").select(
-        "subscription_plans(price_monthly)", count="exact"
+        "id, user_id, subscription_plans(name, price_monthly), stripe_subscription_id",
     ).eq("status", "active").execute()
-    paying_count = active_subs.count or 0
-    mrr = sum(
-        (s.get("subscription_plans") or {}).get("price_monthly", 0)
-        for s in (active_subs.data or [])
-    )
+
+    subs_data = active_subs.data or []
+
+    # Filter out free / zero-priced plans
+    paid_subs = []
+    sub_to_user: dict[str, str] = {}
+    for s in subs_data:
+        plan = s.get("subscription_plans") or {}
+        monthly_price = float(plan.get("price_monthly") or 0)
+        if monthly_price <= 0:
+            continue
+        paid_subs.append(s)
+        sub_id = s.get("stripe_subscription_id")
+        user_id = s.get("user_id")
+        if sub_id and user_id:
+            sub_to_user[sub_id] = user_id
+
+    # Paying users will be computed from stripe_payments (unique users with at least one real payment)
+    paying_count = 0
+
+    # MRR based on last paid invoice per subscription (Stripe source of truth)
+    mrr = 0.0
+    if paid_subs:
+        sub_ids = [s["stripe_subscription_id"] for s in paid_subs if s.get("stripe_subscription_id")]
+        if sub_ids:
+            payments_res = supabase.table("stripe_payments").select(
+                "stripe_subscription_id, stripe_customer_id, amount_paid, interval, interval_count, created_at",
+            ).in_("stripe_subscription_id", sub_ids).order("created_at", desc=True).execute()
+            payments = payments_res.data or []
+
+            # Keep last payment per subscription
+            last_by_sub: dict[str, dict] = {}
+            for p in payments:
+                sub_id = p.get("stripe_subscription_id")
+                if not sub_id:
+                    continue
+                if sub_id in last_by_sub:
+                    continue
+                last_by_sub[sub_id] = p
+
+            # Unique paying users = users (or Stripe customers) that have at least one paid invoice
+            paying_user_ids: set[str] = set()
+
+            for sub_id, p in last_by_sub.items():
+                amount_paid = float(p.get("amount_paid") or 0)
+                interval = (p.get("interval") or "month")
+                interval_count = int(p.get("interval_count") or 1)
+                if amount_paid <= 0:
+                    continue
+
+                # Track unique user IDs when possible, else fallback to customer or subscription
+                user_id = sub_to_user.get(sub_id)
+                if user_id:
+                    paying_user_ids.add(user_id)
+                else:
+                    cust_id = p.get("stripe_customer_id")
+                    if cust_id:
+                        paying_user_ids.add(f"cus:{cust_id}")
+                    else:
+                        paying_user_ids.add(sub_id)
+
+                # Normalise to monthly revenue
+                if interval == "year" or interval == "yearly":
+                    monthly_amount = amount_paid / (12 * max(interval_count, 1))
+                else:
+                    monthly_amount = amount_paid / max(interval_count, 1)
+                mrr += monthly_amount
+
+            paying_count = len(paying_user_ids)
 
     # New users
     new_today = supabase.table("profiles").select("id", count="exact").gte("created_at", today).execute()
@@ -1960,6 +2027,24 @@ async def update_recruiter_request_status(
     return result.data[0]
 
 
+@router.delete("/recruiter-requests/{request_id}")
+async def delete_recruiter_request(
+    request_id: str,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Delete a recruiter consultation request."""
+    supabase = get_supabase_client()
+    supabase.table("recruiter_requests").delete().eq("id", request_id).execute()
+    _log_admin_action(
+        supabase,
+        admin["id"],
+        "admin.recruiter_request_deleted",
+        None,
+        {"request_id": request_id},
+    )
+    return {"success": True}
+
+
 # ============================================================
 # WEBHOOK FAILURE RESOLUTION
 # ============================================================
@@ -2078,14 +2163,20 @@ async def reset_user_usage(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
     today = datetime.now(UTC).date().isoformat()
 
     supabase.table("usage_quotas").update({
+        # Core usage counters
+        "job_searches_used": 0,
+        "job_views_used": 0,
         "cv_analyses_used": 0,
+        "ats_scores_used": 0,
+        "matching_scores_used": 0,
         "assistant_messages_used": 0,
         "coach_seconds_used": 0,
-        "job_searches_used": 0,
+        "recruiter_searches_used": 0,
         "cv_adapt_used": 0,
         "cover_letter_used": 0,
-        "job_views_used": 0,
-        "recruiter_searches_used": 0,
+        "saved_jobs_used": 0,
+        # Detailed assistant breakdown (career coach & co)
+        "assistant_messages_by_coach": {},
     }).eq("user_id", user_id).eq("quota_date", today).execute()
 
     _log_admin_action(
@@ -3921,8 +4012,13 @@ async def create_promo_code(body: CreatePromoCodeRequest, admin: AdminUserDep) -
     supabase = get_supabase_client()
 
     # Check code doesn't already exist
-    existing = supabase.table("promo_codes").select("id").eq("code", body.code.upper()).maybe_single().execute()
-    if existing.data:
+    existing_res = (
+        supabase.table("promo_codes")
+        .select("id")
+        .eq("code", body.code.upper())
+        .execute()
+    )
+    if existing_res.data:
         raise HTTPException(status_code=409, detail="Un code avec ce nom existe deja")
 
     data: dict[str, Any] = {
@@ -3943,10 +4039,16 @@ async def create_promo_code(body: CreatePromoCodeRequest, admin: AdminUserDep) -
 
     result = supabase.table("promo_codes").insert(data).execute()
 
-    _log_admin_action(supabase, admin["id"], "admin.promo_code_created", None, {
-        "code": body.code.upper(),
-        "campaign": body.campaign,
-    })
+    _log_admin_action(
+        supabase,
+        admin["id"],
+        "admin.promo_code_created",
+        None,
+        {
+            "code": body.code.upper(),
+            "campaign": body.campaign,
+        },
+    )
 
     return result.data[0] if result.data else {}
 
@@ -3985,11 +4087,39 @@ async def update_promo_code(promo_id: str, body: UpdatePromoCodeRequest, admin: 
 async def delete_promo_code(promo_id: str, admin: AdminUserDep) -> dict[str, Any]:
     """Delete a promo code."""
     supabase = get_supabase_client()
+    # Ne pas autoriser la suppression si le code a deja ete utilise
+    try:
+        links = (
+            supabase.table("user_promo_codes")
+            .select("id")
+            .eq("promo_code_id", promo_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as e:
+        logger.error(f"Failed to check user_promo_codes for promo {promo_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de la verification des utilisations du code promo.",
+        ) from None
+
+    if links.data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Impossible de supprimer ce code promo car il a deja ete utilise par au moins un utilisateur.",
+        )
+
     supabase.table("promo_codes").delete().eq("id", promo_id).execute()
 
-    _log_admin_action(supabase, admin["id"], "admin.promo_code_deleted", None, {
-        "promo_id": promo_id,
-    })
+    _log_admin_action(
+        supabase,
+        admin["id"],
+        "admin.promo_code_deleted",
+        None,
+        {
+            "promo_id": promo_id,
+        },
+    )
 
     return {"success": True}
 

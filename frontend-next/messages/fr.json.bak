@@ -1,0 +1,2856 @@
+{
+  "notFound": {
+    "title": "404",
+    "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
+    "backHome": "Retour à l'accueil"
+  },
+  "nav": {
+    "jobs": "Recherche d'emploi",
+    "salons": "Salons & Forums",
+    "tools": "Outils",
+    "resources": "Ressources",
+    "toolsItems": {
+      "assistant": "Assistant Carrière",
+      "cvAnalysis": "Analyse CV"
+    },
+    "resourcesItems": {
+      "blog": "Blog",
+      "faq": "FAQ",
+      "reviews": "Avis"
+    },
+    "pricing": "Tarifs",
+    "login": "CONNEXION",
+    "signup": "S'INSCRIRE",
+    "language": "Langue"
+  },
+  "hero": {
+    "tag": "Pour les candidats qui en ont assez de postuler dans le vide",
+    "h1": "Trouver un job ne devrait pas être un parcours du combattant.",
+    "h2": "Accédez aux offres qui vous correspondent, améliorez votre CV et obtenez plus d'entretiens sans perdre des heures à chercher.",
+    "subtitle": "CV certifié ATS · 5 coachs carrière · Score de compatibilité · Contact recruteur",
+    "ctaSearch": "Commencer ma recherche",
+    "ctaDiscover": "Découvrir la méthode",
+    "socialProof": "Des milliers de candidats déjà accompagnés"
+  },
+  "trustBar": {
+    "title": "Offres agrégées en temps réel depuis :",
+    "andMore": "et plus…"
+  },
+  "howItWorks": {
+    "title": "Comment ça marche ?",
+    "step1Title": "Déposez votre CV",
+    "step1Desc": "Reçois un score ATS et des recommandations concrètes en moins d'une minute",
+    "step2Title": "Découvrez les offres qui vous correspondent",
+    "step2Desc": "Filtre, sauvegarde et postule aux meilleures en un clic",
+    "step3Title": "Préparez-vous avec les bons outils",
+    "step3Desc": "Coachs carrière, simulation d'entretien, génération de documents : tout est là"
+  },
+  "tools": {
+    "badge": "Tous nos outils",
+    "title": "Tous les leviers pour décrocher plus d'entretiens",
+    "subtitle": "Chaque outil répond à un problème précis de la recherche d'emploi.",
+    "explore": "Découvrir",
+    "items": {
+      "jobSearch": {
+        "category": "Recherche",
+        "title": "Agrégateur d'offres intelligent",
+        "description": "Regroupez toutes les opportunités pertinentes en un seul endroit et évitez des heures de recherche."
+      },
+      "compatibility": {
+        "category": "Recherche",
+        "title": "Score de compatibilité",
+        "description": "Sachez immédiatement si une offre correspond à votre profil avant de postuler."
+      },
+      "cvAnalysis": {
+        "category": "CV",
+        "title": "Analyse CV experte",
+        "description": "Identifiez les points faibles de votre CV et recevez des conseils concrets pour l'améliorer."
+      },
+      "skills": {
+        "category": "CV",
+        "title": "Diagnostic compétences",
+        "description": "Identifiez vos forces et axes d'amélioration"
+      },
+      "interview": {
+        "category": "Coaching",
+        "title": "Simulation d'entretien",
+        "description": "Préparez-vous dans des conditions réelles pour ne plus être pris au dépourvu."
+      },
+      "coach": {
+        "category": "Coaching",
+        "title": "Coach carrière 24/7",
+        "description": "Un accompagnement personnalisé à chaque étape pour ne plus rester seul."
+      },
+      "salary": {
+        "category": "Coaching",
+        "title": "Projections salariales",
+        "description": "Négociez avec les bons arguments grâce à des données salariales fiables."
+      },
+      "salons": {
+        "category": "Networking",
+        "title": "Salons & Forums emploi",
+        "description": "Rencontrez directement les recruteurs en personne"
+      }
+    }
+  },
+  "painPoints": {
+    "title": "Pourquoi la recherche d'emploi est si frustrante ?",
+    "subtitle": "Si vous vivez ces situations, vous n'êtes pas seul.",
+    "items": {
+      "ghosting": {
+        "title": "GHOSTING PERMANENT",
+        "description": "Vous postulez et aucune réponse n'arrive, même après plusieurs relances."
+      },
+      "exhausting": {
+        "title": "RECHERCHE ÉPUISANTE",
+        "description": "Vous passez des heures sur des annonces qui ne vous correspondent pas."
+      },
+      "negotiation": {
+        "title": "NÉGOCIATION À L'AVEUGLE",
+        "description": "Difficile de savoir combien vaut réellement votre profil sur le marché."
+      },
+      "feedback": {
+        "title": "MANQUE DE FEEDBACK",
+        "description": "Impossible de comprendre pourquoi votre candidature n'a pas été retenue."
+      }
+    }
+  },
+  "features": {
+    "title": "Une méthode simple pour avancer plus vite",
+    "titleHighlight": "avancer plus vite",
+    "subtitle": "Chaque outil est conçu pour résoudre un problème concret et vous faire gagner du temps.",
+    "jobs": {
+      "badge": "RECHERCHE",
+      "title": "Arrêtez de postuler à l'aveugle.",
+      "description": "Concentrez-vous sur les offres où vous avez une vraie chance grâce à notre score de compatibilité. Résultat : moins de candidatures, plus d'entretiens.",
+      "bullet1": "Offres agrégées depuis France Travail, Indeed, LinkedIn et plus",
+      "bullet2": "Filtres avancés : salaire, télétravail, taille d'entreprise",
+      "bullet3": "Score de compatibilité par offre",
+      "bullet4": "Sauvegarde & suivi de vos candidatures",
+      "cta": "Explorer les offres →"
+    },
+    "cv": {
+      "title": "Rendez votre CV irrésistible.",
+      "titleHighlight": "Analyse experte",
+      "badge": "CV & ATS",
+      "description": "Découvrez précisément ce qui bloque et recevez des conseils applicables rapidement. Résultat : plus de réponses et plus d'entretiens.",
+      "bullet1": "Score ATS sur 100 avec analyse détaillée",
+      "bullet2": "Recommandations personnalisées par section",
+      "bullet3": "Export PDF professionnel certifié ATS",
+      "bullet4": "Postes recommandés selon votre profil",
+      "cta": "Analyser mon CV →",
+      "items": [
+        "Évaluation détaillée de vos compétences techniques et humaines",
+        "Recommandations de formations certifiantes ciblées",
+        "Score d'employabilité actualisé en temps réel"
+      ]
+    },
+    "coaches": {
+      "badge": "COACHS CARRIÈRE",
+      "title": "Cinq experts carrière dans votre poche.",
+      "description": "Nova, Maria, Sofia, Lucas et David, chacun spécialisé dans un domaine. Disponibles 24h/24, sans rendez-vous.",
+      "cta": "Parler à un coach →",
+      "list": {
+        "nova": "Stratégie et plan de carrière",
+        "maria": "Recherche d'emploi et candidatures",
+        "sofia": "Optimisation et analyse de CV",
+        "lucas": "Préparation aux entretiens",
+        "david": "Personal Branding et LinkedIn"
+      }
+    },
+    "matching": {
+      "title": "Matching intelligent et recherche ciblée",
+      "titleHighlight": "Matching intelligent et recherche ciblée",
+      "description": "Fini les heures perdues à scroller des offres non pertinentes. Notre agrégateur centralise toutes les opportunités de +20 plateformes et vous présente uniquement celles qui correspondent réellement à votre profil.",
+      "items": [
+        "Score de compatibilité précis (0-100%) pour chaque offre",
+        "Alertes instantanées sur les opportunités à fort potentiel",
+        "Système de favoris pour suivre vos candidatures"
+      ]
+    }
+  },
+  "stats": {
+    "title": "Des résultats mesurables",
+    "subtitle": "Des candidats avancent avec HuntZen chaque jour",
+    "candidates": {
+      "value": "Des milliers",
+      "label": "De candidats accompagnés chaque jour"
+    },
+    "responseRate": {
+      "value": "87%",
+      "label": "Obtiennent au moins une réponse"
+    },
+    "salary": {
+      "value": "+ 35%",
+      "label": "De salaire négocié en moyenne"
+    },
+    "disclaimer": "* Données indicatives basées sur nos utilisateurs actifs"
+  },
+  "featuresGrid": {
+    "title": "Tout ce dont vous avez besoin pour réussir",
+    "subtitle": "Une seule plateforme. Zéro outil manquant.",
+    "badgeSoon": "Bientôt",
+    "items": {
+      "jobSearch": {
+        "name": "Recherche d'emplois",
+        "desc": "Agrégateur multi-plateformes mis à jour quotidiennement"
+      },
+      "cvAnalysis": {
+        "name": "Analyse CV & Score ATS",
+        "desc": "Optimisez votre CV pour passer tous les filtres automatiquement"
+      },
+      "nova": {
+        "name": "Nova · Coach Carrière",
+        "desc": "Stratégie, reconversion, plan d'action personnalisé"
+      },
+      "maria": {
+        "name": "Maria · Coach Emploi",
+        "desc": "Trouve les bonnes offres et postule efficacement"
+      },
+      "sofia": {
+        "name": "Sofia · Expert CV",
+        "desc": "CV percutant qui attire l'attention des recruteurs"
+      },
+      "lucas": {
+        "name": "Lucas · Coach Entretien",
+        "desc": "Prépare les questions difficiles, gère le stress"
+      },
+      "david": {
+        "name": "David · Personal Branding",
+        "desc": "Profil LinkedIn qui attire les recruteurs à vous"
+      },
+      "salons": {
+        "name": "Salons & Forums",
+        "desc": "Événements emploi partout en France"
+      },
+      "savedJobs": {
+        "name": "Offres sauvegardées",
+        "desc": "Retrouvez et suivez toutes vos candidatures favorites"
+      },
+      "recruiterContact": {
+        "name": "Contact Recruteur",
+        "desc": "Session 1:1 avec un expert RH"
+      },
+      "documents": {
+        "name": "Génération Documents",
+        "desc": "CV + lettre de motivation adaptés à chaque offre"
+      },
+      "expat": {
+        "name": "Guide Expatriation",
+        "desc": "S'installer et travailler dans 15 pays"
+      }
+    },
+    "recruiterBadge": "50€"
+  },
+  "landingPricing": {
+    "startFree": "Commencer gratuitement",
+    "choosePlan": "Choisir {name}",
+    "free": "Gratuit",
+    "perMonth": "/mois",
+    "mostPopular": "Le plus populaire"
+  },
+  "ctaFinal": {
+    "title": "Prêt à décrocher votre prochain emploi ?",
+    "subtitle": "Rejoins des milliers de candidats qui avancent avec HuntZen.",
+    "cta": "Commencer gratuitement, c'est sans engagement"
+  },
+  "pricing": {
+    "title": "Choisissez l'accompagnement adapté à votre besoin",
+    "subtitle": "Commencez gratuitement, évoluez ensuite selon votre rythme.",
+    "saveUpTo20": "Économisez jusqu'à 20%",
+    "currentPlan": "✓ Plan actuel",
+    "choosePlan": "Choisir {name}",
+    "toasts": {
+      "alreadyOnPlan": "Vous utilisez déjà ce plan",
+      "mustBeLoggedIn": "Vous devez être connecté(e) pour souscrire à un plan",
+      "redirecting": "Redirection vers le paiement...",
+      "sessionExpired": "Session expirée, veuillez vous reconnecter",
+      "upgraded": "✨ Abonnement mis à niveau !",
+      "scheduledChange": "📅 Changement planifié pour la fin de votre période actuelle."
+    },
+    "secure": "Paiement sécurisé",
+    "noCommitment": "Sans engagement",
+    "responseRate": "87% de taux de réponse",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "toggleBillingLabel": "Basculer la période de facturation",
+    "frenchSupport": "Support francophone",
+    "saveBadge": "Économisez jusqu'à 20%",
+    "testimonialsTitle": "Ils ont transformé leur recherche d'emploi",
+    "testimonialsSubtitle": "Découvrez comment HuntZen a aidé des milliers de professionnels",
+    "faqTitle": "Questions fréquentes",
+    "faqSubtitle": "Tout ce que vous devez savoir sur nos abonnements",
+    "faqMore": "Vous avez d'autres questions ?",
+    "faqContact": "Contactez notre support",
+    "ctaTitle": "Prêt à décrocher votre prochain job ?",
+    "ctaSubtitle": "Rejoignez des milliers de candidats qui utilisent HuntZen pour trouver leur emploi idéal. Commencez gratuitement, aucune carte bancaire requise.",
+    "ctaButton": "Commencer gratuitement",
+    "mostPopular": "Le plus populaire",
+    "socialProof": "Des milliers de candidats accompagnés",
+    "heroTitle": "Choisissez votre plan",
+    "heroHighlight": "et décrochez votre job",
+    "heroDescription": "Des outils puissants pour optimiser votre recherche, préparer vos entretiens et trouver l'emploi qui vous correspond",
+    "free": "Gratuit",
+    "perMonth": "/mois",
+    "billedYearly": "{price}€ facturé annuellement",
+    "savingsLabel": "-{percentage}% soit {amount}€/an",
+    "learnMore": "En savoir plus",
+    "testimonials": [
+      {
+        "name": "Marie L.",
+        "role": "Chef de projet",
+        "content": "J'ai trouvé mon poste actuel en 3 semaines. L'analyse CV et les simulations d'entretien m'ont vraiment aidée.",
+        "plan": "Accélérateur"
+      },
+      {
+        "name": "Thomas D.",
+        "role": "Développeur Full Stack",
+        "content": "Le coaching personnel est exceptionnel. Il m'a aidé à optimiser mon CV et mes candidatures.",
+        "plan": "Carrière"
+      },
+      {
+        "name": "Sophie M.",
+        "role": "Responsable Marketing",
+        "content": "Les alertes instantanées m'ont permis de postuler en premier sur des offres qui correspondaient à mon profil.",
+        "plan": "Carrière"
+      }
+    ],
+    "faqs": [
+      {
+        "question": "Puis-je changer de plan à tout moment ?",
+        "answer": "Absolument ! Vous pouvez upgrader ou downgrader votre abonnement à tout moment depuis votre tableau de bord. Le changement prend effet immédiatement."
+      },
+      {
+        "question": "Y a-t-il un engagement de durée ?",
+        "answer": "Non, aucun engagement ! Tous nos abonnements sont mensuels et sans engagement. Vous êtes libre d'annuler à tout moment."
+      },
+      {
+        "question": "Quelle est votre politique de remboursement ?",
+        "answer": "Vous pouvez annuler votre abonnement a tout moment depuis votre profil. L'annulation prend effet a la fin de la periode en cours. Aucun engagement longue duree."
+      },
+      {
+        "question": "Les prix incluent-ils la TVA ?",
+        "answer": "Oui, tous les prix affichés sont TTC (Toutes Taxes Comprises). Aucun frais supplémentaire ne sera ajouté lors du paiement."
+      },
+      {
+        "question": "Quels moyens de paiement acceptez-vous ?",
+        "answer": "Nous acceptons toutes les cartes bancaires principales (Visa, Mastercard, American Express) via notre partenaire sécurisé Stripe."
+      },
+      {
+        "question": "Puis-je essayer avant de m'engager ?",
+        "answer": "Oui ! Notre plan gratuit vous permet de découvrir HuntZen sans carte bancaire. Aucune carte requise pour commencer."
+      }
+    ]
+  },
+  "cta": {
+    "startFree": "Commencer gratuitement",
+    "learnMore": "En savoir plus"
+  },
+  "footer": {
+    "tagline": "La méthode pour transformer votre recherche d'emploi en résultats concrets.",
+    "copyright": "Tous droits réservés.",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions générales",
+    "contact": "Contact",
+    "sections": {
+      "product": "Produit",
+      "resources": "Ressources",
+      "legal": "Légal"
+    },
+    "links": {
+      "cvAnalysis": "Analyse CV",
+      "jobSearch": "Recherche d'emploi",
+      "coach": "Coach IA",
+      "pricing": "Tarifs",
+      "faq": "FAQ",
+      "blog": "Blog",
+      "testimonials": "Témoignages",
+      "about": "À propos",
+      "legalNotice": "Mentions légales"
+    },
+    "social": {
+      "follow": "Suivez-nous"
+    }
+  },
+  "pricingPlans": {
+    "popular": "POPULAIRE",
+    "plans": {
+      "free": {
+        "name": "EXPLORATION",
+        "period": "Gratuit",
+        "cta": "Commencer gratuitement",
+        "features": [
+          "5 analyses de CV par jour",
+          "10 messages par coach",
+          "Offres d'emploi illimitées",
+          "Gestion des favoris illimitée",
+          "2 exports CV par jour",
+          "2-3 suivis de candidatures"
+        ],
+        "unavailable": [
+          "Coach illimité",
+          "Contact recruteur",
+          "Simulateur d'entretien",
+          "Amélioration auto CV"
+        ]
+      },
+      "starter": {
+        "name": "RECHERCHE ACTIVE",
+        "period": "/mois",
+        "cta": "Commencer avec Recherche Active",
+        "features": [
+          "5 analyses de CV par jour",
+          "20 messages coach par jour",
+          "Offres d'emploi illimitées",
+          "Suivi candidatures illimité",
+          "Page documents (CV & LM)",
+          "Analyse détaillée ATS",
+          "2 exports CV par jour"
+        ],
+        "unavailable": [
+          "Coach illimité",
+          "Contact recruteur",
+          "Simulateur d'entretien"
+        ]
+      },
+      "pro": {
+        "name": "Accélérateur",
+        "period": "/mois",
+        "cta": "Commencer avec Accélérateur",
+        "features": [
+          "20 analyses de CV par jour",
+          "Coach IA illimité 24/7",
+          "Export PDF illimité",
+          "Contact recruteur (email + LinkedIn)",
+          "Amélioration automatique CV (ATS)",
+          "Historique conversations par thème",
+          "Coaching expatriation & négociation",
+          "Support prioritaire"
+        ],
+        "unavailable": []
+      },
+      "premium": {
+        "name": "CARRIÈRE",
+        "period": "/mois",
+        "cta": "Commencer avec Carrière",
+        "features": [
+          "Tout Accélérateur inclus",
+          "Simulateur d'entretien (voicebot)",
+          "Guide Expatriation (+15 pays)",
+          "Coaching avancé : voicebot, négociation, branding",
+          "Historique complet & sauvegarde auto",
+          "Accès anticipé nouvelles fonctionnalités",
+          "Support VIP prioritaire"
+        ],
+        "unavailable": []
+      }
+    }
+  },
+  "sidebar": {
+    "label": "NAVIGATION",
+    "nav": {
+      "jobs": "Recherche d'emplois",
+      "cvAnalysis": "Analyse CV",
+      "assistant": "Assistant Carrière",
+      "salons": "Salons & Forums",
+      "savedJobs": "Jobs sauvegardés",
+      "candidatures": "Mes Candidatures",
+      "recruiterContact": "Contact Recruteur",
+      "documents": "Mes documents",
+      "myUsage": "Mon Utilisation",
+      "referral": "HuntZen Boost",
+      "expat": "Expat & International"
+    },
+    "plans": {
+      "free": "Exploration",
+      "starter": "Recherche Active",
+      "pro": "Carrière",
+      "premium": "Carrière"
+    },
+    "user": {
+      "default": "Utilisateur"
+    },
+    "upgradeCta": "Passer a l'etape superieure",
+    "footer": {
+      "profile": "Mon profil",
+      "pricing": "Tarifs",
+      "help": "Aide",
+      "back": "Retour à huntzen.co",
+      "logout": "Déconnexion",
+      "login": "Se connecter"
+    },
+    "mobile": {
+      "login": "Connexion",
+      "signup": "S'inscrire"
+    },
+    "logout": {
+      "title": "Confirmer la déconnexion",
+      "description": "Vous souhaitez vous déconnecter ? Vos données sauvegardées seront conservées.",
+      "cancel": "Annuler",
+      "confirm": "Se déconnecter"
+    },
+    "badges": {
+      "new": "Nouveau",
+      "recruiterPrice": "50€"
+    },
+    "aria": {
+      "close": "Fermer le menu de navigation",
+      "open": "Ouvrir le menu de navigation",
+      "logout": "Se déconnecter"
+    }
+  },
+  "team": {
+    "tagline": "Votre équipe carrière, toujours avec vous.",
+    "subtitle": "Nous vous aidons à construire la carrière que vous voulez vraiment."
+  },
+  "progression": {
+    "title": "Ta progression carrière",
+    "cvOptimised": "CV optimisé",
+    "profileImproved": "Profil amélioré",
+    "interviewSimulated": "Simulation entretien",
+    "applicationsSent": "Candidatures envoyées",
+    "progressMessage": "Vous avancez bien. Encore quelques étapes et vous serez prêt(e) à postuler."
+  },
+  "retention": {
+    "notification1": "Je viens de trouver 3 offres qui pourraient vraiment vous correspondre.",
+    "notification2": "Ton CV peut encore être amélioré pour attirer plus de recruteurs.",
+    "notification3": "Vous souhaitez faire une simulation d'entretien rapide ?",
+    "relance3days": "On continue à avancer sur votre carrière ?",
+    "relance7days": "Une opportunité pourrait vous attendre aujourd'hui."
+  },
+  "coach": {
+    "justNow": "à l'instant",
+    "export": {
+      "button": "Exporter",
+      "title": "Exporter la conversation",
+      "description": "Choisissez le format d'export pour sauvegarder cette conversation.",
+      "formatLabel": "Format d'export",
+      "pdfDescription": "Document formaté avec le design HuntZen (recommandé)",
+      "markdownDescription": "Fichier texte avec formatage simple (.md)",
+      "previewTitle": "Aperçu de l'export",
+      "previewTitleLabel": "Titre",
+      "previewMessagesLabel": "Messages",
+      "previewSizeLabel": "Taille estimée",
+      "cancel": "Annuler",
+      "exporting": "Export en cours...",
+      "exportButton": "Exporter",
+      "toasts": {
+        "pdfSuccess": "PDF généré avec succès !",
+        "markdownSuccess": "Markdown exporté avec succès !",
+        "pdfError": "Échec de la génération du PDF",
+        "markdownError": "Échec de l'export Markdown"
+      }
+    },
+    "history": {
+      "searchPlaceholder": "Rechercher... (Cmd/Ctrl + K)"
+    },
+    "conversations": {
+      "removeFavorite": "Retirer des favoris",
+      "addFavorite": "Ajouter aux favoris",
+      "deleteConversation": "Supprimer la conversation",
+      "deleteTitle": "Supprimer la conversation ?",
+      "deleteDescription": "Cette action est irréversible. La conversation \"{title}\" sera définitivement supprimée.",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
+    },
+    "questions": {
+      "title": "Questions Rapides",
+      "openQuestions": "Ouvrir les questions rapides",
+      "shuffleQuestions": "Mélanger les questions",
+      "collapsePanel": "Réduire le panneau",
+      "description": "Cliquez sur une question pour l'utiliser comme point de départ",
+      "verticalLabel": "Questions",
+      "tip": "Astuce :",
+      "tipText": "Personnalisez ces questions selon votre situation",
+      "defaultQuestions": {
+        "q1": "Comment structurer mon CV pour un poste senior ?",
+        "q2": "Quelles questions poser en fin d'entretien ?",
+        "q3": "Comment négocier une augmentation de salaire ?",
+        "q4": "Quelles compétences développer pour évoluer ?",
+        "q5": "Comment valoriser une reconversion professionnelle ?",
+        "q6": "Comment répondre à \"Parlez-moi de vous\" ?"
+      }
+    }
+  },
+  "coachFeedback": {
+    "sofia": {
+      "good": "Ton CV est déjà solide. On peut encore l'améliorer."
+    },
+    "lucas": {
+      "good": "Ta réponse est bonne. On peut la rendre encore plus percutante."
+    }
+  },
+  "pricingModal": {
+    "title": "Débloquez toutes les fonctionnalités",
+    "featureRequired": "Cette fonctionnalité nécessite un abonnement",
+    "popular": "Le plus populaire",
+    "free": "Gratuit",
+    "currentPlan": "Plan actuel",
+    "choosePlan": "Choisir {name}",
+    "startWith": "Commencer avec {name}",
+    "moreFeatures": "+ {count} autres fonctionnalités",
+    "guarantee": "✓ Sans engagement, annulation a tout moment",
+    "seeComparison": "Voir le comparatif complet des fonctionnalités",
+    "toasts": {
+      "alreadyOnPlan": "Vous utilisez déjà ce plan",
+      "mustBeLoggedIn": "Vous devez être connecté(e) pour souscrire à un plan",
+      "preparingPayment": "Préparation du paiement...",
+      "upgraded": "✨ Abonnement mis à niveau ! Vérification en cours...",
+      "scheduled": "📅 Changement planifié ! Ton nouveau plan sera actif à la fin de la période actuelle.",
+      "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+      "paymentError": "Erreur lors de la création de la session de paiement",
+      "annualToMonthlyBlocked": "Changement annuel vers mensuel impossible. Votre abonnement annuel court jusqu'au {date}. Vous pourrez passer en mensuel à cette date.",
+      "annualToMonthlyBlockedGeneric": "Vous avez un abonnement annuel en cours. Le changement vers mensuel sera possible à la fin de la période."
+    },
+    "confirmChange": {
+      "upgradeTitle": "Confirmer le changement de plan",
+      "upgradeDescription": "Vous allez passer au plan {planName} a {price} {period}. La difference sera facturee immediatement sur votre carte enregistree.",
+      "downgradeTitle": "Confirmer le changement de plan",
+      "downgradeDescription": "Votre plan sera retrograde au {planName} a la fin de votre periode de facturation actuelle.",
+      "confirm": "Confirmer",
+      "cancel": "Annuler"
+    },
+    "billing": {
+      "monthly": "Mensuel",
+      "yearly": "Annuel",
+      "saveBadge": "Économisez ~2 mois",
+      "toggleLabel": "Basculer la période de facturation",
+      "perYear": "/an",
+      "perMonth": "/mois",
+      "yearlyEquivalent": "soit {price}€/mois"
+    },
+    "plans": {
+      "free": {
+        "name": "Exploration",
+        "tagline": "Exploration",
+        "description": "Pour découvrir la plateforme en toute liberté",
+        "period": "Gratuit",
+        "featureNames": [
+          "5 analyses CV / jour",
+          "10 messages / coach",
+          "Offres illimitées",
+          "Favoris illimités",
+          "2 exports CV / jour",
+          "2-3 suivis candidatures"
+        ]
+      },
+      "starter": {
+        "name": "Recherche Active",
+        "tagline": "Recherche Active",
+        "description": "Pour progresser rapidement dans votre recherche",
+        "period": "/mois",
+        "featureNames": [
+          "5 analyses CV / jour",
+          "20 messages coach / jour",
+          "Offres illimitées",
+          "Suivi candidatures illimité",
+          "Documents (CV & LM)",
+          "Analyse ATS détaillée",
+          "2 exports CV / jour"
+        ]
+      },
+      "pro": {
+        "name": "Accélérateur",
+        "tagline": "Accélérateur",
+        "description": "Pour passer à la vitesse supérieure et être recruté",
+        "period": "/mois",
+        "featureNames": [
+          "20 analyses CV / jour",
+          "Coach IA illimité 24/7",
+          "Export PDF illimité",
+          "Contact recruteur (email + LinkedIn)",
+          "Amélioration auto CV (ATS)",
+          "Historique par thème",
+          "Coaching expat & négociation",
+          "Support prioritaire"
+        ]
+      },
+      "premium": {
+        "name": "Carrière",
+        "tagline": "Carrière",
+        "description": "L'accompagnement complet de A à Z",
+        "period": "/mois",
+        "featureNames": [
+          "Tout Accélérateur inclus",
+          "Simulateur d'entretien (voicebot)",
+          "Guide Expatriation (+15 pays)",
+          "Coaching avancé & branding",
+          "Historique complet & sauvegarde",
+          "Accès anticipé nouvelles fonctions",
+          "Support VIP"
+        ]
+      }
+    }
+  },
+  "usageModal": {
+    "title": "Mon Utilisation",
+    "planTitle": "Plan {planName}",
+    "freeSubtitle": "Découvrez HuntZen gratuitement",
+    "activeSubtitle": "Abonnement actif",
+    "activeBadge": "Actif",
+    "upgradeCta": "Passer à un plan payant",
+    "progressTitle": "Ta progression",
+    "dailyUsageTitle": "Utilisation du jour",
+    "resetAtMidnight": "Réinitialisation à minuit",
+    "cvAnalysis": "Analyses CV",
+    "assistantMessages": "Messages Assistant",
+    "jobSearches": "Recherches d'emploi",
+    "savedJobs": "Jobs sauvegardés",
+    "unlockTitle": "Débloquez tout le potentiel de HuntZen",
+    "unlockDescription": "Passez à un plan payant pour des analyses illimitées, plus de messages coaching, et des fonctionnalités exclusives.",
+    "seePlans": "Voir les plans disponibles",
+    "tipLabel": "Bon à savoir :",
+    "tipText": "Vos quotas se réinitialisent automatiquement chaque jour à minuit. Passez à un plan supérieur pour augmenter vos limites.",
+    "quota": {
+      "usedSingular": "{used}{unit} utilisé",
+      "usedPlural": "{used}{unit} utilisés",
+      "outOf": "sur {limit}{unit}",
+      "unlimited": "Utilisation illimitée",
+      "reached": "Quota atteint pour aujourd'hui"
+    }
+  },
+  "usageCounter": {
+    "dailyUsage": "Utilisation du jour",
+    "features": {
+      "jobSearch": {
+        "label": "recherches"
+      },
+      "jobView": {
+        "label": "offres"
+      },
+      "cvAnalysis": {
+        "label": "analyses"
+      },
+      "assistantMessages": {
+        "label": "messages"
+      },
+      "savedJobs": {
+        "label": "sauvegardes"
+      },
+      "unlimited": "illimitées",
+      "unlimitedShort": "Illimité"
+    },
+    "aria": {
+      "remaining": "{label} : {remaining} restant(e)s sur {max}"
+    }
+  },
+  "upgradeBanner": {
+    "minimal": {
+      "text": "Passez Carrière pour débloquer toutes les fonctionnalités",
+      "cta": "Voir les offres"
+    },
+    "gradient": {
+      "title": "Passez à HuntZen Carrière",
+      "subtitle": "Débloquez toutes les fonctionnalités et booste votre carrière",
+      "cta": "Voir les offres"
+    },
+    "default": {
+      "title": "Débloquez tout le potentiel de HuntZen",
+      "subtitle": "Recherches illimitées, export PDF, simulation entretien et plus",
+      "cta": "Voir les offres"
+    },
+    "featurePrompt": {
+      "unlock": "Débloquer cette fonctionnalité"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Bon retour !",
+      "subtitle": "Connectez-vous pour accéder à votre espace",
+      "googleCta": "Continuer avec Google",
+      "divider": "Ou avec email",
+      "emailLabel": "Adresse email",
+      "emailPlaceholder": "vous@example.com",
+      "passwordLabel": "Mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "loading": "Connexion en cours...",
+      "cta": "Se connecter",
+      "noAccount": "Pas encore de compte ?",
+      "signupLink": "Créer un compte gratuitement",
+      "termsPrefix": "En continuant, vous acceptez nos",
+      "terms": "Conditions d'utilisation",
+      "and": "et notre",
+      "privacy": "Politique de confidentialité"
+    },
+    "signup": {
+      "title": "Créer votre compte",
+      "subtitle": "Rejoignez HuntZen et boostez votre carrière",
+      "subtitleCV": "Commencez votre analyse CV gratuitement",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
+      "googleCta": "S'inscrire avec Google",
+      "divider": "Ou avec email",
+      "fullNameLabel": "Nom complet",
+      "fullNamePlaceholder": "Jean Dupont",
+      "emailLabel": "Adresse email",
+      "emailPlaceholder": "vous@example.com",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "Minimum 6 caractères",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Retapez votre mot de passe",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "loading": "Création en cours...",
+      "cta": "Créer mon compte gratuitement",
+      "hasAccount": "Vous avez déjà un compte ?",
+      "loginLink": "Se connecter",
+      "termsPrefix": "En créant un compte, vous acceptez nos",
+      "terms": "Conditions d'utilisation",
+      "and": "et notre",
+      "privacy": "Politique de confidentialité",
+      "cvBanner": {
+        "title": "Offre de bienvenue :",
+        "feature1": "1 analyse CV gratuite par jour",
+        "feature2": "Score ATS détaillé",
+        "feature3": "Matching emploi",
+        "feature4": "Historique complet"
+      },
+      "success": {
+        "title": "Inscription réussie ! 🎉",
+        "sentEmail": "Nous venons d'envoyer un email de confirmation à :",
+        "checkEmail": "Vérifiez votre boîte mail",
+        "checkEmailDesc": "(et vos spams) pour confirmer votre adresse email avant de vous connecter.",
+        "goToLogin": "Aller à la connexion",
+        "close": "Fermer",
+        "noEmail": "Vous n'avez pas reçu l'email ? Attendez quelques minutes ou vérifiez vos spams.",
+        "resendButton": "Renvoyer l'email de confirmation",
+        "resendSuccess": "Email renvoyé ! Vérifiez votre boîte mail.",
+        "spamWarning": "Pensez à vérifier vos spams / courriers indésirables si vous ne trouvez pas l'email.",
+        "openMail": "Ouvrir ma boîte mail"
+      },
+      "timeout": {
+        "title": "Connexion lente détectée",
+        "description": "La requête a pris trop de temps. Vérifiez votre connexion internet et réessayez dans quelques instants."
+      },
+      "referral": {
+        "title": "Vous avez été invité par un ami !",
+        "description": "Inscrivez-vous et profitez de HuntZen gratuitement. Votre ami recevra une récompense quand vous vous inscrirez.",
+        "code": "Code parrainage : {code}"
+      }
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Saisissez votre adresse email et nous vous enverrons un lien de réinitialisation.",
+      "emailLabel": "Adresse email",
+      "emailPlaceholder": "vous@example.com",
+      "submitButton": "Envoyer le lien",
+      "loading": "Envoi en cours...",
+      "successTitle": "Email envoyé !",
+      "successMessage": "Si un compte existe avec cette adresse, vous recevrez un email de réinitialisation dans quelques minutes. Vérifiez vos spams.",
+      "backToLogin": "Retour à la connexion"
+    },
+    "resetPassword": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Choisissez un mot de passe sécurisé pour votre compte.",
+      "passwordLabel": "Nouveau mot de passe",
+      "passwordPlaceholder": "Minimum 6 caractères",
+      "confirmLabel": "Confirmer le mot de passe",
+      "confirmPlaceholder": "Retapez votre mot de passe",
+      "submitButton": "Mettre à jour le mot de passe",
+      "loading": "Mise à jour...",
+      "successMessage": "Mot de passe mis à jour avec succès !",
+      "mismatchError": "Les mots de passe ne correspondent pas",
+      "tooShortError": "Le mot de passe doit contenir au moins 6 caractères",
+      "expiredError": "Le lien de réinitialisation a expiré. Veuillez recommencer.",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe"
+    },
+    "layout": {
+      "feature1Title": "Analyse CV experte",
+      "feature1Desc": "Optimisez votre CV selon les standards ATS et du marché",
+      "feature2Title": "Recherche d'emploi ciblée",
+      "feature2Desc": "Trouvez les meilleures opportunités adaptées à votre profil",
+      "feature3Title": "Données sécurisées",
+      "feature3Desc": "Vos informations sont protégées et confidentielles",
+      "feature4Title": "Résultats instantanés",
+      "feature4Desc": "Analyses rapides et recommandations personnalisées",
+      "heroTitle": "Votre carrière mérite le meilleur",
+      "heroSubtitle": "Rejoignez des milliers de candidats qui ont transformé leur recherche d'emploi avec HuntZen.",
+      "statCandidates": "Candidats accompagnés",
+      "statResponseRate": "Taux de réponse",
+      "statSupport": "Support",
+      "testimonial1Text": "J'ai trouvé mon emploi de rêve en 3 semaines grâce à HuntZen !",
+      "testimonial1Author": "Sarah M.",
+      "testimonial1Role": "Développeuse Full-Stack",
+      "testimonial2Text": "L'analyse CV m'a aidé à passer les filtres ATS pour la première fois.",
+      "testimonial2Author": "Thomas L.",
+      "testimonial2Role": "Chef de Projet",
+      "testimonial3Text": "Interface intuitive et résultats impressionnants.",
+      "testimonial3Author": "Marie K.",
+      "testimonial3Role": "UX Designer"
+    },
+    "errors": {
+      "emailNotConfirmed": "Veuillez confirmer votre adresse email. Nous vous avons envoyé un email de confirmation lors de votre inscription. Vérifiez votre boîte mail (et vos spams).",
+      "invalidCredentials": "Email ou mot de passe invalide",
+      "timeout": "La requête prend trop de temps. Vérifiez votre connexion internet et réessayez.",
+      "signupFailed": "Échec de la création du compte",
+      "emailAlreadyExists": "Un compte existe déjà avec cette adresse email. Connectez-vous ou utilisez le mot de passe oublié.",
+      "resetPasswordFailed": "Impossible d'envoyer le lien de réinitialisation",
+      "resendConfirmationFailed": "Impossible de renvoyer l'email de confirmation"
+    },
+    "promoCode": {
+      "trigger": "Vous avez un code ?",
+      "placeholder": "Code promo ou de parrainage",
+      "apply": "Appliquer",
+      "applying": "Verification...",
+      "invalid": "Code invalide ou expire",
+      "validReferral": "Parraine par {name}",
+      "validPromo": "{description}",
+      "alreadyApplied": "Code deja applique"
+    }
+  },
+  "dashboard": {
+    "jobs": {
+      "title": "Recherche d'Emplois",
+      "subtitle": "Accédez à des milliers d'offres d'emploi provenant des meilleures plateformes de recrutement, agrégées et mises à jour quotidiennement.",
+      "form": {
+        "title": "Définis vos critères de recherche",
+        "subtitle": "Remplis les champs ci-dessous pour trouver les offres qui correspondent à votre profil",
+        "contractType": "Type de contrat",
+        "optional": "(optionnel)",
+        "allContracts": "Tous les types de contrat",
+        "allTypes": "✓ Tous les types",
+        "jobTitle": "Titre du poste",
+        "country": "Pays",
+        "city": "Ville",
+        "cityHint": "Tout le pays si vide",
+        "selectCountryFirst": "Selectionnez d'abord un pays",
+        "loadingPlaceholder": "Chargement...",
+        "jobTitlePlaceholder": "Ex: Developpeur Full Stack, Chef de Projet...",
+        "cityPlaceholder": "Paris, Lyon, Bruxelles...",
+        "countryPlaceholder": "France, Belgique, Suisse...",
+        "searching": "Recherche en cours...",
+        "search": "Lancer la recherche",
+        "unlock": "Débloquer les recherches illimitées",
+        "advancedFilters": "Filtres avancés",
+        "remaining_one": "{count} restante",
+        "remaining_other": "{count} restantes",
+        "noCountryFound": "Aucun pays trouvé",
+        "noCityFound": "Aucune ville trouvée"
+      },
+      "error": {
+        "title": "Erreur lors de la recherche",
+        "generic": "Une erreur est survenue lors de la recherche. Veuillez reessayer.",
+        "formLoad": "Erreur lors du chargement du formulaire. Veuillez rafraîchir la page.",
+        "fillRequired": "Veuillez remplir le titre du poste et le pays"
+      },
+      "corrected": {
+        "title": "Recherche améliorée",
+        "subtitle": "Nous avons optimisé votre recherche :"
+      },
+      "results": {
+        "count_one": "{count} offre trouvée",
+        "count_other": "{count} offres trouvées",
+        "refresh": "Actualiser",
+        "updating": "Actualisation en cours...",
+        "refreshing": "Actualisation en cours...",
+        "justNow": "à l'instant",
+        "timeJustNow": "à l'instant",
+        "oneMinuteAgo": "il y a 1 minute",
+        "time1Minute": "il y a 1 minute",
+        "minutesAgo": "il y a {n} minutes",
+        "timeMinutes": "il y a {count} minutes",
+        "staleWarning": "- Actualisation recommandée",
+        "refreshRecommended": "Actualisation recommandée",
+        "updatedAt": "Actualisé {time}",
+        "refreshedAt": "Actualisé {time}",
+        "recent": "Résultats récents et pertinents",
+        "visibleOf": "{visible} visible{s} sur {total}",
+        "visibleCount": "{visible} offres visibles sur {total}",
+        "unlockAll": "Débloquer toutes les offres →",
+        "cache": "💾 Cache"
+      },
+      "card": {
+        "details": "Voir détails",
+        "save": "Sauvegarder cette offre",
+        "alreadySaved": "Déjà dans vos favoris",
+        "premiumFeature": "Fonctionnalité Carrière",
+        "locationUnknown": "Localisation non specifiee",
+        "alreadySavedShort": "Déjà sauvegardé",
+        "saveShort": "Sauvegarder"
+      },
+      "empty": {
+        "title": "Aucune offre trouvee",
+        "subtitle": "Nous n'avons pas trouvé d'offres correspondant à vos critères pour le moment.",
+        "tips": "💡 Suggestions :",
+        "tip1": "Essayez avec des mots-cles plus generaux",
+        "tip2": "Verifiez l'orthographe du titre de poste",
+        "tip3": "Élargissez votre zone géographique (ville → pays entier)",
+        "tip4": "Selectionnez \"Tous les types\" pour le contrat"
+      },
+      "toast": {
+        "saved": "Offre ajoutée aux favoris ✨",
+        "saveError": "Erreur lors de la sauvegarde",
+        "mustLogin": "Connectez-vous pour sauvegarder des offres",
+        "mustLoginSave": "Vous devez être connecté(e) pour sauvegarder des offres",
+        "alreadySaved": "Cette offre est déjà dans vos favoris",
+        "savedJobsLimitReached": "Limite de sauvegardes atteinte. Passez a un plan superieur.",
+        "filtersApplied": "{count} filtre(s) avancé(s) appliqué(s)",
+        "filtersAppliedDesc": "Recherche mise à jour avec les nouveaux filtres",
+        "filtersAppliedNext": "Les filtres seront appliqués à la prochaine recherche",
+        "filtersReset": "Filtres avancés réinitialisés"
+      },
+      "sort": {
+        "placeholder": "Trier",
+        "relevance": "Pertinence",
+        "dateDesc": "Plus récent",
+        "dateAsc": "Plus ancien",
+        "salaryDesc": "Salaire (↓)",
+        "salaryAsc": "Salaire (↑)",
+        "companyAsc": "Entreprise A→Z"
+      },
+      "perPage": "Offres par page",
+      "salaryMinPlaceholder": "ex: 35000",
+      "relativeDate": {
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "daysAgo": "Il y a {count} jours",
+        "weeksAgo_one": "Il y a {count} semaine",
+        "weeksAgo_other": "Il y a {count} semaines",
+        "monthsAgo": "Il y a {count} mois"
+      },
+      "countryNotFound": "Pays introuvable - essayez depuis la liste",
+      "refreshTitle": "Actualiser les résultats depuis le serveur",
+      "alternanceToggle": "Alternance",
+      "filterButton": "Filtrer",
+      "filterResults": "Filtrer les résultats",
+      "resetFilters": "Réinitialiser ({count})",
+      "filterSource": "Source",
+      "filterContractType": "Type de contrat",
+      "contractType_cdi": "CDI",
+      "contractType_cdd": "CDD",
+      "contractType_freelance": "Freelance",
+      "contractType_internship": "Stage",
+      "contractType_remote": "Télétravail",
+      "contractType_permanent": "Permanent",
+      "contractType_contract": "Contrat",
+      "contractType_alternance": "Alternance",
+      "contractType_apprentissage": "Apprentissage",
+      "filterPostDate": "Date de publication",
+      "filterDateToday": "Aujourd'hui",
+      "filterDate3Days": "3 jours",
+      "filterDate7Days": "7 jours",
+      "filterDate30Days": "30 jours",
+      "filterSalaryMin": "Salaire min (EUR/an)",
+      "filterDirectOnly": "Liens directs uniquement",
+      "filteredCount_one": "{count} offre affichée",
+      "filteredCount_other": "{count} offres affichées",
+      "filteredCountTotal": " sur {total} total",
+      "recentSearches": "Recherches récentes",
+      "allJobs": "Toutes les offres",
+      "badgeApplied": "Postulé",
+      "badgeViewed": "Déjà ouvert",
+      "viaAggregator": "Via agrégateur",
+      "findRecruiters": "Trouver les recruteurs",
+      "betaTag": "BÊTA",
+      "applyConfirmToast": "Avez-vous postulé chez {company} ?",
+      "applyConfirmYes": "Oui, postulé !",
+      "applyConfirmNo": "Non"
+    },
+    "cvAnalysis": {
+      "title": "Analyse de CV",
+      "loading": "Chargement de votre espace...",
+      "errorTitle": "Erreur lors du chargement de l'analyse CV",
+      "errorDesc": "Une erreur s'est produite. Veuillez rafraîchir la page.",
+      "subtitle": "Optimisez votre CV pour maximiser vos chances de décrocher un entretien. Obtiens une analyse détaillée et des recommandations personnalisées."
+    },
+    "assistant": {
+      "title": "Assistant Carrière",
+      "history": "Historique",
+      "newConversation": "Nouvelle",
+      "simulation": "Simulation",
+      "timeWarning": "Il vous reste moins de 3 messages ! Passez Carrière pour des messages illimités.",
+      "upgradePremium": "Passer Carrière",
+      "placeholder": "Posez votre question... (Entrée pour envoyer, Shift+Entrée pour nouvelle ligne)",
+      "timeExpiredTitle": "Quota atteint",
+      "timeExpiredDesc": "Vous avez utilisé vos {count} messages gratuits du jour",
+      "unlockUnlimited": "Débloquer les messages illimités",
+      "errorMessage": "Désolé, une erreur est survenue. Pouvez-vous reformuler votre question ?",
+      "unlimited": "Illimité",
+      "welcomeMessage": "Bienvenue. Vous venez de rejoindre votre équipe carrière. Choisissez par quoi vous voulez commencer.",
+      "welcomeTeamWithName": "Salut {name} ! Votre équipe carrière est là pour vous aider.",
+      "welcomeTeam": "Votre équipe carrière est là pour vous aider.",
+      "welcomeSubtitle": "On va trouver votre prochain job.",
+      "welcomeChoose": "Choisissez par quoi vous voulez commencer.",
+      "welcomeFooter": "5 coachs disponibles 24h/24",
+      "quickActionCV": "Améliorer mon CV",
+      "quickActionJobs": "Trouver des offres",
+      "quickActionInterview": "Préparer mon entretien",
+      "quickActionCareer": "Définir mon objectif carrière",
+      "switchSystemMessage": "Vous parlez maintenant avec **{name}**. {description}",
+      "switchDialogTitle": "Changer d'assistant ?",
+      "switchDialogDescHistory": "Votre conversation avec {name} sera sauvegardée dans votre historique avant d'ouvrir un nouveau chat.",
+      "switchDialogDescNoHistory": "Votre conversation sera perdue, l'historique n'est pas disponible avec votre plan actuel.",
+      "cancel": "Annuler",
+      "switchAssistant": "Changer d'assistant",
+      "cvUploadError": "Erreur lors de l'analyse du CV. Vérifiez que le fichier est un PDF valide.",
+      "removeCV": "Retirer le CV",
+      "attachCV": "Joindre votre CV (PDF)",
+      "sendMessage": "Envoyer le message",
+      "chatInputLabel": "Votre message",
+      "messageCounter": "Messages restants : {remaining} sur {total}"
+    },
+    "salons": {
+      "title": "Salons & Forums",
+      "subtitle": "Trouve ici les salons et événements qui peuvent vous ouvrir de nouvelles opportunités professionnelles.",
+      "keyMessage1": "Découvre les événements clés pour votre carrière.",
+      "keyMessage2": "Élargis votre réseau et trouve de nouvelles opportunités.",
+      "ctaExplore": "Explorer les salons",
+      "ctaJoin": "Rejoindre un événement",
+      "hideFilters": "Masquer les filtres",
+      "showFilters": "Afficher les filtres",
+      "eventsCount": "{count} événement(s)",
+      "filteredResults": "Résultats filtrés",
+      "filterTitle": "Filtrer les événements",
+      "resetFilters": "Réinitialiser",
+      "activeFilters": "filtre(s) actif(s)",
+      "searchButton": "Rechercher",
+      "loadingEvents": "Chargement {current}/{total} événements...",
+      "clearFilters": "Effacer les filtres",
+      "notCommunicated": "Non communiqué",
+      "viewDetails": "Voir les détails",
+      "filterAll": "Tous",
+      "filterUpcoming": "À venir",
+      "filterOnline": "En ligne",
+      "filterFree": "Gratuits",
+      "searchPlaceholder": "Rechercher un salon...",
+      "noResults": "Aucun salon trouvé",
+      "noResultsSub": "Essayez d'autres filtres ou revenez plus tard.",
+      "registerButton": "S'inscrire",
+      "registeredButton": "Inscrit ✓",
+      "onlineLabel": "En ligne",
+      "freeLabel": "Gratuit",
+      "loadingText": "Chargement des salons...",
+      "errorText": "Erreur lors du chargement",
+      "emptyStateTitle": "Aucun salon disponible",
+      "emptyStateSubtitle": "Revenez bientôt pour découvrir les prochains événements.",
+      "filters": {
+        "regionLabel": "Région",
+        "allRegions": "Toutes les régions",
+        "sectorLabel": "Secteur",
+        "allSectors": "Tous les secteurs",
+        "publicLabel": "Public",
+        "allPublics": "Tous publics",
+        "students": "Étudiants",
+        "professionals": "Professionnels",
+        "seniors": "Seniors",
+        "reconversion": "Reconversion",
+        "all": "Tous",
+        "typeLabel": "Type",
+        "allTypes": "Tous types",
+        "formatLabel": "Format",
+        "allFormats": "Tous formats",
+        "physical": "Physique",
+        "virtual": "Virtuel",
+        "hybrid": "Hybride",
+        "companies": "{count} entreprises",
+        "jobDating": "Job Dating",
+        "dateLabel": "Date",
+        "locationLabel": "Lieu",
+        "scheduleLabel": "Horaires"
+      }
+    },
+    "documents": {
+      "title": "Mes Documents",
+      "subtitle": "Gérez vos CV et lettres de motivation générés",
+      "searchPlaceholder": "Rechercher un document...",
+      "filterAll": "Tous",
+      "filterCvOnly": "CV seul",
+      "filterCvAndCoverLetter": "CV + LM",
+      "emptyStateTitle": "Aucun document",
+      "emptyStateSubtitle": "Tes CV et lettres de motivation générés apparaîtront ici.",
+      "downloadButton": "Télécharger",
+      "deleteButton": "Supprimer",
+      "cvLabel": "CV",
+      "coverLetterLabel": "Lettre de motivation",
+      "generatedOn": "Généré le",
+      "srTitle": "Mes documents",
+      "profilesTitle": "Mes profils CV",
+      "profilesSubtitle": "Réutilisez votre profil pour générer des documents adaptés à chaque offre",
+      "createProfile": "Créer un profil",
+      "noProfileTitle": "Aucun profil CV créé",
+      "noProfileSubtitle": "Créez votre profil une fois et utilisez-le pour toutes vos candidatures sans re-uploader votre CV",
+      "createFirstProfile": "Créer mon premier profil",
+      "profileFallbackName": "Profil CV",
+      "modifiedOn": "Modifié le",
+      "editButton": "Modifier",
+      "deleteProfileTitle": "Supprimer ce profil CV ?",
+      "deleteProfileDescription": "Cette action est irréversible. Le profil sera définitivement supprimé.",
+      "cancelButton": "Annuler",
+      "confirmDeleteButton": "Supprimer",
+      "browseJobs": "Parcourir les offres",
+      "companyUnknown": "Entreprise non précisée",
+      "viewJob": "Voir l'offre",
+      "previewButton": "Prévisualiser",
+      "deleteDocTitle": "Supprimer ce document ?",
+      "deleteDocDescription": "Cette action est irréversible. Le document sera définitivement supprimé.",
+      "edit": {
+        "startDatePlaceholder": "Ex: 2022-01",
+        "endDatePlaceholder": "Ex: 2024-06 ou Présent",
+        "title": "Modifier le CV",
+        "editTitle": "Modifier — {jobTitle} @ {company}",
+        "noDataAvailable": "Données CV non disponibles pour l'édition.",
+        "personalInfo": "Informations personnelles",
+        "fullName": "Nom complet",
+        "email": "Email",
+        "phone": "Téléphone",
+        "location": "Localisation",
+        "linkedin": "LinkedIn",
+        "professionalSummary": "Résumé professionnel",
+        "experiences": "Expériences",
+        "addExperience": "Ajouter",
+        "position": "Poste",
+        "company": "Entreprise",
+        "startDate": "Début",
+        "endDate": "Fin",
+        "description": "Description",
+        "cancel": "Annuler",
+        "saving": "Enregistrement…",
+        "save": "Enregistrer",
+        "pdfGenerationError": "Échec de la génération du PDF",
+        "sessionExpired": "Session expirée",
+        "uploadError": "Échec de l'upload du PDF",
+        "saveError": "Erreur lors de la sauvegarde"
+      }
+    },
+    "savedJobs": {
+      "title": "Offres Sauvegardées",
+      "searchPlaceholder": "Rechercher dans vos offres...",
+      "noJobs": "Vous n'avez pas encore sauvegardé d'offres",
+      "noJobsDesc": "Explore les offres disponibles et sauvegarde celles qui vous intéressent",
+      "loginRequired": "Connectez-vous pour voir vos offres sauvegardées",
+      "deleteError": "Erreur lors de la suppression",
+      "deleted": "Offre supprimée",
+      "viewOffer": "Voir l'offre",
+      "delete": "Supprimer",
+      "savedAt": "Sauvegardée le",
+      "searchJobs": "Rechercher des emplois",
+      "savedCount": "{count} offre(s) sauvegardée(s)",
+      "generateCvLm": "Générer CV + LM",
+      "statusCvGenerated": "CV généré",
+      "statusCoverLetterGenerated": "LM générée",
+      "statusApplied": "Postulé",
+      "tipTitle": "💡 Astuce",
+      "tipText": "Cliquez sur une offre pour générer un CV et une lettre de motivation adaptés en quelques secondes.",
+      "comingSoonTitle": "🚀 Prochainement",
+      "comingSoonText": "Suivi de candidatures, rappels automatiques et analytics.",
+      "comingSoonText2": "Alertes automatiques si une offre favorite expire",
+      "comingSoonText3": "Exportation de vos favoris en PDF",
+      "confirmDeleteTitle": "Supprimer cette offre ?",
+      "confirmDeleteDescription": "Cette action est irréversible. L'offre sera retirée de vos sauvegardes.",
+      "confirmDeleteCancel": "Annuler",
+      "confirmDeleteConfirm": "Supprimer",
+      "pagination": {
+        "page": "Page {current} sur {total}",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "count": "{count} offres sauvegardées"
+      }
+    },
+    "error": {
+      "title": "Oups, une erreur est survenue",
+      "subtitle": "Quelque chose s'est mal passé. Vous pouvez réessayer ou retourner aux offres.",
+      "retry": "Réessayer",
+      "back": "Retour aux offres"
+    },
+    "recruiterContact": {
+      "title": "Contacter un Recruteur",
+      "stats": {
+        "consultations": "Consultations réussies",
+        "satisfaction": "Satisfaction moyenne",
+        "delay": "Délai moyen"
+      },
+      "benefits": {
+        "personalizedTitle": "Conseils personnalisés",
+        "personalizedDesc": "Un recruteur expert analyse votre profil et vous donne des recommandations sur-mesure",
+        "expertiseTitle": "Expertise professionnelle",
+        "expertiseDesc": "Nos recruteurs ont 10+ ans d'expérience dans le recrutement de cadres et talents",
+        "fastResponseTitle": "Réponse rapide",
+        "fastResponseDesc": "Vous serez contacté(e) sous 48h pour planifier votre consultation de 30 minutes"
+      },
+      "pricing": {
+        "title": "Consultation Recruteur",
+        "sessionDesc": "Session individuelle de 30 minutes",
+        "perConsultation": "/ consultation",
+        "noSubscription": "Paiement unique, aucun abonnement",
+        "item1Title": "Session vidéo de 30 minutes",
+        "item1Desc": "Échange en direct avec un expert",
+        "item2Title": "Analyse personnalisée",
+        "item2Desc": "CV, profil LinkedIn, stratégie de recherche",
+        "item3Title": "Plan d'action concret",
+        "item3Desc": "Recommandations actionnables immédiatement",
+        "item4Title": "Compte-rendu écrit",
+        "item4Desc": "Résumé détaillé après la consultation",
+        "securePay": "Paiement sécurisé par Stripe"
+      },
+      "form": {
+        "title": "Réserver ma consultation",
+        "desc": "Remplissez le formulaire pour être contacté par un recruteur expert",
+        "fullName": "Nom complet *",
+        "fullNamePlaceholder": "Jean Dupont",
+        "email": "Email *",
+        "emailPlaceholder": "jean.dupont@example.com",
+        "phone": "Téléphone",
+        "phonePlaceholder": "+33 6 12 34 56 78",
+        "sector": "Secteur d'activité *",
+        "sectorPlaceholder": "Sélectionne votre secteur",
+        "experienceLevel": "Niveau d'expérience *",
+        "experiencePlaceholder": "Sélectionne votre niveau",
+        "preferredDate": "Date préférée (optionnel)",
+        "message": "Message / Questions *",
+        "messagePlaceholder": "Décrivez brièvement votre situation et vos objectifs professionnels...",
+        "submitting": "Traitement en cours...",
+        "submit": "Réserver ma consultation (50€)",
+        "submitNote": "Après validation, vous serez redirigé(e) vers le paiement sécurisé Stripe",
+        "error": "Une erreur est survenue. Veuillez réessayer.",
+        "sectors": {
+          "tech": "Tech / IT",
+          "finance": "Finance / Banque",
+          "marketing": "Marketing / Communication",
+          "sales": "Vente / Commercial",
+          "hr": "RH / Recrutement",
+          "engineering": "Ingénierie",
+          "healthcare": "Santé",
+          "education": "Éducation",
+          "other": "Autre"
+        },
+        "levels": {
+          "junior": "Junior (0-3 ans)",
+          "confirmed": "Confirmé (3-7 ans)",
+          "senior": "Senior (7-12 ans)",
+          "expert": "Expert (12+ ans)",
+          "manager": "Manager / Lead",
+          "executive": "Executive / C-level"
+        }
+      },
+      "validation": {
+        "fullNameRequired": "Le nom complet est requis",
+        "fullNameTooShort": "Le nom doit contenir au moins 2 caractères",
+        "emailRequired": "L'email est requis",
+        "emailInvalid": "Format d'email invalide",
+        "phoneInvalid": "Format de téléphone invalide",
+        "sectorRequired": "Le secteur d'activité est requis",
+        "experienceRequired": "Le niveau d'expérience est requis",
+        "messageRequired": "Le message est requis",
+        "messageTooShort": "Le message doit contenir au moins 10 caractères"
+      },
+      "cta": {
+        "title": "Prêt à booster votre carrière ?",
+        "spots": "👥 5 consultations réservées cette semaine",
+        "button": "Réserver maintenant (50€)"
+      },
+      "modal": {
+        "toastError": "Une erreur est survenue. Veuillez réessayer.",
+        "messagePlaceholder": "Décrivez votre situation...",
+        "sectorPlaceholder": "Sélectionnez",
+        "experiencePlaceholder": "Sélectionnez",
+        "fullNamePlaceholder": "Jean Dupont",
+        "emailPlaceholder": "jean.dupont@example.com",
+        "phonePlaceholder": "+33 6 12 34 56 78"
+      },
+      "finder": {
+        "companyPlaceholder": "Nom de l'entreprise",
+        "quotaReached": "Quota atteint ({count} recherches/jour en version gratuite). Passez à Pro pour un accès illimité."
+      }
+    }
+  },
+  "error": {
+    "title": "Une erreur s'est produite",
+    "description": "Nous avons rencontré un problème inattendu. Notre équipe a été notifiée et travaille sur une solution.",
+    "retry": "Réessayer",
+    "home": "Accueil"
+  },
+  "offline": {
+    "title": "Mode hors ligne",
+    "description": "Il semblerait que vous soyez déconnecté d'Internet. Certaines fonctionnalités peuvent être limitées.",
+    "retry": "Réessayer",
+    "backHome": "Retour à l'accueil",
+    "featuresTitle": "💡 Fonctionnalités hors ligne",
+    "feature1": "Consultation des emplois mis en cache",
+    "feature2": "Visualisation de votre CV",
+    "feature3": "Accès à vos candidatures récentes",
+    "note": "Vérifiez votre connexion Internet et réessayez"
+  },
+  "payment": {
+    "success": {
+      "verifying": "Vérification de votre paiement...",
+      "invalidSession": "Session de paiement invalide",
+      "waitingAuth": "En attente de l'authentification...",
+      "verifyingAttempt": "Vérification en cours (tentative {attempt}/{max})...",
+      "timeoutMessage": "Délai dépassé. Votre abonnement sera visible dans quelques instants.",
+      "errorMessage": "Erreur lors de la vérification. Votre abonnement sera visible dans votre profil.",
+      "processingTitle": "Traitement en cours",
+      "processingSubtitle": "Le webhook Stripe prend plus de temps que prévu. Votre abonnement sera visible dans votre profil dans quelques instants.",
+      "goToProfile": "Aller au profil",
+      "errorTitle": "Erreur de vérification",
+      "viewProfile": "Voir mon profil",
+      "backToPricing": "Retour à la page Tarifs",
+      "successTitle": "Paiement réussi !",
+      "successSubtitle": "Bienvenue dans votre nouvel abonnement HuntZen 🚀",
+      "subscriptionActive": "Votre abonnement est maintenant actif ! Vous avez accès à toutes les fonctionnalités premium de votre plan.",
+      "benefit1": "Recherches d'offres illimitées",
+      "benefit2": "Analyses de CV illimitées avec IA",
+      "benefit3": "Coach IA disponible 24/7",
+      "startSearch": "Commencer la recherche",
+      "viewMyProfile": "Voir mon profil",
+      "emailSent": "Un email de confirmation vous a été envoyé avec les détails de votre abonnement.",
+      "question": "Une question ?",
+      "contactSupport": "Contactez notre support"
+    },
+    "cancel": {
+      "title": "Paiement annulé",
+      "subtitle": "Vous avez annulé le processus de paiement",
+      "noCharge": "Aucun montant n'a été débité de votre compte. Vous pouvez réessayer quand vous le souhaitez ou continuer avec le plan gratuit.",
+      "helpTitle": "Besoin d'aide ?",
+      "helpDesc": "Notre équipe support est disponible pour répondre à toutes vos questions sur nos abonnements.",
+      "backToPricing": "Retour aux tarifs",
+      "continueFree": "Continuer avec le plan gratuit",
+      "questionsTitle": "Des questions sur nos abonnements ?",
+      "contactSupport": "Contactez notre support →",
+      "tip": "Profitez du plan gratuit pour découvrir HuntZen avant de vous abonner",
+      "tipLabel": "Astuce"
+    }
+  },
+  "subscription": {
+    "toasts": {
+      "synced": "Abonnement synchronisé",
+      "syncedDesc": "Vos informations d'abonnement ont été actualisées.",
+      "syncFailed": "Synchronisation impossible",
+      "syncFailedDesc": "La fonction de synchronisation n'est pas disponible.",
+      "sessionExpired": "Session expirée",
+      "sessionExpiredDesc": "Votre session a expiré. Veuillez vous reconnecter.",
+      "sessionExpiredAction": "Reconnecter"
+    },
+    "cancelScheduled": "Annulation programmée",
+    "cancelScheduledDesc": "Votre abonnement {plan} restera actif{until}, puis passera au plan Gratuit.",
+    "cancelScheduledUntil": " jusqu'au {date}",
+    "cancelScheduledUntilFallback": " jusqu'à la fin de la période",
+    "reactivate": "Réactiver mon abonnement",
+    "reactivating": "Réactivation...",
+    "unknownError": "Erreur inconnue",
+    "planChanged": {
+      "title": "Ton abonnement a changé",
+      "description": "Vous êtes maintenant sur le plan {plan}.",
+      "ctaUpgrade": "Voir les offres",
+      "ctaContinue": "Continuer"
+    },
+    "features": {
+      "has_advanced_filters": "Filtres avancés",
+      "has_favorites": "Favoris illimités",
+      "has_email_alerts": "Alertes email",
+      "has_visual_score": "Score visuel CV",
+      "has_pdf_export": "Export PDF",
+      "has_cv_history": "Historique CV",
+      "has_interview_sim": "Simulation d'entretien",
+      "has_personalized_advice": "Conseils personnalisés",
+      "has_coach_history": "Historique Coach"
+    },
+    "paymentFailed": "Paiement en échec",
+    "paymentFailedDesc": "Votre dernier paiement a échoué. Mettez à jour votre moyen de paiement pour conserver votre accès{until}.",
+    "paymentFailedUntil": " jusqu'au {date}",
+    "openingPortal": "Ouverture...",
+    "updateCard": "Mettre à jour ma carte",
+    "active": "Actif",
+    "endsOn": "Fin le {date}",
+    "cancellationScheduled": "Annulation prévue",
+    "upgradeTo": "Passer à {plan}",
+    "featuresIncluded": "Fonctionnalités incluses",
+    "cvAnalysesUnlimited": "Analyses CV illimitées",
+    "cvAnalysesPerDay": "{count} analyse(s) CV par jour",
+    "assistantMessagesUnlimited": "Messages Assistant illimités",
+    "assistantMessagesPerDay": "{count} messages Assistant par jour",
+    "jobSearchesUnlimited": "Recherches d'emploi illimitées",
+    "jobSearchesPerDay": "{count} recherches d'emploi par jour",
+    "dailyUsage": "Utilisation du jour",
+    "cvAnalysesLabel": "Analyses CV",
+    "assistantMessagesLabel": "Messages Assistant",
+    "jobSearchesLabel": "Recherches d'emploi",
+    "unlockPotential": "Débloquez tout le potentiel de HuntZen",
+    "unlockPotentialDesc": "Passez à un plan payant pour des analyses illimitées, plus de messages coaching, et des fonctionnalités exclusives.",
+    "viewPlans": "Voir les plans",
+    "viewPlansAriaLabel": "Voir tous les plans d'abonnement disponibles",
+    "changePlan": "Changer de plan",
+    "changePlanAriaLabel": "Changer de plan d'abonnement",
+    "upgradeAriaLabel": "Passer au plan {plan}",
+    "portalError": "Erreur",
+    "reactivationError": "Erreur lors de la réactivation",
+    "cancellationError": "Erreur lors de l'annulation"
+  },
+  "contact": {
+    "toasts": {
+      "fillAllFields": "Merci de remplir tous les champs obligatoires.",
+      "sendError": "Une erreur est survenue. Veuillez réessayer ou envoyer un email directement."
+    },
+    "placeholders": {
+      "name": "Jean Dupont",
+      "email": "jean@exemple.com",
+      "message": "Décrivez votre demande en détail..."
+    },
+    "heroTitle": "Nous contacter",
+    "heroDescription": "Une question, un problème, une suggestion ? Notre équipe vous répond sous 48h en semaine.",
+    "directEmail": "Email direct",
+    "urgentRequest": "Pour toute demande urgente :",
+    "responseTime": "Temps de réponse",
+    "responseDescription": "Notre équipe répond sous <strong>48h en semaine</strong> (lundi - vendredi).",
+    "proPriority": "Les utilisateurs Pro bénéficient d'un support prioritaire.",
+    "usefulLinks": "Liens utiles",
+    "linkFaq": "FAQ",
+    "linkPrivacy": "Politique de confidentialité",
+    "linkLegal": "Mentions légales",
+    "linkTerms": "Conditions d'utilisation",
+    "messageSentTitle": "Message envoyé !",
+    "messageSentDescription": "Merci pour votre message. Notre équipe vous répondra dans les 48h en semaine.",
+    "sendAnother": "Envoyer un autre message",
+    "formTitle": "Envoyez-nous un message",
+    "requiredFields": "Tous les champs marqués * sont obligatoires.",
+    "labelFullName": "Nom complet *",
+    "labelEmail": "Adresse email *",
+    "labelReason": "Motif de contact",
+    "selectReason": "Sélectionner un motif",
+    "reasons": {
+      "support": "Problème technique",
+      "billing": "Facturation / abonnement",
+      "account": "Mon compte",
+      "feature": "Suggestion de fonctionnalité",
+      "legal": "Question légale / RGPD",
+      "other": "Autre"
+    },
+    "labelMessage": "Message *",
+    "emailHint": "Vous pouvez aussi nous écrire directement à",
+    "sending": "Envoi en cours...",
+    "sendMessage": "Envoyer le message",
+    "footerPrivacy": "Politique de confidentialité",
+    "footerTerms": "Conditions d'utilisation",
+    "footerLegal": "Mentions légales"
+  },
+  "profile": {
+    "multilingualComingSoon": "Le support multilingue sera disponible prochainement",
+    "thankSubscription": "🎉 Merci de votre abonnement !",
+    "deleteAccountComingSoon": "La suppression de compte sera bientôt disponible (RGPD compliance)",
+    "deleteAccountButton": "Supprimer mon compte",
+    "deleteAccountConfirmTitle": "Supprimer définitivement votre compte ?",
+    "deleteAccountConfirmDescription": "Cette action est irréversible. Toutes vos données personnelles, analyses CV, offres sauvegardées et historique de conversations seront définitivement supprimés. Votre abonnement sera annulé.",
+    "deleteAccountCancel": "Annuler",
+    "deleteAccountConfirmButton": "Supprimer définitivement",
+    "deleteAccountDeleting": "Suppression en cours...",
+    "deleteAccountSuccess": "Votre compte a été supprimé avec succès",
+    "deleteAccountError": "Erreur lors de la suppression du compte. Veuillez réessayer ou contacter le support.",
+    "dangerZoneTitle": "Zone de danger",
+    "dangerZoneDescription": "Les actions ci-dessous sont irréversibles. Procédez avec précaution.",
+    "dataExportTitle": "Vos données personnelles (RGPD)",
+    "dataExportDescription": "Conformément au RGPD (art. 20), vous pouvez exporter l'ensemble de vos données personnelles dans un format structuré (JSON).",
+    "dataExportButton": "Exporter mes données",
+    "dataExporting": "Export en cours...",
+    "dataExportSuccess": "Vos données ont été exportées avec succès",
+    "dataExportError": "Erreur lors de l'export. Veuillez réessayer.",
+    "cancelSubscriptionComingSoon": "L'annulation d'abonnement sera disponible prochainement",
+    "cancelSubscription": "Annuler l'abonnement",
+    "cancelling": "Annulation...",
+    "toasts": {
+      "linkCopied": "Lien copié !",
+      "profileUpdated": "Profil mis à jour !",
+      "profileSaved": "Profil sauvegardé !",
+      "profileSaveError": "Erreur lors de la sauvegarde du profil.",
+      "profileDeleted": "Profil supprimé.",
+      "settingsUpdateError": "Erreur lors de la mise à jour des paramètres",
+      "unexpectedError": "Une erreur inattendue est survenue",
+      "logoutSuccess": "Déconnexion réussie",
+      "logoutError": "Erreur lors de la déconnexion",
+      "notifSaveError": "Erreur lors de la sauvegarde des préférences",
+      "avatarUpdated": "Photo de profil mise à jour",
+      "avatarUploadError": "Une erreur est survenue",
+      "profileUpdateError": "Erreur lors de la mise à jour du profil",
+      "profileUpdateSuccess": "Profil mis à jour avec succès"
+    },
+    "settingsLanguagePlaceholder": "Sélectionner une langue",
+    "placeholders": {
+      "fullName": "Votre nom complet"
+    },
+    "cancelDialog": {
+      "title": "Annuler votre abonnement ?",
+      "description": "Aucun prélèvement supplémentaire ne sera effectué. Vous conserverez l'accès à toutes vos fonctionnalités jusqu'à la fin de la période déjà payée, puis votre compte passera automatiquement au plan Gratuit.",
+      "keep": "Garder mon abonnement",
+      "confirm": "Confirmer l'annulation",
+      "successTitle": "Annulation confirmée",
+      "successDescription": "Votre plan {plan} restera actif jusqu'à la fin de la période en cours, sans aucun nouveau prélèvement. Vous passerez ensuite au plan Gratuit."
+    },
+    "pageTitle": "Mon Profil",
+    "pageDescription": "Gérez vos informations personnelles, votre abonnement et vos préférences",
+    "tabs": {
+      "profile": "Profil",
+      "subscription": "Abonnement",
+      "settings": "Paramètres",
+      "notifications": "Notifications",
+      "progression": "Progression",
+      "referral": "Parrainage"
+    },
+    "subscriptionSection": {
+      "title": "Votre abonnement",
+      "description": "Consultez votre plan actuel, votre utilisation quotidienne et gérez votre abonnement"
+    },
+    "settingsSection": {
+      "title": "Paramètres",
+      "description": "Personnalisez votre expérience HuntZen avec vos préférences"
+    },
+    "progressionSection": {
+      "title": "Progression",
+      "description": "Suivez votre Career Score et vos points d'expérience"
+    },
+    "alerts": {
+      "paymentFailed": "Paiement en échec",
+      "cancellationScheduled": "Annulation programmée"
+    },
+    "help": {
+      "title": "Besoin d'aide ?",
+      "description": "Notre équipe support est là pour vous aider. N'hésitez pas à nous contacter si vous avez des questions sur votre compte ou votre abonnement.",
+      "helpCenter": "Centre d'aide"
+    },
+    "referral": {
+      "title": "Parrainez vos proches",
+      "description": "Partagez votre lien. Quand un ami souscrit, vous gagnez des jours offerts.",
+      "yourLink": "Votre lien de parrainage",
+      "code": "Code :",
+      "clicks": "Clics",
+      "signups": "Inscriptions",
+      "conversions": "Conversions",
+      "howItWorks": "Comment ça marche ?",
+      "howItWorksDescription": "Quand un ami souscrit via votre lien, vous recevez automatiquement des jours offerts."
+    }
+  },
+  "cv": {
+    "inProgress": "En cours...",
+    "matchingJobOffer": "🎯 Matching avec offre d'emploi",
+    "freeAnalysesPerDay": "{count} analyse(s) CV gratuite(s) par jour",
+    "freeSignupBenefits": "Ce que vous obtenez gratuitement :",
+    "freeAnalysisBenefit": "{count} analyse(s) CV gratuite(s)",
+    "freeAnalysisBenefitSuffix": "par jour",
+    "toasts": {
+      "pdfOnlyAccepted": "Seuls les fichiers PDF sont acceptés",
+      "historyLoadError": "Impossible de charger l'historique des analyses",
+      "historyRefreshError": "Impossible de rafraîchir l'historique",
+      "analysisLoadError": "Erreur lors du chargement de l'analyse",
+      "pdfExportError": "Erreur lors de l'export PDF"
+    },
+    "placeholders": {
+      "pasteCvText": "Collez le contenu de votre CV ici (minimum 100 caractères)...",
+      "pasteJobDescription": "Collez la description du poste pour obtenir un score de compatibilité...",
+      "pasteJobDescriptionHere": "Collez la description du poste ici..."
+    },
+    "atsScoreAsterisk": "* Ce score reflète la compatibilité ATS de votre CV. Un design volontairement simple améliore le passage des filtres automatiques.",
+    "atsConfirmTitle": "Générer un CV optimisé ATS",
+    "atsConfirmDescription": "Votre CV sera reformaté pour maximiser le passage des filtres automatiques. Le design sera volontairement épuré pour une compatibilité optimale.",
+    "atsConfirmCancel": "Annuler",
+    "atsConfirmGenerate": "Générer",
+    "results": {
+      "scoreDetails": "Détails du score",
+      "strengthsAndWeaknesses": "Points forts & Points faibles",
+      "elementsCount": "{count} éléments",
+      "strengths": "Points forts",
+      "weaknesses": "Points à améliorer",
+      "suggestionsTitle": "Suggestions d'amélioration",
+      "actionsCount": "{count} actions",
+      "lockedTitle": "Contenu reserve aux abonnes",
+      "lockedDescription": "Passez a un plan payant pour voir les details de votre analyse CV : points forts, points faibles et suggestions personnalisees.",
+      "lockedCta": "Debloquer les details",
+      "recommendedJobs": "Postes recommandes pour votre profil",
+      "newAnalysis": "Nouvelle analyse",
+      "improveWithCoach": "Ameliorer avec Coach IA",
+      "exportPdf": "Exporter PDF",
+      "compare": "Comparer"
+    },
+    "comparison": {
+      "needTwoAnalyses": "Vous devez avoir au moins 2 analyses pour utiliser la comparaison",
+      "compareTwoVersions": "Comparer deux versions",
+      "selectTwoAnalyses": "Sélectionnez 2 analyses pour voir vos améliorations",
+      "invalidSelections": "Sélections invalides",
+      "retry": "Réessayer",
+      "comparison": "Comparaison",
+      "changeSelection": "Changer la sélection",
+      "version1": "Version 1",
+      "version2": "Version 2",
+      "improvementsDetected": "Améliorations détectées",
+      "newStrengths": "Points forts ajoutés",
+      "resolvedWeaknesses": "Faiblesses corrigées",
+      "noModification": "Aucune modification",
+      "noSignificantImprovement": "Aucune amélioration significative détectée entre ces deux versions"
+    },
+    "suggestions": {
+      "noSuggestions": "Aucune suggestion disponible",
+      "progression": "Progression",
+      "completedCount": "{completed}/{total} améliorations complétées",
+      "potentialScore": "Score potentiel",
+      "possiblePoints": "+{points} points possibles",
+      "moreInfo": "Voir plus d'informations",
+      "categories": {
+        "skills": "Compétences",
+        "experience": "Expérience",
+        "education": "Formation",
+        "formatting": "Mise en forme",
+        "other": "Autre"
+      }
+    }
+  },
+  "support": {
+    "toasts": {
+      "fileTooLarge": "Fichier trop volumineux (max 5MB)",
+      "fileFormatUnsupported": "Format non supporté. Images ou PDF uniquement.",
+      "fileUploadError": "Erreur lors de l'upload du fichier",
+      "subjectTooShort": "Sujet trop court (min 5 caractères)",
+      "descriptionTooShort": "Description trop courte (min 20 caractères)"
+    },
+    "placeholders": {
+      "subjectPlaceholder": "Décrivez brièvement votre demande",
+      "descriptionPlaceholder": "Décrivez en détail votre problème ou question...",
+      "chatbotQuestion": "Posez votre question..."
+    },
+    "widget": {
+      "minimize": "Réduire",
+      "title": "Support HuntZen",
+      "tabFaq": "Aide & FAQ",
+      "tabTicket": "Ticket Support",
+      "close": "Fermer"
+    }
+  },
+  "jobs": {
+    "toasts": {
+      "fillAllFields": "Veuillez remplir tous les champs requis",
+      "selectCvFirst": "Sélectionne votre CV avant de continuer.",
+      "selectSavedProfile": "Veuillez sélectionner un profil sauvegardé.",
+      "previewLoadError": "Impossible de charger la prévisualisation",
+      "previewError": "Erreur lors de la prévisualisation",
+      "profileSaved": "Profil sauvegardé !",
+      "profileSaveError": "Erreur lors de la sauvegarde du profil.",
+      "applicationSent": "Candidature marquée comme envoyée !",
+      "emailCopied": "Email copié !",
+      "contactsLoadError": "Impossible de récupérer les contacts. Réessayez plus tard.",
+      "applicationSaveError": "Impossible d'enregistrer la candidature. Réessaie.",
+      "quotaReachedRecruiter": "Quota de recherche recruteur atteint. Passez à Pro pour un accès illimité."
+    },
+    "recruiterFinderBeta": "Cette fonctionnalité est en cours d'amélioration. Les résultats peuvent être incomplets.",
+    "recruiterFinderSubtitle": "Trouvez les contacts RH et décideurs de l'entreprise",
+    "recruiterFinderDescription": "Identifie automatiquement les recruteurs et décideurs à contacter pour ce poste.",
+    "recruiterCompanyLabel": "Nom de l'entreprise",
+    "recruiterCompanyPlaceholder": "Ex: Capgemini, BNP Paribas...",
+    "recruiterFinderRgpd": "Ces emails proviennent de sources publiques (Apollo.io, Hunter.io). Respectez le RGPD dans vos communications.",
+    "recruiterEmailVerified": "Verifie",
+    "recruiterEmailGuessed": "Estime",
+    "searchLoadingModal": {
+      "title": "Recherche en cours",
+      "defaultQuery": "Offres d'emploi",
+      "footer": "Environ 30 secondes · Ne fermez pas cette page",
+      "steps": {
+        "connectingJobBoards": "Connexion aux job boards",
+        "analyzingSearch": "Analyse de votre recherche",
+        "filteringRelevance": "Filtrage par pertinence",
+        "verifyingOffers": "Vérification des offres",
+        "sortingResults": "Tri des meilleurs résultats"
+      }
+    },
+    "recruiterViewLinkedin": "Voir le profil LinkedIn",
+    "recruiterSearching": "Recherche des contacts en cours...",
+    "blurred": {
+      "source": "Source",
+      "lockedOffer": "Offre verrouillée",
+      "upgradeToPremium": "Passez Premium pour voir cette offre",
+      "unlock": "Débloquer",
+      "additionalOffers": "+{count} offres supplémentaires",
+      "limitReached": "Vous avez atteint la limite de {visible} offres visibles. Passez Premium pour accéder à toutes les offres et ne manquer aucune opportunité.",
+      "seeAllOffers": "Voir toutes les offres"
+    },
+    "placeholder": {
+      "popularSearches": "Recherches populaires en ce moment",
+      "jobsAggregated": "Offres d'emploi agrégées",
+      "updatedBadge": "Mise à jour 24h/24",
+      "partnerSources": "Sources d'emploi partenaires",
+      "partnerBadge": "LinkedIn, Indeed, APEC...",
+      "maxUpdateDelay": "Délai de mise à jour max",
+      "dailyOffersBadge": "Nouvelles offres quotidiennes",
+      "searchTips": "Conseils pour une recherche efficace",
+      "tipSpecificTitle": "Soyez spécifique",
+      "tipSpecificDesc": "Utilisez des mots-clés précis comme \"React\" au lieu de \"développeur\"",
+      "tipAreaTitle": "Élargissez votre zone",
+      "tipAreaDesc": "Laissez la ville vide pour chercher dans toute la France",
+      "tipFiltersTitle": "Utilisez les filtres",
+      "tipFiltersDesc": "Type de contrat et pays pour affiner vos résultats",
+      "tipRegularTitle": "Revenez régulièrement",
+      "tipRegularDesc": "Nos résultats sont mis à jour toutes les 24 heures"
+    }
+  },
+  "jobDetails": {
+    "close": "Fermer",
+    "companyUnspecified": "Entreprise non spécifiée",
+    "jobDescription": "Description du poste",
+    "keyInfo": "Informations clés",
+    "contractLabel": "Contrat",
+    "salary": "Rémunération",
+    "company": "Entreprise",
+    "location": "Localisation",
+    "postedDate": "Date de publication",
+    "findRecruiter": "Trouver les emails recruteurs",
+    "generateDocuments": "Générer CV + lettre adaptés",
+    "notAvailable": "Non spécifié",
+    "applyDirect": "Postuler directement",
+    "viewOffer": "Voir l'offre",
+    "truncatedDescription": "Cliquez sur \"Voir l'offre\" pour accéder à la description complète.",
+    "relativeDate": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "daysAgo": "Il y a {count} jours",
+      "weeksAgo_one": "Il y a {count} semaine",
+      "weeksAgo_other": "Il y a {count} semaines",
+      "monthsAgo": "Il y a {count} mois"
+    },
+    "findInternalContact": "Trouver des profils LinkedIn",
+    "insiderTitle": "Contacts internes chez {company}",
+    "insiderSubtitle": "Trouve de vraies personnes à contacter sur LinkedIn pour maximiser vos chances",
+    "insiderWhyTitle": "Pourquoi contacter un insider ?",
+    "insiderWhyColleague": "Futur collègue : renseignez-vous sur l'ambiance et le poste réel",
+    "insiderWhyRecruiter": "Recruteur interne : envoie votre CV directement, sans passer par le formulaire",
+    "insiderWhyStats": "Une recommandation interne multiplie par 5 vos chances d'être convoqué",
+    "insiderSearchButton": "Trouver des contacts LinkedIn (5–8s)",
+    "insiderSearching": "Recherche des profils en cours…",
+    "insiderNoResults": "Aucun profil trouvé pour {company}. Essayez de postuler directement sur leur site.",
+    "insiderRetry": "Réessayer",
+    "insiderNewSearch": "Nouvelle recherche",
+    "insiderProfiles": "{count} profil",
+    "insiderProfilesPlural": "{count} profils"
+  },
+  "searchForm": {
+    "jobTitlePlaceholder": "Métier ou poste recherché",
+    "locationPlaceholder": "Ville, département ou région (optionnel)",
+    "jobTitleRequired": "Renseignez un métier ou sélectionnez un type de contrat",
+    "countryRequired": "Le pays est requis",
+    "includeRemote": "Inclure les offres en télétravail",
+    "contractTypeLabel": "Type de contrat",
+    "contractType_cdi": "CDI",
+    "contractType_cdd": "CDD",
+    "contractType_cdi_partial": "CDI temps partiel",
+    "contractType_cdd_partial": "CDD temps partiel",
+    "contractType_alternance": "Alternance",
+    "contractType_apprentissage": "Apprentissage",
+    "contractType_freelance": "Freelance",
+    "contractType_internship": "Stage",
+    "contractType_remote": "Télétravail",
+    "contractType_permanent": "Permanent",
+    "contractType_contract": "Contrat",
+    "jobTitleOptional": "Métier ou poste (optionnel avec filtres)",
+    "searchingLabel": "Recherche en cours...",
+    "searchRadius": "Rayon de recherche",
+    "radiusKm": "{radius} km",
+    "searchesRemaining": "{count} recherche(s) restante(s) aujourd'hui",
+    "searchButton": "Rechercher",
+    "advancedFilters": "Filtres avancés",
+    "typeYourCountry": "Tape votre pays",
+    "typeYourCity": "Tape votre ville",
+    "noCountryFound": "Aucun pays trouvé",
+    "noCityFound": "Aucune ville trouvée",
+    "selectCountryFirst": "Sélectionnez d'abord un pays",
+    "countryPlaceholder": "Pays",
+    "selectCountryInList": "Veuillez sélectionner un pays dans la liste",
+    "contractTypesLabel": "Types de contrat",
+    "allContracts": "Tous les contrats",
+    "selectedCount": "selectionne(s)",
+    "contractType_interim": "Interim",
+    "workDaysLabel": "Jours de travail",
+    "workDays_weekdays": "Semaine (lun-ven)",
+    "workDays_weekend": "Weekend (sam-dim)",
+    "allDays": "Tous les jours",
+    "workScheduleLabel": "Horaires",
+    "workSchedule_morning": "Matin (6h-12h)",
+    "workSchedule_daytime": "Journee (9h-17h)",
+    "workSchedule_evening": "Soir (17h-22h)",
+    "workSchedule_night": "Nuit (22h-6h)",
+    "workSchedule_fulltime": "Temps plein",
+    "allSchedules": "Tous les horaires"
+  },
+  "advancedFilters": {
+    "title": "Filtres avancés",
+    "industriesLabel": "Secteurs d'activité",
+    "experienceLabel": "Niveau d'expérience",
+    "salaryLabel": "Fourchette salariale",
+    "companySizeLabel": "Taille d'entreprise",
+    "applyButton": "Appliquer les filtres",
+    "resetButton": "Réinitialiser",
+    "cancelButton": "Annuler",
+    "industryTechIT": "Tech / IT",
+    "industryFinance": "Finance",
+    "industryMarketing": "Marketing",
+    "industryHealthcare": "Santé",
+    "industryRetail": "Commerce / Retail",
+    "industryManufacturing": "Industrie",
+    "industryEducation": "Éducation",
+    "industryConsulting": "Conseil",
+    "experienceJunior": "Junior (0-2 ans)",
+    "experienceMid": "Confirmé (2-5 ans)",
+    "experienceSenior": "Senior (5+ ans)",
+    "experienceLead": "Lead / Principal",
+    "companySizeStartup": "Startup",
+    "companySizeScaleup": "Scale-up",
+    "companySizeEnterprise": "Grand groupe",
+    "salaryMin": "Salaire min",
+    "salaryMax": "Salaire max",
+    "premiumFeature": "Fonctionnalité Carrière",
+    "selectIndustries": "Sélectionner des industries...",
+    "searchIndustry": "Rechercher une industrie...",
+    "noIndustryFound": "Aucune industrie trouvée.",
+    "industriesSelected": "{count} industrie(s) sélectionnée(s)",
+    "keywordsLabel": "Mots-clés techniques",
+    "keywordsPlaceholder": "Ex: React, Python, AWS...",
+    "addKeyword": "Ajouter",
+    "selectLevel": "Sélectionner un niveau...",
+    "description": "Affinez votre recherche avec des critères supplémentaires",
+    "salaryMinPlaceholder": "30 000",
+    "salaryMaxPlaceholder": "100 000",
+    "salaryError": "Le salaire minimum doit être inférieur au maximum",
+    "companySizeStartupDesc": "Petite équipe agile",
+    "companySizeScaleupDesc": "Croissance rapide",
+    "companySizeEnterpriseDesc": "Grande organisation"
+  },
+  "gradientJobCard": {
+    "lockedOffer": "Offre verrouillée",
+    "upgradeToPremium": "Passez Carrière pour voir cette offre",
+    "unlock": "Débloquer",
+    "moreOffers": "+{count} offres supplémentaires"
+  },
+  "applyModal": {
+    "title": "Postuler à cette offre",
+    "uploadCv": "Télécharger votre CV",
+    "uploadInstruction": "Glisse-dépose votre CV ou clique pour sélectionner",
+    "selectLanguage": "Langue du document",
+    "languageFr": "Français",
+    "languageEn": "Anglais",
+    "processingStep1": "Analyse du CV en cours...",
+    "processingStep2": "Adaptation au poste...",
+    "processingStep3": "Génération de la lettre de motivation...",
+    "processingStep4": "Finalisation des documents...",
+    "generateButton": "Générer CV + Lettre adaptés",
+    "downloadCv": "Télécharger le CV",
+    "downloadCoverLetter": "Télécharger la lettre",
+    "cancelButton": "Annuler",
+    "retryButton": "Réessayer"
+  },
+  "cvBuilder": {
+    "step1": {
+      "textPlaceholder": "Colle ici le contenu de votre CV..."
+    },
+    "step2": {
+      "jobOfferPlaceholder": "Collez ici la description complète de l'offre d'emploi (missions, compétences requises, profil recherché...)..."
+    },
+    "wizard": {
+      "profileNamePlaceholder": "Mon CV principal",
+      "createTitle": "Créer un profil CV",
+      "editTitle": "Modifier le profil CV",
+      "profileNameLabel": "Nom du profil :",
+      "defaultProfileName": "Mon CV",
+      "steps": {
+        "personalInfo": "Infos perso.",
+        "summary": "Résumé",
+        "experiences": "Expériences",
+        "education": "Formation",
+        "skills": "Compétences"
+      },
+      "prev": "Précédent",
+      "next": "Suivant",
+      "saving": "Sauvegarde...",
+      "save": "Sauvegarder le profil"
+    },
+    "personalInfo": {
+      "namePlaceholder": "Marie Dupont",
+      "titlePlaceholder": "Développeur Full-Stack",
+      "emailPlaceholder": "marie@exemple.com",
+      "phonePlaceholder": "+33 6 12 34 56 78",
+      "locationPlaceholder": "Paris, France",
+      "linkedinPlaceholder": "linkedin.com/in/marie-dupont"
+    },
+    "summary": {
+      "placeholder": "Développeur passionné avec 5 ans d'expérience en React et Node.js, spécialisé dans la création d'applications web performantes..."
+    },
+    "experiences": {
+      "titlePlaceholder": "Développeur Full-Stack",
+      "companyPlaceholder": "Google",
+      "startDatePlaceholder": "janv. 2022",
+      "endDatePlaceholder": "déc. 2023",
+      "locationPlaceholder": "Paris, France",
+      "descriptionPlaceholder": "Développement et maintenance d'une application SaaS B2B utilisée par 500+ clients..."
+    },
+    "education": {
+      "degreePlaceholder": "Master Informatique",
+      "institutionPlaceholder": "Université Paris-Saclay",
+      "fieldPlaceholder": "Intelligence Artificielle",
+      "yearPlaceholder": "2022"
+    },
+    "skills": {
+      "technicalPlaceholder": "React, Python, SQL... (Entrée pour ajouter)",
+      "softPlaceholder": "Leadership, Travail en équipe... (Entrée pour ajouter)",
+      "languagePlaceholder": "Français, Anglais...",
+      "levelPlaceholder": "Niveau"
+    }
+  },
+  "candidatures": {
+    "title": "Mes Candidatures",
+    "subtitle": "Suis l'avancement de toutes vos candidatures",
+    "loginRequired": "Connectez-vous pour voir vos candidatures",
+    "status": {
+      "all": "Tous les statuts",
+      "applied": "Postulé",
+      "viewed": "CV consulté",
+      "interview": "Entretien",
+      "rejected": "Refusé",
+      "offer": "Offre reçue 🎉"
+    },
+    "stats": {
+      "total": "Total",
+      "pending": "En attente",
+      "interviews": "Entretiens",
+      "offers": "Offres"
+    },
+    "date": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "daysAgo": "Il y a {count} jours"
+    },
+    "empty": {
+      "noneYet": "Aucune candidature encore. Commence à postuler !",
+      "filtered": "Aucune candidature avec ce statut",
+      "searchCta": "Chercher des offres"
+    },
+    "actions": {
+      "viewOffer": "Voir l'offre",
+      "delete": "Supprimer"
+    },
+    "confirmDelete": {
+      "title": "Supprimer cette candidature ?",
+      "description": "Cette action est irréversible. La candidature sera supprimée de votre suivi.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    }
+  },
+  "referral": {
+    "errorLoad": "Impossible de charger vos données de parrainage.",
+    "retry": "Réessayer",
+    "title": "HuntZen Boost",
+    "tagline": "Invitez. Débloquez. Progressez.",
+    "subtitle": "Parrainez des amis et débloquez des récompenses exclusives.",
+    "link": {
+      "title": "Ton lien de parrainage",
+      "copy": "Copier",
+      "copied": "Copié !",
+      "whatsapp": "WhatsApp",
+      "whatsappMessage": "Rejoins HuntZen et trouve votre prochain job plus vite ! {link}",
+      "linkedin": "LinkedIn"
+    },
+    "stats": {
+      "clicks": "Clics",
+      "signups": "Inscrits",
+      "validated": "Validés"
+    },
+    "sections": {
+      "progress": "Ta progression",
+      "rewards": "Récompenses",
+      "friends": "Tes filleuls"
+    },
+    "progress": {
+      "remaining": "Encore {count, plural, one {# ami} other {# amis}} pour débloquer {label}",
+      "allUnlocked": "Tous les paliers débloqués !"
+    },
+    "tier": {
+      "label": "Palier {index} - {count, plural, one {# ami} other {# amis}}",
+      "reached": "Atteint",
+      "inProgress": "En cours",
+      "locked": "Verrouillé"
+    },
+    "friends": {
+      "emptyTitle": "Aucun ami parrainé pour l'instant",
+      "emptySubtitle": "Partage votre lien pour commencer",
+      "validated": "Ami validé",
+      "registered": "Ami inscrit",
+      "badgeValidated": "Validé",
+      "badgeRegistered": "Inscrit",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "daysAgo": "Il y a {count}j"
+    }
+  },
+  "expat": {
+    "title": "Guide Expatriation",
+    "subtitle": "Salaires, coût de la vie et démarches administratives par pays",
+    "destination": "Destination",
+    "costOfLiving": {
+      "title": "Niveau de vie",
+      "rent": "Loyer 1ch (centre-ville)",
+      "transport": "Transports",
+      "food": "Alimentation",
+      "index": "Indice coût de vie",
+      "baseCountry": "France = 100",
+      "perMonth": "/ mois"
+    },
+    "salaries": {
+      "title": "Salaires médians bruts annuels",
+      "domain": "Domaine",
+      "salary": "Salaire",
+      "disclaimer": "* Données indicatives. Les salaires varient selon l'expérience, le secteur et la ville."
+    },
+    "admin": {
+      "title": "Démarches administratives",
+      "officialSite": "Site officiel →",
+      "savedProgress": "Ta progression est sauvegardée automatiquement dans votre navigateur."
+    },
+    "coach": {
+      "title": "Des questions sur votre expatriation ?",
+      "subtitle": "Notre coach IA peut vous aider à préparer votre projet d'expatriation en {country}.",
+      "cta": "Demander au Coach"
+    },
+    "domains": {
+      "tech": "Tech & IT",
+      "marketing": "Marketing",
+      "finance": "Finance",
+      "health": "Santé",
+      "sales": "Commerce"
+    },
+    "salaryPerYear": "/an",
+    "salaryApprox": "{amount} {currency}/an ≈ {eurAmount} €",
+    "coachPrefill": "Je souhaite m'expatrier en {country}. Peux-tu m'aider à préparer mon projet ?"
+  },
+  "about": {
+    "hero_title": "HuntZen Jobs : Votre Allié Carrière en France",
+    "hero_subtitle": "Découvrez comment <strong>HuntZen Jobs</strong> révolutionne la recherche d'emploi en France avec la puissance de l'IA et une approche centrée sur le candidat.",
+    "who_title": "Qui est HuntZen ?",
+    "who_p1": "<strong>HuntZen Jobs</strong> est la plateforme de recherche d'emploi nouvelle génération qui transforme la façon dont les candidats trouvent leur prochain emploi en France. <strong>HuntZen</strong> combine technologie de pointe, intelligence artificielle et expertise RH pour offrir une expérience de recherche d'emploi inégalée.",
+    "who_p2": "Fondée en 2024, <strong>HuntZen Jobs</strong> est née d'une vision simple : rendre la recherche d'emploi plus efficace, plus humaine et plus accessible à tous. Avec <strong>HuntZen</strong>, nous croyons que chaque candidat mérite les meilleures opportunités et les outils les plus performants pour réussir sa carrière.",
+    "who_p3": "Aujourd'hui, <strong>HuntZen Jobs</strong> agrège des milliers d'offres d'emploi en France, couvrant tous les secteurs, tous les niveaux d'expérience et tous les types de contrats. La plateforme <strong>HuntZen</strong> analyse quotidiennement des milliers d'offres provenant des plus grands sites emploi pour vous offrir un catalogue complet du marché français.",
+    "why_title": "Pourquoi choisir HuntZen Jobs ?",
+    "why_subtitle": "<strong>HuntZen Jobs</strong> vous offre bien plus qu'une simple liste d'offres d'emploi. Découvrez nos 3 piliers qui font de <strong>HuntZen</strong> votre meilleur allié carrière.",
+    "feature1_title": "1. La plus grande base d'offres d'emploi",
+    "feature1_desc": "<strong>HuntZen Jobs</strong> agrège des milliers d'offres d'emploi en France depuis les plus grandes plateformes : Indeed, LinkedIn, Pôle Emploi, APEC et bien d'autres. Avec <strong>HuntZen</strong>, vous accédez à toutes les opportunités en un seul endroit.",
+    "feature2_title": "2. Analyse CV experte avec HuntZen",
+    "feature2_desc": "Notre technologie <strong>HuntZen</strong> analyse votre CV en profondeur et vous donne un score ATS précis. L'outil d'analyse CV <strong>HuntZen Jobs</strong> identifie les points faibles et vous fournit des recommandations concrètes pour améliorer vos chances de décrocher un entretien.",
+    "feature3_title": "3. Coach IA HuntZen 24/7",
+    "feature3_desc": "L'assistant carrière <strong>HuntZen</strong> vous accompagne à chaque étape : préparation d'entretien, négociation salariale, optimisation LinkedIn. Avec <strong>HuntZen Jobs</strong>, vous avez un coach professionnel disponible 24h/24.",
+    "story_title": "L'histoire de HuntZen Jobs",
+    "story_p1": "Fondée en 2024, <strong>HuntZen Jobs</strong> révolutionne le marché de la recherche d'emploi en France. L'équipe <strong>HuntZen</strong> a identifié un problème majeur : les candidats perdent des heures à consulter plusieurs sites emploi, à optimiser leur CV sans guidance, et à se préparer seuls aux entretiens.",
+    "story_p2": "La vision de <strong>HuntZen Jobs</strong> ? Centraliser toutes les offres d'emploi, fournir des outils d'analyse professionnels et offrir un accompagnement personnalisé grâce à l'intelligence artificielle. En quelques mois, <strong>HuntZen</strong> est devenu la référence pour des milliers de candidats en France.",
+    "story_p3": "Aujourd'hui, <strong>HuntZen Jobs</strong> compte plus de 50 000 utilisateurs actifs qui utilisent quotidiennement la plateforme pour trouver leur prochain emploi. La communauté <strong>HuntZen</strong> grandit chaque jour, et notre mission reste la même : rendre la recherche d'emploi plus efficace et plus humaine.",
+    "stats_title": "HuntZen Jobs en chiffres",
+    "stats_subtitle": "Les résultats parlent d'eux-mêmes",
+    "stat_jobs": "Offres d'emploi",
+    "stat_users": "Utilisateurs actifs",
+    "stat_satisfaction": "Taux de satisfaction",
+    "stat_support": "Support disponible",
+    "vs_title": "HuntZen Jobs vs autres plateformes",
+    "vs_subtitle": "Découvrez pourquoi <strong>HuntZen Jobs</strong> surpasse Indeed, LinkedIn et les autres",
+    "vs_item1_title": "Agrégation complète",
+    "vs_item1_desc": "HuntZen centralise TOUTES les offres (Indeed, LinkedIn, Pôle Emploi...)",
+    "vs_item2_title": "Analyse CV gratuite",
+    "vs_item2_desc": "Score ATS précis inclus - payant sur les autres plateformes",
+    "vs_item3_title": "Coach IA 24/7",
+    "vs_item3_desc": "Assistant carrière personnalisé - inexistant ailleurs",
+    "vs_item4_title": "Interface moderne",
+    "vs_item4_desc": "UX intuitive et rapide - bien supérieure aux autres",
+    "vs_item5_title": "Matching intelligent",
+    "vs_item5_desc": "Recommandations IA basées sur votre profil complet",
+    "vs_item6_title": "100% gratuit",
+    "vs_item6_desc": "Toutes les fonctionnalités essentielles sans payer",
+    "cta_title": "Rejoignez HuntZen Jobs aujourd'hui",
+    "cta_subtitle": "Transformez votre recherche d'emploi avec HuntZen. <strong>HuntZen Jobs</strong> est 100% gratuit et sans engagement.",
+    "cta_signup": "Créer mon compte gratuit",
+    "cta_jobs": "Découvrir les offres",
+    "cta_already": "Déjà membre ?",
+    "cta_login": "Se connecter"
+  },
+  "faq": {
+    "title": "Questions Fréquentes",
+    "subtitle": "Tout ce que vous devez savoir sur <strong>HuntZen Jobs</strong>, votre allié pour la recherche d'emploi en France",
+    "searchPlaceholder": "Rechercher une question sur HuntZen Jobs...",
+    "noResults": "Aucune question trouvée",
+    "noResultsHint": "Essayez un autre mot-clé ou contactez notre support",
+    "contactSupport": "Contactez le support",
+    "supportTitle": "Vous n'avez pas trouvé votre réponse ?",
+    "supportSubtitle": "Notre équipe HuntZen Jobs est là pour vous aider 24/7",
+    "contactEmail": "Contactez-nous par email",
+    "tryFree": "Essayer HuntZen Jobs gratuitement"
+  },
+  "blog": {
+    "title": "Blog HuntZen Jobs",
+    "subtitle": "Guides, conseils et stratégies pour réussir votre recherche d'emploi avec <strong>HuntZen Jobs</strong>",
+    "readMore": "Lire l'article",
+    "comingSoon": "📚 Plus d'articles arrivent bientôt !",
+    "subscribe": "Abonnez-vous pour ne rien manquer des conseils HuntZen Jobs",
+    "ctaTitle": "Prêt à transformer votre recherche d'emploi ?",
+    "ctaSubtitle": "Rejoignez HuntZen Jobs et accédez à des milliers d'offres d'emploi",
+    "ctaButton": "Commencer gratuitement"
+  },
+  "onboarding": {
+    "step": "Étape {current} sur {total}",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "start": "Commencer",
+    "skip": "Passer",
+    "identity": {
+      "title": "Comment vous appelez-vous ?",
+      "subtitle": "Nous aimons savoir à qui nous parlons.",
+      "firstName": "Prénom",
+      "firstNamePlaceholder": "Votre prénom",
+      "lastName": "Nom",
+      "lastNamePlaceholder": "Votre nom de famille"
+    },
+    "situation": {
+      "title": "Quelle est votre situation ?",
+      "subtitle": "Cela nous aide à personnaliser votre expérience.",
+      "active": "En recherche active",
+      "watching": "En veille / ouvert aux opportunités",
+      "student": "Étudiant / Alternant",
+      "employed": "En poste, je me renseigne"
+    },
+    "jobSearch": {
+      "title": "Que recherchez-vous ?",
+      "subtitle": "Nous trouverons les offres qui vous correspondent.",
+      "jobTitle": "Poste recherché",
+      "jobTitlePlaceholder": "Développeur React, Designer UX...",
+      "location": "Ville / Localisation",
+      "locationPlaceholder": "Paris, Lyon, Remote..."
+    },
+    "experience": {
+      "title": "Quel est votre niveau d'expérience ?",
+      "subtitle": "Pour affiner les résultats à votre profil.",
+      "junior": "Junior (0-2 ans)",
+      "confirmed": "Confirmé (3-5 ans)",
+      "senior": "Senior (6-10 ans)",
+      "expert": "Expert (10+ ans)"
+    },
+    "discovery": {
+      "title": "Comment avez-vous connu HuntZen ?",
+      "subtitle": "Cela nous aide à mieux vous servir.",
+      "wordOfMouth": "Bouche-à-oreille / Ami",
+      "social": "Réseaux sociaux",
+      "seo": "Google / SEO",
+      "ads": "Publicité",
+      "other": "Autre"
+    },
+    "promoCode": {
+      "title": "Vous avez un code ?",
+      "subtitle": "Code promo, parrainage... entrez-le ici"
+    },
+    "plans": {
+      "title": "Envie d'aller plus vite ?",
+      "subtitle": "Découvrez nos formules pour booster votre recherche. Aucune obligation.",
+      "seePlans": "Voir les formules disponibles",
+      "seePlansDesc": "Analyses CV illimitées, coaching 24/7, et bien plus",
+      "stat1": "plus de résultats",
+      "stat2": "coaching IA",
+      "stat3": "taux de réponse",
+      "skip": "Continuer gratuitement"
+    }
+  },
+  "theme": {
+    "toggleAriaLabel": "Changer le thème",
+    "appearance": "Apparence",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système",
+    "switchToLight": "Passer en mode clair",
+    "switchToDark": "Passer en mode sombre"
+  },
+  "testimonials": {
+    "title": "Témoignages HuntZen Jobs",
+    "subtitle": "Découvrez comment <strong>HuntZen Jobs</strong> a transformé la recherche d'emploi de +10 000 utilisateurs",
+    "ratingLabel": "sur 5",
+    "verifiedReviews": "{count} avis vérifiés",
+    "searchPlaceholder": "Rechercher un témoignage...",
+    "allJobs": "Tous les métiers",
+    "allRatings": "Toutes les notes",
+    "stars5": "5 étoiles",
+    "stars4": "4 étoiles",
+    "selectedRating": "{rating} étoiles",
+    "noResults": "Aucun témoignage trouvé",
+    "noResultsHint": "Essayez d'autres critères de recherche",
+    "resetFilters": "Réinitialiser les filtres",
+    "loadMore": "Voir plus de témoignages",
+    "displayCount": "{displayed} sur {total} témoignages affichés",
+    "ctaTitle": "Rejoignez +10 000 utilisateurs satisfaits",
+    "ctaSubtitle": "Transformez votre recherche d'emploi avec HuntZen Jobs dès maintenant",
+    "ctaSignup": "Créer mon compte gratuitement",
+    "ctaAbout": "En savoir plus sur HuntZen"
+  },
+  "popups": {
+    "close": "Fermer",
+    "couponLabel": "Code :",
+    "planLabel": "Plan",
+    "currencyPerMonth": "€/mois",
+    "searchLimit": {
+      "title": "Vous avez atteint votre limite de recherches aujourd’hui",
+      "body": "Passe à Starter pour des recherches illimitées et trouve votre prochain job plus vite.",
+      "primaryCta": "Débloquer les recherches",
+      "secondaryCta": "Parrainer un ami"
+    },
+    "cvScore": {
+      "title": "Ton CV peut faire beaucoup mieux",
+      "body": "Accède aux conseils détaillés de Sofia pour booster votre score ATS et décrocher plus d’entretiens.",
+      "primaryCta": "Activer l’analyse complète"
+    },
+    "sessionCut": {
+      "title": "Ta session coach est terminée",
+      "body": "Continue avec Nova, Maria ou Lucas sans limite. Ton prochain job est à portée de main.",
+      "primaryCta": "Continuer avec le Coach"
+    },
+    "interviewScore": {
+      "title": "Vous souhaitez aller plus loin avec Lucas ?",
+      "body": "Simulez autant d’entretiens que vous voulez et recevez des retours approfondis à chaque session.",
+      "primaryCta": "Activer la simulation complète"
+    },
+    "momentum": {
+      "title": "Vous êtes en plein élan — profite de -20 % aujourd’hui",
+      "body": "Vous recherchez activement. Voici une offre exclusive valable 24 h pour vous.",
+      "primaryCta": "Choisir mon plan avec -20 %"
+    },
+    "antiChurn": {
+      "title": "Reste et économise -30 % pendant 3 mois",
+      "body": "Avant de partir, voici une offre exclusive : -30 % sur votre abonnement pendant 3 mois.",
+      "primaryCta": "Garder mon avantage",
+      "secondaryCta": "Annuler quand même"
+    },
+    "inactive7d": {
+      "title": "7 jours Accélérateur offerts, nous vous avons réservé votre place",
+      "body": "Vous nous manquez ! Revenez et profitez de 7 jours gratuits pour reprendre votre recherche.",
+      "primaryCta": "Activer mes 7 jours gratuits",
+      "priceOverride": "0€ pendant 7 jours"
+    },
+    "pricingHover": {
+      "title": "67 % de nos abonnés choisissent Accélérateur",
+      "body": "Ils trouvent un job en moyenne 3x plus vite. Rejoins-les aujourd’hui.",
+      "primaryCta": "Choisir Accélérateur maintenant"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout lire",
+    "empty": "Aucune notification",
+    "timeJustNow": "À l'instant",
+    "timeHoursAgo": "Il y a {h}h",
+    "timeDaysAgo": "Il y a {d}j",
+    "centerAriaLabel": "Centre de notifications"
+  },
+  "careerScore": {
+    "title": "Career Score",
+    "activity": "Activité",
+    "ai": "IA",
+    "xp": "XP",
+    "profileAttractive": "Ton profil devient vraiment intéressant pour les recruteurs."
+  },
+  "seo": {
+    "links": {
+      "discoverFeatures": "Découvrez toutes les fonctionnalités de HuntZen Jobs",
+      "homeAnchor": "HuntZen Jobs",
+      "jobsAnchor": "offres d'emploi HuntZen",
+      "cvAnalysisAnchor": "analyse CV HuntZen Jobs",
+      "assistantAnchor": "coach carrière HuntZen",
+      "pricingAnchor": "tarifs HuntZen Jobs",
+      "aboutAnchor": "à propos de HuntZen",
+      "faqAnchor": "FAQ HuntZen Jobs",
+      "testimonialsAnchor": "témoignages HuntZen Jobs",
+      "salonsAnchor": "salons emploi HuntZen",
+      "footerDescription": "<strong>HuntZen Jobs</strong> est votre allié pour la recherche d'emploi en France. Que vous cherchiez des <jobsLink>offres d'emploi</jobsLink>, une <cvLink>analyse CV ATS</cvLink>, ou un <coachLink>coaching carrière personnalisé</coachLink>, <strong>HuntZen</strong> vous accompagne dans votre réussite professionnelle.",
+      "ctaDefaultTitle": "Transformez votre recherche d'emploi avec HuntZen Jobs",
+      "ctaDefaultDescription": "Rejoignez des milliers de candidats qui ont trouvé leur emploi idéal grâce à HuntZen Jobs",
+      "ctaStartFree": "Commencer gratuitement",
+      "ctaLearnMore": "En savoir plus",
+      "ctaReviews": "Avis HuntZen Jobs",
+      "ctaTransparentPricing": "Tarifs transparents",
+      "ctaFrequentQuestions": "Questions fréquentes"
+    }
+  },
+  "a11y": {
+    "close": "Fermer",
+    "clear": "Effacer",
+    "recalculate": "Recalculer",
+    "notifications": "Notifications"
+  },
+  "terms": {
+    "title": "Conditions Générales",
+    "subtitle": "Les règles d'utilisation de notre plateforme et de nos services.",
+    "lastUpdated": "Dernière mise à jour :",
+    "lastUpdatedDate": "Janvier 2026",
+    "quickLinks": {
+      "profiles": "Profils utilisateurs",
+      "services": "Description des services",
+      "pricing": "Prix et paiement",
+      "responsibilities": "Responsabilités"
+    },
+    "whoWeAre": {
+      "title": "Qui sommes-nous",
+      "intro": "Nous sommes <strong>HUNTZEN, Unipessoal Lda.</strong>, Sociedade Unipessoal por Quotas au capital de 15.000,00 euros, dont le siège social est situé à <strong>Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal</strong> et titulaire du numéro d'identification de personne morale et d'immatriculation <strong>516481320</strong> (ci-après « HUNTZEN », « nous », « notre ») et ce sont les Conditions Générales de Vente et d'Utilisations (CGVU) d'HUNTZEN.",
+      "thanks": "Nous vous remercions de prendre quelques minutes pour lire nos CGVU du Site <strong>https://huntzenjobs.com</strong> (ci-après « Site »), édité par la société HUNTZEN.",
+      "important": "Les présentes CGVU contiennent des informations importantes pour vous en tant qu'utilisateur de notre Site et acheteur de nos services, et s'appliquent à tous les services utilisés ou achetés sur notre Site.",
+      "contactIntro": "Si vous avez des questions sur ces CGVU, vous pouvez nous contacter par courrier à l'adresse Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal, par email à l'adresse <strong>contact@huntzenjobs.com</strong> ou par téléphone :",
+      "phonePT": "Téléphone PT : +351 21 111 9967",
+      "phoneFR": "Téléphone FR : +33 (0)1 84 19 26 61"
+    },
+    "applicability": {
+      "title": "Applicabilité des CGVU",
+      "content1": "L'utilisation de ce Site, de tout sous-domaine connexe et de tous les services connexes, produits, offres et services, sont expressément soumis à votre acceptation des présentes CGVU. En utilisant notre Site ou en profitant de l'un de nos services, l'Utilisateur (« Client », « Recruteur » ou « Candidat ») accepte et respecte, sans réserve ni exception, automatiquement les présentes CGVU, y compris les modifications futures annoncées par publication sur notre Site ou qui sont notifiées d'une autre manière.",
+      "content2": "HUNTZEN se réserve le droit de modifier à tout moment et sans préavis les CGVU sans qu'une notification préalable ne soit donnée. Les CGVU modifiées seront applicables dès qu'elles seront rendues accessibles, sans qu'aucune autre formalité ne soit requise.",
+      "warning": "Si l'Utilisateur n'approuve pas ou n'est pas d'accord avec ces CGVU, il ne peut pas utiliser ou accéder au Site, ou faire usage des services d'HUNTZEN.",
+      "warningLabel": "Important :"
+    },
+    "intellectualProperty": {
+      "title": "Propriété intellectuelle",
+      "content1": "Tous les contenus publiés sur le Site (y compris les logos, les marques, les droits d'auteur, etc.) sont la propriété intellectuelle exclusive de HUNTZEN et, sans l'autorisation expresse de HUNTZEN, ils ne peuvent être distribués, modifiés ou utilisés de quelque manière que ce soit.",
+      "content2": "Toute reproduction, distribution, commercialisation ou transformation des contenus qui n'aura pas été expressément autorisée par leurs propriétaires, constitue une violation des droits de propriété intellectuelle et industrielle protégés par la loi et peut donner lieu aux actions administratives, civiles ou pénales compétentes en cas de violation de ces droits par le client.",
+      "content3": "L'accès au Site et aux services et leur utilisation, n'opère aucun transfert de propriété à quelque titre que ce soit."
+    },
+    "siteContent": {
+      "title": "Contenu du Site",
+      "content1": "Sur le Site, l'Utilisateur a la possibilité de souscrire les Services d'HUNTZEN. L'Utilisateur peut accéder sur le Site à une description des caractéristiques essentielles des services en fonction de son profil (Client, Recruteur, Candidat) et le concept qui sous-tend son élaboration.",
+      "content2": "Ces services sont accessibles en langue portugaise, française et anglaise."
+    },
+    "userProfiles": {
+      "title": "Profils des Utilisateurs",
+      "intro": "L'utilisation du Site et les services sont différenciés en fonction du profil de l'Utilisateur :",
+      "clientTitle": "Client",
+      "clientDesc": "Toute personne morale de droit privé ou de droit public, inscrite sur le Site, déposant une annonce sur le Site pour recevoir des candidatures par les comptes Recruteurs ou Candidats.",
+      "recruiterTitle": "Recruteur",
+      "recruiterDesc": "Toute personne physique ou morale, inscrite sur le Site, professionnel du recrutement, souhaitant présenter des Candidats aux Entreprises ayant diffusé une Annonce sur le Site. Ne peuvent être Recruteurs (et donc prétendre à la Prime) que les personnes qui ont soit une expérience du recrutement ou une formation en recrutement.",
+      "candidateTitle": "Candidat",
+      "candidateDesc": "Toute personne physique ayant été recommandée par un Recruteur et ayant accepté d'être potentiellement contactée par le Client."
+    },
+    "servicesDescription": {
+      "title": "Description des Services",
+      "clientTitle": "Pour le Client",
+      "clientDesc": "HUNTZEN permet, à travers de son Site, au Client de s'inscrire, publier des offres, les modifier et communiquer avec les Recruteurs via une plateforme dédiée, ainsi que leur permet d'organiser leurs recrutements.",
+      "recruiterTitle": "Pour le Recruteur",
+      "recruiterDesc": "HUNTZEN permet, à travers de son Site, au Recruteur de s'inscrire, traiter les Curriculum Vitae (CV) reçus et envoyer les CV correspondants aux offres déposées par les Clients. En outre, les Recruteurs peuvent recevoir des primes lorsqu'ils ont participé au recrutement d'un Client.",
+      "candidateTitle": "Pour le Candidat",
+      "candidateDesc": "HUNTZEN permet, à travers de son Site, au Candidat de s'inscrire, déposer un CV et s'organiser via la plateforme dédiée, et recevoir des primes si le CV envoyé est recruté dans les 6 mois."
+    },
+    "serviceAccess": {
+      "title": "Accès au Service",
+      "content1": "HUNTZEN s'efforce de permettre l'accès au site 24 heures sur 24, 7 jours sur 7, sauf en cas de force majeure ou d'un événement hors de son contrôle, et sous réserve des éventuelles pannes et interventions de maintenance nécessaires au bon fonctionnement du Site et des services.",
+      "content2": "Par conséquent, HUNTZEN ne peut garantir une disponibilité du site et/ou des services, une fiabilité des transmissions et des performances en termes de temps de réponse ou de qualité.",
+      "content3": "La responsabilité d'HUNTZEN ne saurait être engagée en cas d'impossibilité d'accès à ce site et/ou d'utilisation des services."
+    },
+    "registration": {
+      "title": "Inscription",
+      "content1": "Toute personne morale ou entité publique, dûment représentée, ainsi que toute personne physique, majeure et ayant la capacité juridique, sont autorisées à s'inscrire sur le Site. L'inscription est indispensable pour rendre possible l'accès au Service.",
+      "content2": "Lorsque l'inscription est conclue, un identifiant (i.e. adresse email ou nom et prénom) et un mot de passe doivent être choisis par le Client, le Recruteur et/ou le Candidat. L'identifiant et le mot de passe sont totalement confidentiels et personnels et ils ne doivent jamais être communiqués à des tiers.",
+      "warning": "Le Client, le Recruteur et/ou le Candidat garantissent que les informations communiquées au moment de leur inscription sont précises et correspondent à la réalité.",
+      "content3": "Pour des mesures de sécurité et de protection des données, HUNTZEN supprimera les comptes des Clients, Recruteurs et/ou Candidats qui sont inopérants, ou sans crédit ou débit, pendant une période d'une année."
+    },
+    "pricingSection": {
+      "title": "Prix et modalités de paiement",
+      "content1": "Tous les prix indiqués par HUNTZEN sur le Site et dans d'autres documents écrits émis par HUNTZEN sont indiqués hors TVA, laquelle sera rajoutée au taux légal au jour de l'émission de la facture correspondante. Toutes les factures sont payables en euros.",
+      "content2": "HUNTZEN se réserve le droit de modifier les prix à tout moment sans préavis.",
+      "financialConditions": "Conditions financières par profil :",
+      "clientTitle": "Pour le Client",
+      "clientBullet1": "Les factures doivent être payées selon les conditions prévues dans les contrats signés entre HUNTZEN et le Client",
+      "clientBullet2": "Le paiement doit être effectué par virement bancaire",
+      "recruiterTitle": "Pour le Recruteur",
+      "recruiterBullet1": "Le Recruteur percevra <strong>70%</strong> de ce que le Client aura payé à HUNTZEN pour le recrutement réalisé",
+      "recruiterBullet2": "Le recrutement d'un Candidat dont le CV a été récupéré via le Site HUNTZEN ouvre droit à une prime réduite à <strong>20%</strong>",
+      "recruiterBullet3": "Le paiement sera effectué par virement bancaire dès que la période d'essai sera validée",
+      "candidateTitle": "Pour le Candidat",
+      "candidateBullet1": "Lorsqu'un CV est recruté par un Client, HUNTZEN verse au Candidat <strong>50%</strong> de ce que le Client a payé",
+      "candidateBullet2": "Le paiement sera effectué par virement bancaire dès que la période d'essai sera validée"
+    },
+    "obligations": {
+      "title": "Obligations et responsabilités",
+      "huntzenTitle": "Obligations d'HUNTZEN",
+      "huntzenContent1": "HUNTZEN s'engage à mettre en œuvre tous les moyens nécessaires afin d'assurer au mieux la fourniture du Service.",
+      "huntzenContent2": "Afin de préserver la qualité du Site, HUNTZEN se réserve le droit de refuser un Client, une annonce, un Recruteur ou un Candidat à sa seule discrétion.",
+      "huntzenContent3": "En cas de non-respect des CGVU par un Utilisateur, HUNTZEN peut résilier unilatéralement et sans délai l'inscription de tout Client, Recruteur ou Candidat, par simple notification électronique.",
+      "clientTitle": "Obligations du Client",
+      "clientBullet1": "Obligation de prévenir HUNTZEN des entretiens avec les Candidats avec un feedback",
+      "clientBullet2": "Obligation de prévenir HUNTZEN de tout recrutement effectué",
+      "recruiterTitle": "Obligations du Recruteur",
+      "recruiterBullet1": "Obligation de prévenir HUNTZEN lorsqu'un Candidat a été recruté",
+      "recruiterBullet2": "Obligation d'envoyer des CV avec un compte rendu correspondant à la recherche du Client",
+      "candidateTitle": "Obligations du Candidat",
+      "candidateBullet1": "Obligation de prévenir HUNTZEN lorsqu'il y a eu un recrutement ou un entretien",
+      "candidateBullet2": "Obligation d'envoyer un CV qui correspond à la fiche de poste"
+    },
+    "liability": {
+      "title": "Exclusion de la responsabilité",
+      "content1": "Dans toute la mesure permise par la loi, toute responsabilité de HUNTZEN ou de ses sociétés affiliées est exclue en cas de perte ou de tout autre dommage subi par l'Utilisateur sur la base ou en relation avec la conclusion d'un contrat de prestation et utilisation des services offerts sur le Site HUNTZEN.",
+      "content2": "Le Client, Recruteur ou Candidat accepte que l'utilisation des services offerts par HUNTZEN se fait à son propre risque.",
+      "warning": "Les retards, la mauvaise exécution ou la non-exécution totale ou partielle des services en cas de force majeure ne peuvent donner lieu à indemnité."
+    },
+    "applicableLaw": {
+      "title": "Loi applicable et compétence",
+      "content1": "La relation entre HUNTZEN et l'Utilisateur en vertu des présentes CGVU est soumis au droit matériel portugais, à moins que les règles de la loi du pays de résidence de l'Utilisateur soient impératives.",
+      "content2": "En cas de difficultés d'interprétation ou d'exécution des CGVU, l'Utilisateur et HUNTZEN s'efforceront de régler leur différend à l'amiable dans un délai de trente (30) jours calendaires.",
+      "content3": "Tout contentieux judiciaire ou arbitral découlant de la relation contractuelle entre HUNTZEN et l'Utilisateur dans le cadre des présentes CGVU sera soumis aux tribunaux portugais."
+    },
+    "contact": {
+      "title": "Contact",
+      "content1": "Le Site est exploité par HUNTZEN, Unipessoal Lda., dont le siège social est situé à Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal.",
+      "content2": "Si vous avez des questions concernant le Site et son contenu, veuillez contacter notre service client :",
+      "phone": "Téléphone : +351 21 111 9967 ou +33 (1) 84 19 26 61",
+      "email": "E-mail : contact@huntzenjobs.com"
+    },
+    "footerLinks": {
+      "home": "Accueil",
+      "pricing": "Tarifs",
+      "privacy": "Politique de confidentialité",
+      "tagline": "Une plateforme créée par un recruteur et un entrepreneur.",
+      "importantLinks": "Liens importants",
+      "contact": "Contact",
+      "copyright": "Copyright © {year} Tous droits réservés HuntZen."
+    }
+  },
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "subtitle": "Votre vie privée est notre priorité. Découvrez comment nous protégeons et utilisons vos données.",
+    "lastUpdated": "Dernière mise à jour :",
+    "lastUpdatedDate": "Janvier 2026",
+    "quickLinks": {
+      "dataCollection": "Collecte des données",
+      "rights": "Vos droits",
+      "security": "Sécurité"
+    },
+    "intro": "La présente Politique de Confidentialité réglemente le traitement des données à caractère personnel des utilisateurs (ci-après « Utilisateur » ou « Utilisateurs »), collectées dans le cadre de l'utilisation du site Internet <strong>https://huntzenjobs.com</strong> (ci-après « Site »), par <strong>HUNTZEN, Unipessoal Lda.</strong>, Sociedade Unipessoal por Quotas au capital de 15.000,00 euros, dont le siège social est situé à Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal et titulaire du numéro d'identification de personne morale et d'immatriculation 516481320 (ci-après « HUNTZEN »), en tant qu'entité responsable du traitement.",
+    "dataCollection": {
+      "title": "Collecte et traitement de données à caractère personnel",
+      "content1": "L'accès et la navigation sur le Site n'impliquent pas automatiquement la mise à disposition de données à caractère personnel par l'Utilisateur.",
+      "content2": "Cependant, l'utilisation de certaines fonctionnalités du Site exige la mise à disposition de données à caractère personnel par l'Utilisateur. En effet, les données à caractère personnel des Utilisateurs sont collectées et traitées afin de répondre aux services proposés.",
+      "content3": "Ces données collectées permettent de :",
+      "bullet1": "Créer et gérer le compte-utilisateur",
+      "bullet2": "Informer chacune des parties prenantes sur un recrutement donné",
+      "bullet3": "Déclencher la facturation pour les clients et l'appel à facture pour les consultants",
+      "bullet4": "Obtenir un support et une aide dans leurs démarches sur le Site",
+      "bullet5": "Répondre aux questions que l'Utilisateur viendrait à se poser"
+    },
+    "userRights": {
+      "title": "Droits de l'utilisateur",
+      "content1": "Conformément à la législation applicable, l'Utilisateur pourra demander, à tout moment, l'accès aux données à caractère personnel qui le concernent ainsi que leur rectification, leur effacement, la limitation de leur traitement, la portabilité de ses données ou s'opposer à leur traitement.",
+      "content2": "L'Utilisateur peut également obtenir la confirmation du fait que les données à caractère personnel qui le concernent font l'objet d'un traitement, lui étant fournie, sur demande, une copie des données en cours de traitement.",
+      "content3": "La loi garantit également à l'Utilisateur le droit de retirer son consentement vis-à-vis du traitement des données pour les finalités indiquées sans toutefois annuler le traitement effectué jusqu'à cette date sur la base du consentement donné précédemment.",
+      "contactTitle": "Pour exercer vos droits, contactez-nous :",
+      "contactEmail": "E-mail : contact@huntzenjobs.com",
+      "contactAddress": "Adresse : Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal"
+    },
+    "dataRetention": {
+      "title": "Conservation des données à caractère personnel",
+      "content1": "Les données à caractère personnel collectées sont traitées conformément à la législation applicable.",
+      "content2": "Les données à caractère personnel seront conservées selon leur finalité et conformément à la durée de conservation prévue par la loi applicable. Ainsi, lorsqu'il n'existe aucune exigence légale spécifique, les données seront stockées et conservées pour une période appropriée et pour les finalités pour lesquelles elles ont été collectées, sauf si l'Utilisateur décide d'exercer, dans les limites de la loi, le droit de retirer son consentement."
+    },
+    "dataSharing": {
+      "title": "Dans quel cas les données sont-elles transmises à d'autres entités ?",
+      "content1": "HUNTZEN pourra transmettre les données à caractère personnel :",
+      "bullet1": "Lors du recours à des tiers pour la prestation de certains services, dès lors que la prestation de ces services puisse exiger l'accès, par ces entités, aux données à caractère personnel. Ainsi, toute entité sous-traitante d'HUNTZEN traitera vos données à caractère personnel, au nom et pour le compte d'HUNTZEN, selon la stricte obligation de suivre ses instructions et conformément à l'accord de sous-traitance conclu avec lesdites entités sous-traitantes.",
+      "bullet2": "À des tiers, si elle entend que ces transmissions de données sont nécessaires ou appropriées (i) au regard de la loi, (ii) en vertu d'obligations légales/ordres judiciaires, (iii) de délibérations ou de décisions des autorités de contrôle ou (iv) pour répondre aux demandes d'autorités publiques ou gouvernementales."
+    },
+    "security": {
+      "title": "Sécurité",
+      "content1": "HUNTZEN fait tout ce qui en son pouvoir pour assurer la protection des données à caractère personnel des Utilisateurs face à des accès non-autorisés. À cette fin, elle utilise des systèmes de sécurité, des règles et d'autres procédures pour garantir la protection des données à caractère personnel, ainsi que pour empêcher l'accès non autorisé aux données ou leur utilisation abusive, leur divulgation, leur perte ou leur destruction.",
+      "content2": "Cependant, les Utilisateurs sont responsables de garantir et d'assurer que les dispositifs et les équipements utilisés pour accéder au Site sont dûment protégés contre les logiciels malveillants, les virus informatiques et les vers."
+    },
+    "cookiesSection": {
+      "title": "Cookies",
+      "whatIsTitle": "Qu'est-ce qu'un cookie ?",
+      "whatIsContent": "Les cookies sont de petits fichiers ou dispositifs placés sur l'ordinateur des Utilisateurs qui permettent de conserver, de récupérer, de mettre à jour et de traiter les données relatives aux transactions effectuées sur le Site. Ces cookies sont mis sur l'HD des Utilisateurs et non sur le Site.",
+      "firstVisit": "Lors de la première visite sur le Site, il est proposé aux Utilisateurs d'accepter ou de refuser l'utilisation de certaines catégories de cookies.",
+      "ownCookies": "Sur le Site, sont utilisés les propres cookies d'HUNTZEN et ceux de tiers qui permettent d'effectuer de manière anonyme des analyses d'utilisation et de mesure afin de nous assurer que le Site fonctionne correctement et d'améliorer nos services.",
+      "controlTitle": "Contrôle de l'utilisation des cookies",
+      "controlContent": "Si l'Utilisateur souhaite supprimer les cookies qui sont déjà installés sur son terminal, il peut le faire depuis son navigateur. Pour savoir comment procéder, il suffit de consulter l'aide de son navigateur, où se trouvent les étapes à suivre pour les supprimer."
+    },
+    "internationalTransfers": {
+      "title": "Transferts internationaux de données",
+      "content1": "HUNTZEN pourra transférer des données à caractère personnel vers des pays tiers (hors de l'Union européenne ou de l'Espace économique européen), dans le cadre des finalités prévues par la présente politique, pour lesquelles il n'existe aucune décision d'adéquation prise par la Commission Européenne.",
+      "content2": "Dans ce cas, HUNTZEN s'engage à prendre les mesures de sécurité appropriées afin d'assurer la confidentialité et la protection des données à caractère personnel, conformément à la législation applicable en matière de protection des données à caractère personnel.",
+      "content3": "L'Utilisateur peut demander des informations sur ces transferts en contactant contact@huntzenjobs.com."
+    },
+    "complaints": {
+      "title": "Réclamations",
+      "content1": "Sans préjudice de toute autre voie de recours administratif ou judiciaire, l'Utilisateur a le droit de présenter une réclamation à l'autorité de contrôle compétente conformément à la loi, lorsqu'il considère que le traitement de ses données par HUNTZEN viole le régime légal en vigueur."
+    },
+    "questions": {
+      "title": "Questions et suggestions",
+      "content1": "L'Utilisateur peut contacter HUNTZEN vis-à-vis de toutes les questions concernant le traitement de ses données à caractère personnel et l'exercice des droits qui lui sont octroyés par la législation applicable :",
+      "phone": "Téléphone : +351 21 111 9967 ou +33 (1) 84 19 26 61",
+      "email": "E-mail : contact@huntzenjobs.com",
+      "address": "Adresse : Rua dos Lusíadas 5 5b, 1300-365 Lisboa, Portugal"
+    },
+    "policyChanges": {
+      "title": "Modification de la politique de confidentialité",
+      "content1": "HUNTZEN se réserve le droit de modifier les présentes conditions de traitement des données à caractère personnel à tout moment. Ces modifications seront dès lors qu'elles seront rendues disponibles sur le Site, sans qu'aucune formalité ne soit requise."
+    },
+    "footerLinks": {
+      "home": "Accueil",
+      "pricing": "Tarifs",
+      "terms": "Conditions générales",
+      "tagline": "Une plateforme créée par un recruteur et un entrepreneur.",
+      "importantLinks": "Liens importants",
+      "contact": "Contact",
+      "copyright": "Copyright © {year} Tous droits réservés HuntZen."
+    }
+  },
+  "legal": {
+    "title": "Mentions légales",
+    "subtitle": "Informations légales relatives à l'éditeur et à l'hébergement du site huntzenjobs.com.",
+    "lastUpdated": "Dernière mise à jour : mars 2026",
+    "quickLinks": {
+      "editor": "Éditeur",
+      "hosting": "Hébergement",
+      "intellectualProperty": "Propriété intellectuelle",
+      "liability": "Limitation de responsabilité",
+      "personalData": "Données personnelles",
+      "cookies": "Cookies",
+      "contact": "Contact"
+    },
+    "editor": {
+      "title": "1. Éditeur du site",
+      "intro": "Le site <strong>huntzenjobs.com</strong> est édité par :",
+      "companyName": "Raison sociale :",
+      "companyNameValue": "HUNTZEN, Unipessoal Lda.",
+      "legalForm": "Forme juridique :",
+      "legalFormValue": "Sociedade Unipessoal por Quotas",
+      "capital": "Capital social :",
+      "capitalValue": "15 000 EUR",
+      "address": "Siège social :",
+      "addressValue": "Rua dos Lusiadas 5 5b, 1300-365 Lisboa, Portugal",
+      "nipc": "NIPC :",
+      "nipcValue": "516481320",
+      "email": "Email :",
+      "emailValue": "contact@huntzenjobs.com",
+      "director": "Directeur de publication :",
+      "directorValue": "Wissem Jegham"
+    },
+    "hosting": {
+      "title": "2. Hébergement",
+      "intro": "Le site est hébergé par les prestataires suivants :",
+      "frontendLabel": "Frontend (interface utilisateur)",
+      "frontendProvider": "Vercel Inc.",
+      "frontendAddress": "440 N Barranca Ave #4133, Covina, CA 91723, États-Unis",
+      "frontendUrl": "vercel.com",
+      "backendLabel": "Backend (API)",
+      "backendProvider": "Railway Corp.",
+      "backendAddress": "548 Market St PMB 68957, San Francisco, CA 94104, États-Unis",
+      "backendUrl": "railway.app",
+      "databaseLabel": "Base de données",
+      "databaseProvider": "Supabase Inc.",
+      "databaseAddress": "970 Toa Payoh North #07-04, Singapore 318992",
+      "databaseUrl": "supabase.com"
+    },
+    "intellectualProperty": {
+      "title": "3. Propriété intellectuelle",
+      "content1": "L'ensemble du contenu du site huntzenjobs.com (textes, images, logos, icônes, code source, interface utilisateur) est la propriété exclusive de HUNTZEN, Unipessoal Lda. ou de ses partenaires et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.",
+      "content2": "Toute reproduction, représentation, modification, publication ou adaptation de tout ou partie des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans l'autorisation écrite préalable de HUNTZEN, Unipessoal Lda.."
+    },
+    "liability": {
+      "title": "4. Limitation de responsabilité",
+      "content1": "HUNTZEN, Unipessoal Lda. s'efforce d'assurer l'exactitude et la mise à jour des informations diffusées sur le site. HUNTZEN, Unipessoal Lda. ne saurait être tenue responsable des erreurs ou omissions dans les informations publiées, ni des dommages directs ou indirects pouvant résulter de l'utilisation du site.",
+      "content2": "Les offres d'emploi affichées sur HuntZen Jobs sont agrégées depuis des sources tierces. HUNTZEN, Unipessoal Lda. ne peut garantir l'exactitude, l'exhaustivité ou la disponibilité de ces offres et décline toute responsabilité concernant leur contenu."
+    },
+    "personalData": {
+      "title": "5. Données personnelles",
+      "content1": "La collecte et le traitement des données personnelles sont régis par notre",
+      "privacyLink": "Politique de confidentialité",
+      "content2": ", conformément au Règlement Général sur la Protection des Données (RGPD - Règlement UE 2016/679).",
+      "content3": "Pour exercer vos droits (accès, rectification, effacement, portabilité), contactez-nous à",
+      "privacyEmail": "privacy@huntzenjobs.com"
+    },
+    "cookiesSection": {
+      "title": "6. Cookies",
+      "content1": "Le site huntzenjobs.com utilise des cookies techniques nécessaires à son fonctionnement (authentification, préférences utilisateur) et des cookies analytiques pour améliorer l'expérience utilisateur.",
+      "content2": "Conformément à la réglementation RGPD et aux recommandations de la CNIL, votre consentement est recueilli avant le dépôt de tout cookie non essentiel. Vous pouvez modifier vos préférences à tout moment depuis le bandeau de consentement."
+    },
+    "contactSection": {
+      "title": "7. Contact",
+      "intro": "Pour toute question relative aux présentes mentions légales :",
+      "emailLabel": "Email :",
+      "emailValue": "contact@huntzenjobs.com",
+      "formLabel": "Formulaire de contact :",
+      "formValue": "huntzenjobs.com/contact"
+    },
+    "footerLinks": {
+      "privacy": "Politique de confidentialité",
+      "terms": "Conditions d'utilisation",
+      "contact": "Contact"
+    }
+  },
+  "cookies": {
+    "message": "We use cookies to improve your experience on HuntZen Jobs. Essential cookies are required for the site to function.",
+    "learnMore": "Learn more",
+    "decline": "Decline",
+    "accept": "Accept",
+    "close": "Close",
+    "ariaLabel": "Cookie management"
+  },
+  "errorBoundary": {
+    "title": "Oops, something went wrong",
+    "description": "We encountered an unexpected issue. Our team has been notified.",
+    "retry": "Try again",
+    "backHome": "Back to home"
+  },
+  "dashboardFooter": {
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact"
+  },
+  "faqData": {
+    "categories": {
+      "general": {
+        "title": "HuntZen Jobs - Général",
+        "q1": "Qu'est-ce que HuntZen Jobs ?",
+        "a1": "HuntZen Jobs est une plateforme innovante d'aide à la recherche d'emploi en France. HuntZen combine intelligence artificielle, analyse CV ATS, et coaching personnalisé pour vous aider à trouver l'emploi idéal. Avec des milliers d'offres d'emploi actualisées quotidiennement, HuntZen Jobs transforme votre recherche d'emploi en véritable succès.",
+        "q2": "Comment fonctionne HuntZen Jobs ?",
+        "a2": "HuntZen Jobs utilise l'IA pour matcher votre profil avec les meilleures offres d'emploi. Uploadez votre CV sur HuntZen, notre algorithme analyse votre profil et vos compétences, puis vous propose des offres d'emploi parfaitement adaptées. HuntZen Jobs optimise aussi votre CV pour les systèmes ATS des recruteurs.",
+        "q3": "HuntZen Jobs est-il gratuit ?",
+        "a3": "Oui ! HuntZen Jobs propose un plan gratuit avec {freeCvLimit} analyse(s) CV par jour et accès aux offres d'emploi. Pour débloquer toutes les fonctionnalités de HuntZen (analyses CV illimitées, coaching personnalisé, alertes emploi personnalisées), passez au plan Pro HuntZen Jobs à seulement {proPrice}.",
+        "q4": "Pourquoi choisir HuntZen Jobs plutôt qu'Indeed ou LinkedIn ?",
+        "a4": "Contrairement à Indeed ou LinkedIn, HuntZen Jobs vous offre un coach personnalisé, une analyse CV ATS professionnelle, et un matching intelligent. HuntZen ne se contente pas de lister des offres : nous vous accompagnons de A à Z. La majorité de nos utilisateurs HuntZen Jobs reçoivent plus de réponses qu'avec Indeed ou LinkedIn."
+      },
+      "cvAts": {
+        "title": "Analyse CV & ATS",
+        "q1": "Comment fonctionne l'analyse CV de HuntZen Jobs ?",
+        "a1": "L'analyse CV HuntZen Jobs scanne votre CV avec la même technologie ATS que les recruteurs. HuntZen détecte les mots-clés manquants, les erreurs de formatage, et vous donne un score ATS. Ensuite, HuntZen vous fournit des recommandations précises pour améliorer votre CV et passer les filtres ATS.",
+        "q2": "Qu'est-ce qu'un score ATS sur HuntZen Jobs ?",
+        "a2": "Le score ATS HuntZen Jobs mesure la compatibilité de votre CV avec les systèmes de tri automatique des recruteurs. Un score HuntZen supérieur à 80% garantit que votre CV sera lu par un humain. HuntZen analyse format, mots-clés, structure et lisibilité pour calculer ce score.",
+        "q3": "Combien d'analyses CV puis-je faire avec HuntZen Jobs ?",
+        "a3": "Avec le plan gratuit HuntZen Jobs, vous avez droit à {freeCvLimit} analyse(s) CV par jour. Avec le plan Pro HuntZen, les analyses CV sont illimitées. HuntZen Pro vous permet aussi de comparer plusieurs versions de votre CV et de suivre l'évolution de votre score ATS.",
+        "q4": "HuntZen Jobs garde-t-il mon CV confidentiel ?",
+        "a4": "Absolument ! HuntZen Jobs respecte la confidentialité de vos données. Votre CV est stocké de manière sécurisée et chiffrée. HuntZen ne partage JAMAIS votre CV sans votre autorisation explicite. Vous contrôlez totalement la visibilité de votre profil sur HuntZen Jobs."
+      },
+      "jobSearch": {
+        "title": "Recherche d'emploi",
+        "q1": "Combien d'offres d'emploi HuntZen Jobs propose-t-il ?",
+        "a1": "HuntZen Jobs agrège des milliers d'offres d'emploi en France, mises à jour quotidiennement. HuntZen compile les offres de toutes les grandes plateformes (Indeed, LinkedIn, Welcome to the Jungle, etc.) et les filtre pour vous proposer uniquement les plus pertinentes selon votre profil.",
+        "q2": "Comment HuntZen Jobs trouve les offres d'emploi qui me correspondent ?",
+        "a2": "HuntZen Jobs utilise un algorithme de matching qui analyse votre CV, vos compétences, votre expérience et vos préférences. Ensuite, HuntZen compare ces données avec les offres d'emploi disponibles pour vous proposer les meilleures opportunités chaque jour. Le matching HuntZen s'améliore au fur et à mesure.",
+        "q3": "Puis-je postuler directement via HuntZen Jobs ?",
+        "a3": "HuntZen Jobs vous redirige vers le site de l'offre d'emploi pour postuler directement. Pour chaque offre sur HuntZen, vous accédez au lien de candidature original. Avant de postuler, HuntZen vous aide à optimiser votre CV et à préparer votre candidature pour maximiser vos chances.",
+        "q4": "HuntZen Jobs propose-t-il des alertes emploi ?",
+        "a4": "Oui ! Avec HuntZen Jobs Pro, vous recevez des alertes emploi personnalisées par email. HuntZen vous prévient dès qu'une nouvelle offre correspond à votre profil. Configurez vos critères (secteur, localisation, salaire) et laissez HuntZen analyser les nouvelles offres pour vous."
+      },
+      "assistant": {
+        "title": "Assistant Carrière",
+        "q1": "Qu'est-ce que l'Assistant Carrière HuntZen Jobs ?",
+        "a1": "L'Assistant Carrière HuntZen Jobs est un coach personnalisé accessible depuis votre tableau de bord. HuntZen vous aide à préparer vos entretiens, rédiger des lettres de motivation, optimiser votre CV, et construire votre stratégie de recherche d'emploi. C'est comme avoir un consultant carrière dédié sur HuntZen.",
+        "q2": "Comment HuntZen Jobs m'aide à préparer mes entretiens ?",
+        "a2": "HuntZen Jobs analyse l'offre d'emploi et votre profil pour générer des questions d'entretien personnalisées. HuntZen vous fournit aussi des réponses types, des conseils comportementaux, et des simulations d'entretien. Avec HuntZen, vous arrivez préparé(e) et confiant(e) en entretien.",
+        "q3": "HuntZen Jobs peut-il rédiger ma lettre de motivation ?",
+        "a3": "Oui ! HuntZen Jobs génère des lettres de motivation personnalisées en quelques secondes. Donnez à HuntZen l'offre d'emploi et votre CV : votre coach rédige une lettre professionnelle, convaincante et adaptée. Vous pouvez ensuite personnaliser le texte généré par HuntZen."
+      },
+      "pricing": {
+        "title": "Tarifs & Abonnement",
+        "q1": "Combien coûte HuntZen Jobs ?",
+        "a1": "HuntZen Jobs propose 2 plans : Gratuit (0€/mois) avec {freeCvLimit} analyse(s) CV/jour et accès aux offres, et Pro ({proPrice}) avec analyses CV illimitées, coach personnel, alertes emploi, et accompagnement personnalisé. Vous pouvez passer au plan Pro à tout moment depuis votre compte.",
+        "q2": "Comment annuler mon abonnement HuntZen Jobs ?",
+        "a2": "Vous pouvez annuler votre abonnement HuntZen Jobs à tout moment depuis votre compte. Allez dans Paramètres > Abonnement > Annuler. Aucun frais caché : avec HuntZen, vous payez uniquement jusqu'à la fin de votre période. Votre accès HuntZen Pro reste actif jusqu'à expiration.",
+        "q3": "Comment annuler si HuntZen Jobs ne me convient pas ?",
+        "a3": "Vous pouvez annuler votre abonnement a tout moment depuis votre profil. L'annulation prend effet a la fin de la periode en cours. Aucun engagement longue duree. Pour toute question, contactez notre support a support@huntzenjobs.com."
+      },
+      "support": {
+        "title": "Support & Aide",
+        "q1": "Comment contacter le support HuntZen Jobs ?",
+        "a1": "Le support HuntZen Jobs est disponible par email à support@huntzenjobs.com. Nos équipes HuntZen répondent en moins de 48h en semaine. Pour les utilisateurs Pro, HuntZen offre un support prioritaire.",
+        "q2": "HuntZen Jobs propose-t-il des tutoriels vidéo ?",
+        "a2": "HuntZen Jobs met à disposition des guides d'utilisation directement dans l'interface. Pour toute question, notre équipe support est disponible par email à support@huntzenjobs.com.",
+        "q3": "Puis-je utiliser HuntZen Jobs sur mobile ?",
+        "a3": "Oui ! HuntZen Jobs est 100% responsive et fonctionne parfaitement sur mobile et tablette via votre navigateur. Accédez à toutes les fonctionnalités depuis votre smartphone : recherche d'emploi, analyse de CV, et coaching personnalisé."
+      }
+    }
+  },
+  "pageGate": {
+    "title": "Page non disponible",
+    "description": "Cette fonctionnalite n'est pas incluse dans votre plan actuel. Passez a un plan superieur pour y acceder.",
+    "upgrade": "Voir les plans",
+    "loginTitle": "Connectez-vous pour continuer",
+    "loginDescription": "Connectez-vous ou creez un compte gratuit pour acceder a cette fonctionnalite.",
+    "loginCta": "Se connecter"
+  },
+  "coaches": {
+    "greeting": "Bonjour, je suis",
+    "comingSoon": "Bientôt disponible",
+    "soon": "Bientôt",
+    "close": "Fermer",
+    "closeComing": "J'ai hâte ! Fermer",
+    "notifiedOnLaunch": "Vous serez notifié dès le lancement",
+    "interviewSimTitle": "Interview Simulator",
+    "interviewSimDesc": "Préparez vos entretiens comme jamais auparavant — avec une IA qui joue le recruteur en temps réel.",
+    "whatsComingTitle": "Ce qui arrive",
+    "interviewFeature1Label": "Entretiens en temps réel",
+    "interviewFeature1Desc": "Simulation live face à un recruteur IA",
+    "interviewFeature2Label": "Feedback instantané",
+    "interviewFeature2Desc": "Analyse de vos réponses, posture, mots-clés",
+    "interviewFeature3Label": "Tous types d'entretiens",
+    "interviewFeature3Desc": "Tech, RH, comportemental, cas pratiques",
+    "interviewFeature4Label": "Coaching post-entretien",
+    "interviewFeature4Desc": "Plan d'amélioration personnalisé",
+    "expertDisclaimer": "💬 Vous discutez avec des experts humains certifiés",
+    "nova": {
+      "name": "Nova – Coach Carrière",
+      "shortName": "Coach Carrière",
+      "description": "Je t'aide à clarifier ce que tu veux vraiment pour ta carrière et à construire un plan pour y arriver.",
+      "specialty1": "Orientation professionnelle",
+      "specialty2": "Reconversion",
+      "specialty3": "Plan de carrière",
+      "specialty4": "Formation continue",
+      "q1": "On va définir ton objectif de carrière.",
+      "q2": "Tu veux évoluer, changer de job ou gagner plus ?",
+      "q3": "On construit ton plan ensemble."
+    },
+    "maria": {
+      "name": "Maria – Coach Recherche d'Emploi",
+      "shortName": "Recherche d'Emploi",
+      "description": "Je t'aide à trouver les bonnes offres et à postuler efficacement.",
+      "specialty1": "Stratégie de recherche",
+      "specialty2": "Ciblage d'entreprises",
+      "specialty3": "Candidature spontanée",
+      "specialty4": "Réseau professionnel",
+      "q1": "Je viens de trouver des offres qui peuvent t'intéresser.",
+      "q2": "On va optimiser ta recherche pour trouver plus vite.",
+      "q3": "Comment approcher un recruteur ?"
+    },
+    "sofia": {
+      "name": "Sofia – Expert CV",
+      "shortName": "Expert CV",
+      "description": "Je t'aide à créer un CV qui attire l'attention des recruteurs.",
+      "specialty1": "Analyse ATS",
+      "specialty2": "Structure et mise en page",
+      "specialty3": "Mots-clés sectoriels",
+      "specialty4": "Impact des expériences",
+      "specialty5": "Adaptation à une offre d'emploi",
+      "q1": "Je peux améliorer ton CV en quelques minutes.",
+      "q2": "Ton CV peut être beaucoup plus impactant.",
+      "q3": "Quels mots-clés utiliser ?"
+    },
+    "cvAdapter": {
+      "name": "Assistant Adaptation CV",
+      "shortName": "Adaptation CV",
+      "description": "Personnalisation par un spécialiste pour chaque offre",
+      "specialty1": "Matching CV-offre",
+      "specialty2": "Reformulation ciblée",
+      "specialty3": "Alignement compétences",
+      "specialty4": "Optimisation mots-clés",
+      "q1": "Comment adapter mon CV à cette offre ?",
+      "q2": "Quelles compétences mettre en avant ?",
+      "q3": "Comment reformuler mon expérience ?"
+    },
+    "lucas": {
+      "name": "Lucas – Coach Entretien",
+      "shortName": "Coach Entretien",
+      "description": "Je te prépare aux entretiens pour que tu sois prêt le jour J.",
+      "specialty1": "Entretien technique",
+      "specialty2": "Entretien RH",
+      "specialty3": "Questions pièges",
+      "specialty4": "Communication verbale",
+      "q1": "On va simuler un entretien.",
+      "q2": "Je vais te poser les questions que les recruteurs posent vraiment.",
+      "q3": "Comment gérer le stress ?"
+    },
+    "david": {
+      "name": "David – Coach Personal Branding",
+      "shortName": "Personal Branding",
+      "description": "Je t'aide à construire un profil qui attire les recruteurs.",
+      "specialty1": "Posts LinkedIn viraux",
+      "specialty2": "Storytelling professionnel",
+      "specialty3": "Personal branding X/Twitter",
+      "specialty4": "Stratégie de contenu",
+      "q1": "Ton profil peut devenir beaucoup plus attractif.",
+      "q2": "On va améliorer ta présence professionnelle.",
+      "q3": "Comment développer ma marque personnelle ?",
+      "q4": "Fais moi un post LinkedIn viral pour créer de l'engagement."
+    }
+  }
+}

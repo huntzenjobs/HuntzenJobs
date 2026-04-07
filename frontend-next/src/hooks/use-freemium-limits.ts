@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { getClientId } from "@/lib/utils/client-id";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Plan types
 export type PlanType = "free" | "starter" | "pro" | "premium";
@@ -10,12 +10,14 @@ export type PlanType = "free" | "starter" | "pro" | "premium";
 export type FeatureType =
   | "job_search"
   | "job_view"
-  | "cv_analysis"
+  | "ats_score"
+  | "matching_score"
   | "assistant_messages"
   | "recruiter_search"
   | "cv_adapt"
   | "cover_letter"
-  | "coach";
+  | "coach"
+  | "saved_jobs";
 
 // ── Plan limits — Dynamic from Supabase via /api/public/plans ──────────────
 // PLAN_LIMITS is a Proxy that reads from the API cache (localStorage).
@@ -25,8 +27,13 @@ export type FeatureType =
 interface PlanLimitValues {
   job_searches_per_day: number;
   jobs_visible: number;
-  cv_analyses_per_day: number;
+  ats_scores_per_day: number;
+  matching_scores_per_day: number;
   assistant_messages_per_day: number;
+  saved_jobs_per_day: number;
+  recruiter_searches_per_day: number;
+  cv_adapt_per_day: number;
+  cover_letter_per_day: number;
   has_advanced_filters: boolean;
   has_favorites: boolean;
   has_email_alerts: boolean;
@@ -39,33 +46,69 @@ interface PlanLimitValues {
   has_branding: boolean;
   has_cover_letter: boolean;
   has_cv_details: boolean;
+  has_matching_score: boolean;
+  page_jobs: boolean;
+  page_cv_analysis: boolean;
+  page_assistant: boolean;
+  page_salons: boolean;
+  page_saved_jobs: boolean;
+  page_candidatures: boolean;
+  page_expat: boolean;
+  page_referral: boolean;
+  page_recruiter_contact: boolean;
+  page_recruiter_finder: boolean;
+  page_documents: boolean;
+  page_profile: boolean;
 }
 
 // Hardcoded defaults — last resort if API cache is empty
 const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
   free: {
-    job_searches_per_day: 3,
-    jobs_visible: 10,
-    cv_analyses_per_day: 1,
-    assistant_messages_per_day: 10,
-    has_advanced_filters: false,
-    has_favorites: false,
+    job_searches_per_day: 5,
+    jobs_visible: 50,
+    ats_scores_per_day: 5,
+    matching_scores_per_day: 10,
+    assistant_messages_per_day: 5,
+    saved_jobs_per_day: 10,
+    recruiter_searches_per_day: 10,
+    cv_adapt_per_day: 5,
+    cover_letter_per_day: 10,
+    has_advanced_filters: true,
+    has_favorites: true,
     has_email_alerts: false,
-    has_visual_score: false,
-    has_pdf_export: false,
+    has_visual_score: true,
+    has_pdf_export: true,
     has_cv_history: false,
     has_interview_sim: false,
     has_personalized_advice: false,
     has_coach_history: false,
     has_branding: false,
-    has_cover_letter: false,
-    has_cv_details: false,
+    has_cover_letter: true,
+    has_cv_details: true,
+    has_matching_score: true,
+    page_jobs: true,
+    page_cv_analysis: true,
+    page_assistant: true,
+    page_salons: true,
+    page_saved_jobs: true,
+    page_candidatures: true,
+    page_expat: true,
+    page_referral: true,
+    page_recruiter_contact: true,
+    page_recruiter_finder: false,
+    page_documents: true,
+    page_profile: true,
   },
   starter: {
-    job_searches_per_day: Infinity,
-    jobs_visible: Infinity,
-    cv_analyses_per_day: 5,
-    assistant_messages_per_day: 100,
+    job_searches_per_day: 10,
+    jobs_visible: 200,
+    ats_scores_per_day: 10,
+    matching_scores_per_day: 30,
+    assistant_messages_per_day: 20,
+    saved_jobs_per_day: 30,
+    recruiter_searches_per_day: 20,
+    cv_adapt_per_day: 10,
+    cover_letter_per_day: 10,
     has_advanced_filters: true,
     has_favorites: true,
     has_email_alerts: false,
@@ -76,14 +119,32 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_personalized_advice: false,
     has_coach_history: true,
     has_branding: false,
-    has_cover_letter: false,
+    has_cover_letter: true,
     has_cv_details: true,
+    has_matching_score: true,
+    page_jobs: true,
+    page_cv_analysis: true,
+    page_assistant: true,
+    page_salons: true,
+    page_saved_jobs: true,
+    page_candidatures: true,
+    page_expat: true,
+    page_referral: true,
+    page_recruiter_contact: true,
+    page_recruiter_finder: true,
+    page_documents: true,
+    page_profile: true,
   },
   pro: {
     job_searches_per_day: Infinity,
     jobs_visible: Infinity,
-    cv_analyses_per_day: 20,
+    ats_scores_per_day: Infinity,
+    matching_scores_per_day: Infinity,
     assistant_messages_per_day: Infinity,
+    saved_jobs_per_day: Infinity,
+    recruiter_searches_per_day: Infinity,
+    cv_adapt_per_day: Infinity,
+    cover_letter_per_day: Infinity,
     has_advanced_filters: true,
     has_favorites: true,
     has_email_alerts: false,
@@ -96,12 +157,30 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_branding: true,
     has_cover_letter: true,
     has_cv_details: true,
+    has_matching_score: true,
+    page_jobs: true,
+    page_cv_analysis: true,
+    page_assistant: true,
+    page_salons: true,
+    page_saved_jobs: true,
+    page_candidatures: true,
+    page_expat: true,
+    page_referral: true,
+    page_recruiter_contact: true,
+    page_recruiter_finder: true,
+    page_documents: true,
+    page_profile: true,
   },
   premium: {
     job_searches_per_day: Infinity,
     jobs_visible: Infinity,
-    cv_analyses_per_day: Infinity,
+    ats_scores_per_day: Infinity,
+    matching_scores_per_day: Infinity,
     assistant_messages_per_day: Infinity,
+    saved_jobs_per_day: Infinity,
+    recruiter_searches_per_day: Infinity,
+    cv_adapt_per_day: Infinity,
+    cover_letter_per_day: Infinity,
     has_advanced_filters: true,
     has_favorites: true,
     has_email_alerts: true,
@@ -114,6 +193,19 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     has_branding: true,
     has_cover_letter: true,
     has_cv_details: true,
+    has_matching_score: true,
+    page_jobs: true,
+    page_cv_analysis: true,
+    page_assistant: true,
+    page_salons: true,
+    page_saved_jobs: true,
+    page_candidatures: true,
+    page_expat: true,
+    page_referral: true,
+    page_recruiter_contact: true,
+    page_recruiter_finder: true,
+    page_documents: true,
+    page_profile: true,
   },
 };
 
@@ -141,31 +233,71 @@ function buildLimitsFromApi(
   };
 
   return {
-    job_searches_per_day: num("job_searches", defaults.job_searches_per_day),
+    job_searches_per_day: num(
+      "job_searches_per_day",
+      defaults.job_searches_per_day,
+    ),
     jobs_visible: num("jobs_visible", defaults.jobs_visible),
-    cv_analyses_per_day: num("cv_analyses", defaults.cv_analyses_per_day),
+    ats_scores_per_day: num("ats_scores_per_day", defaults.ats_scores_per_day),
+    matching_scores_per_day: num(
+      "matching_scores_per_day",
+      defaults.matching_scores_per_day,
+    ),
     assistant_messages_per_day: num(
-      "assistant_messages",
+      "assistant_messages_per_day",
       defaults.assistant_messages_per_day,
     ),
+    saved_jobs_per_day: num(
+      "saved_jobs_per_day",
+      defaults.saved_jobs_per_day || 10,
+    ),
+    recruiter_searches_per_day: num(
+      "recruiter_searches_per_day",
+      defaults.recruiter_searches_per_day,
+    ),
+    cv_adapt_per_day: num("cv_adapt_per_day", defaults.cv_adapt_per_day),
+    cover_letter_per_day: num(
+      "cover_letter_per_day",
+      defaults.cover_letter_per_day,
+    ),
+    // Feature flags from DB use "has_*" keys (set via admin UI)
     has_advanced_filters: flag(
-      "advanced_filters",
+      "has_advanced_filters",
       defaults.has_advanced_filters,
     ),
-    has_favorites: flag("favorites", defaults.has_favorites),
-    has_email_alerts: flag("email_alerts", defaults.has_email_alerts),
-    has_visual_score: flag("visual_score", defaults.has_visual_score),
-    has_pdf_export: flag("pdf_export", defaults.has_pdf_export),
-    has_cv_history: flag("cv_history", defaults.has_cv_history),
-    has_interview_sim: flag("interview_sim", defaults.has_interview_sim),
+    has_favorites: flag("has_favorites", defaults.has_favorites),
+    has_email_alerts: flag("has_email_alerts", defaults.has_email_alerts),
+    has_visual_score: flag("has_visual_score", defaults.has_visual_score),
+    has_pdf_export: flag("has_pdf_export", defaults.has_pdf_export),
+    has_cv_history: flag("has_cv_history", defaults.has_cv_history),
+    has_interview_sim: flag("has_interview_sim", defaults.has_interview_sim),
     has_personalized_advice: flag(
-      "personalized_advice",
+      "has_personalized_advice",
       defaults.has_personalized_advice,
     ),
-    has_coach_history: flag("coach_history", defaults.has_coach_history),
-    has_branding: flag("branding", defaults.has_branding),
-    has_cover_letter: flag("cover_letter", defaults.has_cover_letter),
-    has_cv_details: flag("cv_details", defaults.has_cv_details),
+    has_coach_history: flag("has_coach_history", defaults.has_coach_history),
+    has_branding: flag("has_branding", defaults.has_branding),
+    has_cover_letter: flag("has_cover_letter", defaults.has_cover_letter),
+    has_cv_details: flag("has_cv_details", defaults.has_cv_details),
+    has_matching_score: flag("has_matching_score", defaults.has_matching_score),
+    page_jobs: flag("page_jobs", defaults.page_jobs),
+    page_cv_analysis: flag("page_cv_analysis", defaults.page_cv_analysis),
+    page_assistant: flag("page_assistant", defaults.page_assistant),
+    page_salons: flag("page_salons", defaults.page_salons),
+    page_saved_jobs: flag("page_saved_jobs", defaults.page_saved_jobs),
+    page_candidatures: flag("page_candidatures", defaults.page_candidatures),
+    page_expat: flag("page_expat", defaults.page_expat),
+    page_referral: flag("page_referral", defaults.page_referral),
+    page_recruiter_contact: flag(
+      "page_recruiter_contact",
+      defaults.page_recruiter_contact,
+    ),
+    page_recruiter_finder: flag(
+      "page_recruiter_finder",
+      defaults.page_recruiter_finder,
+    ),
+    page_documents: flag("page_documents", defaults.page_documents),
+    page_profile: flag("page_profile", defaults.page_profile),
   };
 }
 
@@ -219,7 +351,7 @@ function loadApiPlansCache(): Record<PlanType, PlanLimitValues> | null {
 /**
  * PLAN_LIMITS — Proxy that reads from API cache, falls back to hardcoded defaults.
  *
- * Usage unchanged: PLAN_LIMITS["free"].cv_analyses_per_day
+ * Usage unchanged: PLAN_LIMITS["free"].ats_scores_per_day
  * Type unchanged: typeof PLAN_LIMITS is Record<PlanType, PlanLimitValues>
  *
  * When usePlansConfig() fetches /api/public/plans and writes to localStorage,
@@ -244,9 +376,15 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimitValues> = new Proxy(
 interface UsageLimits {
   searchesToday: number;
   jobsViewedToday: number;
-  cvAnalysesToday: number;
+  atsScoresUsedToday: number;
+  matchingScoresUsedToday: number;
   assistantMessagesUsedToday: number;
+  savedJobsCount: number;
+  cvAdaptsUsedToday: number;
+  coverLettersUsedToday: number;
+  recruiterSearchesUsedToday: number;
   lastResetDate: string;
+  lastIncrementTimestamps?: Record<string, number>; // Used to protect against sync race conditions
 }
 
 interface FreemiumState {
@@ -273,9 +411,15 @@ function getDefaultState(): FreemiumState {
     usage: {
       searchesToday: 0,
       jobsViewedToday: 0,
-      cvAnalysesToday: 0,
+      atsScoresUsedToday: 0,
+      matchingScoresUsedToday: 0,
       assistantMessagesUsedToday: 0,
+      savedJobsCount: 0,
+      cvAdaptsUsedToday: 0,
+      coverLettersUsedToday: 0,
+      recruiterSearchesUsedToday: 0,
       lastResetDate: getTodayDate(),
+      lastIncrementTimestamps: {},
     },
     planExpiresAt: null,
   };
@@ -294,6 +438,12 @@ function loadState(userId?: string): FreemiumState {
         state.usage = {
           ...getDefaultState().usage,
           lastResetDate: getTodayDate(),
+        };
+      } else {
+        // Ensure all usage keys exist in state.usage (fix for NaN on day-of-update)
+        state.usage = {
+          ...getDefaultState().usage,
+          ...state.usage,
         };
       }
       return state;
@@ -379,19 +529,29 @@ export function useFreemiumLimits(userId?: string) {
             currentState.usage.searchesToday <
             currentLimits.job_searches_per_day
           );
-        case "job_view":
+        case "ats_score":
           return (
-            currentState.usage.jobsViewedToday < currentLimits.jobs_visible
+            currentState.usage.atsScoresUsedToday <
+            currentLimits.ats_scores_per_day
           );
-        case "cv_analysis":
+        case "matching_score":
           return (
-            currentState.usage.cvAnalysesToday <
-            currentLimits.cv_analyses_per_day
+            currentState.usage.matchingScoresUsedToday <
+            currentLimits.matching_scores_per_day
           );
-        case "assistant_messages":
+        case "cv_adapt":
           return (
-            currentState.usage.assistantMessagesUsedToday <
-            currentLimits.assistant_messages_per_day
+            currentState.usage.cvAdaptsUsedToday <
+            currentLimits.cv_adapt_per_day
+          );
+        case "saved_jobs":
+          return (
+            currentState.usage.savedJobsCount < currentLimits.saved_jobs_per_day
+          );
+        case "cover_letter":
+          return (
+            currentState.usage.coverLettersUsedToday <
+            currentLimits.cover_letter_per_day
           );
         default:
           return false;
@@ -418,17 +578,35 @@ export function useFreemiumLimits(userId?: string) {
             0,
             currentLimits.jobs_visible - currentState.usage.jobsViewedToday,
           );
-        case "cv_analysis":
+        case "ats_score":
           return Math.max(
             0,
-            currentLimits.cv_analyses_per_day -
-              currentState.usage.cvAnalysesToday,
+            currentLimits.ats_scores_per_day -
+              currentState.usage.atsScoresUsedToday,
           );
-        case "assistant_messages":
+        case "matching_score":
           return Math.max(
             0,
-            currentLimits.assistant_messages_per_day -
-              currentState.usage.assistantMessagesUsedToday,
+            currentLimits.matching_scores_per_day -
+              currentState.usage.matchingScoresUsedToday,
+          );
+        case "cv_adapt":
+          return Math.max(
+            0,
+            currentLimits.cv_adapt_per_day -
+              currentState.usage.cvAdaptsUsedToday,
+          );
+        case "saved_jobs":
+          return Math.max(
+            0,
+            currentLimits.saved_jobs_per_day -
+              currentState.usage.savedJobsCount,
+          );
+        case "cover_letter":
+          return Math.max(
+            0,
+            currentLimits.cover_letter_per_day -
+              currentState.usage.coverLettersUsedToday,
           );
         default:
           return 0;
@@ -437,13 +615,88 @@ export function useFreemiumLimits(userId?: string) {
     [], // No dependencies - stable reference
   );
 
+  // Sync usage for a feature from external source (e.g. API)
+  const syncUsage = useCallback((feature: FeatureType, value: number): void => {
+    setState((prev) => {
+      // Only sync if API value is different
+      let localUsed = 0;
+      switch (feature) {
+        case "job_search":
+          localUsed = prev.usage.searchesToday;
+          break;
+        case "ats_score":
+          localUsed = prev.usage.atsScoresUsedToday;
+          break;
+        case "matching_score":
+          localUsed = prev.usage.matchingScoresUsedToday;
+          break;
+        case "assistant_messages":
+          localUsed = prev.usage.assistantMessagesUsedToday;
+          break;
+        case "saved_jobs":
+          localUsed = prev.usage.savedJobsCount;
+          break;
+        case "cv_adapt":
+          localUsed = prev.usage.cvAdaptsUsedToday;
+          break;
+        case "cover_letter":
+          localUsed = prev.usage.coverLettersUsedToday;
+          break;
+      }
+
+      if (localUsed === value) return prev;
+
+      const newState = {
+        ...prev,
+        usage: {
+          ...prev.usage,
+        },
+      };
+
+      switch (feature) {
+        case "job_search":
+          newState.usage.searchesToday = value;
+          break;
+        case "ats_score":
+          newState.usage.atsScoresUsedToday = value;
+          break;
+        case "matching_score":
+          newState.usage.matchingScoresUsedToday = value;
+          break;
+        case "assistant_messages":
+          newState.usage.assistantMessagesUsedToday = value;
+          break;
+        case "saved_jobs":
+          newState.usage.savedJobsCount = value;
+          break;
+        case "cv_adapt":
+          newState.usage.cvAdaptsUsedToday = value;
+          break;
+        case "cover_letter":
+          newState.usage.coverLettersUsedToday = value;
+          break;
+      }
+
+      stateRef.current = newState;
+      saveState(newState, userIdRef.current);
+      return newState;
+    });
+  }, []);
+
   // Increment usage for a feature
   const incrementUsage = useCallback(
     (feature: FeatureType, amount: number = 1): void => {
+      const timestamp = Date.now();
       setState((prev) => {
         const newState = {
           ...prev,
-          usage: { ...prev.usage },
+          usage: {
+            ...prev.usage,
+            lastIncrementTimestamps: {
+              ...(prev.usage.lastIncrementTimestamps || {}),
+              [feature]: timestamp,
+            },
+          },
         };
         switch (feature) {
           case "job_search":
@@ -452,13 +705,26 @@ export function useFreemiumLimits(userId?: string) {
           case "job_view":
             newState.usage.jobsViewedToday += amount;
             break;
-          case "cv_analysis":
-            newState.usage.cvAnalysesToday += amount;
+          case "ats_score":
+            newState.usage.atsScoresUsedToday += amount;
+            break;
+          case "matching_score":
+            newState.usage.matchingScoresUsedToday += amount;
+            break;
+          case "cv_adapt":
+            newState.usage.cvAdaptsUsedToday += amount;
+            break;
+          case "cover_letter":
+            newState.usage.coverLettersUsedToday += amount;
             break;
           case "assistant_messages":
             newState.usage.assistantMessagesUsedToday += amount;
             break;
+          case "saved_jobs":
+            newState.usage.savedJobsCount += amount;
+            break;
         }
+        stateRef.current = newState;
         saveState(newState, userIdRef.current);
         return newState;
       });
@@ -476,15 +742,12 @@ export function useFreemiumLimits(userId?: string) {
   );
 
   // Get required plan for a feature
-  const getRequiredPlan = useCallback(
-    (feature: keyof (typeof PLAN_LIMITS)["free"]): PlanType => {
-      if (PLAN_LIMITS.free[feature]) return "free";
-      if (PLAN_LIMITS.starter[feature]) return "starter";
-      if (PLAN_LIMITS.pro[feature]) return "pro";
-      return "premium";
-    },
-    [],
-  );
+  const getRequiredPlan = useCallback((feature: string): PlanType => {
+    if ((PLAN_LIMITS.free as any)[feature]) return "free";
+    if ((PLAN_LIMITS.starter as any)[feature]) return "starter";
+    if ((PLAN_LIMITS.pro as any)[feature]) return "pro";
+    return "premium";
+  }, []);
 
   // Upgrade plan (for testing or when user subscribes)
   const setPlan = useCallback((plan: PlanType, expiresAt?: string): void => {
@@ -494,7 +757,7 @@ export function useFreemiumLimits(userId?: string) {
         plan,
         planExpiresAt: expiresAt || null,
       };
-      saveState(newState);
+      saveState(newState, userIdRef.current); // Assuming userIdRef.current is used consistently for saving state
       return newState;
     });
   }, []);
@@ -505,11 +768,58 @@ export function useFreemiumLimits(userId?: string) {
     [
       state.usage.searchesToday,
       state.usage.jobsViewedToday,
-      state.usage.cvAnalysesToday,
+      state.usage.atsScoresUsedToday,
+      state.usage.matchingScoresUsedToday,
       state.usage.assistantMessagesUsedToday,
+      state.usage.savedJobsCount,
+      state.usage.cvAdaptsUsedToday,
+      state.usage.coverLettersUsedToday,
+      state.usage.recruiterSearchesUsedToday,
       state.usage.lastResetDate,
+      state.usage.lastIncrementTimestamps,
     ],
   );
+
+  // Reset usage for a feature (e.g. when API shows a reset)
+  const resetUsage = useCallback((feature: FeatureType): void => {
+    setState((prev) => {
+      const newState = {
+        ...prev,
+        usage: { ...prev.usage },
+      };
+      switch (feature) {
+        case "job_search":
+          newState.usage.searchesToday = 0;
+          break;
+        case "job_view":
+          newState.usage.jobsViewedToday = 0;
+          break;
+        case "ats_score":
+          newState.usage.atsScoresUsedToday = 0;
+          break;
+        case "matching_score":
+          newState.usage.matchingScoresUsedToday = 0;
+          break;
+        case "assistant_messages":
+          newState.usage.assistantMessagesUsedToday = 0;
+          break;
+        case "saved_jobs":
+          newState.usage.savedJobsCount = 0;
+          break;
+        case "cv_adapt":
+          newState.usage.cvAdaptsUsedToday = 0;
+          break;
+        case "cover_letter":
+          newState.usage.coverLettersUsedToday = 0;
+          break;
+        case "recruiter_search":
+          newState.usage.recruiterSearchesUsedToday = 0;
+          break;
+      }
+      saveState(newState, userIdRef.current);
+      return newState;
+    });
+  }, []);
 
   return {
     // State
@@ -523,6 +833,8 @@ export function useFreemiumLimits(userId?: string) {
     canUse,
     getRemaining,
     incrementUsage,
+    syncUsage,
+    resetUsage,
     hasFeature,
     getRequiredPlan,
     setPlan,

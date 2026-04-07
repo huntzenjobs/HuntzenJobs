@@ -1,14 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { useTranslations } from "next-intl";
-import { useJobTranslation } from "@/hooks/use-job-translation";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -16,8 +9,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useJobTranslation } from "@/hooks/use-job-translation";
+import { createClient } from "@/lib/supabase/client";
+import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Select,
@@ -26,61 +26,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import {
-  Search,
-  MapPin,
-  Building,
-  ExternalLink,
-  Loader2,
-  Lock,
-  Heart,
-  Sparkles,
-  Filter,
   AlertCircle,
+  ArrowUpDown,
+  Building,
   CheckCircle,
   CheckCircle2,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
   Clock,
+  ExternalLink,
+  Filter,
+  Heart,
+  Loader2,
+  Lock,
+  MapPin,
+  RefreshCw,
+  Search,
   SlidersHorizontal,
-  ArrowUpDown,
+  Sparkles,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-import {
-  huntzenApi,
-  isQuotaExceededError,
-  type Job,
-} from "@/lib/api/huntzen-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSubscription } from "@/contexts/subscription-context";
-import { useOptionalAuth } from "@/contexts/auth-context";
-import { toast } from "sonner";
+import { PageGate } from "@/components/auth/page-gate";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { useConversionPopup } from "@/components/freemium/conversion-popups";
 import { UsageCounter } from "@/components/freemium/usage-counter";
+import {
+  AdvancedFiltersModal,
+  type AdvancedFilters,
+} from "@/components/jobs/advanced-filters-modal";
 import {
   GradientJobCard,
   JobsLimitReached,
 } from "@/components/jobs/gradient-job-card";
 import { JobDetailsModal } from "@/components/jobs/job-details-modal";
-import { SearchLoadingModal } from "@/components/jobs/search-loading-modal";
-import {
-  formatJobSource,
-  getSourceColor,
-} from "@/lib/utils/job-source-formatter";
+import { JobsPlaceholder } from "@/components/jobs/jobs-placeholder";
 import {
   SearchFormInline,
   type SearchParams,
 } from "@/components/jobs/search-form-inline";
-import { featureFlags } from "@/lib/feature-flags";
-import { JobsPlaceholder } from "@/components/jobs/jobs-placeholder";
-import { ErrorBoundary } from "@/components/error-boundary";
-import {
-  AdvancedFiltersModal,
-  type AdvancedFilters,
-} from "@/components/jobs/advanced-filters-modal";
-import { useConversionPopup } from "@/components/freemium/conversion-popups";
+import { SearchLoadingModal } from "@/components/jobs/search-loading-modal";
+import { RecruiterEmailFinder } from "@/components/recruiter/recruiter-email-finder";
 import {
   Sheet,
   SheetContent,
@@ -88,10 +76,23 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { RecruiterEmailFinder } from "@/components/recruiter/recruiter-email-finder";
-import { UserSearch } from "lucide-react";
-import { PageGate } from "@/components/auth/page-gate";
+import { useOptionalAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
+import {
+  huntzenApi,
+  isQuotaExceededError,
+  type ContractType,
+  type Job,
+} from "@/lib/api/huntzen-client";
+import { featureFlags } from "@/lib/feature-flags";
 import { track } from "@/lib/track";
+import {
+  formatJobSource,
+  getSourceColor,
+} from "@/lib/utils/job-source-formatter";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { UserSearch } from "lucide-react";
+import { toast } from "sonner";
 
 // ─── Fuzzy location helpers ───────────────────────────────────────────────────
 
@@ -323,7 +324,7 @@ export default function JobsPage() {
   const loadingCities = citiesQuery.isLoading;
 
   // Fetch contract types
-  const { data: contractTypes = [] } = useQuery({
+  const { data: allContractTypes = [] } = useQuery({
     queryKey: ["contractTypes"],
     queryFn: () => huntzenApi.getContractTypes(),
     staleTime: 1000 * 60 * 60, // 1 hour
@@ -596,31 +597,116 @@ export default function JobsPage() {
   const hasIncrementedQuotaRef = useRef(false);
   const isRestoringFromCacheRef = useRef(false);
   const lastFetchTimeRef = useRef(0);
+  
+  // Stable computed values for useEffect dependencies
+  const effectiveContractTypes = useMemo(
+    () => jobSearchParams?.contractTypes || [],
+    [jobSearchParams?.contractTypes],
+  );
 
-  // Reset to page 1 when search changes
+  // Re-declare missing variables used later in the file
+  const effectiveContractType = jobSearchParams?.contractType || contractType;
+  const effectiveWorkDays = jobSearchParams?.workDays;
+  const effectiveWorkSchedule = jobSearchParams?.workSchedule;
+  /**
+   * Helper: Generate a deterministic hash for search parameters to avoid duplication
+   */
+  const generateSearchHash = useCallback((params: SearchParams | null, filters: AdvancedFilters) => {
+    if (!params) return "";
+    
+    // Create a clean, alphabetically sorted object for deterministic hashing
+    const cleanObject = {
+      companySize: filters.companySize?.toLowerCase() || "",
+      contracts: [...(params.contractTypes || [])].map(c => typeof c === 'string' ? c.toLowerCase() : (c as any).id || (c as any).value || String(c)).sort(),
+      country: params.country?.toLowerCase() || "",
+      days: quickFilters.maxDays || 0,
+      experience: filters.experienceLevel?.toLowerCase() || "",
+      industries: [...(filters.industries || [])].map(i => i.toLowerCase()).sort(),
+      keywords: [...(filters.keywords || [])].map(k => k.toLowerCase()).sort(),
+      location: params.location?.toLowerCase() || "",
+      q: params.query?.trim().toLowerCase() || "",
+      remote: params.includeRemote ?? true, // Consistent default
+      salaryMax: filters.salaryMax || 0,
+      salaryMin: filters.salaryMin || 0
+    };
+    
+    return JSON.stringify(cleanObject);
+  }, [quickFilters.maxDays]);
+
+  // Combined search state hash for stable comparisons
+  const currentSearchHash = useMemo(
+    () => generateSearchHash(jobSearchParams, advancedFilters),
+    [jobSearchParams, advancedFilters, generateSearchHash]
+  );
+
+  const lastProcessedHashRef = useRef("");
+  const isInitializingRef = useRef(true);
+
+  // Combined Effect: Handle Pagination, Cache Reset, AND Deduplication
   useEffect(() => {
-    setCurrentPage(1);
-  }, [jobSearchParams]);
+    if (!jobSearchParams) return;
+
+    // Reset pagination on search change if search hash actually changed
+    if (currentSearchHash !== lastProcessedHashRef.current) {
+      // Don't reset quota flag if we are still initializing/restoring state
+      // This prevents "massive loss" of quota on first search due to flickering hashes
+      if (!isInitializingRef.current) {
+        hasIncrementedQuotaRef.current = false;
+      }
+      
+      setCurrentPage(1);
+      isRestoringFromCacheRef.current = false;
+      lastProcessedHashRef.current = currentSearchHash;
+    }
+  }, [jobSearchParams, currentSearchHash]);
 
   // Restore search state from URL params + localStorage on mount
   useEffect(() => {
     const q = searchParams.get("q");
     const country = searchParams.get("country");
     const city = searchParams.get("city");
+    
+    // Parse ALL advanced filters from URL
+    const industries = searchParams.get("industries")?.split(",").filter(Boolean);
+    const keywords = searchParams.get("keywords")?.split(",").filter(Boolean);
+    const experienceLevel = searchParams.get("experienceLevel") || undefined;
+    const salaryMin = searchParams.get("salaryMin") ? parseInt(searchParams.get("salaryMin")!) : undefined;
+    const salaryMax = searchParams.get("salaryMax") ? parseInt(searchParams.get("salaryMax")!) : undefined;
+    const companySize = searchParams.get("companySize") || undefined;
+    const contractTypesParam = searchParams.get("contractTypes")?.split(",").filter(Boolean);
+
+    const initialFilters: AdvancedFilters = {
+      ...(industries ? { industries } : {}),
+      ...(keywords ? { keywords } : {}),
+      ...(experienceLevel ? { experienceLevel } : {}),
+      ...(salaryMin ? { salaryMin } : {}),
+      ...(salaryMax ? { salaryMax } : {}),
+      ...(companySize ? { companySize } : {}),
+    };
+
+    const remoteParam = searchParams.get("remote");
+    const initialIncludeRemote = remoteParam !== null ? remoteParam === "true" : undefined;
 
     // Try to restore from localStorage (works even without URL params)
     try {
       const raw = localStorage.getItem("huntzen_jobs_cache");
       if (!raw) {
-        // No cache — only restore form fields from URL
+        // No cache — restore ALL from URL
         if (q) setJobTitle(q);
         if (country) setSelectedCountry(country);
         if (city) {
           setSelectedCity(city);
           setCitySearch(city);
         }
-        return;
+        if (Object.keys(initialFilters).length > 0) {
+          setAdvancedFilters(initialFilters);
+        }
+        
+        // Finalize initialization after a delay
+        const timer = setTimeout(() => { isInitializingRef.current = false; }, 1500);
+        return () => clearTimeout(timer);
       }
+      
       const { jobs: cachedJobs, query, timestamp } = JSON.parse(raw);
       const isRecent = Date.now() - timestamp < 60 * 60 * 1000; // 1h cache
 
@@ -628,6 +714,8 @@ export default function JobsPage() {
       const restoreTitle = q || query.jobTitle;
       const restoreCountry = country || query.selectedCountry;
       const restoreCity = city || query.selectedCity;
+      const restoreFilters = Object.keys(initialFilters).length > 0 ? initialFilters : (query.advancedFilters || {});
+      const restoreContractTypes = contractTypesParam || query.contractTypes || [];
 
       if (isRecent && restoreTitle) {
         isRestoringFromCacheRef.current = true;
@@ -638,11 +726,17 @@ export default function JobsPage() {
           setSelectedCity(restoreCity);
           setCitySearch(restoreCity);
         }
+        setAdvancedFilters(restoreFilters);
         setJobs(cachedJobs);
+        const restoreIncludeRemote = initialIncludeRemote !== undefined ? initialIncludeRemote : (query.includeRemote !== undefined ? query.includeRemote : true);
+
         setJobSearchParams({
           query: restoreTitle,
           country: restoreCountry || "",
           location: restoreCity || "",
+          contractTypes: restoreContractTypes.map((c: any) => typeof c === 'string' ? c : (c as any).id || (c as any).value),
+          includeRemote: restoreIncludeRemote,
+          fromHistory: true, // Mark as restoration to avoid re-billing
         });
         // Sync URL if it was missing params
         if (!q) {
@@ -660,24 +754,20 @@ export default function JobsPage() {
           setSelectedCity(city);
           setCitySearch(city);
         }
+        setAdvancedFilters(initialFilters);
       }
-    } catch {
-      // Fallback — restore form fields from URL only
+    } catch (e) {
+      // Fallback
       if (q) setJobTitle(q);
-      if (country) setSelectedCountry(country);
-      if (city) {
-        setSelectedCity(city);
-        setCitySearch(city);
-      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // Mark initialization as sequence-complete
+    const timer = setTimeout(() => {
+      isInitializingRef.current = false;
+    }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Effective contract type: prefer pre-search filter from SearchParams, fallback to page-level
-  const effectiveContractType = jobSearchParams?.contractType || contractType;
-  const effectiveContractTypes = jobSearchParams?.contractTypes;
-  const effectiveWorkDays = jobSearchParams?.workDays;
-  const effectiveWorkSchedule = jobSearchParams?.workSchedule;
 
   // Search query with intelligent caching
   const searchQuery = useQuery({
@@ -738,8 +828,10 @@ export default function JobsPage() {
       }
     },
     enabled: !!jobSearchParams,
-    staleTime: 1000 * 60 * 30, // 30 min — results stay fresh
+    staleTime: 1000 * 60 * 5, // 5 min — avoid redundant identical searches
     gcTime: 1000 * 60 * 60, // 1h — keep in memory for back navigation
+    refetchOnWindowFocus: false, // CRITICAL: Prevent billing on focus
+    refetchOnReconnect: false, // Prevent billing on reconnect
     retry: (failureCount, error) =>
       !isQuotaExceededError(error) && failureCount < 1,
   });
@@ -748,13 +840,7 @@ export default function JobsPage() {
    * Reset quota increment flag when search parameters change.
    * This allows a new search with different params to increment quota again.
    */
-  useEffect(() => {
-    // Only reset if this is a genuinely NEW search (not a cache restoration)
-    if (!isRestoringFromCacheRef.current) {
-      hasIncrementedQuotaRef.current = false;
-    }
-    isRestoringFromCacheRef.current = false;
-  }, [jobSearchParams]);
+  // Quota increment reset handled above in the combined effect
 
   /**
    * Increments user's job_search quota when a NEW fetch completes successfully.
@@ -763,6 +849,7 @@ export default function JobsPage() {
    * - ✅ Count on first successful NEW fetch only
    * - ❌ Don't count on cache hits / page reloads / cache restoration
    * - ❌ Don't count on API errors (isSuccess check)
+   * - ❌ Don't count during initialization (first 2s of mount)
    */
   useEffect(() => {
     if (
@@ -772,18 +859,41 @@ export default function JobsPage() {
       !searchQuery.isFetching &&
       !hasIncrementedQuotaRef.current &&
       !jobSearchParams?.fromHistory &&
-      searchQuery.dataUpdatedAt > lastFetchTimeRef.current // Only count genuinely new data
+      searchQuery.dataUpdatedAt > lastFetchTimeRef.current
     ) {
-      incrementUsage("job_search");
+      // PER-REQUEST DEDUPLICATION (Inline check for maximum robustness)
+      const billedHash = currentSearchHash;
+      if (!billedHash) return;
+
+      try {
+        const lastBilledHash = sessionStorage.getItem("huntzen_last_billed_search_hash");
+        if (billedHash === lastBilledHash) {
+          console.log("[QUOTA] Deduplicated search (sessionStorage match):", billedHash);
+          hasIncrementedQuotaRef.current = true;
+          return;
+        }
+      } catch (e) {}
+
+      // If we reach here, it's a genuinely new search
+      console.log("[QUOTA] Incrementing job_search quota for hash:", billedHash);
+      // NO MORE MANUAL INCREMENT HERE — backend handles it automatically in the /search route.
+      // We just refetch to sync the UI limits.
+      refreshQuotas();
       hasIncrementedQuotaRef.current = true;
       lastFetchTimeRef.current = searchQuery.dataUpdatedAt;
+
+      try {
+        sessionStorage.setItem("huntzen_last_billed_search_hash", billedHash);
+      } catch (e) {}
     }
   }, [
     searchQuery.isSuccess,
-    searchQuery.data,
     searchQuery.isFetched,
     searchQuery.isFetching,
+    searchQuery.data,
     searchQuery.dataUpdatedAt,
+    jobSearchParams,
+    currentSearchHash,
     incrementUsage,
   ]);
 
@@ -802,6 +912,7 @@ export default function JobsPage() {
               jobTitle: jobSearchParams?.query || "",
               selectedCountry: jobSearchParams?.country || "",
               selectedCity: jobSearchParams?.location || "",
+              includeRemote: jobSearchParams?.includeRemote ?? true,
             },
             timestamp: Date.now(),
           }),
@@ -827,6 +938,9 @@ export default function JobsPage() {
     if (params.query) urlParams.set("q", params.query);
     if (params.country) urlParams.set("country", params.country);
     if (params.location) urlParams.set("city", params.location);
+    if (params.includeRemote !== undefined) {
+      urlParams.set("remote", params.includeRemote ? "true" : "false");
+    }
     router.replace(`/jobs?${urlParams.toString()}`, { scroll: false });
 
     // Save to search history (last 5, deduplicated)
@@ -933,12 +1047,9 @@ export default function JobsPage() {
       return;
     }
 
-    // Check saved jobs quota (total limit)
-    if (savedJobsLimit !== -1 && savedJobsUsed >= savedJobsLimit) {
-      openPricingModal("saved_jobs");
-      toast.error(t("toast.savedJobsLimitReached"));
-      return;
-    }
+    // Optimistic local update + trigger backend refresh
+    // We call this BEFORE mutation for immediate UI feedback (decrement remaining count)
+    incrementUsage("saved_jobs");
 
     saveJobMutation.mutate(job);
   };
@@ -1170,7 +1281,7 @@ export default function JobsPage() {
       <div className="space-y-6">
         {/* Search Loading Modal */}
         <SearchLoadingModal
-          isOpen={searchQuery.isFetching}
+          isOpen={searchQuery.isFetching && jobs.length === 0}
           searchQuery={jobSearchParams?.query}
         />
 
@@ -1229,10 +1340,11 @@ export default function JobsPage() {
         >
           {featureFlags.useJobsV2 ? (
             <SearchFormInline
+              initialQuery={jobTitle || popularQuery}
+              initialIncludeRemote={jobSearchParams?.includeRemote}
               onSearch={handleSearch}
               isLoading={searchQuery.isFetching}
               disabled={false}
-              initialQuery={popularQuery}
             />
           ) : (
             <Card className="shadow-sm border-2 border-slate-200 bg-white">
@@ -1275,7 +1387,7 @@ export default function JobsPage() {
                         <SelectItem value="all">
                           {t("form.allTypes")}
                         </SelectItem>
-                        {contractTypes.map((type) => (
+                        {allContractTypes.map((type: ContractType) => (
                           <SelectItem key={type.id} value={type.id}>
                             {type.label}
                           </SelectItem>
@@ -1594,7 +1706,7 @@ export default function JobsPage() {
                           <SelectItem value="all">
                             {t("form.allTypes")}
                           </SelectItem>
-                          {contractTypes.map((type) => (
+                          {allContractTypes.map((type: ContractType) => (
                             <SelectItem key={type.id} value={type.id}>
                               {type.label}
                             </SelectItem>

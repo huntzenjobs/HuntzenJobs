@@ -20,58 +20,49 @@ router = APIRouter()
 settings = get_settings()
 
 
-def _get_saved_jobs_limit(user_id: str) -> int:
-    """Get saved_jobs limit for user's plan. Returns -1 for unlimited."""
+def _get_saved_jobs_daily_limit(user_id: str) -> int:
+    """Get daily saved_jobs limit for user's plan. Returns -1 for unlimited."""
     try:
         supabase = get_supabase_client()
-        # Get plan limits via user subscription
-        res = supabase.rpc("get_user_plan_limits", {"p_user_id": user_id}).execute()
-        if res.data and isinstance(res.data, dict):
-            return res.data.get("saved_jobs", -1)
-        # Fallback: query subscription_plans directly
-        sub = supabase.table("user_subscriptions").select(
-            "plan_id, subscription_plans(limits)"
-        ).eq("user_id", user_id).eq("status", "active").limit(1).execute()
-        if sub.data and sub.data[0].get("subscription_plans"):
-            limits = sub.data[0]["subscription_plans"].get("limits") or {}
-            return limits.get("saved_jobs", -1)
-        # No active sub → free plan limits
-        free = supabase.table("subscription_plans").select("limits").eq("name", "free").single().execute()
-        if free.data:
-            return (free.data.get("limits") or {}).get("saved_jobs", -1)
+        # Get daily quota status for saved_jobs
+        res = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if res.data:
+            for row in res.data:
+                if row.get("feature") == "saved_jobs":
+                    return row.get("quota_limit", -1)
     except Exception as e:
-        logger.warning(f"Could not check saved_jobs limit for {user_id}: {e}")
+        logger.warning(f"Could not check saved_jobs daily limit for {user_id}: {e}")
     return -1  # Allow through on error
 
 
 def _check_saved_jobs_limit(user_id: str) -> None:
-    """Check if user has reached their saved jobs limit. Raises 429 if exceeded."""
-    limit = _get_saved_jobs_limit(user_id)
-    if limit == -1:
-        return  # Unlimited
-
+    """Check if user has reached their daily saved jobs limit. Raises 429 if exceeded."""
     try:
         supabase = get_supabase_client()
-        count_res = supabase.table("saved_jobs").select(
-            "id", count="exact"
-        ).eq("user_id", user_id).execute()
-        current_count = count_res.count or 0
+        res = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        if not res.data:
+            return
 
-        if current_count >= limit:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail={
-                    "code": "QUOTA_EXCEEDED",
-                    "feature": "saved_jobs",
-                    "limit": limit,
-                    "used": current_count,
-                    "message": f"Limite de {limit} offres sauvegardées atteinte. Passez à un plan supérieur.",
-                },
-            )
+        for row in res.data:
+            if row.get("feature") == "saved_jobs":
+                if not row.get("has_access", True):
+                    limit = row.get("quota_limit")
+                    used = row.get("quota_used")
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "code": "QUOTA_EXCEEDED",
+                            "feature": "saved_jobs",
+                            "limit": limit,
+                            "used": used,
+                            "message": f"Limite de {limit} offres sauvegardées aujourd'hui atteinte. Revenez demain !",
+                        },
+                    )
+                return
     except HTTPException:
         raise
     except Exception as e:
-        logger.warning(f"Could not check saved_jobs count for {user_id}: {e}")
+        logger.warning(f"Could not check saved_jobs quota for {user_id}: {e}")
 
 
 class SaveJobRequest(BaseModel):
@@ -190,6 +181,18 @@ async def save_job(
             .execute()
 
         inserted_id = result.data[0]["id"] if result.data else None
+        
+        # Increment daily quota usage
+        if inserted_id:
+            try:
+                supabase.rpc("increment_usage", {
+                    "p_user_id": user_id,
+                    "p_feature": "saved_jobs",
+                    "p_amount": 1
+                }).execute()
+            except Exception as inc_err:
+                logger.warning(f"Failed to increment saved_jobs quota: {inc_err}")
+
         return {"success": True, "job_id": inserted_id}
 
     except Exception as e:

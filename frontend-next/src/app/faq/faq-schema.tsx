@@ -14,7 +14,7 @@ export function FAQSchema() {
   const proPrice = proPlan
     ? `${formatPrice(proPlan.price_monthly)}€/mois`
     : "...";
-  const freeCvLimit = PLAN_LIMITS.free.cv_analyses_per_day;
+  const freeCvLimit = PLAN_LIMITS.free.ats_scores_per_day;
 
   const faqCategories = buildFaqCategories({ proPrice, freeCvLimit }, tData);
 

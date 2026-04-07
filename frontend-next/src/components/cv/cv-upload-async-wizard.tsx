@@ -21,48 +21,47 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Upload,
-  FileText,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ArrowLeft,
-  ArrowRight,
-  History,
-  Sparkles,
-  Download,
-  Pencil,
-} from "lucide-react";
+import type { Suggestion } from "@/components/cv/actionable-suggestions";
+import { CVHistoryDrawer } from "@/components/cv/cv-history-drawer";
+import type { CvInfo } from "@/components/cv/cv-info-panel";
+import { CVInfoPanel } from "@/components/cv/cv-info-panel";
+import { ProcessingSteps } from "@/components/cv/processing-steps";
+import { ResultsAccordion } from "@/components/cv/results-accordion";
+import { ScoreRing } from "@/components/cv/score-ring";
+import { WizardSteps } from "@/components/cv/wizard-steps";
 import { ApplyModal, type ParsedCvData } from "@/components/jobs/apply-modal";
-import type { Job } from "@/lib/api/huntzen-client";
-import { useDocuments } from "@/hooks/use-documents";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCVAnalysis,
   type CVAnalysisApiResult,
 } from "@/hooks/use-cv-analysis";
+import type { CVAnalysisResult } from "@/hooks/use-cv-history";
+import { useDocuments } from "@/hooks/use-documents";
+import { PLAN_LIMITS, type FeatureType } from "@/hooks/use-freemium-limits";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
-import { CVHistoryDrawer } from "@/components/cv/cv-history-drawer";
-import { WizardSteps } from "@/components/cv/wizard-steps";
-import { ResultsAccordion } from "@/components/cv/results-accordion";
-import { CVInfoPanel } from "@/components/cv/cv-info-panel";
-import { ScoreRing } from "@/components/cv/score-ring";
-import { ProcessingSteps } from "@/components/cv/processing-steps";
+import type { Job } from "@/lib/api/huntzen-client";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Download,
+  FileText,
+  History,
+  Loader2,
+  Pencil,
+  Sparkles,
+  Upload,
+  XCircle,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 // Dynamic import: @react-pdf/renderer est lourd (~200KB), chargé uniquement au clic export
 const lazyExportCVAnalysisToPDF = () =>
   import("@/utils/export-cv-pdf").then((mod) => mod.exportCVAnalysisToPDF);
-import { type FeatureType, PLAN_LIMITS } from "@/hooks/use-freemium-limits";
-import type { Suggestion } from "@/components/cv/actionable-suggestions";
-import type { CvInfo } from "@/components/cv/cv-info-panel";
-import type { CVAnalysisResult } from "@/hooks/use-cv-history";
-import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 // ============================================
 // TYPES
@@ -82,6 +81,7 @@ interface AnalysisListItem {
 interface CVUploadAsyncWizardProps {
   canUse: (feature: FeatureType) => boolean;
   incrementUsage: (feature: FeatureType) => void;
+  refreshQuotas: () => void;
   openPricingModal: (feature?: string) => void;
   hasFeatures: {
     hasCVHistory: boolean;
@@ -146,6 +146,7 @@ const stepVariants = {
 export function CVUploadAsyncWizard({
   canUse,
   incrementUsage,
+  refreshQuotas,
   openPricingModal,
   hasFeatures,
 }: CVUploadAsyncWizardProps) {
@@ -202,7 +203,6 @@ export function CVUploadAsyncWizard({
 
   const [isDragging, setIsDragging] = useState(false);
 
-  // CV Analysis hook
   const {
     uploadCV,
     uploadCVText,
@@ -216,7 +216,9 @@ export function CVUploadAsyncWizard({
     elapsedTime,
     reset: resetAnalysis,
   } = useCVAnalysis(() => {
-    incrementUsage("cv_analysis");
+    // QUOTA: Le backend (cv_analysis.py) incrémente déjà le quota lorsqu'il accepte l'analyse.
+    // On se contente de rafraîchir les limites locales pour l'UI.
+    refreshQuotas();
   });
 
   // Hook to refetch subscription data after CV upload
@@ -374,7 +376,7 @@ export function CVUploadAsyncWizard({
                 <span>
                   <strong>
                     {t("freeAnalysisBenefit", {
-                      count: PLAN_LIMITS.free.cv_analyses_per_day,
+                      count: PLAN_LIMITS.free.ats_scores_per_day,
                     })}
                   </strong>{" "}
                   {t("freeAnalysisBenefitSuffix")}
@@ -517,9 +519,19 @@ export function CVUploadAsyncWizard({
   const handleStep2Analyze = async () => {
     if (!canAnalyze) return;
 
-    // "adapt" mode: generate CV + LM PDFs (no freemium check for now)
+    // "adapt" mode: generate CV + LM PDFs
     if (wizardState.analysisType === "adapt") {
       if (!wizardState.file) return; // adapt requires a file
+
+      // Check freemium limits for BOTH CV and Letter
+      if (!canUse("cv_adapt")) {
+        openPricingModal("cv_adapt_per_day");
+        return;
+      }
+      if (!canUse("cover_letter")) {
+        openPricingModal("cover_letter_per_day");
+        return;
+      }
 
       setWizardState((prev) => ({ ...prev, currentStep: 3 }));
       setAdaptLoading(true);
@@ -528,6 +540,12 @@ export function CVUploadAsyncWizard({
       try {
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
         const { language: adaptLang } = { language: wizardState.adaptLanguage };
+
+        // Headers for authenticated requests
+        const token = session?.access_token;
+        const authHeaders: Record<string, string> = token
+          ? { Authorization: `Bearer ${token}` }
+          : {};
 
         // Step 1: adapt CV
         const formData = new FormData();
@@ -538,9 +556,22 @@ export function CVUploadAsyncWizard({
 
         const adaptRes = await fetch(
           `${backendUrl}/api/cv-adapter/adapt/upload`,
-          { method: "POST", body: formData },
+          {
+            method: "POST",
+            body: formData,
+            headers: { ...authHeaders },
+          },
         );
-        if (!adaptRes.ok) throw new Error("Erreur lors de l'adaptation du CV");
+        if (!adaptRes.ok) {
+          const errData = await adaptRes.json().catch(() => ({}));
+          if (adaptRes.status === 429) {
+            throw new Error("Quota insuffisant pour l'adaptation de CV.");
+          }
+          throw new Error(
+            errData.detail?.message || "Erreur lors de l'adaptation du CV",
+          );
+        }
+
         const adaptData = await adaptRes.json();
         const cvData = adaptData.cv_data;
         const matchScore = adaptData.match_score;
@@ -549,7 +580,10 @@ export function CVUploadAsyncWizard({
         const [cvPdfRes, lmJsonRes] = await Promise.all([
           fetch(`${backendUrl}/api/cv-adapter/generate-pdf`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...authHeaders,
+            },
             body: JSON.stringify({
               cv_data: cvData,
               template: "ats",
@@ -558,7 +592,10 @@ export function CVUploadAsyncWizard({
           }),
           fetch(`${backendUrl}/api/cv-adapter/generate-cover-letter/json`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...authHeaders,
+            },
             body: JSON.stringify({
               cv_data: cvData,
               job_description: wizardState.jobDescription,
@@ -583,7 +620,10 @@ export function CVUploadAsyncWizard({
               `${backendUrl}/api/cv-adapter/generate-cover-letter/pdf-from-data`,
               {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                  "Content-Type": "application/json",
+                  ...authHeaders,
+                },
                 body: JSON.stringify({
                   cover_letter_data: lmData,
                   language: adaptLang,
@@ -592,6 +632,8 @@ export function CVUploadAsyncWizard({
             );
             lmPdfBlob = lmPdfRes.ok ? await lmPdfRes.blob() : null;
           }
+        } else if (lmJsonRes.status === 429) {
+          toast.error("Quota insuffisant pour la lettre de motivation.");
         }
 
         setAdaptResult({
@@ -613,9 +655,14 @@ export function CVUploadAsyncWizard({
           lmPdfBlob: lmPdfBlob ?? undefined,
           language: adaptLang,
         }).catch(() => {});
+        // Rafraîchir les quotas depuis le backend (source de vérité)
+        await refreshQuotas();
       } catch (err) {
         setAdaptError(
           err instanceof Error ? err.message : "Une erreur est survenue",
+        );
+        toast.error(
+          err instanceof Error ? err.message : "Erreur lors de la génération",
         );
       } finally {
         setAdaptLoading(false);
@@ -624,8 +671,14 @@ export function CVUploadAsyncWizard({
     }
 
     // Check freemium limit (ATS / matching only)
-    if (!canUse("cv_analysis")) {
-      openPricingModal("cv_analyses_per_day");
+    const feature: FeatureType =
+      wizardState.analysisType === "match" ? "matching_score" : "ats_score";
+    if (!canUse(feature)) {
+      openPricingModal(
+        wizardState.analysisType === "match"
+          ? "matching_scores_per_day"
+          : "ats_scores_per_day",
+      );
       return;
     }
 
@@ -1260,7 +1313,14 @@ export function CVUploadAsyncWizard({
                             `${backendUrl}/api/cv-adapter/generate-cover-letter/pdf-from-data`,
                             {
                               method: "POST",
-                              headers: { "Content-Type": "application/json" },
+                              headers: {
+                                "Content-Type": "application/json",
+                                ...(session?.access_token
+                                  ? {
+                                      Authorization: `Bearer ${session.access_token}`,
+                                    }
+                                  : {}),
+                              },
                               body: JSON.stringify({
                                 cover_letter_data: editingLmData,
                                 language: wizardState.adaptLanguage,
@@ -1468,13 +1528,15 @@ export function CVUploadAsyncWizard({
             </div>
           </div>
 
-          {/* Score Ring */}
-          <div className="flex justify-center mb-8">
-            <ScoreRing
-              score={displayResult.ats_score.overall_score}
-              size={200}
-            />
-          </div>
+          {/* Score Ring - Only for ATS Analysis (Not for matching as it can be confusing) */}
+          {wizardState.analysisType !== "match" && (
+            <div className="flex justify-center mb-8">
+              <ScoreRing
+                score={displayResult.ats_score.overall_score}
+                size={200}
+              />
+            </div>
+          )}
 
           {displayResult.job_match_score != null && (
             <div className="mx-auto max-w-lg mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
@@ -1500,32 +1562,39 @@ export function CVUploadAsyncWizard({
 
           {/* Results Accordion */}
           <ResultsAccordion
-            breakdown={[
-              {
-                label: "Format",
-                value: displayResult.ats_score.formatting_score,
-                max: 100,
-                explanation: displayResult.ats_score.formatting_explanation,
-              },
-              {
-                label: "Mots-clés",
-                value: displayResult.ats_score.keywords_score,
-                max: 100,
-                explanation: displayResult.ats_score.keywords_explanation,
-              },
-              {
-                label: "Structure",
-                value: displayResult.ats_score.structure_score,
-                max: 100,
-                explanation: displayResult.ats_score.structure_explanation,
-              },
-              {
-                label: "Lisibilité",
-                value: displayResult.ats_score.readability_score,
-                max: 100,
-                explanation: displayResult.ats_score.readability_explanation,
-              },
-            ]}
+            breakdown={
+              wizardState.analysisType === "match"
+                ? [] // Hide ATS breakdown in match mode
+                : [
+                    {
+                      label: "Format",
+                      value: displayResult.ats_score.formatting_score,
+                      max: 100,
+                      explanation:
+                        displayResult.ats_score.formatting_explanation,
+                    },
+                    {
+                      label: "Mots-clés",
+                      value: displayResult.ats_score.keywords_score,
+                      max: 100,
+                      explanation: displayResult.ats_score.keywords_explanation,
+                    },
+                    {
+                      label: "Structure",
+                      value: displayResult.ats_score.structure_score,
+                      max: 100,
+                      explanation:
+                        displayResult.ats_score.structure_explanation,
+                    },
+                    {
+                      label: "Lisibilité",
+                      value: displayResult.ats_score.readability_score,
+                      max: 100,
+                      explanation:
+                        displayResult.ats_score.readability_explanation,
+                    },
+                  ]
+            }
             strengths={displayResult.strengths || []}
             weaknesses={displayResult.improvements || []}
             suggestions={transformedSuggestions}

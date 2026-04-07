@@ -4,6 +4,7 @@ Job Search API Routes
 Endpoints for AI-powered job searching.
 """
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -353,35 +354,142 @@ async def search_jobs(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
         )
-    _check_job_search_quota(user_id)
 
-    # ── Cache Redis : cle basee sur les parametres de recherche ──
-    cache_key_data = json.dumps({
-        "job_title": data.job_title,
-        "country_code": data.country_code,
-        "city": data.city,
-        "contract_type": effective_contract_type,
-        "max_results": data.max_results,
-        "max_days": data.max_days,
-        "radius_km": data.radius_km,
-        "include_remote": data.include_remote,
-    }, sort_keys=True, default=str)
-    cache_key = f"jobs:search:{hashlib.md5(cache_key_data.encode()).hexdigest()}"
-
+    # ── Verrou de recherche (Race condition protection) ──
+    # Empeche deux recherches identiques d'etre facturees en meme temps
+    search_hash = hashlib.md5(data.model_dump_json(sort_keys=True).encode()).hexdigest()
+    lock_key = f"search_lock:{user_id}:{search_hash}"
     redis = await get_redis()
-    cached_jobs = None
+    
     if redis:
-        try:
-            raw = await redis.get(cache_key)
-            if raw:
-                import orjson
-                cached_jobs = orjson.loads(raw)
-                logger.debug(f"Cache HIT for job search: {cache_key[:40]}")
-        except Exception as e:
-            logger.warning(f"[cache] job search GET error: {e}")
+        # Tenter d'acquerir un verrou de 30s
+        is_locked = await redis.set(lock_key, "1", ex=30, nx=True)
+        if not is_locked:
+            logger.info(f"Concurrent search detected for user {user_id}, waiting for cache...")
+            
+            # Attendre que la recherche en cours peuple le cache (max 5s)
+            cache_key = f"jobs:search:{search_hash}"
+            for _ in range(10):  # 10 * 0.5s = 5s
+                await asyncio.sleep(0.5)
+                raw = await redis.get(cache_key)
+                if raw:
+                    import orjson
+                    logger.info(f"Concurrent search resolved via cache for user {user_id}")
+                    cached_data = orjson.loads(raw)
+                    # Deduplicated response (re-wrapped for JobSearchResponse)
+                    jobs = [Job(**j) if isinstance(j, dict) else j for j in cached_data.get("jobs", [])]
+                    metadata = cached_data.get("metadata", {})
+                    return JobSearchResponse(
+                        success=True,
+                        jobs=jobs,
+                        metadata=SearchMetadata(**metadata) if isinstance(metadata, dict) else metadata,
+                        ai_insights=cached_data.get("insights") or cached_data.get("ai_insights")
+                    )
+            
+            # Si toujours pas de cache apres 5s
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Une recherche identique est déjà en cours. Veuillez patienter..."
+            )
 
-    if cached_jobs is not None:
-        # Cache hit : on utilise les offres cachées, mais on regénère les insights
+    try:
+        # Check quota
+        _check_job_search_quota(user_id)
+
+        # ── Cache Redis : cle basee sur les parametres de recherche ──
+        cache_key = f"jobs:search:{search_hash}"
+        cached_jobs = None
+        if redis:
+            try:
+                raw = await redis.get(cache_key)
+                if raw:
+                    import orjson
+                    cached_jobs = orjson.loads(raw)
+                    logger.debug(f"Cache HIT for job search: {cache_key[:40]}")
+            except Exception as e:
+                logger.warning(f"[cache] job search query error: {e}")
+
+        if cached_jobs is not None:
+            # Cache hit : on utilise les offres cachées, mais on regénère les insights
+            jobs = [
+                Job(
+                    id=j.get("id", ""),
+                    title=j.get("title", ""),
+                    company=j.get("company", ""),
+                    location=j.get("location", ""),
+                    description=j.get("description"),
+                    url=j.get("url"),
+                    salary=j.get("salary"),
+                    contract_type=j.get("contract_type"),
+                    source=j.get("source", "unknown"),
+                    posted_date=j.get("posted_date"),
+                    score=j.get("score", 0.5),
+                )
+                for j in cached_jobs.get("jobs", [])
+            ]
+            metadata = cached_jobs.get("metadata", {})
+
+            # Apply post-processing filters on cached results
+            if has_post_filters:
+                jobs_dicts = [j.model_dump() for j in jobs]
+                jobs_dicts = apply_advanced_filters(
+                    jobs=jobs_dicts,
+                    contract_types=data.contract_types or None,
+                    work_schedule=data.work_schedule or None,
+                    work_days=data.work_days or None,
+                )
+                jobs = [Job(**j) for j in jobs_dicts]
+
+            # Re-generate insights or use placeholder
+            ai_insights = "Insights disponibles via recherche fraîche."
+
+            return JobSearchResponse(
+                success=True,
+                jobs=jobs,
+                metadata=SearchMetadata(
+                    original_query=metadata.get("original_query", data.job_title),
+                    refined_query=metadata.get("refined_query"),
+                    total_raw=metadata.get("total_raw", 0),
+                    total_deduplicated=metadata.get("total_deduplicated", len(jobs)),
+                    sources_used=metadata.get("sources_used", []),
+                    search_time_ms=metadata.get("search_time_ms", 0),
+                ),
+                ai_insights=ai_insights
+            )
+
+        # ── Cache MISS : executer la recherche ──
+        result = await agent.run(
+            job_title=data.job_title,
+            country_code=data.country_code,
+            city=data.city,
+            contract_type=effective_contract_type,
+            max_results=data.max_results,
+            max_days=data.max_days,
+            radius_km=data.radius_km,
+            include_remote=data.include_remote,
+            include_insights=True,
+        )
+
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.get("error", "Search failed"),
+            )
+
+        # Stocker en cache les offres
+        if redis and result.get("jobs"):
+            try:
+                import orjson
+                cache_payload = orjson.dumps({
+                    "jobs": result.get("jobs", []),
+                    "metadata": result.get("metadata", {}),
+                }, option=orjson.OPT_NON_STR_KEYS).decode()
+                await redis.setex(cache_key, JOBS_CACHE_TTL, cache_payload)
+                logger.debug(f"Cached job search results: {cache_key[:40]}")
+            except Exception as e:
+                logger.warning(f"[cache] job search SET error: {e}")
+
+        # Convert to response model
         jobs = [
             Job(
                 id=j.get("id", ""),
@@ -396,11 +504,12 @@ async def search_jobs(
                 posted_date=j.get("posted_date"),
                 score=j.get("score", 0.5),
             )
-            for j in cached_jobs.get("jobs", [])
+            for j in result.get("jobs", [])
         ]
-        metadata = cached_jobs.get("metadata", {})
 
-        # Apply post-processing filters on cached results
+        metadata = result.get("metadata", {})
+
+        # Apply post-processing filters on fresh results
         if has_post_filters:
             jobs_dicts = [j.model_dump() for j in jobs]
             jobs_dicts = apply_advanced_filters(
@@ -409,9 +518,7 @@ async def search_jobs(
                 work_schedule=data.work_schedule or None,
                 work_days=data.work_days or None,
             )
-            jobs = [
-                Job(**j) for j in jobs_dicts
-            ]
+            jobs = [Job(**j) for j in jobs_dicts]
 
         response = JobSearchResponse(
             success=True,
@@ -424,94 +531,19 @@ async def search_jobs(
                 sources_used=metadata.get("sources_used", []),
                 search_time_ms=metadata.get("search_time_ms", 0),
             ),
-            ai_insights=None,
+            ai_insights=str(result.get("insights", "")) if result.get("insights") else None,
         )
-        # Cache hit : ne PAS incrémenter le quota (même recherche, pas de nouvelle consommation)
+
+        # Incrementer quota apres succes (sauf si recherche depuis l'historique)
+        if user_id and not data.from_history:
+            _increment_job_search_quota(user_id)
+            await invalidate_user_quota_cache(user_id)
+
         return response
-
-    # ── Cache MISS : executer la recherche ──
-    result = await agent.run(
-        job_title=data.job_title,
-        country_code=data.country_code,
-        city=data.city,
-        contract_type=effective_contract_type,
-        max_results=data.max_results,
-        max_days=data.max_days,
-        radius_km=data.radius_km,
-        include_remote=data.include_remote,
-        include_insights=True,
-    )
-
-    if not result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=result.get("error", "Search failed"),
-        )
-
-    # Stocker en cache les offres (pas les insights IA)
-    if redis and result.get("jobs"):
-        try:
-            import orjson
-            cache_payload = orjson.dumps({
-                "jobs": result.get("jobs", []),
-                "metadata": result.get("metadata", {}),
-            }, option=orjson.OPT_NON_STR_KEYS).decode()
-            await redis.setex(cache_key, JOBS_CACHE_TTL, cache_payload)
-            logger.debug(f"Cached job search results: {cache_key[:40]} (TTL: {JOBS_CACHE_TTL}s)")
-        except Exception as e:
-            logger.warning(f"[cache] job search SET error: {e}")
-
-    # Convert to response model
-    jobs = [
-        Job(
-            id=j.get("id", ""),
-            title=j.get("title", ""),
-            company=j.get("company", ""),
-            location=j.get("location", ""),
-            description=j.get("description"),
-            url=j.get("url"),
-            salary=j.get("salary"),
-            contract_type=j.get("contract_type"),
-            source=j.get("source", "unknown"),
-            posted_date=j.get("posted_date"),
-            score=j.get("score", 0.5),
-        )
-        for j in result.get("jobs", [])
-    ]
-
-    metadata = result.get("metadata", {})
-
-    # Apply post-processing filters on fresh results
-    if has_post_filters:
-        jobs_dicts = [j.model_dump() for j in jobs]
-        jobs_dicts = apply_advanced_filters(
-            jobs=jobs_dicts,
-            contract_types=data.contract_types or None,
-            work_schedule=data.work_schedule or None,
-            work_days=data.work_days or None,
-        )
-        jobs = [Job(**j) for j in jobs_dicts]
-
-    response = JobSearchResponse(
-        success=True,
-        jobs=jobs,
-        metadata=SearchMetadata(
-            original_query=metadata.get("original_query", data.job_title),
-            refined_query=metadata.get("refined_query"),
-            total_raw=metadata.get("total_raw", 0),
-            total_deduplicated=metadata.get("total_deduplicated", len(jobs)),
-            sources_used=metadata.get("sources_used", []),
-            search_time_ms=metadata.get("search_time_ms", 0),
-        ),
-        ai_insights=str(result.get("insights", "")) if result.get("insights") else None,
-    )
-
-    # Incrementer quota apres succes (sauf si recherche depuis l'historique)
-    if user_id and not data.from_history:
-        _increment_job_search_quota(user_id)
-        await invalidate_user_quota_cache(user_id)
-
-    return response
+    finally:
+        # Toujours liberer le verrou
+        if redis:
+            await redis.delete(lock_key)
 
 
 @router.get("/search")
@@ -567,54 +599,122 @@ async def search_jobs_get(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
         )
-    _check_job_search_quota(user_id)
-    result = await agent.run(
-        job_title=q,
-        country_code=country,
-        city=city,
-        contract_type=effective_contract,
-        max_results=limit,
-        radius_km=radius,
-        include_remote=include_remote,
-    )
 
-    # Filtres basiques (accessibles à tous) : type contrat, jours, horaires
-    has_basic_filters = any([contract_types_list, work_schedule_list, work_days_list])
-    # Filtres avancés (Premium) : industries, mots-clés, expérience, salaire, taille
-    has_advanced_filters = any([industries, keywords, experience_level, salary_min, salary_max, company_size])
+    # ── Verrou de recherche (Race condition protection) ──
+    params_dict = {
+        "job_title": q,
+        "country_code": country,
+        "city": city,
+        "contract_type": effective_contract,
+        "max_results": limit,
+        "max_days": None,
+        "radius_km": radius,
+        "include_remote": include_remote,
+    }
+    search_hash = hashlib.md5(json.dumps(params_dict, sort_keys=True, default=str).encode()).hexdigest()
+    lock_key = f"search_lock:{user_id}:{search_hash}"
+    redis = await get_redis()
 
-    if has_advanced_filters:
-        user_id = get_user_id_from_token(authorization)
-        if user_id:
-            _require_feature_flag_sync(user_id, "advanced_filters", "Les filtres avances necessitent un plan superieur.")
+    if redis:
+        # Check cache first (avant de tenter de verrouiller)
+        cache_key = f"jobs:search:{search_hash}"
+        try:
+            raw = await redis.get(cache_key)
+            if raw:
+                import orjson
+                logger.debug(f"Cache HIT for job search (GET): {cache_key[:40]}")
+                return orjson.loads(raw)
+        except Exception as e:
+            logger.warning(f"[cache] job search GET error: {e}")
 
-    if has_basic_filters or has_advanced_filters:
-        jobs = result.get('jobs', [])
-        filtered_jobs = apply_advanced_filters(
-            jobs=jobs,
-            industries=industries,
-            keywords=keywords,
-            experience_level=experience_level,
-            salary_min=salary_min,
-            salary_max=salary_max,
-            company_size=company_size,
-            contract_types=contract_types_list or None,
-            work_schedule=work_schedule_list or None,
-            work_days=work_days_list or None,
+        # Tenter d'acquerir un verrou de 30s
+        is_locked = await redis.set(lock_key, "1", ex=30, nx=True)
+        if not is_locked:
+            logger.info(f"Concurrent search detected (GET) for user {user_id}, waiting for cache...")
+
+            # Attendre que la recherche en cours peuple le cache (max 5s)
+            for _ in range(10):
+                await asyncio.sleep(0.5)
+                raw = await redis.get(cache_key)
+                if raw:
+                    import orjson
+                    logger.info(f"Concurrent search resolved (GET) via cache for user {user_id}")
+                    return orjson.loads(raw)
+
+            # Si toujours pas de cache apres 5s
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Recherche déjà en cours. Veuillez patienter..."
+            )
+
+    try:
+        _check_job_search_quota(user_id)
+
+        # ── Cache MISS : executer la recherche ──
+        result = await agent.run(
+            job_title=q,
+            country_code=country,
+            city=city,
+            contract_type=effective_contract,
+            max_results=limit,
+            radius_km=radius,
+            include_remote=include_remote,
         )
-        result['jobs'] = filtered_jobs
-        if 'metadata' not in result:
-            result['metadata'] = {}
-        result['metadata']['total_filtered'] = len(filtered_jobs)
-        result['metadata']['total_before_filters'] = len(jobs)
 
-    # Incrémenter quota après recherche réussie (comme le POST /search)
-    from_history = request.query_params.get("from_history", "").lower() == "true"
-    if user_id and not from_history:
-        _increment_job_search_quota(user_id)
-        await invalidate_user_quota_cache(user_id)
+        # Stocker en cache les offres
+        if redis and result.get("jobs"):
+            try:
+                import orjson
+                cache_payload = orjson.dumps({
+                    "jobs": result.get("jobs", []),
+                    "metadata": result.get("metadata", {}),
+                    "success": result.get("success", True),
+                    "insights": result.get("insights", "")
+                }, option=orjson.OPT_NON_STR_KEYS).decode()
+                await redis.setex(cache_key, JOBS_CACHE_TTL, cache_payload)
+                logger.debug(f"Cached job search results (GET): {cache_key[:40]}")
+            except Exception as e:
+                logger.warning(f"[cache] job search SET error: {e}")
 
-    return result
+        # Filtres basiques (accessibles à tous) : type contrat, jours, horaires
+        has_basic_filters = any([contract_types_list, work_schedule_list, work_days_list])
+        # Filtres avancés (Premium) : industries, mots-clés, expérience, salaire, taille
+        has_advanced_filters = any([industries, keywords, experience_level, salary_min, salary_max, company_size])
+
+        if has_advanced_filters:
+            if user_id:
+                _require_feature_flag_sync(user_id, "advanced_filters", "Les filtres avances necessitent un plan superieur.")
+
+        if has_basic_filters or has_advanced_filters:
+            jobs = result.get('jobs', [])
+            filtered_jobs = apply_advanced_filters(
+                jobs=jobs,
+                industries=industries,
+                keywords=keywords,
+                experience_level=experience_level,
+                salary_min=salary_min,
+                salary_max=salary_max,
+                company_size=company_size,
+                contract_types=contract_types_list or None,
+                work_schedule=work_schedule_list or None,
+                work_days=work_days_list or None,
+            )
+            result['jobs'] = filtered_jobs
+            if 'metadata' not in result:
+                result['metadata'] = {}
+            result['metadata']['total_filtered'] = len(filtered_jobs)
+            result['metadata']['total_before_filters'] = len(jobs)
+
+        # Incrémenter quota après recherche réussie
+        from_history = request.query_params.get("from_history", "").lower() == "true"
+        if user_id and not from_history:
+            _increment_job_search_quota(user_id)
+            await invalidate_user_quota_cache(user_id)
+
+        return result
+    finally:
+        if redis:
+            await redis.delete(lock_key)
 
 
 @router.post("/analyze-query")
@@ -832,8 +932,8 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
         "job_title": "Full Stack Developer"   // for context
     }
 
-    Returns recruiters (HR/managers), tech team, email pattern, and LinkedIn URLs.
-    Requires authentication — calls Hunter.io API (paid service).
+    Returns recruiters (HR/managers) via Apollo with SerpAPI fallback.
+    Requires authentication — Apollo credits first, SerpAPI only when needed.
     """
     user_id = get_user_id_from_token(authorization)
     if not user_id:
@@ -855,8 +955,8 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
                 detail="At least company_name or company_domain is required",
             )
 
-        from src.services.recruiter_finder.apollo import find_recruiters_apollo
-        from src.services.recruiter_finder.hunter import extract_domain, find_recruiters_for_job
+        from src.services.recruiter_finder import find_recruiters_apollo
+        from src.services.recruiter_finder.serpapi import extract_domain, find_recruiters_serpapi
 
         # Resolve domain
         domain = ""
@@ -865,32 +965,22 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
         elif company_website:
             domain = extract_domain(company_website)
 
-        # 1. Try Apollo first (primary source)
         result = await find_recruiters_apollo(
             company_name=company_name,
             company_domain=domain,
             job_title=job_title,
         )
 
-        # 2. If Apollo found nothing, fallback to Hunter.io
         if not result.get("recruiters") and not result.get("tech_team"):
-            logger.info("[find-recruiter] Apollo found nothing, trying Hunter.io fallback")
-            result = await find_recruiters_for_job(
+            logger.info("[find-recruiter] Apollo empty result, using SerpAPI fallback")
+            result = await find_recruiters_serpapi(
                 company_name=company_name,
-                company_domain=company_domain,
-                company_website=company_website,
+                company_domain=domain,
                 job_title=job_title,
             )
-            result["source"] = "hunter"
+            result["source"] = "serpapi"
 
-        # 3. Mark email verification status
-        source = result.get("source", "hunter")
-        for contact in result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", []):
-            if source == "apollo":
-                contact["email_verified"] = contact.get("email_status") == "verified"
-            else:
-                contact["email_verified"] = (contact.get("confidence", 0) >= 80)
-            contact.setdefault("source", source)
+        _enrich_recruiter_contacts(result)
 
         await increment_quota(user_id, "recruiter_search")
         await invalidate_user_quota_cache(user_id)
@@ -911,3 +1001,15 @@ async def find_recruiter(request: Request, authorization: str | None = Header(No
             "tech_team": [],
             "total_found": 0,
         }
+
+
+def _enrich_recruiter_contacts(result: dict) -> None:
+    source = result.get("source", "serpapi")
+    contacts = result.get("recruiters", []) + result.get("tech_team", []) + result.get("all_contacts", [])
+    for contact in contacts:
+        if source == "apollo":
+            contact["email_verified"] = contact.get("email_status") == "verified"
+        else:
+            contact["email"] = ""
+            contact["email_verified"] = False
+        contact.setdefault("source", source)

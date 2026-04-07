@@ -41,7 +41,8 @@ interface QuotaData {
 }
 
 interface QuotasData {
-  cv_analysis: QuotaData;
+  ats_score: QuotaData;
+  matching_score: QuotaData;
   coach: QuotaData;
   job_search: QuotaData;
   assistant_messages: QuotaData;
@@ -49,6 +50,7 @@ interface QuotasData {
   recruiter_search?: QuotaData;
   cv_adapt?: QuotaData;
   cover_letter?: QuotaData;
+  saved_jobs?: QuotaData;
 }
 
 interface SavedJobsQuota {

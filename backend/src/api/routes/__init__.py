@@ -37,6 +37,7 @@ from src.api.routes.contact_finder import router as contact_finder_router
 from src.api.routes.recruiter_finder import router as recruiter_finder_router
 from src.api.routes.referrals import router as referrals_router
 from src.api.routes.saved_jobs import router as saved_jobs_router
+from src.api.routes.saved_recruiters import router as saved_recruiters_router
 from src.api.routes.static_data import router as static_data_router
 from src.api.routes.stats import router as stats_router
 from src.api.routes.stress import router as stress_router
@@ -52,6 +53,7 @@ router.include_router(pages_router, tags=["Pages"])
 router.include_router(static_data_router, tags=["Static Data"])
 router.include_router(auth_router, tags=["Authentication"])
 router.include_router(saved_jobs_router, tags=["Saved Jobs"])
+router.include_router(saved_recruiters_router, tags=["Saved Recruiters"])
 router.include_router(coach_router, prefix="/api/coach", tags=["Career Coach"])
 router.include_router(assistant_router, prefix="/api/assistant", tags=["Multi-Assistant"])
 router.include_router(jobs_router, prefix="/api/jobs", tags=["Job Search"])
