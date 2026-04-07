@@ -118,9 +118,9 @@ def apply_advanced_filters(
         filtered = [
             job for job in filtered
             if any(
-                ind in job.get('title', '').lower() or
-                ind in job.get('description', '').lower() or
-                ind in job.get('company', '').lower()
+                ind in (job.get('title') or '').lower() or
+                ind in (job.get('description') or '').lower() or
+                ind in (job.get('company') or '').lower()
                 for ind in industry_list
             )
         ]
@@ -131,8 +131,8 @@ def apply_advanced_filters(
         filtered = [
             job for job in filtered
             if any(
-                kw in job.get('title', '').lower() or
-                kw in job.get('description', '').lower()
+                kw in (job.get('title') or '').lower() or
+                kw in (job.get('description') or '').lower()
                 for kw in keyword_list
             )
         ]
@@ -150,8 +150,8 @@ def apply_advanced_filters(
             filtered = [
                 job for job in filtered
                 if any(
-                    keyword in job.get('title', '').lower() or
-                    keyword in job.get('description', '').lower()
+                    keyword in (job.get('title') or '').lower() or
+                    keyword in (job.get('description') or '').lower()
                     for keyword in keywords_to_match
                 )
             ]
@@ -178,8 +178,8 @@ def apply_advanced_filters(
             filtered = [
                 job for job in filtered
                 if any(
-                    keyword in job.get('company', '').lower() or
-                    keyword in job.get('description', '').lower()
+                    keyword in (job.get('company') or '').lower() or
+                    keyword in (job.get('description') or '').lower()
                     for keyword in keywords_to_match
                 )
             ]
@@ -255,7 +255,7 @@ def apply_advanced_filters(
             sched_kws.extend(schedule_keywords.get(s.lower().strip(), []))
 
         def matches_schedule(job: dict) -> bool:
-            text = (job.get('title', '') + ' ' + job.get('description', '')).lower()
+            text = ((job.get('title') or '') + ' ' + (job.get('description') or '')).lower()
             # If temps_plein selected: exclude part-time jobs
             if has_temps_plein and any(kw in text for kw in part_time_keywords):
                 return False
@@ -293,8 +293,8 @@ def apply_advanced_filters(
                 filtered = [
                     job for job in filtered
                     if any(
-                        kw in job.get('title', '').lower()
-                        or kw in job.get('description', '').lower()
+                        kw in (job.get('title') or '').lower()
+                        or kw in (job.get('description') or '').lower()
                         for kw in days_kws
                 )
             ]
