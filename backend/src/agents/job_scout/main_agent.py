@@ -200,7 +200,7 @@ class JobScoutAgent(BaseAgent):
                 active_providers = [p for p in active_providers if p.name != "remoteok"]
                 logger.info(f"[{self.name}] Remote jobs excluded")
 
-            # Alternance : remote ≠ alternance (présentiel requis)
+            # Alternance : remote ≠ alternance (presentiel requis)
             if contract_type in ("alternance", "apprentissage"):
                 active_providers = [p for p in active_providers if p.name != "remoteok"]
                 # Prioriser France Travail (asyncio.gather respecte l'ordre input)
@@ -220,6 +220,7 @@ class JobScoutAgent(BaseAgent):
                 max_days=max_days,
                 contract_type=contract_type,
                 radius_km=radius_km,
+                include_remote=include_remote,
             )
 
             # Always search with the corrected query (abbreviation preserved)
@@ -248,7 +249,7 @@ class JobScoutAgent(BaseAgent):
 
             # Step 3.6: Filter school/training-org offers disguised as employers
             # Skip pour l'alternance : _SCHOOL_CONTENT_PATTERNS contient
-            # "programme de formation en alternance" qui filtre des offres légitimes
+            # "programme de formation en alternance" qui filtre des offres legitimes
             if contract_type not in ("alternance", "apprentissage"):
                 filtered_jobs = self._filter_school_offers(filtered_jobs)
 
