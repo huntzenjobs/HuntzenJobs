@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     rapidapi_key: SecretStr = Field(default=SecretStr(""), description="RapidAPI Key")
     france_travail_client_id: str = Field(default="", alias="CLIENT_ID", description="France Travail OAuth2 Client ID")
     france_travail_client_secret: str = Field(default="", alias="CLIENT_SECRET", description="France Travail OAuth2 Client Secret")
+    jooble_api_key: str = Field(default="", alias="JOOBLE_API_KEY", description="Jooble API Key (free)")
 
     # --------------------------------------------------------------------------
     # API Keys - Recruiter Finder (Hunter.io)
