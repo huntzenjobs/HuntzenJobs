@@ -33,7 +33,7 @@ class AdzunaProvider(BaseJobProvider):
 
     name = "adzuna"
     supported_countries = {
-        "au", "at", "br", "ca", "de", "fr", "in", "it",
+        "au", "at", "be", "br", "ca", "ch", "de", "fr", "in", "it",
         "mx", "nl", "nz", "pl", "ru", "sg", "za", "gb", "us"
     }
 
