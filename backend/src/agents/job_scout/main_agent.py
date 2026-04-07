@@ -19,6 +19,7 @@ from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
 from src.services.job_providers import (
     AdzunaProvider,
+    CareerjetProvider,
     FranceTravailProvider,
     JoobleProvider,
     JSearchProvider,
@@ -89,6 +90,7 @@ class JobScoutAgent(BaseAgent):
             JSearchProvider(),
             RemoteOKProvider(),
             JoobleProvider(),
+            CareerjetProvider(),
         ]
 
         # Country-specific providers (activated conditionally in run())
