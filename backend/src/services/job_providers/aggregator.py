@@ -194,44 +194,102 @@ async def aggregate_jobs(
         before = len(all_jobs)
         all_jobs = [j for j in all_jobs if _is_alternance_job(j)]
         for j in all_jobs:
-            if j.get("contract_type") != "alternance":
-                j["contract_type"] = "alternance"
+            if (j.get("contract_type") or "").lower() != "alternance":
+                j["contract_type"] = "Alternance"
         logger.info(f"[Aggregator] Post-filter alternance: {before} -> {len(all_jobs)} jobs")
 
-    # Post-filter location — only keep jobs whose location matches the requested city
-    # This is critical because JSearch, SerpAPI, and Adzuna often return results
-    # from other cities even when a specific city is requested.
+    # Post-filter location par rayon GPS
+    # Geocode la ville cible, puis filtre les offres par distance haversine.
+    # Ajoute distance_km à chaque offre pour affichage frontend ("à 15km de Nantes").
     if location:
+        from src.services.job_providers.geo_utils import (
+            extract_city_name,
+            geocode,
+            haversine,
+        )
+
+        effective_radius = radius_km or 50  # 50km par défaut
+        target_coords = await geocode(location, country_code)
+
         before = len(all_jobs)
         filtered = []
         remote_kept = 0
         no_location_kept = 0
+        geocode_miss = 0
 
-        for job in all_jobs:
-            # Remote jobs: keep if include_remote is True
-            if _is_remote_job(job):
-                if include_remote:
+        if target_coords:
+            target_lat, target_lon = target_coords
+
+            # Collecter les locations uniques pour batch geocoding
+            unique_locs: dict[str, tuple[float, float] | None] = {}
+            for job in all_jobs:
+                job_loc = (job.get("location") or "").strip()
+                if job_loc and job_loc not in unique_locs:
+                    city_name = extract_city_name(job_loc)
+                    if city_name:
+                        unique_locs[job_loc] = None  # placeholder
+
+            # Geocode les locations uniques
+            for loc_key in unique_locs:
+                city_name = extract_city_name(loc_key)
+                if city_name:
+                    coords = await geocode(city_name, country_code)
+                    unique_locs[loc_key] = coords
+
+            # Filtrer par distance
+            for job in all_jobs:
+                if _is_remote_job(job):
+                    if include_remote:
+                        job["distance_km"] = None
+                        job["distance_label"] = "Remote"
+                        filtered.append(job)
+                        remote_kept += 1
+                    continue
+
+                job_loc = (job.get("location") or "").strip()
+                if not job_loc:
+                    job["distance_km"] = None
                     filtered.append(job)
-                    remote_kept += 1
-                continue
+                    no_location_kept += 1
+                    continue
 
-            # Jobs with no location: keep (benefit of the doubt)
-            job_loc = (job.get("location") or "").strip()
-            if not job_loc:
-                filtered.append(job)
-                no_location_kept += 1
-                continue
-
-            # Location matching
-            if _location_matches(job_loc, location):
-                filtered.append(job)
-            # else: job is from another city → drop it
+                job_coords = unique_locs.get(job_loc)
+                if job_coords:
+                    dist = haversine(target_lat, target_lon, job_coords[0], job_coords[1])
+                    if dist <= effective_radius:
+                        job["distance_km"] = round(dist, 1)
+                        if dist < 1:
+                            job["distance_label"] = location
+                        else:
+                            job["distance_label"] = f"à {round(dist)}km de {location}"
+                        filtered.append(job)
+                    # else: hors rayon → drop
+                else:
+                    # Geocodage échoué → fallback substring matching
+                    geocode_miss += 1
+                    if _location_matches(job_loc, location):
+                        job["distance_km"] = None
+                        job["distance_label"] = job_loc
+                        filtered.append(job)
+        else:
+            # Geocodage de la ville cible échoué → fallback complet sur substring
+            logger.warning(f"[Aggregator] Could not geocode target '{location}', falling back to text matching")
+            for job in all_jobs:
+                job_loc = (job.get("location") or "").strip()
+                if _is_remote_job(job):
+                    if include_remote:
+                        filtered.append(job)
+                        remote_kept += 1
+                elif not job_loc or _location_matches(job_loc, location):
+                    filtered.append(job)
 
         removed = before - len(filtered)
         if removed > 0:
             logger.info(
-                f"[Aggregator] Post-filter location '{location}': {before} -> {len(filtered)} jobs "
-                f"(removed {removed}, kept {remote_kept} remote, {no_location_kept} without location)"
+                f"[Aggregator] Post-filter location '{location}' (radius={effective_radius}km): "
+                f"{before} -> {len(filtered)} jobs "
+                f"(removed {removed}, kept {remote_kept} remote, {no_location_kept} without loc, "
+                f"{geocode_miss} geocode misses)"
             )
 
         all_jobs = filtered

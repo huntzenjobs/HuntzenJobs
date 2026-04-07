@@ -1,0 +1,179 @@
+<h2>Gestion complète des utilisateurs & packages</h2>
+<p class="subtitle">Vert = déjà dans ton admin · Orange = à améliorer · Rouge = à créer</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+
+  <!-- GESTION USERS -->
+  <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:16px">
+    <div class="label">👤 Actions sur un utilisateur</div>
+
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:12px">
+
+      <div style="background:rgba(34,197,94,0.1);border-left:3px solid #22c55e;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong>✅ Déjà existant</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li>Suspendre un compte (blocage temporaire)</li>
+          <li>Réactiver un compte suspendu</li>
+          <li>Forcer un changement de plan (upgrade)</li>
+          <li>Remettre les quotas à zéro</li>
+          <li>Envoyer un email personnalisé</li>
+          <li>Voir le détail complet du profil</li>
+          <li>Voir l'historique d'abonnement</li>
+          <li>Voir les 50 derniers events de sécurité</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(249,115,22,0.1);border-left:3px solid #f97316;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong style="color:#f97316">🔧 À améliorer / compléter</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li>Forcer rétrograder le plan (actuellement : upgrade seulement)</li>
+          <li>Supprimer définitivement le compte (RGPD)</li>
+          <li>Voir les paiements Stripe (endpoint existe, UI incomplète)</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(239,68,68,0.1);border-left:3px solid #ef4444;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong style="color:#ef4444">🆕 À créer</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li><strong>Envoyer email "Mot de passe oublié"</strong> — déclenche le lien Supabase Auth reset</li>
+          <li><strong>Bannir définitivement</strong> (différent de suspendre — bloque la reconnexion)</li>
+          <li><strong>Changer l'email</strong> d'un utilisateur</li>
+          <li><strong>Ajouter une note admin</strong> sur un user (ex: "a contacté le support 3x")</li>
+          <li><strong>Forcer déconnexion</strong> de toutes ses sessions actives</li>
+          <li><strong>Offrir des jours gratuits</strong> (extend trial)</li>
+          <li><strong>Onglet "Activité"</strong> — log complet en français (lié au tracking)</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GESTION PLANS & PACKAGES -->
+  <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:16px">
+    <div class="label">📦 Gestion des plans & packages</div>
+
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:12px">
+
+      <div style="background:rgba(34,197,94,0.1);border-left:3px solid #22c55e;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong>✅ Déjà existant</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li>Modifier les limites d'un plan (nb messages, CV, etc.)</li>
+          <li>Modifier les features incluses par plan</li>
+          <li>Modifier le prix affiché (display price)</li>
+          <li>Voir la distribution des plans (gratuit/starter/pro/premium)</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(249,115,22,0.1);border-left:3px solid #f97316;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong style="color:#f97316">🔧 À améliorer</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li>Éditeur de plan : preview en temps réel avant sauvegarde</li>
+          <li>Historique des modifications de plan (qui a changé quoi quand)</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(239,68,68,0.1);border-left:3px solid #ef4444;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong style="color:#ef4444">🆕 À créer</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li><strong>Appliquer un changement de plan à un groupe</strong> d'users (ex: tous les Pro → + 50 messages)</li>
+          <li><strong>Créer un nouveau plan</strong> depuis l'admin (sans toucher au code)</li>
+          <li><strong>Plan sur-mesure</strong> pour un user spécifique (limites personnalisées)</li>
+          <li><strong>Offrir un coupon depuis la fiche user</strong> (ex: -50% pour 3 mois)</li>
+          <li><strong>Voir quel % d'users utilise vraiment chaque feature</strong> par plan</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COMMUNICATION GLOBALE -->
+  <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:16px">
+    <div class="label">📧 Communication & notifications</div>
+
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:12px">
+
+      <div style="background:rgba(34,197,94,0.1);border-left:3px solid #22c55e;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong>✅ Déjà existant</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li>Envoyer un email individuel personnalisé</li>
+          <li>Notifications in-app (table user_notifications)</li>
+          <li>Coupons de réduction (page /admin/coupons)</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(239,68,68,0.1);border-left:3px solid #ef4444;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong style="color:#ef4444">🆕 À créer</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li><strong>Email en masse par segment</strong> (ex: email à tous les gratuits inactifs 7j)</li>
+          <li><strong>Notification in-app en masse</strong> (ex: "Nouvelle feature disponible !")</li>
+          <li><strong>Envoyer reset mot de passe</strong> depuis la fiche user</li>
+          <li><strong>Banner d'annonce</strong> site-wide (ex: maintenance prévue à 22h)</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECURITE & MODERATION -->
+  <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:16px">
+    <div class="label">🔒 Sécurité & modération</div>
+
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:12px">
+
+      <div style="background:rgba(34,197,94,0.1);border-left:3px solid #22c55e;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong>✅ Déjà existant</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li>Logs de sécurité (tentatives de connexion, anomalies)</li>
+          <li>Détection automatique des tentatives répétées</li>
+          <li>Toutes les actions admin sont loggées</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(239,68,68,0.1);border-left:3px solid #ef4444;padding:8px 12px;border-radius:0 6px 6px 0">
+        <strong style="color:#ef4444">🆕 À créer</strong>
+        <ul style="color:#a1a1aa;margin-top:4px;line-height:2">
+          <li><strong>Bannir une IP</strong> (bloquer une adresse spécifique)</li>
+          <li><strong>Liste noire d'emails</strong> (bloquer des domaines ex: yopmail)</li>
+          <li><strong>Voir les sessions actives</strong> d'un user (depuis quel appareil)</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- RÉSUMÉ PRIORITÉS -->
+<div style="margin-top:20px;padding:16px;background:rgba(255,255,255,0.04);border-radius:10px">
+  <div class="label">🎯 Ce qu'on ajoute dans ce projet (priorité haute)</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;font-size:12px">
+    <div style="padding:8px;background:rgba(239,68,68,0.08);border-radius:6px">
+      <strong style="color:#ef4444">Actions user essentielles</strong>
+      <ul style="color:#a1a1aa;margin-top:6px;line-height:2">
+        <li>Envoyer reset mot de passe</li>
+        <li>Bannir (blocage définitif)</li>
+        <li>Rétrograder le plan</li>
+        <li>Note admin sur user</li>
+        <li>Forcer déconnexion</li>
+        <li>Offrir jours gratuits</li>
+      </ul>
+    </div>
+    <div style="padding:8px;background:rgba(239,68,68,0.08);border-radius:6px">
+      <strong style="color:#ef4444">Packages & plans</strong>
+      <ul style="color:#a1a1aa;margin-top:6px;line-height:2">
+        <li>Plan sur-mesure par user</li>
+        <li>Coupon depuis fiche user</li>
+        <li>Action groupée sur segment</li>
+        <li>Usage réel par feature/plan</li>
+      </ul>
+    </div>
+    <div style="padding:8px;background:rgba(239,68,68,0.08);border-radius:6px">
+      <strong style="color:#ef4444">Communication</strong>
+      <ul style="color:#a1a1aa;margin-top:6px;line-height:2">
+        <li>Email en masse par segment</li>
+        <li>Notif in-app en masse</li>
+        <li>Banner annonce site-wide</li>
+      </ul>
+    </div>
+  </div>
+</div>

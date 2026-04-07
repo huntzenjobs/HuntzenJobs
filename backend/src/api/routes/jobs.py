@@ -219,10 +219,13 @@ def apply_advanced_filters(
                 target_types.add(normalized)
 
         if target_types:
+            # Pré-calculer les target_types en minuscule pour comparaison insensible à la casse
+            target_types_lower = {t.lower() for t in target_types}
+
             def _matches_contract(job: dict) -> bool:
                 ct = job.get("contract_type", "")
-                # Niveau 1 : match exact sur le type normalisé
-                if ct in target_types:
+                # Niveau 1 : match sur le type normalisé (insensible à la casse)
+                if ct and ct.lower() in target_types_lower:
                     return True
                 # Niveau 2 : si type vide, scanner titre + description
                 if not ct:
@@ -237,10 +240,17 @@ def apply_advanced_filters(
 
     # Filter by work schedule (heuristic on text)
     if work_schedule:
+        # Normalize frontend EN values to backend FR keys
+        schedule_value_map = {
+            "morning": "matin", "daytime": "journee", "evening": "soir",
+            "night": "nuit", "fulltime": "temps_plein",
+        }
+        work_schedule = [schedule_value_map.get(s.lower().strip(), s.lower().strip()) for s in work_schedule]
+
         # Special logic: "temps_plein" = EXCLUDE part-time offers (most jobs are full-time by default)
         # Other schedules = INCLUDE only jobs mentioning those keywords
-        has_temps_plein = "temps_plein" in [s.lower().strip() for s in work_schedule]
-        other_schedules = [s for s in work_schedule if s.lower().strip() != "temps_plein"]
+        has_temps_plein = "temps_plein" in work_schedule
+        other_schedules = [s for s in work_schedule if s != "temps_plein"]
 
         part_time_keywords = ["temps partiel", "part-time", "part time", "mi-temps", "half-time", "partiel"]
 
@@ -270,7 +280,9 @@ def apply_advanced_filters(
     # Filter by work days (heuristic on text)
     # If both "semaine" and "weekend" selected → no filter (show all)
     if work_days:
-        selected_days = [d.lower().strip() for d in work_days]
+        # Normalize frontend EN values to backend FR keys
+        days_value_map = {"weekdays": "semaine"}
+        selected_days = [days_value_map.get(d.lower().strip(), d.lower().strip()) for d in work_days]
         both_selected = "semaine" in selected_days and "weekend" in selected_days
 
         if not both_selected:
@@ -619,7 +631,7 @@ async def search_jobs_get(
         is_locked = await redis.set(lock_key, "1", ex=30, nx=True)
         if not is_locked:
             logger.info(f"Concurrent search detected (GET) for user {user_id}, waiting for cache...")
-            
+
             # Attendre que la recherche en cours peuple le cache (max 5s)
             for _ in range(10):
                 await asyncio.sleep(0.5)
@@ -628,7 +640,7 @@ async def search_jobs_get(
                     import orjson
                     logger.info(f"Concurrent search resolved (GET) via cache for user {user_id}")
                     return orjson.loads(raw)
-            
+
             # Si toujours pas de cache apres 5s
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -664,14 +676,16 @@ async def search_jobs_get(
             except Exception as e:
                 logger.warning(f"[cache] job search SET error: {e}")
 
-        # Apply advanced filters if any are provided (Premium feature)
-        has_filters = any([
-            industries, keywords, experience_level, salary_min, salary_max, company_size,
-            contract_types_list, work_schedule_list, work_days_list,
-        ])
-        if has_filters:
+        # Filtres basiques (accessibles à tous) : type contrat, jours, horaires
+        has_basic_filters = any([contract_types_list, work_schedule_list, work_days_list])
+        # Filtres avancés (Premium) : industries, mots-clés, expérience, salaire, taille
+        has_advanced_filters = any([industries, keywords, experience_level, salary_min, salary_max, company_size])
+
+        if has_advanced_filters:
             if user_id:
                 _require_feature_flag_sync(user_id, "advanced_filters", "Les filtres avances necessitent un plan superieur.")
+
+        if has_basic_filters or has_advanced_filters:
             jobs = result.get('jobs', [])
             filtered_jobs = apply_advanced_filters(
                 jobs=jobs,

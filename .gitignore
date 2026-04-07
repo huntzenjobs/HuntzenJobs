@@ -143,6 +143,7 @@ celerybeat.pid
 .env.test.local
 .env.production.local
 .env.production
+.env.railway
 .envrc
 .venv
 env/

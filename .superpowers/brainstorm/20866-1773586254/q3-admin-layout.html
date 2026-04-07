@@ -1,0 +1,91 @@
+<h2>Où mettre le centre de contrôle temps réel dans l'admin ?</h2>
+<p class="subtitle">Ton admin a déjà : Dashboard · Analytics · Users · Plans · Logs · Referrals · Support</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Nouvelle page dédiée "/admin/live"</h3>
+      <div class="mockup">
+        <div class="mock-nav">⚡ HuntZen Admin &nbsp;|&nbsp; Dashboard · Analytics · Users · Plans · <strong>🔴 Live</strong> · Logs · Support</div>
+        <div class="mockup-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px">
+          <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:12px">
+            <div class="label" style="color:#22c55e">● En ce moment</div>
+            <div style="font-size:13px;margin-top:8px;line-height:2">
+              👤 <strong>3 utilisateurs actifs</strong><br>
+              🤖 2 sur le Coach IA<br>
+              📄 1 en train d'analyser son CV
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:12px">
+            <div class="label" style="color:#f59e0b">⚠ Santé du service</div>
+            <div style="font-size:13px;margin-top:8px;line-height:2">
+              🟢 Coach IA — Normal<br>
+              🟢 Analyse CV — Normal<br>
+              🟢 Base de données — OK
+            </div>
+          </div>
+          <div style="grid-column:span 2;background:rgba(255,255,255,0.06);border-radius:8px;padding:12px">
+            <div class="label">Fil d'événements — en direct</div>
+            <div style="font-size:12px;margin-top:8px;line-height:2;color:#a1a1aa">
+              <span style="color:#22c55e">14:31:07</span> — Thomas vient de s'inscrire (plan Gratuit)<br>
+              <span style="color:#22c55e">14:30:44</span> — Marie a terminé une session Coach Nova (4 questions)<br>
+              <span style="color:#f59e0b">14:30:12</span> — Ahmed a atteint sa limite quotidienne de messages<br>
+              <span style="color:#22c55e">14:29:55</span> — Karim a analysé son CV — score 72/100
+            </div>
+          </div>
+        </div>
+      </div>
+      <p><em>Page dédiée = focus total. Parfait pour surveiller en temps réel.</em></p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Intégré dans le Dashboard existant</h3>
+      <div class="mockup">
+        <div class="mock-nav">⚡ HuntZen Admin &nbsp;|&nbsp; <strong>Dashboard</strong> · Analytics · Users · Plans · Logs · Support</div>
+        <div class="mockup-body" style="padding:12px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+            <div style="background:rgba(255,255,255,0.06);border-radius:6px;padding:8px;font-size:11px;text-align:center">
+              <div style="font-size:18px;font-weight:bold">27</div>
+              <div style="color:#a1a1aa">Utilisateurs</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.06);border-radius:6px;padding:8px;font-size:11px;text-align:center">
+              <div style="font-size:18px;font-weight:bold">203€</div>
+              <div style="color:#a1a1aa">MRR</div>
+            </div>
+            <div style="background:rgba(22,163,74,0.2);border-radius:6px;padding:8px;font-size:11px;text-align:center;border:1px solid #22c55e">
+              <div style="font-size:18px;font-weight:bold;color:#22c55e">3</div>
+              <div style="color:#22c55e">● Actifs maintenant</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.06);border-radius:6px;padding:8px;font-size:11px;text-align:center">
+              <div style="font-size:18px;font-weight:bold">9</div>
+              <div style="color:#a1a1aa">Payants</div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:10px;font-size:11px">
+            <div class="label">Derniers événements</div>
+            <div style="margin-top:6px;color:#a1a1aa;line-height:1.8">
+              <span style="color:#22c55e">14:31</span> Thomas s'est inscrit &nbsp; <span style="color:#22c55e">14:30</span> Marie — session Coach terminée &nbsp; <span style="color:#f59e0b">14:30</span> Limite Ahmed atteinte
+            </div>
+          </div>
+        </div>
+      </div>
+      <p><em>Dashboard enrichi = tout au même endroit, pas besoin de changer de page.</em></p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Les deux — bloc live sur le Dashboard + page Live complète</h3>
+      <p>Dashboard : aperçu rapide (3 actifs maintenant, 2 derniers événements)<br>
+      Page <strong>/admin/live</strong> : vue complète avec fil d'événements complet + santé détaillée</p>
+      <p><em>Le dashboard te donne le pouls, la page Live te donne le détail quand tu veux creuser.</em></p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px">💡 Ma recommandation : <strong>Option C</strong> — aperçu sur le dashboard + page dédiée pour surveiller en détail.</p>

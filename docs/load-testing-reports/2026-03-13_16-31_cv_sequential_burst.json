@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "scenario": "cv_sequential",
+    "mode": "burst",
+    "users": 1,
+    "date": "2026-03-13T16:31:10.206245",
+    "duration_s": 30.7
+  },
+  "steps": {},
+  "breakdown_level": 1,
+  "bottleneck": null,
+  "error_rate": 1.0,
+  "recommendations": [
+    "Taux d'erreur 100% > 20% à 1 users — seuil de rupture identifié."
+  ]
+}

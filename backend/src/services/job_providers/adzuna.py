@@ -69,11 +69,23 @@ class AdzunaProvider(BaseJobProvider):
             logger.debug(f"[{self.name}] Missing credentials")
             return []
 
-        # Check country support
+        # Check country support (with fallback for unsupported countries)
         cc = country_code.lower()
+        # Belgique, Luxembourg : Adzuna ne les supporte pas directement.
+        # Chercher via les pays voisins qui indexent des offres frontalières.
+        _COUNTRY_FALLBACK = {
+            "be": "fr",  # Belgique → France (marché francophone partagé)
+            "lu": "fr",  # Luxembourg → France
+            "ch": "de",  # Suisse → Allemagne
+        }
         if not self.supports_country(cc):
-            logger.debug(f"[{self.name}] Country {cc} not supported")
-            return []
+            fallback = _COUNTRY_FALLBACK.get(cc)
+            if fallback:
+                logger.info(f"[{self.name}] Country {cc} not supported, using {fallback} fallback")
+                cc = fallback
+            else:
+                logger.debug(f"[{self.name}] Country {cc} not supported")
+                return []
 
         url = f"{self.BASE_URL}/{cc}/search/1"
         params = {
