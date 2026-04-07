@@ -20,7 +20,9 @@ from src.config.settings import settings
 from src.services.job_providers import (
     AdzunaProvider,
     FranceTravailProvider,
+    JoobleProvider,
     JSearchProvider,
+    LeForemProvider,
     RemoteOKProvider,
     SerpAPIProvider,
     aggregate_jobs,
@@ -80,16 +82,18 @@ class JobScoutAgent(BaseAgent):
         )
         super().__init__(config)
 
-        # Initialize providers
+        # Initialize providers (all countries)
         self.providers = [
             AdzunaProvider(),
             SerpAPIProvider(),
             JSearchProvider(),
             RemoteOKProvider(),
+            JoobleProvider(),
         ]
 
-        # France-only provider (activated conditionally in run())
+        # Country-specific providers (activated conditionally in run())
         self.france_travail = FranceTravailProvider()
+        self.le_forem = LeForemProvider()
 
         # Initialize sub-agents
         self._init_sub_agents()
@@ -190,10 +194,13 @@ class JobScoutAgent(BaseAgent):
             # Step 2: Filter providers based on settings
             active_providers = list(self.providers)
 
-            # Add France Travail only for French searches
+            # Add country-specific providers
             if country_code.lower() == "fr":
                 active_providers.append(self.france_travail)
                 logger.info(f"[{self.name}] France Travail activated (country=fr)")
+            elif country_code.lower() == "be":
+                active_providers.append(self.le_forem)
+                logger.info(f"[{self.name}] Le Forem activated (country=be)")
 
             # Remove RemoteOK if user doesn't want remote jobs
             if not include_remote:
