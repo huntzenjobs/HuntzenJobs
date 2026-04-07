@@ -44,7 +44,7 @@ import {
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface SidebarProps {
@@ -57,13 +57,16 @@ export function Sidebar({ className }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const [isCandidaturesNew, setIsCandidaturesNew] = useState(() => {
+  const [isCandidaturesNew, setIsCandidaturesNew] = useState(false);
+
+  // Hydrate from localStorage after mount (avoids hydration #418)
+  useEffect(() => {
     try {
-      return !localStorage.getItem("huntzen_candidatures_visited");
-    } catch {
-      return false;
-    }
-  });
+      if (!localStorage.getItem("huntzen_candidatures_visited")) {
+        setIsCandidaturesNew(true);
+      }
+    } catch {}
+  }, []);
   const t = useTranslations("sidebar");
 
   // Use auth context as single source of truth
