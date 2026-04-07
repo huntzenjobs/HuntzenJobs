@@ -312,7 +312,11 @@
           "PDF export",
           "Advanced filters"
         ],
-        "unavailable": ["Email alerts", "CV History", "Interview simulation"]
+        "unavailable": [
+          "Email alerts",
+          "CV History",
+          "Interview simulation"
+        ]
       },
       "starter": {
         "name": "ACTIVE SEARCH",
@@ -330,7 +334,10 @@
           "Advanced filters",
           "CV History"
         ],
-        "unavailable": ["Interview simulation", "Email alerts"]
+        "unavailable": [
+          "Interview simulation",
+          "Email alerts"
+        ]
       },
       "pro": {
         "name": "ACCELERATOR",
@@ -2943,11 +2950,13 @@
     "errorGeneric": "Error searching for contacts",
     "rgpdDisclaimer": "This information comes from public sources (LinkedIn, company websites). Use responsibly in compliance with GDPR.",
     "copyEmail": "Copy {email}",
-    "category.hr": "Recruiter",
-    "category.pair": "Future colleague",
-    "category.campus": "Campus",
-    "category.tech": "Tech",
-    "category.other": "Contact",
-    "profileCount": "{count} profile(s)"
+    "profileCount": "{count} profile(s)",
+    "category": {
+      "hr": "Recruiter",
+      "pair": "Future colleague",
+      "campus": "Campus",
+      "tech": "Tech",
+      "other": "Contact"
+    }
   }
 }
