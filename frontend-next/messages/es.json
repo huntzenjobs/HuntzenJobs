@@ -2387,8 +2387,8 @@
     "dailyUsageTitle": "Cuotas diarias",
     "generalUsageTitle": "Cuotas generales",
     "resetAtMidnight": "Se restablece a medianoche",
-    "atsScore": "Puntuación ATS",
-    "matchingScore": "Matching de empleo",
+    "atsScore": "Score ATS",
+    "matchingScore": "Matching Job",
     "customCv": "CV personalizado",
     "recruiterSearch": "Búsquedas de reclutador (LinkedIn)",
     "jobSearches": "Búsquedas de empleo",
@@ -2408,10 +2408,7 @@
     },
     "savedJobs": "Empleos guardados",
     "assistantMessages": "Mensajes del Asistente",
-    "atsScore": "Score ATS",
-    "matchingScore": "Matching Job",
-    "cvAdapt": "Adaptación CV",
-    "customCv": "CV personalizado"
+    "cvAdapt": "Adaptación CV"
   },
   "notifications": {
     "title": "Notifications",
@@ -2949,11 +2946,13 @@
     "errorGeneric": "Error al buscar contactos",
     "rgpdDisclaimer": "Esta informacion proviene de fuentes publicas (LinkedIn, sitios web de empresas). Usala de manera responsable conforme al RGPD.",
     "copyEmail": "Copiar {email}",
-    "category.hr": "Reclutador",
-    "category.pair": "Futuro colega",
-    "category.campus": "Campus",
-    "category.tech": "Tech",
-    "category.other": "Contacto",
-    "profileCount": "{count} perfil(es)"
+    "profileCount": "{count} perfil(es)",
+    "category": {
+      "hr": "Reclutador",
+      "pair": "Futuro colega",
+      "campus": "Campus",
+      "tech": "Tech",
+      "other": "Contacto"
+    }
   }
 }

@@ -1926,7 +1926,15 @@
     "contractTypesLabel": "Types de contrat",
     "allContracts": "Tous les contrats",
     "selectedCount": "selectionne(s)",
-    "contractType_interim": "Interim",
+    "contractType_cdi": "CDI",
+    "contractType_cdd": "CDD",
+    "contractType_freelance": "Freelance",
+    "contractType_stage": "Stage",
+    "contractType_alternance": "Alternance",
+    "contractType_apprentissage": "Apprentissage",
+    "contractType_interim": "Intérim",
+    "contractType_temps partiel": "Temps partiel",
+    "contractType_remote": "Télétravail",
     "workDaysLabel": "Jours de travail",
     "workDays_weekdays": "Semaine (lun-ven)",
     "workDays_weekend": "Weekend (sam-dim)",
@@ -2946,11 +2954,13 @@
     "errorGeneric": "Erreur lors de la recherche de contacts",
     "rgpdDisclaimer": "Ces informations proviennent de sources publiques (LinkedIn, sites d'entreprise). Utilisez-les de manière responsable conformément au RGPD.",
     "copyEmail": "Copier {email}",
-    "category.hr": "Recruteur",
-    "category.pair": "Futur collègue",
-    "category.campus": "Campus",
-    "category.tech": "Tech",
-    "category.other": "Contact",
+    "category": {
+      "hr": "Recruteur",
+      "pair": "Futur collègue",
+      "campus": "Campus",
+      "tech": "Tech",
+      "other": "Contact"
+    },
     "profileCount": "{count} profil(s)"
   }
 }

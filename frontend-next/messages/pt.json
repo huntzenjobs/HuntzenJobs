@@ -2388,8 +2388,8 @@
     "generalUsageTitle": "Cotas gerais",
     "resetAtMidnight": "Reinicia à meia-noite",
     "atsScore": "Pontuação ATS",
-    "matchingScore": "Matching de emprego",
-    "customCv": "CV personalizado",
+    "matchingScore": "Matching de Vaga",
+    "customCv": "CV Personalizado",
     "recruiterSearch": "Pesquisas de recrutador (LinkedIn)",
     "jobSearches": "Buscas de Emprego",
     "unlockTitle": "Desbloqueie todo o potencial do HuntZen",
@@ -2408,10 +2408,7 @@
     },
     "savedJobs": "Vagas Salvas",
     "assistantMessages": "Mensagens do Assistente",
-    "atsScore": "Pontuação ATS",
-    "matchingScore": "Matching de Vaga",
-    "cvAdapt": "Adaptação de CV",
-    "customCv": "CV Personalizado"
+    "cvAdapt": "Adaptação de CV"
   },
   "notifications": {
     "title": "Notifications",
@@ -2949,11 +2946,13 @@
     "errorGeneric": "Erro ao pesquisar contatos",
     "rgpdDisclaimer": "Estas informações provêm de fontes públicas (LinkedIn, sites de empresas). Use de forma responsável em conformidade com o RGPD.",
     "copyEmail": "Copiar {email}",
-    "category.hr": "Recrutador",
-    "category.pair": "Futuro colega",
-    "category.campus": "Campus",
-    "category.tech": "Tech",
-    "category.other": "Contato",
-    "profileCount": "{count} perfil(is)"
+    "profileCount": "{count} perfil(is)",
+    "category": {
+      "hr": "Recrutador",
+      "pair": "Futuro colega",
+      "campus": "Campus",
+      "tech": "Tech",
+      "other": "Contato"
+    }
   }
 }
