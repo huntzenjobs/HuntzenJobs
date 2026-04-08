@@ -104,7 +104,7 @@ class CareerjetProvider(BaseJobProvider):
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(self.BASE_URL, params=params, headers=headers)
             if resp.status_code != 200:
-                logger.error(f"[{self.name}] HTTP {resp.status_code}: {resp.text[:200]}")
+                logger.error(f"[{self.name}] HTTP {resp.status_code} body={resp.text}")
                 return []
             data = resp.json()
 
