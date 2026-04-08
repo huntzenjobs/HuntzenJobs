@@ -9,14 +9,17 @@ Features:
 - Native fr_FR, fr_BE, fr_CH, fr_CA, fr_LU locales
 - 40M+ job listings from 70,000+ sites
 - Free, 1000 requests/hour
-- No API key required (affiliate ID only)
+- Basic Auth with API key
 """
 
 import logging
+import re
+from base64 import b64encode
 from typing import Any
 
 import httpx
 
+from src.config.settings import settings
 from src.services.job_providers.base import (
     BaseJobProvider,
     handle_provider_errors,
@@ -48,15 +51,14 @@ class CareerjetProvider(BaseJobProvider):
     """
     Careerjet job aggregator — strong francophone coverage.
 
-    Native support for fr_FR, fr_BE, fr_CH, fr_CA, fr_LU.
-    Returns French job titles and descriptions for francophone countries.
+    Uses Basic Auth (API key as username, empty password).
+    Requires user_ip, user_agent, and Referer header.
     """
 
     name = "careerjet"
     supported_countries = set()  # All countries via locale mapping
 
-    BASE_URL = "https://public.api.careerjet.net/search"
-    AFFID = "213e213hd12"  # Public affiliate ID for API access
+    BASE_URL = "https://search.api.careerjet.net/v4/query"
 
     @handle_provider_errors
     async def search(
@@ -68,29 +70,49 @@ class CareerjetProvider(BaseJobProvider):
         **kwargs,
     ) -> list[dict[str, Any]]:
         """Search Careerjet for jobs with native locale support."""
-        locale = _COUNTRY_TO_LOCALE.get(country_code.lower(), "en_US")
+        api_key = settings.careerjet_affid
+        if not api_key:
+            logger.debug(f"[{self.name}] Missing Careerjet API key (CAREERJET_AFFID)")
+            return []
 
-        params = {
+        locale = _COUNTRY_TO_LOCALE.get(country_code.lower(), "en_GB")
+
+        params: dict[str, Any] = {
             "keywords": query,
             "location": location,
             "locale_code": locale,
-            "affid": self.AFFID,
-            "pagesize": min(max_results, 99),
+            "page_size": min(max_results, 99),
             "page": 1,
             "sort": "relevance",
-            "contracttype": self._map_contract(kwargs.get("contract_type", "")),
+            "user_ip": "195.154.0.1",
+            "user_agent": "Mozilla/5.0 (compatible; HuntZen/3.0)",
         }
 
-        # Remove empty params
-        params = {k: v for k, v in params.items() if v}
+        # Contract type filter
+        contract_mapped = self._map_contract(kwargs.get("contract_type", ""))
+        if contract_mapped:
+            params["contract_type"] = contract_mapped
+
+        # Basic Auth: API key as username, empty password
+        credentials = b64encode(f"{api_key}:".encode()).decode()
+        headers = {
+            "Authorization": f"Basic {credentials}",
+            "Content-Type": "application/json",
+            "Referer": "https://www.huntzenjobs.com/jobs",
+        }
 
         async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(self.BASE_URL, params=params)
+            resp = await client.get(self.BASE_URL, params=params, headers=headers)
             resp.raise_for_status()
             data = resp.json()
 
+        # Handle location mode (no results, just location suggestions)
+        if data.get("type") == "LOCATIONS":
+            logger.info(f"[{self.name}] Location mode: {data.get('message')}")
+            return []
+
         if data.get("type") == "ERROR":
-            logger.warning(f"[{self.name}] API error: {data.get('error')}")
+            logger.warning(f"[{self.name}] API error: {data.get('message')}")
             return []
 
         raw_jobs = data.get("jobs", [])
@@ -102,26 +124,24 @@ class CareerjetProvider(BaseJobProvider):
 
     def _normalize_job(self, item: dict) -> dict[str, Any]:
         """Normalize a Careerjet job to the standard format."""
-        import re
-
         # Nettoyer la description HTML
         description = item.get("description", "") or ""
         description = re.sub(r"<[^>]+>", "", description).strip()
 
         # Salaire
         salary = item.get("salary") or None
-        if salary and salary.strip() == "":
+        if salary and isinstance(salary, str) and salary.strip() == "":
             salary = None
 
         return {
-            "id": f"careerjet_{item.get('url', '').split('/')[-1][:20] or 'unknown'}",
+            "id": f"cj_{hash(item.get('url', '')) % 10**8}",
             "title": item.get("title", ""),
             "company": item.get("company", ""),
             "location": item.get("locations", ""),
             "description": description[:500] if description else "",
             "url": item.get("url", ""),
             "salary": salary,
-            "contract_type": normalize_contract_type(item.get("type", "")),
+            "contract_type": normalize_contract_type(item.get("salary_type", "")),
             "source": self.name,
             "posted_date": item.get("date"),
             "url_is_direct": False,
@@ -129,7 +149,7 @@ class CareerjetProvider(BaseJobProvider):
 
     @staticmethod
     def _map_contract(contract_type: str) -> str:
-        """Map normalized contract type to Careerjet contracttype param."""
+        """Map normalized contract type to Careerjet contract_type param."""
         if not contract_type:
             return ""
         mapping = {
