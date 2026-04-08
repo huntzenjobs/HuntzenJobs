@@ -103,7 +103,9 @@ class CareerjetProvider(BaseJobProvider):
 
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(self.BASE_URL, params=params, headers=headers)
-            resp.raise_for_status()
+            if resp.status_code != 200:
+                logger.error(f"[{self.name}] HTTP {resp.status_code}: {resp.text[:200]}")
+                return []
             data = resp.json()
 
         # Handle location mode (no results, just location suggestions)
