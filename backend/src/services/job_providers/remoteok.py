@@ -95,6 +95,8 @@ class RemoteOKProvider(BaseJobProvider):
             description = BeautifulSoup(raw_desc, "html.parser").get_text(
                 separator="\n", strip=True
             )
+            # Fix encoding artifacts (Â, Ã, etc.)
+            description = description.replace("Â", "").replace("\xa0", " ").strip()
         else:
             description = None
         url = item.get("url")

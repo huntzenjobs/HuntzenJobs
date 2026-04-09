@@ -444,9 +444,14 @@ class JobScoutAgent(BaseAgent):
                 continue
 
             # Check 2: Fuzzy match (partial word match like "boulang" in "boulangerie")
+            # Min 3 chars for substring match to avoid "de" matching "developer"
             has_fuzzy = False
             for qw in query_words:
+                if len(qw) < 3:
+                    continue
                 for tw in title_words:
+                    if len(tw) < 3:
+                        continue
                     if qw in tw or tw in qw:
                         has_fuzzy = True
                         break
