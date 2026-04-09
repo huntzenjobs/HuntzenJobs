@@ -88,24 +88,41 @@ def _normalize_analysis_result(raw_result: Any) -> dict[str, Any]:
     ats_raw = raw_result.get("ats_score")
     ats_details = raw_result.get("ats_details") or {}
 
+    # Le LLM retourne des scores sur des max différents : format/20, keywords/30, experience/25, skills/15
+    # On convertit en pourcentage (0-100) pour le frontend
+    def _to_pct(value: int, max_score: int) -> int:
+        """Convertit un score brut en pourcentage 0-100."""
+        if max_score <= 0:
+            return 0
+        # Si la valeur est déjà > max_score, elle est probablement déjà en pourcentage
+        if value > max_score:
+            return min(100, value)
+        return min(100, round(value * 100 / max_score))
+
     if isinstance(ats_raw, dict):
         overall = _safe_int(
             ats_raw.get("overall_score", ats_raw.get("total", 0)),
             0,
         )
-        formatting = _safe_int(
+        formatting_raw = _safe_int(
             ats_raw.get("formatting_score", ats_raw.get("format_score", 0)),
             0,
         )
-        keywords = _safe_int(ats_raw.get("keywords_score", 0), 0)
-        structure = _safe_int(ats_raw.get("structure_score", ats_raw.get("experience_score", 0)), 0)
-        readability = _safe_int(ats_raw.get("readability_score", ats_raw.get("skills_score", 0)), 0)
+        keywords_raw = _safe_int(ats_raw.get("keywords_score", 0), 0)
+        structure_raw = _safe_int(ats_raw.get("structure_score", ats_raw.get("experience_score", 0)), 0)
+        readability_raw = _safe_int(ats_raw.get("readability_score", ats_raw.get("skills_score", 0)), 0)
     else:
         overall = _safe_int(ats_raw if ats_raw is not None else raw_result.get("overall_score"), 0)
-        formatting = _safe_int(ats_details.get("formatting_score", ats_details.get("format_score", 0)), 0)
-        keywords = _safe_int(ats_details.get("keywords_score", 0), 0)
-        structure = _safe_int(ats_details.get("structure_score", ats_details.get("experience_score", 0)), 0)
-        readability = _safe_int(ats_details.get("readability_score", ats_details.get("skills_score", 0)), 0)
+        formatting_raw = _safe_int(ats_details.get("formatting_score", ats_details.get("format_score", 0)), 0)
+        keywords_raw = _safe_int(ats_details.get("keywords_score", 0), 0)
+        structure_raw = _safe_int(ats_details.get("structure_score", ats_details.get("experience_score", 0)), 0)
+        readability_raw = _safe_int(ats_details.get("readability_score", ats_details.get("skills_score", 0)), 0)
+
+    # Convertir en pourcentage (format/20, keywords/30, experience/25, skills/15)
+    formatting = _to_pct(formatting_raw, 20)
+    keywords = _to_pct(keywords_raw, 30)
+    structure = _to_pct(structure_raw, 25)
+    readability = _to_pct(readability_raw, 15)
 
     return {
         **raw_result,
