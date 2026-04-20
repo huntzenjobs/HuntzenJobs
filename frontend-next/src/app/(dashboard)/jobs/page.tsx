@@ -1237,7 +1237,17 @@ export default function JobsPage() {
       result = result.filter((j) => quickFilters.sources.includes(j.source));
     }
     if (quickFilters.contractTypes.length > 0) {
-      const normalizedFilters = quickFilters.contractTypes.map((c) => c.toLowerCase());
+      // Map frontend filter values → backend normalized contract_type values
+      const ALIASES: Record<string, string> = {
+        internship: "stage",
+        apprentissage: "alternance",
+        cdi_partial: "temps partiel",
+        cdd_partial: "temps partiel",
+      };
+      const normalizedFilters = quickFilters.contractTypes.map((c) => {
+        const lower = c.toLowerCase();
+        return ALIASES[lower] ?? lower;
+      });
       const hasAlternance = normalizedFilters.includes("alternance");
       result = result.filter((j) => {
         const jobType = j.contract_type?.toLowerCase();
