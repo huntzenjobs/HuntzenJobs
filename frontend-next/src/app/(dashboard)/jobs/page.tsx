@@ -1237,25 +1237,23 @@ export default function JobsPage() {
       result = result.filter((j) => quickFilters.sources.includes(j.source));
     }
     if (quickFilters.contractTypes.length > 0) {
-      const hasAlternance = quickFilters.contractTypes.includes("alternance");
+      const normalizedFilters = quickFilters.contractTypes.map((c) => c.toLowerCase());
+      const hasAlternance = normalizedFilters.includes("alternance");
       result = result.filter((j) => {
+        const jobType = j.contract_type?.toLowerCase();
         if (hasAlternance) {
           const text = `${j.title ?? ""} ${j.description ?? ""}`.toLowerCase();
           const isAlternance =
-            j.contract_type === "alternance" ||
+            jobType === "alternance" ||
             text.includes("alternance") ||
             text.includes("apprenti");
-          if (quickFilters.contractTypes.length === 1) return isAlternance;
+          if (normalizedFilters.length === 1) return isAlternance;
           return (
             isAlternance ||
-            (j.contract_type != null &&
-              quickFilters.contractTypes.includes(j.contract_type))
+            (jobType != null && normalizedFilters.includes(jobType))
           );
         }
-        return (
-          j.contract_type != null &&
-          quickFilters.contractTypes.includes(j.contract_type)
-        );
+        return jobType != null && normalizedFilters.includes(jobType);
       });
     }
     if (quickFilters.maxDays !== null) {
