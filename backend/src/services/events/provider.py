@@ -666,6 +666,7 @@ async def search_job_fairs(
     public: str = "",
     event_type: str = "",
     format_type: str = "",
+    country: str = "",
     include_mock: bool = False
 ) -> dict[str, Any]:
     """Aggregate professional events from multiple sources."""
@@ -698,6 +699,32 @@ async def search_job_fairs(
     public = PUBLIC_MAP.get(public.lower().strip(), public) if public else ""
     format_type = FORMAT_MAP.get(format_type.lower().strip(), format_type) if format_type else ""
     sector = SECTOR_MAP.get(sector.lower().strip(), sector) if sector else ""
+
+    # International mode: use SerpAPI for the requested country
+    if country and country.lower() != "france":
+        from src.services.events.serpapi import fetch_events_for_country
+        international = await fetch_events_for_country(country)
+        filtered_intl = international
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        filtered_intl = [e for e in filtered_intl if (e.get("date_start") or "") >= today]
+
+        if sector and sector != "all":
+            filtered_intl = [e for e in filtered_intl if e.get("sector") in (sector, "all")]
+        if public and public != "all":
+            filtered_intl = [e for e in filtered_intl if e.get("public") in (public, "all")]
+        if event_type:
+            filtered_intl = [e for e in filtered_intl if e.get("event_type") == event_type]
+        if format_type:
+            filtered_intl = [e for e in filtered_intl if e.get("format") == format_type]
+
+        filtered_intl.sort(key=lambda e: e.get("date_start", ""))
+        return {
+            "success": True,
+            "events": filtered_intl,
+            "count": len(filtered_intl),
+            "sources": ["serpapi"],
+        }
 
     tasks = [
         ("france_travail", scrape_france_travail_events(region, sector)),
