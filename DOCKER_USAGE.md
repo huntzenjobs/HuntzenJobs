@@ -1,10 +1,10 @@
-# 🐳 Guide d'Utilisation Docker - HuntZen JobSearch
+# Guide d'Utilisation Docker - HuntZen JobSearch
 
 Guide complet pour lancer et gérer le projet avec Docker.
 
 ---
 
-## 📋 Prérequis
+## Prérequis
 
 - Docker Desktop installé et lancé
 - Fichier `.env` configuré à la racine du projet
@@ -12,7 +12,7 @@ Guide complet pour lancer et gérer le projet avec Docker.
 
 ---
 
-## 🚀 Option 1 : Lancer TOUT avec Docker Compose (Recommandé)
+## Option 1 : Lancer tout avec Docker Compose (recommandé)
 
 ```bash
 # 1. Vérifier que le fichier .env existe à la racine
@@ -41,7 +41,7 @@ docker compose down
 
 ---
 
-## 🔧 Option 2 : Lancer Backend et Frontend SÉPARÉMENT
+## Option 2 : Lancer backend et frontend séparément
 
 ### Backend uniquement
 
@@ -85,7 +85,7 @@ docker compose logs -f frontend
 
 ---
 
-## ⚡ Option 3 : Build Rapide Sans Cache
+## Option 3 : Build sans cache
 
 ```bash
 # Si tu as modifié du code et veux rebuilder proprement
@@ -100,7 +100,7 @@ docker compose up
 
 ---
 
-## 🔄 Option 4 : Dev Mode (Hot Reload Activé)
+## Option 4 : Dev mode (hot reload)
 
 C'est **déjà configuré** dans docker-compose.yml !
 
@@ -121,7 +121,7 @@ docker compose up
 
 ---
 
-## 🔍 Commandes Utiles de Debugging
+## Commandes utiles de debugging
 
 ### Voir l'état des conteneurs
 
@@ -213,7 +213,7 @@ docker stats huntzen-frontend
 
 ---
 
-## 🧪 Tests de Vérification
+## Tests de vérification
 
 ### 1. Backend Health Check
 
@@ -263,7 +263,7 @@ curl -f http://localhost:8000/docs || echo "❌ Docs KO"
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Problème : Port déjà utilisé
 
@@ -334,7 +334,7 @@ docker compose restart backend
 
 ---
 
-## 📊 Commandes Avancées
+## Commandes avancées
 
 ### Rebuild un seul service
 
@@ -390,7 +390,7 @@ docker load < backend.tar.gz
 
 ---
 
-## 🎯 Workflow Recommandé
+## Workflow recommandé
 
 ### Développement quotidien
 
@@ -441,7 +441,7 @@ docker compose logs frontend | grep ERROR
 
 ---
 
-## 📝 Variables d'Environnement Requises
+## Variables d'environnement requises
 
 Fichier `.env` à la racine du projet :
 
@@ -472,7 +472,7 @@ UPSTASH_REDIS_REST_TOKEN=your_token_here
 
 ---
 
-## 🚀 Prêt pour la Production
+## Déploiement en production
 
 Pour déployer en production, voir [DEPLOYMENT.md](./DEPLOYMENT.md).
 
@@ -485,7 +485,7 @@ Pour déployer en production, voir [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ---
 
-## 📧 Support
+## Support
 
 En cas de problème :
 1. Vérifier les logs : `docker compose logs -f`

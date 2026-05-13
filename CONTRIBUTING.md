@@ -1,10 +1,10 @@
-# 🤝 Contributing to HuntZen
+# Contributing to HuntZen
 
 Thank you for your interest in contributing to HuntZen! This document provides guidelines and instructions for contributing.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
@@ -18,7 +18,7 @@ Thank you for your interest in contributing to HuntZen! This document provides g
 
 ---
 
-## 📜 Code of Conduct
+## Code of Conduct
 
 ### Our Pledge
 
@@ -40,7 +40,7 @@ We are committed to providing a welcoming and inspiring community for all. We ex
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Fork and Clone
 
@@ -103,7 +103,7 @@ git checkout -b fix/bug-description
 
 ---
 
-## 🔄 Development Workflow
+## Development Workflow
 
 ### 1. Make Changes
 
@@ -163,7 +163,7 @@ git push origin feature/your-feature-name
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ### Backend Architecture
 
@@ -231,7 +231,7 @@ frontend-next/src/
 
 ---
 
-## 📝 Coding Standards
+## Coding Standards
 
 ### Python (Backend)
 
@@ -374,7 +374,7 @@ export function JobCard({ job, onSave }: JobCardProps) {
 
 ---
 
-## ✅ Testing Requirements
+## Testing Requirements
 
 ### Backend Testing
 
@@ -461,7 +461,7 @@ test('user can search for jobs', async ({ page }) => {
 
 ---
 
-## 📝 Commit Guidelines
+## Commit Guidelines
 
 ### Commit Message Format
 
@@ -514,7 +514,7 @@ Closes #42"
 
 ---
 
-## 🔀 Pull Request Process
+## Pull Request Process
 
 ### 1. Pre-PR Checklist
 
@@ -579,7 +579,7 @@ Closes #(issue number)
 
 ---
 
-## 🐛 Issue Reporting
+## Issue Reporting
 
 ### Bug Reports
 
@@ -630,25 +630,25 @@ Any other information
 
 ---
 
-## 🎯 Areas to Contribute
+## Areas to Contribute
 
 ### High Priority
 
-- 🐛 **Bug Fixes**: Check [bug reports](https://github.com/huntzenjobs/HuntzenJobs/labels/bug)
-- 📚 **Documentation**: Improve guides and API docs
-- ✅ **Tests**: Increase test coverage
-- ♿ **Accessibility**: Improve WCAG compliance
+- **Bug Fixes**: Check [bug reports](https://github.com/huntzenjobs/HuntzenJobs/labels/bug)
+- **Documentation**: Improve guides and API docs
+- **Tests**: Increase test coverage
+- **Accessibility**: Improve WCAG compliance
 
 ### Feature Ideas
 
-- 🌍 **Internationalization**: Add new language support
-- 🔌 **Integrations**: Add new job provider APIs
-- 🎨 **UI/UX**: Enhance user interface
-- 🤖 **AI Prompts**: Improve agent prompts
+- **Internationalization**: Add new language support
+- **Integrations**: Add new job provider APIs
+- **UI/UX**: Enhance user interface
+- **AI Prompts**: Improve agent prompts
 
 ---
 
-## 📧 Questions?
+## Questions?
 
 - **GitHub Discussions**: [Ask questions](https://github.com/huntzenjobs/HuntzenJobs/discussions)
 - **Discord** (coming soon)
@@ -656,11 +656,11 @@ Any other information
 
 ---
 
-## 🙏 Recognition
+## Recognition
 
 Contributors will be:
 - Listed in our [Contributors](https://github.com/huntzenjobs/HuntzenJobs/graphs/contributors) page
 - Mentioned in release notes for significant contributions
 - Invited to join our contributor community
 
-Thank you for making HuntZen better! 🚀
+Thank you for making HuntZen better.
