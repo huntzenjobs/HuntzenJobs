@@ -1,6 +1,6 @@
-# CLAUDE.md — frontend-next/
+# AGENTS.md — frontend-next/
 
-> Conventions spécifiques au frontend Next.js 14. Complète le CLAUDE.md racine.
+> Conventions spécifiques au frontend Next.js 14. Complète le AGENTS.md racine.
 > Tout est basé sur l'exploration réelle du code.
 
 ---
