@@ -22,7 +22,7 @@ Complete production deployment guide for HuntZen AI Career Platform.
 
 ```
 ┌─────────────────┐
-│   Vercel CDN    │  ← Next.js 15 Frontend (Static + SSR)
+│   Vercel CDN    │  ← Next.js 14 Frontend (Static + SSR)
 └────────┬────────┘
          │
          ├─────────────────────────────────┐
@@ -47,7 +47,7 @@ Complete production deployment guide for HuntZen AI Career Platform.
 ```
 
 **Components:**
-- **Frontend**: Vercel (Next.js 15 with SSR + Static)
+- **Frontend**: Vercel (Next.js 14 with SSR + Static)
 - **Backend**: Modal Labs (Serverless FastAPI)
 - **Database**: Supabase (PostgreSQL + Auth + Storage)
 - **LLM**: Groq (Llama 3.3 70B + Llama 3.1 8B)
