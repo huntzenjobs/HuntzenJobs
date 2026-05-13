@@ -346,3 +346,6 @@ backups/*.sql
 
 # Notes de travail locales
 docs/superpowers/
+
+# Pull Railway local artifacts
+*.env.railway
