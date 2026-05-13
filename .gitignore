@@ -332,3 +332,17 @@ playwright-report-production/
 !supabase/migrations/*.sql
 !backend/USEFUL_SQL_QUERIES.sql
 .worktrees/
+
+# Outils de dev locaux (perso)
+.claude/
+.localcoder/
+
+# Backups SQL (gardés en local seulement)
+backups/*.sql
+
+# Fichiers backup résiduels
+*.bak
+*.backup
+
+# Notes de travail locales
+docs/superpowers/
