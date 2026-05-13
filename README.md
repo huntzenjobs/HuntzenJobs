@@ -1,4 +1,4 @@
-# 🎯 HuntZen - AI-Powered Career Platform
+# HuntZen - AI-Powered Career Platform
 
 > Professional AI career platform combining **FastAPI**, **Next.js 15**, **LangChain**, and **Groq LLMs** for intelligent job search and career guidance.
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 
 - [Features](#-features)
 - [Architecture](#-architecture)
@@ -24,9 +24,9 @@
 
 ---
 
-## ✨ Features
+## Features
 
-### 🤖 Career Coach Agent
+### Career Coach Agent
 
 Your AI career advisor powered by LangChain with specialized sub-agents:
 
@@ -35,7 +35,7 @@ Your AI career advisor powered by LangChain with specialized sub-agents:
 - **SkillAnalyzer**: Market demand analysis and skill gap identification
 - **InterviewSimulator**: Voice-based interview practice with ElevenLabs AI (Beta)
 
-### 🔍 Job Scout Agent
+### Job Scout Agent
 
 Intelligent job search aggregating multiple sources with AI enhancement:
 
@@ -45,7 +45,7 @@ Intelligent job search aggregating multiple sources with AI enhancement:
 - **MarketAnalyzer**: Real-time salary insights and market trends
 - **Smart Filtering**: Location, salary, remote work, job type
 
-### 📄 CV Analyzer Agent
+### CV Analyzer Agent
 
 Comprehensive CV analysis with ATS optimization:
 
@@ -55,7 +55,7 @@ Comprehensive CV analysis with ATS optimization:
 - **ImprovementAdvisor**: Actionable recommendations for CV enhancement
 - **PDF Processing**: IBM Docling for accurate document parsing
 
-### 🎨 Modern Frontend
+### Frontend
 
 Next.js 15 application with enterprise features:
 
@@ -67,7 +67,7 @@ Next.js 15 application with enterprise features:
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 huntzen_jobsearch/
@@ -136,7 +136,7 @@ huntzen_jobsearch/
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Framework**: FastAPI 0.109+ (async Python web framework)
@@ -167,7 +167,7 @@ huntzen_jobsearch/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -233,13 +233,13 @@ Frontend now running at: http://localhost:3000
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Required API Keys
 
 Create a `.env` file at the project root from `.env.example`:
 
-#### 🔐 Supabase (Required)
+#### Supabase (Required)
 
 Get credentials from [Supabase Dashboard](https://supabase.com/dashboard):
 
@@ -251,7 +251,7 @@ SUPABASE_JWT_SECRET=your-jwt-secret
 DATABASE_URL=postgresql://postgres...
 ```
 
-#### 🤖 Groq (Required)
+#### Groq (Required)
 
 Get free API key from [Groq Console](https://console.groq.com/keys):
 
@@ -261,7 +261,7 @@ PRIMARY_MODEL=llama-3.3-70b-versatile
 FAST_MODEL=llama-3.1-8b-instant
 ```
 
-#### 🔍 Job Search APIs (Optional but recommended)
+#### Job Search APIs (Optional but recommended)
 
 ```env
 # Adzuna - https://developer.adzuna.com/
@@ -275,7 +275,7 @@ SERPAPI_KEY=your_serpapi_key
 RAPIDAPI_KEY=your_rapidapi_key
 ```
 
-#### 🎙️ Interview Simulator (Optional - Beta)
+#### Interview Simulator (Optional - Beta)
 
 ```env
 ENABLE_INTERVIEW_SIMULATOR=true  # Default: false
@@ -283,7 +283,7 @@ ELEVENLABS_API_KEY=sk_your_elevenlabs_key
 ELEVENLABS_AGENT_ID=agent_your_agent_id
 ```
 
-#### 📊 Monitoring & Security (Production)
+#### Monitoring & Security (Production)
 
 ```env
 # Sentry - https://sentry.io/
@@ -297,7 +297,7 @@ UPSTASH_REDIS_REST_TOKEN=your_token
 
 ---
 
-## 💻 Development
+## Development
 
 ### Backend Development
 
@@ -355,7 +355,7 @@ python scripts/debug/check_auth_structure.py
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
 ### Interactive Documentation
 
@@ -403,7 +403,7 @@ GET /api/events/search        # Tech events and conferences
 
 ---
 
-## 🌐 Deployment
+## Deployment
 
 For detailed production deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
@@ -431,7 +431,7 @@ modal deploy modal_app.py
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
@@ -451,13 +451,13 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **LangChain**: For the agent framework
 - **Groq**: For ultra-fast LLM inference
@@ -468,7 +468,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📧 Contact & Support
+## Contact & Support
 
 - **Issues**: [GitHub Issues](https://github.com/huntzenjobs/HuntzenJobs/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/huntzenjobs/HuntzenJobs/discussions)
