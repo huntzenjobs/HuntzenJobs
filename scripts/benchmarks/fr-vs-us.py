@@ -13,7 +13,6 @@ import os
 import sys
 import time
 import uuid
-from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -30,7 +29,16 @@ SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 SUPABASE_JWT_SECRET = os.environ["SUPABASE_JWT_SECRET"]
 
-PREMIUM_PLAN_ID = None  # résolu dynamiquement
+# Garde-fou production : ce script effectue des opérations admin contre la prod
+# (création d'un user temporaire, requêtes contre /api/jobs/search en production).
+# Pour l'exécuter, definir explicitement ALLOW_PROD_BENCHMARK=1 dans l'environnement.
+if os.environ.get("ALLOW_PROD_BENCHMARK") != "1":
+    print(
+        "ERREUR : ce script execute des operations contre la production.\n"
+        "Pour confirmer l'execution, definir la variable d'environnement :\n"
+        "  ALLOW_PROD_BENCHMARK=1 python scripts/benchmarks/fr-vs-us.py"
+    )
+    sys.exit(1)
 
 QUERIES_BY_COUNTRY = {
     "fr": ["développeur", "responsable marketing", "analyste de données"],
