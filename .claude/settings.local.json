@@ -48,7 +48,8 @@
       "Bash(/private/tmp/claude/-Users-wissem-HuntzenIA-huntzen-jobsearch/5c8de718-4b47-42e7-babc-6de1b7248baa/scratchpad/test_cv_auth.sh:*)",
       "mcp__plugin_playwright_playwright__browser_install",
       "Bash(python -m pytest:*)",
-      "Bash(npm run test:*)"
+      "Bash(npm run test:*)",
+      "Bash(awk -F= '{print $1, \"=\", \\(length\\($2\\) > 0 ? \"<present>\" : \"<empty>\"\\)}')"
     ]
   }
 }
