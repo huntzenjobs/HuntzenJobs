@@ -1,10 +1,10 @@
 # HuntZen - AI-Powered Career Platform
 
-> Professional AI career platform combining **FastAPI**, **Next.js 15**, **LangChain**, and **Groq LLMs** for intelligent job search and career guidance.
+> Professional AI career platform combining **FastAPI**, **Next.js 14**, **LangChain**, and **Groq LLMs** for intelligent job search and career guidance.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![Next.js 14](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 
 ---
@@ -57,7 +57,7 @@ Comprehensive CV analysis with ATS optimization:
 
 ### Frontend
 
-Next.js 15 application with enterprise features:
+Next.js 14 application with enterprise features:
 
 - **Authentication**: Supabase Auth with JWT
 - **Responsive UI**: shadcn/ui + Tailwind CSS
@@ -100,9 +100,9 @@ huntzen_jobsearch/
 │   ├── pyproject.toml         # Python Dependencies
 │   └── pytest.ini             # Test Configuration
 │
-├── frontend-next/             # Next.js 15 Frontend
+├── frontend-next/             # Next.js 14 Frontend
 │   ├── src/
-│   │   ├── app/              # App Router (Next.js 15)
+│   │   ├── app/              # App Router (Next.js 14)
 │   │   │   ├── (auth)/       # Auth pages (login, signup)
 │   │   │   ├── (dashboard)/  # Protected pages
 │   │   │   └── api/          # API routes & webhooks
@@ -149,7 +149,7 @@ huntzen_jobsearch/
 - **Caching**: Upstash Redis
 
 ### Frontend
-- **Framework**: Next.js 15 (App Router, Server Actions)
+- **Framework**: Next.js 14 (App Router, Server Actions)
 - **Language**: TypeScript 5+
 - **UI Library**: React 19
 - **Styling**: Tailwind CSS + shadcn/ui
