@@ -24,8 +24,10 @@ Variables d'environnement dans `.env` (racine du projet) :
 
 ### Exécution
 
+Le script execute des operations contre la production (création d'un user temporaire, appels `/api/jobs/search`). Il faut donc activer explicitement le garde-fou :
+
 ```bash
-./venv/bin/python scripts/benchmarks/fr-vs-us.py
+ALLOW_PROD_BENCHMARK=1 ./venv/bin/python scripts/benchmarks/fr-vs-us.py
 ```
 
 Durée : environ 1 minute (6 requêtes espacées de 7s + lookup + cleanup).
