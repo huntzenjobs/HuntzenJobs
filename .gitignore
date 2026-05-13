@@ -267,7 +267,7 @@ temp/
 .vercel
 
 # ============================================
-# Claude Analysis Files (keep local, don't push)
+# Local notes and analysis (kept out of repo)
 # ============================================
 # Analysis & Planning docs
 AUDIT_*.md
