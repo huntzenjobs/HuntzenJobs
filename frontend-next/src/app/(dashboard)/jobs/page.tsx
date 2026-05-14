@@ -1,5 +1,6 @@
 "use client";
 
+import { tokenRefreshService } from "@/lib/auth/token-refresh-service";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -215,24 +216,24 @@ export default function JobsPage() {
     | "company_asc";
   const [sortKey, setSortKey] = useState<SortKey>("relevance");
 
-  const [viewedJobIds, setViewedJobIds] = useState<Set<string>>(() => {
+  const [viewedJobIds, setViewedJobIds] = useState<Set<string>>(new Set());
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
+
+  // Hydrate from localStorage after mount (avoids SSR mismatch #418)
+  useEffect(() => {
     try {
-      return new Set(
-        JSON.parse(localStorage.getItem("huntzen_viewed_jobs") || "[]"),
+      const viewed = JSON.parse(
+        localStorage.getItem("huntzen_viewed_jobs") || "[]",
       );
-    } catch {
-      return new Set();
-    }
-  });
-  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(() => {
+      if (viewed.length) setViewedJobIds(new Set(viewed));
+    } catch {}
     try {
-      return new Set(
-        JSON.parse(localStorage.getItem("huntzen_applied_jobs") || "[]"),
+      const applied = JSON.parse(
+        localStorage.getItem("huntzen_applied_jobs") || "[]",
       );
-    } catch {
-      return new Set();
-    }
-  });
+      if (applied.length) setAppliedJobIds(new Set(applied));
+    } catch {}
+  }, []);
 
   // Advanced filters state
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
@@ -597,7 +598,7 @@ export default function JobsPage() {
   const hasIncrementedQuotaRef = useRef(false);
   const isRestoringFromCacheRef = useRef(false);
   const lastFetchTimeRef = useRef(0);
-  
+
   // Stable computed values for useEffect dependencies
   const effectiveContractTypes = useMemo(
     () => jobSearchParams?.contractTypes || [],
@@ -611,32 +612,45 @@ export default function JobsPage() {
   /**
    * Helper: Generate a deterministic hash for search parameters to avoid duplication
    */
-  const generateSearchHash = useCallback((params: SearchParams | null, filters: AdvancedFilters) => {
-    if (!params) return "";
-    
-    // Create a clean, sorted object
-    const cleanObject = {
-      q: params.query?.trim().toLowerCase() || "",
-      country: params.country?.toLowerCase() || "",
-      location: params.location?.toLowerCase() || "",
-      industries: [...(filters.industries || [])].sort(),
-      keywords: [...(filters.keywords || [])].sort(),
-      experience: filters.experienceLevel || "",
-      salaryMin: filters.salaryMin || 0,
-      salaryMax: filters.salaryMax || 0,
-      companySize: filters.companySize || "",
-      contracts: [...(params.contractTypes || [])].map(c => typeof c === 'string' ? c : (c as any).id || (c as any).value || String(c)).sort(),
-      days: quickFilters.maxDays || 0,
-      remote: params.includeRemote || false
-    };
-    
-    return JSON.stringify(cleanObject);
-  }, [quickFilters.maxDays]);
+  const generateSearchHash = useCallback(
+    (params: SearchParams | null, filters: AdvancedFilters) => {
+      if (!params) return "";
+
+      // Create a clean, alphabetically sorted object for deterministic hashing
+      const cleanObject = {
+        companySize: filters.companySize?.toLowerCase() || "",
+        contracts: [...(params.contractTypes || [])]
+          .map((c) =>
+            typeof c === "string"
+              ? c.toLowerCase()
+              : (c as any).id || (c as any).value || String(c),
+          )
+          .sort(),
+        country: params.country?.toLowerCase() || "",
+        days: quickFilters.maxDays || 0,
+        experience: filters.experienceLevel?.toLowerCase() || "",
+        industries: [...(filters.industries || [])]
+          .map((i) => i.toLowerCase())
+          .sort(),
+        keywords: [...(filters.keywords || [])]
+          .map((k) => k.toLowerCase())
+          .sort(),
+        location: params.location?.toLowerCase() || "",
+        q: params.query?.trim().toLowerCase() || "",
+        remote: params.includeRemote ?? true, // Consistent default
+        salaryMax: filters.salaryMax || 0,
+        salaryMin: filters.salaryMin || 0,
+      };
+
+      return JSON.stringify(cleanObject);
+    },
+    [quickFilters.maxDays],
+  );
 
   // Combined search state hash for stable comparisons
   const currentSearchHash = useMemo(
     () => generateSearchHash(jobSearchParams, advancedFilters),
-    [jobSearchParams, advancedFilters, generateSearchHash]
+    [jobSearchParams, advancedFilters, generateSearchHash],
   );
 
   const lastProcessedHashRef = useRef("");
@@ -653,7 +667,7 @@ export default function JobsPage() {
       if (!isInitializingRef.current) {
         hasIncrementedQuotaRef.current = false;
       }
-      
+
       setCurrentPage(1);
       isRestoringFromCacheRef.current = false;
       lastProcessedHashRef.current = currentSearchHash;
@@ -665,15 +679,25 @@ export default function JobsPage() {
     const q = searchParams.get("q");
     const country = searchParams.get("country");
     const city = searchParams.get("city");
-    
+
     // Parse ALL advanced filters from URL
-    const industries = searchParams.get("industries")?.split(",").filter(Boolean);
+    const industries = searchParams
+      .get("industries")
+      ?.split(",")
+      .filter(Boolean);
     const keywords = searchParams.get("keywords")?.split(",").filter(Boolean);
     const experienceLevel = searchParams.get("experienceLevel") || undefined;
-    const salaryMin = searchParams.get("salaryMin") ? parseInt(searchParams.get("salaryMin")!) : undefined;
-    const salaryMax = searchParams.get("salaryMax") ? parseInt(searchParams.get("salaryMax")!) : undefined;
+    const salaryMin = searchParams.get("salaryMin")
+      ? parseInt(searchParams.get("salaryMin")!)
+      : undefined;
+    const salaryMax = searchParams.get("salaryMax")
+      ? parseInt(searchParams.get("salaryMax")!)
+      : undefined;
     const companySize = searchParams.get("companySize") || undefined;
-    const contractTypesParam = searchParams.get("contractTypes")?.split(",").filter(Boolean);
+    const contractTypesParam = searchParams
+      .get("contractTypes")
+      ?.split(",")
+      .filter(Boolean);
 
     const initialFilters: AdvancedFilters = {
       ...(industries ? { industries } : {}),
@@ -683,6 +707,10 @@ export default function JobsPage() {
       ...(salaryMax ? { salaryMax } : {}),
       ...(companySize ? { companySize } : {}),
     };
+
+    const remoteParam = searchParams.get("remote");
+    const initialIncludeRemote =
+      remoteParam !== null ? remoteParam === "true" : undefined;
 
     // Try to restore from localStorage (works even without URL params)
     try {
@@ -698,12 +726,14 @@ export default function JobsPage() {
         if (Object.keys(initialFilters).length > 0) {
           setAdvancedFilters(initialFilters);
         }
-        
+
         // Finalize initialization after a delay
-        const timer = setTimeout(() => { isInitializingRef.current = false; }, 1500);
+        const timer = setTimeout(() => {
+          isInitializingRef.current = false;
+        }, 1500);
         return () => clearTimeout(timer);
       }
-      
+
       const { jobs: cachedJobs, query, timestamp } = JSON.parse(raw);
       const isRecent = Date.now() - timestamp < 60 * 60 * 1000; // 1h cache
 
@@ -711,8 +741,12 @@ export default function JobsPage() {
       const restoreTitle = q || query.jobTitle;
       const restoreCountry = country || query.selectedCountry;
       const restoreCity = city || query.selectedCity;
-      const restoreFilters = Object.keys(initialFilters).length > 0 ? initialFilters : (query.advancedFilters || {});
-      const restoreContractTypes = contractTypesParam || query.contractTypes || [];
+      const restoreFilters =
+        Object.keys(initialFilters).length > 0
+          ? initialFilters
+          : query.advancedFilters || {};
+      const restoreContractTypes =
+        contractTypesParam || query.contractTypes || [];
 
       if (isRecent && restoreTitle) {
         isRestoringFromCacheRef.current = true;
@@ -725,11 +759,22 @@ export default function JobsPage() {
         }
         setAdvancedFilters(restoreFilters);
         setJobs(cachedJobs);
+        const restoreIncludeRemote =
+          initialIncludeRemote !== undefined
+            ? initialIncludeRemote
+            : query.includeRemote !== undefined
+              ? query.includeRemote
+              : true;
+
         setJobSearchParams({
           query: restoreTitle,
           country: restoreCountry || "",
           location: restoreCity || "",
-          contractTypes: restoreContractTypes.map((c: any) => typeof c === 'string' ? c : (c as any).id || (c as any).value),
+          contractTypes: restoreContractTypes.map((c: any) =>
+            typeof c === "string" ? c : (c as any).id || (c as any).value,
+          ),
+          includeRemote: restoreIncludeRemote,
+          fromHistory: true, // Mark as restoration to avoid re-billing
         });
         // Sync URL if it was missing params
         if (!q) {
@@ -761,7 +806,6 @@ export default function JobsPage() {
     return () => clearTimeout(timer);
   }, []);
 
-
   // Search query with intelligent caching
   const searchQuery = useQuery({
     queryKey: [
@@ -789,6 +833,12 @@ export default function JobsPage() {
       }
 
       try {
+        // Toujours récupérer un token frais (évite 401 sur 2ème recherche)
+        const token = await tokenRefreshService.getValidToken();
+        if (!token) {
+          throw new Error("Session expirée, veuillez vous reconnecter.");
+        }
+
         const data = await huntzenApi.searchJobs(
           {
             job_title: jobSearchParams.query,
@@ -808,7 +858,7 @@ export default function JobsPage() {
             salaryMax: advancedFilters.salaryMax,
             companySize: advancedFilters.companySize,
           },
-          auth?.session?.access_token,
+          token,
         );
 
         return data;
@@ -821,8 +871,10 @@ export default function JobsPage() {
       }
     },
     enabled: !!jobSearchParams,
-    staleTime: 1000 * 60 * 30, // 30 min — results stay fresh
+    staleTime: 1000 * 60 * 5, // 5 min — avoid redundant identical searches
     gcTime: 1000 * 60 * 60, // 1h — keep in memory for back navigation
+    refetchOnWindowFocus: false, // CRITICAL: Prevent billing on focus
+    refetchOnReconnect: false, // Prevent billing on reconnect
     retry: (failureCount, error) =>
       !isQuotaExceededError(error) && failureCount < 1,
   });
@@ -857,17 +909,27 @@ export default function JobsPage() {
       if (!billedHash) return;
 
       try {
-        const lastBilledHash = sessionStorage.getItem("huntzen_last_billed_search_hash");
+        const lastBilledHash = sessionStorage.getItem(
+          "huntzen_last_billed_search_hash",
+        );
         if (billedHash === lastBilledHash) {
-          console.log("[QUOTA] Deduplicated search (sessionStorage match):", billedHash);
+          console.log(
+            "[QUOTA] Deduplicated search (sessionStorage match):",
+            billedHash,
+          );
           hasIncrementedQuotaRef.current = true;
           return;
         }
       } catch (e) {}
 
       // If we reach here, it's a genuinely new search
-      console.log("[QUOTA] Incrementing job_search quota for hash:", billedHash);
-      incrementUsage("job_search");
+      console.log(
+        "[QUOTA] Incrementing job_search quota for hash:",
+        billedHash,
+      );
+      // NO MORE MANUAL INCREMENT HERE — backend handles it automatically in the /search route.
+      // We just refetch to sync the UI limits.
+      refreshQuotas();
       hasIncrementedQuotaRef.current = true;
       lastFetchTimeRef.current = searchQuery.dataUpdatedAt;
 
@@ -901,6 +963,7 @@ export default function JobsPage() {
               jobTitle: jobSearchParams?.query || "",
               selectedCountry: jobSearchParams?.country || "",
               selectedCity: jobSearchParams?.location || "",
+              includeRemote: jobSearchParams?.includeRemote ?? true,
             },
             timestamp: Date.now(),
           }),
@@ -926,6 +989,9 @@ export default function JobsPage() {
     if (params.query) urlParams.set("q", params.query);
     if (params.country) urlParams.set("country", params.country);
     if (params.location) urlParams.set("city", params.location);
+    if (params.includeRemote !== undefined) {
+      urlParams.set("remote", params.includeRemote ? "true" : "false");
+    }
     router.replace(`/jobs?${urlParams.toString()}`, { scroll: false });
 
     // Save to search history (last 5, deduplicated)
@@ -954,6 +1020,9 @@ export default function JobsPage() {
       filtered.unshift(entry);
       localStorage.setItem(historyKey, JSON.stringify(filtered.slice(0, 5)));
     } catch {}
+
+    // Vider les résultats précédents pour afficher le loading modal
+    setJobs([]);
 
     // Trigger search with caching
     setJobSearchParams(params);
@@ -1168,25 +1237,33 @@ export default function JobsPage() {
       result = result.filter((j) => quickFilters.sources.includes(j.source));
     }
     if (quickFilters.contractTypes.length > 0) {
-      const hasAlternance = quickFilters.contractTypes.includes("alternance");
+      // Map frontend filter values → backend normalized contract_type values
+      const ALIASES: Record<string, string> = {
+        internship: "stage",
+        apprentissage: "alternance",
+        cdi_partial: "temps partiel",
+        cdd_partial: "temps partiel",
+      };
+      const normalizedFilters = quickFilters.contractTypes.map((c) => {
+        const lower = c.toLowerCase();
+        return ALIASES[lower] ?? lower;
+      });
+      const hasAlternance = normalizedFilters.includes("alternance");
       result = result.filter((j) => {
+        const jobType = j.contract_type?.toLowerCase();
         if (hasAlternance) {
           const text = `${j.title ?? ""} ${j.description ?? ""}`.toLowerCase();
           const isAlternance =
-            j.contract_type === "alternance" ||
+            jobType === "alternance" ||
             text.includes("alternance") ||
             text.includes("apprenti");
-          if (quickFilters.contractTypes.length === 1) return isAlternance;
+          if (normalizedFilters.length === 1) return isAlternance;
           return (
             isAlternance ||
-            (j.contract_type != null &&
-              quickFilters.contractTypes.includes(j.contract_type))
+            (jobType != null && normalizedFilters.includes(jobType))
           );
         }
-        return (
-          j.contract_type != null &&
-          quickFilters.contractTypes.includes(j.contract_type)
-        );
+        return jobType != null && normalizedFilters.includes(jobType);
       });
     }
     if (quickFilters.maxDays !== null) {
@@ -1325,10 +1402,13 @@ export default function JobsPage() {
         >
           {featureFlags.useJobsV2 ? (
             <SearchFormInline
+              initialQuery={jobTitle || popularQuery}
+              initialCountry={selectedCountry}
+              initialLocation={selectedCity}
+              initialIncludeRemote={jobSearchParams?.includeRemote}
               onSearch={handleSearch}
               isLoading={searchQuery.isFetching}
               disabled={false}
-              initialQuery={popularQuery}
             />
           ) : (
             <Card className="shadow-sm border-2 border-slate-200 bg-white">
@@ -2164,7 +2244,7 @@ export default function JobsPage() {
                                     : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
                                 )}
                               >
-                                {t(`contractType_${ct}`, {
+                                {t(`contractType_${ct.toLowerCase()}`, {
                                   defaultMessage: ct,
                                 })}
                               </button>

@@ -558,8 +558,8 @@ export function JobDetailsModal({
                     size="lg"
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                     onClick={() => {
-                      if (!canUse("cv_analysis")) {
-                        openPricingModal("cv_analysis");
+                      if (!canUse("matching_score")) {
+                        openPricingModal("matching_score");
                         return;
                       }
                       setApplyModalOpen(true);

@@ -72,7 +72,7 @@ class JobSearchRequest(BaseModel):
     ] = ""
     salary_min: int | None = Field(default=None, ge=0)
     max_results: int = Field(default=100, ge=5, le=200)
-    max_days: int = Field(default=7, ge=1, le=30, description="Max days since posting (1-30)")
+    max_days: int = Field(default=120, ge=1, le=180, description="Max days since posting (1-180)")
     radius_km: int | None = Field(default=None, ge=1, le=100, description="Search radius in kilometers around city (1-100)")
     include_remote: bool = Field(default=True, description="Include remote jobs in search results")
     contract_types: list[str] = Field(
@@ -101,7 +101,7 @@ class JobSearchRequest(BaseModel):
         "work_schedule": ["journee"],
         "work_days": ["semaine"],
         "max_results": 100,
-        "max_days": 7,
+        "max_days": 120,
         "radius_km": 50
     }}}
 

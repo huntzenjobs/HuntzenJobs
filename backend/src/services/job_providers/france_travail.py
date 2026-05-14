@@ -26,6 +26,10 @@ from src.services.job_providers.base import (
 
 logger = logging.getLogger(__name__)
 
+# Cache mémoire ville → (lat, lon). Persiste tant que le process tourne.
+# Les coordonnées de villes ne changent pas, pas besoin de TTL.
+_geocode_cache: dict[str, tuple[float, float] | None] = {}
+
 
 class FranceTravailProvider(BaseJobProvider):
     """
@@ -47,6 +51,40 @@ class FranceTravailProvider(BaseJobProvider):
     def __init__(self):
         super().__init__()
         self._access_token: str | None = None
+
+    @staticmethod
+    async def _geocode_city(city: str, country_code: str = "fr") -> tuple[float, float] | None:
+        """Geocode a city name to (lat, lon) via Nominatim, with in-memory cache."""
+        cache_key = f"{city.lower().strip()}|{country_code.lower()}"
+        if cache_key in _geocode_cache:
+            return _geocode_cache[cache_key]
+
+        try:
+            url = "https://nominatim.openstreetmap.org/search"
+            params = {
+                "q": city,
+                "countrycodes": country_code.lower(),
+                "format": "json",
+                "limit": 1,
+            }
+            headers = {"User-Agent": "HuntZen/3.0 (job search platform)"}
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(url, params=params, headers=headers)
+                resp.raise_for_status()
+                data = resp.json()
+
+            if data:
+                lat = float(data[0]["lat"])
+                lon = float(data[0]["lon"])
+                _geocode_cache[cache_key] = (lat, lon)
+                logger.info(f"[france_travail] Geocoded '{city}' → ({lat}, {lon})")
+                return (lat, lon)
+
+            _geocode_cache[cache_key] = None
+            return None
+        except Exception as e:
+            logger.warning(f"[france_travail] Geocode failed for '{city}': {e}")
+            return None
 
     async def _get_token(self) -> str | None:
         """
@@ -120,10 +158,27 @@ class FranceTravailProvider(BaseJobProvider):
             "range": f"0-{min(max_results, 149)}",
         }
 
-        # Add location as keyword if provided (France Travail uses INSEE codes,
-        # but motsCles also matches location text)
+        # Géolocalisation native France Travail (latitude/longitude/distance)
         if location:
-            params["motsCles"] = f"{query} {location}"
+            # Priorité 1 : lat/lon passés explicitement (futur frontend enrichi)
+            city_lat = kwargs.get("city_lat")
+            city_lon = kwargs.get("city_lon")
+
+            # Priorité 2 : geocodage automatique via Nominatim (cache mémoire)
+            if not city_lat or not city_lon:
+                coords = await self._geocode_city(location, country_code)
+                if coords:
+                    city_lat, city_lon = coords
+
+            if city_lat and city_lon:
+                params["latitude"] = str(city_lat)
+                params["longitude"] = str(city_lon)
+                params["distance"] = str(kwargs.get("radius_km", 30))
+                logger.info(f"[{self.name}] Native geo: lat={city_lat}, lon={city_lon}, distance={params['distance']}km")
+            else:
+                # Fallback : ville dans motsCles (moins précis mais ne casse rien)
+                params["motsCles"] = f"{query} {location}"
+                logger.info(f"[{self.name}] Geocode failed, fallback to motsCles: '{params['motsCles']}'")
 
         # Filtre natif France Travail par type de contrat
         contract_type = kwargs.get("contract_type", "")

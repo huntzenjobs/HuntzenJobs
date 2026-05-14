@@ -32,7 +32,7 @@ supabase>=2.7.0,<3.0.0  # Supabase Python client (>=2.7 pour auth.admin.create_u
 stripe  # Stripe payment processing
 # Country & City Data (Phase 2 - Hybrid approach)
 pycountry==24.6.1  # ISO 3166 country codes
-geonamescache==2.1.2  # Local cities fallback
+geonamescache>=1.5.0  # Local cities fallback
 sentry-sdk[fastapi]==2.19.2
 # HTML Parsing (job description scraping)
 beautifulsoup4

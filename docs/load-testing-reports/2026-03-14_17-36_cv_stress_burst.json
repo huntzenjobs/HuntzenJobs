@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "scenario": "cv_stress",
+    "mode": "burst",
+    "users": 10,
+    "date": "2026-03-14T17:36:08.664672",
+    "duration_s": 42.1
+  },
+  "steps": {
+    "cv_cover_letter": {
+      "p50": 35.613,
+      "p95": 42.085,
+      "p99": 42.085,
+      "success_rate": 1.0,
+      "count": 10,
+      "errors": {}
+    },
+    "cv_adapt": {
+      "p50": 35.614,
+      "p95": 42.015,
+      "p99": 42.015,
+      "success_rate": 1.0,
+      "count": 10,
+      "errors": {}
+    }
+  },
+  "breakdown_level": 10,
+  "bottleneck": "cv_cover_letter",
+  "error_rate": 0.333,
+  "recommendations": [
+    "Taux d'erreur 33% > 20% à 10 users — seuil de rupture identifié."
+  ]
+}

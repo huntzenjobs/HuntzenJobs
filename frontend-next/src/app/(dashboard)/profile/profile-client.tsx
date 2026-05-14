@@ -1,32 +1,37 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 import {
-  User,
-  CreditCard,
-  Settings,
-  UserCircle,
-  Gift,
-  Bell,
-  Copy,
-  Check,
-  MousePointerClick,
-  TrendingUp,
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AvatarUpload } from "@/components/profile/avatar-upload";
-import { ProfileForm } from "@/components/profile/profile-form";
-import { SubscriptionCard } from "@/components/profile/subscription-card";
+  PromoCodeInput,
+  type CodeValidationResult,
+} from "@/components/auth/promo-code-input";
 import { CareerScoreCard } from "@/components/career-score/career-score-card";
-import { SettingsSection } from "@/components/profile/settings-section";
+import { AvatarUpload } from "@/components/profile/avatar-upload";
 import { NotificationsSection } from "@/components/profile/notifications-section";
+import { ProfileForm } from "@/components/profile/profile-form";
+import { SettingsSection } from "@/components/profile/settings-section";
+import { SubscriptionCard } from "@/components/profile/subscription-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/auth-context";
 import { useSubscriptionApi } from "@/hooks/use-subscription-api";
+import { createClient } from "@/lib/supabase/client";
+import { motion } from "framer-motion";
+import {
+  Bell,
+  Check,
+  Copy,
+  CreditCard,
+  Gift,
+  MousePointerClick,
+  Settings,
+  TrendingUp,
+  User,
+  UserCircle,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface ProfilePageClientProps {
   user: {
@@ -270,6 +275,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [fullName, setFullName] = useState(profile.full_name || "");
   const { subscription } = useSubscriptionApi();
+  const { session } = useAuth();
   const isPastDue = subscription?.status === "past_due";
   const cancelAtPeriodEnd = subscription?.cancel_at_period_end ?? false;
   const hasSubscriptionAlert = isPastDue || cancelAtPeriodEnd;
@@ -428,6 +434,111 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
 
               {/* Subscription Card with Plan & Quotas */}
               <SubscriptionCard />
+
+              {/* Promo / Referral code input for existing users */}
+              <div className="mt-4 border-t pt-6">
+                <h3 className="text-lg font-semibold text-black mb-1">
+                  Vous avez un code promo ?
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Entrez votre code promo ou code d&apos;influenceur pour
+                  bénéficier de jours offerts sur votre abonnement.
+                </p>
+                <PromoCodeInput
+                  onCodeValidated={async (
+                    code: string,
+                    result: CodeValidationResult,
+                  ) => {
+                    const backendUrl =
+                      process.env.NEXT_PUBLIC_API_URL ||
+                      process.env.NEXT_PUBLIC_BACKEND_URL ||
+                      "";
+
+                    if (!session?.access_token) {
+                      toast.error(
+                        "Vous devez être connecté pour appliquer un code.",
+                      );
+                      return;
+                    }
+
+                    // Sauvegarde de secours (même logique que signup/onboarding)
+                    document.cookie = `huntzen_referral_code=${code}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+                    localStorage.setItem("huntzen_referral_code", code);
+
+                    try {
+                      if (result.type === "referral") {
+                        const res = await fetch(
+                          `${backendUrl}/api/referrals/register`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              code,
+                              new_user_id: user.id,
+                            }),
+                          },
+                        );
+
+                        if (!res.ok) {
+                          throw new Error(
+                            "Impossible d&apos;appliquer ce code de parrainage.",
+                          );
+                        }
+
+                        localStorage.setItem(
+                          "huntzen_referral_registered",
+                          "true",
+                        );
+                        localStorage.removeItem("huntzen_referral_code");
+                        document.cookie =
+                          "huntzen_referral_code=; path=/; max-age=0; SameSite=Lax";
+                        toast.success(
+                          "Code de parrainage appliqué à votre compte.",
+                        );
+                        return;
+                      }
+
+                      // Code promo (jours gratuits sur un plan)
+                      const res = await fetch(`${backendUrl}/api/codes/apply`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${session.access_token}`,
+                        },
+                        body: JSON.stringify({ code }),
+                      });
+
+                      if (!res.ok) {
+                        const err = await res
+                          .json()
+                          .catch(() => ({ detail: "" }));
+                        throw new Error(
+                          err.detail ||
+                            "Impossible d&apos;appliquer ce code promo.",
+                        );
+                      }
+
+                      localStorage.setItem(
+                        "huntzen_referral_registered",
+                        "true",
+                      );
+                      localStorage.removeItem("huntzen_referral_code");
+                      document.cookie =
+                        "huntzen_referral_code=; path=/; max-age=0; SameSite=Lax";
+                      toast.success(
+                        "Code promo appliqué à votre compte avec succès.",
+                      );
+                    } catch (e) {
+                      const msg =
+                        e instanceof Error
+                          ? e.message
+                          : "Impossible d&apos;appliquer ce code.";
+                      toast.error(msg);
+                    }
+                  }}
+                  className="max-w-md"
+                />
+              </div>
             </motion.div>
           </TabsContent>
 

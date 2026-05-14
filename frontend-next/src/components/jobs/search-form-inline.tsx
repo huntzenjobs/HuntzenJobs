@@ -103,6 +103,9 @@ interface SearchFormInlineProps {
   isLoading?: boolean;
   disabled?: boolean;
   initialQuery?: string;
+  initialCountry?: string;
+  initialLocation?: string;
+  initialIncludeRemote?: boolean;
 }
 
 export interface SearchParams {
@@ -122,18 +125,21 @@ export function SearchFormInline({
   isLoading = false,
   disabled = false,
   initialQuery,
+  initialCountry,
+  initialLocation,
+  initialIncludeRemote = true,
 }: SearchFormInlineProps) {
   const [query, setQuery] = useState(initialQuery ?? "");
-  const [location, setLocation] = useState("");
-  const [country, setCountry] = useState("");
+  const [location, setLocation] = useState(initialLocation ?? "");
+  const [country, setCountry] = useState(initialCountry ?? "");
   const [selectedCountryName, setSelectedCountryName] = useState("");
-  const [isCountryValid, setIsCountryValid] = useState(false);
+  const [isCountryValid, setIsCountryValid] = useState(!!initialCountry);
   const [selectedContracts, setSelectedContracts] = useState<string[]>([]);
   const [selectedWorkDays, setSelectedWorkDays] = useState<string[]>([]);
   const [selectedWorkSchedule, setSelectedWorkSchedule] = useState<string[]>(
     [],
   );
-  const [includeRemote, setIncludeRemote] = useState(true);
+  const [includeRemote, setIncludeRemote] = useState(initialIncludeRemote);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const t = useTranslations("searchForm");
@@ -279,12 +285,31 @@ export function SearchFormInline({
     setErrors({});
   };
 
-  // Sync initialQuery prop
+  // Sync props when parent state changes
   useEffect(() => {
     if (initialQuery !== undefined && initialQuery !== "") {
       setQuery(initialQuery);
     }
   }, [initialQuery]);
+
+  useEffect(() => {
+    if (initialCountry !== undefined && initialCountry !== "") {
+      setCountry(initialCountry);
+      setIsCountryValid(true);
+    }
+  }, [initialCountry]);
+
+  useEffect(() => {
+    if (initialLocation !== undefined) {
+      setLocation(initialLocation);
+    }
+  }, [initialLocation]);
+
+  useEffect(() => {
+    if (initialIncludeRemote !== undefined) {
+      setIncludeRemote(initialIncludeRemote);
+    }
+  }, [initialIncludeRemote]);
 
   // Clear errors when user types or selects filters
   useEffect(() => {

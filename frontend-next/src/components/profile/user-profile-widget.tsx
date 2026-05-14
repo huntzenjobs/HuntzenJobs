@@ -23,7 +23,8 @@ interface UserData {
     current_period_end: string | null
   }
   quotas: {
-    cv_analysis?: QuotaStatus
+    ats_score?: QuotaStatus
+    matching_score?: QuotaStatus
     coach?: QuotaStatus
     job_search?: QuotaStatus
   }
@@ -39,7 +40,8 @@ interface QuotaStatus {
 }
 
 const FEATURE_LABELS: Record<string, string> = {
-  cv_analysis: 'Analyses CV',
+  ats_score: 'Analyses CV (ATS)',
+  matching_score: 'Matching Job',
   coach: 'Minutes Coach',
   job_search: 'Recherches d\'emploi'
 }
@@ -252,11 +254,6 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
       <div className="space-y-4">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
           <span>Utilisation du jour</span>
-          {quotas.cv_analysis?.reset_at && (
-            <span className="text-xs text-gray-500 font-normal">
-              (réinitialisation à minuit)
-            </span>
-          )}
         </h3>
 
         {Object.entries(quotas).map(([feature, quota]) => (

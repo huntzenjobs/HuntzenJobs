@@ -33,7 +33,7 @@ class AdzunaProvider(BaseJobProvider):
 
     name = "adzuna"
     supported_countries = {
-        "au", "at", "br", "ca", "de", "fr", "in", "it",
+        "au", "at", "be", "br", "ca", "ch", "de", "fr", "in", "it",
         "mx", "nl", "nz", "pl", "ru", "sg", "za", "gb", "us"
     }
 
@@ -69,11 +69,23 @@ class AdzunaProvider(BaseJobProvider):
             logger.debug(f"[{self.name}] Missing credentials")
             return []
 
-        # Check country support
+        # Check country support (with fallback for unsupported countries)
         cc = country_code.lower()
+        # Belgique, Luxembourg : Adzuna ne les supporte pas directement.
+        # Chercher via les pays voisins qui indexent des offres frontalières.
+        _COUNTRY_FALLBACK = {
+            "be": "fr",  # Belgique → France (marché francophone partagé)
+            "lu": "fr",  # Luxembourg → France
+            "ch": "de",  # Suisse → Allemagne
+        }
         if not self.supports_country(cc):
-            logger.debug(f"[{self.name}] Country {cc} not supported")
-            return []
+            fallback = _COUNTRY_FALLBACK.get(cc)
+            if fallback:
+                logger.info(f"[{self.name}] Country {cc} not supported, using {fallback} fallback")
+                cc = fallback
+            else:
+                logger.debug(f"[{self.name}] Country {cc} not supported")
+                return []
 
         url = f"{self.BASE_URL}/{cc}/search/1"
         params = {
@@ -87,10 +99,10 @@ class AdzunaProvider(BaseJobProvider):
         }
 
         # Map contract types to Adzuna values
-        if contract_type in ("alternance", "apprentissage"):
-            # Adzuna n'a pas de type natif alternance — enrichir la query
-            params["what"] = f"{params['what']} alternance".strip()
-        elif contract_type:
+        # Alternance : on ne touche PAS la query. Le post-filtre dans
+        # aggregator.py (_is_alternance_job) se charge de filtrer après.
+        # Enrichir avec "alternance" retournait souvent 0 résultats.
+        if contract_type and contract_type not in ("alternance", "apprentissage"):
             contract_map = {
                 "cdi": "permanent",
                 "cdd": "contract",

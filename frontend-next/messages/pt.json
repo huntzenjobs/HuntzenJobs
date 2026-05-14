@@ -382,7 +382,8 @@
       "salons": "Feiras & Fóruns",
       "savedJobs": "Empregos salvos",
       "candidatures": "Minhas Candidaturas",
-      "recruiterContact": "Contato Recrutador",
+      "recruiterContact": "Contato especialista",
+      "recruiterFinder": "Contato recrutador",
       "documents": "Meus documentos",
       "myUsage": "Meu Uso",
       "referral": "HuntZen Boost",
@@ -418,7 +419,8 @@
     },
     "badges": {
       "new": "Novo",
-      "recruiterPrice": "50€"
+      "recruiterPrice": "50€",
+      "soon": "Em breve"
     },
     "aria": {
       "close": "Fechar o menu de navegação",
@@ -1149,7 +1151,17 @@
       },
       "finder": {
         "companyPlaceholder": "Company name",
-        "quotaReached": "Cota atingida ({count} pesquisas/dia no plano gratuito). Mude para Pro para acesso ilimitado."
+        "cityPlaceholder": "Cidade (opcional)",
+        "quotaReached": "Cota atingida ({count} pesquisas/dia no plano gratuito). Mude para Pro para acesso ilimitado.",
+        "searchTab": "Pesquisa",
+        "savedTab": "Contactos guardados",
+        "noResults": "Nenhum contacto encontrado para esta empresa.",
+        "save": "Guardar",
+        "saved": "Guardado",
+        "savedEmpty": "Ainda não guardou nenhum contacto.",
+        "loginRequired": "Inicie sessão para guardar os seus contactos de recrutador.",
+        "loadingSaved": "A carregar os seus contactos guardados...",
+        "remove": "Eliminar"
       }
     },
     "documents": {
@@ -2375,6 +2387,10 @@
     "dailyUsageTitle": "Cotas diárias",
     "generalUsageTitle": "Cotas gerais",
     "resetAtMidnight": "Reinicia à meia-noite",
+    "atsScore": "Pontuação ATS",
+    "matchingScore": "Matching de Vaga",
+    "customCv": "CV Personalizado",
+    "recruiterSearch": "Pesquisas de recrutador (LinkedIn)",
     "jobSearches": "Buscas de Emprego",
     "unlockTitle": "Desbloqueie todo o potencial do HuntZen",
     "unlockDescription": "Mude para um plano pago para análises ilimitadas, mais mensagens de coaching e recursos exclusivos.",
@@ -2392,9 +2408,7 @@
     },
     "savedJobs": "Vagas Salvas",
     "assistantMessages": "Mensagens do Assistente",
-    "atsScore": "Pontuação ATS",
-    "matchingScore": "Matching de Vaga",
-    "customCv": "CV Personalizado"
+    "cvAdapt": "Adaptação de CV"
   },
   "notifications": {
     "title": "Notifications",
@@ -2932,11 +2946,13 @@
     "errorGeneric": "Erro ao pesquisar contatos",
     "rgpdDisclaimer": "Estas informações provêm de fontes públicas (LinkedIn, sites de empresas). Use de forma responsável em conformidade com o RGPD.",
     "copyEmail": "Copiar {email}",
-    "category.hr": "Recrutador",
-    "category.pair": "Futuro colega",
-    "category.campus": "Campus",
-    "category.tech": "Tech",
-    "category.other": "Contato",
-    "profileCount": "{count} perfil(is)"
+    "profileCount": "{count} perfil(is)",
+    "category": {
+      "hr": "Recrutador",
+      "pair": "Futuro colega",
+      "campus": "Campus",
+      "tech": "Tech",
+      "other": "Contato"
+    }
   }
 }

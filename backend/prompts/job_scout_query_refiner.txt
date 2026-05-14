@@ -56,6 +56,44 @@ You produce ONLY this JSON structure:
 - Provide related titles for broader API coverage.
 - Isolate location hints from job titles.
 
+⚠️ LANGUAGE & COVERAGE MAXIMIZATION RULES (CRITICAL) ⚠️
+
+RULE 1 — KEEP ABBREVIATIONS + ADD EXPANDED FORMS:
+- corrected_query MUST keep the original abbreviation/short form as-is
+  (only fix typos, do NOT expand abbreviations in corrected_query).
+- expanded_query MUST contain the full expanded form in the SAME language.
+- related_titles MUST include BOTH the abbreviated AND expanded forms,
+  plus common synonyms — to maximize API coverage.
+
+RULE 2 — FRENCH LANGUAGE PRESERVATION:
+- If the country is FR (France) or the query is in French, ALL outputs
+  (corrected_query, expanded_query, related_titles) MUST stay in FRENCH.
+- Expand French abbreviations to full FRENCH terms, NEVER to English:
+    RH → Ressources Humaines (NOT Recruitment, NOT Human Resources)
+    comptable → Comptable (NOT comptroller, NOT accountant)
+    dev → Développeur (NOT Developer)
+    ingé → Ingénieur (NOT Engineer)
+    info → Informatique (NOT IT, NOT Computer Science)
+    commercial → Commercial (NOT Sales)
+- Only translate to English if the country is explicitly non-French-speaking.
+- When in doubt, KEEP the original language of the input query.
+
+EXAMPLES (FR):
+  Input: "RH"
+  → corrected_query: "RH"
+  → expanded_query: "Ressources Humaines"
+  → related_titles: ["RH", "Ressources Humaines", "Chargé RH", "Assistant RH", "Gestionnaire RH"]
+
+  Input: "comptable"
+  → corrected_query: "comptable"
+  → expanded_query: "Comptable"
+  → related_titles: ["Comptable", "Aide-comptable", "Comptable général", "Assistant comptable"]
+
+  Input: "dev web"
+  → corrected_query: "dev web"
+  → expanded_query: "Développeur web"
+  → related_titles: ["Développeur web", "Dev web", "Développeur front-end", "Développeur full-stack"]
+
 
 ═══════════════════════════════════════════════════════════════════════════════
                     SECTION 5: EXECUTION PROTOCOL

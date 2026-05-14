@@ -384,10 +384,20 @@ export function SubscriptionCard() {
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
               <span>
-                {limits.cv_analyses_per_day === Infinity
-                  ? tSub("cvAnalysesUnlimited")
-                  : tSub("cvAnalysesPerDay", {
-                      count: limits.cv_analyses_per_day,
+                {limits.ats_scores_per_day === Infinity
+                  ? tSub("atsScoresUnlimited")
+                  : tSub("atsScoresPerDay", {
+                      count: limits.ats_scores_per_day,
+                    })}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
+              <span>
+                {limits.matching_scores_per_day === Infinity
+                  ? tSub("matchingScoresUnlimited")
+                  : tSub("matchingScoresPerDay", {
+                      count: limits.matching_scores_per_day,
                     })}
               </span>
             </div>
@@ -427,7 +437,8 @@ export function SubscriptionCard() {
             <p className="text-xs text-gray-500 font-medium">
               {tSub("cvAnalysesLabel")}
             </p>
-            <UsageCounter feature="cv_analysis" showIcon={false} />
+            <UsageCounter feature="ats_score" showIcon={false} />
+            <UsageCounter feature="matching_score" showIcon={false} />
           </div>
 
           {/* Assistant Messages */}

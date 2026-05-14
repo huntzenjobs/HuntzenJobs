@@ -7,30 +7,30 @@ Endpoints for searching job fairs and employment events.
 from fastapi import APIRouter, Query
 
 from src.services.events.provider import search_job_fairs
+from src.services.events.serpapi import SUPPORTED_COUNTRIES
 
 router = APIRouter()
 
 
 @router.get("/search")
 async def search_events(
-    region: str = Query(default="", description="Filter by region"),
+    region: str = Query(default="", description="Filter by region (France only)"),
     sector: str = Query(default="", description="Filter by sector"),
     public: str = Query(default="", description="Filter by target public"),
     event_type: str = Query(default="", description="Filter by event type"),
-    format_type: str = Query(default="", description="Filter by format (physique/virtuel)")
+    format_type: str = Query(default="", description="Filter by format (physique/virtuel)"),
+    country: str = Query(default="", description="Country for international events (e.g. Germany, India)"),
 ):
-    """
-    Search for job fairs and professional events.
-    """
+    """Search for job fairs and professional events."""
     result = await search_job_fairs(
         region=region,
         sector=sector,
         public=public,
         event_type=event_type,
         format_type=format_type,
-        include_mock=False
+        country=country,
+        include_mock=False,
     )
-    # Add missing fields expected by frontend
     return {
         **result,
         "message": "Search completed successfully",
@@ -40,41 +40,34 @@ async def search_events(
             "public": public,
             "event_type": event_type,
             "format_type": format_type,
-        }
+            "country": country,
+        },
     }
 
 
 @router.post("/search")
 async def search_events_post(data: dict):
-    """
-    Search for professional events (POST version).
-    """
-    region = data.get("region", "")
-    sector = data.get("sector", "")
-    public = data.get("public", "")
-    event_type = data.get("event_type", "")
-    format_type = data.get("format_type", "")
-
+    """Search for professional events (POST version)."""
     result = await search_job_fairs(
-        region=region,
-        sector=sector,
-        public=public,
-        event_type=event_type,
-        format_type=format_type,
-        include_mock=False
+        region=data.get("region", ""),
+        sector=data.get("sector", ""),
+        public=data.get("public", ""),
+        event_type=data.get("event_type", ""),
+        format_type=data.get("format_type", ""),
+        country=data.get("country", ""),
+        include_mock=False,
     )
-    # Add missing fields expected by frontend
     return {
         **result,
         "message": "Search completed successfully",
-        "filters_applied": {
-            "region": region,
-            "sector": sector,
-            "public": public,
-            "event_type": event_type,
-            "format_type": format_type,
-        }
+        "filters_applied": {k: data.get(k, "") for k in ("region", "sector", "public", "event_type", "format_type", "country")},
     }
+
+
+@router.get("/countries")
+async def get_countries():
+    """Get list of supported countries for international event search."""
+    return {"success": True, "countries": SUPPORTED_COUNTRIES, "count": len(SUPPORTED_COUNTRIES)}
 
 
 @router.get("/regions")

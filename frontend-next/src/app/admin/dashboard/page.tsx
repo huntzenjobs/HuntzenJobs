@@ -260,7 +260,7 @@ export default function AdminDashboardPage() {
   }, [load, loadHealth]);
 
   const formatEur = (v: number) =>
-    `€${v.toLocaleString("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    `€${v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const maxSignups = growth.length
     ? Math.max(...growth.map((g) => g.new_signups), 1)
     : 1;

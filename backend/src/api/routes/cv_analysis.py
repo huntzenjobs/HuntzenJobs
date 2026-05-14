@@ -48,61 +48,52 @@ else:
 # QUOTA INCREMENT HELPER
 # ============================================
 
-def check_cv_analysis_quota(user_id: str) -> None:
+def _check_quota(user_id: str, feature: str) -> None:
     """
-    Check if user has remaining CV analysis quota.
-    Raises HTTP 429 if quota exceeded. Mirrors check_assistant_quota() in deps.py.
+    Check if user has remaining quota for a specific feature.
+    Raises HTTP 429 if quota exceeded.
     """
     if not supabase_client:
-        return  # No Supabase = allow through (dev mode)
+        return
     try:
         result = supabase_client.rpc("get_quota_status", {"p_user_id": user_id}).execute()
         if not result.data:
             return
         for row in result.data:
-            if row.get("feature") == "cv_analysis":
+            if row.get("feature") == feature:
                 if not row.get("has_access", True):
                     raise HTTPException(
                         status_code=429,
                         detail={
                             "code": "QUOTA_EXCEEDED",
-                            "feature": "cv_analysis",
+                            "feature": feature,
                             "limit": row.get("quota_limit"),
                             "used": row.get("quota_used"),
                             "reset_at": str(row.get("reset_at", "")),
-                            "message": "Quota d'analyses CV journalier atteint. Passez à un plan supérieur pour continuer."
+                            "message": f"Quota journalier pour {feature} atteint. Passez à un plan supérieur pour continuer."
                         }
                     )
                 return
     except HTTPException:
         raise
     except Exception as e:
-        logger.warning(f"[quota] CV check failed for {user_id}, allowing through: {e}")
+        logger.warning(f"[quota] {feature} check failed for {user_id}, allowing through: {e}")
 
 
-async def increment_user_cv_quota(user_id: str) -> bool:
+async def _increment_quota(user_id: str, feature: str) -> bool:
     """
-    Increment cv_analysis usage quota for user via Supabase RPC.
-
-    Calls the increment_usage() PostgreSQL function via Supabase.
-
-    Args:
-        user_id: User UUID
-
-    Returns:
-        True if incremented successfully, False otherwise
+    Increment usage quota for a specific feature via Supabase RPC.
     """
     if not supabase_client:
-        logger.error("[QUOTA] Supabase client not configured")
+        logger.error(f"[QUOTA] Supabase client not configured for {feature}")
         return False
 
     try:
-        # Call PostgreSQL function via Supabase RPC
         response = supabase_client.rpc(
             "increment_usage",
             {
                 "p_user_id": user_id,
-                "p_feature": "cv_analysis",
+                "p_feature": feature,
                 "p_amount": 1
             }
         ).execute()
@@ -110,9 +101,9 @@ async def increment_user_cv_quota(user_id: str) -> bool:
         success = response.data if response.data else False
 
         if success:
-            logger.info(f"[QUOTA] ✅ Incremented cv_analysis quota for user {user_id}")
+            logger.info(f"[QUOTA] ✅ Incremented {feature} quota for user {user_id}")
         else:
-            logger.warning(f"[QUOTA] ⚠️ Failed to increment quota for user {user_id}")
+            logger.warning(f"[QUOTA] ⚠️ Failed to increment {feature} quota for user {user_id}")
 
         return bool(success)
 
@@ -210,11 +201,14 @@ async def analyze_cv_async(
             )
         await file.seek(0)
 
-    # ✅ CHECK QUOTA BEFORE PROCESSING — blocks if daily limit exceeded
-    check_cv_analysis_quota(user_id)
+    # ✅ DETERMINE FEATURE BASED ON JOB DESCRIPTION
+    feature = "matching_score" if job_description else "ats_score"
 
-    # ✅ INCREMENT QUOTA IMMEDIATELY (callback Modal n'est pas garanti)
-    await increment_user_cv_quota(user_id)
+    # ✅ CHECK QUOTA BEFORE PROCESSING
+    _check_quota(user_id, feature)
+
+    # ✅ INCREMENT QUOTA IMMEDIATELY
+    await _increment_quota(user_id, feature)
     await invalidate_user_quota_cache(user_id)
 
     return await process_cv_async(

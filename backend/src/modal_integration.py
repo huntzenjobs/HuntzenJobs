@@ -28,6 +28,144 @@ from supabase import Client, create_client
 
 logger = get_logger(__name__)
 
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    """Convert value to int safely with fallback."""
+    try:
+        if value is None:
+            return default
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_list(value: Any) -> list[str]:
+    """Normalize any value to a list of strings for frontend safety."""
+    if value is None:
+        return []
+    # If we receive a dict like {"content_improvements": [...]}, unwrap common key
+    if isinstance(value, dict):
+        for key in ("content_improvements", "items", "values"):
+            if key in value and isinstance(value[key], (list, tuple, set)):
+                return [str(v) for v in value[key] if v is not None]
+        # Otherwise fall back to stringification
+        return [str(value)]
+    if isinstance(value, list):
+        return [str(v) for v in value if v is not None]
+    if isinstance(value, (tuple, set)):
+        return [str(v) for v in value if v is not None]
+    # If payload accidentally sends a single string/object, wrap it
+    return [str(value)]
+
+
+def _normalize_analysis_result(raw_result: Any) -> dict[str, Any]:
+    """
+    Normalize CV analysis payload to frontend-compatible schema.
+
+    Handles legacy/new payload variants where:
+    - result may be non-dict
+    - ats_score may be a number or an object
+    - fields can have different names (recommended_job_titles, weaknesses, etc.)
+    """
+    if not isinstance(raw_result, dict):
+        score = _safe_int(raw_result, 0) if isinstance(raw_result, int | float | str) else 0
+        return {
+            "ats_score": {
+                "overall_score": max(0, min(100, score)),
+                "formatting_score": 0,
+                "keywords_score": 0,
+                "structure_score": 0,
+                "readability_score": 0,
+            },
+            "strengths": [],
+            "improvements": [],
+            "missing_sections": [],
+            "keywords_found": [],
+            "keywords_missing": [],
+            "suggested_job_titles": [],
+        }
+
+    ats_raw = raw_result.get("ats_score")
+    ats_details = raw_result.get("ats_details") or {}
+
+    # Le LLM retourne des scores sur des max différents : format/20, keywords/30, experience/25, skills/15
+    # On convertit en pourcentage (0-100) pour le frontend
+    def _to_pct(value: int, max_score: int) -> int:
+        """Convertit un score brut en pourcentage 0-100."""
+        if max_score <= 0:
+            return 0
+        # Si la valeur est déjà > max_score, elle est probablement déjà en pourcentage
+        if value > max_score:
+            return min(100, value)
+        return min(100, round(value * 100 / max_score))
+
+    if isinstance(ats_raw, dict):
+        overall = _safe_int(
+            ats_raw.get("overall_score", ats_raw.get("total", 0)),
+            0,
+        )
+        formatting_raw = _safe_int(
+            ats_raw.get("formatting_score", ats_raw.get("format_score", 0)),
+            0,
+        )
+        keywords_raw = _safe_int(ats_raw.get("keywords_score", 0), 0)
+        structure_raw = _safe_int(ats_raw.get("structure_score", ats_raw.get("experience_score", 0)), 0)
+        readability_raw = _safe_int(ats_raw.get("readability_score", ats_raw.get("skills_score", 0)), 0)
+    else:
+        overall = _safe_int(ats_raw if ats_raw is not None else raw_result.get("overall_score"), 0)
+        formatting_raw = _safe_int(ats_details.get("formatting_score", ats_details.get("format_score", 0)), 0)
+        keywords_raw = _safe_int(ats_details.get("keywords_score", 0), 0)
+        structure_raw = _safe_int(ats_details.get("structure_score", ats_details.get("experience_score", 0)), 0)
+        readability_raw = _safe_int(ats_details.get("readability_score", ats_details.get("skills_score", 0)), 0)
+
+    # Convertir en pourcentage (format/20, keywords/30, experience/25, skills/15)
+    formatting = _to_pct(formatting_raw, 20)
+    keywords = _to_pct(keywords_raw, 30)
+    structure = _to_pct(structure_raw, 25)
+    readability = _to_pct(readability_raw, 15)
+
+    return {
+        **raw_result,
+        "ats_score": {
+            "overall_score": max(0, min(100, overall)),
+            "formatting_score": max(0, min(100, formatting)),
+            "formatting_explanation": (
+                raw_result.get("ats_score", {}).get("formatting_explanation")
+                if isinstance(raw_result.get("ats_score"), dict)
+                else None
+            ),
+            "keywords_score": max(0, min(100, keywords)),
+            "keywords_explanation": (
+                raw_result.get("ats_score", {}).get("keywords_explanation")
+                if isinstance(raw_result.get("ats_score"), dict)
+                else None
+            ),
+            "structure_score": max(0, min(100, structure)),
+            "structure_explanation": (
+                raw_result.get("ats_score", {}).get("structure_explanation")
+                if isinstance(raw_result.get("ats_score"), dict)
+                else None
+            ),
+            "readability_score": max(0, min(100, readability)),
+            "readability_explanation": (
+                raw_result.get("ats_score", {}).get("readability_explanation")
+                if isinstance(raw_result.get("ats_score"), dict)
+                else None
+            ),
+        },
+        "strengths": _as_list(raw_result.get("strengths")),
+        "improvements": _as_list(
+            raw_result.get("improvements") or raw_result.get("weaknesses")
+        ),
+        "missing_sections": _as_list(raw_result.get("missing_sections")),
+        "keywords_found": _as_list(raw_result.get("keywords_found")),
+        "keywords_missing": _as_list(raw_result.get("keywords_missing")),
+        "suggested_job_titles": _as_list(
+            raw_result.get("suggested_job_titles")
+            or raw_result.get("recommended_job_titles")
+        ),
+    }
+
 # ============================================
 # SUPABASE CLIENT
 # ============================================
@@ -436,6 +574,8 @@ async def get_cv_analysis_status(
 
         data = response.data
 
+        normalized_result = _normalize_analysis_result(data.get("result")) if data.get("result") else None
+
         # Calculate processing time if completed
         processing_time = None
         if data.get("completed_at") and data.get("created_at"):
@@ -446,7 +586,7 @@ async def get_cv_analysis_status(
         return {
             "cv_id": cv_id,
             "status": data["status"],
-            "result": data.get("result"),
+            "result": normalized_result,
             "error": data.get("error_message"),
             "created_at": data["created_at"],
             "completed_at": data.get("completed_at"),
@@ -502,8 +642,14 @@ async def list_user_cv_analyses(
                 processing_time = (completed - created).total_seconds()
 
             # Extract summary fields from result JSON for history display
-            result_data = row.get("result") or {}
-            ats_score = result_data.get("ats_score") or {}
+            result_data = _normalize_analysis_result(row.get("result"))
+            
+            # Defensive score extraction (handles both old dict and new int formats)
+            ats_score_raw = result_data.get("ats_score")
+            if isinstance(ats_score_raw, dict):
+                score_val = ats_score_raw.get("total") or ats_score_raw.get("overall_score")
+            else:
+                score_val = ats_score_raw
 
             analyses.append({
                 "cv_id": row["id"],
@@ -513,7 +659,7 @@ async def list_user_cv_analyses(
                 "processing_time_seconds": processing_time,
                 "has_result": bool(result_data),
                 # Summary fields for history drawer display
-                "score": ats_score.get("overall_score"),
+                "score": score_val,
                 "strengths": result_data.get("strengths", []),
                 "weaknesses": result_data.get("improvements", result_data.get("weaknesses", [])),
                 "suggestions": [],

@@ -1,0 +1,1 @@
+﻿__tests__/unit/components/freemium/usage-counter.test.tsx(47,28): error TS2322: Type '"cv_analysis"' is not assignable to type 'FeatureType'.

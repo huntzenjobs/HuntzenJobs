@@ -16,7 +16,7 @@ export default function CVAnalysisPage() {
   const t = useTranslations("dashboard.cvAnalysis");
 
   // Freemium state
-  const { canUse, incrementUsage, hasFeature, openPricingModal } =
+  const { canUse, incrementUsage, refreshQuotas, hasFeature, openPricingModal } =
     useSubscription();
 
   // Skeleton pendant vérification auth
@@ -62,7 +62,10 @@ export default function CVAnalysisPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <UsageCounter feature="cv_analysis" />
+            <div className="flex flex-col gap-2">
+              <UsageCounter feature="ats_score" />
+              <UsageCounter feature="matching_score" />
+            </div>
           </motion.div>
         )}
       </motion.div>
@@ -88,6 +91,7 @@ export default function CVAnalysisPage() {
           <CVUploadAsyncWizard
             canUse={canUse}
             incrementUsage={incrementUsage}
+            refreshQuotas={refreshQuotas}
             openPricingModal={openPricingModal}
             hasFeatures={{
               hasCVHistory: hasFeature("has_cv_history"),

@@ -6,6 +6,8 @@ Combines results from multiple job providers.
 
 import asyncio
 import logging
+import re
+import unicodedata
 from difflib import SequenceMatcher
 from typing import Any
 
@@ -20,12 +22,100 @@ ALTERNANCE_SIGNALS = frozenset({
     "work-study", "work study",
 })
 
+# Tokens to strip from location strings before matching
+_LOCATION_NOISE = re.compile(
+    r"\b(cedex|cs\s*\d+|bp\s*\d+)\b",
+    re.IGNORECASE,
+)
+
+# Postal-code pattern (French 5-digit or generic)
+_POSTAL_CODE_RE = re.compile(r"\b\d{4,5}\b")
+
+
+def _normalize_location_text(text: str) -> str:
+    """
+    Normalize a location string for fuzzy comparison.
+
+    - lowercase
+    - strip accents (e.g. "Genève" → "geneve")
+    - remove postal codes, cedex, CS/BP numbers
+    - collapse whitespace
+    """
+    text = text.lower().strip()
+    # Remove accents
+    text = unicodedata.normalize("NFD", text)
+    text = "".join(c for c in text if unicodedata.category(c) != "Mn")
+    # Remove noise tokens (cedex, CS, BP)
+    text = _LOCATION_NOISE.sub("", text)
+    # Remove postal codes
+    text = _POSTAL_CODE_RE.sub("", text)
+    # Collapse whitespace
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _location_matches(job_location: str, target_city: str) -> bool:
+    """
+    Check if a job's location field matches the target city.
+
+    Handles common patterns:
+    - "Nantes" matches "Nantes"
+    - "44000 - Nantes" matches "Nantes"
+    - "Nantes, Pays de la Loire" matches "Nantes"
+    - "Nantes (44)" matches "Nantes"
+    - "Saint-Herblain" does NOT match "Nantes" (nearby but different city)
+    - "" (empty) → considered a match (benefit of the doubt)
+    - "Remote" → handled separately by caller
+
+    Returns True if the job location contains the target city name.
+    """
+    if not job_location:
+        return True  # No location info → keep (benefit of the doubt)
+
+    norm_job = _normalize_location_text(job_location)
+    norm_city = _normalize_location_text(target_city)
+
+    if not norm_city:
+        return True  # No city filter → keep everything
+
+    # Direct substring match: "nantes" in "44000 - nantes, pays de la loire"
+    if norm_city in norm_job:
+        return True
+
+    # Split job location by common separators and check each part
+    # e.g. "Lyon 3e - 69003" → ["lyon 3e", "69003"]
+    parts = re.split(r"[,\-/|()]+", norm_job)
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        # Check if the city name is contained in the part or vice versa
+        # Require min 3 chars to avoid false positives ("a" in "nantes")
+        if norm_city in part or (len(part) >= 3 and part in norm_city):
+            return True
+
+    return False
+
+
+def _is_remote_job(job: dict) -> bool:
+    """Check if a job is a remote position."""
+    location = (job.get("location") or "").lower()
+    if "remote" in location or "télétravail" in location or "teletravail" in location:
+        return True
+    contract = (job.get("contract_type") or "").lower()
+    if contract == "remote":
+        return True
+    source = job.get("source", "")
+    if source == "remoteok":
+        return True
+    return False
+
 
 def _is_alternance_job(job: dict) -> bool:
-    """Retourne True si l'offre présente un signal alternance clair."""
+    """Retourne True si l'offre presente un signal alternance clair."""
     text = f"{job.get('title', '')} {job.get('description', '') or ''}".lower()
     return (
-        job.get("contract_type") == "alternance"
+        (job.get("contract_type") or "").lower() == "alternance"
         or any(signal in text for signal in ALTERNANCE_SIGNALS)
     )
 
@@ -39,6 +129,7 @@ async def aggregate_jobs(
     max_days: int = 7,
     contract_type: str = "",
     radius_km: int | None = None,
+    include_remote: bool = True,
 ) -> list[dict[str, Any]]:
     """
     Aggregate jobs from multiple providers.
@@ -52,6 +143,7 @@ async def aggregate_jobs(
         max_days: Only jobs from last N days
         contract_type: Filter by contract type
         radius_km: Search radius in kilometers around city (optional)
+        include_remote: Whether to keep remote jobs in results
 
     Returns:
         Combined list of all job listings
@@ -66,11 +158,10 @@ async def aggregate_jobs(
                 "country_code": country_code,
                 "max_results": max_per_provider,
             }
-            # Adzuna supporte max_days — conserver ce comportement spécifique
-            if hasattr(provider, 'name') and provider.name == 'adzuna':
-                kwargs["max_days"] = max_days
+            # Passer max_days a tous les providers (chacun l'ignore si non supporte via **kwargs)
+            kwargs["max_days"] = max_days
 
-            # Transmettre contract_type à TOUS les providers via **kwargs
+            # Transmettre contract_type a TOUS les providers via **kwargs
             if contract_type:
                 kwargs["contract_type"] = contract_type
 
@@ -98,14 +189,110 @@ async def aggregate_jobs(
 
     logger.info(f"[Aggregator] Collected {len(all_jobs)} total jobs | {source_stats}")
 
-    # Post-filter alternance — filet de sécurité contre les faux positifs résiduels
+    # Post-filter alternance — filet de securite contre les faux positifs residuels
     if contract_type in ("alternance", "apprentissage"):
         before = len(all_jobs)
         all_jobs = [j for j in all_jobs if _is_alternance_job(j)]
         for j in all_jobs:
-            if j.get("contract_type") != "alternance":
-                j["contract_type"] = "alternance"
-        logger.info(f"[Aggregator] Post-filter alternance: {before} → {len(all_jobs)} jobs")
+            if (j.get("contract_type") or "").lower() != "alternance":
+                j["contract_type"] = "Alternance"
+        logger.info(f"[Aggregator] Post-filter alternance: {before} -> {len(all_jobs)} jobs")
+
+    # Post-filter location par rayon GPS
+    # Geocode la ville cible, puis filtre les offres par distance haversine.
+    # Ajoute distance_km à chaque offre pour affichage frontend ("à 15km de Nantes").
+    if location:
+        from src.services.job_providers.geo_utils import (
+            extract_city_name,
+            geocode,
+            haversine,
+        )
+
+        effective_radius = radius_km or 50  # 50km par défaut
+        target_coords = await geocode(location, country_code)
+
+        before = len(all_jobs)
+        filtered = []
+        remote_kept = 0
+        no_location_kept = 0
+        geocode_miss = 0
+
+        if target_coords:
+            target_lat, target_lon = target_coords
+
+            # Collecter les locations uniques pour batch geocoding
+            unique_locs: dict[str, tuple[float, float] | None] = {}
+            for job in all_jobs:
+                job_loc = (job.get("location") or "").strip()
+                if job_loc and job_loc not in unique_locs:
+                    city_name = extract_city_name(job_loc)
+                    if city_name:
+                        unique_locs[job_loc] = None  # placeholder
+
+            # Geocode les locations uniques
+            for loc_key in unique_locs:
+                city_name = extract_city_name(loc_key)
+                if city_name:
+                    coords = await geocode(city_name, country_code)
+                    unique_locs[loc_key] = coords
+
+            # Filtrer par distance
+            for job in all_jobs:
+                if _is_remote_job(job):
+                    if include_remote:
+                        job["distance_km"] = None
+                        job["distance_label"] = "Remote"
+                        filtered.append(job)
+                        remote_kept += 1
+                    continue
+
+                job_loc = (job.get("location") or "").strip()
+                if not job_loc:
+                    job["distance_km"] = None
+                    filtered.append(job)
+                    no_location_kept += 1
+                    continue
+
+                job_coords = unique_locs.get(job_loc)
+                if job_coords:
+                    dist = haversine(target_lat, target_lon, job_coords[0], job_coords[1])
+                    if dist <= effective_radius:
+                        job["distance_km"] = round(dist, 1)
+                        if dist < 1:
+                            job["distance_label"] = location
+                        else:
+                            job["distance_label"] = f"à {round(dist)}km de {location}"
+                        filtered.append(job)
+                    # else: hors rayon → drop
+                else:
+                    # Geocodage échoué → fallback substring matching
+                    geocode_miss += 1
+                    if _location_matches(job_loc, location):
+                        job["distance_km"] = None
+                        job["distance_label"] = job_loc
+                        filtered.append(job)
+        else:
+            # Geocodage de la ville cible échoué → fallback complet sur substring
+            logger.warning(f"[Aggregator] Could not geocode target '{location}', falling back to text matching")
+            for job in all_jobs:
+                job_loc = (job.get("location") or "").strip()
+                if _is_remote_job(job):
+                    if include_remote:
+                        filtered.append(job)
+                        remote_kept += 1
+                elif not job_loc or _location_matches(job_loc, location):
+                    filtered.append(job)
+
+        removed = before - len(filtered)
+        if removed > 0:
+            logger.info(
+                f"[Aggregator] Post-filter location '{location}' (radius={effective_radius}km): "
+                f"{before} -> {len(filtered)} jobs "
+                f"(removed {removed}, kept {remote_kept} remote, {no_location_kept} without loc, "
+                f"{geocode_miss} geocode misses)"
+            )
+
+        all_jobs = filtered
 
     return all_jobs
 

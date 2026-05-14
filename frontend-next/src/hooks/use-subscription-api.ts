@@ -41,10 +41,8 @@ interface QuotaData {
 }
 
 interface QuotasData {
-  cv_analysis: QuotaData;
   ats_score: QuotaData;
   matching_score: QuotaData;
-  custom_cv: QuotaData;
   coach: QuotaData;
   job_search: QuotaData;
   assistant_messages: QuotaData;
@@ -135,21 +133,36 @@ function clearPersistentCache(): void {
 export function useSubscriptionApi(): SubscriptionApiData {
   const { session, loading: authLoading } = useAuth();
 
-  // Pre-populate state from persistent cache so users see their last known plan immediately
-  const [data, setData] = useState<Omit<SubscriptionApiData, "refetch">>(() => {
-    const cached = loadPersistentCache();
-    return {
-      user: cached?.user ?? null,
-      subscription: cached?.subscription ?? null,
-      quotas: cached?.quotas ?? null,
-      saved_jobs_quota: cached?.saved_jobs_quota ?? { used: 0, limit: -1 },
-      feature_overrides: cached?.feature_overrides ?? {},
-      plan_feature_flags: cached?.plan_feature_flags ?? {},
-      isLoading: !cached, // If cache exists, no loading state
-      error: null,
-      isFromCache: !!cached,
-    };
+  // Initialize with defaults (no localStorage during SSR to avoid hydration #418)
+  const [data, setData] = useState<Omit<SubscriptionApiData, "refetch">>({
+    user: null,
+    subscription: null,
+    quotas: null,
+    saved_jobs_quota: { used: 0, limit: -1 },
+    feature_overrides: {},
+    plan_feature_flags: {},
+    isLoading: true,
+    error: null,
+    isFromCache: false,
   });
+
+  // Hydrate from persistent cache after mount
+  useEffect(() => {
+    const cached = loadPersistentCache();
+    if (cached) {
+      setData({
+        user: cached.user ?? null,
+        subscription: cached.subscription ?? null,
+        quotas: cached.quotas ?? null,
+        saved_jobs_quota: cached.saved_jobs_quota ?? { used: 0, limit: -1 },
+        feature_overrides: cached.feature_overrides ?? {},
+        plan_feature_flags: cached.plan_feature_flags ?? {},
+        isLoading: false,
+        error: null,
+        isFromCache: true,
+      });
+    }
+  }, []);
 
   // Use ref to avoid recreating interval on every render
   const intervalRef = useRef<NodeJS.Timeout | null>(null);

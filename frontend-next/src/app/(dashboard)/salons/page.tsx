@@ -1,24 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Building2,
-  Clock,
-  ExternalLink,
-  Filter,
-  X,
-  Loader2,
-  Sparkles,
-  TrendingUp,
-  AlertCircle,
-} from "lucide-react";
-import { huntzenApi, type JobFair } from "@/lib/api/huntzen-client";
+import { PageGate } from "@/components/auth/page-gate";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { FeaturedEventsCarousel } from "@/components/salons/featured-events-carousel";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -26,14 +14,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { motion, AnimatePresence } from "framer-motion";
+import { huntzenApi, type JobFair } from "@/lib/api/huntzen-client";
 import { cn } from "@/lib/utils";
 import DOMPurify from "dompurify";
-import { FeaturedEventsCarousel } from "@/components/salons/featured-events-carousel";
-import { ErrorBoundary } from "@/components/error-boundary";
-import { useTranslations, useLocale } from "next-intl";
-import { PageGate } from "@/components/auth/page-gate";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  AlertCircle,
+  Building2,
+  Calendar,
+  Clock,
+  ExternalLink,
+  Filter,
+  Loader2,
+  MapPin,
+  Sparkles,
+  TrendingUp,
+  X,
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 
 // Fonction pour nettoyer le HTML et extraire le texte brut
 function stripHtml(html: string): string {
@@ -264,7 +263,7 @@ export default function SalonsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={clearFilters}
-                          className="text-xs text-[#00D9FF] hover:text-black hover:bg-gray-100 hover:text-slate-900"
+                          className="text-xs text-[#00D9FF] hover:text-black hover:bg-gray-100"
                         >
                           <X className="size-3 mr-1" />
                           {t("resetFilters")}

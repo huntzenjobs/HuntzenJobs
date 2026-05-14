@@ -9,6 +9,7 @@ Sub-agents:
 3. MarketAnalyzer - Provides job market insights
 """
 
+import asyncio
 import logging
 import time
 from difflib import SequenceMatcher
@@ -18,8 +19,11 @@ from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
 from src.services.job_providers import (
     AdzunaProvider,
+    CareerjetProvider,
     FranceTravailProvider,
+    JoobleProvider,
     JSearchProvider,
+    LeForemProvider,
     RemoteOKProvider,
     SerpAPIProvider,
     aggregate_jobs,
@@ -79,16 +83,19 @@ class JobScoutAgent(BaseAgent):
         )
         super().__init__(config)
 
-        # Initialize providers
+        # Initialize providers (all countries)
         self.providers = [
             AdzunaProvider(),
             SerpAPIProvider(),
             JSearchProvider(),
             RemoteOKProvider(),
+            JoobleProvider(),
+            CareerjetProvider(),
         ]
 
-        # France-only provider (activated conditionally in run())
+        # Country-specific providers (activated conditionally in run())
         self.france_travail = FranceTravailProvider()
+        self.le_forem = LeForemProvider()
 
         # Initialize sub-agents
         self._init_sub_agents()
@@ -98,7 +105,7 @@ class JobScoutAgent(BaseAgent):
         self.query_refiner = SubAgent(
             name="QueryRefiner",
             system_prompt=load_prompt("job_scout_query_refiner.txt"),
-            temperature=0.1,
+            temperature=0.0,
             max_tokens=512,
         )
         self.register_sub_agent(self.query_refiner)
@@ -130,8 +137,8 @@ class JobScoutAgent(BaseAgent):
         country_code: str = "fr",
         city: str = "",
         contract_type: str = "",
-        max_results: int = 50,
-        max_days: int = 7,
+        max_results: int = 200,
+        max_days: int = 120,
         radius_km: int | None = None,
         include_remote: bool = True,
         include_insights: bool = True,
@@ -179,26 +186,30 @@ class JobScoutAgent(BaseAgent):
                 effective_title = "emploi"
                 logger.info(f"[{self.name}] No job_title or contract_type, using fallback: 'emploi'")
 
-            # Step 1: Refine query with sub-agent
-            refined = await self._refine_query(effective_title)
+            # Step 1: Refine query with sub-agent (pass country for language context)
+            refined = await self._refine_query(effective_title, country_code)
             search_query = refined.get("corrected_query", effective_title)
+            expanded_query = refined.get("expanded_query", "")
 
-            logger.info(f"[{self.name}] Searching: '{search_query}' in {country_code}")
+            logger.info(f"[{self.name}] Searching: '{search_query}' (expanded: '{expanded_query}') in {country_code}")
 
             # Step 2: Filter providers based on settings
             active_providers = list(self.providers)
 
-            # Add France Travail only for French searches
+            # Add country-specific providers
             if country_code.lower() == "fr":
                 active_providers.append(self.france_travail)
                 logger.info(f"[{self.name}] France Travail activated (country=fr)")
+            elif country_code.lower() == "be":
+                active_providers.append(self.le_forem)
+                logger.info(f"[{self.name}] Le Forem activated (country=be)")
 
             # Remove RemoteOK if user doesn't want remote jobs
             if not include_remote:
                 active_providers = [p for p in active_providers if p.name != "remoteok"]
                 logger.info(f"[{self.name}] Remote jobs excluded")
 
-            # Alternance : remote ≠ alternance (présentiel requis)
+            # Alternance : remote ≠ alternance (presentiel requis)
             if contract_type in ("alternance", "apprentissage"):
                 active_providers = [p for p in active_providers if p.name != "remoteok"]
                 # Prioriser France Travail (asyncio.gather respecte l'ordre input)
@@ -209,28 +220,45 @@ class JobScoutAgent(BaseAgent):
 
             logger.info(f"[{self.name}] Using {len(active_providers)} providers")
 
-            # Step 3: Aggregate from active providers
-            raw_jobs = await aggregate_jobs(
+            # Step 3: Aggregate — fan-out original + expanded in parallel for max coverage
+            aggregate_kwargs = dict(
                 providers=active_providers,
-                query=search_query,
                 location=city,
                 country_code=country_code,
                 max_per_provider=max_results,
                 max_days=max_days,
                 contract_type=contract_type,
                 radius_km=radius_km,
+                include_remote=include_remote,
             )
+
+            # Always search with the corrected query (abbreviation preserved)
+            search_tasks = [aggregate_jobs(query=search_query, **aggregate_kwargs)]
+
+            # Fan-out: also search with expanded form if it differs
+            if expanded_query and expanded_query.lower() != search_query.lower():
+                search_tasks.append(aggregate_jobs(query=expanded_query, **aggregate_kwargs))
+                logger.info(f"[{self.name}] Fan-out enabled: '{search_query}' + '{expanded_query}'")
+
+            results = await asyncio.gather(*search_tasks, return_exceptions=True)
+            raw_jobs = []
+            for r in results:
+                if isinstance(r, list):
+                    raw_jobs.extend(r)
+                elif isinstance(r, Exception):
+                    logger.warning(f"[{self.name}] Fan-out query failed: {r}")
 
             # Step 3: Deduplicate
             unique_jobs = self._deduplicate_jobs(raw_jobs)
 
-            # Step 3.5: Pre-filter by relevance (safety net)
-            filtered_jobs = self._pre_filter_by_relevance(unique_jobs, search_query)
+            # Step 3.5: Pre-filter by relevance (use both queries for wider matching)
+            filter_query = f"{search_query} {expanded_query}".strip() if expanded_query else search_query
+            filtered_jobs = self._pre_filter_by_relevance(unique_jobs, filter_query)
             logger.info(f"[{self.name}] Pre-filter: {len(unique_jobs)} → {len(filtered_jobs)} jobs")
 
             # Step 3.6: Filter school/training-org offers disguised as employers
             # Skip pour l'alternance : _SCHOOL_CONTENT_PATTERNS contient
-            # "programme de formation en alternance" qui filtre des offres légitimes
+            # "programme de formation en alternance" qui filtre des offres legitimes
             if contract_type not in ("alternance", "apprentissage"):
                 filtered_jobs = self._filter_school_offers(filtered_jobs)
 
@@ -253,6 +281,8 @@ class JobScoutAgent(BaseAgent):
                 "metadata": {
                     "original_query": job_title,
                     "refined_query": search_query if search_query != job_title else None,
+                    "expanded_query": expanded_query if expanded_query and expanded_query.lower() != search_query.lower() else None,
+                    "fan_out": bool(expanded_query and expanded_query.lower() != search_query.lower()),
                     "total_raw": len(raw_jobs),
                     "total_deduplicated": len(unique_jobs),
                     "sources_used": list({j.get("source", "unknown") for j in raw_jobs}),
@@ -269,10 +299,13 @@ class JobScoutAgent(BaseAgent):
                 "jobs": [],
             }
 
-    async def _refine_query(self, query: str) -> dict:
+    async def _refine_query(self, query: str, country_code: str = "fr") -> dict:
         """Refine search query using sub-agent."""
         try:
-            result = await self.query_refiner.run(task=f"Refine job search: {query}")
+            result = await self.query_refiner.run(
+                task=f"Refine job search: {query}",
+                context=f"Country: {country_code.upper()}",
+            )
             return self._parse_json(result) or {"corrected_query": query}
         except Exception as e:
             logger.warning(f"[{self.name}] Query refinement failed: {e}")
@@ -337,7 +370,6 @@ class JobScoutAgent(BaseAgent):
                 pass  # Keep quick score if AI fails
             return job
 
-        import asyncio
         await asyncio.gather(*[ai_score(job) for job in top_jobs])
 
         # Re-sort all jobs (AI scores updated top 20, rest keep keyword scores)
@@ -368,10 +400,11 @@ class JobScoutAgent(BaseAgent):
         unique = []
 
         for job in jobs:
-            # Create fingerprint
+            # Create fingerprint (full title + location for stricter dedup)
             title = (job.get("title") or "").lower()
             company = (job.get("company") or "").lower()
-            fingerprint = f"{title[:30]}|{company[:20]}"
+            location = (job.get("location") or "").lower()
+            fingerprint = f"{title}|{company[:20]}|{location[:20]}"
 
             if fingerprint not in seen:
                 seen.add(fingerprint)
@@ -411,11 +444,14 @@ class JobScoutAgent(BaseAgent):
                 continue
 
             # Check 2: Fuzzy match (partial word match like "boulang" in "boulangerie")
+            # Min 3 chars for substring match to avoid "de" matching "developer"
             has_fuzzy = False
             for qw in query_words:
                 if len(qw) < 3:
                     continue
                 for tw in title_words:
+                    if len(tw) < 3:
+                        continue
                     if qw in tw or tw in qw:
                         has_fuzzy = True
                         break
@@ -464,9 +500,10 @@ class JobScoutAgent(BaseAgent):
             # Check 1: known school company name
             is_school = any(kw in company for kw in _SCHOOL_COMPANY_KEYWORDS)
 
-            # Check 2: content patterns (one strong signal is enough)
+            # Check 2: content patterns (require 2+ signals to avoid false positives)
             if not is_school:
-                is_school = any(pattern in content for pattern in _SCHOOL_CONTENT_PATTERNS)
+                signal_count = sum(1 for pattern in _SCHOOL_CONTENT_PATTERNS if pattern in content)
+                is_school = signal_count >= 2
 
             if is_school:
                 removed_count += 1
@@ -484,17 +521,18 @@ class JobScoutAgent(BaseAgent):
 
         return filtered
 
-    async def refine_query(self, query: str) -> dict:
+    async def refine_query(self, query: str, country_code: str = "fr") -> dict:
         """
         Public method to refine search query.
 
         Args:
             query: Raw search query
+            country_code: ISO country code for language context
 
         Returns:
             Refined search parameters
         """
-        return await self._refine_query(query)
+        return await self._refine_query(query, country_code)
 
     async def analyze_market(
         self,

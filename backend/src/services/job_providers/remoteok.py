@@ -66,20 +66,29 @@ class RemoteOKProvider(BaseJobProvider):
             response.raise_for_status()
             data = response.json()
 
-        # Filter by query
+        # Filter by query — strict matching to avoid irrelevant remote jobs
         query_lower = query.lower()
-        query_words = set(query_lower.split())
+        # Mots à ignorer (trop communs, causent des faux positifs)
+        _STOP_WORDS = {"de", "du", "le", "la", "les", "des", "en", "et", "un", "une",
+                        "au", "aux", "à", "ou", "par", "sur", "pour", "dans", "avec",
+                        "the", "and", "of", "in", "for", "to", "a", "an", "is", "on"}
+        query_words = {w for w in query_lower.split() if len(w) >= 3 and w not in _STOP_WORDS}
+
+        if not query_words:
+            # Query trop courte/vague → ne pas retourner de remote random
+            return []
 
         jobs = []
         for item in data[1:]:  # Skip first item (legal notice)
             if not isinstance(item, dict):
                 continue
 
-            # Check relevance
+            # Check relevance — au moins un mot significatif doit matcher
             position = (item.get("position") or "").lower()
             tags = " ".join(item.get("tags", [])).lower()
+            searchable = f"{position} {tags}"
 
-            if any(word in position or word in tags for word in query_words):
+            if any(word in searchable for word in query_words):
                 jobs.append(self._normalize_remoteok_job(item))
 
                 if len(jobs) >= max_results:
@@ -95,6 +104,8 @@ class RemoteOKProvider(BaseJobProvider):
             description = BeautifulSoup(raw_desc, "html.parser").get_text(
                 separator="\n", strip=True
             )
+            # Fix encoding artifacts (Â, Ã, etc.)
+            description = description.replace("Â", "").replace("\xa0", " ").strip()
         else:
             description = None
         url = item.get("url")

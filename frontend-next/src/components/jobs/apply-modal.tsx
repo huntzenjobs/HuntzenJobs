@@ -15,49 +15,50 @@
 
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Sparkles,
-  Upload,
-  FileText,
-  CheckCircle2,
-  Download,
-  ExternalLink,
-  X,
-  Loader2,
-  Building,
-  MapPin,
-  AlertCircle,
-  User,
-  Plus,
-  Check,
-  RefreshCw,
-  Pencil,
-} from "lucide-react";
+import { QueueWaitingIndicator } from "@/components/coach/queue-waiting-indicator";
+import { CvBuilderWizard } from "@/components/cv-builder/cv-builder-wizard";
+import type { CvData } from "@/components/cv-builder/types";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import type { Job, QueueWaitingState } from "@/lib/api/huntzen-client";
-import { useDocuments } from "@/hooks/use-documents";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/auth-context";
+import { useSubscription } from "@/contexts/subscription-context";
 import { useCvProfiles, type CvProfile } from "@/hooks/use-cv-profiles";
-import { CvBuilderWizard } from "@/components/cv-builder/cv-builder-wizard";
-import type { CvData } from "@/components/cv-builder/types";
-import { QueueWaitingIndicator } from "@/components/coach/queue-waiting-indicator";
+import { useDocuments } from "@/hooks/use-documents";
+import type { Job, QueueWaitingState } from "@/lib/api/huntzen-client";
+import { cn } from "@/lib/utils";
+import {
+  Building,
+  Check,
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  FileText,
+  Loader2,
+  MapPin,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  Upload,
+  User,
+  X,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 // ============================================================================
 // TYPES
@@ -275,6 +276,14 @@ export function ApplyModal({
     fetchProfiles,
     saveProfile,
   } = useCvProfiles();
+  const { session } = useAuth();
+  const {
+    canUse,
+    openPricingModal,
+    refreshQuotas,
+    reconcileSubscription,
+    incrementUsage,
+  } = useSubscription();
 
   // Load profiles when switching to profile tab
   useEffect(() => {
@@ -402,6 +411,12 @@ export function ApplyModal({
     throw new Error("Délai d'attente dépassé. Veuillez réessayer.");
   };
 
+  const getAuthHeaders = (): Record<string, string> => {
+    return session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}` }
+      : {};
+  };
+
   // ── Generation from uploaded file ───────────────────────────────────────────
 
   const generateFromFile = async () => {
@@ -423,10 +438,17 @@ export function ApplyModal({
 
       const adaptResponse = await fetch(
         `${BACKEND_URL}/api/cv-adapter/adapt/upload`,
-        { method: "POST", body: formData },
+        {
+          method: "POST",
+          body: formData,
+          headers: getAuthHeaders(),
+        },
       );
 
       if (!adaptResponse.ok) {
+        if (adaptResponse.status === 429) {
+          throw new Error("Quota insuffisant pour l'adaptation de CV.");
+        }
         const err = await adaptResponse.json().catch(() => ({}));
         throw new Error(err.detail || "Erreur lors de l'adaptation du CV");
       }
@@ -481,9 +503,13 @@ export function ApplyModal({
       const adaptResponse = await fetch(`${BACKEND_URL}/api/cv-adapter/adapt`, {
         method: "POST",
         body: adaptFormData,
+        headers: getAuthHeaders(),
       });
 
       if (!adaptResponse.ok) {
+        if (adaptResponse.status === 429) {
+          throw new Error("Quota insuffisant pour l'adaptation de profil.");
+        }
         const err = await adaptResponse.json().catch(() => ({}));
         throw new Error(err.detail || "Erreur lors de l'adaptation du CV");
       }
@@ -524,12 +550,18 @@ export function ApplyModal({
     const [cvPdfResponse, lmPdfResponse] = await Promise.all([
       fetch(`${BACKEND_URL}/api/cv-adapter/generate-pdf`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify({ cv_data: cvData, template: "ats", language }),
       }),
       fetch(`${BACKEND_URL}/api/cv-adapter/generate-cover-letter`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify({
           cv_data: cvData,
           job_description: jobDescription || job.description || job.title,
@@ -567,13 +599,25 @@ export function ApplyModal({
       lmPdfBlob,
       language,
       jobUrl: job.url ?? undefined,
-      savedJobId: savedJobId ?? undefined,
     }).catch(() => {});
+
+    // Rafraîchir les quotas depuis le backend (source de vérité)
+    await refreshQuotas();
   };
 
   // ── Main generate handler ────────────────────────────────────────────────────
 
   const handleGenerate = async () => {
+    // Check quotas first
+    if (!canUse("cv_adapt")) {
+      openPricingModal("cv_adapt_per_day");
+      return;
+    }
+    if (!canUse("cover_letter")) {
+      openPricingModal("cover_letter_per_day");
+      return;
+    }
+
     if (cvSource === "upload") {
       if (!selectedFile) {
         toast.error(tJobs("toasts.selectCvFirst"));

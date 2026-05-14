@@ -12,6 +12,7 @@ Architecture:
 import asyncio
 import json
 import logging
+import os
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -21,6 +22,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.tools import BaseTool as LangChainBaseTool
 from langchain_groq import ChatGroq
 from pydantic import BaseModel
+from supabase import create_client
 
 from src.config.settings import settings
 from src.utils.groq_retry import with_groq_key_rotation, with_groq_retry
@@ -35,11 +37,13 @@ def load_prompt(filename: str) -> str:
     """
     name = filename.removesuffix(".txt")
     try:
-        from src.api.dependencies import get_supabase_client
-        supabase = get_supabase_client()
-        res = supabase.table("ai_prompts").select("content").eq("name", name).maybe_single().execute()
-        if res.data and res.data.get("content"):
-            return res.data["content"]
+        supabase_url = os.getenv("SUPABASE_URL", "")
+        supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+        if supabase_url and supabase_key:
+            supabase = create_client(supabase_url, supabase_key)
+            res = supabase.table("ai_prompts").select("content").eq("name", name).maybe_single().execute()
+            if res.data and res.data.get("content"):
+                return res.data["content"]
     except Exception as e:
         logger.warning(f"Could not load prompt '{name}' from DB, falling back to file: {e}")
 
@@ -222,6 +226,7 @@ class BaseAgent(ABC):
             # Try direct parse first
             return json.loads(text)
         except json.JSONDecodeError:
+            logger.debug(f"[{self.name}] Direct JSON parse failed, trying regex extraction...")
             pass
 
         # Try to extract JSON from markdown code blocks
@@ -240,7 +245,7 @@ class BaseAgent(ABC):
             except json.JSONDecodeError:
                 pass
 
-        logger.warning(f"[{self.name}] Failed to parse JSON from response")
+        logger.error(f"[{self.name}] Failed to parse JSON from response. Raw text: {text[:500]}...")
         return None
 
     def _parse_json_response(self, text: str) -> dict | None:

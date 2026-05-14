@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from typing import Any
 
 from src.api.deps import get_supabase_client
-from src.services.recruiter_finder.apollo import find_recruiters_apollo
 from src.services.recruiter_finder.hunter import (
     build_linkedin_company_url,
     extract_domain,
@@ -111,17 +110,7 @@ def dedup_contacts(contacts: list[dict]) -> list[dict]:
 # Contact normalization
 # ---------------------------------------------------------------------------
 
-def _normalize_apollo_contact(c: dict) -> dict:
-    return {
-        "name": c.get("name", ""),
-        "position": c.get("position"),
-        "email": c.get("email") or None,
-        "email_verified": c.get("email_verified", False),
-        "linkedin_url": c.get("linkedin") or None,
-        "confidence": c.get("confidence", 0),
-        "category": c.get("role", "other"),
-        "source": "apollo",
-    }
+
 
 
 def _normalize_insider_contact(c: dict) -> dict:
@@ -236,26 +225,7 @@ async def _orchestrate_search(
     elif company_website:
         domain = extract_domain(company_website)
 
-    # 2. Apollo (primary)
-    apollo_result = await find_recruiters_apollo(
-        company_name=company_name,
-        company_domain=domain,
-        job_title=job_title or "",
-        city=city or "",
-        country_code=country_code,
-    )
-
-    apollo_contacts = []
-    for c in apollo_result.get("recruiters", []) + apollo_result.get("tech_team", []):
-        apollo_contacts.append(_normalize_apollo_contact(c))
-
-    for c in apollo_result.get("all_contacts", []):
-        if c.get("role") == "other" and c.get("linkedin"):
-            apollo_contacts.append(_normalize_apollo_contact(c))
-
-    if apollo_contacts:
-        sources_used.append("apollo")
-        all_contacts.extend(apollo_contacts)
+    # 2. Skip Apollo (using SerpAPI/Insider as primary)
 
     # 3. SerpAPI if Apollo < 3 HR contacts
     hr_count = sum(1 for c in all_contacts if c.get("category") == "hr")
