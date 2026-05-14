@@ -21,24 +21,26 @@ import jwt
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
-ROOT = Path(__file__).parent.parent
+# ROOT pointe vers la racine du projet (scripts/benchmarks/fr-vs-us.py -> ../../)
+ROOT = Path(__file__).parent.parent.parent
 load_dotenv(ROOT / ".env", override=True)
+
+# Garde-fou production : ce script effectue des opérations admin contre la prod
+# (création d'un user temporaire, requêtes contre /api/jobs/search en production).
+# Pour l'exécuter, définir explicitement ALLOW_PROD_BENCHMARK=1 dans l'environnement.
+# Évalué AVANT les os.environ obligatoires pour afficher un message clair plutôt qu'un KeyError.
+if os.environ.get("ALLOW_PROD_BENCHMARK") != "1":
+    print(
+        "ERREUR : ce script exécute des opérations contre la production.\n"
+        "Pour confirmer l'exécution, définir la variable d'environnement :\n"
+        "  ALLOW_PROD_BENCHMARK=1 python scripts/benchmarks/fr-vs-us.py"
+    )
+    sys.exit(1)
 
 PROD_URL = "https://huntzenjobs-production.up.railway.app"
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 SUPABASE_JWT_SECRET = os.environ["SUPABASE_JWT_SECRET"]
-
-# Garde-fou production : ce script effectue des opérations admin contre la prod
-# (création d'un user temporaire, requêtes contre /api/jobs/search en production).
-# Pour l'exécuter, definir explicitement ALLOW_PROD_BENCHMARK=1 dans l'environnement.
-if os.environ.get("ALLOW_PROD_BENCHMARK") != "1":
-    print(
-        "ERREUR : ce script execute des operations contre la production.\n"
-        "Pour confirmer l'execution, definir la variable d'environnement :\n"
-        "  ALLOW_PROD_BENCHMARK=1 python scripts/benchmarks/fr-vs-us.py"
-    )
-    sys.exit(1)
 
 QUERIES_BY_COUNTRY = {
     "fr": ["développeur", "responsable marketing", "analyste de données"],
@@ -80,7 +82,9 @@ def grant_premium(sb: Client, user_id: str, plan_id: str) -> str:
         "current_period_start": now.isoformat(),
         "current_period_end": end.isoformat(),
         "cancel_at_period_end": False,
-        "stripe_subscription_id": "benchmark_temp",
+        # Valeur unique par run pour éviter de violer la contrainte unique
+        # de user_subscriptions.stripe_subscription_id si un cleanup précédent a échoué.
+        "stripe_subscription_id": f"benchmark_temp_{uuid.uuid4().hex[:12]}",
         "stripe_customer_id": None,
     }
     res = sb.table("user_subscriptions").insert(payload).execute()
