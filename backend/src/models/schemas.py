@@ -207,3 +207,18 @@ class EventSearchResponse(BaseResponse):
     """Response model for event search."""
     events: list[Event] = Field(default_factory=list)
     total: int = 0
+
+
+class EventSuggestRequest(BaseModel):
+    """Request model for proactive event suggestions based on user context."""
+    sector: str = Field(default="", description="User's sector or target sector")
+    city: str = Field(default="", description="User's city (mapped to region for search)")
+    country: str = Field(default="", description="User's country (for international events)")
+    public: str = Field(default="", description="Target public: students, pros, seniors, all")
+
+    model_config = {"json_schema_extra": {"example": {
+        "sector": "tech",
+        "city": "Paris",
+        "country": "France",
+        "public": "pros"
+    }}}

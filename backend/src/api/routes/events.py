@@ -4,11 +4,16 @@ Job Fairs / Events API Routes
 Endpoints for searching job fairs and employment events.
 """
 
-from fastapi import APIRouter, Query
+import logging
 
-from src.services.events.provider import search_job_fairs
+from fastapi import APIRouter, HTTPException, Query, Request, status
+
+from src.api.middleware import limiter
+from src.models.schemas import EventSuggestRequest
+from src.services.events.provider import compute_event_id, search_job_fairs
 from src.services.events.serpapi import SUPPORTED_COUNTRIES
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -121,3 +126,87 @@ async def get_event_types():
     """
     event_types = ["salon", "forum", "job_dating", "webinar"]
     return {"success": True, "event_types": event_types, "count": len(event_types)}
+
+
+@router.get("/{event_id}")
+@limiter.limit("30/minute")
+async def get_event_by_id(
+    request: Request,
+    event_id: str,
+    region: str = Query(default="", description="Optional region to narrow the search"),
+    country: str = Query(default="", description="Optional country for international events"),
+) -> dict:
+    """
+    Return a single event by its deterministic ID.
+
+    Since events have no persistent DB, a broad search is performed and the
+    matching event is returned. 404 if not found.
+    """
+    try:
+        result = await search_job_fairs(
+            region=region,
+            sector="",
+            public="",
+            event_type="",
+            format_type="",
+            country=country,
+            include_mock=False,
+        )
+    except Exception as e:
+        logger.error(f"[Events] Error fetching event {event_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de la récupération des événements",
+        ) from e
+
+    events: list[dict] = result.get("events", [])
+    for event in events:
+        # Events already have an 'id' injected by search_job_fairs
+        eid = event.get("id") or compute_event_id(event)
+        if eid == event_id:
+            return {"success": True, "event": event}
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Événement '{event_id}' introuvable",
+    )
+
+
+@router.post("/suggest")
+@limiter.limit("30/minute")
+async def suggest_events(
+    request: Request,
+    payload: EventSuggestRequest,
+) -> dict:
+    """
+    Suggest upcoming events proactively based on user context.
+
+    Maps city → region (or country for international), filters by sector/public
+    and returns the 10 nearest events sorted chronologically.
+    """
+    try:
+        result = await search_job_fairs(
+            region=payload.city,
+            sector=payload.sector,
+            public=payload.public,
+            event_type="",
+            format_type="",
+            country=payload.country,
+            include_mock=False,
+        )
+    except Exception as e:
+        logger.error(f"[Events] Error in suggest endpoint: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de la suggestion d'événements",
+        ) from e
+
+    events: list[dict] = result.get("events", [])
+    # Already sorted by date_start ascending from search_job_fairs — take top 10
+    suggestions = events[:10]
+
+    return {
+        "success": True,
+        "suggestions": suggestions,
+        "total": len(suggestions),
+    }
