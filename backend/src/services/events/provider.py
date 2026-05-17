@@ -8,6 +8,7 @@ Follows PEP 8 standards and uses English for code/comments.
 """
 
 import asyncio
+import hashlib
 import logging
 import re
 from dataclasses import asdict, dataclass
@@ -50,6 +51,19 @@ class JobFair:
     def to_dict(self) -> dict[str, Any]:
         """Convert dataclass to dictionary."""
         return asdict(self)
+
+
+# ------------------------------------------------------------------------------
+# Utilities
+# ------------------------------------------------------------------------------
+
+def compute_event_id(event: dict) -> str:
+    """
+    Compute a deterministic 16-char ID from title + url.
+    Identical event dicts always produce the same ID.
+    """
+    raw = (event.get("title", "") + event.get("url", "")).encode()
+    return hashlib.sha1(raw).hexdigest()[:16]
 
 
 # ------------------------------------------------------------------------------
@@ -719,6 +733,10 @@ async def search_job_fairs(
             filtered_intl = [e for e in filtered_intl if e.get("format") == format_type]
 
         filtered_intl.sort(key=lambda e: e.get("date_start", ""))
+        # Inject deterministic ID into each event
+        for ev in filtered_intl:
+            if "id" not in ev:
+                ev["id"] = compute_event_id(ev)
         return {
             "success": True,
             "events": filtered_intl,
@@ -776,9 +794,16 @@ async def search_job_fairs(
     # Sort chronological
     filtered.sort(key=lambda e: e.date_start)
 
+    # Serialize and inject deterministic ID into each event
+    serialized = []
+    for e in filtered:
+        d = e.to_dict()
+        d["id"] = compute_event_id(d)
+        serialized.append(d)
+
     return {
         "success": True,
-        "events": [e.to_dict() for e in filtered],
-        "count": len(filtered),
+        "events": serialized,
+        "count": len(serialized),
         "sources": sources
     }
