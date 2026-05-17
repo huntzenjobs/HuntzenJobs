@@ -2,7 +2,7 @@
 International Events via SerpAPI Google Events
 ================================================
 Fetches career fairs and student events worldwide.
-Results are cached 12h per country to minimize API usage.
+Results are cached 30 min per country to minimize API usage.
 """
 
 import logging
@@ -39,11 +39,11 @@ COUNTRY_QUERIES: dict[str, str] = {
 SUPPORTED_COUNTRIES = sorted(COUNTRY_QUERIES.keys())
 
 
-@redis_cache(ttl=43200, prefix="events_int")
+@redis_cache(ttl=1800, prefix="events_int")
 async def fetch_events_for_country(country: str) -> list[dict]:
     """
     Fetch upcoming career/student events for a given country via SerpAPI.
-    Cached 12h per country to avoid redundant API calls.
+    Cached 30 min per country to avoid redundant API calls.
     """
     query_term = COUNTRY_QUERIES.get(country, "career fair student")
     api_key = settings.get_serpapi_key()
