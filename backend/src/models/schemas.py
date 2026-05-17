@@ -222,3 +222,36 @@ class EventSuggestRequest(BaseModel):
         "country": "France",
         "public": "pros"
     }}}
+
+
+# ------------------------------------------------------------------------------
+# Expadation (agent conseiller expatriation)
+# ------------------------------------------------------------------------------
+
+class ExpatAskRequest(BaseModel):
+    """Requête vers l'agent Expadation."""
+    message: str = Field(..., min_length=3, max_length=2000, description="Question de l'utilisateur")
+    language: str = Field(default="fr", description="Langue de la réponse (fr, en, ...)")
+    history: list[dict] = Field(default_factory=list, description="Historique de la conversation")
+
+    model_config = {"json_schema_extra": {"example": {
+        "message": "Quels sont les documents nécessaires pour s'expatrier au Canada ?",
+        "language": "fr",
+        "history": []
+    }}}
+
+
+class ExpatSource(BaseModel):
+    """Source documentaire retournée par l'agent Expadation."""
+    url: str
+    scraped_at: str
+    country: str
+
+
+class ExpatAskResponse(BaseModel):
+    """Réponse de l'agent Expadation."""
+    success: bool = True
+    response: str = ""
+    sources: list[ExpatSource] = Field(default_factory=list)
+    freshness_warnings: list[str] = Field(default_factory=list)
+    language: str = "fr"
