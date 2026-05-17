@@ -2304,9 +2304,30 @@
       "health": "Healthcare",
       "sales": "Sales"
     },
-    "salaryPerYear": "/yr",
-    "salaryApprox": "{amount} {currency}/yr ≈ {eurAmount} €",
-    "coachPrefill": "I would like to move to {country}. Can you help me prepare my project?"
+    "salaryPerYear": "/año",
+    "salaryApprox": "{amount} {currency}/año ≈ {eurAmount} €",
+    "coachPrefill": "Me gustaría mudarme a {country}. ¿Puedes ayudarme a preparar mi proyecto?",
+    "chat": {
+      "title": "Asistente de Expatriación",
+      "subtitle": "Haz tus preguntas sobre visados, fiscalidad, alojamiento y más.",
+      "placeholder": "Ej: ¿Qué visa necesito para trabajar en Canadá como desarrollador?",
+      "send": "Enviar",
+      "welcome": "¡Hola! Soy tu asistente de expatriación. Hazme tus preguntas sobre visados, fiscalidad, alojamiento, trámites administrativos o el mercado laboral en el país de tu destino.",
+      "suggestions": "Preguntas frecuentes",
+      "suggestion1": "¿Qué visa necesito para trabajar en Canadá como desarrollador?",
+      "suggestion2": "¿Cómo funciona la fiscalidad para un expatriado en Alemania?",
+      "suggestion3": "¿Cuáles son los trámites para instalarse en España desde Francia?",
+      "suggestion4": "¿Cuáles son las mejores ciudades para empleos tech en el Reino Unido?",
+      "sources": "Fuentes",
+      "scrapedAt": "Actualizado el {date}",
+      "freshnessWarning": "Advertencia",
+      "errorTitle": "Error",
+      "errorMessage": "Se ha producido un error. Por favor, inténtalo de nuevo.",
+      "thinking": "Pensando…",
+      "you": "Tú",
+      "assistant": "Asistente",
+      "contextCountry": "País de destino: {country}"
+    }
   },
   "popups": {
     "close": "Cerrar",
