@@ -18,6 +18,7 @@ from src.agents.cv_adapter.conversational_agent import CVAdapterConversationalAg
 from src.agents.cv_adapter.main_agent import CVAdapterAgent
 from src.agents.cv_analyzer.conversational_agent import CVAnalyzerConversationalAgent
 from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
+from src.agents.expat import ExpadationAgent
 from src.agents.interview_sim.conversational_agent import InterviewSimAgent
 from src.agents.job_scout.conversational_agent import JobScoutConversationalAgent
 from src.agents.job_scout.main_agent import JobScoutAgent
@@ -144,6 +145,9 @@ _interview_sim_agent_lock = threading.Lock()
 _branding_agent: BrandingAgent | None = None
 _branding_agent_lock = threading.Lock()
 
+_expat_agent: ExpadationAgent | None = None
+_expat_agent_lock = threading.Lock()
+
 # Main (non-conversational) agents
 _cv_analyzer_main_agent: CVAnalyzerAgent | None = None
 _cv_analyzer_main_lock = threading.Lock()
@@ -269,6 +273,19 @@ def get_branding_agent() -> BrandingAgent:
     return _branding_agent
 
 
+def get_expat_agent() -> ExpadationAgent:
+    """Get ExpadationAgent singleton (thread-safe)."""
+    global _expat_agent
+
+    if _expat_agent is None:
+        with _expat_agent_lock:
+            if _expat_agent is None:
+                _expat_agent = ExpadationAgent()
+                logger.info("[deps] ExpadationAgent singleton created")
+
+    return _expat_agent
+
+
 CoachAgentDep = Annotated[CareerCoachAgent, Depends(get_coach_agent)]
 ScoutAgentDep = Annotated[JobScoutAgent, Depends(get_scout_agent)]
 ScoutConversationalAgentDep = Annotated[JobScoutConversationalAgent, Depends(get_scout_conversational_agent)]
@@ -280,6 +297,7 @@ InterviewSimAgentDep = Annotated[InterviewSimAgent, Depends(get_interview_sim_ag
 CVAnalyzerMainDep = Annotated[CVAnalyzerAgent, Depends(get_cv_analyzer_main)]
 CVAdapterMainDep = Annotated[CVAdapterAgent, Depends(get_cv_adapter_main)]
 BrandingAgentDep = Annotated[BrandingAgent, Depends(get_branding_agent)]
+ExpadationAgentDep = Annotated[ExpadationAgent, Depends(get_expat_agent)]
 
 
 # Supabase Client - Thread-safe
