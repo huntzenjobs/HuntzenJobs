@@ -3,17 +3,21 @@ ARQ Task Functions — HuntZen
 Tâches async exécutées par les workers ARQ.
 
 Couverture :
-- coach_task        → CareerCoachAgent (5 sous-agents Groq)
-- assistant_task    → Multi-assistant (Nova/Maria/Sofia/Lucas/Jeff)
-- cv_adapt_task     → CVAdapterAgent (adaptation CV pour une offre)
-- cover_letter_task → CVAdapterAgent (génération lettre de motivation JSON)
+- coach_task          → CareerCoachAgent (5 sous-agents Groq)
+- assistant_task      → Multi-assistant (Nova/Maria/Sofia/Lucas/Jeff)
+- cv_adapt_task       → CVAdapterAgent (adaptation CV pour une offre)
+- cover_letter_task   → CVAdapterAgent (génération lettre de motivation JSON)
+- expat_refresh_task  → Ingest Expadation (scraping hebdomadaire)
 
 CV Analysis (Modal pipeline) n'est pas ici : il a déjà son propre système async.
 """
 import asyncio
+import logging
 
 # Semaphore global : max 5 appels Groq simultanés par worker ARQ
 _groq_semaphore = asyncio.Semaphore(5)
+
+logger = logging.getLogger(__name__)
 
 
 # ─── Coach ────────────────────────────────────────────────────────────────────
@@ -134,6 +138,21 @@ async def cover_letter_task(
         )
 
     return result
+
+
+# ─── Expadation Refresh ───────────────────────────────────────────────────────
+
+async def expat_refresh_task(ctx: dict) -> dict:
+    """ARQ task — rafraîchit la base documentaire Expadation (scraping hebdomadaire)."""
+    from src.services.expat.ingest import ingest_all
+
+    try:
+        result = await ingest_all()
+        logger.info(f"[expat_refresh] Ingestion terminée : {result}")
+        return {"success": True, "result": result}
+    except Exception as exc:
+        logger.error(f"[expat_refresh] Échec de l'ingestion : {exc}", exc_info=True)
+        return {"success": False, "error": str(exc)}
 
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
