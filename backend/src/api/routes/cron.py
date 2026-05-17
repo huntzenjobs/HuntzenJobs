@@ -230,6 +230,30 @@ async def purge_events(authorization: str | None = Header(None)):
     return {"success": True, "deleted": deleted}
 
 
+@router.post("/expat-refresh")
+async def expat_refresh_cron(authorization: str | None = Header(None)):
+    """
+    Déclenche le scraping hebdomadaire Expadation via ARQ.
+    Protégé par CRON_SECRET (Bearer token).
+    Planifié chaque lundi à 03h00 UTC.
+    """
+    _verify_cron_secret(authorization)
+
+    try:
+        from arq import create_pool
+
+        from src.workers.settings import _get_redis_settings
+
+        pool = await create_pool(_get_redis_settings())
+        job = await pool.enqueue_job("expat_refresh_task")
+        job_id = job.job_id if job else None
+        logger.info(f"[cron] expat-refresh enqueued — job_id={job_id}")
+        return {"success": True, "message": "Expat refresh enqueued", "job_id": job_id}
+    except Exception as exc:
+        logger.error(f"[cron] expat-refresh: enqueue failed: {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to enqueue expat refresh") from None
+
+
 @router.post("/notify-expiring-plans")
 async def notify_expiring_plans_cron(authorization: str | None = Header(None)):
     """
