@@ -2198,7 +2198,28 @@
     },
     "salaryPerYear": "/yr",
     "salaryApprox": "{amount} {currency}/yr ≈ {eurAmount} €",
-    "coachPrefill": "I would like to move to {country}. Can you help me prepare my project?"
+    "coachPrefill": "I would like to move to {country}. Can you help me prepare my project?",
+    "chat": {
+      "title": "Expat Assistant",
+      "subtitle": "Ask your questions about visas, taxes, housing and more.",
+      "placeholder": "E.g. What visa do I need to work in Canada as a developer?",
+      "send": "Send",
+      "welcome": "Hello! I am your expat assistant. Ask me your questions about visas, taxation, housing, administrative steps or the job market in your destination country.",
+      "suggestions": "Frequently asked questions",
+      "suggestion1": "What visa do I need to work in Canada as a developer?",
+      "suggestion2": "How does taxation work for an expat in Germany?",
+      "suggestion3": "What are the steps to move to Spain from France?",
+      "suggestion4": "What are the best cities for tech jobs in the UK?",
+      "sources": "Sources",
+      "scrapedAt": "Updated on {date}",
+      "freshnessWarning": "Warning",
+      "errorTitle": "Error",
+      "errorMessage": "An error occurred. Please try again.",
+      "thinking": "Thinking…",
+      "you": "You",
+      "assistant": "Assistant",
+      "contextCountry": "Destination country: {country}"
+    }
   },
   "about": {
     "hero_title": "HuntZen Jobs: Your Career Ally in France",
