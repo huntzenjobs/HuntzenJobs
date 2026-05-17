@@ -65,6 +65,14 @@ class Settings(BaseSettings):
     careerjet_affid: str = Field(default="", alias="CAREERJET_AFFID", description="Careerjet Affiliate ID (free)")
 
     # --------------------------------------------------------------------------
+    # API Keys - Embeddings (Jina AI)
+    # --------------------------------------------------------------------------
+    jina_api_key: SecretStr = Field(
+        default=SecretStr(""),
+        description="Jina AI API Key (free tier, embeddings jina-embeddings-v3)"
+    )
+
+    # --------------------------------------------------------------------------
     # API Keys - Recruiter Finder (Hunter.io)
     # --------------------------------------------------------------------------
     #hunter_api_key: SecretStr = Field(default=SecretStr(""), description="Hunter.io API Key")
@@ -196,6 +204,10 @@ class Settings(BaseSettings):
     def get_resend_api_key(self) -> str:
         """Get Resend API key as string."""
         return self.resend_api_key.get_secret_value()
+
+    def get_jina_key(self) -> str:
+        """Get Jina AI API key as string (free tier, embeddings)."""
+        return self.jina_api_key.get_secret_value()
 
     def get_frontend_urls(self) -> list[str]:
         """
