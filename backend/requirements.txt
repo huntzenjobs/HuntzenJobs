@@ -36,3 +36,6 @@ geonamescache>=1.5.0  # Local cities fallback
 sentry-sdk[fastapi]==2.19.2
 # HTML Parsing (job description scraping)
 beautifulsoup4
+# Expadation RAG — scraping sources officielles
+selectolax  # Parser HTML rapide (C) pour le scraping de masse
+markdownify  # Conversion HTML vers Markdown propre
