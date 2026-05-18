@@ -30,7 +30,7 @@ class CoachRequest(BaseModel):
     session_id: str = Field(..., pattern=r"^[a-f0-9-]{36}$", description="Session UUID")
     language: Literal["fr", "en", "es", "pt"] = Field(default="fr")
     assistant_type: str = Field(default="career-coach", description="Coach/assistant type for per-coach quota tracking")
-    request_id: str | None = Field(default=None, description="Clé d'idempotence optionnelle pour déduplication ARQ")
+    request_id: str | None = Field(default=None, max_length=128, description="Clé d'idempotence optionnelle pour déduplication ARQ")
 
     model_config = {"json_schema_extra": {"example": {
         "message": "How can I improve my CV for a Data Engineer position?",
@@ -294,7 +294,7 @@ class BrandingMemoryRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=3000, description="Message utilisateur")
     session_id: str = Field(..., pattern=r"^[a-f0-9\-]{36}$", description="UUID de session")
     language: str = Field(default="fr", description="Langue de réponse")
-    request_id: str | None = Field(default=None, description="Clé idempotence optionnelle")
+    request_id: str | None = Field(default=None, max_length=128, description="Clé idempotence optionnelle")
     branding_profile: BrandingProfileMemory | None = Field(
         default=None,
         description="Profil branding en fallback (sessions non authentifiées / locales)",

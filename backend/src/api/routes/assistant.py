@@ -30,7 +30,7 @@ from src.api.deps import (
 from src.services.cv_chat_extractor import extract_cv_structured
 from src.services.modal_pdf_extractor import extract_text_via_modal, is_modal_pdf_enabled
 from src.services.stripe import invalidate_user_quota_cache
-from src.utils.request_dedup import build_dedup_request_id, get_or_register_request
+from src.utils.request_dedup import build_dedup_request_id, register_request, store_job_id
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +70,36 @@ async def _decr_active() -> None:
         val = await redis.decr(_GROQ_ACTIVE_KEY)
         if val < 0:
             await redis.set(_GROQ_ACTIVE_KEY, 0)
+
+async def _dedup_or_enqueue(
+    pool,
+    task_name: str,
+    assistant_type: str,
+    user_id: str,
+    request_id: str | None,
+    active: int,
+    **task_kwargs,
+) -> dict | None:
+    """Helper mutualisé : déduplication + enqueue ARQ.
+
+    Retourne le dict de réponse queue si dedup hit ou enqueue réussi, None sinon.
+    NE touche JAMAIS au quota — c'est la responsabilité de l'appelant UNIQUEMENT
+    lors d'un nouveau job (pas sur dedup hit).
+    """
+    req_id = request_id or build_dedup_request_id(
+        "assistant", assistant_type, user_id,
+        task_kwargs.get("session_id", ""), task_kwargs.get("message", ""),
+    )
+    existing = await register_request(req_id)
+    if existing and existing != "__pending__":
+        # Doublon détecté — NE PAS incrémenter le quota (P1-1)
+        logger.info(f"[assistant/{assistant_type}] dedup hit — returning existing job={existing}")
+        return {"queued": True, "job_id": existing, "estimated_wait_seconds": active * 8}
+
+    job = await pool.enqueue_job(task_name, **task_kwargs)
+    await store_job_id(req_id, job.job_id)
+    return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8, "_new_job": True}
+
 
 # ── Prompts de réception du CV par assistant ─────────────────────────────────
 # Chaque assistant répond différemment à l'upload d'un CV.
@@ -129,7 +159,7 @@ class AssistantRequest(BaseModel):
     ] = Field(..., description="Type of assistant to use")
     language: str = Field(default="fr", description="Response language (fr/en)")
     request_id: str | None = Field(
-        default=None, description="Clé d'idempotence optionnelle pour déduplication ARQ"
+        default=None, max_length=128, description="Clé d'idempotence optionnelle pour déduplication ARQ"
     )
 
     # Optional context data for specific assistants
@@ -178,34 +208,29 @@ async def job_scout_chat(
         pool = await _get_arq_pool()
         if pool:
             try:
-                req_id = request.request_id or build_dedup_request_id(
-                    "assistant", "job-scout", user_id, request.session_id, request.message[:50]
-                )
-                dedup_id: str | None = None
-                existing = await get_or_register_request(req_id, "_pending_")
-                if existing and existing != "_pending_":
-                    increment_assistant_messages(user_id, "job-scout")
-                    await invalidate_user_quota_cache(user_id)
-                    logger.info(
-                        f"[assistant/job-scout] dedup hit — returning existing job={existing}"
-                    )
-                    return {"queued": True, "job_id": existing, "estimated_wait_seconds": active * 8}
-                job = await pool.enqueue_job(
+                result_queue = await _dedup_or_enqueue(
+                    pool,
                     "assistant_task",
+                    "job-scout",
+                    user_id,
+                    request.request_id,
+                    active,
                     message=request.message,
                     session_id=request.session_id,
                     assistant_type="job-scout",
                     language=request.language,
                     history=history,
                 )
-                dedup_id = job.job_id
-                await get_or_register_request(req_id, dedup_id)
-                increment_assistant_messages(user_id, "job-scout")
-                await invalidate_user_quota_cache(user_id)
-                logger.info(
-                    f"[assistant/job-scout] ARQ queued — active={active} job={dedup_id}"
-                )
-                return {"queued": True, "job_id": dedup_id, "estimated_wait_seconds": active * 8}
+                if result_queue is not None:
+                    if result_queue.pop("_new_job", False):
+                        # Nouveau job uniquement : incrémenter le quota
+                        increment_assistant_messages(user_id, "job-scout")
+                        await invalidate_user_quota_cache(user_id)
+                        logger.info(
+                            f"[assistant/job-scout] ARQ queued — active={active} "
+                            f"job={result_queue['job_id']}"
+                        )
+                    return result_queue
             except Exception as e:
                 logger.warning(f"[assistant/job-scout] ARQ enqueue failed ({e}) — fallback sync")
         await _incr_active()
@@ -266,32 +291,28 @@ async def cv_analyzer_chat(
         pool = await _get_arq_pool()
         if pool:
             try:
-                req_id = request.request_id or build_dedup_request_id(
-                    "assistant", "cv-analyzer", user_id, request.session_id, request.message[:50]
-                )
-                existing = await get_or_register_request(req_id, "_pending_")
-                if existing and existing != "_pending_":
-                    increment_assistant_messages(user_id, "cv-analyzer")
-                    await invalidate_user_quota_cache(user_id)
-                    logger.info(
-                        f"[assistant/cv-analyzer] dedup hit — returning existing job={existing}"
-                    )
-                    return {"queued": True, "job_id": existing, "estimated_wait_seconds": active * 8}
-                job = await pool.enqueue_job(
+                result_queue = await _dedup_or_enqueue(
+                    pool,
                     "assistant_task",
+                    "cv-analyzer",
+                    user_id,
+                    request.request_id,
+                    active,
                     message=request.message,
                     session_id=request.session_id,
                     assistant_type="cv-analyzer",
                     language=request.language,
                     history=history,
                 )
-                await get_or_register_request(req_id, job.job_id)
-                increment_assistant_messages(user_id, "cv-analyzer")
-                await invalidate_user_quota_cache(user_id)
-                logger.info(
-                    f"[assistant/cv-analyzer] ARQ queued — active={active} job={job.job_id}"
-                )
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+                if result_queue is not None:
+                    if result_queue.pop("_new_job", False):
+                        increment_assistant_messages(user_id, "cv-analyzer")
+                        await invalidate_user_quota_cache(user_id)
+                        logger.info(
+                            f"[assistant/cv-analyzer] ARQ queued — active={active} "
+                            f"job={result_queue['job_id']}"
+                        )
+                    return result_queue
             except Exception as e:
                 logger.warning(f"[assistant/cv-analyzer] ARQ enqueue failed ({e}) — fallback sync")
         await _incr_active()
@@ -352,32 +373,28 @@ async def cv_adapter_chat(
         pool = await _get_arq_pool()
         if pool:
             try:
-                req_id = request.request_id or build_dedup_request_id(
-                    "assistant", "cv-adapter", user_id, request.session_id, request.message[:50]
-                )
-                existing = await get_or_register_request(req_id, "_pending_")
-                if existing and existing != "_pending_":
-                    increment_assistant_messages(user_id, "cv-adapter")
-                    await invalidate_user_quota_cache(user_id)
-                    logger.info(
-                        f"[assistant/cv-adapter] dedup hit — returning existing job={existing}"
-                    )
-                    return {"queued": True, "job_id": existing, "estimated_wait_seconds": active * 8}
-                job = await pool.enqueue_job(
+                result_queue = await _dedup_or_enqueue(
+                    pool,
                     "assistant_task",
+                    "cv-adapter",
+                    user_id,
+                    request.request_id,
+                    active,
                     message=request.message,
                     session_id=request.session_id,
                     assistant_type="cv-adapter",
                     language=request.language,
                     history=history,
                 )
-                await get_or_register_request(req_id, job.job_id)
-                increment_assistant_messages(user_id, "cv-adapter")
-                await invalidate_user_quota_cache(user_id)
-                logger.info(
-                    f"[assistant/cv-adapter] ARQ queued — active={active} job={job.job_id}"
-                )
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+                if result_queue is not None:
+                    if result_queue.pop("_new_job", False):
+                        increment_assistant_messages(user_id, "cv-adapter")
+                        await invalidate_user_quota_cache(user_id)
+                        logger.info(
+                            f"[assistant/cv-adapter] ARQ queued — active={active} "
+                            f"job={result_queue['job_id']}"
+                        )
+                    return result_queue
             except Exception as e:
                 logger.warning(f"[assistant/cv-adapter] ARQ enqueue failed ({e}) — fallback sync")
         await _incr_active()
@@ -440,32 +457,28 @@ async def interview_sim_chat(
         pool = await _get_arq_pool()
         if pool:
             try:
-                req_id = request.request_id or build_dedup_request_id(
-                    "assistant", "interview-sim", user_id, request.session_id, request.message[:50]
-                )
-                existing = await get_or_register_request(req_id, "_pending_")
-                if existing and existing != "_pending_":
-                    increment_assistant_messages(user_id, "interview-sim")
-                    await invalidate_user_quota_cache(user_id)
-                    logger.info(
-                        f"[assistant/interview-sim] dedup hit — returning existing job={existing}"
-                    )
-                    return {"queued": True, "job_id": existing, "estimated_wait_seconds": active * 8}
-                job = await pool.enqueue_job(
+                result_queue = await _dedup_or_enqueue(
+                    pool,
                     "assistant_task",
+                    "interview-sim",
+                    user_id,
+                    request.request_id,
+                    active,
                     message=request.message,
                     session_id=request.session_id,
                     assistant_type="interview-sim",
                     language=request.language,
                     history=history,
                 )
-                await get_or_register_request(req_id, job.job_id)
-                increment_assistant_messages(user_id, "interview-sim")
-                await invalidate_user_quota_cache(user_id)
-                logger.info(
-                    f"[assistant/interview-sim] ARQ queued — active={active} job={job.job_id}"
-                )
-                return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
+                if result_queue is not None:
+                    if result_queue.pop("_new_job", False):
+                        increment_assistant_messages(user_id, "interview-sim")
+                        await invalidate_user_quota_cache(user_id)
+                        logger.info(
+                            f"[assistant/interview-sim] ARQ queued — active={active} "
+                            f"job={result_queue['job_id']}"
+                        )
+                    return result_queue
             except Exception as e:
                 logger.warning(f"[assistant/interview-sim] ARQ enqueue failed ({e}) — fallback sync")
         await _incr_active()

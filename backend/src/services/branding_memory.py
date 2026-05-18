@@ -16,6 +16,7 @@ Adapté depuis la branche brand-agent (commit ~2026-03) au code actuel.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from copy import deepcopy
 from datetime import UTC, datetime
@@ -159,8 +160,18 @@ def calculate_profile_completion(
 def determine_branding_state(
     profile: dict[str, Any] | BrandingProfileMemory | None,
 ) -> str:
-    """Détermine l'état branding suivant en fonction de la mémoire courante."""
+    """Détermine l'état branding en fonction de la mémoire courante.
+
+    Si `current_state` est présent dans le profil et correspond à un état valide,
+    il est utilisé comme valeur minimale (l'état calculé ne peut pas régresser
+    en dessous de la valeur explicitement fournie).
+    """
     data = profile.model_dump() if isinstance(profile, BrandingProfileMemory) else (profile or {})
+
+    # Respecter l'override explicite quand il est valide (P1-6)
+    state_override = _clean_text(data.get("current_state"))
+    if state_override in BRANDING_STATES:
+        return state_override
 
     if not _clean_text(data.get("professional_identity")) or not _clean_text(
         data.get("current_context")
@@ -278,7 +289,6 @@ def hydrate_branding_profile_from_cv(
     role = _clean_text(cv_structured.get("current_role"))
     years_experience = cv_structured.get("years_experience")
     summary = _clean_text(cv_structured.get("summary"))
-    skills = _clean_list(cv_structured.get("key_skills"))[:5]
     education = _clean_list(cv_structured.get("education"))[:2]
 
     professional_identity = summary or role
@@ -290,12 +300,14 @@ def hydrate_branding_profile_from_cv(
     if education:
         current_context_parts.append(f"Formation: {education[0]}")
 
+    # P1-5 : ne PAS pré-remplir content_pillars avec key_skills
+    # (content_pillars = thèmes de publication, pas compétences techniques)
+    # L'agent/utilisateur remplira content_pillars lors de l'étape audience_topics.
     updates = {
         "professional_identity": professional_identity,
         "current_context": (
             " • ".join(current_context_parts) if current_context_parts else None
         ),
-        "content_pillars": skills,
         "current_state": "goals" if (professional_identity or current_context_parts) else None,
     }
 
@@ -307,7 +319,7 @@ def hydrate_branding_profile_from_cv(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def load_branding_session(
+async def load_branding_session(
     supabase: Client,
     user_id: str,
     session_id: str,
@@ -315,23 +327,34 @@ def load_branding_session(
     """Charge l'historique de conversation et le profil branding d'une session.
 
     Priorité : table branding_profiles > contexte coach_conversations > profil vide.
+    Les deux round-trips Supabase sont lancés en parallèle via asyncio.gather.
     """
-    conversation_res = (
-        supabase.table("coach_conversations")
-        .select("id, messages, context")
-        .eq("user_id", user_id)
-        .eq("session_id", session_id)
-        .eq("assistant_type", BRANDING_ASSISTANT_TYPE)
-        .limit(1)
-        .execute()
-    )
-    profile_res = (
-        supabase.table("branding_profiles")
-        .select("*")
-        .eq("user_id", user_id)
-        .eq("session_id", session_id)
-        .limit(1)
-        .execute()
+
+    def _fetch_conversation() -> Any:
+        return (
+            supabase.table("coach_conversations")
+            .select("id, messages, context")
+            .eq("user_id", user_id)
+            .eq("session_id", session_id)
+            .eq("assistant_type", BRANDING_ASSISTANT_TYPE)
+            .limit(1)
+            .execute()
+        )
+
+    def _fetch_profile() -> Any:
+        return (
+            supabase.table("branding_profiles")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("session_id", session_id)
+            .limit(1)
+            .execute()
+        )
+
+    # Deux round-trips indépendants lancés en parallèle (P0-2)
+    conversation_res, profile_res = await asyncio.gather(
+        asyncio.to_thread(_fetch_conversation),
+        asyncio.to_thread(_fetch_profile),
     )
 
     conversation = conversation_res.data[0] if conversation_res.data else None
@@ -351,7 +374,7 @@ def load_branding_session(
     }
 
 
-def save_branding_turn(
+async def save_branding_turn(
     supabase: Client,
     *,
     user_id: str,
@@ -394,8 +417,8 @@ def save_branding_turn(
     }
 
     if conversation_id:
-        conversation_res = (
-            supabase.table("coach_conversations")
+        conversation_res = await asyncio.to_thread(
+            lambda: supabase.table("coach_conversations")
             .update(conversation_payload)
             .eq("id", conversation_id)
             .execute()
@@ -404,8 +427,8 @@ def save_branding_turn(
             conversation_res.data[0] if conversation_res.data else {"id": conversation_id}
         )
     else:
-        conversation_res = (
-            supabase.table("coach_conversations").insert(conversation_payload).execute()
+        conversation_res = await asyncio.to_thread(
+            lambda: supabase.table("coach_conversations").insert(conversation_payload).execute()
         )
         conversation_data = conversation_res.data[0] if conversation_res.data else {}
 
@@ -426,9 +449,11 @@ def save_branding_turn(
         "profile_completion": branding_profile.get("profile_completion", 0),
         "ready_for_generation": branding_profile.get("ready_for_generation", False),
     }
-    supabase.table("branding_profiles").upsert(
-        profile_payload, on_conflict="user_id,session_id"
-    ).execute()
+    await asyncio.to_thread(
+        lambda: supabase.table("branding_profiles")
+        .upsert(profile_payload, on_conflict="user_id,session_id")
+        .execute()
+    )
     logger.info(
         "[branding_memory] session saved",
         extra={
@@ -440,18 +465,27 @@ def save_branding_turn(
     )
 
 
-def delete_branding_session(
+async def delete_branding_session(
     supabase: Client,
     user_id: str,
     session_id: str,
 ) -> None:
     """Supprime la conversation branding et le profil d'une session utilisateur."""
-    supabase.table("branding_profiles").delete().eq("user_id", user_id).eq(
-        "session_id", session_id
-    ).execute()
-    supabase.table("coach_conversations").delete().eq("user_id", user_id).eq(
-        "session_id", session_id
-    ).eq("assistant_type", BRANDING_ASSISTANT_TYPE).execute()
+    await asyncio.to_thread(
+        lambda: supabase.table("branding_profiles")
+        .delete()
+        .eq("user_id", user_id)
+        .eq("session_id", session_id)
+        .execute()
+    )
+    await asyncio.to_thread(
+        lambda: supabase.table("coach_conversations")
+        .delete()
+        .eq("user_id", user_id)
+        .eq("session_id", session_id)
+        .eq("assistant_type", BRANDING_ASSISTANT_TYPE)
+        .execute()
+    )
     logger.info(
         "[branding_memory] session deleted",
         extra={"user_id": user_id, "session_id": session_id},
