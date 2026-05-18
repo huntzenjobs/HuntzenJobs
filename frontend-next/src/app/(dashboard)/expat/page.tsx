@@ -160,8 +160,14 @@ export default function ExpatPage() {
 
       try {
         const token = session?.access_token;
+        // Préfixer le message avec le pays sélectionné pour que l'agent backend
+        // dispose du contexte pays dès la première sous-requête, indépendamment
+        // de ce que l'IntentParser est capable d'extraire de la question seule.
+        const messageWithContext = country
+          ? `[Pays de destination : ${country.name}] ${trimmed}`
+          : trimmed;
         const result = await huntzenApi.askExpat({
-          message: trimmed,
+          message: messageWithContext,
           language: locale,
           history,
           token,
@@ -177,9 +183,7 @@ export default function ExpatPage() {
         };
         setMessages((prev) => [...prev, assistantMsg]);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : tc("errorMessage"),
-        );
+        setError(err instanceof Error ? err.message : tc("errorMessage"));
       } finally {
         setLoading(false);
       }

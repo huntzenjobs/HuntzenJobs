@@ -128,15 +128,16 @@ async def ingest_source(
         logger.error("Erreur embeddings", extra={"url": url, "error": str(exc)}, exc_info=True)
         return {"status": "error", "reason": f"embedding failed: {exc}"}
 
-    # --- Étape 7 : Upsert document -------------------------------------------
-    doc_payload: dict[str, Any] = {
+    # --- Étape 7 : Upsert document (sans mettre à jour content_hash pour l'instant) ----------
+    # Le content_hash est mis à jour EN DERNIER, après confirmation de l'insertion des chunks.
+    # Ainsi, si l'insertion échoue, le hash reste l'ancien → la source sera ré-ingérée au prochain run.
+    doc_payload_without_hash: dict[str, Any] = {
         "source_url": url,
         "country": country,
         "visa_type": visa_type,
         "language": "fr",
         "title": title,
         "raw_markdown": markdown,
-        "content_hash": content_hash,
         "scraped_at": scraped_at,
         "is_stale": False,
         "updated_at": scraped_at,
@@ -145,7 +146,7 @@ async def ingest_source(
     try:
         upsert_result = (
             supabase.table("expat_documents")
-            .upsert(doc_payload, on_conflict="source_url")
+            .upsert(doc_payload_without_hash, on_conflict="source_url")
             .execute()
         )
         doc_id = upsert_result.data[0]["id"]
@@ -153,19 +154,9 @@ async def ingest_source(
         logger.error("Erreur upsert document", extra={"url": url, "error": str(exc)}, exc_info=True)
         return {"status": "error", "reason": f"upsert document failed: {exc}"}
 
-    # --- Étape 8 : Supprimer les anciens chunks ------------------------------
-    # La contrainte ON DELETE CASCADE gère la suppression automatique,
-    # mais on supprime explicitement pour contrôler l'ordre.
-    try:
-        supabase.table("expat_chunks").delete().eq("document_id", doc_id).execute()
-    except Exception as exc:
-        logger.warning(
-            "Impossible de supprimer les anciens chunks",
-            extra={"doc_id": doc_id, "error": str(exc)},
-        )
-        # Non bloquant — on continue pour insérer les nouveaux
-
-    # --- Étape 9 : Insérer les nouveaux chunks -------------------------------
+    # --- Étape 8 : Insérer les nouveaux chunks AVANT de supprimer les anciens --------
+    # Ordre sûr : insérer → supprimer anciens → mettre à jour le hash.
+    # Si l'insert échoue, les anciens chunks restent intacts et le hash n'est pas mis à jour.
     chunk_rows: list[dict[str, Any]] = []
     for chunk, embedding in zip(chunks, embeddings, strict=True):
         chunk_rows.append(
@@ -187,6 +178,37 @@ async def ingest_source(
     except Exception as exc:
         logger.error("Erreur insertion chunks", extra={"url": url, "error": str(exc)}, exc_info=True)
         return {"status": "error", "reason": f"insert chunks failed: {exc}"}
+
+    # --- Étape 9 : Supprimer les anciens chunks (maintenant que les nouveaux sont confirmés) ---
+    try:
+        (
+            supabase.table("expat_chunks")
+            .delete()
+            .eq("document_id", doc_id)
+            # Exclure les chunks qu'on vient d'insérer (chunk_index présents dans chunk_rows)
+            .not_.in_("chunk_index", [c["chunk_index"] for c in chunk_rows])
+            .execute()
+        )
+    except Exception as exc:
+        logger.warning(
+            "Impossible de supprimer les anciens chunks orphelins",
+            extra={"doc_id": doc_id, "error": str(exc)},
+        )
+        # Non bloquant — les anciens chunks seront écrasés au prochain run
+
+    # --- Étape 10 : Mettre à jour le content_hash EN DERNIER (après confirmation des chunks) ---
+    try:
+        supabase.table("expat_documents").update({"content_hash": content_hash}).eq(
+            "id", doc_id
+        ).execute()
+    except Exception as exc:
+        logger.error(
+            "Erreur mise à jour content_hash",
+            extra={"url": url, "doc_id": doc_id, "error": str(exc)},
+            exc_info=True,
+        )
+        # Non bloquant pour le résultat retourné : les chunks sont bien insérés.
+        # Au prochain run, la source sera ré-ingérée (hash toujours ancien).
 
     logger.info(
         "Ingestion réussie",

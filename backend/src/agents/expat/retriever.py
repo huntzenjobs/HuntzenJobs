@@ -79,9 +79,14 @@ class DocumentRetriever:
 
             try:
                 embedding = await embed_query(query)
+            except RuntimeError:
+                # RuntimeError = erreur de configuration (ex. JINA_API_KEY manquante).
+                # On la laisse remonter pour éviter un faux "aucune source" silencieux.
+                raise
             except Exception as exc:
+                # Erreurs réseau transitoires : on logue et on continue avec la sous-requête suivante.
                 logger.error(
-                    "[DocumentRetriever] Erreur embedding sous-requête %d : %s",
+                    "[DocumentRetriever] Erreur réseau embedding sous-requête %d : %s",
                     query_idx,
                     exc,
                     exc_info=True,

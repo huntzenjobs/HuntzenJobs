@@ -21,6 +21,30 @@ from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Normalisation pays → code ISO 2 lettres
+# L'IntentParser retourne des noms en clair ("Canada", "France") alors que les
+# métadonnées ingérées utilisent des codes ("CA", "FR", "DE").
+# Si le pays n'est pas reconnu, on retourne "" → pas de filtre pays,
+# ce qui est préférable à un filtre qui ne matche rien.
+# ---------------------------------------------------------------------------
+_COUNTRY_CODE_MAP: dict[str, str] = {
+    "france": "FR",
+    "fr": "FR",
+    "canada": "CA",
+    "ca": "CA",
+    "germany": "DE",
+    "allemagne": "DE",
+    "deutschland": "DE",
+    "de": "DE",
+}
+
+
+def _normalize_country(name: str) -> str:
+    """Convertit un nom de pays ou code libre en code ISO 2 lettres connu."""
+    return _COUNTRY_CODE_MAP.get((name or "").strip().lower(), "")
+
+
 # Message de repli quand aucune source officielle n'est disponible
 _NO_SOURCE_RESPONSE = (
     "Je n'ai pas de source officielle vérifiée pour répondre précisément à cette question. "
@@ -120,13 +144,19 @@ class ExpadationAgent(BaseAgent):
         try:
             # ── Étape 1 : IntentParser ────────────────────────────────────────
             intent = await self._parse_intent(message)
-            destination = intent.get("destination_country", "")
+            destination_raw = intent.get("destination_country", "")
             project_type = intent.get("project_type", "")
 
+            # Normalisation pays → code ISO (ex. "Canada" → "CA")
+            # Si le pays n'est pas dans le mapping, on passe "" → pas de filtre,
+            # pour éviter qu'un filtre erroné retourne 0 résultat.
+            destination = _normalize_country(destination_raw)
+
             logger.info(
-                "[%s] Intention extraite : destination=%s, project_type=%s",
+                "[%s] Intention extraite : destination_raw=%s, destination=%s, project_type=%s",
                 self.name,
-                destination or "(non précisé)",
+                destination_raw or "(non précisé)",
+                destination or "(pas de filtre pays)",
                 project_type or "(non précisé)",
             )
 
@@ -140,10 +170,13 @@ class ExpadationAgent(BaseAgent):
             )
 
             # ── Étape 3 : DocumentRetriever ───────────────────────────────────
+            # Note : le visa_type n'est pas transmis comme filtre car les valeurs
+            # retournées par l'IntentParser peuvent ne pas correspondre exactement
+            # aux valeurs ingérées. On laisse le retrieval vectoriel faire le tri.
             chunks = await self._retriever.retrieve(
                 sub_queries=sub_queries,
                 country=destination,
-                visa_type=project_type,
+                visa_type="",
                 match_count=6,
             )
 
