@@ -29,6 +29,7 @@ from src.api.middleware import limiter
 from src.models.schemas import CoachRequest, CoachResponse
 from src.services.stripe import invalidate_user_quota_cache
 from src.services.user_events import log_event
+from src.utils.request_dedup import build_dedup_request_id, get_or_register_request
 
 # Seuil global (toutes replicas confondues) → au-dessus : queue Redis
 COACH_SYNC_THRESHOLD = 12  # max 12 Groq simultanés TOTAL (cross-replicas via Redis)
@@ -210,12 +211,23 @@ async def coach_chat(
         pool = await _get_arq_pool()
         if pool:
             try:
+                req_id = data.request_id or build_dedup_request_id(
+                    "coach", data.assistant_type, user_id_for_quota or "", data.session_id, data.message[:50]
+                )
+                existing = await get_or_register_request(req_id, "_pending_")
+                if existing and existing != "_pending_":
+                    estimated_wait = active * 8
+                    logger.info(
+                        f"[coach/chat] dedup hit — returning existing job={existing}"
+                    )
+                    return {"queued": True, "job_id": existing, "estimated_wait_seconds": estimated_wait}
                 job = await pool.enqueue_job(
                     "coach_task",
                     message=data.message,
                     session_id=data.session_id,
                     language=data.language,
                 )
+                await get_or_register_request(req_id, job.job_id)
                 estimated_wait = active * 8
                 logger.info(
                     f"[coach/chat] ARQ queued — active_global={active} "
