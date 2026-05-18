@@ -30,6 +30,7 @@ class CoachRequest(BaseModel):
     session_id: str = Field(..., pattern=r"^[a-f0-9-]{36}$", description="Session UUID")
     language: Literal["fr", "en", "es", "pt"] = Field(default="fr")
     assistant_type: str = Field(default="career-coach", description="Coach/assistant type for per-coach quota tracking")
+    request_id: str | None = Field(default=None, max_length=128, description="Clé d'idempotence optionnelle pour déduplication ARQ")
 
     model_config = {"json_schema_extra": {"example": {
         "message": "How can I improve my CV for a Data Engineer position?",
@@ -207,3 +208,114 @@ class EventSearchResponse(BaseResponse):
     """Response model for event search."""
     events: list[Event] = Field(default_factory=list)
     total: int = 0
+
+
+class EventSuggestRequest(BaseModel):
+    """Request model for proactive event suggestions based on user context."""
+    sector: str = Field(default="", description="User's sector or target sector")
+    city: str = Field(default="", description="User's city (mapped to region for search)")
+    country: str = Field(default="", description="User's country (for international events)")
+    public: str = Field(default="", description="Target public: students, pros, seniors, all")
+
+    model_config = {"json_schema_extra": {"example": {
+        "sector": "tech",
+        "city": "Paris",
+        "country": "France",
+        "public": "pros"
+    }}}
+
+
+# ------------------------------------------------------------------------------
+# Expadation (agent conseiller expatriation)
+# ------------------------------------------------------------------------------
+
+class ExpatAskRequest(BaseModel):
+    """Requête vers l'agent Expadation."""
+    message: str = Field(..., min_length=3, max_length=2000, description="Question de l'utilisateur")
+    language: str = Field(default="fr", description="Langue de la réponse (fr, en, ...)")
+    history: list[dict] = Field(default_factory=list, description="Historique de la conversation")
+
+    model_config = {"json_schema_extra": {"example": {
+        "message": "Quels sont les documents nécessaires pour s'expatrier au Canada ?",
+        "language": "fr",
+        "history": []
+    }}}
+
+
+class ExpatSource(BaseModel):
+    """Source documentaire retournée par l'agent Expadation."""
+    url: str
+    scraped_at: str
+    country: str
+
+
+class ExpatAskResponse(BaseModel):
+    """Réponse de l'agent Expadation."""
+    success: bool = True
+    response: str = ""
+    sources: list[ExpatSource] = Field(default_factory=list)
+    freshness_warnings: list[str] = Field(default_factory=list)
+    language: str = "fr"
+
+
+# ------------------------------------------------------------------------------
+# Branding — Mémoire persistante du profil branding
+# ------------------------------------------------------------------------------
+
+BrandingState = Literal[
+    "discovery",
+    "goals",
+    "voice_preferences",
+    "audience_topics",
+    "content_generation",
+]
+
+
+class BrandingProfileMemory(BaseModel):
+    """Mémoire structurée et persistante de l'assistant branding personnel."""
+
+    current_state: BrandingState = "discovery"
+    professional_identity: str | None = None
+    current_context: str | None = None
+    primary_goal: str | None = None
+    target_audience: list[str] = Field(default_factory=list)
+    content_pillars: list[str] = Field(default_factory=list)
+    voice_preferences: dict[str, Any] = Field(default_factory=dict)
+    content_boundaries: list[str] = Field(default_factory=list)
+    platforms: list[str] = Field(default_factory=list)
+    format_preferences: list[str] = Field(default_factory=list)
+    profile_completion: int = Field(default=0, ge=0, le=100)
+    ready_for_generation: bool = False
+
+
+class BrandingMemoryRequest(BaseModel):
+    """Requête de chat branding avec support de la mémoire persistante."""
+
+    message: str = Field(..., min_length=1, max_length=3000, description="Message utilisateur")
+    session_id: str = Field(..., pattern=r"^[a-f0-9\-]{36}$", description="UUID de session")
+    language: str = Field(default="fr", description="Langue de réponse")
+    request_id: str | None = Field(default=None, max_length=128, description="Clé idempotence optionnelle")
+    branding_profile: BrandingProfileMemory | None = Field(
+        default=None,
+        description="Profil branding en fallback (sessions non authentifiées / locales)",
+    )
+
+
+class BrandingMemoryResponse(BaseResponse):
+    """Réponse de l'assistant branding avec profil mis à jour."""
+
+    response: str = Field(..., description="Réponse de l'assistant branding")
+    language: str = "fr"
+    current_state: BrandingState = "discovery"
+    profile_completion: int = Field(default=0, ge=0, le=100)
+    ready_for_generation: bool = False
+    branding_profile: BrandingProfileMemory = Field(default_factory=BrandingProfileMemory)
+    memory_updated_fields: list[str] = Field(default_factory=list)
+
+
+class BrandingSessionMemoryResponse(BaseResponse):
+    """Payload complet de restauration de session branding."""
+
+    session_id: str
+    messages: list[dict[str, Any]] = Field(default_factory=list)
+    branding_profile: BrandingProfileMemory = Field(default_factory=BrandingProfileMemory)
