@@ -184,9 +184,63 @@ def _extract_title(html: str) -> str:
     wait=wait_exponential(multiplier=1, min=3, max=30),
     reraise=True,
 )
+async def _scrape_url_with_retry(url: str, content_selector: str, scraped_at: str) -> dict[str, Any]:
+    """
+    Fonction interne décorée par tenacity.
+
+    Laisse remonter les exceptions retryables (httpx.TransportError, _ScraperHTTPError 429/503)
+    pour que tenacity puisse les intercepter et relancer.
+    Les autres exceptions (ex. parsing HTML) sont propagées telles quelles.
+    """
+    async with httpx.AsyncClient(
+        http2=True,
+        follow_redirects=True,
+        timeout=20.0,
+        headers=_HEADERS,
+    ) as client:
+        response = await client.get(url)
+
+    if response.status_code not in {200, 201}:
+        raise _ScraperHTTPError(response.status_code, url)
+
+    html = response.text
+    title = _extract_title(html)
+    content_html = _extract_content(html, content_selector)
+
+    markdown = md(
+        content_html,
+        heading_style="ATX",
+        strip=["a", "img"],
+        convert=["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "table"],
+    )
+    # Nettoyage basique : supprimer les lignes vides consécutives
+    lines = [line.rstrip() for line in markdown.splitlines()]
+    cleaned_lines: list[str] = []
+    prev_empty = False
+    for line in lines:
+        if line == "":
+            if not prev_empty:
+                cleaned_lines.append(line)
+            prev_empty = True
+        else:
+            cleaned_lines.append(line)
+            prev_empty = False
+    markdown = "\n".join(cleaned_lines).strip()
+
+    logger.info(
+        "Scraping réussi",
+        extra={"url": url, "title": title, "markdown_len": len(markdown)},
+    )
+    return {"url": url, "title": title, "markdown": markdown, "scraped_at": scraped_at}
+
+
 async def scrape_url(url: str, content_selector: str = "") -> dict[str, Any]:
     """
     Scrape une URL et retourne le contenu en Markdown.
+
+    Wrapper autour de `_scrape_url_with_retry` : le retry tenacity est appliqué
+    à l'intérieur (sur les erreurs réseau et 429/503). Ce wrapper capture les
+    erreurs non récupérables après épuisement des retries et retourne un résultat vide.
 
     Args:
         url:              URL à scraper.
@@ -194,56 +248,13 @@ async def scrape_url(url: str, content_selector: str = "") -> dict[str, Any]:
 
     Returns:
         dict avec clés : url, title, markdown, scraped_at.
-        En cas d'erreur : markdown="" et l'erreur est loggée (pas propagée).
+        En cas d'erreur définitive : markdown="" et l'erreur est loggée (pas propagée).
     """
     scraped_at = datetime.now(UTC).isoformat()
     logger.info("Scraping URL", extra={"url": url})
 
     try:
-        async with httpx.AsyncClient(
-            http2=True,
-            follow_redirects=True,
-            timeout=20.0,
-            headers=_HEADERS,
-        ) as client:
-            response = await client.get(url)
-
-        if response.status_code not in {200, 201}:
-            raise _ScraperHTTPError(response.status_code, url)
-
-        html = response.text
-        title = _extract_title(html)
-        content_html = _extract_content(html, content_selector)
-
-        markdown = md(
-            content_html,
-            heading_style="ATX",
-            strip=["a", "img"],
-            convert=["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "table"],
-        )
-        # Nettoyage basique : supprimer les lignes vides consécutives
-        lines = [line.rstrip() for line in markdown.splitlines()]
-        cleaned_lines: list[str] = []
-        prev_empty = False
-        for line in lines:
-            if line == "":
-                if not prev_empty:
-                    cleaned_lines.append(line)
-                prev_empty = True
-            else:
-                cleaned_lines.append(line)
-                prev_empty = False
-        markdown = "\n".join(cleaned_lines).strip()
-
-        logger.info(
-            "Scraping réussi",
-            extra={"url": url, "title": title, "markdown_len": len(markdown)},
-        )
-        return {"url": url, "title": title, "markdown": markdown, "scraped_at": scraped_at}
-
-    except _ScraperHTTPError:
-        raise  # Propagée pour le retry tenacity
-
+        return await _scrape_url_with_retry(url, content_selector, scraped_at)
     except Exception as exc:
         logger.error("Erreur scraping", extra={"url": url, "error": str(exc)}, exc_info=True)
         return {"url": url, "title": "", "markdown": "", "scraped_at": scraped_at}
