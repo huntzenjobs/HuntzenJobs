@@ -2193,7 +2193,28 @@
     },
     "salaryPerYear": "/an",
     "salaryApprox": "{amount} {currency}/an ≈ {eurAmount} €",
-    "coachPrefill": "Je souhaite m'expatrier en {country}. Peux-tu m'aider à préparer mon projet ?"
+    "coachPrefill": "Je souhaite m'expatrier en {country}. Peux-tu m'aider à préparer mon projet ?",
+    "chat": {
+      "title": "Assistant Expatriation",
+      "subtitle": "Posez vos questions sur les visas, la fiscalité, le logement et bien plus.",
+      "placeholder": "Ex : Quel visa pour travailler au Canada en tant que développeur ?",
+      "send": "Envoyer",
+      "welcome": "Bonjour ! Je suis votre assistant expatriation. Posez-moi vos questions sur les visas, la fiscalité, le logement, les démarches administratives ou le marché du travail dans le pays de votre choix.",
+      "suggestions": "Questions fréquentes",
+      "suggestion1": "Quel visa pour travailler au Canada en tant que développeur ?",
+      "suggestion2": "Comment fonctionne la fiscalité pour un expatrié en Allemagne ?",
+      "suggestion3": "Quelles démarches pour s'installer en Espagne depuis la France ?",
+      "suggestion4": "Quelles sont les meilleures villes pour trouver un emploi tech en UK ?",
+      "sources": "Sources",
+      "scrapedAt": "Mis à jour le {date}",
+      "freshnessWarning": "Avertissement",
+      "errorTitle": "Erreur",
+      "errorMessage": "Une erreur est survenue. Veuillez réessayer.",
+      "thinking": "En cours de réflexion…",
+      "you": "Vous",
+      "assistant": "Assistant",
+      "contextCountry": "Pays de destination : {country}"
+    }
   },
   "about": {
     "hero_title": "HuntZen Jobs : Votre Allié Carrière en France",

@@ -15,13 +15,20 @@ export interface QuotaExceededError extends Error {
 }
 
 export function isQuotaExceededError(err: unknown): err is QuotaExceededError {
-  if (err instanceof Error && err.message === "QUOTA_EXCEEDED" && "quotaDetail" in err) {
+  if (
+    err instanceof Error &&
+    err.message === "QUOTA_EXCEEDED" &&
+    "quotaDetail" in err
+  ) {
     return true;
   }
-  
+
   // Also check if the string error message mentions quotas implicitly,
   // but DO NOT return true for generic 429 or "Too Many Requests" as those are Rate Limits!
-  const msg = typeof err === "string" ? err : (err as Error)?.message || (err as any)?.detail || "";
+  const msg =
+    typeof err === "string"
+      ? err
+      : (err as Error)?.message || (err as any)?.detail || "";
   if (
     msg.includes("Quota atteint") ||
     msg.includes("Limite atteinte") ||
@@ -31,7 +38,7 @@ export function isQuotaExceededError(err: unknown): err is QuotaExceededError {
   ) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -731,6 +738,30 @@ class HuntzenApiClient {
   }
 
   // Recruiter Consultation Request
+  // Expat AI assistant
+  async askExpat(params: {
+    message: string;
+    language: string;
+    history: Array<{ role: "user" | "assistant"; content: string }>;
+    token?: string;
+  }): Promise<{
+    success: boolean;
+    response: string;
+    sources: Array<{ url: string; scraped_at: string; country: string }>;
+    freshness_warnings: string[];
+    language: string;
+  }> {
+    return this.fetch("/api/expat/ask", {
+      method: "POST",
+      body: JSON.stringify({
+        message: params.message,
+        language: params.language,
+        history: params.history,
+      }),
+      headers: params.token ? { Authorization: `Bearer ${params.token}` } : {},
+    });
+  }
+
   async createRecruiterRequest(data: {
     fullName: string;
     email: string;

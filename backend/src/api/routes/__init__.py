@@ -17,12 +17,14 @@ from src.api.routes.career_score import router as career_score_router
 from src.api.routes.coach import router as coach_router
 from src.api.routes.codes import router as codes_router
 from src.api.routes.contact import router as contact_router
+from src.api.routes.contact_finder import router as contact_finder_router
 from src.api.routes.coupons import router as coupons_router
 from src.api.routes.cron import router as cron_router
 from src.api.routes.cv_adapter import router as cv_adapter_router
 from src.api.routes.cv_analysis import router as cv_analysis_router
 from src.api.routes.documents import router as documents_router
 from src.api.routes.events import router as events_router
+from src.api.routes.expat import router as expat_router
 from src.api.routes.health import router as health_router
 from src.api.routes.insider_finder import router as insider_finder_router
 from src.api.routes.jobs import router as jobs_router
@@ -33,7 +35,6 @@ from src.api.routes.public_coaches import router as public_coaches_router
 from src.api.routes.public_plans import router as public_plans_router
 from src.api.routes.queue import router as queue_router
 from src.api.routes.recruiter import router as recruiter_router
-from src.api.routes.contact_finder import router as contact_finder_router
 from src.api.routes.recruiter_finder import router as recruiter_finder_router
 from src.api.routes.referrals import router as referrals_router
 from src.api.routes.saved_jobs import router as saved_jobs_router
@@ -90,3 +91,4 @@ router.include_router(public_plans_router, prefix="/api/public", tags=["Public P
 router.include_router(public_coaches_router, prefix="/api/public", tags=["Public Coaches"])
 router.include_router(contact_router, prefix="/api/contact", tags=["Contact"])
 router.include_router(account_router, prefix="/api/account", tags=["Account"])
+router.include_router(expat_router, prefix="/api/expat", tags=["Expadation"])
