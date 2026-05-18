@@ -30,6 +30,10 @@ class BrandingRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=3000, description="User message")
     session_id: str = Field(..., pattern=r"^[a-f0-9\-]{36}$", description="Session UUID")
     language: str = Field(default="fr", description="Response language")
+    # TODO: ajouter déduplication ARQ quand branding_chat passe en mode queue
+    request_id: str | None = Field(
+        default=None, description="Clé d'idempotence optionnelle (réservée pour mode ARQ futur)"
+    )
     branding_state: dict | None = Field(default=None, description="Current branding profile state")
 
 
