@@ -154,7 +154,7 @@ Agrégation d'événements depuis 6 sources publiques françaises : France Trava
 
 ### 3.6 Guide expatriation
 
-Guide par pays avec coût de la vie, comparaison salariale, checklist des démarches administratives. Données disponibles en 4 langues.
+Guide par pays avec coût de la vie, comparaison salariale, checklist des démarches administratives. Données disponibles en 4 langues. La page intègre également un assistant conversationnel (Agent Expadation) qui répond aux questions d'immigration et de visa en s'appuyant sur des sources officielles scrapées, avec citations. Voir la section 17 pour son fonctionnement et son activation.
 
 ### 3.7 Suivi de candidatures
 
@@ -461,6 +461,7 @@ La plateforme supporte 4 langues : français (défaut), anglais, espagnol, portu
 | **Resend** | Emails transactionnels | SDK Python |
 | **Sentry** | Monitoring erreurs et performance | SDK Python + Next.js |
 | **LangSmith** | Tracing des agents LLM | LangChain integration |
+| **Jina AI** | Embeddings vectoriels (RAG Agent Expadation) | REST API, free tier — voir section 17 |
 | **Adzuna** | Offres d'emploi + données salariales | REST API |
 | **France Travail** | Offres d'emploi françaises | OAuth2 API |
 | **SerpAPI** | Google Jobs + recherche Google | REST API |
@@ -469,6 +470,68 @@ La plateforme supporte 4 langues : français (défaut), anglais, espagnol, portu
 | **Apollo.io** | Recherche de contacts professionnels | REST API |
 | **Hunter.io** | Recherche d'emails | REST API |
 | **OpenStreetMap / Nominatim** | Géocodage villes | REST API |
+
+---
+
+## 17. Agent Expadation — fonctionnement, service Jina et activation
+
+L'**Agent Expadation** est l'assistant conversationnel de la page Guide expatriation (section 3.6). Il répond aux questions d'immigration et de visa via un pipeline RAG : les sources officielles des pays couverts (service-public.fr, gov.uk, canada.ca, travel.state.gov...) sont scrapées, converties en Markdown, découpées en fragments, vectorisées, puis interrogées par similarité sémantique. Chaque réponse cite ses sources avec leur date.
+
+### 17.1 Service Jina AI — à quoi il sert
+
+Le pipeline RAG doit transformer le texte en vecteurs numériques (embeddings) pour permettre la recherche par similarité de sens. C'est le rôle de **Jina AI**. Sans ce service, ni l'indexation des sources ni la recherche ne fonctionnent.
+
+| Élément | Valeur |
+|---|---|
+| Service | Jina Embedding API |
+| Modèle | `jina-embeddings-v3` (multilingue, dimension 1024) |
+| Endpoint | `https://api.jina.ai/v1/embeddings` |
+| Tarif | Free tier — 10 M tokens offerts, sans carte bancaire |
+| Variable d'environnement | `JINA_API_KEY` |
+| Limites free tier | 100 requêtes/min, 100 000 tokens/min |
+
+**Particularité importante** : Jina ne crée pas de compte utilisateur. La clé API *est* l'identité ; elle porte directement le solde de tokens. Une clé perdue n'est pas récupérable — elle doit être conservée précieusement (gestionnaire de mots de passe + variables Railway).
+
+**Suivi de la consommation** : sur la page API de jina.ai, coller la clé affiche le solde de tokens restant en temps réel. C'est le seul tableau de bord disponible (pas de compte, donc pas d'interface dédiée).
+
+### 17.2 Pourquoi Jina plutôt qu'une alternative
+
+- Embeddings OpenAI : payants — écartés (contrainte « zéro API payante »).
+- Modèle d'embeddings local (sentence-transformers + PyTorch) : ~1,3 Go en mémoire, risque de saturation RAM (OOM) sur le process web Railway — écarté.
+- Jina free tier : gratuit, multilingue, zéro consommation RAM côté serveur — retenu.
+
+### 17.3 État d'activation et couverture pays
+
+Le bot est **actif** : migration appliquée (extension pgvector + tables `expat_documents` / `expat_chunks` + RPC `match_expat_chunks`), clé `JINA_API_KEY` configurée, base vectorielle peuplée. Couverture initiale : **20 pays**, ~600 fragments indexés.
+
+Les pays se répartissent en deux groupes selon leur mode de scraping :
+
+| Groupe | Pays | Rafraîchissement |
+|---|---|---|
+| **httpx** (12) | France, Allemagne, Canada, Royaume-Uni, États-Unis, Irlande, Suisse, Suède, Norvège, Finlande, Belgique, Japon | Cron hebdo automatique (`expat_refresh_task`) |
+| **Navigateur headless** (8) | Pays-Bas, Australie, Danemark, Singapour, Luxembourg, Autriche, Espagne, Portugal | Ingéré une seule fois — voir ci-dessous |
+
+Les 8 pays du second groupe ont des sites en **SPA JavaScript** : leur contenu n'existe pas dans le HTML brut, il faut un navigateur headless (Playwright) qui exécute le JavaScript. Ils ont été ingérés une fois en local. Le cron httpx hebdomadaire ne les rafraîchit **pas** (le worker Railway n'embarque pas de navigateur). Leurs données restent servies normalement ; le `FreshnessChecker` ne signale une source qu'après 1 an sans rafraîchissement.
+
+**Évolution (roadmap)** : pour rafraîchir automatiquement les pays SPA, ajouter Playwright au worker Railway (`pip install playwright` + `playwright install chromium` dans le Dockerfile du worker). Le code est déjà prêt : `ingest_source()` accepte un paramètre `prefetched_html` pour ingérer du HTML pré-rendu.
+
+**Ajouter un pays** : ajouter une entrée `{"url", "visa_type", "content_selector"}` sous le code pays voulu dans `SOURCE_REGISTRY` (`backend/src/services/expat/scraper.py`), et le nom du pays dans `_COUNTRY_CODE_MAP` (`backend/src/agents/expat/main_agent.py`). Vérifier au préalable que le site officiel se scrape (pas de SPA JavaScript, pas de blocage anti-bot).
+
+### 17.4 Où trouver les informations
+
+| Sujet | Emplacement |
+|---|---|
+| Configuration de la clé Jina | `backend/src/config/settings.py` — champ `jina_api_key` |
+| Appels à l'API Jina (embeddings) | `backend/src/services/expat/embeddings.py` |
+| Scraping des sources officielles | `backend/src/services/expat/scraper.py` — `SOURCE_REGISTRY` |
+| Découpage en fragments (chunks) | `backend/src/services/expat/chunker.py` |
+| Ingestion (scrape → embed → stockage) | `backend/src/services/expat/ingest.py` |
+| Agent RAG et sous-agents | `backend/src/agents/expat/` |
+| Endpoint API du bot | `POST /api/expat/ask` — `backend/src/api/routes/expat.py` |
+| Schéma de la base vectorielle | `supabase/migrations/20260517000001_expat_rag.sql` |
+| Page frontend | `frontend-next/src/app/(dashboard)/expat/page.tsx` |
+| Cron de rafraîchissement | `frontend-next/src/app/api/cron/expat-refresh/route.ts` |
+| Documentation officielle Jina | https://jina.ai/embeddings — FAQ, modèles, limites de débit |
 
 ---
 

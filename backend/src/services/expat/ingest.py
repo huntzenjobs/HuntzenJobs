@@ -16,6 +16,7 @@ Usage :
 
 import hashlib
 import logging
+from datetime import UTC, datetime
 from typing import Any
 
 from supabase import create_client
@@ -23,7 +24,7 @@ from supabase import create_client
 from src.config.settings import get_settings
 from src.services.expat.chunker import chunk_markdown
 from src.services.expat.embeddings import embed_texts_batched
-from src.services.expat.scraper import SOURCE_REGISTRY, scrape_url
+from src.services.expat.scraper import SOURCE_REGISTRY, parse_html, scrape_url
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,7 @@ async def ingest_source(
     country: str,
     visa_type: str,
     content_selector: str = "",
+    prefetched_html: str | None = None,
 ) -> dict[str, Any]:
     """
     Ingère une source dans le vector store.
@@ -70,16 +72,23 @@ async def ingest_source(
     """
     logger.info("Ingestion source", extra={"url": url, "country": country, "visa_type": visa_type})
 
-    # --- Étape 1 : Scraping ---------------------------------------------------
-    try:
-        scraped = await scrape_url(url, content_selector=content_selector)
-    except Exception as exc:
-        logger.error("Erreur scraping", extra={"url": url, "error": str(exc)}, exc_info=True)
-        return {"status": "error", "reason": f"scraping failed: {exc}"}
-
-    markdown: str = scraped.get("markdown", "")
-    title: str = scraped.get("title", "")
-    scraped_at: str = scraped.get("scraped_at", "")
+    # --- Étape 1 : Scraping (ou parsing d'un HTML pré-rendu) -----------------
+    if prefetched_html is not None:
+        # HTML déjà récupéré en amont (ex. page SPA rendue par un navigateur
+        # headless). On saute la requête httpx et on parse directement.
+        parsed = parse_html(prefetched_html, content_selector)
+        markdown: str = parsed["markdown"]
+        title: str = parsed["title"]
+        scraped_at: str = datetime.now(UTC).isoformat()
+    else:
+        try:
+            scraped = await scrape_url(url, content_selector=content_selector)
+        except Exception as exc:
+            logger.error("Erreur scraping", extra={"url": url, "error": str(exc)}, exc_info=True)
+            return {"status": "error", "reason": f"scraping failed: {exc}"}
+        markdown = scraped.get("markdown", "")
+        title = scraped.get("title", "")
+        scraped_at = scraped.get("scraped_at", "")
 
     # --- Étape 2 : Markdown vide ---------------------------------------------
     if not markdown or not markdown.strip():
@@ -91,18 +100,22 @@ async def ingest_source(
 
     # --- Étape 4 : Vérification idempotence ----------------------------------
     supabase = _get_supabase()
+    # limit(1) plutôt que maybe_single() : maybe_single() renvoie None (pas un
+    # objet .data=None) quand 0 ligne, ce qui casse l'accès .data.
     existing = (
         supabase.table("expat_documents")
         .select("id, content_hash")
         .eq("source_url", url)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
     doc_id: str | None = None
 
-    if existing.data:
-        doc_id = existing.data["id"]
-        if existing.data["content_hash"] == content_hash:
+    existing_rows = existing.data or []
+    if existing_rows:
+        row = existing_rows[0]
+        doc_id = row["id"]
+        if row["content_hash"] == content_hash:
             logger.info("Document inchangé", extra={"url": url})
             return {"status": "unchanged"}
 
@@ -128,16 +141,19 @@ async def ingest_source(
         logger.error("Erreur embeddings", extra={"url": url, "error": str(exc)}, exc_info=True)
         return {"status": "error", "reason": f"embedding failed: {exc}"}
 
-    # --- Étape 7 : Upsert document (sans mettre à jour content_hash pour l'instant) ----------
-    # Le content_hash est mis à jour EN DERNIER, après confirmation de l'insertion des chunks.
-    # Ainsi, si l'insertion échoue, le hash reste l'ancien → la source sera ré-ingérée au prochain run.
-    doc_payload_without_hash: dict[str, Any] = {
+    # --- Étape 7 : Upsert document (content_hash placeholder pour l'instant) ----------
+    # content_hash est NOT NULL : on insère un placeholder vide, le vrai hash est
+    # écrit EN DERNIER (étape 10) après confirmation des chunks. Un placeholder ""
+    # ne matche jamais un vrai sha256 → si un run échoue avant l'étape 10, la
+    # source est ré-ingérée au prochain run.
+    doc_payload: dict[str, Any] = {
         "source_url": url,
         "country": country,
         "visa_type": visa_type,
         "language": "fr",
         "title": title,
         "raw_markdown": markdown,
+        "content_hash": "",
         "scraped_at": scraped_at,
         "is_stale": False,
         "updated_at": scraped_at,
@@ -146,7 +162,7 @@ async def ingest_source(
     try:
         upsert_result = (
             supabase.table("expat_documents")
-            .upsert(doc_payload_without_hash, on_conflict="source_url")
+            .upsert(doc_payload, on_conflict="source_url")
             .execute()
         )
         doc_id = upsert_result.data[0]["id"]
