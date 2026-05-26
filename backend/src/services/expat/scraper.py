@@ -29,65 +29,90 @@ logger = logging.getLogger(__name__)
 # Registre des sources officielles
 # Extensible : ajouter de nouvelles entrées sans modifier la logique de scraping
 # ---------------------------------------------------------------------------
+_SP = "https://www.service-public.fr/particuliers/vosdroits/"
+_CA = "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/"
+_MIG = "https://www.make-it-in-germany.com/fr/visa-sejour/"
+
 SOURCE_REGISTRY: dict[str, list[dict[str, str]]] = {
-    # ── FRANCE ──────────────────────────────────────────────────────────────
+    # ── FRANCE — fiches service-public.fr (identifiants vérifiés) ────────────
     "FR": [
-        {
-            "url": "https://www.service-public.fr/particuliers/vosdroits/F2231",
-            "visa_type": "etude",
-            "content_selector": "#page-content",
-        },
-        {
-            "url": "https://france-visas.gouv.fr/web/france-visas/etudes",
-            "visa_type": "etude",
-            "content_selector": "",
-        },
-        {
-            "url": "https://www.campusfrance.org/fr/les-visas-pour-etudier-en-france",
-            "visa_type": "etude",
-            "content_selector": "",
-        },
-        {
-            "url": "https://www.service-public.fr/particuliers/vosdroits/F2784",
-            "visa_type": "travail",
-            "content_selector": "#page-content",
-        },
+        {"url": _SP + "F2231", "visa_type": "etudiant", "content_selector": "#page-content"},
+        {"url": _SP + "F35796", "visa_type": "etudiant-mobilite", "content_selector": "#page-content"},
+        {"url": _SP + "F17312", "visa_type": "stagiaire", "content_selector": "#page-content"},
+        {"url": _SP + "F15898", "visa_type": "salarie", "content_selector": "#page-content"},
+        {"url": _SP + "F16922", "visa_type": "talent", "content_selector": "#page-content"},
+        {"url": _SP + "F35795", "visa_type": "entrepreneur", "content_selector": "#page-content"},
+        {"url": _SP + "F21516", "visa_type": "saisonnier", "content_selector": "#page-content"},
+        {"url": _SP + "F17319", "visa_type": "recherche-emploi", "content_selector": "#page-content"},
+        {"url": _SP + "F2209", "visa_type": "vie-privee-familiale", "content_selector": "#page-content"},
+        {"url": _SP + "F2208", "visa_type": "resident", "content_selector": "#page-content"},
+        {"url": _SP + "F17359", "visa_type": "resident-longue-duree-ue", "content_selector": "#page-content"},
+        {"url": _SP + "F35799", "visa_type": "pluriannuelle", "content_selector": "#page-content"},
+        {"url": _SP + "F302", "visa_type": "visiteur", "content_selector": "#page-content"},
+        {"url": _SP + "F39", "visa_type": "sejour-plus-3-mois", "content_selector": "#page-content"},
+        {"url": _SP + "F17048", "visa_type": "integration", "content_selector": "#page-content"},
     ],
-    # ── CANADA ──────────────────────────────────────────────────────────────
+    # ── CANADA — canada.ca (IRCC) ────────────────────────────────────────────
     "CA": [
-        {
-            "url": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/etudier-canada/permis-etudes.html",
-            "visa_type": "etude",
-            "content_selector": "main",
-        },
-        {
-            "url": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/travailler-canada/permis.html",
-            "visa_type": "travail",
-            "content_selector": "main",
-        },
-        {
-            "url": "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/travailler-canada/pvt.html",
-            "visa_type": "pvt",
-            "content_selector": "main",
-        },
+        {"url": _CA + "etudier-canada/permis-etudes/admissibilite.html", "visa_type": "permis-etudes", "content_selector": "main"},
+        {"url": _CA + "travailler-canada/permis/temporaire/admissibilite.html", "visa_type": "permis-travail", "content_selector": "main"},
+        {"url": _CA + "immigrer-canada/entree-express/admissibilite.html", "visa_type": "entree-express", "content_selector": "main"},
     ],
-    # ── ALLEMAGNE ────────────────────────────────────────────────────────────
+    # ── ALLEMAGNE — make-it-in-germany.com ───────────────────────────────────
     "DE": [
-        {
-            "url": "https://www.make-it-in-germany.com/fr/visa-pour-lallemagne/chercheurs-demploi/visa-de-recherche-demploi",
-            "visa_type": "travail",
-            "content_selector": "",
-        },
-        {
-            "url": "https://www.bamf.de/FR/Themen/MigrationAufenthalt/ZuwandererDrittstaaten/Bildung/Studium/studium-node.html",
-            "visa_type": "etude",
-            "content_selector": "",
-        },
-        {
-            "url": "https://www.make-it-in-germany.com/fr/visa-pour-lallemagne/travailler/visa-demploi-qualifie",
-            "visa_type": "travail",
-            "content_selector": "",
-        },
+        {"url": _MIG + "loi-immigration-travailleurs-qualifies", "visa_type": "travailleur-qualifie", "content_selector": ""},
+        {"url": _MIG + "types/carte-bleue-europeenne", "visa_type": "carte-bleue-ue", "content_selector": ""},
+        {"url": _MIG + "residence-permanente", "visa_type": "residence-permanente", "content_selector": ""},
+        {"url": _MIG + "regroupement-familial", "visa_type": "regroupement-familial", "content_selector": ""},
+    ],
+    # ── ROYAUME-UNI — gov.uk ─────────────────────────────────────────────────
+    "GB": [
+        {"url": "https://www.gov.uk/skilled-worker-visa", "visa_type": "salarie-qualifie", "content_selector": ""},
+        {"url": "https://www.gov.uk/student-visa", "visa_type": "etudiant", "content_selector": ""},
+        {"url": "https://www.gov.uk/global-talent", "visa_type": "talent", "content_selector": ""},
+        {"url": "https://www.gov.uk/graduate-visa", "visa_type": "diplome", "content_selector": ""},
+        {"url": "https://www.gov.uk/health-care-worker-visa", "visa_type": "personnel-sante", "content_selector": ""},
+    ],
+    # ── ETATS-UNIS — travel.state.gov ────────────────────────────────────────
+    "US": [
+        {"url": "https://travel.state.gov/content/travel/en/us-visas/immigrate.html", "visa_type": "immigration", "content_selector": ""},
+        {"url": "https://travel.state.gov/content/travel/en/us-visas/study.html", "visa_type": "etudiant", "content_selector": ""},
+        {"url": "https://travel.state.gov/content/travel/en/us-visas/employment.html", "visa_type": "emploi", "content_selector": ""},
+        {"url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/the-immigrant-visa-process.html", "visa_type": "processus-visa-immigrant", "content_selector": ""},
+    ],
+    # ── IRLANDE — irishimmigration.ie ────────────────────────────────────────
+    "IE": [
+        {"url": "https://www.irishimmigration.ie/coming-to-work-in-ireland/", "visa_type": "travail", "content_selector": ""},
+        {"url": "https://www.irishimmigration.ie/coming-to-study-in-ireland/", "visa_type": "etudes", "content_selector": ""},
+        {"url": "https://www.irishimmigration.ie/coming-to-live-in-ireland/", "visa_type": "sejour", "content_selector": ""},
+    ],
+    # ── BELGIQUE — Office des etrangers ──────────────────────────────────────
+    "BE": [
+        {"url": "https://dofi.ibz.be/fr/themes/ressortissants-dun-pays-tiers/travail", "visa_type": "travail", "content_selector": ""},
+    ],
+    # ── SUISSE — sem.admin.ch ────────────────────────────────────────────────
+    "CH": [
+        {"url": "https://www.sem.admin.ch/sem/fr/home/themen/aufenthalt.html", "visa_type": "sejour", "content_selector": ""},
+        {"url": "https://www.sem.admin.ch/sem/fr/home/themen/arbeit.html", "visa_type": "travail", "content_selector": ""},
+    ],
+    # ── SUEDE — migrationsverket.se ──────────────────────────────────────────
+    "SE": [
+        {"url": "https://www.migrationsverket.se/English/Private-individuals/Working-in-Sweden.html", "visa_type": "travail", "content_selector": ""},
+        {"url": "https://www.migrationsverket.se/English/Private-individuals/Studying-in-Sweden.html", "visa_type": "etudes", "content_selector": ""},
+    ],
+    # ── NORVEGE — udi.no ─────────────────────────────────────────────────────
+    "NO": [
+        {"url": "https://www.udi.no/en/want-to-apply/work-immigration/", "visa_type": "travail", "content_selector": ""},
+        {"url": "https://www.udi.no/en/want-to-apply/studies/", "visa_type": "etudes", "content_selector": ""},
+    ],
+    # ── FINLANDE — migri.fi ──────────────────────────────────────────────────
+    "FI": [
+        {"url": "https://migri.fi/en/working-in-finland", "visa_type": "travail", "content_selector": ""},
+        {"url": "https://migri.fi/en/studying-in-finland", "visa_type": "etudes", "content_selector": ""},
+    ],
+    # ── JAPON — mofa.go.jp ───────────────────────────────────────────────────
+    "JP": [
+        {"url": "https://www.mofa.go.jp/j_info/visit/visa/index.html", "visa_type": "visa", "content_selector": ""},
     ],
 }
 
@@ -98,14 +123,23 @@ _TAGS_TO_REMOVE: list[str] = [
 ]
 
 # En-têtes HTTP réalistes pour éviter les blocages basiques
+# En-têtes navigateur complets : les sites .gouv (canada.ca notamment) refusent
+# les requêtes sans les en-têtes Sec-* / Sec-Fetch-* émis par un vrai navigateur.
 _HEADERS: dict[str, str] = {
     "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/124.0.0.0 Safari/537.36"
     ),
-    "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+    "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Upgrade-Insecure-Requests": "1",
 }
 
 
@@ -203,14 +237,35 @@ async def _scrape_url_with_retry(url: str, content_selector: str, scraped_at: st
     if response.status_code not in {200, 201}:
         raise _ScraperHTTPError(response.status_code, url)
 
-    html = response.text
+    parsed = parse_html(response.text, content_selector)
+    logger.info(
+        "Scraping réussi",
+        extra={"url": url, "title": parsed["title"], "markdown_len": len(parsed["markdown"])},
+    )
+    return {
+        "url": url,
+        "title": parsed["title"],
+        "markdown": parsed["markdown"],
+        "scraped_at": scraped_at,
+    }
+
+
+def parse_html(html: str, content_selector: str = "") -> dict[str, str]:
+    """
+    Convertit du HTML brut en {title, markdown}.
+
+    Partagé entre le scraping httpx et l'ingestion depuis du HTML pré-rendu
+    (ex. pages SPA rendues par un navigateur headless).
+    """
     title = _extract_title(html)
     content_html = _extract_content(html, content_selector)
 
+    # convert seul = whitelist : les balises non listées (a, img) ne sont pas
+    # converties — les liens deviennent du texte brut, les images disparaissent.
+    # markdownify interdit de passer strip et convert ensemble.
     markdown = md(
         content_html,
         heading_style="ATX",
-        strip=["a", "img"],
         convert=["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "table"],
     )
     # Nettoyage basique : supprimer les lignes vides consécutives
@@ -225,13 +280,7 @@ async def _scrape_url_with_retry(url: str, content_selector: str, scraped_at: st
         else:
             cleaned_lines.append(line)
             prev_empty = False
-    markdown = "\n".join(cleaned_lines).strip()
-
-    logger.info(
-        "Scraping réussi",
-        extra={"url": url, "title": title, "markdown_len": len(markdown)},
-    )
-    return {"url": url, "title": title, "markdown": markdown, "scraped_at": scraped_at}
+    return {"title": title, "markdown": "\n".join(cleaned_lines).strip()}
 
 
 async def scrape_url(url: str, content_selector: str = "") -> dict[str, Any]:

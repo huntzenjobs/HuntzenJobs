@@ -93,14 +93,16 @@ class FreshnessChecker:
     dont la date de scraping dépasse le seuil configuré.
     """
 
-    def check(self, chunks: list[dict], max_age_days: int = 30) -> list[str]:
+    def check(self, chunks: list[dict], max_age_days: int = 365) -> list[str]:
         """
         Identifie les sources potentiellement obsolètes.
 
         Args:
             chunks:       Liste de dicts de chunks (issus de `DocumentRetriever.retrieve`).
             max_age_days: Seuil en jours au-delà duquel une source est considérée
-                          comme potentiellement obsolète.
+                          comme potentiellement obsolète. Défaut 365 jours : le
+                          contenu légal/immigration évolue lentement, un avertissement
+                          ne se justifie qu'après ~1 an sans rafraîchissement.
 
         Returns:
             Liste de chaînes d'avertissement (vide si toutes les sources sont fraîches

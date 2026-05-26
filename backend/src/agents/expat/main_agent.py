@@ -29,14 +29,28 @@ logger = logging.getLogger(__name__)
 # ce qui est préférable à un filtre qui ne matche rien.
 # ---------------------------------------------------------------------------
 _COUNTRY_CODE_MAP: dict[str, str] = {
-    "france": "FR",
-    "fr": "FR",
-    "canada": "CA",
-    "ca": "CA",
-    "germany": "DE",
-    "allemagne": "DE",
-    "deutschland": "DE",
-    "de": "DE",
+    "france": "FR", "fr": "FR",
+    "canada": "CA", "ca": "CA",
+    "germany": "DE", "allemagne": "DE", "deutschland": "DE", "de": "DE",
+    "royaume-uni": "GB", "royaume uni": "GB", "uk": "GB", "gb": "GB",
+    "angleterre": "GB", "grande-bretagne": "GB", "united kingdom": "GB",
+    "etats-unis": "US", "états-unis": "US", "etats unis": "US",
+    "états unis": "US", "usa": "US", "us": "US", "united states": "US",
+    "irlande": "IE", "ireland": "IE", "ie": "IE",
+    "belgique": "BE", "belgium": "BE", "be": "BE",
+    "suisse": "CH", "switzerland": "CH", "schweiz": "CH", "ch": "CH",
+    "suede": "SE", "suède": "SE", "sweden": "SE", "se": "SE",
+    "norvege": "NO", "norvège": "NO", "norway": "NO", "no": "NO",
+    "finlande": "FI", "finland": "FI", "fi": "FI",
+    "japon": "JP", "japan": "JP", "jp": "JP",
+    "pays-bas": "NL", "pays bas": "NL", "netherlands": "NL", "hollande": "NL", "nl": "NL",
+    "australie": "AU", "australia": "AU", "au": "AU",
+    "danemark": "DK", "denmark": "DK", "dk": "DK",
+    "singapour": "SG", "singapore": "SG", "sg": "SG",
+    "luxembourg": "LU", "lu": "LU",
+    "autriche": "AT", "austria": "AT", "at": "AT",
+    "espagne": "ES", "spain": "ES", "espana": "ES", "españa": "ES", "es": "ES",
+    "portugal": "PT", "pt": "PT",
 }
 
 
