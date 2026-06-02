@@ -37,7 +37,7 @@ Modèle : freemium + premium (Stripe). Multi-langues : fr, en, es, pt.
 1. Lire [`docs/setup/docker.md`](setup/docker.md) — section "Démarrage rapide"
 2. Cloner, configurer `.env` (copier `.env.example`), lancer `npm run dev`
 3. Vérifier que `http://localhost:3000` charge et que `http://localhost:8000/docs` affiche Swagger
-4. Lire [`docs/setup/contributing.md`](setup/contributing.md) — sections "Workflow Git" et "Conventions"
+4. Lire [`CONTRIBUTING.md`](../CONTRIBUTING.md) — sections "Workflow Git" et "Conventions"
 
 ### ⏱ 1 journée — Être autonome sur sa première PR
 1. Lire complètement [`CONTRIBUTING.md`](../CONTRIBUTING.md) — règles projet et workflow Git
@@ -65,7 +65,7 @@ Modèle : freemium + premium (Stripe). Multi-langues : fr, en, es, pt.
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Workflow Git, conventions, ouverture de PR | Tout nouveau dev |
 | [`docs/architecture/overview.md`](architecture/overview.md) | Vue d'ensemble technique (17 sections) | Tout nouveau dev |
 | [`docs/setup/docker.md`](setup/docker.md) | Lancer le stack en local | Avant 1ère exécution |
-| [`docs/setup/contributing.md`](setup/contributing.md) | Workflow Git, conventions, PR | Avant 1ère PR |
+| [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Workflow Git, conventions, PR | Avant 1ère PR |
 | [`docs/audit/MAP.md`](audit/MAP.md) | **Cartographie exhaustive du code** (composants, endpoints, tables) | Avant créer/modifier |
 
 ### 🟡 Tier 2 — RÉFÉRENCE (consulter selon le besoin)
@@ -114,7 +114,7 @@ Modèle : freemium + premium (Stripe). Multi-langues : fr, en, es, pt.
 | Quelle variable d'env utiliser | `.env.example` (134 vars) + `docs/RUNBOOK.md` §6 |
 | Pourquoi telle décision a été prise | `docs/audit/MAP.md` ou `docs/audit/subagents/` |
 | Quels comptes existent (Stripe, Supabase, etc.) | `docs/COMPTES_PASSATION.md` |
-| Comment ouvrir une PR | `docs/setup/contributing.md` |
+| Comment ouvrir une PR | `CONTRIBUTING.md` (racine) |
 | Convention de code TypeScript / Python | `frontend-next/AGENTS.md` ou `backend/AGENTS.md` |
 | Architecture des agents IA | `docs/architecture/overview.md` §4 (5 chatbots) + `backend/AGENTS.md` |
 | Schéma base de données | `docs/audit/MAP.md` §4 + `supabase/migrations/` |

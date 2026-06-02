@@ -474,7 +474,7 @@ UPSTASH_REDIS_REST_TOKEN=your_token_here
 
 ## Déploiement en production
 
-Pour déployer en production, voir [DEPLOYMENT.md](./DEPLOYMENT.md).
+Pour déployer en production, voir [DEPLOYMENT.md](../../DEPLOYMENT.md).
 
 **Stack de production :**
 - Frontend : Vercel
@@ -491,7 +491,7 @@ En cas de problème :
 1. Vérifier les logs : `docker compose logs -f`
 2. Vérifier le fichier `.env`
 3. Rebuild sans cache : `docker compose build --no-cache`
-4. Consulter [contributing.md](contributing.md)
+4. Consulter [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 ---
 

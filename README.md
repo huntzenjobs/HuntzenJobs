@@ -88,7 +88,8 @@ huntzen_jobsearch/
 │   │   ├── services/          # External Services
 │   │   │   ├── job_providers/ # Adzuna, SerpAPI, RemoteOK
 │   │   │   ├── events/        # Tech events scraper
-│   │   │   └── pdf/           # CV parsing (IBM Docling)
+│   │   │   ├── pdf_generator.py        # CV PDF generation (WeasyPrint)
+│   │   │   └── modal_pdf_extractor.py  # CV extraction via Modal Labs
 │   │   │
 │   │   ├── models/            # Pydantic Schemas
 │   │   ├── config/            # Settings & Configuration
@@ -113,9 +114,9 @@ huntzen_jobsearch/
 │   │   │   ├── jobs/         # Job search & listings
 │   │   │   └── coach/        # Career coach chat
 │   │   │
+│   │   ├── hooks/            # React hooks customs
 │   │   ├── lib/              # Libraries & Utilities
 │   │   │   ├── security/     # Rate limiting, monitoring
-│   │   │   ├── hooks/        # React hooks
 │   │   │   └── utils/        # Helper functions
 │   │   │
 │   │   └── types/            # TypeScript type definitions
