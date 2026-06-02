@@ -1,6 +1,6 @@
 # Runbook opérationnel HuntZen
 
-Guide pratique pour exploiter, surveiller, dépanner. Complète `DOCUMENTATION_TECHNIQUE_HUNTZEN.md` qui couvre l'architecture. Ici, les *gestes du quotidien*.
+Guide pratique pour exploiter, surveiller, dépanner. Complète [`architecture/overview.md`](architecture/overview.md) qui couvre l'architecture. Ici, les *gestes du quotidien*.
 
 ## 1. Cartographie rapide
 
@@ -259,7 +259,77 @@ Les pays NL, AU, DK, SG, LU, AT, ES, PT ont été ingérés une fois via Playwri
 
 Voir l'issue GitHub correspondante pour le détail.
 
-## 10. Lancement des tests
+## 10. Couverture pays — Recherche d'offres d'emploi
+
+La recherche d'offres interroge **8 providers en parallèle** via l'agrégateur `backend/src/services/job_providers/aggregator.py`. Chaque provider déclare quels pays il supporte ; l'agrégateur ne route la requête qu'aux providers compatibles avec le pays demandé. Le sélecteur de pays côté UI expose les **250 pays ISO** (via `pycountry`) ; la densité de résultats dépend de la couverture des providers.
+
+### 22 pays avec providers natifs / spécialisés
+
+| Pays | Code ISO | Providers natifs |
+|---|---|---|
+| Afrique du Sud | ZA | Adzuna |
+| Allemagne | DE | Adzuna · Careerjet |
+| Australie | AU | Adzuna · Careerjet |
+| Autriche | AT | Adzuna · Careerjet |
+| Belgique | BE | Le Forem · Adzuna · Careerjet |
+| Brésil | BR | Adzuna |
+| Canada | CA | Adzuna · Careerjet |
+| Espagne | ES | Careerjet |
+| États-Unis | US | Adzuna · Careerjet |
+| France | FR | France Travail · Adzuna · Careerjet |
+| Inde | IN | Adzuna |
+| Italie | IT | Adzuna · Careerjet |
+| Luxembourg | LU | Careerjet |
+| Mexique | MX | Adzuna |
+| Nouvelle-Zélande | NZ | Adzuna |
+| Pays-Bas | NL | Adzuna · Careerjet |
+| Pologne | PL | Adzuna |
+| Portugal | PT | Careerjet |
+| Royaume-Uni | GB | Adzuna · Careerjet |
+| Russie | RU | Adzuna |
+| Singapour | SG | Adzuna |
+| Suisse | CH | Adzuna · Careerjet |
+
+### Reste du monde — via agrégateurs
+
+Pour les pays hors des 22 listés ci-dessus, la recherche est servie par les agrégateurs mondiaux :
+
+- **Jooble** — revendique 70+ pays, qualité variable selon le marché
+- **JSearch / RapidAPI** — revendique 250+ pays via Google
+- **SerpAPI Google Jobs** — environ 150 pays où Google Jobs est indexé
+
+Résultats moins denses qu'avec un provider natif, mais existants.
+
+### RemoteOK
+
+**RemoteOK** est interrogé en plus, sans filtre pays, pour les offres remote globales.
+
+### Densité de couverture pratique
+
+| Niveau | Pays | Caractéristique |
+|---|---|---|
+| **Très dense** | France, Belgique, USA, Royaume-Uni, Allemagne, Canada | 3+ providers natifs |
+| **Dense** | Suisse, Pays-Bas, Italie, Espagne, Portugal, Autriche, Australie, Luxembourg | 1-2 providers spécialisés |
+| **Moyenne** | Brésil, Inde, Singapour, Afrique du Sud, Mexique, Nouvelle-Zélande, Pologne, Russie | 1 provider Adzuna + agrégateurs |
+| **Faible** | Reste du monde | Agrégateurs uniquement (Google Jobs, JSearch, Jooble) |
+
+### Zones où la couverture est la plus limitée
+
+Asie (hors Singapour, Inde), Afrique (hors Afrique du Sud), Amérique latine (hors Brésil, Mexique), Moyen-Orient. Les résultats remontent essentiellement de Google Jobs via SerpAPI ; la qualité dépend de l'indexation Google locale.
+
+### Ajouter un nouveau provider
+
+Pour étendre la couverture sur un marché spécifique :
+
+1. Créer `backend/src/services/job_providers/<provider>.py` héritant de `BaseJobProvider`
+2. Définir `supported_countries = {"<code>"}` ou `set()` pour une couverture worldwide
+3. Implémenter `async def search(query, location, country_code, max_results, ...)`
+4. Exporter dans `backend/src/services/job_providers/__init__.py`
+5. Instancier le provider dans la route `/api/jobs` ; l'agrégateur le branche automatiquement
+
+---
+
+## 11. Lancement des tests
 
 ```bash
 # Backend (lance pytest avec le contournement du conftest racine cassé)
@@ -276,7 +346,7 @@ cd frontend-next && npm run test:e2e
 
 > Le `conftest.py` racine importe un module `main` inexistant (dette pré-existante). À nettoyer dans un futur sprint.
 
-## 11. Points de vigilance connus
+## 12. Points de vigilance connus
 
 - `pricing-modal.tsx` contient encore un `console.log("[PRICING MODAL DEBUG]")` en production
 - `ENABLE_INTERVIEW_SIMULATOR=false` : bouton micro caché côté UI (feature Voice Layer non livrée, roadmap)
@@ -284,11 +354,11 @@ cd frontend-next && npm run test:e2e
 - `profiles.subscription_*` est **DEPRECATED** — utiliser `user_subscriptions` uniquement
 - Docling est pinné à `2.70.0` (compatibilité API PdfPipelineOptions). Ne pas mettre à jour sans valider l'extraction PDF
 
-## 12. Liens utiles
+## 13. Liens utiles
 
-- **Documentation technique complète** : `docs/DOCUMENTATION_TECHNIQUE_HUNTZEN.md`
-- **CLAUDE.md** racine : conventions et workflow projet
-- **backend/CLAUDE.md** : conventions backend spécifiques
-- **frontend-next/CLAUDE.md** : conventions frontend spécifiques
+- **Documentation technique complète** : [`architecture/overview.md`](architecture/overview.md)
+- **CONTRIBUTING.md** racine : workflow Git, conventions, PR
+- **backend/AGENTS.md** : conventions backend spécifiques
+- **frontend-next/AGENTS.md** : conventions frontend spécifiques
 - **Migrations** : `supabase/migrations/`
-- **Plans architecturaux** : `docs/`
+- **Cartographie du code** : [`audit/MAP.md`](audit/MAP.md)

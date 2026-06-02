@@ -491,7 +491,7 @@ En cas de problème :
 1. Vérifier les logs : `docker compose logs -f`
 2. Vérifier le fichier `.env`
 3. Rebuild sans cache : `docker compose build --no-cache`
-4. Consulter [CONTRIBUTING.md](./CONTRIBUTING.md)
+4. Consulter [contributing.md](contributing.md)
 
 ---
 

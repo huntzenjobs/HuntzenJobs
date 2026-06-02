@@ -1,6 +1,6 @@
 # MAP — HuntZen Codebase
 Date : 2026-03-18
-Genere par : Claude Opus 4.6 (subagent cartographie)
+Cartographie complete du code (composants UI, endpoints backend, tables Supabase).
 
 ## Resume
 - Pages frontend : 51 (45 pages + 6 route handlers)

@@ -159,10 +159,11 @@ huntzen_jobsearch/
 - **Monitoring**: Sentry
 
 ### Infrastructure
-- **Serverless CV**: Modal Labs (async PDF processing)
-- **Frontend Hosting**: Vercel
+- **Backend API**: Railway (FastAPI, Docker, branche `Production`)
+- **CV Processing**: Modal Labs (serverless — extraction PDF Docling + analyse LLM Groq, app `huntzen-cv-processor`)
+- **Frontend Hosting**: Vercel (Next.js 14)
 - **Database**: Supabase (PostgreSQL + Auth + Storage)
-- **Caching**: Upstash Redis
+- **Caching / Queue**: Upstash Redis + ARQ workers
 - **Monitoring**: Sentry
 
 ---
@@ -416,11 +417,26 @@ cd frontend-next
 vercel --prod
 ```
 
-#### Backend (Modal + Serverless)
+#### Backend API (Railway)
+
+Push to the `Production` branch triggers an automatic redeploy:
 
 ```bash
-cd backend
-modal deploy modal_app.py
+git push origin Production
+```
+
+Force a redeploy without changes:
+
+```bash
+git commit --allow-empty -m "chore: trigger redeploy" && git push origin Production
+```
+
+#### CV Processing service (Modal Labs)
+
+Serverless function for async CV extraction + LLM analysis:
+
+```bash
+modal deploy scripts/deployment/modal_app.py
 ```
 
 #### Database (Supabase)
