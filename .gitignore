@@ -347,6 +347,11 @@ backups/*.sql
 
 # Notes de travail locales
 docs/superpowers/
+.superpowers/
+
+# Artefacts de build (ne jamais committer)
+.next/trace
+.next/trace-build
 
 # Fichiers de configuration IDE locaux
 CLAUDE.md
