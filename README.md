@@ -114,7 +114,7 @@ huntzen_jobsearch/
 │   │   │   ├── jobs/         # Job search & listings
 │   │   │   └── coach/        # Career coach chat
 │   │   │
-│   │   ├── hooks/            # React hooks customs
+│   │   ├── hooks/            # Custom React hooks
 │   │   ├── lib/              # Libraries & Utilities
 │   │   │   ├── security/     # Rate limiting, monitoring
 │   │   │   └── utils/        # Helper functions
