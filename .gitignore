@@ -348,5 +348,14 @@ backups/*.sql
 # Notes de travail locales
 docs/superpowers/
 
+# Fichiers de configuration IDE locaux
+CLAUDE.md
+**/CLAUDE.md
+.claude/
+.cursorrules
+.cursor/
+.aider*
+.continue/
+
 # Pull Railway local artifacts
 *.env.railway

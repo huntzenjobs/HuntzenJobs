@@ -1,44 +1,135 @@
 # Documentation HuntZen
 
-Point d'entrée pour la documentation technique du projet HuntZen. Ce dossier complète les fichiers de référence à la racine et dans chaque sous-projet.
+> Point d'entrée. Carte de lecture organisée en parcours logiques.
 
-## Pour bien démarrer
+---
 
-- [README.md](../README.md) — Présentation générale du projet, stack technique, comment lancer le projet.
-- [DEPLOYMENT.md](../DEPLOYMENT.md) — Guide complet de déploiement (Vercel pour le frontend, Railway pour le backend, Supabase pour la base de données).
-- [DOCKER_USAGE.md](../DOCKER_USAGE.md) — Lancer le stack en local avec Docker Compose.
-- [CONTRIBUTING.md](../CONTRIBUTING.md) — Workflow Git, conventions de code, ouverture de pull requests.
+## 🎯 Tu es nouveau ? Commence ici
 
-## Conventions par sous-projet
+👉 **[ONBOARDING.md](ONBOARDING.md)** — guide complet de compréhension (15 min → 1 semaine), hiérarchie des docs, parcours par rôle, premiers réflexes.
 
-- [frontend-next/AGENTS.md](../frontend-next/AGENTS.md) — Conventions et patterns pour le frontend Next.js 14 (composants, hooks, auth Supabase SSR, i18n, tests Vitest).
-- [frontend-next/README.md](../frontend-next/README.md) — README court du sous-projet frontend.
+---
 
-## Rapports et analyses
+## 🗺 Roadmap de lecture par objectif
 
-Documents de référence sur l'état du backend, des tests et des migrations base de données.
+### 🟢 Comprendre le produit (15 min)
 
-### Backend
+```
+README.md (../) ─┐
+                  ├──> architecture/overview.md §1-2 ──> ✅ Tu sais ce qu'on construit
+ONBOARDING.md ───┘
+```
 
-- [BUGS_IDENTIFIED.md](../backend/BUGS_IDENTIFIED.md) — Bugs connus côté backend, avec contexte et reproduction.
-- [QA_REPORT.md](../backend/QA_REPORT.md) — Rapport de qualité backend.
-- [SUPABASE_AUDIT_REPORT.md](../backend/SUPABASE_AUDIT_REPORT.md) — Audit complet de l'usage Supabase côté backend.
+### 🟢 Lancer le projet en local (1 h)
 
-### Frontend
+```
+setup/docker.md ──> .env.example ──> npm run dev ──> ../CONTRIBUTING.md ──> ✅ Tu peux coder
+```
 
-- [TEST_FIXES_SUMMARY.md](../frontend-next/TEST_FIXES_SUMMARY.md) — Résumé des fixes appliqués aux tests frontend.
-- [TEST_SUMMARY.md](../frontend-next/TEST_SUMMARY.md) — Synthèse des tests frontend.
-- [src/lib/constants/README.md](../frontend-next/src/lib/constants/README.md) — Documentation des constantes partagées.
+### 🟢 Première PR (1 journée)
 
-### Base de données et migrations
+```
+CONTRIBUTING.md (../) ──┐
+                         ├──> audit/MAP.md (Ctrl+F) ──> code ──> tests ──> PR ──> ✅ Tu contribues
+backend/AGENTS.md       │
+   ou                   │
+frontend/AGENTS.md      ┘
+```
 
-- [MIGRATION_PHASE_8_SUCCESS.md](../supabase/MIGRATION_PHASE_8_SUCCESS.md) — Compte rendu de la migration de phase 8.
-- [migrations/README_SUBSCRIPTION_MIGRATION.md](../supabase/migrations/README_SUBSCRIPTION_MIGRATION.md) — Documentation de la migration du système de souscriptions.
+### 🟡 Comprendre un incident en prod (urgent)
 
-### Tests
+```
+RUNBOOK.md §8 ──> COMPTES_PASSATION.md ──> dashboards (Vercel/Railway/Supabase) ──> ✅ Tu débugges
+```
 
-- [tests/README.md](../tests/README.md) — Comment lancer les tests (backend pytest, frontend Vitest, E2E Playwright).
+### 🟡 Déployer ou modifier l'infra (avancé)
 
-## Archives
+```
+DEPLOYMENT.md ──> RUNBOOK.md §3 ──> architecture/scaling.md ──> ✅ Tu déploies
+```
 
-Le sous-dossier `audit/` contient des audits techniques historiques et des analyses produites au fil du projet. Ces documents ne sont pas maintenus à jour mais restent disponibles pour comprendre les décisions passées.
+---
+
+## 📚 Index complet par catégorie
+
+### Démarrage rapide
+
+- [README.md](../README.md) — Présentation produit, stack, quickstart
+- [setup/docker.md](setup/docker.md) — Lancer le stack en local avec Docker Compose
+- [../CONTRIBUTING.md](../CONTRIBUTING.md) — Workflow Git, conventions de code, ouverture de PR
+
+### Architecture et conception
+
+- [architecture/overview.md](architecture/overview.md) — **Documentation technique complète** (17 sections : archi, features, agents IA, DB, sécurité, crons…)
+- [architecture/scaling.md](architecture/scaling.md) — Guide de scaling : capacités, goulots, optimisations
+- [architecture/scaling-flows.md](architecture/scaling-flows.md) — Simulations de charge par scénario utilisateur
+
+### Cartographie du code
+
+- [audit/MAP.md](audit/MAP.md) — **Carte exhaustive** : 119 composants UI, 157 endpoints, 36 tables. À consulter avant toute création
+- [audit/admin-api-audit.md](audit/admin-api-audit.md) — Audit complet de l'API admin
+- [audit/i18n-todo.md](audit/i18n-todo.md) — Travail i18n restant
+- [audit/subagents/](audit/subagents/) — 10 audits dimensionnels (business, UI/UX, i18n, sécurité, DB, API, perf/SEO, accessibilité, code quality, features)
+
+### Opérations et passation
+
+- [RUNBOOK.md](RUNBOOK.md) — **Runbook opérationnel** : incidents, déploiement, rollback, monitoring (13 sections)
+- [COMPTES_PASSATION.md](COMPTES_PASSATION.md) — Inventaire des comptes et accès pour la passation
+- [../DEPLOYMENT.md](../DEPLOYMENT.md) — Guide de déploiement complet (Vercel + Railway + Modal + Supabase)
+
+### Conventions par sous-projet
+
+- [../backend/AGENTS.md](../backend/AGENTS.md) — Backend FastAPI : stack, structure `src/`, patterns routes, agents LangChain, ARQ workers
+- [../frontend-next/AGENTS.md](../frontend-next/AGENTS.md) — Frontend Next.js 14 : composants, hooks, auth Supabase SSR, i18n, tests
+
+### Tests et benchmarks
+
+- [../tests/README.md](../tests/README.md) — Load testing k6 (⚠️ ne couvre pas pytest/vitest/playwright)
+- [../e2e/bugs/README.md](../e2e/bugs/README.md) — Tests E2E Playwright ciblés bugs
+- [../scripts/benchmarks/README.md](../scripts/benchmarks/README.md) — Scripts de benchmark de couverture providers
+
+### Données techniques
+
+- [../supabase/migrations/README_SUBSCRIPTION_MIGRATION.md](../supabase/migrations/README_SUBSCRIPTION_MIGRATION.md) — Migration du système de souscriptions
+- [../frontend-next/src/lib/constants/README.md](../frontend-next/src/lib/constants/README.md) — Documentation z-index scale
+
+### Historique
+
+- `load-testing-reports/` — Rapports horodatés des burst tests CV (mars 2026)
+
+---
+
+## 🧭 Schéma de navigation
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    NOUVEAU SUR LE PROJET                      │
+│                            ↓                                  │
+│                    ONBOARDING.md                              │
+│              (parcours 15 min → 1 semaine)                    │
+└──────────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        ↓                   ↓                   ↓
+   ┌─────────┐         ┌─────────┐         ┌─────────┐
+   │COMPRENDRE│        │  CODER  │         │  OPÉRER │
+   └─────────┘         └─────────┘         └─────────┘
+        │                   │                   │
+   ┌────▼─────┐        ┌────▼──────┐       ┌────▼──────┐
+   │README    │        │CONTRIBUTING│      │RUNBOOK    │
+   │overview  │        │MAP.md      │      │DEPLOYMENT │
+   │scaling   │        │backend/    │      │COMPTES    │
+   │          │        │  AGENTS    │      │           │
+   └──────────┘        └────────────┘      └───────────┘
+```
+
+---
+
+## 📏 Hiérarchie résumée (4 tiers)
+
+- **🟢 Tier 1 ESSENTIEL** : `README`, `CONTRIBUTING`, `architecture/overview`, `setup/docker`, `audit/MAP`
+- **🟡 Tier 2 RÉFÉRENCE** : `RUNBOOK`, `DEPLOYMENT`, `scaling`, `scaling-flows`, `COMPTES_PASSATION`
+- **🔵 Tier 3 SPÉCIALISÉ** : `backend/AGENTS`, `frontend-next/AGENTS`, `admin-api-audit`, `i18n-todo`, `subagents/`
+- **⚪ Tier 4 HISTORIQUE** : `load-testing-reports/`
+
+Détail dans [ONBOARDING.md §3](ONBOARDING.md#3-hiérarchie-des-documents).
