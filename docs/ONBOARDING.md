@@ -131,8 +131,8 @@ Modèle : freemium + premium (Stripe). Multi-langues : fr, en, es, pt.
 |---|---|---|
 | ~~`DEPLOYMENT.md` parle de Modal comme backend~~ | Corrigé : Railway = backend API, Modal = CV processor serverless dédié | ✅ Résolu |
 | ~~`README.md` mentionnait Modal comme backend principal~~ | Corrigé : section infrastructure clarifiée + commande `git push origin Production` documentée | ✅ Résolu |
-| **`frontend-next/README.md` est le boilerplate Next.js par défaut** | 36 lignes, aucune info HuntZen | 🟡 À remplacer ou supprimer (redondant avec `frontend-next/AGENTS.md`) |
-| **`tests/README.md` ne couvre QUE k6** | Ne mentionne ni pytest, ni vitest, ni Playwright | 🟡 À enrichir avec `npm run test:backend`, `test:frontend`, `test:e2e` |
+| ~~`frontend-next/README.md` est le boilerplate Next.js~~ | Réécrit avec stack, scripts et structure du projet | ✅ Résolu |
+| ~~`tests/README.md` ne couvre QUE k6~~ | Enrichi : pytest, Vitest, Playwright et k6 | ✅ Résolu |
 | **Aucun diagramme visuel** (PNG/SVG/Mermaid) | Tout est en ASCII art | 🟢 Amélioration future : diagrammes Mermaid auth/paiement/agents |
 
 ---
