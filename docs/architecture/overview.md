@@ -431,6 +431,100 @@ La plateforme supporte 4 langues : français (défaut), anglais, espagnol, portu
 
 ---
 
+## 14bis. Pages du site (routes frontend)
+
+Toutes les pages déployées, base `https://huntzenjobs.com`. Les pages dans le route group `(dashboard)` n'ont pas de préfixe `/dashboard` dans l'URL (les parenthèses sont un groupe de routes Next.js, pas un segment d'URL).
+
+### Pages publiques (marketing et légal)
+
+| Page | Rôle |
+|---|---|
+| `/` | Page d'accueil, présentation du produit et entrée vers l'inscription |
+| `/about` | À propos de HuntZen |
+| `/faq` | Questions fréquentes |
+| `/pricing` | Grille tarifaire (Free, Starter, Pro, Premium) |
+| `/temoignages` | Témoignages utilisateurs |
+| `/contact` | Formulaire de contact |
+| `/legal` | Mentions légales |
+| `/privacy` | Politique de confidentialité |
+| `/terms` | Conditions générales d'utilisation |
+
+### Authentification
+
+| Page | Rôle |
+|---|---|
+| `/login` | Connexion |
+| `/signup` | Inscription |
+| `/forgot-password` | Demande de réinitialisation du mot de passe |
+| `/reset-password` | Saisie du nouveau mot de passe |
+| `/auth/recovery` | Callback de récupération de compte (lien email) |
+| `/onboarding` | Parcours d'accueil après inscription |
+
+### Application
+
+| Page | Rôle | Login requis |
+|---|---|---|
+| `/jobs` | Recherche d'offres d'emploi (multi-providers) | Non (SEO) |
+| `/saved-jobs` | Offres sauvegardées | Oui |
+| `/candidatures` | Suivi des candidatures | Oui (groupe dashboard) |
+| `/cv-analysis` | Analyse de CV (ATS, score) | Non (SEO) |
+| `/documents` | Gestion des documents (CV, lettres) | Oui (groupe dashboard) |
+| `/assistant` | Hub des assistants IA (coach, branding, etc.) | Non (SEO) |
+| `/expat` | Guide d'expatriation par pays | Oui (groupe dashboard) |
+| `/profile` | Profil utilisateur et abonnement | Oui |
+| `/referral` | Programme de parrainage | Oui |
+| `/salons` | Salons et forums emploi | Non (SEO) |
+| `/recruiter-finder` | Recherche de recruteurs | Oui (groupe dashboard) |
+| `/recruiter-contact` | Achat d'un contact recruteur (Stripe) | Oui (groupe dashboard) |
+| `/recruiter-contact/success` | Confirmation après paiement du contact | Oui (groupe dashboard) |
+
+Note : `/profile`, `/saved-jobs` et `/referral` sont protégées par le middleware. Les autres pages du groupe dashboard exigent une connexion via leur layout serveur, sauf celles laissées publiques pour le SEO (`/jobs`, `/cv-analysis`, `/salons`, `/assistant`).
+
+### Admin (compte admin requis)
+
+| Page | Rôle |
+|---|---|
+| `/admin` | Entrée du panel admin |
+| `/admin/dashboard` | Vue d'ensemble (métriques clés) |
+| `/admin/analytics` | Statistiques détaillées |
+| `/admin/users` | Gestion des utilisateurs |
+| `/admin/coaches` | Configuration des coachs IA |
+| `/admin/coupons` | Codes promo et coupons |
+| `/admin/live` | Activité temps réel |
+| `/admin/logs` | Journaux et événements |
+| `/admin/notifications` | Envoi de notifications |
+| `/admin/plans` | Édition des plans (limites, prix, features) |
+| `/admin/prompts` | Édition des prompts IA |
+| `/admin/recruiter-requests` | Demandes de contact recruteur à traiter |
+| `/admin/referrals` | Suivi du parrainage |
+| `/admin/segments` | Segments d'utilisateurs |
+| `/admin/stress` | Dashboard de stress testing |
+| `/admin/suggestions` | Suggestions utilisateurs |
+| `/admin/support` | Support et tickets |
+
+### Paiement
+
+| Page | Rôle |
+|---|---|
+| `/payment/success` | Retour Stripe après paiement réussi |
+| `/payment/cancel` | Retour Stripe après annulation |
+
+### SEO dynamiques (générées)
+
+| Page | Rôle |
+|---|---|
+| `/emploi-{ville}` | Landing page emploi par ville (générée, voir `sitemap.ts`) |
+| `/emploi-{secteur}` | Landing page emploi par secteur (générée) |
+
+### Système
+
+| Page | Rôle |
+|---|---|
+| `/maintenance` | Page affichée pendant une maintenance |
+| `/offline` | Page de repli hors ligne (PWA service worker) |
+
+---
+
 ## 15. Historique de développement
 
 | Phase | Période | Réalisations principales |

@@ -255,7 +255,8 @@ Workflow : `feat/...` → PR vers `Pre-production` → validation → merge vers
 - **Dashboard Stripe** : paiements + webhooks
 - **Dashboard Upstash** : Redis cache + queue
 
-Comptes/accès → voir `docs/COMPTES_PASSATION.md`.
+Liste complète des URLs du projet → voir [`RUNBOOK.md`](RUNBOOK.md) section 1bis.
+Comptes/accès → voir [`COMPTES_PASSATION.md`](COMPTES_PASSATION.md).
 
 ---
 
