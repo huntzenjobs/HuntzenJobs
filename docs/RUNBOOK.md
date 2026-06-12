@@ -12,6 +12,42 @@ Guide pratique pour exploiter, surveiller, dépanner. Complète [`architecture/o
 | Base de données | `ngiakfikbuyugqfqtfwp.supabase.co` | Supabase | n/a |
 | Redis | Upstash + Railway interne | Upstash + Railway | n/a |
 
+## 1bis. Toutes les URLs du projet
+
+### Public
+
+| Quoi | URL |
+|---|---|
+| Site (prod) | https://huntzenjobs.com (redirige vers `www.`) |
+| API backend (prod) | https://huntzenjobs-production.up.railway.app |
+| Documentation API (Swagger) | https://huntzenjobs-production.up.railway.app/docs |
+| Staging (Pre-production) | Déployé sur Vercel depuis la branche `Pre-production`. Pas forcément à jour. Utilise le même backend Railway que la prod. URL à retrouver dans le dashboard Vercel. |
+
+### Diagnostic et santé
+
+| Quoi | URL |
+|---|---|
+| Health check backend | https://huntzenjobs-production.up.railway.app/health |
+| Version déployée backend | https://huntzenjobs-production.up.railway.app/api/auth/test-debug |
+| Ping santé | https://huntzenjobs-production.up.railway.app/api/health/ping |
+
+### Code et déploiement
+
+| Quoi | URL |
+|---|---|
+| Dépôt GitHub | https://github.com/huntzenjobs/HuntzenJobs |
+| Issues | https://github.com/huntzenjobs/HuntzenJobs/issues |
+| Dashboard Railway | https://railway.app |
+| Dashboard Vercel | https://vercel.com |
+
+### Dashboards des services
+
+Les URLs de tous les services tiers (Supabase, Stripe, Groq, Sentry, Resend, etc.) sont dans [`COMPTES_PASSATION.md`](COMPTES_PASSATION.md).
+
+### Pages du site
+
+La liste complète des pages déployées (publiques, app, admin, paiement, SEO) est dans [`architecture/overview.md`](architecture/overview.md) section 14bis. Quelques pages utiles pour vérifier la prod : `/` (home), `/pricing`, `/jobs`, `/login`, `/admin`.
+
 ## 2. Comptes et propriété
 
 | Plateforme | Compte propriétaire | Où récupérer les credentials |

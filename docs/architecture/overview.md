@@ -431,6 +431,42 @@ La plateforme supporte 4 langues : français (défaut), anglais, espagnol, portu
 
 ---
 
+## 14bis. Pages du site (routes frontend)
+
+Toutes les pages déployées, base `https://huntzenjobs.com`. Les pages dans le route group `(dashboard)` n'ont pas de préfixe `/dashboard` dans l'URL (les parenthèses sont un groupe de routes Next.js, pas un segment d'URL).
+
+### Pages publiques (marketing et légal)
+
+`/` · `/about` · `/faq` · `/pricing` · `/temoignages` · `/contact` · `/legal` · `/privacy` · `/terms`
+
+### Authentification
+
+`/login` · `/signup` · `/forgot-password` · `/reset-password` · `/auth/recovery` · `/onboarding`
+
+### Application
+
+`/jobs` · `/saved-jobs` · `/candidatures` · `/cv-analysis` · `/documents` · `/assistant` · `/expat` · `/profile` · `/referral` · `/salons` · `/recruiter-finder` · `/recruiter-contact` · `/recruiter-contact/success`
+
+Protégées par le middleware (login requis) : `/profile`, `/saved-jobs`, `/referral`. Les autres (`/jobs`, `/cv-analysis`, `/salons`, `/assistant`) restent accessibles publiquement pour le SEO.
+
+### Admin (compte admin requis)
+
+`/admin` · `/admin/dashboard` · `/admin/analytics` · `/admin/users` · `/admin/coaches` · `/admin/coupons` · `/admin/live` · `/admin/logs` · `/admin/notifications` · `/admin/plans` · `/admin/prompts` · `/admin/recruiter-requests` · `/admin/referrals` · `/admin/segments` · `/admin/stress` · `/admin/suggestions` · `/admin/support`
+
+### Paiement
+
+`/payment/success` · `/payment/cancel`
+
+### SEO dynamiques (générées)
+
+`/emploi-{ville}` · `/emploi-{secteur}` — pages générées dynamiquement par ville et par secteur (voir `frontend-next/src/app/sitemap.ts`).
+
+### Système
+
+`/maintenance` · `/offline`
+
+---
+
 ## 15. Historique de développement
 
 | Phase | Période | Réalisations principales |
