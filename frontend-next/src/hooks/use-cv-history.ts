@@ -5,11 +5,11 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useSubscription } from "@/contexts/subscription-context";
-import type { BreakdownItem } from "@/components/cv/score-breakdown-v2";
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
 import type { CvInfo } from "@/components/cv/cv-info-panel";
+import type { BreakdownItem } from "@/components/cv/score-breakdown-v2";
+import { useSubscription } from "@/contexts/subscription-context";
+import { useCallback, useEffect, useState } from "react";
 
 // ============================================================================
 // TYPES
@@ -24,13 +24,12 @@ export interface CVAnalysisResult {
   strengths: string[];
   weaknesses: string[];
   suggestions: Suggestion[];
-  rawAnalysis?: string; // Optional raw analysis text
-  error?: string; // Optional error message
-  cv_info?: CvInfo; // Optional CV info (name, email, phone, skills)
-  recommended_job_titles?: string[]; // Suggested job titles based on skills
+  rawAnalysis?: string;
+  error?: string;
+  cv_info?: CvInfo;
+  recommended_job_titles?: string[];
 }
 
-// Serialized version for localStorage (Date → string)
 interface CVAnalysisResultSerialized {
   id: string;
   fileName: string;
