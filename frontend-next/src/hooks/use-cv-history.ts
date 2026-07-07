@@ -1,8 +1,3 @@
-/**
- * useCVHistory - Hook for managing CV analysis history with localStorage
- * Features: tier-based limits, CRUD operations, auto-cleanup
- */
-
 "use client";
 
 import type { Suggestion } from "@/components/cv/actionable-suggestions";
@@ -10,10 +5,6 @@ import type { CvInfo } from "@/components/cv/cv-info-panel";
 import type { BreakdownItem } from "@/components/cv/score-breakdown-v2";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useCallback, useEffect, useState } from "react";
-
-// ============================================================================
-// TYPES
-// ============================================================================
 
 export interface CVAnalysisResult {
   id: string;
