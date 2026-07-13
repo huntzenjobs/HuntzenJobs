@@ -1,10 +1,4 @@
 "use client";
-
-/**
- * Login Page - Modern Design
- * Email/Password + Google OAuth sign in
- */
-
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";

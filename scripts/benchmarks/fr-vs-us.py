@@ -1,13 +1,7 @@
 """
 Benchmark FR vs US contre la PROD avec un user temporaire Premium.
 
-Workflow :
-1. Crée un user temporaire via auth.admin.create_user
-2. Insère une ligne user_subscriptions avec plan Premium (admin_granted, 30j)
-3. Signe un JWT pour ce user
-4. Lance 6 requêtes /api/jobs/search (3 queries × 2 pays, espacées 7s)
-5. Cleanup : delete subscription + delete user (toujours, même si erreur)
-"""
+
 import asyncio
 import os
 import sys
