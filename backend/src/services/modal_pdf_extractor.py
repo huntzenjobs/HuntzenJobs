@@ -24,12 +24,12 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-# Modal webhook URL — set in Railway environment variables
-# Default points to the deployed Modal endpoint (same app as CV processor)
-MODAL_PDF_EXTRACT_URL = os.getenv(
-    "MODAL_PDF_EXTRACT_URL",
-    "https://huntzenproject--huntzen-pdf-extractor-extract-pdf-text.modal.run",
-)
+# Aucune URL de production implicite : Modal doit être explicitement activé et
+# protégé par un proxy token propre à l'environnement.
+MODAL_PDF_EXTRACT_URL = os.getenv("MODAL_PDF_EXTRACT_URL", "").strip()
+MODAL_PROXY_TOKEN_ID = os.getenv("MODAL_PROXY_TOKEN_ID", "").strip()
+MODAL_PROXY_TOKEN_SECRET = os.getenv("MODAL_PROXY_TOKEN_SECRET", "").strip()
+MODAL_ENABLED_SETTING = os.getenv("MODAL_ENABLED", "false").strip().lower() == "true"
 
 # Max PDF size to send to Modal (10MB)
 MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024
@@ -40,7 +40,12 @@ MODAL_TIMEOUT_SECONDS = 120.0
 
 def is_modal_pdf_enabled() -> bool:
     """Check if Modal PDF extraction is configured."""
-    return bool(MODAL_PDF_EXTRACT_URL)
+    return bool(
+        MODAL_ENABLED_SETTING
+        and MODAL_PDF_EXTRACT_URL
+        and MODAL_PROXY_TOKEN_ID
+        and MODAL_PROXY_TOKEN_SECRET
+    )
 
 
 async def extract_text_via_modal(pdf_bytes: bytes) -> str:
@@ -59,9 +64,9 @@ async def extract_text_via_modal(pdf_bytes: bytes) -> str:
     Raises:
         RuntimeError: If Modal is not configured, call fails, or extraction errors
     """
-    if not MODAL_PDF_EXTRACT_URL:
+    if not is_modal_pdf_enabled():
         raise RuntimeError(
-            "MODAL_PDF_EXTRACT_URL not configured — cannot use Modal PDF extraction"
+            "Modal PDF extraction is disabled or proxy authentication is incomplete"
         )
 
     if len(pdf_bytes) == 0:
@@ -86,6 +91,10 @@ async def extract_text_via_modal(pdf_bytes: bytes) -> str:
             response = await client.post(
                 MODAL_PDF_EXTRACT_URL,
                 json={"pdf_bytes": pdf_b64},
+                headers={
+                    "Modal-Key": MODAL_PROXY_TOKEN_ID,
+                    "Modal-Secret": MODAL_PROXY_TOKEN_SECRET,
+                },
             )
 
         if response.status_code != 200:

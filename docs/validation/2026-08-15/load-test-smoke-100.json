@@ -1,0 +1,149 @@
+{
+    "metrics": {
+        "data_received": {
+            "count": 1133275,
+            "rate": 64351.761654850605
+        },
+        "vus": {
+            "value": 100,
+            "min": 100,
+            "max": 100
+        },
+        "http_req_sending": {
+            "avg": 0.1535021228417771,
+            "min": 0.008,
+            "med": 0.149,
+            "max": 0.937,
+            "p(90)": 0.21480000000000007,
+            "p(95)": 0.24439999999999984
+        },
+        "http_req_receiving": {
+            "max": 78.009,
+            "p(90)": 2.4640000000000004,
+            "p(95)": 3.177399999999996,
+            "avg": 0.8037588451740695,
+            "min": 0.004,
+            "med": 0.054
+        },
+        "http_req_duration": {
+            "avg": 292.28341579394277,
+            "min": 16.622,
+            "med": 24.287,
+            "max": 4888.657,
+            "p(90)": 36.847,
+            "p(95)": 4662.7092,
+            "thresholds": {
+                "p(95)<500": true,
+                "p(99)<1000": true
+            }
+        },
+        "critical_errors": {
+            "passes": 0,
+            "fails": 3533,
+            "thresholds": {
+                "rate<0.005": false
+            },
+            "value": 0
+        },
+        "iteration_duration": {
+            "avg": 495.8366527837533,
+            "min": 217.439666,
+            "med": 225.133291,
+            "max": 5090.417208,
+            "p(90)": 242.7019916,
+            "p(95)": 4863.1735413999995
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 3533,
+            "thresholds": {
+                "rate<0.005": false
+            },
+            "value": 0
+        },
+        "checks": {
+            "passes": 7066,
+            "fails": 0,
+            "value": 1
+        },
+        "http_reqs": {
+            "count": 3533,
+            "rate": 200.6174793643089
+        },
+        "iterations": {
+            "count": 3533,
+            "rate": 200.6174793643089
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "max": 170.351,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 2.67489810359468,
+            "min": 0
+        },
+        "http_req_waiting": {
+            "avg": 291.3261548259272,
+            "min": 16.388,
+            "med": 23.529,
+            "max": 4887.23,
+            "p(90)": 35.1544,
+            "p(95)": 4661.2394
+        },
+        "data_sent": {
+            "count": 306288,
+            "rate": 17392.223753052775
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(90)": 36.847,
+            "p(95)": 4662.7092,
+            "avg": 292.28341579394277,
+            "min": 16.622,
+            "med": 24.287,
+            "max": 4888.657
+        },
+        "vus_max": {
+            "value": 100,
+            "min": 100,
+            "max": 100
+        },
+        "http_req_blocked": {
+            "avg": 2.9653962637985956,
+            "min": 0,
+            "med": 0.001,
+            "max": 180.801,
+            "p(90)": 0.001,
+            "p(95)": 0.001
+        },
+        "http_req_connecting": {
+            "avg": 0.2263189923577695,
+            "min": 0,
+            "med": 0,
+            "max": 9.621,
+            "p(90)": 0,
+            "p(95)": 0
+        }
+    },
+    "root_group": {
+        "checks": {
+            "health returns 200": {
+                "name": "health returns 200",
+                "path": "::health returns 200",
+                "id": "e541dcf719b124ee8f73cfb91a5bbf45",
+                "passes": 3533,
+                "fails": 0
+            },
+            "health payload is ok": {
+                "name": "health payload is ok",
+                "path": "::health payload is ok",
+                "id": "b1d8c32abc9a035c5b784437a1b865e5",
+                "passes": 3533,
+                "fails": 0
+            }
+        },
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {}
+    }
+}

@@ -5,7 +5,7 @@ Provides health check and monitoring endpoints for system observability.
 Includes webhook failure tracking for alerting and debugging.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -71,22 +71,44 @@ async def get_webhook_health(hours: int = 24) -> dict[str, Any]:
         if hours < 1 or hours > 168:  # Max 7 days
             raise HTTPException(status_code=400, detail="hours must be between 1 and 168")
 
-        # Get webhook failure statistics
-        failures_response = supabase_client.rpc("get_webhook_failure_stats", {
-            "p_hours": hours
-        }).execute()
-
-        if not failures_response.data:
-            # No failures in period
-            failures_data = {
-                "total_failures": 0,
-                "unique_events": 0,
-                "high_retry_events": 0,
-                "event_types": {},
-                "recent_failures": []
+        # Lire la même source que le dispatcher actuel. La table historique
+        # webhook_failures n'est plus alimentée par les nouveaux webhooks.
+        since = (datetime.now(UTC) - timedelta(hours=hours)).isoformat()
+        failures_response = supabase_client.table("stripe_webhook_events").select(
+            "id,stripe_event_id,event_type,error_type,processing_started_at,"
+            "failed_at,created_at",
+            count="exact",
+        ).eq("status", "failed").gte("created_at", since).order(
+            "failed_at",
+            desc=True,
+        ).execute()
+        failed_rows = failures_response.data or []
+        failure_types: dict[str, int] = {}
+        for failed_event in failed_rows:
+            event_type = failed_event.get("event_type") or "unknown"
+            failure_types[event_type] = failure_types.get(event_type, 0) + 1
+        recent_failures = [
+            {
+                "event_id": failed_event.get("stripe_event_id"),
+                "event_type": failed_event.get("event_type"),
+                "error": failed_event.get("error_type"),
+                "retry_count": 0,
+                "last_attempt": (
+                    failed_event.get("failed_at")
+                    or failed_event.get("processing_started_at")
+                    or failed_event.get("created_at")
+                ),
             }
-        else:
-            failures_data = failures_response.data[0] if isinstance(failures_response.data, list) else failures_response.data
+            for failed_event in failed_rows[:10]
+        ]
+        failed_count = failures_response.count or len(failed_rows)
+        failures_data = {
+            "total_failures": failed_count,
+            "unique_events": failed_count,
+            "high_retry_events": 0,
+            "event_types": failure_types,
+            "recent_failures": recent_failures,
+        }
 
         # Get webhook processing statistics (total events processed)
         processing_response = supabase_client.rpc("get_webhook_processing_stats", {

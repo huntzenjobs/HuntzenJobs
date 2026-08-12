@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import SiteBanner from "@/components/layout/site-banner";
 import { CookieBanner } from "@/components/layout/cookie-banner";
+import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
 import { createClient } from "@/lib/supabase/server";
 
 // Metadata optimisées pour SEO 100/100
@@ -61,7 +62,7 @@ export default async function RootLayout({
         {/* DNS Prefetch et Preconnect pour resources externes */}
         <link
           rel="dns-prefetch"
-          href="https://ngiakfikbuyugqfqtfwp.supabase.co"
+          href="https://auth.huntzenjobs.com"
         />
         <link
           rel="dns-prefetch"
@@ -69,7 +70,7 @@ export default async function RootLayout({
         />
         <link
           rel="preconnect"
-          href="https://ngiakfikbuyugqfqtfwp.supabase.co"
+          href="https://auth.huntzenjobs.com"
           crossOrigin="anonymous"
         />
         <link
@@ -101,10 +102,11 @@ export default async function RootLayout({
         <SiteBanner />
         <SkipLink />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers initialUser={user}>
-            <div id="main-content">{children}</div>
-          </Providers>
-          <CookieBanner />
+           <Providers initialUser={user}>
+             <div id="main-content">{children}</div>
+           </Providers>
+           <GoogleTagManager />
+           <CookieBanner />
         </NextIntlClientProvider>
       </body>
     </html>

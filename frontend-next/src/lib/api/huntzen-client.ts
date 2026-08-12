@@ -770,11 +770,12 @@ class HuntzenApiClient {
     experienceLevel: string;
     message: string;
     preferredDate?: string;
-  }): Promise<{ request_id: string; status: string; message: string }> {
+  }, token: string): Promise<{ request_id: string; status: string; message: string }> {
     return this.fetch<{ request_id: string; status: string; message: string }>(
       "/api/recruiter/request",
       {
         method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           full_name: data.fullName,
           email: data.email,
@@ -790,30 +791,34 @@ class HuntzenApiClient {
 
   async createRecruiterPayment(
     requestId: string,
+    token: string,
   ): Promise<{ checkout_url: string; session_id: string }> {
     return this.fetch<{ checkout_url: string; session_id: string }>(
       "/api/recruiter/create-payment",
       {
         method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({ request_id: requestId }),
       },
     );
   }
 
-  async getRecruiterRequestStatus(requestId: string): Promise<{
+  async getRecruiterRequestStatus(requestId: string, token: string): Promise<{
     request_id: string;
     payment_status: string;
     request_status: string;
     created_at: string;
-    scheduled_at?: string;
+    scheduled_at?: string | null;
   }> {
     return this.fetch<{
       request_id: string;
       payment_status: string;
       request_status: string;
       created_at: string;
-      scheduled_at?: string;
-    }>(`/api/recruiter/status/${requestId}`);
+      scheduled_at?: string | null;
+    }>(`/api/recruiter/status/${requestId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }
 }
 

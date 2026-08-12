@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     // 1. Cleanup old security events (90 days)
     const { error: securityError } = await supabase.rpc(
       "cleanup_old_security_events",
-      { days: 90 },
+      { p_retention_days: 90 },
     );
     results.security_events = securityError
       ? { success: false, error: securityError.message }
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     // 3. Cleanup old user sessions (30 days)
     const { error: sessionsError } = await supabase.rpc(
       "cleanup_old_user_sessions",
-      { days: 30 },
+      { p_days_old: 30 },
     );
     results.user_sessions = sessionsError
       ? { success: false, error: sessionsError.message }

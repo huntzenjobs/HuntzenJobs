@@ -422,6 +422,7 @@
       "recruiterPrice": "50€",
       "soon": "Em breve"
     },
+    "soonMessage": "Esta funcionalidade estará disponível em breve 🚀",
     "aria": {
       "close": "Fechar o menu de navegação",
       "open": "Abrir o menu de navegação",
@@ -582,9 +583,6 @@
       },
       "customCv": {
         "label": "CV personalizados"
-      },
-      "jobSearches": {
-        "label": "buscas"
       }
     },
     "aria": {
@@ -1056,6 +1054,19 @@
     },
     "recruiterContact": {
       "title": "Contatar um Recrutador",
+      "hero": {
+        "badge": "Sessão individual · Atendimento em até 48 h",
+        "heading1": "Fale diretamente com",
+        "headingAccent": "um recrutador",
+        "heading2": "especialista",
+        "subtitle": "30 minutos de aconselhamento personalizado para impulsionar a sua candidatura e conquistar o emprego dos seus sonhos.",
+        "cta": "Reservar a minha consulta",
+        "reviews": "4,9/5 · 127 avaliações",
+        "stat1Sub": "consultas realizadas",
+        "stat2Sub": "encontram emprego em 30 dias",
+        "stat3Sub": "satisfação do cliente",
+        "stat4Sub": "prazo de atendimento"
+      },
       "stats": {
         "consultations": "Consultas bem-sucedidas",
         "satisfaction": "Satisfação média",
@@ -1508,6 +1519,8 @@
     "contractType_freelance": "Freelance",
     "contractType_internship": "Estágio",
     "contractType_remote": "Remoto",
+    "contractType_stage": "Estágio",
+    "contractType_temps partiel": "Tempo parcial",
     "contractType_permanent": "Permanente",
     "contractType_contract": "Contrato",
     "jobTitleOptional": "Cargo (opcional com filtros)",

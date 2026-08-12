@@ -14,8 +14,18 @@ Set this URL as MODAL_PDF_EXTRACT_URL in Railway environment variables.
 """
 
 import modal
+from pydantic import BaseModel, ConfigDict, Field
 
 app = modal.App("huntzen-pdf-extractor")
+
+
+class PDFExtractRequest(BaseModel):
+    """Corps strict et borné de l'extracteur PDF privé."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    # 10 Mio deviennent environ 13,4 Mio en base64.
+    pdf_bytes: str = Field(min_length=4, max_length=14_000_000)
 
 
 def _download_docling_models():
@@ -94,10 +104,11 @@ docling_image = (
     cpu=2,
     memory=4096,        # 4 GB — Docling layout models need ~2-4 GB
     timeout=120,        # 2 min max per extraction
-    min_containers=1,   # Always keep 1 warm container — eliminates cold starts (~$3-5/month)
+    min_containers=0,
+    max_containers=10,
 )
-@modal.fastapi_endpoint(method="POST")
-async def extract_pdf_text(body: dict) -> dict:
+@modal.fastapi_endpoint(method="POST", requires_proxy_auth=True)
+async def extract_pdf_text(body: PDFExtractRequest) -> dict:
     """
     Extract text from PDF bytes using Docling.
 
@@ -116,14 +127,13 @@ async def extract_pdf_text(body: dict) -> dict:
     from docling.datamodel.pipeline_options import PdfPipelineOptions
     from docling.document_converter import DocumentConverter, PdfFormatOption
 
-    pdf_bytes_b64 = body.get("pdf_bytes")
-    if not pdf_bytes_b64:
-        return {"success": False, "error": "Missing required field: pdf_bytes"}
-
     try:
-        pdf_bytes = base64.b64decode(pdf_bytes_b64)
+        pdf_bytes = base64.b64decode(body.pdf_bytes, validate=True)
     except Exception as e:
         return {"success": False, "error": f"Invalid base64 encoding: {str(e)}"}
+
+    if len(pdf_bytes) > 10 * 1024 * 1024:
+        return {"success": False, "error": "PDF exceeds the 10 MiB limit"}
 
     tmp_path = None
     try:

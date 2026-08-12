@@ -7,6 +7,7 @@ import { X, Cookie } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 const CONSENT_KEY = "huntzen_cookie_consent";
+const CONSENT_EVENT = "huntzen:cookie-consent";
 
 type ConsentStatus = "accepted" | "declined" | null;
 
@@ -21,11 +22,17 @@ export function CookieBanner() {
 
   const handleAccept = () => {
     localStorage.setItem(CONSENT_KEY, "accepted");
+    window.dispatchEvent(
+      new CustomEvent(CONSENT_EVENT, { detail: "accepted" }),
+    );
     setStatus("accepted");
   };
 
   const handleDecline = () => {
     localStorage.setItem(CONSENT_KEY, "declined");
+    window.dispatchEvent(
+      new CustomEvent(CONSENT_EVENT, { detail: "declined" }),
+    );
     setStatus("declined");
   };
 

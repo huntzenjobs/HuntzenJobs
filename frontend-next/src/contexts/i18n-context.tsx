@@ -9,6 +9,7 @@ import {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale as useNextIntlLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 // Supported locales (must match middleware.ts)
@@ -35,7 +36,11 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const serverLocale = useNextIntlLocale();
+  const initialLocale = SUPPORTED_LOCALES.includes(serverLocale as Locale)
+    ? (serverLocale as Locale)
+    : DEFAULT_LOCALE;
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
   const router = useRouter();
 
   // Read locale from cookie on mount

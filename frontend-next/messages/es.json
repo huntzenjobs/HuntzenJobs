@@ -422,6 +422,7 @@
       "recruiterPrice": "50€",
       "soon": "Próximamente"
     },
+    "soonMessage": "Esta función estará disponible próximamente 🚀",
     "aria": {
       "close": "Cerrar el menú de navegación",
       "open": "Abrir el menú de navegación",
@@ -582,9 +583,6 @@
       },
       "coach": {
         "label": "mensajes coach"
-      },
-      "jobSearches": {
-        "label": "búsquedas"
       }
     },
     "aria": {
@@ -1056,6 +1054,19 @@
     },
     "recruiterContact": {
       "title": "Contactar un Reclutador",
+      "hero": {
+        "badge": "Sesión individual · Atención en 48 h",
+        "heading1": "Habla directamente con",
+        "headingAccent": "un reclutador",
+        "heading2": "experto",
+        "subtitle": "30 minutos de asesoramiento personalizado para impulsar tu candidatura y conseguir el trabajo de tus sueños.",
+        "cta": "Reservar mi consulta",
+        "reviews": "4,9/5 · 127 opiniones",
+        "stat1Sub": "consultas realizadas",
+        "stat2Sub": "encuentran empleo en 30 días",
+        "stat3Sub": "satisfacción del cliente",
+        "stat4Sub": "plazo de atención"
+      },
       "stats": {
         "consultations": "Consultas exitosas",
         "satisfaction": "Satisfacción promedio",
@@ -1508,6 +1519,8 @@
     "contractType_freelance": "Freelance",
     "contractType_internship": "Prácticas",
     "contractType_remote": "Remoto",
+    "contractType_stage": "Prácticas",
+    "contractType_temps partiel": "Tiempo parcial",
     "contractType_permanent": "Permanente",
     "contractType_contract": "Contrato",
     "jobTitleOptional": "Puesto (opcional con filtros)",

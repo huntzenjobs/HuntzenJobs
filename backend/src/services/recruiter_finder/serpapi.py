@@ -1,8 +1,8 @@
 import logging
 import re
-from datetime import datetime, timedelta, timezone
-from typing import Any
 import threading
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import httpx
 from supabase import Client, create_client
@@ -164,7 +164,7 @@ async def _get_cached_recruiters(slug: str) -> dict[str, Any] | None:
         )
         if not result.data:
             return None
-        
+
         row = result.data[0]
         recruiters = row.get("recruiters") or []
         # If cache contains no recruiters, treat as a miss so we can refresh
@@ -173,10 +173,10 @@ async def _get_cached_recruiters(slug: str) -> dict[str, Any] | None:
             return None
         # Check expiry
         expires_at = datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00"))
-        if expires_at < datetime.now(timezone.utc):
+        if expires_at < datetime.now(UTC):
             logger.info("[serpapi] Cache expired for %s", slug)
             return None
-            
+
         logger.info("[serpapi] Cache HIT for %s", slug)
         return {
             "recruiters": recruiters,
@@ -193,8 +193,8 @@ async def _save_to_cache(slug: str, company: str, recruiters: list[Any], strateg
     """Save found recruiters to Supabase cache with a 30-day TTL."""
     try:
         supabase = get_supabase_client()
-        expires_at = datetime.now(timezone.utc) + timedelta(days=30)
-        
+        expires_at = datetime.now(UTC) + timedelta(days=30)
+
         data = {
             "company_slug": slug,
             "company_name": company,
@@ -203,8 +203,11 @@ async def _save_to_cache(slug: str, company: str, recruiters: list[Any], strateg
             "search_queries": strategy_info.get("queries") if strategy_info else [],
             "expires_at": expires_at.isoformat(),
         }
-        
-        supabase.table("recruiter_cache").upsert(data).execute()
+
+        supabase.table("recruiter_cache").upsert(
+            data,
+            on_conflict="company_slug",
+        ).execute()
         logger.info("[serpapi] Saved recruiters to cache for %s", slug)
     except Exception as e:
         logger.warning("[serpapi] Cache write failed: %s", e)
@@ -219,7 +222,7 @@ async def find_recruiters_serpapi(
     city: str = "",
 ) -> dict[str, Any]:
     """Search LinkedIn profiles via SerpAPI for recruiter-style contacts (checked against Cache first)."""
-    
+
     slug = generate_company_slug(company_name)
     if city:
         city_slug = FreshLinkedInProfileValidator._normalize(city)
@@ -354,4 +357,3 @@ async def find_recruiters_serpapi(
         ]
 
     return result
-

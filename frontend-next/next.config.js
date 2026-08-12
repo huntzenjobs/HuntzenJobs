@@ -147,6 +147,10 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'auth.huntzenjobs.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'images.unsplash.com',
       },
     ],
@@ -171,12 +175,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://vercel.live",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://va.vercel-scripts.com https://vercel.live",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://ngiakfikbuyugqfqtfwp.supabase.co https://*.supabase.co https://huntzenjobs-production.up.railway.app https://*.ingest.sentry.io http://localhost:* ws://localhost:* wss://ngiakfikbuyugqfqtfwp.supabase.co",
-              "frame-src 'self' https://vercel.live",
+              "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://auth.huntzenjobs.com https://ngiakfikbuyugqfqtfwp.supabase.co https://*.supabase.co https://huntzenjobs-production.up.railway.app https://*.ingest.sentry.io http://localhost:* ws://localhost:* wss://auth.huntzenjobs.com wss://ngiakfikbuyugqfqtfwp.supabase.co",
+              "frame-src 'self' https://www.googletagmanager.com https://vercel.live",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

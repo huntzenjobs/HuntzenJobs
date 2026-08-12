@@ -7,10 +7,8 @@ POST /api/referrals/track-click     — increment click counter (unauthenticated
 POST /api/referrals/register        — link a newly created user to a referral code
 """
 
-import json
 import logging
 import os
-from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
@@ -18,7 +16,7 @@ from pydantic import BaseModel
 from src.api.deps import CurrentUserDep, get_supabase_client
 from src.api.middleware import limiter
 from src.services.notifications import create_notification
-from src.services.referrals import _apply_free_days, _apply_quota_bonus, _apply_stripe_coupon
+from src.services.referrals import enqueue_referral_reward_debt
 
 APP_URL = os.getenv("NEXT_PUBLIC_APP_URL", "https://huntzenjobs.com")
 
@@ -240,64 +238,31 @@ async def _auto_apply_tier_rewards(supabase, referrer_id: str, total_signups: in
             if not signup_id:
                 continue
 
-            # Insérer la récompense avec idempotence DB-level via RPC.
-            # insert_tier_reward() utilise ON CONFLICT DO NOTHING (sans cible)
-            # → attrape idx_referral_rewards_tier_unique correctement.
-            # PostgREST upsert cible ON CONFLICT (id) par défaut, ce qui ne
-            # couvre PAS l'index fonctionnel JSONB — d'où le passage par RPC.
             reward_value = {**tier, "tier_index": tier_index}
-            reward_result = supabase.rpc(
-                "insert_tier_reward",
-                {
-                    "p_referral_signup_id": signup_id,
-                    "p_referrer_id": referrer_id,
-                    "p_reward_type": tier.get("reward_type", "quota_bonus"),
-                    "p_reward_value": json.dumps(reward_value),
-                },
-            ).execute()
-
-            # RPC retourne NULL si ON CONFLICT DO NOTHING a été déclenché
-            reward_id = reward_result.data
-            if not reward_id:
+            reward_result = await enqueue_referral_reward_debt(
+                supabase,
+                referral_signup_id=signup_id,
+                referrer_id=referrer_id,
+                reward_type=tier.get("reward_type", "quota_bonus"),
+                reward_value=reward_value,
+                source_key=f"tier:{referrer_id}:{tier_index}",
+            )
+            if reward_result.get("created") is not True:
                 logger.info(
                     f"[REFERRAL] Tier {tier_index} reward already exists for {referrer_id} — skipped"
                 )
                 continue
-
-            # Appliquer la récompense
-            reward_type_str = tier.get("reward_type", "quota_bonus")
-            try:
-                if reward_type_str == "free_days":
-                    success = await _apply_free_days(supabase, referrer_id, tier)
-                elif reward_type_str == "quota_bonus":
-                    success = await _apply_quota_bonus(supabase, referrer_id, tier)
-                elif reward_type_str == "stripe_coupon":
-                    success = await _apply_stripe_coupon(supabase, referrer_id, tier, reward_id)
-                else:
-                    success = False
-            except Exception as e:
-                logger.error(f"[REFERRAL] auto tier reward error for {referrer_id}: {e}")
-                success = False
-
-            if success and reward_id:
-                supabase.table("referral_rewards").update({
-                    "applied": True,
-                    "applied_at": datetime.now(UTC).isoformat(),
-                }).eq("id", reward_id).execute()
-
-                # Notification
-                create_notification(
-                    supabase,
-                    referrer_id,
-                    "referral_bonus",
-                    f"Niveau Ambassadeur atteint — {tier.get('label', '')}",
-                    f"Félicitations ! Tu as atteint le palier {tier_index + 1}. Ta récompense : {tier.get('label', '')}.",
-                    {"tier_index": tier_index, "tier": tier},
-                )
-                logger.info(f"[REFERRAL] Auto-applied tier {tier_index} reward for {referrer_id}")
-            elif reward_id:
-                supabase.table("referral_rewards").delete().eq("id", reward_id).execute()
-                logger.warning(f"[REFERRAL] Auto tier {tier_index} reward failed for {referrer_id}, record cleaned up")
+            create_notification(
+                supabase,
+                referrer_id,
+                "referral_bonus",
+                f"Niveau Ambassadeur atteint — {tier.get('label', '')}",
+                f"Félicitations ! Tu as atteint le palier {tier_index + 1}. Ta récompense : {tier.get('label', '')}.",
+                {"tier_index": tier_index, "tier": tier},
+            )
+            logger.info(
+                f"[REFERRAL] Queued tier {tier_index} reward for {referrer_id}"
+            )
 
     except Exception as e:
         logger.error(f"[REFERRAL] _auto_apply_tier_rewards error for {referrer_id}: {e}")
@@ -459,28 +424,6 @@ async def apply_tier_reward(body: ApplyTierRewardRequest, current_user: CurrentU
 
     tier = tiers[body.tier_index]
 
-    # Idempotence : vérifier si ce palier a déjà été enregistré (applied ou en cours)
-    try:
-        existing_rewards = (
-            supabase.table("referral_rewards")
-            .select("id, reward_value, applied")
-            .eq("referrer_id", user_id)
-            .execute()
-        )
-        for row in (existing_rewards.data or []):
-            rv = row.get("reward_value") or {}
-            if rv.get("tier_index") == body.tier_index:
-                if row.get("applied"):
-                    return {"ok": True, "tier": tier, "tier_index": body.tier_index, "already_applied": True}
-                # Record applied=False existant → précédent appel a crashé, on nettoie
-                try:
-                    supabase.table("referral_rewards").delete().eq("id", row["id"]).execute()
-                    logger.info(f"[REFERRAL] Cleaned up stale applied=False reward {row['id']} for {user_id}")
-                except Exception:
-                    pass
-    except Exception as e:
-        logger.warning(f"[REFERRAL] idempotency check failed for {user_id}: {e}")
-
     # Récupère un referral_signup_id (FK NOT NULL sur referral_rewards)
     try:
         ref_res = (
@@ -508,15 +451,14 @@ async def apply_tier_reward(body: ApplyTierRewardRequest, current_user: CurrentU
         if not signup_id:
             raise HTTPException(status_code=400, detail="No referral signups found — tier reward cannot be applied")
 
-        # Insère la récompense dans referral_rewards (applied=False initialement)
-        reward_res = supabase.table("referral_rewards").insert({
-            "referral_signup_id": signup_id,
-            "referrer_id": user_id,
-            "reward_type": tier.get("reward_type", "quota_bonus"),
-            "reward_value": {**tier, "tier_index": body.tier_index},
-            "applied": False,
-        }).execute()
-        reward_id = reward_res.data[0]["id"] if reward_res.data else None
+        reward_result = await enqueue_referral_reward_debt(
+            supabase,
+            referral_signup_id=signup_id,
+            referrer_id=user_id,
+            reward_type=tier.get("reward_type", "quota_bonus"),
+            reward_value={**tier, "tier_index": body.tier_index},
+            source_key=f"tier:{user_id}:{body.tier_index}",
+        )
 
     except HTTPException:
         raise
@@ -524,30 +466,14 @@ async def apply_tier_reward(body: ApplyTierRewardRequest, current_user: CurrentU
         logger.error(f"[REFERRAL] apply_tier_reward insert failed for {user_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to record tier reward") from e
 
-    # Appliquer réellement la récompense selon le type
-    reward_type_str = tier.get("reward_type", "quota_bonus")
-    try:
-        if reward_type_str == "free_days":
-            success = await _apply_free_days(supabase, user_id, tier)
-        elif reward_type_str == "quota_bonus":
-            success = await _apply_quota_bonus(supabase, user_id, tier)
-        elif reward_type_str == "stripe_coupon":
-            success = await _apply_stripe_coupon(supabase, user_id, tier, reward_id)
-        else:
-            logger.warning(f"[REFERRAL] Unknown reward_type '{reward_type_str}' for tier {body.tier_index}")
-            success = False
-    except Exception as e:
-        logger.error(f"[REFERRAL] reward application error for {user_id}: {e}")
-        success = False
-
-    if success and reward_id:
-        supabase.table("referral_rewards").update({
-            "applied": True,
-            "applied_at": datetime.now(UTC).isoformat(),
-        }).eq("id", reward_id).execute()
-    elif reward_id:
-        supabase.table("referral_rewards").delete().eq("id", reward_id).execute()
-        raise HTTPException(status_code=500, detail="Failed to apply tier reward")
+    if reward_result.get("created") is not True:
+        return {
+            "ok": True,
+            "tier": tier,
+            "tier_index": body.tier_index,
+            "already_queued": True,
+            "already_applied": reward_result.get("applied") is True,
+        }
 
     # Notif de palier atteint
     create_notification(
@@ -559,5 +485,10 @@ async def apply_tier_reward(body: ApplyTierRewardRequest, current_user: CurrentU
         {"tier_index": body.tier_index, "tier": tier},
     )
 
-    logger.info(f"[REFERRAL] Tier {body.tier_index} reward applied for user {user_id}")
-    return {"ok": True, "tier": tier, "tier_index": body.tier_index}
+    logger.info(f"[REFERRAL] Tier {body.tier_index} reward queued for user {user_id}")
+    return {
+        "ok": True,
+        "tier": tier,
+        "tier_index": body.tier_index,
+        "queued": True,
+    }

@@ -191,6 +191,11 @@ export default function PricingPage() {
         return;
       }
 
+      if (data.modified) {
+        toast.success(tPricing("toasts.upgraded"));
+        return;
+      }
+
       if (data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {

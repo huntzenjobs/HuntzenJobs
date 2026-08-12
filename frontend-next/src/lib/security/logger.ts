@@ -76,24 +76,6 @@ export function getClientIP(headers?: Headers): string | undefined {
 }
 
 /**
- * Get session ID from Supabase auth
- * Silently fails if session is broken to avoid breaking logout
- */
-async function getSessionId(): Promise<string | undefined> {
-  try {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.access_token;
-  } catch (error) {
-    // Session broken (AbortError, etc.) - return undefined
-    // This is normal during logout or when session expires
-    return undefined;
-  }
-}
-
-/**
  * Log a security event to Supabase, Sentry, and console
  */
 export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
@@ -101,7 +83,6 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
     eventType,
     severity = "info",
     userId,
-    sessionId,
     ipAddress,
     userAgent,
     metadata = {},
@@ -109,9 +90,6 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
 
   try {
     const supabase = createClient();
-
-    // Get session ID if not provided (may return undefined if session broken)
-    const finalSessionId = sessionId || (await getSessionId());
 
     // Get user agent if not provided (browser only)
     const finalUserAgent =
@@ -125,9 +103,11 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
         p_event_type: eventType,
         p_severity: severity,
         p_user_id: userId || null,
-        p_session_id: finalSessionId || null,
-        p_ip_address: ipAddress || null,
-        p_user_agent: finalUserAgent || null,
+        // La base dérive le session_id du JWT vérifié. Ne jamais transmettre
+        // l'access token ni faire confiance à l'IP/UA déclarée par le navigateur.
+        p_session_id: null,
+        p_ip_address: null,
+        p_user_agent: null,
         p_event_data: metadata,
       });
 

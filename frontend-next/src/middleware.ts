@@ -1,66 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-// Supported locales
-const SUPPORTED_LOCALES = ["fr", "en", "es", "pt"] as const;
-const DEFAULT_LOCALE = "fr";
-
-// Country to language mapping (IP geolocation)
-const COUNTRY_TO_LANG: Record<string, string> = {
-  // French-speaking
-  FR: "fr",
-  BE: "fr",
-  LU: "fr",
-  CH: "fr",
-  MC: "fr",
-  SN: "fr",
-  CI: "fr",
-  ML: "fr",
-  BF: "fr",
-  NE: "fr",
-  CD: "fr",
-  CG: "fr",
-  MG: "fr",
-  CM: "fr",
-  TG: "fr",
-  // English-speaking
-  GB: "en",
-  US: "en",
-  CA: "en",
-  AU: "en",
-  NZ: "en",
-  IE: "en",
-  IN: "en",
-  ZA: "en",
-  NG: "en",
-  KE: "en",
-  // Spanish-speaking
-  ES: "es",
-  MX: "es",
-  AR: "es",
-  CO: "es",
-  CL: "es",
-  PE: "es",
-  VE: "es",
-  EC: "es",
-  GT: "es",
-  CU: "es",
-  BO: "es",
-  DO: "es",
-  HN: "es",
-  PY: "es",
-  SV: "es",
-  // Portuguese-speaking
-  BR: "pt",
-  PT: "pt",
-  AO: "pt",
-  MZ: "pt",
-  GW: "pt",
-  // Morocco/MENA (French as default)
-  MA: "fr",
-  DZ: "fr",
-  TN: "fr",
-};
+import { detectLocale } from "@/i18n/detect-locale";
 
 // Generate a client ID for freemium tracking
 function generateClientId(): string {
@@ -129,17 +69,14 @@ export async function middleware(request: NextRequest) {
 
   if (!manualLocale) {
     // Auto-detect from IP on every request (follows VPN/travel changes)
-    let detectedLocale = DEFAULT_LOCALE;
-
     // Vercel geo headers (works in production on Vercel Edge)
     // x-vercel-ip-country is the reliable header — request.geo is deprecated
     const countryCode =
       request.headers.get("x-vercel-ip-country") || request.geo?.country;
-
-    if (countryCode && COUNTRY_TO_LANG[countryCode]) {
-      detectedLocale = COUNTRY_TO_LANG[countryCode];
-    }
-    // No Accept-Language fallback — default stays "fr" for French-first platform
+    const detectedLocale = detectLocale(
+      countryCode,
+      request.headers.get("accept-language"),
+    );
 
     // Set/update locale cookie based on current IP
     supabaseResponse.cookies.set("NEXT_LOCALE", detectedLocale, {

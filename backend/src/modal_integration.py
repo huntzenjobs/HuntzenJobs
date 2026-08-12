@@ -20,6 +20,7 @@ import os
 import uuid
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import HTTPException, UploadFile
@@ -185,19 +186,66 @@ else:
 # MODAL WEBHOOK CONFIGURATION
 # ============================================
 
-# Modal web endpoint URL (deployed via modal deploy modal_app.py)
-MODAL_WEBHOOK_URL = os.getenv(
-    "MODAL_WEBHOOK_URL",
-    "https://huntzenproject--huntzen-cv-processor-process-cv-webhook.modal.run"
-)
+# Modal est désactivé par défaut. Une URL seule ne doit jamais activer
+# implicitement un endpoint de calcul, et les deux éléments du proxy token sont
+# obligatoires pour empêcher tout appel public au webhook Modal.
+MODAL_WEBHOOK_URL = os.getenv("MODAL_WEBHOOK_URL", "").strip()
+MODAL_PROXY_TOKEN_ID = os.getenv("MODAL_PROXY_TOKEN_ID", "").strip()
+MODAL_PROXY_TOKEN_SECRET = os.getenv("MODAL_PROXY_TOKEN_SECRET", "").strip()
+MODAL_ENABLED_SETTING = os.getenv("MODAL_ENABLED", "false").strip().lower() == "true"
 
-# Check if Modal is enabled (webhook URL is configured)
-MODAL_ENABLED = bool(MODAL_WEBHOOK_URL)
 
-if MODAL_ENABLED:
+def is_modal_enabled() -> bool:
+    """Vérifier que Modal est explicitement activé et authentifié."""
+    return bool(
+        MODAL_ENABLED_SETTING
+        and MODAL_WEBHOOK_URL
+        and MODAL_PROXY_TOKEN_ID
+        and MODAL_PROXY_TOKEN_SECRET
+    )
+
+
+def validate_modal_cv_payload(
+    *,
+    cv_id: str,
+    user_id: str | None,
+    pdf_url: str | None,
+    cv_text: str | None,
+    language: str,
+) -> None:
+    """Valider le contrat envoyé à Modal avant tout appel externe."""
+    try:
+        uuid.UUID(cv_id)
+        if not user_id:
+            raise ValueError("user_id is required")
+        uuid.UUID(user_id)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Valid cv_id and user_id UUIDs are required") from exc
+
+    if bool(pdf_url) == bool(cv_text):
+        raise ValueError("Exactly one CV source is required")
+    if cv_text and len(cv_text) > 100_000:
+        raise ValueError("CV text exceeds the 100000 character limit")
+    if language not in {"fr", "en", "es", "pt"}:
+        raise ValueError("Unsupported CV language")
+
+    if pdf_url:
+        expected = urlparse(SUPABASE_URL)
+        candidate = urlparse(pdf_url)
+        expected_prefix = "/storage/v1/object/sign/cvs/"
+        if (
+            candidate.scheme != "https"
+            or not expected.hostname
+            or candidate.hostname != expected.hostname
+            or not candidate.path.startswith(expected_prefix)
+        ):
+            raise ValueError("Only a signed Supabase CV URL is accepted")
+
+
+if is_modal_enabled():
     logger.info(f"Modal integration enabled - webhook URL: {MODAL_WEBHOOK_URL}")
 else:
-    logger.warning("Modal integration disabled - MODAL_WEBHOOK_URL not configured")
+    logger.warning("Modal integration disabled or proxy authentication incomplete")
 
 
 # ============================================
@@ -220,7 +268,7 @@ async def upload_cv_to_storage(
         user_id: User UUID (REQUIRED - no anonymous support)
 
     Returns:
-        Public URL of uploaded file
+        Chemin privé de l'objet dans le bucket `cvs`
 
     Raises:
         HTTPException: If upload fails
@@ -249,15 +297,30 @@ async def upload_cv_to_storage(
             file_options={"content-type": "application/pdf"}
         )
 
-        # Get public URL
-        public_url = supabase_client.storage.from_("cvs").get_public_url(unique_filename)
-
-        logger.info(f"CV uploaded successfully: {public_url}")
-        return public_url
+        logger.info(f"CV uploaded successfully: {unique_filename}")
+        return unique_filename
 
     except Exception as e:
         logger.error(f"Failed to upload CV to storage: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to upload CV: {str(e)}") from None
+
+
+def create_private_cv_download_url(object_path: str, expires_in: int = 600) -> str:
+    """Créer une URL signée courte pour transmettre un CV privé à Modal."""
+    if not supabase_client:
+        raise HTTPException(status_code=500, detail="Supabase client not configured")
+
+    if not object_path or object_path.startswith(("http://", "https://", "/")) or ".." in object_path:
+        raise ValueError("Invalid private CV object path")
+
+    signed = supabase_client.storage.from_("cvs").create_signed_url(
+        object_path,
+        expires_in=expires_in,
+    )
+    signed_url = signed.get("signedURL") or signed.get("signedUrl")
+    if not signed_url:
+        raise RuntimeError("Supabase did not return a signed CV URL")
+    return str(signed_url)
 
 
 # ============================================
@@ -359,7 +422,7 @@ async def spawn_modal_cv_processing(
     Raises:
         HTTPException: If Modal webhook call fails
     """
-    if not MODAL_ENABLED:
+    if not is_modal_enabled():
         logger.warning("Modal integration disabled - falling back to synchronous processing")
         return False
 
@@ -376,6 +439,13 @@ async def spawn_modal_cv_processing(
             "job_description": job_description,
             "language": language
         }
+        validate_modal_cv_payload(
+            cv_id=cv_id,
+            user_id=user_id,
+            pdf_url=pdf_url,
+            cv_text=cv_text,
+            language=language,
+        )
 
         # Call Modal webhook (extended timeout for cold starts)
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -383,7 +453,11 @@ async def spawn_modal_cv_processing(
             # Modal processes and returns results directly
             response = await client.post(
                 MODAL_WEBHOOK_URL,
-                json=payload
+                json=payload,
+                headers={
+                    "Modal-Key": MODAL_PROXY_TOKEN_ID,
+                    "Modal-Secret": MODAL_PROXY_TOKEN_SECRET,
+                },
             )
 
             # Check if webhook accepted the request
@@ -468,22 +542,26 @@ async def process_cv_async(
         # ✅ Validation: user_id is required
         if not user_id:
             raise ValueError("user_id is required for CV analysis (no anonymous support)")
-        pdf_url = None
+        pdf_object_path = None
+        pdf_download_url = None
 
         # Step 1: Handle file or text
         if file:
             # PDF mode: Upload to Supabase Storage
             file_content = await file.read()
-            pdf_url = await upload_cv_to_storage(
+            pdf_object_path = await upload_cv_to_storage(
                 file_content=file_content,
                 filename=file.filename,
                 user_id=user_id  # ✅ Seulement user_id (plus d'anonymous_id)
             )
+            pdf_download_url = create_private_cv_download_url(pdf_object_path)
 
         # Step 2: Create database record
         cv_id = await create_cv_analysis_record(
             user_id=user_id,  # ✅ Seulement user_id (plus d'anonymous_id ni client_ip)
-            pdf_url=pdf_url,
+            # La base conserve uniquement le chemin privé durable. L'URL
+            # signée éphémère n'est transmise qu'au processeur Modal.
+            pdf_url=pdf_object_path,
             cv_text=cv_text,
             filename=file.filename if file else None,
             job_description=job_description,
@@ -494,7 +572,7 @@ async def process_cv_async(
         modal_spawned = await spawn_modal_cv_processing(
             cv_id=cv_id,
             user_id=user_id,
-            pdf_url=pdf_url,
+            pdf_url=pdf_download_url,
             cv_text=cv_text,
             job_description=job_description,
             language=language
@@ -550,21 +628,17 @@ async def get_cv_analysis_status(
     if not supabase_client:
         raise HTTPException(status_code=500, detail="Supabase client not configured")
 
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     try:
         # Build query based on authentication type
         query = supabase_client.table("cv_analyses").select("*").eq("id", cv_id)
 
         # Add authorization filter
-        if user_id:
-            # Authenticated user - must match user_id
-            query = query.eq("user_id", user_id)
-        elif anonymous_id:
-            # Anonymous user - must match anonymous_id
-            query = query.eq("anonymous_id", anonymous_id).is_("user_id", "null")
-        else:
-            # No authentication provided - allow access by cv_id only
-            # This is for backwards compatibility and public access
-            pass
+        # L'accès est toujours lié au propriétaire authentifié. Les anciennes
+        # analyses anonymes ne doivent plus être exposées par simple UUID.
+        query = query.eq("user_id", user_id)
 
         # Use maybeSingle() instead of single() to handle "not found" gracefully
         response = query.maybe_single().execute()
@@ -643,7 +717,7 @@ async def list_user_cv_analyses(
 
             # Extract summary fields from result JSON for history display
             result_data = _normalize_analysis_result(row.get("result"))
-            
+
             # Defensive score extraction (handles both old dict and new int formats)
             ats_score_raw = result_data.get("ats_score")
             if isinstance(ats_score_raw, dict):

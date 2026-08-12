@@ -50,6 +50,18 @@ interface ProfilePageClientProps {
   };
 }
 
+export interface PromoClaimResponse {
+  ok: boolean;
+  status: "queued" | "pending" | "applied";
+  applied: boolean;
+  promo_link_id: string | null;
+  message: string;
+}
+
+export function isPromoClaimApplied(response: PromoClaimResponse): boolean {
+  return response.ok && response.applied && response.status === "applied";
+}
+
 function ReferralWidget({
   userId,
   tProfile,
@@ -516,6 +528,12 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
                           err.detail ||
                             "Impossible d&apos;appliquer ce code promo.",
                         );
+                      }
+
+                      const claim = (await res.json()) as PromoClaimResponse;
+                      if (!isPromoClaimApplied(claim)) {
+                        toast.info(claim.message);
+                        return;
                       }
 
                       localStorage.setItem(

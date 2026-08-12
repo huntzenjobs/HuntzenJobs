@@ -11,8 +11,11 @@ const mockSubscriptionContext = {
   limits: {
     job_searches_per_day: 3,
     jobs_visible: 5,
-    cv_analyses_per_day: 1,
+    ats_scores_per_day: 1,
+    matching_scores_per_day: 3,
     assistant_messages_per_day: 10,
+    saved_jobs_per_day: 5,
+    recruiter_searches_per_day: 1,
   },
   isFreePlan: true,
   plan: "free",
@@ -42,11 +45,11 @@ describe("UsageCounter Component", () => {
       ).toBeInTheDocument();
     });
 
-    it("renders cv_analysis feature counter", () => {
+    it("renders ATS score feature counter", () => {
       mockSubscriptionContext.getRemaining.mockReturnValue(1);
-      render(<UsageCounter feature="cv_analysis" />);
+      render(<UsageCounter feature="ats_score" />);
       // Use getAllByText since "analyses" appears multiple times
-      const elements = screen.getAllByText(/features\.cvAnalysis\.label/i);
+      const elements = screen.getAllByText(/features\.atsScore\.label/i);
       expect(elements.length).toBeGreaterThan(0);
     });
 
@@ -92,7 +95,7 @@ describe("UsageCounter Component", () => {
     it("renders in compact mode", () => {
       render(<UsageCounter feature="job_search" compact={true} />);
       // Compact mode uses inline-flex and rounded-full
-      const element = screen.getByText(/1\/3|2\/3/).closest("span");
+      const element = screen.getByText("2").closest("span");
       expect(element).toHaveClass("inline-flex");
     });
   });
@@ -148,9 +151,10 @@ describe("UsageSummary Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSubscriptionContext.isFreePlan = true;
+    mockSubscriptionContext.plan = "free";
     mockSubscriptionContext.getRemaining.mockReturnValue(2);
     mockSubscriptionContext.limits.job_searches_per_day = 3;
-    mockSubscriptionContext.limits.cv_analyses_per_day = 1;
+    mockSubscriptionContext.limits.ats_scores_per_day = 1;
     mockSubscriptionContext.limits.assistant_messages_per_day = 10;
     mockSubscriptionContext.assistantMessagesRemaining = 8;
     mockSubscriptionContext.assistantMessagesLimit = 10;
@@ -164,6 +168,7 @@ describe("UsageSummary Component", () => {
 
     it("does not render for paid plan", () => {
       mockSubscriptionContext.isFreePlan = false;
+      mockSubscriptionContext.plan = "pro";
       const { container } = render(<UsageSummary />);
       expect(container.firstChild).toBeNull();
     });
@@ -177,10 +182,10 @@ describe("UsageSummary Component", () => {
       ).toBeInTheDocument();
     });
 
-    it("displays cv analysis counter", () => {
+    it("displays ATS score counter", () => {
       render(<UsageSummary />);
       // Use getAllByText since "analyses" appears multiple times
-      const elements = screen.getAllByText(/features\.cvAnalysis\.label/i);
+      const elements = screen.getAllByText(/features\.atsScore\.label/i);
       expect(elements.length).toBeGreaterThan(0);
     });
 
