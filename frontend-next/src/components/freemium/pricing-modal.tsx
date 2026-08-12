@@ -166,11 +166,8 @@ export function PricingModal() {
       }
 
       // Call backend to create Stripe checkout session
-      const apiUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
-      if (!apiUrl) throw new Error("Backend URL not configured");
       const response = await fetch(
-        `${apiUrl}/api/stripe/create-checkout-session`,
+        "/api/stripe/create-checkout-session",
         {
           method: "POST",
           headers: {

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocale } from "next-intl";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const CACHE_TTL = 10 * 1000; // 10 seconds — pre-commercialisation, propagation rapide des changements admin
 
 export interface PlanConfig {
@@ -69,7 +68,8 @@ export function usePlansConfig() {
     }
 
     try {
-      const url = `${BACKEND_URL}/api/public/plans${locale !== "fr" ? `?locale=${locale}` : ""}`;
+      const path = `/api/public/plans${locale !== "fr" ? `?locale=${locale}` : ""}`;
+      const url = new URL(path, window.location.origin).toString();
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch plans");
       const data: PlanConfig[] = await res.json();
