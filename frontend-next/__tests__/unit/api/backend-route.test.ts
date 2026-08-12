@@ -69,4 +69,53 @@ describe("relais backend same-origin", () => {
     expect(init.body).toBe("plan_name=starter&billing_period=monthly");
     expect(response.status).toBe(200);
   });
+
+  it("relaie la lecture fraîche de l'abonnement vers le bon endpoint", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
+    const backendFetch = vi.fn().mockResolvedValue(
+      Response.json({
+        success: true,
+        subscription: { plan_name: "starter", status: "active" },
+      }),
+    );
+    vi.stubGlobal("fetch", backendFetch);
+
+    const { GET } = await import("@/app/api/subscription/current/route");
+    const response = await GET(
+      new Request("https://app.example.test/api/subscription/current", {
+        headers: { Authorization: "Bearer user-token" },
+      }),
+    );
+
+    expect(backendFetch).toHaveBeenCalledWith(
+      "https://backend.example.test/api/subscription/current",
+      expect.objectContaining({ method: "GET" }),
+    );
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      subscription: { plan_name: "starter", status: "active" },
+    });
+  });
+
+  it("relaie l'invalidation du cache d'abonnement en POST", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
+    const backendFetch = vi
+      .fn()
+      .mockResolvedValue(Response.json({ success: true }));
+    vi.stubGlobal("fetch", backendFetch);
+
+    const { POST } = await import("@/app/api/subscription/sync-cache/route");
+    const response = await POST(
+      new Request("https://app.example.test/api/subscription/sync-cache", {
+        method: "POST",
+        headers: { Authorization: "Bearer user-token" },
+      }),
+    );
+
+    expect(backendFetch).toHaveBeenCalledWith(
+      "https://backend.example.test/api/subscription/sync-cache",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(response.status).toBe(200);
+  });
 });

@@ -55,15 +55,12 @@ export default function PaymentSuccessPage() {
           t("verifyingAttempt", { attempt: currentAttempt, max: MAX_ATTEMPTS }),
         );
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/current`,
-          {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
+        const response = await fetch("/api/subscription/current", {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
           },
-        );
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -75,16 +72,13 @@ export default function PaymentSuccessPage() {
         if (planName && planName !== "free") {
           if (pollingInterval) clearInterval(pollingInterval);
 
-          await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/sync-cache`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${session.access_token}`,
-                "Content-Type": "application/json",
-              },
+          await fetch("/api/subscription/sync-cache", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
             },
-          );
+          });
 
           localStorage.removeItem("huntzen_subscription_cache");
           localStorage.removeItem("huntzen_subscription_cache_expiry");
@@ -105,16 +99,13 @@ export default function PaymentSuccessPage() {
 
           if (pollingInterval) clearInterval(pollingInterval);
 
-          await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/sync-cache`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${session.access_token}`,
-                "Content-Type": "application/json",
-              },
+          await fetch("/api/subscription/sync-cache", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
             },
-          );
+          });
 
           window.dispatchEvent(new CustomEvent("subscription-changed"));
 
