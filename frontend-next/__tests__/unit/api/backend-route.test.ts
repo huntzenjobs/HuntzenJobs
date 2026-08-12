@@ -97,6 +97,33 @@ describe("relais backend same-origin", () => {
     });
   });
 
+  it("relaie les informations utilisateur sans exposer Railway au navigateur", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
+    const backendFetch = vi.fn().mockResolvedValue(
+      Response.json({
+        success: true,
+        subscription: { plan_name: "starter", status: "active" },
+      }),
+    );
+    vi.stubGlobal("fetch", backendFetch);
+
+    const { GET } = await import("@/app/api/auth/me/route");
+    const response = await GET(
+      new Request("https://app.example.test/api/auth/me", {
+        headers: { Authorization: "Bearer user-token" },
+      }),
+    );
+
+    expect(backendFetch).toHaveBeenCalledWith(
+      "https://backend.example.test/api/auth/me",
+      expect.objectContaining({ method: "GET" }),
+    );
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      subscription: { plan_name: "starter", status: "active" },
+    });
+  });
+
   it("relaie l'invalidation du cache d'abonnement en POST", async () => {
     vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
     const backendFetch = vi
