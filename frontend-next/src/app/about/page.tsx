@@ -167,7 +167,6 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* Stats Section */}
       <div className="py-20 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -207,7 +206,6 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* HuntZen vs autres plateformes */}
       <div className="py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-5xl mx-auto">
