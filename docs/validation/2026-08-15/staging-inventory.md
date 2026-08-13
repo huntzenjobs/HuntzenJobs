@@ -1,6 +1,6 @@
 # Inventaire production et préproduction
 
-**Date du snapshot :** 11 août 2026
+**Date du snapshot :** 13 août 2026
 **Branche de travail :** `codex/stripe-stabilization`
 **Commit de base :** `3f2c297`
 **Confidentialité :** aucune valeur de secret n'est conservée dans ce document.
@@ -14,10 +14,10 @@ Une préproduction isolée existe désormais sur Supabase, Railway, Redis et Ver
 | Service | Production observée | Staging observé | État / preuve |
 |---|---|---|---|
 | Supabase | Projet HuntZen `ngiakfikbuyugqfqtfwp`, région Europe Ouest, PostgreSQL 17 | Branche persistante `staging`, ref `cxkpbciubsvopgxakgbj`, sans copie des données | 124 migrations présentes ; historique local/distant identique et lint DB sans erreur ni warning. URL de site et callback Auth limités à `staging.huntzenjobs.com`; Google OAuth staging dédié activé et testé. Le statut Dashboard historique reste rouge malgré le journal SQL aligné et ne se laisse pas réinitialiser par les overrides CLI 2.84.2 et 2.113.0. |
-| Stripe | Mode Live, un endpoint Railway actif | Sandbox Test HuntZen, catalogue dédié, endpoint webhook staging distinct | Trois produits et six prix récurrents EUR ont été créés en Test puis mappés uniquement dans Supabase staging. Clés Test et secret webhook sont injectés masqués dans Railway staging. L'ancienne clé Test visible pendant l'audit a été tournée immédiatement. Aucun objet Live modifié. |
-| Railway | Backend public version `3.0.0`, health `ok`; services backend, ARQ et stress observés `Online` après bascule Supabase | Environnement `staging`; backend `ravishing-reprieve`, domaine `ravishing-reprieve-staging.up.railway.app` | Le commit exact `c039692` est déployé et `/api/health/ping` retourne `200`. Stripe Test, Resend staging et Modal staging sont configurés ; `MODAL_ENABLED=true` après ajout de la clé Groq dédiée. Aucun secret Stripe Live ou Modal production n'est utilisé. |
-| Vercel | Projet `frontend-next` de l'équipe `huntzen-jobs`; déploiement production et aliases apex/www `Ready` après bascule | Custom Environment `staging`; déploiement `dpl_HbHp2XKwFdjKwVcZmNZ7eH1jqhMf`; domaine `staging.huntzenjobs.com` | Build Next.js réussi, certificat TLS valide et alias staging actif. Supabase et backend pointent uniquement vers staging. |
-| Redis / ARQ | Redis production Railway observé `Online` | Redis dédié `Redis-SU2L` `Online`; service ARQ `respectful-rebirth`, un seul réplica | Le worker staging utilise `/backend/railway.worker.toml`; le candidat `c039692` a été publié et `stripe_effect_outbox_task` s'exécute. Les effets Resend restent en retry contrôlé jusqu'au transfert du domaine. |
+| Stripe | Mode Live, un endpoint Railway actif | Sandbox Test HuntZen, catalogue dédié, endpoint webhook staging distinct | Un seul endpoint Test est actif, limité aux cinq événements traités et dirigé vers le backend Railway staging. Le dry-run Checkout legacy retourne zéro candidat. Les fixtures CLI génériques ont confirmé la signature et le refus des payloads étrangers, mais quatre abonnements de fixture sans métadonnées HuntZen restent volontairement absents de la projection locale ; l'E2E HuntZen synthétique reste requis. Aucun objet Live modifié. |
+| Railway | Backend public version `3.0.0`, health `ok`; services backend, ARQ et stress observés `Online` après bascule Supabase | Environnement `staging`; backend `ravishing-reprieve`, domaine `ravishing-reprieve-staging.up.railway.app` | Le snapshot exact de `d47ed4c` est déployé et `/api/health/ping` retourne `200`. Stripe Test, Resend staging et Modal staging sont configurés ; `MODAL_ENABLED=true` après ajout de la clé Groq dédiée. Aucun secret Stripe Live ou Modal production n'est utilisé. |
+| Vercel | Projet `frontend-next` de l'équipe `huntzen-jobs`; déploiement production et aliases apex/www `Ready` après bascule | Custom Environment `staging`; déploiement `dpl_CcPqk5uNtJ1nZtVBYRz4KB6npV1H`; domaine `staging.huntzenjobs.com` | Le build exact de `d47ed4c` est `Ready`; l'alias staging a été basculé sur ce déploiement et répond `200` via `vercel curl` authentifié. Supabase et backend pointent uniquement vers staging. |
+| Redis / ARQ | Redis production Railway observé `Online` | Redis dédié `Redis-SU2L` `Online`; service ARQ `respectful-rebirth`, un seul réplica | Le worker staging utilise `/backend/railway.worker.toml`; le snapshot exact de `d47ed4c` a été publié avec succès et les logs annoncent `stripe_effect_outbox_task`. Les effets Resend restent en retry contrôlé jusqu'au transfert du domaine. |
 | Modal | Deux applications historiques déployées : traitement CV et extraction PDF | Environnement `staging` séparé ; application `huntzen-cv-processor-staging`, secret staging, Proxy Token et clé Groq dédiée expirant le 11 novembre 2026 | Les applications historiques n'ont pas été modifiées. Le probe sans credential retourne `401`; le Proxy Token atteint la validation du payload (`422` sur payload vide). Un CV texte entièrement synthétique est passé à `completed`, avec résultat JSON persisté, callback Railway réussi et aucune erreur Modal ; la ligne synthétique a ensuite été supprimée. |
 | Sentry | Organisation `huntzen`, projet historique `javascript-nextjs` | Projet séparé `huntzen-staging` (plateforme FastAPI) | DSN injecté uniquement dans le backend et le worker Railway staging ainsi que dans le Custom Environment Vercel `staging`. Le frontend local utilise `NEXT_PUBLIC_SENTRY_ENVIRONMENT=staging`; l'injection d'une erreur contrôlée attend la publication du candidat local. |
 | Resend | L'ancien compte contient déjà `huntzenjobs.com`, `.fr`, `.co` et `.eu` vérifiés | Barrière email staging publiée et clé `sending_access` installée sur le worker Railway staging | La clé est acceptée, mais les envois restent en retry car `huntzenjobs.com` n'est pas encore revendiqué dans la nouvelle équipe. Le transfert des quatre domaines exige Resend Pro ; abonnement autorisé mais paiement reporté jusqu'à disponibilité de la carte du responsable. Aucun email client n'a été envoyé. |
@@ -63,9 +63,9 @@ Toutes les tables publiques ont désormais la RLS. `stripe_payments`, `recruiter
 
 ## Blocages actuels
 
-1. Confirmer que le frontend Vercel staging sert le même SHA candidat que le backend et le worker Railway staging.
-2. Rejouer les événements Stripe Test restants, y compris ordre inversé, doublons et finalisation partielle, puis exécuter les derniers E2E billing.
-3. Exécuter la réconciliation Stripe en dry-run et exiger zéro divergence critique.
+1. Remplacer les fixtures Stripe CLI génériques par un E2E HuntZen synthétique complet, puis couvrir ordre inversé, doublons et finalisation partielle.
+2. Rejouer la réconciliation après cet E2E : le dry-run actuel compte un abonnement HuntZen synchronisé et quatre `database_missing`, tous attribués à des abonnements de fixtures génériques sans métadonnées HuntZen.
+3. Vérifier le cron minute, les leases/retries/dead-letter ARQ et l'alerte Sentry contrôlée sur la révision alignée.
 4. Dès que la carte du responsable est disponible, souscrire Resend Pro puis revendiquer uniquement les quatre domaines HuntZen via OVH, sans suppression préalable ; vérifier ensuite une livraison vers `delivered@resend.dev` uniquement.
 5. Valider encore le chemin PDF privé signé Modal : PDF synthétique normal/corrompu, dépassement taille, timeout et replay ; tourner la clé Groq staging avant le 11 novembre 2026.
 6. Traiter les 43 vulnérabilités npm signalées au build (dont 4 critiques) et les avertissements React/ESLint prioritaires avant le Go/No-Go.
@@ -91,12 +91,15 @@ Toutes les tables publiques ont désormais la RLS. `stripe_payments`, `recruiter
 - Sentry staging : projet séparé créé, health backend toujours à 200 après ajout du DSN ; 4 tests prouvent le tag `staging` sur client/serveur/edge et le masquage Replay de tout texte, saisie et média. Le test d'ingestion réel reste ouvert jusqu'au déploiement du candidat qui contient cette configuration.
 - Resend staging : 2 tests unitaires de sécurité email et 83 tests email/Stripe/recruteur réussis ; Ruff ciblé vert. La clé staging est active sur le worker, mais la livraison est bloquée proprement en retry jusqu'au transfert du domaine.
 - Groq : Sentry production a exposé l'ancien modèle Llama 4 Scout retiré. Le candidat aligne maintenant les noms documentés `FAST_MODEL`/`PRIMARY_MODEL` avec Pydantic et utilise les remplaçants officiels `openai/gpt-oss-20b`/`openai/gpt-oss-120b`. Une clé dédiée à Modal/Railway staging a été créée avec expiration au 11 novembre 2026 ; aucune clé production n'a été réutilisée.
+- Alignement staging : Vercel et les deux services Railway exécutent le snapshot candidat `d47ed4c`; frontend `Ready`, backend `2/2`, worker `1/1`, health backend `200` et tâche outbox présente au démarrage ARQ.
+- Stripe Test : CLI mise à jour et authentifiée sans clé Live ; un seul endpoint canonique actif. Les cinq types d'événements ont été émis en ordre inversé. Les payloads génériques étrangers au modèle HuntZen sont refusés/classés en échec sans créer de droits ; `invoice.payment_failed` et un `invoice.paid` sans projection applicable sont finalisés. Cette campagne ne remplace pas l'E2E métier.
 
 ## Versions d'outillage
 
 - Modal CLI locale : `1.5.4`.
 - Vercel CLI globale : `58.10.0`.
 - Railway CLI globale : `5.38.0`.
+- Stripe CLI globale : `1.45.2`.
 - Supabase CLI locale : `2.84.2`, dernière proposée : `2.113.0`.
 
 La CLI Supabase doit être mise à jour et revérifiée avant une nouvelle mutation de base, sans modifier les dépendances applicatives.
