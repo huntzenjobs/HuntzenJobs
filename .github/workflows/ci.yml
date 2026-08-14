@@ -1,162 +1,121 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, "codex/**"]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
-  PYTHON_VERSION: '3.11'
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
+  PYTHON_VERSION: "3.11"
 
 jobs:
-  # ============================================
-  # Backend Tests & Lint
-  # ============================================
-  test-backend:
-    name: Backend Tests
+  backend:
+    name: Backend
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: backend
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          cache: pip
 
-      - name: Install dependencies
+      - name: Dépendances système
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libpango1.0-dev libgdk-pixbuf-2.0-dev libffi-dev poppler-utils shared-mime-info tesseract-ocr
+
+      - name: Dépendances Python
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff pytest pytest-asyncio
+          python -m pip install -e ".[dev]"
 
-      - name: Lint with Ruff
-        run: |
-          ruff check --output-format=github .
-        continue-on-error: true
+      - name: Ruff
+        run: ruff check src tests ../scripts/deployment
 
-      - name: Run tests
-        run: |
-          pytest tests/ -v --tb=short || echo "No tests found yet"
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      - name: Pytest
+        run: python -m pytest tests/unit tests/integration --tb=short --junitxml=test-results/backend.xml
 
-  # ============================================
-  # Frontend Tests & Build
-  # ============================================
-  test-frontend:
-    name: Frontend Tests & Build
+      - name: Rapport Pytest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-report
+          path: backend/test-results/backend.xml
+          if-no-files-found: error
+
+  frontend:
+    name: Frontend
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: frontend-next
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend-next/package-lock.json
 
-      - name: Install dependencies
-        working-directory: frontend-next
+      - name: Dépendances Node.js
         run: npm ci
 
-      - name: Lint
-        working-directory: frontend-next
+      - name: ESLint
         run: npm run lint
 
-      - name: Type check
-        working-directory: frontend-next
+      - name: TypeScript
         run: npx tsc --noEmit
 
-      - name: Build
-        working-directory: frontend-next
+      - name: Vitest
+        run: npm run test:run -- --reporter=default --reporter=junit --outputFile.junit=reports/vitest.xml
+
+      - name: Build Next.js
         run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key' }}
           NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
 
-  # ============================================
-  # Docker Build Test
-  # ============================================
-  docker-build:
-    name: Docker Build Test
+      - name: Rapport Vitest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-report
+          path: frontend-next/reports/vitest.xml
+          if-no-files-found: error
+
+  docker:
+    name: Image backend
     runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]
-
+    needs: [backend, frontend]
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
+      - name: Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Backend Docker image
-        uses: docker/build-push-action@v5
+      - name: Construire l'image backend
+        uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile.backend
+          context: ./backend
+          file: ./backend/Dockerfile
           push: false
           tags: huntzen-backend:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Build Frontend Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend-next
-          file: ./frontend-next/Dockerfile
-          push: false
-          tags: huntzen-frontend:test
-          build-args: |
-            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key' }}
-            NEXT_PUBLIC_API_URL=http://localhost:8000
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ============================================
-  # Deploy to Production (on main branch only)
-  # ============================================
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [docker-build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy notification
-        run: |
-          echo "Ready for deployment!"
-          echo "Add your deployment steps here:"
-          echo "  - Railway: railway up"
-          echo "  - Vercel: vercel --prod"
-          echo "  - Custom: docker-compose push && ssh deploy"
-
-      # Uncomment and configure for your deployment platform:
-      #
-      # Railway deployment:
-      # - name: Deploy to Railway
-      #   uses: bervProject/railway-deploy@main
-      #   with:
-      #     railway_token: ${{ secrets.RAILWAY_TOKEN }}
-      #     service: huntzen-backend
-      #
-      # Vercel deployment (frontend):
-      # - name: Deploy Frontend to Vercel
-      #   uses: amondnet/vercel-action@v25
-      #   with:
-      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
-      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-      #     working-directory: frontend-next

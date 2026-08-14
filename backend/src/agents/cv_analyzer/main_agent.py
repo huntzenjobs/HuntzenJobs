@@ -18,13 +18,11 @@ import os
 import tempfile
 from typing import Any
 
-from src.utils.cache import get_redis
-
 from groq import Groq
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
-from src.models.schemas import ATSScore
+from src.utils.cache import get_redis
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +190,7 @@ class CVAnalyzerAgent(BaseAgent):
             # ── CACHE LAYER ──
             cv_hash = hashlib.md5(cv_text.encode()).hexdigest()
             cache_key = f"cv:analysis:{cv_hash}"
-            
+
             redis = await get_redis()
             cached_data = None
             if redis:
@@ -206,7 +204,7 @@ class CVAnalyzerAgent(BaseAgent):
 
             # Run sub-agents in parallel
             tasks = []
-            
+
             # 1. ATS Scoring
             if cached_data and "ats_result" in cached_data:
                 ats_task = asyncio.create_task(asyncio.sleep(0, cached_data["ats_result"]))

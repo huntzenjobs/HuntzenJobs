@@ -145,7 +145,7 @@ async def get_current_user_info(
         profile_response = supabase.table("profiles").select(
             "id, email, full_name, avatar_url, created_at"
         ).eq("id", user_id).execute()
- 
+
         if not profile_response or not profile_response.data or len(profile_response.data) == 0:
             raise HTTPException(
                 status_code=404,

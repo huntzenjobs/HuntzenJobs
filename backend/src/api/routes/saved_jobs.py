@@ -181,7 +181,7 @@ async def save_job(
             .execute()
 
         inserted_id = result.data[0]["id"] if result.data else None
-        
+
         # Increment daily quota usage
         if inserted_id:
             try:

@@ -360,13 +360,13 @@ async def search_jobs(
     search_hash = hashlib.md5(data.model_dump_json(sort_keys=True).encode()).hexdigest()
     lock_key = f"search_lock:{user_id}:{search_hash}"
     redis = await get_redis()
-    
+
     if redis:
         # Tenter d'acquerir un verrou de 30s
         is_locked = await redis.set(lock_key, "1", ex=30, nx=True)
         if not is_locked:
             logger.info(f"Concurrent search detected for user {user_id}, waiting for cache...")
-            
+
             # Attendre que la recherche en cours peuple le cache (max 5s)
             cache_key = f"jobs:search:{search_hash}"
             for _ in range(10):  # 10 * 0.5s = 5s
@@ -385,7 +385,7 @@ async def search_jobs(
                         metadata=SearchMetadata(**metadata) if isinstance(metadata, dict) else metadata,
                         ai_insights=cached_data.get("insights") or cached_data.get("ai_insights")
                     )
-            
+
             # Si toujours pas de cache apres 5s
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
