@@ -66,6 +66,7 @@ COPY --chown=huntzen:huntzen src/ ./src/
 COPY --chown=huntzen:huntzen app/ ./app/
 COPY --chown=huntzen:huntzen prompts/ ./prompts/
 COPY --chown=huntzen:huntzen templates/ ./templates/
+COPY --chown=huntzen:huntzen start.sh ./start.sh
 # Note: pyproject.toml already copied above
 
 # Create cache directory for Marker models with proper permissions
@@ -90,17 +91,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Production command with Gunicorn multi-worker
-# ${WORKERS:-4} : scalable via Railway env var, défaut 4
-# --worker-tmp-dir /dev/shm : évite Permission denied (socket Unix) avec user non-root
-CMD gunicorn src.main:app \
-    --worker-class uvicorn.workers.UvicornWorker \
-    --workers ${WORKERS:-4} \
-    --worker-tmp-dir /dev/shm \
-    --bind 0.0.0.0:${PORT:-8000} \
-    --timeout 120 \
-    --graceful-timeout 30 \
-    --keep-alive 5 \
-    --max-requests 1000 \
-    --max-requests-jitter 50 \
-    --access-logfile - \
-    --error-logfile -
+CMD ["sh", "/app/start.sh"]
