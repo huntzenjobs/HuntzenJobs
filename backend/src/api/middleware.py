@@ -100,7 +100,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Log all incoming requests."""
 
     # Paths to ignore in logs (external polling, health checks, etc.)
-    IGNORED_PATHS = {"/api/sms/stats", "/api/sms/responses", "/health", "/favicon.ico"}
+    IGNORED_PATHS = {
+        "/api/health/ping",
+        "/api/sms/responses",
+        "/api/sms/stats",
+        "/favicon.ico",
+        "/health",
+    }
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()

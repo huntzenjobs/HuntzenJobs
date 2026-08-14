@@ -42,3 +42,4 @@ def test_startup_spreads_worker_recycling_beyond_a_load_probe(tmp_path: Path) ->
     assert max_requests_jitter >= max_requests // 2
     assert arguments[arguments.index("--workers") + 1] == "2"
     assert arguments[arguments.index("--bind") + 1] == "0.0.0.0:8080"
+    assert "--access-logfile" not in arguments

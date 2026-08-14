@@ -11,5 +11,4 @@ exec gunicorn src.main:app \
     --keep-alive 5 \
     --max-requests 10000 \
     --max-requests-jitter 5000 \
-    --access-logfile - \
     --error-logfile -
