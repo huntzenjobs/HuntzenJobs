@@ -14,6 +14,7 @@ Set this URL as MODAL_PDF_EXTRACT_URL in Railway environment variables.
 """
 
 import modal
+from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 app = modal.App("huntzen-pdf-extractor")
@@ -130,10 +131,16 @@ async def extract_pdf_text(body: PDFExtractRequest) -> dict:
     try:
         pdf_bytes = base64.b64decode(body.pdf_bytes, validate=True)
     except Exception as e:
-        return {"success": False, "error": f"Invalid base64 encoding: {str(e)}"}
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid base64 encoding",
+        ) from e
 
     if len(pdf_bytes) > 10 * 1024 * 1024:
-        return {"success": False, "error": "PDF exceeds the 10 MiB limit"}
+        raise HTTPException(
+            status_code=413,
+            detail="PDF exceeds the 10 MiB limit",
+        )
 
     tmp_path = None
     try:
@@ -167,22 +174,27 @@ async def extract_pdf_text(body: PDFExtractRequest) -> dict:
                     return {"success": True, "text": fallback_text}
             except Exception as pypdf_exc:
                 print(f"⚠️ pypdf fallback also failed: {pypdf_exc}")
-            return {
-                "success": False,
-                "error": f"All extraction failed ({len((text or '').strip())} chars from Docling, pypdf also failed)",
-            }
+            raise HTTPException(
+                status_code=422,
+                detail="No usable text found in PDF",
+            )
 
         return {"success": True, "text": text}
 
+    except HTTPException:
+        raise
     except Exception as e:
         error_str = str(e)
         # "is not valid" = PDF corrompu/invalide → faute de l'utilisateur, pas du serveur
-        is_user_error = "is not valid" in error_str or "not a valid PDF" in error_str.lower()
-        return {
-            "success": False,
-            "error": f"Docling extraction failed: {error_str}",
-            "user_error": is_user_error,
-        }
+        is_user_error = "is not valid" in error_str or "not a valid pdf" in error_str.lower()
+        raise HTTPException(
+            status_code=422 if is_user_error else 500,
+            detail=(
+                "Invalid or corrupted PDF"
+                if is_user_error
+                else "PDF extraction failed"
+            ),
+        ) from e
 
     finally:
         if tmp_path and os.path.exists(tmp_path):

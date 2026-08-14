@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 from uuid import UUID
 
 import modal
+from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # IMPORTANT: Add /root to sys.path so we can import 'src' from the mounted directory
@@ -249,7 +250,6 @@ async def process_cv_analysis(
     import tempfile
 
     import httpx
-
     from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
 
     print(f"🚀 Unified CV Processing Starting: {cv_id}")
@@ -350,7 +350,7 @@ async def process_cv_analysis(
 @modal.fastapi_endpoint(method="POST", requires_proxy_auth=True)
 async def process_cv_webhook(request_body: CVProcessRequest) -> dict:
     try:
-        process_cv_analysis.spawn(
+        await process_cv_analysis.spawn.aio(
             cv_id=str(request_body.cv_id),
             user_id=str(request_body.user_id),
             pdf_url=request_body.pdf_url,
@@ -359,5 +359,8 @@ async def process_cv_webhook(request_body: CVProcessRequest) -> dict:
             language=request_body.language,
         )
         return {"success": True, "cv_id": str(request_body.cv_id)}
-    except Exception as e:  # noqa: BLE001 - frontière HTTP Modal
-        return {"success": False, "error": str(e)}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to start CV analysis",
+        ) from e

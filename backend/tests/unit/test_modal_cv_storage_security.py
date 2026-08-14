@@ -1,5 +1,6 @@
 """Garanties de confidentialité du pipeline CV Supabase/Modal."""
 
+import base64
 import importlib.util
 import sys
 from pathlib import Path
@@ -33,6 +34,9 @@ class _ModalImage:
     def add_local_dir(self, *_args: object) -> "_ModalImage":
         return self
 
+    def run_function(self, *_args: object) -> "_ModalImage":
+        return self
+
 
 class _ModalApp:
     def __init__(self, _name: str) -> None:
@@ -56,6 +60,74 @@ def _load_modal_cv_app(monkeypatch: pytest.MonkeyPatch):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _load_modal_pdf_app(monkeypatch: pytest.MonkeyPatch):
+    modal_stub = SimpleNamespace(
+        App=_ModalApp,
+        Image=SimpleNamespace(debian_slim=lambda **_kwargs: _ModalImage()),
+        fastapi_endpoint=lambda **_kwargs: (lambda function: function),
+    )
+    monkeypatch.setitem(sys.modules, "modal", modal_stub)
+    module_path = REPO_ROOT / "backend/modal_pdf_extractor_app.py"
+    spec = importlib.util.spec_from_file_location("modal_pdf_app_under_test", module_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _install_failing_docling(
+    monkeypatch: pytest.MonkeyPatch,
+    failure: Exception,
+) -> None:
+    converter = SimpleNamespace(convert=Mock(side_effect=failure))
+    monkeypatch.setitem(
+        sys.modules,
+        "docling.datamodel.base_models",
+        SimpleNamespace(InputFormat=SimpleNamespace(PDF="pdf")),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "docling.datamodel.pipeline_options",
+        SimpleNamespace(PdfPipelineOptions=lambda **_kwargs: object()),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "docling.document_converter",
+        SimpleNamespace(
+            DocumentConverter=lambda **_kwargs: converter,
+            PdfFormatOption=lambda **_kwargs: object(),
+        ),
+    )
+
+
+def _install_empty_docling(monkeypatch: pytest.MonkeyPatch) -> None:
+    document = SimpleNamespace(export_to_markdown=lambda: "")
+    converter = SimpleNamespace(convert=Mock(return_value=SimpleNamespace(document=document)))
+    monkeypatch.setitem(
+        sys.modules,
+        "docling.datamodel.base_models",
+        SimpleNamespace(InputFormat=SimpleNamespace(PDF="pdf")),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "docling.datamodel.pipeline_options",
+        SimpleNamespace(PdfPipelineOptions=lambda **_kwargs: object()),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "docling.document_converter",
+        SimpleNamespace(
+            DocumentConverter=lambda **_kwargs: converter,
+            PdfFormatOption=lambda **_kwargs: object(),
+        ),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "pypdf",
+        SimpleNamespace(PdfReader=Mock(side_effect=ValueError("no text layer"))),
+    )
 
 
 class _PrivateBucket:
@@ -312,6 +384,124 @@ def test_modal_cv_webhook_uses_strict_request_model() -> None:
     assert "class CVProcessRequest(BaseModel):" in source
     assert 'model_config = ConfigDict(extra="forbid")' in source
     assert "async def process_cv_webhook(request_body: CVProcessRequest)" in source
+
+
+@pytest.mark.asyncio
+async def test_modal_cv_webhook_reports_spawn_failure_as_http_500(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+    async_spawn = AsyncMock(side_effect=RuntimeError("spawn failed"))
+    monkeypatch.setattr(
+        modal_app,
+        "process_cv_analysis",
+        SimpleNamespace(spawn=SimpleNamespace(aio=async_spawn)),
+    )
+    request = modal_app.CVProcessRequest(
+        cv_id="0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+        user_id="e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+        cv_text="contenu du CV suffisamment long pour lancer une analyse",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        await modal_app.process_cv_webhook(request)
+
+    assert error.value.status_code == 500
+    assert async_spawn.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_modal_cv_webhook_uses_async_spawn_interface(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+    async_spawn = AsyncMock()
+    monkeypatch.setattr(
+        modal_app,
+        "process_cv_analysis",
+        SimpleNamespace(spawn=SimpleNamespace(aio=async_spawn)),
+    )
+    request = modal_app.CVProcessRequest(
+        cv_id="0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+        user_id="e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+        cv_text="contenu du CV suffisamment long pour lancer une analyse",
+    )
+
+    response = await modal_app.process_cv_webhook(request)
+
+    assert response == {
+        "success": True,
+        "cv_id": "0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+    }
+    assert async_spawn.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_modal_pdf_webhook_reports_invalid_base64_as_http_422(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_pdf_app = _load_modal_pdf_app(monkeypatch)
+    request = modal_pdf_app.PDFExtractRequest(pdf_bytes="not-valid-base64")
+
+    with pytest.raises(HTTPException) as error:
+        await modal_pdf_app.extract_pdf_text(request)
+
+    assert error.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_modal_pdf_webhook_reports_oversized_pdf_as_http_413(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_pdf_app = _load_modal_pdf_app(monkeypatch)
+    oversized_pdf = base64.b64encode(b"x" * (10 * 1024 * 1024 + 1)).decode()
+    request = modal_pdf_app.PDFExtractRequest(pdf_bytes=oversized_pdf)
+
+    with pytest.raises(HTTPException) as error:
+        await modal_pdf_app.extract_pdf_text(request)
+
+    assert error.value.status_code == 413
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("failure", "expected_status"),
+    [
+        (ValueError("not a valid PDF"), 422),
+        (RuntimeError("converter unavailable"), 500),
+    ],
+)
+async def test_modal_pdf_webhook_maps_extraction_failures_to_http_status(
+    monkeypatch: pytest.MonkeyPatch,
+    failure: Exception,
+    expected_status: int,
+) -> None:
+    modal_pdf_app = _load_modal_pdf_app(monkeypatch)
+    _install_failing_docling(monkeypatch, failure)
+    request = modal_pdf_app.PDFExtractRequest(
+        pdf_bytes=base64.b64encode(b"%PDF-1.4\nsynthetic").decode(),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        await modal_pdf_app.extract_pdf_text(request)
+
+    assert error.value.status_code == expected_status
+
+
+@pytest.mark.asyncio
+async def test_modal_pdf_webhook_reports_empty_extraction_as_http_422(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_pdf_app = _load_modal_pdf_app(monkeypatch)
+    _install_empty_docling(monkeypatch)
+    request = modal_pdf_app.PDFExtractRequest(
+        pdf_bytes=base64.b64encode(b"%PDF-1.4\nsynthetic").decode(),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        await modal_pdf_app.extract_pdf_text(request)
+
+    assert error.value.status_code == 422
 
 
 @pytest.mark.asyncio

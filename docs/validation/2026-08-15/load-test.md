@@ -2,8 +2,8 @@
 
 **Date :** 14 août 2026
 **Cible :** backend Railway staging uniquement
-**Révision backend retestée :** `4fc00ff`
-**Déploiement Railway :** `17f07bb3-b0ad-47dd-871d-49f1001a7304`
+**Révision backend retestée :** `3acb81c938b233bad05f8abc3100022beb617a31`
+**Déploiement Railway :** `32bb5890-1914-49d3-8bb2-3cd370620940`
 **Configuration conservée :** Railway `WORKERS=2`
 **Production :** explicitement refusée par le harness
 
@@ -32,9 +32,10 @@ Seuils : erreurs critiques `< 0,5 %`, p95 `< 500 ms`, p99 `< 1 000 ms`.
 | 50 VU cloud, logs corrigés, essai 1 | 15 s | 1 572 | 104,80 | 0 % | 250,83 ms | 346,52 ms | 1,16 / 1,41 s | Rouge p99 |
 | 50 VU cloud, logs corrigés, essai 2 | 15 s | 2 407 | 160,47 | 0 % | 99,43 ms | 118,39 ms | 668,81 / 811,26 ms | Vert |
 | 50 VU cloud, logs corrigés, essai 3 | 15 s | 3 250 | 216,67 | 0 % | 25,45 ms | 36,05 ms | 334,52 / 370,03 ms | Vert |
+| 50 VU local, candidat `3acb81c` | 15 s | 2 589 | 169,60 | 0,88 % (23 timeouts) | 31,05 ms | 115,11 ms | 132,99 / 311,66 ms | Rouge erreurs |
 
-Les paliers 250 et 500 n'ont pas été lancés : le seuil d'arrêt a été franchi à
-50 VU sur le candidat final. Le service est revenu à `200` après les tests.
+Les paliers 100, 250 et 500 n'ont pas été relancés sur `3acb81c` : le seuil
+d'arrêt a été franchi à 50 VU. Le service est revenu à `200` après le test.
 
 ## Diagnostic et corrections
 
@@ -61,6 +62,11 @@ que Railway ne mesure aucune requête au-dessus de 1 s. Deux essais finaux sur
 trois sont entièrement verts. Le palier 50 VU n'est donc pas encore déclaré
 reproductible sous le gate strict, même si le goulot applicatif identifié est
 fermé et le taux d'erreur est désormais nul.
+
+La relance locale sur `3acb81c` confirme l'intermittence : les réponses reçues
+restent rapides et Railway ne journalise aucun 5xx ni requête supérieure à une
+seconde, mais 23 requêtes expirent côté client en une rafale. Le taux d'erreur
+de 0,88 % dépasse le seuil strict ; aucun palier supérieur n'a été lancé.
 
 ## Réponse honnête à la question des 5 000 utilisateurs
 

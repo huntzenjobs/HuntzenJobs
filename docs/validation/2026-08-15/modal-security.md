@@ -2,7 +2,7 @@
 
 **Date :** 14 août 2026
 **Environnement :** application Modal staging isolée + Supabase/Railway staging
-**Décision actuelle :** GO staging pour les chemins normal, corrompu, trop lourd et replay ; timeout réel et alerte budget restent requis avant production.
+**Décision actuelle :** GO staging pour les chemins normal, corrompu, trop lourd, replay et timeout réel ; l'alerte budget reste requise avant production.
 
 ## Correctifs vérifiés localement
 
@@ -16,11 +16,13 @@
 - L'extracteur PDF utilise un modèle Pydantic `extra="forbid"`, limite le base64 et refuse un PDF décodé supérieur à 10 Mio.
 - Le processeur CV est borné à 20 conteneurs ; l'extracteur PDF à 10 conteneurs, sans conteneur chaud permanent.
 - Le traitement réserve désormais atomiquement une ligne `pending` avant tout appel Groq. Un replay `processing`, `completed` ou `failed` ne relance pas l'analyse.
+- Le webhook CV utilise l'interface asynchrone Modal et renvoie HTTP 500 si le spawn échoue, sans exposer l'exception interne.
+- L'extracteur PDF renvoie 422 pour un payload/PDF invalide ou vide, 413 au-delà de 10 Mio et 500 pour une panne interne ; ces erreurs ne sont plus déguisées en HTTP 200.
 
 ## Preuves
 
 ```text
-backend/tests/unit/test_modal_cv_storage_security.py : 18 passed
+backend/tests/unit/test_modal_cv_storage_security.py : 24 passed
 Ruff ciblé : All checks passed
 py_compile des deux applications Modal : succès
 git diff --check : succès
@@ -29,11 +31,10 @@ PDF synthétique corrompu : failed, aucun résultat, erreur persistée
 PDF synthétique > 10 Mio : HTTP 400 avant quota, stockage et traitement
 Replay réel du même cv_id completed : deux HTTP 200, ligne/résultat/updated_at inchangés
 Timeout HTTP simulé : statut failed et message contractuel persistés
+Timeout Modal réel : sonde éphémère annulée exactement à 10 s, sans secret ni donnée applicative
 Nettoyage utilisateur, ligne cv_analyses et objet Storage : succès
 ```
 
 ## Points restant ouverts
 
-1. Exécuter un timeout réel contrôlé sans transmettre les Proxy Tokens à un tiers ; le chemin automatisé est couvert mais aucun traitement de 120 secondes n'a été facturé uniquement pour ce test.
-2. Renvoyer 422/401/504/500 de façon contractuelle au lieu de réponses métier HTTP 200 sur certains échecs.
-3. Mesurer une rafale staging et créer une alerte budget avant activation production.
+1. Mesurer une rafale staging et créer une alerte budget avant activation production. La CLI permet de lire la facturation mais pas de configurer l'alerte ; le Dashboard Modal doit être authentifié pour cette dernière action.
