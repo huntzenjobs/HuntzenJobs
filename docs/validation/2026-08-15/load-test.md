@@ -2,8 +2,8 @@
 
 **Date :** 14 août 2026
 **Cible :** backend Railway staging uniquement
-**Révision backend finale au palier sûr :** `840bdfaf308eb0bebb9b1512511911aaf3985a5d`
-**Déploiement Railway final :** `2a7a05c7-e5c5-4243-b294-8c876ecc709d`
+**Révision backend finale au palier sûr :** `072aa7db68b535fd336ca0f0fb2f58a90d049921`
+**Déploiement Railway final :** `3b0649c3-ba80-48fe-beed-92d8c62c6b0e`
 **Révision du dernier essai 50 VU :** `3acb81c938b233bad05f8abc3100022beb617a31`
 **Configuration conservée :** Railway `WORKERS=2`
 **Production :** explicitement refusée par le harness
@@ -22,6 +22,7 @@ Seuils : erreurs critiques `< 0,5 %`, p95 `< 500 ms`, p99 `< 1 000 ms`.
 
 | Palier | Durée | Requêtes | RPS | Erreurs | p50 | p95 | p99/max | Décision |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
+| 10 VU, candidat final `072aa7d` | 15 s | 618 | 40,63 | 0 % | 29,32 ms | 109,34 ms | p99 155,18 ms, max 178,11 ms | Vert |
 | 10 VU | 15 s | 579 | 38,02 | 0 % | 41,67 ms | 104,29 ms | max 295,42 ms | Vert |
 | 50 VU, essai 1 | 15 s | 2 231 | 146,41 | 1,16 % (26 timeouts) | 46,46 ms | 105,42 ms | max nominal 289,80 ms | Rouge |
 | 50 VU, essai 2 | 15 s | 1 873 | 123,34 | 0 % | 48,28 ms | 138,67 ms | p99 > 1 s, max 4,80 s | Rouge |
@@ -68,7 +69,13 @@ trois sont entièrement verts. Le palier 50 VU n'est donc pas encore déclaré
 reproductible sous le gate strict, même si le goulot applicatif identifié est
 fermé et le taux d'erreur est désormais nul.
 
-La relance locale sur `3acb81c` confirme l'intermittence : les réponses reçues
+La relance finale sur `072aa7d` confirme le palier sûr à 10 VU : 618 réponses,
+zéro erreur, tous les seuils verts et aucun 5xx Railway. Les métriques Railway
+sur la fenêtre longue montrent par ailleurs une CPU sous 0,5 vCPU et une mémoire
+sous 3 Go pour deux réplicas ; aucune saturation applicative n'explique les
+timeouts du palier supérieur.
+
+La relance locale sur `3acb81c` confirme l'intermittence à 50 VU : les réponses reçues
 restent rapides et Railway ne journalise aucun 5xx ni requête supérieure à une
 seconde, mais 23 requêtes expirent côté client en une rafale. Le taux d'erreur
 de 0,88 % dépasse le seuil strict ; aucun palier supérieur n'a été lancé.
