@@ -21,7 +21,10 @@
     "pricing": "Pricing",
     "login": "LOG IN",
     "signup": "SIGN UP",
-    "language": "Language"
+    "language": "Language",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "skipToContent": "Skip to main content"
   },
   "hero": {
     "tag": "For candidates tired of applying into the void",
@@ -425,7 +428,8 @@
     "aria": {
       "close": "Close navigation menu",
       "open": "Open navigation menu",
-      "logout": "Log out"
+      "logout": "Log out",
+      "accountMenu": "Open account menu"
     }
   },
   "pricingModal": {
@@ -623,6 +627,7 @@
     }
   },
   "upgradeBanner": {
+    "dismiss": "Dismiss offer",
     "minimal": {
       "text": "Go Premium to unlock all features",
       "cta": "See plans"
@@ -1622,6 +1627,7 @@
       "chatbotQuestion": "Ask your question..."
     },
     "widget": {
+      "buttonLabel": "Help and support",
       "minimize": "Minimize",
       "title": "HuntZen Support",
       "tabFaq": "Help & FAQ",
@@ -2466,7 +2472,9 @@
     "close": "Close",
     "clear": "Clear",
     "recalculate": "Recalculate",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "changeLanguage": "Change language",
+    "switchTo": "Switch to {language}"
   },
   "terms": {
     "title": "Terms and Conditions",

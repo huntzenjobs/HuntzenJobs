@@ -21,7 +21,10 @@
     "pricing": "Tarifs",
     "login": "CONNEXION",
     "signup": "S'INSCRIRE",
-    "language": "Langue"
+    "language": "Langue",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "skipToContent": "Aller au contenu principal"
   },
   "hero": {
     "tag": "Pour les candidats qui en ont assez de postuler dans le vide",
@@ -508,7 +511,8 @@
     "aria": {
       "close": "Fermer le menu de navigation",
       "open": "Ouvrir le menu de navigation",
-      "logout": "Se déconnecter"
+      "logout": "Se déconnecter",
+      "accountMenu": "Ouvrir le menu du compte"
     }
   },
   "team": {
@@ -780,19 +784,20 @@
     }
   },
   "upgradeBanner": {
+    "dismiss": "Fermer l’offre",
     "minimal": {
-      "text": "Passez Carrière pour débloquer toutes les fonctionnalités",
-      "cta": "Voir les offres"
+      "text": "Passez à Carrière pour débloquer toutes les fonctionnalités",
+      "cta": "Voir les plans"
     },
     "gradient": {
       "title": "Passez à HuntZen Carrière",
-      "subtitle": "Débloquez toutes les fonctionnalités et booste votre carrière",
-      "cta": "Voir les offres"
+      "subtitle": "Débloquez toutes les fonctionnalités et boostez votre carrière",
+      "cta": "Voir les plans"
     },
     "default": {
       "title": "Débloquez tout le potentiel de HuntZen",
       "subtitle": "Recherches illimitées, export PDF, simulation entretien et plus",
-      "cta": "Voir les offres"
+      "cta": "Voir les plans"
     },
     "featurePrompt": {
       "unlock": "Débloquer cette fonctionnalité"
@@ -1779,6 +1784,7 @@
       "chatbotQuestion": "Posez votre question..."
     },
     "widget": {
+      "buttonLabel": "Aide et support",
       "minimize": "Réduire",
       "title": "Support HuntZen",
       "tabFaq": "Aide & FAQ",
@@ -2467,7 +2473,9 @@
     "close": "Fermer",
     "clear": "Effacer",
     "recalculate": "Recalculer",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "changeLanguage": "Changer de langue",
+    "switchTo": "Passer en {language}"
   },
   "terms": {
     "title": "Conditions Générales",
@@ -2772,12 +2780,12 @@
     }
   },
   "cookies": {
-    "message": "We use cookies to improve your experience on HuntZen Jobs. Essential cookies are required for the site to function.",
-    "learnMore": "Learn more",
-    "decline": "Decline",
-    "accept": "Accept",
-    "close": "Close",
-    "ariaLabel": "Cookie management"
+    "message": "Nous utilisons des cookies pour améliorer votre expérience sur HuntZen Jobs. Les cookies essentiels sont nécessaires au fonctionnement du site.",
+    "learnMore": "En savoir plus",
+    "decline": "Refuser",
+    "accept": "Accepter",
+    "close": "Fermer",
+    "ariaLabel": "Gestion des cookies"
   },
   "errorBoundary": {
     "title": "Oops, something went wrong",

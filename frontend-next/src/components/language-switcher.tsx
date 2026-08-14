@@ -11,6 +11,7 @@ import {
 import { Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as Flags from "country-flag-icons/react/3x2";
+import { useTranslations } from "next-intl";
 
 // Locale → ISO 3166-1 alpha-2 country code for flag rendering
 const LOCALE_FLAG_CODE: Record<Locale, keyof typeof Flags> = {
@@ -44,6 +45,7 @@ function LocaleFlag({
  */
 export function LanguageSwitcher({ className }: { className?: string }) {
   const { locale, setLocale, supportedLocales } = useLocale();
+  const t = useTranslations("a11y");
 
   return (
     <DropdownMenu>
@@ -51,8 +53,8 @@ export function LanguageSwitcher({ className }: { className?: string }) {
         <Button
           variant="ghost"
           size="sm"
-          className={cn("gap-1.5 px-2.5", className)}
-          aria-label="Change language"
+          className={cn("min-h-11 gap-1.5 px-2.5", className)}
+          aria-label={t("changeLanguage")}
         >
           <LocaleFlag locale={locale} className="w-5 h-3.5 rounded-sm" />
           <span className="hidden sm:inline text-xs font-medium">
@@ -87,6 +89,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
  */
 export function LanguageSwitcherCompact() {
   const { locale, setLocale, supportedLocales } = useLocale();
+  const t = useTranslations("a11y");
 
   return (
     <div className="flex items-center gap-1">
@@ -95,12 +98,12 @@ export function LanguageSwitcherCompact() {
           key={lang}
           onClick={() => setLocale(lang)}
           className={cn(
-            "px-2 py-1 rounded text-lg transition-all text-white",
+            "flex size-11 items-center justify-center rounded text-lg text-white transition-all",
             locale === lang
               ? "bg-white/20 ring-1 ring-white/40"
               : "opacity-50 hover:opacity-100 hover:bg-white/10",
           )}
-          aria-label={`Switch to ${LOCALE_LABELS[lang]}`}
+          aria-label={t("switchTo", { language: LOCALE_LABELS[lang] })}
           aria-pressed={locale === lang}
         >
           <LocaleFlag locale={lang} />

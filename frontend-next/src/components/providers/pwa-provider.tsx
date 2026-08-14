@@ -20,14 +20,15 @@ const LEGACY_CLEANUP_KEY = "huntzen_pwa_serwist_migration_v1";
 
 interface PwaRegistrationProps {
   children: ReactNode;
+  disabled: boolean;
 }
 
-function PwaRegistration({ children }: PwaRegistrationProps) {
+function PwaRegistration({ children, disabled }: PwaRegistrationProps) {
   const { serwist } = useSerwist();
   const registrationStarted = useRef(false);
 
   useEffect(() => {
-    if (!serwist || registrationStarted.current) return;
+    if (disabled || !serwist || registrationStarted.current) return;
     registrationStarted.current = true;
     const serwistManager = serwist;
 
@@ -68,7 +69,7 @@ function PwaRegistration({ children }: PwaRegistrationProps) {
     }
 
     void replaceLegacyWorker();
-  }, [serwist]);
+  }, [disabled, serwist]);
 
   return children;
 }
@@ -77,15 +78,29 @@ export interface PwaProviderProps {
   children: ReactNode;
 }
 
+export function shouldDisablePwa(hostname: string): boolean {
+  return (
+    hostname === "staging.huntzenjobs.com" ||
+    hostname.endsWith(".vercel.app")
+  );
+}
+
 export function PwaProvider({ children }: PwaProviderProps) {
+  const isProtectedVercelDeployment =
+    typeof window !== "undefined" && shouldDisablePwa(window.location.hostname);
+  const isSerwistProviderDisabled =
+    process.env.NODE_ENV !== "production" || isProtectedVercelDeployment;
+
   return (
     <SerwistProvider
       swUrl="/serwist/sw.js"
       cacheOnNavigation={false}
-      disable={process.env.NODE_ENV !== "production"}
+      disable={isSerwistProviderDisabled}
       register={false}
     >
-      <PwaRegistration>{children}</PwaRegistration>
+      <PwaRegistration disabled={isProtectedVercelDeployment}>
+        {children}
+      </PwaRegistration>
     </SerwistProvider>
   );
 }

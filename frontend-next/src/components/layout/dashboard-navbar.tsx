@@ -86,13 +86,14 @@ export function DashboardNavbar() {
         {/* Right: user actions */}
         <div className="flex items-center gap-2">
           {/* Notifications */}
-          <NotificationBell />
+          <NotificationBell tone="light" />
 
           {/* Help */}
           <Link
             href="mailto:contact@huntzenjobs.com"
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex size-11 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
             title={t("footer.help")}
+            aria-label={t("footer.help")}
           >
             <HelpCircle className="w-4.5 h-4.5" />
           </Link>
@@ -100,8 +101,9 @@ export function DashboardNavbar() {
           {/* Pricing */}
           <Link
             href="/pricing"
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex size-11 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
             title={t("footer.pricing")}
+            aria-label={t("footer.pricing")}
           >
             <Crown className="w-4.5 h-4.5" />
           </Link>
@@ -109,7 +111,10 @@ export function DashboardNavbar() {
           {/* User dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors group">
+              <button
+                className="group flex min-h-11 items-center gap-2.5 rounded-lg py-1.5 pl-3 pr-2 transition-colors hover:bg-gray-50"
+                aria-label={t("aria.accountMenu")}
+              >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00D9FF]/20 to-[#00D9FF]/5 flex items-center justify-center border border-gray-200">
                   <User className="w-4 h-4 text-[#00D9FF]" />
                 </div>

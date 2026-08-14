@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { X, Cookie } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-const CONSENT_KEY = "huntzen_cookie_consent";
-const CONSENT_EVENT = "huntzen:cookie-consent";
+export const COOKIE_CONSENT_KEY = "huntzen_cookie_consent";
+export const COOKIE_CONSENT_EVENT = "huntzen:cookie-consent";
 
 type ConsentStatus = "accepted" | "declined" | null;
 
@@ -16,22 +16,24 @@ export function CookieBanner() {
   const t = useTranslations("cookies");
 
   useEffect(() => {
-    const stored = localStorage.getItem(CONSENT_KEY) as ConsentStatus | null;
+    const stored = localStorage.getItem(
+      COOKIE_CONSENT_KEY,
+    ) as ConsentStatus | null;
     setStatus(stored);
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem(CONSENT_KEY, "accepted");
+    localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
     window.dispatchEvent(
-      new CustomEvent(CONSENT_EVENT, { detail: "accepted" }),
+      new CustomEvent(COOKIE_CONSENT_EVENT, { detail: "accepted" }),
     );
     setStatus("accepted");
   };
 
   const handleDecline = () => {
-    localStorage.setItem(CONSENT_KEY, "declined");
+    localStorage.setItem(COOKIE_CONSENT_KEY, "declined");
     window.dispatchEvent(
-      new CustomEvent(CONSENT_EVENT, { detail: "declined" }),
+      new CustomEvent(COOKIE_CONSENT_EVENT, { detail: "declined" }),
     );
     setStatus("declined");
   };

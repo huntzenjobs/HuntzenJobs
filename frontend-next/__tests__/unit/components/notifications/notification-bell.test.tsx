@@ -25,4 +25,12 @@ describe("NotificationBell", () => {
     fireEvent.click(screen.getByRole("button"));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
+
+  it("utilise un contraste sombre sur une barre claire", () => {
+    render(<NotificationBell tone="light" />);
+
+    expect(screen.getByRole("button").querySelector("svg")).toHaveClass(
+      "text-slate-600",
+    );
+  });
 });

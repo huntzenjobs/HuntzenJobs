@@ -9,7 +9,7 @@ import { homeMetadata } from "@/lib/seo/metadata";
 import { HomePageSchemas } from "@/components/seo/structured-data";
 import { inter, dmSans } from "@/lib/fonts";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import SiteBanner from "@/components/layout/site-banner";
 import { CookieBanner } from "@/components/layout/cookie-banner";
 import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
@@ -44,6 +44,7 @@ export default async function RootLayout({
 
   const locale = await getLocale();
   const messages = await getMessages();
+  const tNav = await getTranslations("nav");
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -102,10 +103,12 @@ export default async function RootLayout({
         </noscript>
         <PwaProvider>
           <SiteBanner />
-          <SkipLink />
+          <SkipLink label={tNav("skipToContent")} />
           <NextIntlClientProvider locale={locale} messages={messages}>
             <Providers initialUser={user}>
-              <div id="main-content">{children}</div>
+              <div id="main-content" tabIndex={-1}>
+                {children}
+              </div>
             </Providers>
             <GoogleTagManager />
             <CookieBanner />

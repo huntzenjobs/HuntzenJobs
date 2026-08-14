@@ -1,27 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageCircleQuestion } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSupportTicket } from "@/hooks/use-support";
 import { SupportWidget } from "./support-widget";
+import {
+  COOKIE_CONSENT_EVENT,
+  COOKIE_CONSENT_KEY,
+} from "@/components/layout/cookie-banner";
+import { useTranslations } from "next-intl";
 
 export function SupportBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chatbot" | "ticket">("chatbot");
+  const [hasConsentChoice, setHasConsentChoice] = useState(false);
   const { myTickets } = useSupportTicket();
+  const t = useTranslations("support.widget");
+
+  useEffect(() => {
+    setHasConsentChoice(localStorage.getItem(COOKIE_CONSENT_KEY) !== null);
+
+    const handleConsent = () => setHasConsentChoice(true);
+    window.addEventListener(COOKIE_CONSENT_EVENT, handleConsent);
+    return () => window.removeEventListener(COOKIE_CONSENT_EVENT, handleConsent);
+  }, []);
 
   const openTicketCount = myTickets.filter(
     (t) => t.status === "open" || t.status === "in_progress"
   ).length;
+
+  if (!hasConsentChoice) return null;
 
   return (
     <>
       {/* FAB Button */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Aide et Support"
-        title="Aide & Support"
+        aria-label={t("buttonLabel")}
+        title={t("buttonLabel")}
         className={cn(
           "fixed bottom-6 right-6 z-[60]",
           "w-14 h-14 rounded-full",

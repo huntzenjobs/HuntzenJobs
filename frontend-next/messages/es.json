@@ -16,7 +16,10 @@
     "pricing": "Precios",
     "login": "INICIAR SESIÓN",
     "signup": "REGISTRARSE",
-    "language": "Idioma"
+    "language": "Idioma",
+    "openMenu": "Abrir el menú",
+    "closeMenu": "Cerrar el menú",
+    "skipToContent": "Ir al contenido principal"
   },
   "hero": {
     "tag": "Para los candidatos cansados de postularse sin respuesta",
@@ -426,7 +429,8 @@
     "aria": {
       "close": "Cerrar el menú de navegación",
       "open": "Abrir el menú de navegación",
-      "logout": "Cerrar sesión"
+      "logout": "Cerrar sesión",
+      "accountMenu": "Abrir el menú de la cuenta"
     }
   },
   "pricingModal": {
@@ -590,6 +594,7 @@
     }
   },
   "upgradeBanner": {
+    "dismiss": "Cerrar oferta",
     "minimal": {
       "text": "Pasa a Premium para desbloquear todas las funcionalidades",
       "cta": "Ver planes"
@@ -2064,14 +2069,15 @@
     "placeholders": {
       "subjectPlaceholder": "Describa brevemente su solicitud",
       "descriptionPlaceholder": "Describa en detalle su problema o pregunta...",
-      "chatbotQuestion": "Ask your question..."
+      "chatbotQuestion": "Escriba su pregunta..."
     },
     "widget": {
+      "buttonLabel": "Ayuda y soporte",
       "minimize": "Minimizar",
-      "title": "HuntZen Support",
-      "tabFaq": "Help & FAQ",
-      "tabTicket": "Support Ticket",
-      "close": "Close"
+      "title": "Soporte HuntZen",
+      "tabFaq": "Ayuda y FAQ",
+      "tabTicket": "Ticket de soporte",
+      "close": "Cerrar"
     }
   },
   "jobs": {
@@ -2486,7 +2492,9 @@
     "close": "Close",
     "clear": "Clear",
     "recalculate": "Recalculate",
-    "notifications": "Notifications"
+    "notifications": "Notificaciones",
+    "changeLanguage": "Cambiar idioma",
+    "switchTo": "Cambiar a {language}"
   },
   "terms": {
     "title": "Terms and Conditions",

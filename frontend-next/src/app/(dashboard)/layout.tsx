@@ -29,7 +29,6 @@ export default async function DashboardLayout({
 
           {/* Main content - offset by sidebar width */}
           <main
-            id="main-content"
             className="huntzen-main lg:ml-[280px] min-h-screen transition-all"
           >
             {/* Presence heartbeat — tracks user on /dashboard */}

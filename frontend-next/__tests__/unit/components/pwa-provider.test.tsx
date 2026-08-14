@@ -10,12 +10,22 @@ vi.mock("@serwist/turbopack/react", () => ({
   useSerwist: () => ({ serwist: { register: registerWorker } }),
 }));
 
-import { PwaProvider } from "@/components/providers/pwa-provider";
+import {
+  PwaProvider,
+  shouldDisablePwa,
+} from "@/components/providers/pwa-provider";
 
 describe("PwaProvider", () => {
   beforeEach(() => {
     localStorage.clear();
     registerWorker.mockClear();
+    delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+  });
+
+  it("désactive Serwist sur les hôtes Vercel de préproduction", () => {
+    expect(shouldDisablePwa("staging.huntzenjobs.com")).toBe(true);
+    expect(shouldDisablePwa("huntzen-preview-abc.vercel.app")).toBe(true);
+    expect(shouldDisablePwa("huntzenjobs.com")).toBe(false);
   });
 
   it("retire seulement l'ancien worker et ses caches avant l'enregistrement Serwist", async () => {
