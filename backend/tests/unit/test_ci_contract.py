@@ -25,10 +25,22 @@ def test_ci_uses_the_real_projects_and_never_masks_failures() -> None:
     assert "playwright" not in workflow.lower()
     assert 'NODE_VERSION: "24"' in workflow
     assert workflow.count("if-no-files-found: warn") == 2
+    assert workflow.count("actions/checkout@v7") == 3
+    assert "actions/setup-python@v7" in workflow
+    assert "actions/setup-node@v7" in workflow
+    assert workflow.count("actions/upload-artifact@v7") == 2
+    assert "docker/setup-buildx-action@v4" in workflow
+    assert "docker/build-push-action@v7" in workflow
     assert '"test:backend": "cd backend && python -m pytest tests/unit tests/integration' in root_package
     assert '"lint": "eslint . --max-warnings 102"' in (
         REPOSITORY_ROOT / "frontend-next" / "package.json"
     ).read_text(encoding="utf-8")
     assert '"ruff==0.16.3"' in (REPOSITORY_ROOT / "backend" / "pyproject.toml").read_text(
+        encoding="utf-8"
+    )
+    assert "FROM python:3.11-slim AS builder" in (
+        REPOSITORY_ROOT / "backend" / "Dockerfile"
+    ).read_text(encoding="utf-8")
+    assert ".mypy_cache/" in (REPOSITORY_ROOT / "backend" / ".dockerignore").read_text(
         encoding="utf-8"
     )
