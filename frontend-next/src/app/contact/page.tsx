@@ -56,7 +56,6 @@ export default function ContactPage() {
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
-      toast.error(t("toasts.fillAllFields"));
       if (nextErrors.name) nameRef.current?.focus();
       else if (nextErrors.email) emailRef.current?.focus();
       else messageRef.current?.focus();

@@ -1,6 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+const { toastError } = vi.hoisted(() => ({ toastError: vi.fn() }));
+
+vi.mock("sonner", () => ({
+  toast: { error: toastError },
+}));
+
 vi.mock("@/contexts/auth-context", () => ({
   useOptionalAuth: () => ({ user: null }),
 }));
@@ -26,5 +32,6 @@ describe("formulaire de contact", () => {
       "id",
       "contact-name-error",
     );
+    expect(toastError).not.toHaveBeenCalled();
   });
 });
