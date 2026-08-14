@@ -158,6 +158,35 @@ def cv_belongs_to_user(cv_id: str, user_id: str) -> bool:
         conn.close()
 
 
+def claim_cv_analysis(cv_id: str, user_id: str) -> str | None:
+    """Réserver durablement une analyse pending et retourner son état courant."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE cv_analyses
+                SET status = 'processing', updated_at = NOW()
+                WHERE id = %s AND user_id = %s AND status = 'pending'
+                RETURNING status
+                """,
+                (str(cv_id), str(user_id)),
+            )
+            if cur.fetchone() is not None:
+                conn.commit()
+                return "claimed"
+
+            cur.execute(
+                "SELECT status FROM cv_analyses WHERE id = %s AND user_id = %s",
+                (str(cv_id), str(user_id)),
+            )
+            current = cur.fetchone()
+            conn.commit()
+            return str(current[0]) if current else None
+    finally:
+        conn.close()
+
+
 async def update_cv_status(
     cv_id: str,
     user_id: str,
@@ -227,9 +256,28 @@ async def process_cv_analysis(
 
     ownership_verified = False
     try:
-        ownership_verified = cv_belongs_to_user(cv_id, user_id)
-        if not ownership_verified:
+        claim_state = claim_cv_analysis(cv_id, user_id)
+        if claim_state == "completed":
+            return {
+                "success": True,
+                "cv_id": cv_id,
+                "already_processed": True,
+            }
+        if claim_state == "processing":
+            return {
+                "success": True,
+                "cv_id": cv_id,
+                "already_processing": True,
+            }
+        if claim_state == "failed":
+            return {
+                "success": False,
+                "cv_id": cv_id,
+                "error": "CV analysis already failed",
+            }
+        if claim_state != "claimed":
             raise PermissionError("CV analysis ownership mismatch")
+        ownership_verified = True
 
         # Step 1: Processing Status
         if not await update_cv_status(cv_id, user_id, "processing"):

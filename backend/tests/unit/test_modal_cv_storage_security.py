@@ -355,7 +355,7 @@ async def test_modal_processing_fails_when_final_status_cannot_be_persisted(
 ) -> None:
     modal_app = _load_modal_cv_app(monkeypatch)
     run = AsyncMock(return_value={"score": 80})
-    monkeypatch.setattr(modal_app, "cv_belongs_to_user", lambda *_args: True)
+    monkeypatch.setattr(modal_app, "claim_cv_analysis", lambda *_args: "claimed")
     monkeypatch.setattr(
         modal_app,
         "update_cv_status",
@@ -375,6 +375,46 @@ async def test_modal_processing_fails_when_final_status_cannot_be_persisted(
 
     assert response["success"] is False
     assert "final status persistence failed" in response["error"]
+
+
+@pytest.mark.asyncio
+async def test_modal_processing_returns_existing_completed_job_without_replay(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+    fetch_results = iter((None, ("completed",)))
+
+    class _Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def execute(self, _query: str, _params: tuple[str, str]) -> None:
+            return None
+
+        def fetchone(self):
+            return next(fetch_results)
+
+    connection = SimpleNamespace(
+        cursor=lambda: _Cursor(),
+        commit=Mock(),
+        close=Mock(),
+    )
+    monkeypatch.setattr(modal_app, "get_db_connection", lambda: connection)
+
+    response = await modal_app.process_cv_analysis(
+        cv_id="cv-id",
+        user_id="owner-id",
+        cv_text="contenu du CV suffisamment long pour lancer une analyse complète",
+    )
+
+    assert response == {
+        "success": True,
+        "cv_id": "cv-id",
+        "already_processed": True,
+    }
 
 
 def test_modal_pdf_webhook_uses_strict_bounded_request_model() -> None:
