@@ -6,6 +6,9 @@ from urllib.parse import urlparse
 import psycopg
 import pytest
 
+STAGING_PROJECT_REF = "cxkpbciubsvopgxakgbj"
+PRODUCTION_PROJECT_REF = "ngiakfikbuyugqfqtfwp"
+
 
 @pytest.fixture(scope="module")
 def staging_connection():
@@ -14,8 +17,13 @@ def staging_connection():
     if not database_url or not project_ref:
         pytest.skip("Supabase staging non configuré pour ce test d'intégration")
 
-    hostname = urlparse(database_url).hostname or ""
-    assert project_ref in hostname, "Le test refuse toute base qui n'est pas le staging attendu"
+    parsed_url = urlparse(database_url)
+    database_identity = f"{parsed_url.hostname or ''}:{parsed_url.username or ''}"
+    assert project_ref == STAGING_PROJECT_REF, "La ref staging attendue est obligatoire"
+    assert PRODUCTION_PROJECT_REF not in database_identity, "La production est interdite"
+    assert project_ref in database_identity, (
+        "Le test refuse toute base qui n'est pas le staging attendu"
+    )
 
     with psycopg.connect(database_url) as connection:
         connection.execute("BEGIN READ ONLY")

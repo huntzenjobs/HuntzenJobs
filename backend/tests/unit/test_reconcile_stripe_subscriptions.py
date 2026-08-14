@@ -22,6 +22,13 @@ def test_reconcile_classifies_mismatches_without_personal_data():
             "current_period_start": 1_786_291_200,
             "current_period_end": 1_788_969_600,
         },
+        {
+            "stripe_subscription_id": "sub_cancelled_history",
+            "status": "canceled",
+            "stripe_price_id": "price_pro",
+            "current_period_start": 1_786_291_200,
+            "current_period_end": 1_788_969_600,
+        },
     ]
     database_rows = [
         {
@@ -45,7 +52,8 @@ def test_reconcile_classifies_mismatches_without_personal_data():
 
     assert report["mode"] == "dry-run"
     assert report["counts"] == {
-        "database_missing": 1,
+        "database_missing_active": 1,
+        "database_missing_cancelled_history": 1,
         "stripe_missing": 1,
         "synchronized": 1,
     }

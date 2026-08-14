@@ -41,12 +41,15 @@ d'impayé réel a révélé puis corrigé par migration forward un défaut d'ord
 
 1. Transférer les quatre domaines HuntZen vers la nouvelle équipe Resend après
    activation du forfait Pro autorisé, puis valider une livraison contrôlée.
-2. Rejouer la réconciliation après suppression ou exclusion explicite des
-   anciennes fixtures Stripe génériques et obtenir zéro divergence critique.
-3. Vérifier l'alerte dead-letter/Sentry par erreur contrôlée après restauration
-   de la livraison email staging.
-4. Valider avec Leonel la politique TVA avant toute activation de Stripe Tax ;
+2. Restaurer la livraison email staging puis vérifier une réception Resend
+   contrôlée ; le retry, le passage dead-letter et l'appel Sentry sont déjà verts.
+3. Valider avec Leonel la politique TVA avant toute activation de Stripe Tax ;
    aucune activation automatique n'a été faite.
+
+La réconciliation du 14 août ne contient plus aucune divergence active : un
+abonnement est synchronisé et cinq abonnements annulés restent classés comme
+historique Stripe Test. Les deux fixtures génériques encore actives ont été
+annulées en mode Test.
 
 Tant que ces gates ne sont pas verts, aucune clé Test ne doit être remplacée par
 une clé Live et aucun endpoint production ne doit être modifié.

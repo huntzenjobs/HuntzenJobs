@@ -670,3 +670,8 @@ async def test_scheduled_cancellation_is_skipped_after_reactivation(monkeypatch)
 
     assert result == effect["dedupe_key"]
     send_email.assert_not_called()
+
+
+def test_single_row_reports_missing_subject_without_attribute_error():
+    with pytest.raises(RuntimeError, match="subject missing: subscription"):
+        stripe_outbox._single_row(None, label="subscription")

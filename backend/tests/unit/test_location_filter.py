@@ -2,8 +2,6 @@
 Tests for the location post-filter in the aggregator.
 """
 
-import pytest
-
 from src.services.job_providers.aggregator import (
     _is_remote_job,
     _location_matches,

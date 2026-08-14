@@ -1,8 +1,8 @@
 # Validation sécurité Modal
 
-**Date :** 12 août 2026
-**Environnement :** candidat local `codex/stripe-stabilization`
-**Décision actuelle :** NO-GO production tant que l'application Modal staging isolée n'est pas déployée et testée de bout en bout.
+**Date :** 14 août 2026
+**Environnement :** application Modal staging isolée + Supabase/Railway staging
+**Décision actuelle :** GO staging pour le chemin PDF signé normal et corrompu ; replay/timeout restent requis avant production.
 
 ## Correctifs vérifiés localement
 
@@ -23,13 +23,14 @@ backend/tests/unit/test_modal_cv_storage_security.py : 11 passed
 Ruff ciblé : All checks passed
 py_compile des deux applications Modal : succès
 git diff --check : succès
+PDF synthétique privé signé : completed, résultat persisté, callback réussi
+PDF synthétique corrompu : failed, aucun résultat, erreur persistée
+Nettoyage utilisateur, ligne cv_analyses et objet Storage : succès
 ```
 
 ## Points restant ouverts
 
-1. Tester réellement le rejet 401 sans proxy token et le succès avec token sur une application Modal staging.
-2. Vérifier dans le job Modal que `cv_id` et `user_id` désignent la même ligne avant toute mutation.
-3. Ajouter une idempotence durable par `job_id` et couvrir le replay.
-4. Renvoyer 422/401/504/500 de façon contractuelle au lieu de réponses métier HTTP 200 sur certains échecs.
-5. Supprimer le contenu de CV et les erreurs détaillées des logs, puis exécuter les scénarios PDF normal/corrompu/trop lourd/timeout.
-6. Mesurer une rafale staging et créer une alerte budget avant activation.
+1. Ajouter une idempotence durable par `job_id` et couvrir le replay.
+2. Renvoyer 422/401/504/500 de façon contractuelle au lieu de réponses métier HTTP 200 sur certains échecs.
+3. Exécuter les scénarios PDF trop lourd et timeout ; les cas normal et corrompu sont verts.
+4. Mesurer une rafale staging et créer une alerte budget avant activation production.

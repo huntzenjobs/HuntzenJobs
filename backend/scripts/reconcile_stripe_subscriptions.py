@@ -73,7 +73,11 @@ def reconcile_subscriptions(
         database_row = database_by_id.get(subscription_id)
         issues: list[str] = []
         if database_row is None:
-            issues.append("database_missing")
+            issues.append(
+                "database_missing_cancelled_history"
+                if stripe_row.get("status") == "canceled"
+                else "database_missing_active"
+            )
         else:
             if database_row.get("status") != stripe_row.get("status"):
                 issues.append("status_mismatch")

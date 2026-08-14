@@ -80,7 +80,7 @@ async def _invoice_plan_name(invoice: Any) -> str:
 
 
 def _single_row(query_result: Any, *, label: str) -> dict[str, Any]:
-    data = query_result.data
+    data = getattr(query_result, "data", None)
     if isinstance(data, list):
         data = data[0] if data else None
     if not isinstance(data, dict):

@@ -75,6 +75,8 @@ RUN mkdir -p /home/huntzen/.cache && \
 # Donner ownership de /app à huntzen — nécessaire pour Gunicorn 25.x control server socket
 # Sans ça : [Errno 13] Permission denied au démarrage → master crash → workers meurent
 RUN chown huntzen:huntzen /app && \
+    mkdir -p /home/huntzen/.gunicorn && \
+    chown -R huntzen:huntzen /home/huntzen && \
     mkdir -p /app/templates/cv_pdf && \
     chown -R huntzen:huntzen /app/templates
 
