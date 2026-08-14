@@ -97,7 +97,7 @@ export const AutocompleteInput = React.forwardRef<
     >([]);
     const [internalLoading, setInternalLoading] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
-    const debounceRef = React.useRef<NodeJS.Timeout>();
+    const debounceRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
     const isSelectionRef = React.useRef(false);
     // Tracks whether a click-selection already handled this blur event
     const blurHandledRef = React.useRef(false);

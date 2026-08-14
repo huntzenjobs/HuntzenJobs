@@ -44,7 +44,7 @@ export function useStressTest(runId: string | null) {
   const [connected, setConnected] = useState(false);
 
   const retryCount = useRef(0);
-  const retryTimer = useRef<ReturnType<typeof setTimeout>>();
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const destroyed = useRef(false);
   const esRef = useRef<EventSource | null>(null);
 

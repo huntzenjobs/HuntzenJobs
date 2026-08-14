@@ -14,6 +14,7 @@ import SiteBanner from "@/components/layout/site-banner";
 import { CookieBanner } from "@/components/layout/cookie-banner";
 import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
 import { createClient } from "@/lib/supabase/server";
+import { PwaProvider } from "@/components/providers/pwa-provider";
 
 // Metadata optimisées pour SEO 100/100
 export const metadata: Metadata = homeMetadata;
@@ -99,15 +100,17 @@ export default async function RootLayout({
             </p>
           </div>
         </noscript>
-        <SiteBanner />
-        <SkipLink />
-        <NextIntlClientProvider locale={locale} messages={messages}>
-           <Providers initialUser={user}>
-             <div id="main-content">{children}</div>
-           </Providers>
-           <GoogleTagManager />
-           <CookieBanner />
-        </NextIntlClientProvider>
+        <PwaProvider>
+          <SiteBanner />
+          <SkipLink />
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <Providers initialUser={user}>
+              <div id="main-content">{children}</div>
+            </Providers>
+            <GoogleTagManager />
+            <CookieBanner />
+          </NextIntlClientProvider>
+        </PwaProvider>
       </body>
     </html>
   );

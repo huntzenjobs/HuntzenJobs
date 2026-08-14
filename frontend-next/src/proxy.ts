@@ -7,7 +7,7 @@ function generateClientId(): string {
   return "hzn_" + crypto.randomUUID().replace(/-/g, "");
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -71,8 +71,7 @@ export async function middleware(request: NextRequest) {
     // Auto-detect from IP on every request (follows VPN/travel changes)
     // Vercel geo headers (works in production on Vercel Edge)
     // x-vercel-ip-country is the reliable header — request.geo is deprecated
-    const countryCode =
-      request.headers.get("x-vercel-ip-country") || request.geo?.country;
+    const countryCode = request.headers.get("x-vercel-ip-country");
     const detectedLocale = detectLocale(
       countryCode,
       request.headers.get("accept-language"),

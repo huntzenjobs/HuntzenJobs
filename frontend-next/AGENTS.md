@@ -1,6 +1,6 @@
 # AGENTS.md — frontend-next/
 
-> Conventions spécifiques au frontend Next.js 14. Complète le AGENTS.md racine.
+> Conventions spécifiques au frontend Next.js 16. Complète le AGENTS.md racine.
 > Tout est basé sur l'exploration réelle du code.
 
 ---
@@ -9,20 +9,20 @@
 
 | Outil | Version |
 |-------|---------|
-| Next.js | 14.2.21 (App Router) |
-| React | 18.2.0 |
+| Next.js | 16.3.1 (App Router + Turbopack) |
+| React | 19.2.8 |
 | TypeScript | ^5 (strict mode) |
 | Tailwind CSS | ^3.4.13 |
 | shadcn/ui | composants copiés dans src/components/ui/ |
 | Radix UI | 14 librairies (@radix-ui/react-*) |
 | Supabase | @supabase/ssr ^0.5.1 + @supabase/supabase-js ^2.45.4 |
 | next-intl | ^4.8.3 (fr, en, es, pt) |
-| next-pwa | ^5.6.0 |
+| Serwist | ^9.5.12 (@serwist/turbopack) |
 | Sentry | @sentry/nextjs ^10.36.0 |
 | Zustand | ^4.5.5 (installé mais NON utilisé — utiliser Context API) |
 | TanStack Query | ^5.56.2 |
-| SWR | ^2.2.5 |
-| Vitest | ^2.0.0 + @testing-library/react ^14.2.0 |
+| SWR | ^2.5.1 |
+| Vitest | ^4.1.10 + @testing-library/react ^16.3.2 |
 | framer-motion | ^12.29.0 |
 | sonner | ^1.5.0 (toasts) |
 | recharts | ^3.8.0 |
@@ -34,7 +34,7 @@
 
 ```
 src/
-├── middleware.ts              # Auth Supabase SSR + geo + referral
+├── proxy.ts                   # Auth Supabase SSR + geo + referral
 ├── app/                       # App Router
 │   ├── (dashboard)/           # Routes protégées (auth requise)
 │   ├── (public)/              # Pages publiques
