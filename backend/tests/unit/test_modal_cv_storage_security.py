@@ -213,6 +213,60 @@ async def test_modal_cv_request_uses_proxy_auth_headers(
     }
 
 
+@pytest.mark.asyncio
+async def test_modal_cv_timeout_persists_failed_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _ClientContext:
+        async def __aenter__(self) -> SimpleNamespace:
+            return SimpleNamespace(
+                post=AsyncMock(side_effect=modal_integration.httpx.TimeoutException("timeout"))
+            )
+
+        async def __aexit__(self, *_args: object) -> None:
+            return None
+
+    class _UpdateQuery:
+        def __init__(self) -> None:
+            self.payload: dict[str, str] = {}
+
+        def update(self, payload: dict[str, str]) -> "_UpdateQuery":
+            self.payload = payload
+            return self
+
+        def eq(self, _column: str, _value: str) -> "_UpdateQuery":
+            return self
+
+        def execute(self) -> SimpleNamespace:
+            return SimpleNamespace(data=[])
+
+    query = _UpdateQuery()
+    monkeypatch.setattr(modal_integration, "MODAL_WEBHOOK_URL", "https://modal.example/run")
+    monkeypatch.setattr(modal_integration, "MODAL_PROXY_TOKEN_ID", "wk-test")
+    monkeypatch.setattr(modal_integration, "MODAL_PROXY_TOKEN_SECRET", "ws-test")
+    monkeypatch.setattr(modal_integration, "MODAL_ENABLED_SETTING", True)
+    monkeypatch.setattr(
+        modal_integration.httpx,
+        "AsyncClient",
+        lambda **_kwargs: _ClientContext(),
+    )
+    monkeypatch.setattr(
+        modal_integration,
+        "supabase_client",
+        SimpleNamespace(table=lambda _name: query),
+    )
+
+    triggered = await modal_integration.spawn_modal_cv_processing(
+        cv_id="0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+        user_id="e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+        cv_text="contenu du CV suffisamment long",
+    )
+
+    assert triggered is False
+    assert query.payload["status"] == "failed"
+    assert query.payload["error_message"] == "Modal webhook timeout"
+
+
 def test_modal_web_endpoints_require_proxy_auth() -> None:
     for relative_path in (
         "scripts/deployment/modal_app.py",
