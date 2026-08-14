@@ -6,9 +6,13 @@ import createNextIntlPlugin from "next-intl/plugin";
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
+export function resolveOutputMode(vercelEnvironment) {
+  return vercelEnvironment ? undefined : "standalone";
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  output: resolveOutputMode(process.env.VERCEL),
   outputFileTracingRoot: projectRoot,
   serverExternalPackages: ["isomorphic-dompurify", "jsdom"],
   reactStrictMode: true,

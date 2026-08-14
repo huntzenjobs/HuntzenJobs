@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import nextConfig from "../../../next.config.mjs";
+import nextConfig, {
+  resolveOutputMode,
+} from "../../../next.config.mjs";
 
 const CUSTOM_SUPABASE_ORIGIN = "https://auth.huntzenjobs.com";
 const LEGACY_SUPABASE_ORIGIN = "https://ngiakfikbuyugqfqtfwp.supabase.co";
@@ -10,6 +12,11 @@ function readProjectFile(relativePath: string): string {
 }
 
 describe("bascule du domaine Supabase", () => {
+  it("laisse Vercel produire ses fonctions tout en gardant le standalone Docker", () => {
+    expect(resolveOutputMode("1")).toBeUndefined();
+    expect(resolveOutputMode(undefined)).toBe("standalone");
+  });
+
   it("autorise le domaine personnalisé dans la CSP tout en conservant le rollback legacy", async () => {
     const headerRules = await nextConfig.headers?.();
     const csp = headerRules?.[0]?.headers.find(
