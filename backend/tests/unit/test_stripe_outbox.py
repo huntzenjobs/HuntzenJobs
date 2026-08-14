@@ -669,6 +669,34 @@ async def test_cancellation_email_uses_immutable_outbox_period(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_deleted_subscription_admin_alert_does_not_require_subject(monkeypatch):
+    database = SimpleNamespace(
+        table=lambda _name: pytest.fail("La livraison admin ne doit pas relire le sujet")
+    )
+    send_alert = AsyncMock(return_value=True)
+    monkeypatch.setattr(stripe_outbox, "send_admin_alert", send_alert)
+    effect = {
+        "effect_type": "subscription_cancelled_admin",
+        "subject_id": "sub_deleted_fixture",
+        "dedupe_key": "subscription-cancelled-admin:sub_deleted_fixture",
+        "payload": {"cancellation_mode": "deleted"},
+    }
+
+    result = await stripe_outbox.deliver_stripe_effect(database, effect)
+
+    assert result == effect["dedupe_key"]
+    send_alert.assert_awaited_once_with(
+        subject="Résiliation abonnement",
+        body="Stripe sub: sub_deleted_fixture",
+        severity="warning",
+        skip_throttle=True,
+        category="cancellation",
+        idempotency_key=effect["dedupe_key"],
+        strict=True,
+    )
+
+
+@pytest.mark.asyncio
 async def test_scheduled_cancellation_is_skipped_after_reactivation(monkeypatch):
     class _TableQuery:
         def select(self, *_args):

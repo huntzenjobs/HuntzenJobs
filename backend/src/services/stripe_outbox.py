@@ -164,21 +164,27 @@ async def deliver_stripe_effect(supabase_client: Any, effect: dict[str, Any]) ->
     if effect_type.startswith("subscription_cancelled_"):
         payload = effect.get("payload")
         immutable_payload = payload if isinstance(payload, dict) else {}
-        subscription_query = (
-            supabase_client.table("user_subscriptions")
-            .select(
-                "user_id,plan_id,current_period_end,stripe_customer_id,"
-                "cancel_at_period_end,status"
-            )
-            .eq("stripe_subscription_id", subject_id)
-            .maybe_single()
-        )
-        row = _single_row(
-            await asyncio.to_thread(subscription_query.execute),
-            label="subscription",
-        )
+        row: dict[str, Any] = {}
+        cancellation_mode = immutable_payload.get("cancellation_mode")
         if (
-            immutable_payload.get("cancellation_mode") == "scheduled"
+            effect_type == "subscription_cancelled_client"
+            or cancellation_mode == "scheduled"
+        ):
+            subscription_query = (
+                supabase_client.table("user_subscriptions")
+                .select(
+                    "user_id,plan_id,current_period_end,stripe_customer_id,"
+                    "cancel_at_period_end,status"
+                )
+                .eq("stripe_subscription_id", subject_id)
+                .maybe_single()
+            )
+            row = _single_row(
+                await asyncio.to_thread(subscription_query.execute),
+                label="subscription",
+            )
+        if (
+            cancellation_mode == "scheduled"
             and row.get("status") != "canceled"
             and row.get("cancel_at_period_end") is not True
         ):
