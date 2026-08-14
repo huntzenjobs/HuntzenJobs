@@ -3,11 +3,12 @@
 **Date du snapshot :** 14 août 2026
 **Branche de travail :** `codex/stripe-stabilization`
 **Commit distant backend testé :** `4fc00ff`
+**Révision candidate validée en CI :** `a84f0b06683096daec9d65fb78dea02a169ce8ed`
 **Confidentialité :** aucune valeur de secret n'est conservée dans ce document.
 
 ## Résumé
 
-Une préproduction isolée existe désormais sur Supabase, Railway, Redis, Vercel et Modal, sans copie des données de production ni secret Stripe Live. La branche Supabase persistante a reçu les 128 migrations locales et son journal local/distant est identique. Le backend est publié depuis `4fc00ff`; worker ARQ, frontend et Modal restent sur `798b97e`, leur dernier commit fonctionnel commun. Le frontend staging et le backend répondent `200`. Le domaine `staging.huntzenjobs.com` possède un certificat Vercel valide. La livraison email reste bloquée par le transfert Resend. À 50 VU, les timeouts sont éliminés mais le p99 public reste ponctuellement hors seuil.
+Une préproduction isolée existe désormais sur Supabase, Railway, Redis, Vercel et Modal, sans copie des données de production ni secret Stripe Live. La branche Supabase persistante a reçu les 128 migrations locales et son journal local/distant est identique. Le backend est publié depuis `4fc00ff`; worker ARQ, frontend et Modal restent sur `798b97e`, leur dernier commit fonctionnel commun. Le candidat Git `a84f0b0` passe la CI canonique complète, y compris l'image Docker. Le frontend staging et le backend répondent `200`. Le domaine `staging.huntzenjobs.com` possède un certificat Vercel valide. La livraison email reste bloquée par le transfert Resend. À 50 VU, les timeouts sont éliminés mais le p99 public reste ponctuellement hors seuil.
 
 ## Plateformes
 
@@ -21,6 +22,7 @@ Une préproduction isolée existe désormais sur Supabase, Railway, Redis, Verce
 | Modal | Deux applications historiques déployées | Environnement `staging` séparé ; application `huntzen-cv-processor-staging`, tag `798b97e`, secret staging, Proxy Token et clé Groq dédiée expirant le 11 novembre 2026 | Texte et PDF privé signé passent à `completed`; PDF corrompu à `failed`; PDF >10 Mio à HTTP 400. Deux replays réels d'une ligne `completed` la laissent strictement inchangée. Toutes les données synthétiques sont nettoyées. |
 | Sentry | Organisation `huntzen`, projet historique `javascript-nextjs` | Projet séparé `huntzen-staging` | DSN injecté uniquement en staging. Le passage contrôlé en dead-letter a exécuté l'appel Sentry depuis le worker ; les logs ne montrent aucune erreur d'envoi. |
 | Resend | L'ancien compte contient déjà `huntzenjobs.com`, `.fr`, `.co` et `.eu` vérifiés | Barrière email staging publiée et clé `sending_access` installée sur le worker Railway staging | La clé est acceptée, mais les envois restent en retry car `huntzenjobs.com` n'est pas encore revendiqué dans la nouvelle équipe. Le transfert des quatre domaines exige Resend Pro ; abonnement autorisé mais paiement reporté jusqu'à disponibilité de la carte du responsable. Aucun email client n'a été envoyé. |
+| GitHub Actions | Workflow historique dupliqué et permissif | Workflow canonique unique `CI/CD Pipeline` | Run [`31814941024`](https://github.com/huntzenjobs/HuntzenJobs/actions/runs/31814941024) vert sur le SHA exact `a84f0b0` : Backend, Frontend et image backend. Node 24, Ruff 0.16.3 et actions compatibles Node 24 sont verrouillés ; aucun échec n'est masqué et aucun test Playwright n'est exécuté. |
 
 ## Crons configurés dans le code
 
@@ -65,19 +67,19 @@ Toutes les tables publiques ont désormais la RLS. `stripe_payments`, `recruiter
 
 1. Dès que la carte du responsable est disponible, souscrire Resend Pro puis revendiquer uniquement les quatre domaines HuntZen via OVH, sans suppression préalable ; vérifier ensuite une livraison vers `delivered@resend.dev` uniquement.
 2. Exécuter le timeout Modal réel contrôlé et créer l'alerte budget ; normal, corrompu, trop lourd et replay durable sont validés.
-3. Planifier la migration majeure Next.js/`next-pwa` : l'audit production est passé de 30 vulnérabilités dont 1 critique à 18 sans critique, mais 15 high transitives exigent une migration majeure et non un `audit fix --force`.
+3. Planifier la migration majeure Next.js/`next-pwa` : l'audit production est passé de 30 vulnérabilités dont 1 critique à 18 sans critique, mais 15 high transitives exigent une migration majeure et non un `audit fix --force`. Le chemin retenu est une branche dédiée Next.js 14 → 15.5 → 16.3, React 19, `middleware.ts` → `proxy.ts`, puis remplacement de `next-pwa` par Serwist compatible Turbopack. Le cache large `/api/.*` doit être supprimé ou limité aux seules requêtes publiques explicitement sûres.
 4. Le goulot Railway identifié est corrigé, mais un p99 public sur trois reste à 1,16 s ; conserver le palier strict en observation avant de revendiquer sa reproductibilité.
 5. Rejouer immédiatement avant production le préflight `user_notifications`. Au snapshot du 14 août : 21 lignes, 49 152 octets avec index, 0 notification `payment_failed`, 0 doublon, 0 verrou en attente et index forward absent ; la création non concurrente est donc de faible risque sur ce volume observé.
 
 ## Validation locale avant staging
 
-- Backend : 181 tests unitaires réussis, dont 18 sur la sécurité et la durabilité Modal, plus les contrats de démarrage Gunicorn et de journalisation du health ping.
-- Ruff ciblé : aucune erreur sur les fichiers Python du lot.
+- Backend : 182 tests réussis et 12 tests PostgreSQL staging ignorés localement faute de variables staging ; 7 warnings historiques. La suite comprend la sécurité et la durabilité Modal, les contrats de démarrage Gunicorn, de journalisation du health ping et le contrat CI.
+- Ruff canonique : aucune erreur sur `backend/src`, `backend/tests` et `scripts/deployment`, avec Ruff verrouillé en `0.16.3`.
 - Frontend : 302 tests Vitest réussis.
 - TypeScript : `npx tsc --noEmit` réussi.
 - Build Next.js : réussi avec injection temporaire des variables locales, sans les copier dans le worktree.
-- ESLint : aucune erreur bloquante, mais avertissements historiques présents, notamment sur les dépendances de hooks pricing.
-- Suite backend racine : non exploitable en l'état ; `npm run test:backend` cible l'ancien arbre `tests/` avec le Python système et échoue à l'import de `main`. Ce défaut de CI est distinct de la suite canonique backend du lot et doit être corrigé avant Go final.
+- ESLint : 0 erreur et exactement 102 warnings historiques ; la commande échoue désormais dès qu'un avertissement supplémentaire est introduit.
+- CI distante : le workflow unique utilise les vrais répertoires, installe les dépendances verrouillées, publie les rapports JUnit et construit réellement l'image backend. Le run `31814941024` est vert sur `a84f0b0` : 182 tests backend réussis, 12 ignorés, 302 tests frontend, TypeScript, ESLint, build Next.js, Ruff et Docker verts.
 - PostgreSQL local : indisponible car le daemon Docker n'est pas actif. La chaîne a cependant été appliquée sur la base PostgreSQL staging réelle ; 128 migrations sont enregistrées et alignées avec le dépôt.
 - Lint PostgreSQL staging : zéro erreur au niveau `error`. Le contrôle catalogue confirme zéro table publique sans RLS et zéro fonction `SECURITY DEFINER` exécutable par `anon`.
 - RLS admin vérifiée sous rôle `authenticated`; appels techniques vérifiés avec le format `request.jwt.claims` PostgREST actuel; usurpation d'un autre UUID refusée.
