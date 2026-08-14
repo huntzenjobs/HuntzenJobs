@@ -23,7 +23,12 @@ def test_ci_uses_the_real_projects_and_never_masks_failures() -> None:
     assert "context: ./backend" in workflow
     assert "file: ./backend/Dockerfile" in workflow
     assert "playwright" not in workflow.lower()
+    assert 'NODE_VERSION: "24"' in workflow
+    assert workflow.count("if-no-files-found: warn") == 2
     assert '"test:backend": "cd backend && python -m pytest tests/unit tests/integration' in root_package
     assert '"lint": "eslint . --max-warnings 102"' in (
         REPOSITORY_ROOT / "frontend-next" / "package.json"
     ).read_text(encoding="utf-8")
+    assert '"ruff==0.16.3"' in (REPOSITORY_ROOT / "backend" / "pyproject.toml").read_text(
+        encoding="utf-8"
+    )

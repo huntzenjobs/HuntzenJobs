@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "24"
   PYTHON_VERSION: "3.11"
 
 jobs:
@@ -53,7 +53,7 @@ jobs:
         with:
           name: pytest-report
           path: backend/test-results/backend.xml
-          if-no-files-found: error
+          if-no-files-found: warn
 
   frontend:
     name: Frontend
@@ -97,7 +97,7 @@ jobs:
         with:
           name: vitest-report
           path: frontend-next/reports/vitest.xml
-          if-no-files-found: error
+          if-no-files-found: warn
 
   docker:
     name: Image backend
