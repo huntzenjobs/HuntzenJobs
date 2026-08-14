@@ -1,7 +1,12 @@
 import { shouldUseNetworkOnly } from "@/lib/pwa/cache-policy";
 import * as cachePolicy from "@/lib/pwa/cache-policy";
+import { config as proxyConfig } from "@/proxy";
 
 describe("politique de cache PWA", () => {
+  it("sert le worker sans passer par le proxy d'authentification", () => {
+    expect(proxyConfig.matcher[0]).toContain("serwist/");
+  });
+
   it.each([
     "/api/auth/me",
     "/api/subscription/current",
