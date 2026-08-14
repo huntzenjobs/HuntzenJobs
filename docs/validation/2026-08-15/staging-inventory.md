@@ -7,16 +7,16 @@
 
 ## Résumé
 
-Une préproduction isolée existe désormais sur Supabase, Railway, Redis et Vercel, sans copie des données de production ni secret Stripe Live/Resend. La branche Supabase persistante a reçu les 124 migrations locales et son journal local/distant est identique. Le backend Railway staging démarre avec Supabase/Redis staging et répond sur son endpoint de santé. Le frontend Vercel a été construit dans le Custom Environment `staging` et répond derrière Deployment Protection. Le worker ARQ staging est en cours de validation. Le domaine `staging.huntzenjobs.com` résout chez OVH, possède un certificat Vercel valide et sert le frontend staging.
+Une préproduction isolée existe désormais sur Supabase, Railway, Redis et Vercel, sans copie des données de production ni secret Stripe Live/Resend. La branche Supabase persistante a reçu les 128 migrations locales et son journal local/distant est identique. Le backend Railway staging démarre avec Supabase/Redis staging et répond sur son endpoint de santé. Le frontend Vercel a été construit dans le Custom Environment `staging` et répond derrière Deployment Protection. Le worker ARQ staging est en cours de validation. Le domaine `staging.huntzenjobs.com` résout chez OVH, possède un certificat Vercel valide et sert le frontend staging.
 
 ## Plateformes
 
 | Service | Production observée | Staging observé | État / preuve |
 |---|---|---|---|
-| Supabase | Projet HuntZen `ngiakfikbuyugqfqtfwp`, région Europe Ouest, PostgreSQL 17 | Branche persistante `staging`, ref `cxkpbciubsvopgxakgbj`, sans copie des données | 124 migrations présentes ; historique local/distant identique et lint DB sans erreur ni warning. URL de site et callback Auth limités à `staging.huntzenjobs.com`; Google OAuth staging dédié activé et testé. Le statut Dashboard historique reste rouge malgré le journal SQL aligné et ne se laisse pas réinitialiser par les overrides CLI 2.84.2 et 2.113.0. |
-| Stripe | Mode Live, un endpoint Railway actif | Sandbox Test HuntZen, catalogue dédié, endpoint webhook staging distinct | Un seul endpoint Test est actif, limité aux cinq événements traités et dirigé vers le backend Railway staging. Le dry-run Checkout legacy retourne zéro candidat. Les fixtures CLI génériques ont confirmé la signature et le refus des payloads étrangers, mais quatre abonnements de fixture sans métadonnées HuntZen restent volontairement absents de la projection locale ; l'E2E HuntZen synthétique reste requis. Aucun objet Live modifié. |
+| Supabase | Projet HuntZen `ngiakfikbuyugqfqtfwp`, région Europe Ouest, PostgreSQL 17 | Branche persistante `staging`, ref `cxkpbciubsvopgxakgbj`, sans copie des données | 128 migrations présentes ; historique local/distant identique et lint DB sans erreur ni warning. Les consommateurs staging utilisent désormais les clés `sb_publishable`/`sb_secret`; les clés API legacy sont désactivées et l'ancienne signature HS256 est révoquée. Création, login et suppression synthétiques sont verts après rotation. URL de site et callback Auth limités à `staging.huntzenjobs.com`; Google OAuth staging dédié activé et testé. |
+| Stripe | Mode Live, un endpoint Railway actif | Sandbox Test HuntZen, catalogue dédié, endpoint webhook staging distinct | Un seul endpoint Test est actif, limité aux cinq événements traités et dirigé vers le backend Railway staging. Un E2E HuntZen synthétique a validé Checkout Starter, paiement, ledger, impayé, résiliation idempotente et réactivation. Le compte, l'abonnement et les lignes Supabase synthétiques ont été supprimés après preuve. Les quatre fixtures CLI génériques restent à exclure de la réconciliation. Aucun objet Live modifié. |
 | Railway | Backend public version `3.0.0`, health `ok`; services backend, ARQ et stress observés `Online` après bascule Supabase | Environnement `staging`; backend `ravishing-reprieve`, domaine `ravishing-reprieve-staging.up.railway.app` | Le snapshot exact de `d47ed4c` est déployé et `/api/health/ping` retourne `200`. Stripe Test, Resend staging et Modal staging sont configurés ; `MODAL_ENABLED=true` après ajout de la clé Groq dédiée. Aucun secret Stripe Live ou Modal production n'est utilisé. |
-| Vercel | Projet `frontend-next` de l'équipe `huntzen-jobs`; déploiement production et aliases apex/www `Ready` après bascule | Custom Environment `staging`; déploiement `dpl_CcPqk5uNtJ1nZtVBYRz4KB6npV1H`; domaine `staging.huntzenjobs.com` | Le build exact de `d47ed4c` est `Ready`; l'alias staging a été basculé sur ce déploiement et répond `200` via `vercel curl` authentifié. Supabase et backend pointent uniquement vers staging. |
+| Vercel | Projet `frontend-next` de l'équipe `huntzen-jobs`; déploiement production et aliases apex/www `Ready` après bascule | Custom Environment `staging`; déploiement `dpl_2SG88hWeQBeggqLdDpzeLT6Gyw9n`; domaine `staging.huntzenjobs.com` | Le rebuild exact du candidat est `Ready` avec les clés Supabase modernes ; l'alias staging a été basculé sur ce déploiement et répond `200` via `vercel curl` authentifié. Supabase et backend pointent uniquement vers staging. |
 | Redis / ARQ | Redis production Railway observé `Online` | Redis dédié `Redis-SU2L` `Online`; service ARQ `respectful-rebirth`, un seul réplica | Le worker staging utilise `/backend/railway.worker.toml`; le snapshot exact de `d47ed4c` a été publié avec succès et les logs annoncent `stripe_effect_outbox_task`. Les effets Resend restent en retry contrôlé jusqu'au transfert du domaine. |
 | Modal | Deux applications historiques déployées : traitement CV et extraction PDF | Environnement `staging` séparé ; application `huntzen-cv-processor-staging`, secret staging, Proxy Token et clé Groq dédiée expirant le 11 novembre 2026 | Les applications historiques n'ont pas été modifiées. Le probe sans credential retourne `401`; le Proxy Token atteint la validation du payload (`422` sur payload vide). Un CV texte entièrement synthétique est passé à `completed`, avec résultat JSON persisté, callback Railway réussi et aucune erreur Modal ; la ligne synthétique a ensuite été supprimée. |
 | Sentry | Organisation `huntzen`, projet historique `javascript-nextjs` | Projet séparé `huntzen-staging` (plateforme FastAPI) | DSN injecté uniquement dans le backend et le worker Railway staging ainsi que dans le Custom Environment Vercel `staging`. Le frontend local utilise `NEXT_PUBLIC_SENTRY_ENVIRONMENT=staging`; l'injection d'une erreur contrôlée attend la publication du candidat local. |
@@ -63,13 +63,13 @@ Toutes les tables publiques ont désormais la RLS. `stripe_payments`, `recruiter
 
 ## Blocages actuels
 
-1. Remplacer les fixtures Stripe CLI génériques par un E2E HuntZen synthétique complet, puis couvrir ordre inversé, doublons et finalisation partielle.
-2. Rejouer la réconciliation après cet E2E : le dry-run actuel compte un abonnement HuntZen synchronisé et quatre `database_missing`, tous attribués à des abonnements de fixtures génériques sans métadonnées HuntZen.
-3. Vérifier le cron minute, les leases/retries/dead-letter ARQ et l'alerte Sentry contrôlée sur la révision alignée.
-4. Dès que la carte du responsable est disponible, souscrire Resend Pro puis revendiquer uniquement les quatre domaines HuntZen via OVH, sans suppression préalable ; vérifier ensuite une livraison vers `delivered@resend.dev` uniquement.
-5. Valider encore le chemin PDF privé signé Modal : PDF synthétique normal/corrompu, dépassement taille, timeout et replay ; tourner la clé Groq staging avant le 11 novembre 2026.
-6. Traiter les 43 vulnérabilités npm signalées au build (dont 4 critiques) et les avertissements React/ESLint prioritaires avant le Go/No-Go.
-7. Résoudre la divergence Git : `Pre-production` diverge de `Production` et ne contient pas encore le lot `codex/stripe-stabilization`. Aucun commit manuel n'est autorisé par les règles du dépôt.
+1. Rejouer la réconciliation après suppression ou exclusion explicite des quatre abonnements de fixtures génériques sans métadonnées HuntZen.
+2. Vérifier l'alerte Sentry dead-letter contrôlée après restauration de la livraison email staging.
+3. Dès que la carte du responsable est disponible, souscrire Resend Pro puis revendiquer uniquement les quatre domaines HuntZen via OVH, sans suppression préalable ; vérifier ensuite une livraison vers `delivered@resend.dev` uniquement.
+4. Valider encore le chemin PDF privé signé Modal : PDF synthétique normal/corrompu, dépassement taille, timeout et replay ; tourner la clé Groq staging avant le 11 novembre 2026.
+5. Traiter les 43 vulnérabilités npm signalées au build (dont 4 critiques) et les avertissements React/ESLint prioritaires avant le Go/No-Go.
+6. Résoudre la divergence Git : `Pre-production` diverge de `Production` et ne contient pas encore le lot `codex/stripe-stabilization`. Aucun commit manuel n'est autorisé par les règles du dépôt.
+7. Tourner le mot de passe PostgreSQL/pooler de la branche staging depuis le Dashboard Supabase, puis mettre à jour Railway et le secret Modal staging de façon coordonnée. La rotation des clés API/JWT est terminée, mais le mot de passe DB a été visible dans une sortie de diagnostic locale.
 
 ## Validation locale avant staging
 
@@ -80,7 +80,7 @@ Toutes les tables publiques ont désormais la RLS. `stripe_payments`, `recruiter
 - Build Next.js : réussi avec injection temporaire des variables locales, sans les copier dans le worktree.
 - ESLint : aucune erreur bloquante, mais avertissements historiques présents, notamment sur les dépendances de hooks pricing.
 - Suite backend racine : non exploitable en l'état ; `npm run test:backend` cible l'ancien arbre `tests/` avec le Python système et échoue à l'import de `main`. Ce défaut de CI est distinct de la suite canonique backend du lot et doit être corrigé avant Go final.
-- PostgreSQL local : indisponible car le daemon Docker n'est pas actif. La chaîne a cependant été appliquée sur la base PostgreSQL staging réelle ; 119 migrations sont enregistrées.
+- PostgreSQL local : indisponible car le daemon Docker n'est pas actif. La chaîne a cependant été appliquée sur la base PostgreSQL staging réelle ; 128 migrations sont enregistrées et alignées avec le dépôt.
 - Lint PostgreSQL staging : zéro erreur au niveau `error`. Le contrôle catalogue confirme zéro table publique sans RLS et zéro fonction `SECURITY DEFINER` exécutable par `anon`.
 - RLS admin vérifiée sous rôle `authenticated`; appels techniques vérifiés avec le format `request.jwt.claims` PostgREST actuel; usurpation d'un autre UUID refusée.
 - Les deux paramètres PostgREST du cron cleanup ont été alignés sur leurs signatures (`p_retention_days`, `p_days_old`).
@@ -92,14 +92,16 @@ Toutes les tables publiques ont désormais la RLS. `stripe_payments`, `recruiter
 - Resend staging : 2 tests unitaires de sécurité email et 83 tests email/Stripe/recruteur réussis ; Ruff ciblé vert. La clé staging est active sur le worker, mais la livraison est bloquée proprement en retry jusqu'au transfert du domaine.
 - Groq : Sentry production a exposé l'ancien modèle Llama 4 Scout retiré. Le candidat aligne maintenant les noms documentés `FAST_MODEL`/`PRIMARY_MODEL` avec Pydantic et utilise les remplaçants officiels `openai/gpt-oss-20b`/`openai/gpt-oss-120b`. Une clé dédiée à Modal/Railway staging a été créée avec expiration au 11 novembre 2026 ; aucune clé production n'a été réutilisée.
 - Alignement staging : Vercel et les deux services Railway exécutent le snapshot candidat `d47ed4c`; frontend `Ready`, backend `2/2`, worker `1/1`, health backend `200` et tâche outbox présente au démarrage ARQ.
-- Stripe Test : CLI mise à jour et authentifiée sans clé Live ; un seul endpoint canonique actif. Les cinq types d'événements ont été émis en ordre inversé. Les payloads génériques étrangers au modèle HuntZen sont refusés/classés en échec sans créer de droits ; `invoice.payment_failed` et un `invoice.paid` sans projection applicable sont finalisés. Cette campagne ne remplace pas l'E2E métier.
+- Stripe Test : CLI mise à jour et authentifiée sans clé Live ; un seul endpoint canonique actif. Les cinq types d'événements ont été émis en ordre inversé. Les payloads génériques étrangers au modèle HuntZen sont refusés/classés en échec sans créer de droits ; `invoice.payment_failed` et un `invoice.paid` sans projection applicable sont finalisés.
+- Stripe Test E2E : un compte Supabase synthétique a créé un Checkout Starter via l'API réelle. Paiement Test, projection, ledger, résiliation idempotente, réactivation et impayé ont été vérifiés. L'ordre `subscription.updated(past_due)` avant `invoice.payment_failed` a produit un test rouge, puis les migrations forward `20260813224640` et `20260814083310` ont rendu le test vert avec deux effets et une notification unique par facture. Les objets synthétiques ont été nettoyés.
+- Rotation Supabase staging : backend, worker et Vercel utilisent les clés modernes ; les clés API JWT legacy sont désactivées et la signature HS256 précédente est révoquée. Un compte synthétique créé via la clé secrète moderne s'est connecté via la clé publique moderne, puis a été supprimé.
 
 ## Versions d'outillage
 
 - Modal CLI locale : `1.5.4`.
-- Vercel CLI globale : `58.10.0`.
+- Vercel CLI globale : `59.0.0`.
 - Railway CLI globale : `5.38.0`.
-- Stripe CLI globale : `1.45.2`.
-- Supabase CLI locale : `2.84.2`, dernière proposée : `2.113.0`.
+- Stripe CLI globale : `1.50.0`.
+- Supabase CLI locale : `2.114.0`.
 
-La CLI Supabase doit être mise à jour et revérifiée avant une nouvelle mutation de base, sans modifier les dépendances applicatives.
+Les CLI Supabase, Stripe et Vercel ont été mises à jour avant les dernières opérations staging.

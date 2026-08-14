@@ -6,14 +6,13 @@
 
 ## Décision actuelle
 
-**NO-GO production / GO technique partiel en staging.**
+**NO-GO production / GO technique renforcé en staging.**
 
-Le code critique dispose de 104 tests ciblés verts (101 unitaires et 3 tests
-PostgreSQL staging réels) et les migrations
-transactionnelles/outbox sont présentes sur PostgreSQL staging réel. Un sandbox
-Stripe Test est désormais raccordé à la préproduction, mais le backend Railway
-staging exécute encore la branche distante historique et ne contient donc pas le
-lot local complet (`stripe_effect_outbox_task` absent des logs ARQ).
+Le candidat aligné est déployé sur Vercel, Railway et le worker ARQ staging. Un
+Checkout HuntZen synthétique complet a validé la création Starter, le ledger,
+les webhooks, la résiliation idempotente et la réactivation. Le scénario
+d'impayé réel a révélé puis corrigé par migration forward un défaut d'ordre des
+événements Stripe. La production reste inchangée.
 
 ## Éléments validés
 
@@ -28,18 +27,26 @@ lot local complet (`stripe_effect_outbox_task` absent des logs ARQ).
 - Le claim webhook et outbox a été exercé avec deux connexions PostgreSQL
   concurrentes : un seul propriétaire, token de fencing obligatoire, retry puis
   dead-letter, ACL service_role et nettoyage final à zéro.
+- Un Checkout Starter mensuel Test à 9,99 EUR a été payé avec une carte de test,
+  puis résilié et nettoyé ; aucun paiement réel n'a été lancé.
+- L'ordre réel `customer.subscription.updated(past_due)` avant
+  `invoice.payment_failed` est désormais indépendant : deux effets outbox et
+  une notification idempotente sont créés par facture.
+- Les migrations `20260813224640_fix_payment_failed_notification_order.sql` et
+  `20260814083310_enforce_unique_payment_failed_notification.sql` sont
+  appliquées uniquement au staging ; l'unicité est garantie par index, les 4
+  tests PostgreSQL ciblés et le lint DB au niveau warning sont verts.
 
 ## Gates encore obligatoires
 
-1. Publier le candidat local sur une branche distante autorisée, sans écraser les changements existants.
-2. Redéployer backend et worker staging ; exiger `stripe_effect_outbox_task` dans les logs ARQ et un seul réplica worker.
-3. Réauthentifier Stripe CLI Test puis rejouer les cinq événements signés
-   contre ce candidat ; la session locale a expiré le 12 août.
-4. Tester Checkout, renouvellement, impayé, résiliation, réactivation, concurrence et retry partiel.
-5. Exécuter le nettoyage des sessions legacy en dry-run, inspecter chaque cible, puis seulement appliquer.
-6. Exécuter la réconciliation Stripe en dry-run et obtenir zéro divergence critique.
-7. Vérifier l'alerte dead-letter/Sentry par erreur contrôlée.
-8. Valider avec Leonel la politique TVA avant toute activation de Stripe Tax ; aucune activation automatique n'a été faite.
+1. Transférer les quatre domaines HuntZen vers la nouvelle équipe Resend après
+   activation du forfait Pro autorisé, puis valider une livraison contrôlée.
+2. Rejouer la réconciliation après suppression ou exclusion explicite des
+   anciennes fixtures Stripe génériques et obtenir zéro divergence critique.
+3. Vérifier l'alerte dead-letter/Sentry par erreur contrôlée après restauration
+   de la livraison email staging.
+4. Valider avec Leonel la politique TVA avant toute activation de Stripe Tax ;
+   aucune activation automatique n'a été faite.
 
 Tant que ces gates ne sont pas verts, aucune clé Test ne doit être remplacée par
 une clé Live et aucun endpoint production ne doit être modifié.
