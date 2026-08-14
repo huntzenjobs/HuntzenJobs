@@ -105,10 +105,10 @@ async def deliver_stripe_effect(supabase_client: Any, effect: dict[str, Any]) ->
         amount_paid = (_value(invoice, "amount_paid", 0) or 0) / 100
         amount_due = (_value(invoice, "amount_due", 0) or 0) / 100
         currency = str(_value(invoice, "currency", "eur")).upper()
-        customer_email = await _invoice_email(invoice)
         subscription_id = _extract_invoice_subscription_id(invoice) or "N/A"
 
         if effect_type == "payment_confirmation_client":
+            customer_email = await _invoice_email(invoice)
             sent = await asyncio.to_thread(
                 send_payment_confirmation_email,
                 user_email=customer_email,
@@ -122,6 +122,7 @@ async def deliver_stripe_effect(supabase_client: Any, effect: dict[str, Any]) ->
             )
             _require_delivery(sent, effect_type)
         elif effect_type == "payment_failed_client":
+            customer_email = await _invoice_email(invoice)
             sent = await asyncio.to_thread(
                 send_payment_failed_email,
                 user_email=customer_email,

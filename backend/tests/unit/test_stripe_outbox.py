@@ -255,6 +255,49 @@ async def test_payment_confirmation_uses_resend_idempotency_key(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_payment_admin_alert_does_not_require_customer_email(monkeypatch):
+    invoice = stripe.StripeObject.construct_from(
+        {
+            "id": "in_test_admin",
+            "amount_paid": 1_390,
+            "currency": "eur",
+            "parent": {
+                "type": "subscription_details",
+                "subscription_details": {"subscription": "sub_test_admin"},
+            },
+        },
+        key=None,
+    )
+    send_alert = AsyncMock(return_value=True)
+    monkeypatch.setattr(
+        stripe_outbox.stripe.Invoice,
+        "retrieve",
+        Mock(return_value=invoice),
+    )
+    monkeypatch.setattr(stripe_outbox, "send_admin_alert", send_alert)
+    effect = {
+        "effect_type": "payment_received_admin",
+        "subject_type": "invoice",
+        "subject_id": "in_test_admin",
+        "dedupe_key": "payment-received-admin:in_test_admin",
+        "payload": {},
+    }
+
+    provider_id = await stripe_outbox.deliver_stripe_effect(object(), effect)
+
+    assert provider_id == effect["dedupe_key"]
+    send_alert.assert_awaited_once_with(
+        subject="Paiement reçu — 13.90 EUR",
+        body="Montant: 13.90 EUR\nStripe sub: sub_test_admin\nInvoice ID: in_test_admin",
+        severity="info",
+        skip_throttle=True,
+        category="payment_received",
+        idempotency_key=effect["dedupe_key"],
+        strict=True,
+    )
+
+
+@pytest.mark.asyncio
 async def test_payment_stripe_lookups_run_outside_event_loop(monkeypatch):
     main_thread = threading.get_ident()
     lookup_threads: list[int] = []

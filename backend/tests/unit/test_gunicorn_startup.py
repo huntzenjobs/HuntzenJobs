@@ -5,9 +5,18 @@ from __future__ import annotations
 import os
 import shlex
 import subprocess
+import tomllib
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
+
+
+def test_railway_config_uses_supported_horizontal_scaling() -> None:
+    """Le nombre de réplicas doit être explicite, sans faux autoscaling horizontal."""
+    config = tomllib.loads((BACKEND_DIR / "railway.toml").read_text(encoding="utf-8"))
+
+    assert config["deploy"]["numReplicas"] == 2
+    assert "autoscaling" not in config["deploy"]
 
 
 def test_startup_spreads_worker_recycling_beyond_a_load_probe(tmp_path: Path) -> None:
