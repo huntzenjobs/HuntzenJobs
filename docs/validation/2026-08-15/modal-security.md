@@ -26,6 +26,9 @@ backend/tests/unit/test_modal_cv_storage_security.py : 25 passed
 Ruff ciblé : All checks passed
 py_compile des deux applications Modal : succès
 git diff --check : succès
+Application staging canonique : ap-YwrHEsOHrHU6OjULV692NK, version v4, tag 840bdfa
+Probe HTTP authentifié après déploiement : payload vide -> HTTP 422
+Logs post-déploiement : deux requêtes 422, aucun nouvel AsyncUsageWarning
 PDF synthétique privé signé : completed, résultat persisté, callback réussi
 PDF synthétique corrompu : failed, aucun résultat, erreur persistée
 PDF synthétique > 10 Mio : HTTP 400 avant quota, stockage et traitement

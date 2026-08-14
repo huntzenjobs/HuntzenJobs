@@ -2,8 +2,9 @@
 
 **Date :** 14 août 2026
 **Cible :** backend Railway staging uniquement
-**Révision backend retestée :** `3acb81c938b233bad05f8abc3100022beb617a31`
-**Déploiement Railway :** `32bb5890-1914-49d3-8bb2-3cd370620940`
+**Révision backend finale au palier sûr :** `840bdfaf308eb0bebb9b1512511911aaf3985a5d`
+**Déploiement Railway final :** `2a7a05c7-e5c5-4243-b294-8c876ecc709d`
+**Révision du dernier essai 50 VU :** `3acb81c938b233bad05f8abc3100022beb617a31`
 **Configuration conservée :** Railway `WORKERS=2`
 **Production :** explicitement refusée par le harness
 
@@ -33,9 +34,13 @@ Seuils : erreurs critiques `< 0,5 %`, p95 `< 500 ms`, p99 `< 1 000 ms`.
 | 50 VU cloud, logs corrigés, essai 2 | 15 s | 2 407 | 160,47 | 0 % | 99,43 ms | 118,39 ms | 668,81 / 811,26 ms | Vert |
 | 50 VU cloud, logs corrigés, essai 3 | 15 s | 3 250 | 216,67 | 0 % | 25,45 ms | 36,05 ms | 334,52 / 370,03 ms | Vert |
 | 50 VU local, candidat `3acb81c` | 15 s | 2 589 | 169,60 | 0,88 % (23 timeouts) | 31,05 ms | 115,11 ms | 132,99 / 311,66 ms | Rouge erreurs |
+| 10 VU local, candidat final `840bdfa` | 15 s | 618 | 40,68 | 0 % | 27,60 ms | 111,32 ms | 147,23 / 232,85 ms | Vert |
 
 Les paliers 100, 250 et 500 n'ont pas été relancés sur `3acb81c` : le seuil
 d'arrêt a été franchi à 50 VU. Le service est revenu à `200` après le test.
+Après l'alignement final sur `840bdfa`, seul le palier sûr de 10 VU a été
+rejoué : 618 requêtes, 0 erreur et tous les seuils verts. Aucun palier supérieur
+n'a été lancé puisque le gate 50 VU reste officiellement rouge.
 
 ## Diagnostic et corrections
 
