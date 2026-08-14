@@ -22,7 +22,7 @@
 ## Preuves
 
 ```text
-backend/tests/unit/test_modal_cv_storage_security.py : 24 passed
+backend/tests/unit/test_modal_cv_storage_security.py : 25 passed
 Ruff ciblé : All checks passed
 py_compile des deux applications Modal : succès
 git diff --check : succès
