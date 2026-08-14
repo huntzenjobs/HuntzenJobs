@@ -88,6 +88,15 @@ timeouts applicatifs ont disparu mais le p99 réseau franchit encore le seuil de
 façon intermittente. Les parcours IA et paiement devront être mesurés séparément
 avant toute extrapolation.
 
+## Politique de lancement retenue
+
+Le déploiement technique initial est limité à la capacité démontrée de 10 VU,
+sans campagne publicitaire ni promesse de 5 000 utilisateurs. Ce choix ferme le
+gate de décision de capacité sans masquer le résultat rouge : le palier 50 VU
+reste obligatoire avant toute montée marketing. Les seuils d'arrêt restent
+0,5 % d'erreurs critiques, p95 à 500 ms et p99 à 1 000 ms ; un dépassement
+entraîne l'arrêt de la montée et le maintien du trafic au palier précédent.
+
 ## Preuves brutes
 
 - `load-test-smoke-10.json`
