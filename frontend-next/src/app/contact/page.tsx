@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Mail, MessageSquare, Clock, ChevronRight } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
@@ -20,6 +20,9 @@ const CONTACT_REASON_KEYS = [
   "other",
 ] as const;
 
+type ContactField = "name" | "email" | "message";
+type ContactErrors = Partial<Record<ContactField, string>>;
+
 export default function ContactPage() {
   const t = useTranslations("contact");
   const [form, setForm] = useState({
@@ -30,13 +33,36 @@ export default function ContactPage() {
   });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [errors, setErrors] = useState<ContactErrors>({});
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  const clearFieldError = (field: ContactField) => {
+    setErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.message) {
+    const nextErrors: ContactErrors = {};
+    if (!form.name.trim()) nextErrors.name = t("errors.nameRequired");
+    if (!form.email.trim()) nextErrors.email = t("errors.emailRequired");
+    if (!form.message.trim()) nextErrors.message = t("errors.messageRequired");
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
       toast.error(t("toasts.fillAllFields"));
+      if (nextErrors.name) nameRef.current?.focus();
+      else if (nextErrors.email) emailRef.current?.focus();
+      else messageRef.current?.focus();
       return;
     }
+    setErrors({});
     setLoading(true);
     try {
       const res = await fetch(
@@ -163,7 +189,7 @@ export default function ContactPage() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} noValidate className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
                     {t("formTitle")}
@@ -180,15 +206,31 @@ export default function ContactPage() {
                       {t("labelFullName")}
                     </label>
                     <Input
+                      ref={nameRef}
                       id="name"
                       type="text"
+                      autoComplete="name"
+                      aria-invalid={Boolean(errors.name)}
+                      aria-describedby={
+                        errors.name ? "contact-name-error" : undefined
+                      }
                       placeholder={t("placeholders.name")}
                       value={form.name}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, name: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        setForm((f) => ({ ...f, name: e.target.value }));
+                        clearFieldError("name");
+                      }}
                       required
                     />
+                    {errors.name && (
+                      <p
+                        id="contact-name-error"
+                        role="alert"
+                        className="text-sm text-destructive"
+                      >
+                        {errors.name}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label
@@ -198,15 +240,31 @@ export default function ContactPage() {
                       {t("labelEmail")}
                     </label>
                     <Input
+                      ref={emailRef}
                       id="email"
                       type="email"
+                      autoComplete="email"
+                      aria-invalid={Boolean(errors.email)}
+                      aria-describedby={
+                        errors.email ? "contact-email-error" : undefined
+                      }
                       placeholder={t("placeholders.email")}
                       value={form.email}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, email: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        setForm((f) => ({ ...f, email: e.target.value }));
+                        clearFieldError("email");
+                      }}
                       required
                     />
+                    {errors.email && (
+                      <p
+                        id="contact-email-error"
+                        role="alert"
+                        className="text-sm text-destructive"
+                      >
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -242,15 +300,30 @@ export default function ContactPage() {
                     {t("labelMessage")}
                   </label>
                   <Textarea
+                    ref={messageRef}
                     id="message"
+                    aria-invalid={Boolean(errors.message)}
+                    aria-describedby={
+                      errors.message ? "contact-message-error" : undefined
+                    }
                     placeholder={t("placeholders.message")}
                     rows={6}
                     value={form.message}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, message: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, message: e.target.value }));
+                      clearFieldError("message");
+                    }}
                     required
                   />
+                  {errors.message && (
+                    <p
+                      id="contact-message-error"
+                      role="alert"
+                      className="text-sm text-destructive"
+                    >
+                      {errors.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">

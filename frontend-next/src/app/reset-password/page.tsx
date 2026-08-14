@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -31,6 +31,8 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,11 +40,13 @@ export default function ResetPasswordPage() {
 
     if (password !== confirmPassword) {
       setError(t("mismatchError"));
+      confirmPasswordRef.current?.focus();
       return;
     }
 
     if (password.length < 6) {
       setError(t("tooShortError"));
+      passwordRef.current?.focus();
       return;
     }
 
@@ -126,7 +130,7 @@ export default function ResetPasswordPage() {
         </div>
 
         {error && (
-          <Alert variant="destructive">
+          <Alert id="reset-password-error" variant="destructive">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -148,8 +152,12 @@ export default function ResetPasswordPage() {
             <div className="relative">
               <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
+                ref={passwordRef}
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "reset-password-error" : undefined}
                 placeholder={t("passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -161,7 +169,7 @@ export default function ResetPasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
                 aria-label={
                   showPassword ? t("hidePassword") : t("showPassword")
                 }
@@ -185,8 +193,12 @@ export default function ResetPasswordPage() {
             <div className="relative">
               <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
+                ref={confirmPasswordRef}
                 id="confirmPassword"
                 type={showConfirm ? "text" : "password"}
+                autoComplete="new-password"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "reset-password-error" : undefined}
                 placeholder={t("confirmPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -197,7 +209,7 @@ export default function ResetPasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600"
                 aria-label={showConfirm ? t("hidePassword") : t("showPassword")}
               >
                 {showConfirm ? (

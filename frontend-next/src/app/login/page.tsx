@@ -195,6 +195,7 @@ function LoginForm() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -225,6 +226,7 @@ function LoginForm() {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -235,8 +237,10 @@ function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+                aria-label={
+                  showPassword ? t("hidePassword") : t("showPassword")
+                }
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />

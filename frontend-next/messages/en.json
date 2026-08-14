@@ -1400,6 +1400,11 @@
     "cancellationError": "Error during cancellation"
   },
   "contact": {
+    "errors": {
+      "nameRequired": "Enter your full name.",
+      "emailRequired": "Enter your email address.",
+      "messageRequired": "Describe your request."
+    },
     "toasts": {
       "fillAllFields": "Please fill in all required fields.",
       "sendError": "An error occurred. Please try again or send an email directly."
@@ -2280,6 +2285,7 @@
     "title": "Frequently Asked Questions",
     "subtitle": "Everything you need to know about <strong>HuntZen Jobs</strong>, your job search ally in France",
     "searchPlaceholder": "Search a question about HuntZen Jobs...",
+    "searchLabel": "Search the FAQ",
     "noResults": "No questions found",
     "noResultsHint": "Try another keyword or contact our support",
     "contactSupport": "Contact support",

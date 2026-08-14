@@ -1557,6 +1557,11 @@
     "cancellationError": "Erreur lors de l'annulation"
   },
   "contact": {
+    "errors": {
+      "nameRequired": "Indiquez votre nom complet.",
+      "emailRequired": "Indiquez votre adresse email.",
+      "messageRequired": "Décrivez votre demande."
+    },
     "toasts": {
       "fillAllFields": "Merci de remplir tous les champs obligatoires.",
       "sendError": "Une erreur est survenue. Veuillez réessayer ou envoyer un email directement."
@@ -2272,6 +2277,7 @@
     "title": "Questions Fréquentes",
     "subtitle": "Tout ce que vous devez savoir sur <strong>HuntZen Jobs</strong>, votre allié pour la recherche d'emploi en France",
     "searchPlaceholder": "Rechercher une question sur HuntZen Jobs...",
+    "searchLabel": "Rechercher dans la FAQ",
     "noResults": "Aucune question trouvée",
     "noResultsHint": "Essayez un autre mot-clé ou contactez notre support",
     "contactSupport": "Contactez le support",

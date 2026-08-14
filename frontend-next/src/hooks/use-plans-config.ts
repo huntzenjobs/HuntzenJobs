@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocale } from "next-intl";
 
 const CACHE_TTL = 10 * 1000; // 10 seconds — pre-commercialisation, propagation rapide des changements admin
@@ -57,11 +57,17 @@ export function usePlansConfig() {
   const locale = useLocale();
   const [plans, setPlans] = useState<PlanConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const activeRequestRef = useRef<AbortController | null>(null);
 
   const fetchPlans = useCallback(async () => {
+    activeRequestRef.current?.abort();
+    const controller = new AbortController();
+    activeRequestRef.current = controller;
+
     // Try cache first
     const cached = loadCache(locale);
     if (cached) {
+      if (controller.signal.aborted) return;
       setPlans(cached);
       setIsLoading(false);
       return;
@@ -70,27 +76,30 @@ export function usePlansConfig() {
     try {
       const path = `/api/public/plans${locale !== "fr" ? `?locale=${locale}` : ""}`;
       const url = new URL(path, window.location.origin).toString();
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: controller.signal });
       if (!res.ok) throw new Error("Failed to fetch plans");
       const data: PlanConfig[] = await res.json();
+      if (controller.signal.aborted) return;
       saveCache(locale, data);
       setPlans(data);
     } catch (err) {
+      if (controller.signal.aborted) return;
       console.warn("[usePlansConfig] API unavailable, no fallback:", err);
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) setIsLoading(false);
     }
   }, [locale]);
 
   useEffect(() => {
-    fetchPlans();
+    void fetchPlans();
+    return () => activeRequestRef.current?.abort();
   }, [fetchPlans]);
 
   // Refresh when admin saves plan changes
   useEffect(() => {
     const handleChange = () => {
       clearCache(locale);
-      fetchPlans();
+      void fetchPlans();
     };
     window.addEventListener("subscription-changed", handleChange);
     return () =>

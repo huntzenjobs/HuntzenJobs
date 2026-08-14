@@ -1845,6 +1845,7 @@
     "title": "Preguntas Frecuentes",
     "subtitle": "Todo lo que necesitas saber sobre <strong>HuntZen Jobs</strong>, tu aliado en la busqueda de empleo en Francia",
     "searchPlaceholder": "Buscar una pregunta sobre HuntZen Jobs...",
+    "searchLabel": "Buscar en las preguntas frecuentes",
     "noResults": "No se encontraron preguntas",
     "noResultsHint": "Prueba con otra palabra clave o contacta con nuestro soporte",
     "contactSupport": "Contactar con soporte",
@@ -2012,6 +2013,11 @@
     "cancellationError": "Error during cancellation"
   },
   "contact": {
+    "errors": {
+      "nameRequired": "Indica tu nombre completo.",
+      "emailRequired": "Indica tu dirección de correo electrónico.",
+      "messageRequired": "Describe tu solicitud."
+    },
     "toasts": {
       "fillAllFields": "Please fill in all required fields.",
       "sendError": "An error occurred. Please try again or send an email directly."

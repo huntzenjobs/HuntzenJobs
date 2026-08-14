@@ -1845,6 +1845,7 @@
     "title": "Perguntas Frequentes",
     "subtitle": "Tudo o que voce precisa saber sobre o <strong>HuntZen Jobs</strong>, seu aliado na busca de emprego na Franca",
     "searchPlaceholder": "Buscar uma pergunta sobre o HuntZen Jobs...",
+    "searchLabel": "Pesquisar nas perguntas frequentes",
     "noResults": "Nenhuma pergunta encontrada",
     "noResultsHint": "Tente outra palavra-chave ou entre em contato com nosso suporte",
     "contactSupport": "Entrar em contato com o suporte",
@@ -2012,6 +2013,11 @@
     "cancellationError": "Error during cancellation"
   },
   "contact": {
+    "errors": {
+      "nameRequired": "Indique o seu nome completo.",
+      "emailRequired": "Indique o seu endereço de email.",
+      "messageRequired": "Descreva o seu pedido."
+    },
     "toasts": {
       "fillAllFields": "Please fill in all required fields.",
       "sendError": "An error occurred. Please try again or send an email directly."
