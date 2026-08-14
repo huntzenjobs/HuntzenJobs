@@ -2,12 +2,12 @@
 
 **Date du snapshot :** 14 août 2026
 **Branche de travail :** `codex/stripe-stabilization`
-**Commit distant testé :** `798b97e`
+**Commit distant backend testé :** `4fc00ff`
 **Confidentialité :** aucune valeur de secret n'est conservée dans ce document.
 
 ## Résumé
 
-Une préproduction isolée existe désormais sur Supabase, Railway, Redis, Vercel et Modal, sans copie des données de production ni secret Stripe Live. La branche Supabase persistante a reçu les 128 migrations locales et son journal local/distant est identique. Backend, worker ARQ, frontend et Modal sont publiés depuis `798b97e`; le frontend staging et le backend répondent `200`. Le domaine `staging.huntzenjobs.com` possède un certificat Vercel valide. La livraison email reste bloquée par le transfert Resend et le gate de charge publique n'est pas reproductible à 50 VU.
+Une préproduction isolée existe désormais sur Supabase, Railway, Redis, Vercel et Modal, sans copie des données de production ni secret Stripe Live. La branche Supabase persistante a reçu les 128 migrations locales et son journal local/distant est identique. Le backend est publié depuis `4fc00ff`; worker ARQ, frontend et Modal restent sur `798b97e`, leur dernier commit fonctionnel commun. Le frontend staging et le backend répondent `200`. Le domaine `staging.huntzenjobs.com` possède un certificat Vercel valide. La livraison email reste bloquée par le transfert Resend. À 50 VU, les timeouts sont éliminés mais le p99 public reste ponctuellement hors seuil.
 
 ## Plateformes
 
@@ -15,7 +15,7 @@ Une préproduction isolée existe désormais sur Supabase, Railway, Redis, Verce
 |---|---|---|---|
 | Supabase | Projet HuntZen `ngiakfikbuyugqfqtfwp`, région Europe Ouest, PostgreSQL 17 | Branche persistante `staging`, ref `cxkpbciubsvopgxakgbj`, sans copie des données | 128 migrations présentes ; historique local/distant identique et lint DB sans erreur ni warning. Vercel utilise une clé `sb_publishable`; backend et worker utilisent uniquement la clé nommée `staging_backend_20260814`, l'ancienne clé serveur ayant été supprimée. Le mot de passe PostgreSQL/pooler a été tourné une seconde fois puis propagé à Railway et Modal. Les 8 tests RLS/ACL avec deux identités synthétiques passent. |
 | Stripe | Mode Live, un endpoint Railway actif | Sandbox Test HuntZen, catalogue dédié, endpoint webhook staging distinct | Un seul endpoint Test est actif. L'E2E synthétique Checkout/paiement/ledger/impayé/résiliation/réactivation est vert. Le dry-run final contient 1 abonnement synchronisé, 0 divergence active et 5 abonnements annulés historiques. Deux fixtures génériques actives ont été annulées en Test. Aucun objet Live modifié. |
-| Railway | Backend public version `3.0.0`, health `ok` | Environnement `staging`; backend `ravishing-reprieve` (`8874ad4d-9597-44d3-a899-38b3ea3603f2`), worker `respectful-rebirth` (`5138356a-521c-4c2b-8aeb-f2656a04155f`) | `798b97e` est publié par upload contrôlé sur les deux services avec `WORKERS=2`. Deux workers démarrent, le socket Gunicorn est accessible et le worker charge l'outbox. 10 VU est vert ; 50 VU reste intermittent et hors seuil malgré un essai réversible à quatre workers. |
+| Railway | Backend public version `3.0.0`, health `ok` | Environnement `staging`; backend `ravishing-reprieve` (`17f07bb3-b0ad-47dd-871d-49f1001a7304`), worker `respectful-rebirth` (`5138356a-521c-4c2b-8aeb-f2656a04155f`) | Backend `4fc00ff`, worker `798b97e`, `WORKERS=2`. Deux workers par réplica démarrent et le socket Gunicorn est accessible. Le recyclage groupé et le double access log sont corrigés : cinq sondes cloud post-correction à 50 VU ont 0 erreur ; deux des trois essais finaux passent tous les seuils, un dépasse seulement le p99 public à 1,16 s. |
 | Vercel | Projet `frontend-next` de l'équipe `huntzen-jobs` | Custom Environment `staging`; déploiement `dpl_DcKUobLbxgMitiw4hiLjr5eZmded`; domaine `staging.huntzenjobs.com` | Le déploiement de `798b97e` est `Ready`, aliasé et répond `200`. La clé navigateur a été corrigée en `sb_publishable`; aucun secret serveur n'est exposé au client. |
 | Redis / ARQ | Redis production Railway observé `Online` | Redis dédié `Redis-SU2L` `Online`; service ARQ `respectful-rebirth`, un seul réplica | Le cron minute produit un `job_id` stable et le second appel de la fenêtre est dédupliqué. Le worker charge `stripe_effect_outbox_task`; une injection contrôlée a produit 5 retries et 1 dead-letter avec appel Sentry. |
 | Modal | Deux applications historiques déployées | Environnement `staging` séparé ; application `huntzen-cv-processor-staging`, tag `798b97e`, secret staging, Proxy Token et clé Groq dédiée expirant le 11 novembre 2026 | Texte et PDF privé signé passent à `completed`; PDF corrompu à `failed`; PDF >10 Mio à HTTP 400. Deux replays réels d'une ligne `completed` la laissent strictement inchangée. Toutes les données synthétiques sont nettoyées. |
@@ -66,12 +66,12 @@ Toutes les tables publiques ont désormais la RLS. `stripe_payments`, `recruiter
 1. Dès que la carte du responsable est disponible, souscrire Resend Pro puis revendiquer uniquement les quatre domaines HuntZen via OVH, sans suppression préalable ; vérifier ensuite une livraison vers `delivered@resend.dev` uniquement.
 2. Exécuter le timeout Modal réel contrôlé et créer l'alerte budget ; normal, corrompu, trop lourd et replay durable sont validés.
 3. Planifier la migration majeure Next.js/`next-pwa` : l'audit production est passé de 30 vulnérabilités dont 1 critique à 18 sans critique, mais 15 high transitives exigent une migration majeure et non un `audit fix --force`.
-4. Diagnostiquer les timeouts Railway/proxy qui rendent 50 VU non reproductible avant de revendiquer ce palier.
-5. Avant production, exécuter le préflight doublons/volumétrie de `user_notifications` car l'index unique forward est créé sans `CONCURRENTLY`.
+4. Le goulot Railway identifié est corrigé, mais un p99 public sur trois reste à 1,16 s ; conserver le palier strict en observation avant de revendiquer sa reproductibilité.
+5. Rejouer immédiatement avant production le préflight `user_notifications`. Au snapshot du 14 août : 21 lignes, 49 152 octets avec index, 0 notification `payment_failed`, 0 doublon, 0 verrou en attente et index forward absent ; la création non concurrente est donc de faible risque sur ce volume observé.
 
 ## Validation locale avant staging
 
-- Backend : 179 tests unitaires réussis, dont 18 sur la sécurité et la durabilité Modal.
+- Backend : 181 tests unitaires réussis, dont 18 sur la sécurité et la durabilité Modal, plus les contrats de démarrage Gunicorn et de journalisation du health ping.
 - Ruff ciblé : aucune erreur sur les fichiers Python du lot.
 - Frontend : 302 tests Vitest réussis.
 - TypeScript : `npx tsc --noEmit` réussi.
@@ -89,11 +89,11 @@ Toutes les tables publiques ont désormais la RLS. `stripe_payments`, `recruiter
 - Sentry staging : projet séparé créé ; 4 tests prouvent le tag `staging` et le masquage Replay. Un dead-letter contrôlé a déclenché l'appel Sentry du worker sans erreur d'envoi observée.
 - Resend staging : 2 tests unitaires de sécurité email et 83 tests email/Stripe/recruteur réussis ; Ruff ciblé vert. La clé staging est active sur le worker, mais la livraison est bloquée proprement en retry jusqu'au transfert du domaine.
 - Groq : Sentry production a exposé l'ancien modèle Llama 4 Scout retiré. Le candidat aligne maintenant les noms documentés `FAST_MODEL`/`PRIMARY_MODEL` avec Pydantic et utilise les remplaçants officiels `openai/gpt-oss-20b`/`openai/gpt-oss-120b`. Une clé dédiée à Modal/Railway staging a été créée avec expiration au 11 novembre 2026 ; aucune clé production n'a été réutilisée.
-- Alignement staging : Vercel, Modal et les deux services Railway sont publiés depuis `798b97e`; frontend `Ready`, backend et worker `SUCCESS`, health `200`, tâche outbox présente.
+- Alignement staging : Vercel, Modal et le worker Railway restent sur `798b97e`; le backend Railway est sur `4fc00ff`, qui ne modifie que son démarrage et ses logs HTTP. Frontend `Ready`, backend et worker `SUCCESS`, health `200`, tâche outbox présente.
 - Stripe Test : CLI mise à jour et authentifiée sans clé Live ; un seul endpoint canonique actif. Les cinq types d'événements ont été émis en ordre inversé. Les payloads génériques étrangers au modèle HuntZen sont refusés/classés en échec sans créer de droits ; `invoice.payment_failed` et un `invoice.paid` sans projection applicable sont finalisés.
 - Stripe Test E2E : un compte Supabase synthétique a créé un Checkout Starter via l'API réelle. Paiement Test, projection, ledger, résiliation idempotente, réactivation et impayé ont été vérifiés. L'ordre `subscription.updated(past_due)` avant `invoice.payment_failed` a produit un test rouge, puis les migrations forward `20260813224640` et `20260814083310` ont rendu le test vert avec deux effets et une notification unique par facture. Les objets synthétiques ont été nettoyés.
 - Rotation Supabase staging : backend, worker et Vercel utilisent les clés modernes ; les clés API JWT legacy sont désactivées et la signature HS256 précédente est révoquée. Un compte synthétique créé via la clé secrète moderne s'est connecté via la clé publique moderne, puis a été supprimé.
-- Capacité publique staging : 10 VU vert à 0 erreur ; 50 VU intermittent (timeouts ou p99 hors seuil) avec deux workers et encore rouge à 0,56 % avec quatre workers. La limite stable démontrée est 10 VU sur `/api/health/ping`.
+- Capacité publique staging : 10 VU vert à 0 erreur. Après correction du recyclage Gunicorn et du double access log, cinq sondes cloud à 50 VU ont 0 erreur ; les trois essais finaux ont un p95 inférieur à 347 ms, mais un p99 sur trois atteint 1,16 s. La limite strictement reproductible reste donc 10 VU sur `/api/health/ping`, sans timeout applicatif résiduel démontré à 50 VU.
 - Dépendances frontend : Sentry, DOMPurify, next-intl, UUID, PostCSS et Next 14 ont été mis à jour dans leurs lignes compatibles. Tests, types, lint et build staging sont verts ; l'audit production ne contient plus de vulnérabilité critique.
 
 ## Versions d'outillage
