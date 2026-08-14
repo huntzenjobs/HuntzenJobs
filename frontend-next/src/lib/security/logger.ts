@@ -91,6 +91,15 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
   try {
     const supabase = createClient();
 
+    // La RPC est volontairement réservée aux sessions authentifiées. Les
+    // tentatives anonymes (inscription avec confirmation, login refusé) sont
+    // déjà tracées par Supabase Auth et ne doivent pas générer une erreur RPC.
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+    if (sessionError || !session?.user) return;
+
     // Get user agent if not provided (browser only)
     const finalUserAgent =
       userAgent ||
