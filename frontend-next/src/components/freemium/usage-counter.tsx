@@ -181,12 +181,16 @@ export function UsageCounter({
     }
     case "cv_adapt": {
       const q = quotas?.cv_adapt;
-      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      max = q ? (q.limit === -1 ? Infinity : q.limit) : limits.cv_adapt_per_day;
       break;
     }
     case "cover_letter": {
       const q = quotas?.cover_letter;
-      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      max = q
+        ? q.limit === -1
+          ? Infinity
+          : q.limit
+        : limits.cover_letter_per_day;
       break;
     }
     default:

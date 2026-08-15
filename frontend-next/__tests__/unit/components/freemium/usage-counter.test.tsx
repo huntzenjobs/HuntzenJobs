@@ -16,6 +16,8 @@ const mockSubscriptionContext = {
     assistant_messages_per_day: 10,
     saved_jobs_per_day: 5,
     recruiter_searches_per_day: 1,
+    cv_adapt_per_day: 5,
+    cover_letter_per_day: 10,
   },
   isFreePlan: true,
   plan: "free",
@@ -88,6 +90,28 @@ describe("UsageCounter Component", () => {
       // Progress bar should be visible
       const container = document.querySelector(".bg-gray-100");
       expect(container).toBeInTheDocument();
+    });
+
+    it("utilise les limites du plan quand les quotas CV ne sont pas encore chargés", () => {
+      mockSubscriptionContext.getRemaining.mockImplementation((feature) =>
+        feature === "cv_adapt" ? 5 : 10,
+      );
+
+      render(
+        <>
+          <UsageCounter feature="cv_adapt" />
+          <UsageCounter feature="cover_letter" />
+        </>,
+      );
+
+      expect(screen.getAllByRole("progressbar")[0]).toHaveAttribute(
+        "aria-valuemax",
+        "5",
+      );
+      expect(screen.getAllByRole("progressbar")[1]).toHaveAttribute(
+        "aria-valuemax",
+        "10",
+      );
     });
   });
 
