@@ -221,8 +221,8 @@ export default function CouponsPage() {
             Offrent des jours gratuits sur un plan.
           </p>
         </CardHeader>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
+        <CardContent className="overflow-x-auto p-0">
+          <table className="min-w-[900px] w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30">
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">

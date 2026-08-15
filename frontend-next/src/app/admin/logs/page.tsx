@@ -190,8 +190,8 @@ function PlatformEventsTab() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border overflow-hidden">
-        <table className="w-full text-xs">
+      <div className="overflow-x-auto rounded-md border">
+        <table className="min-w-[640px] w-full text-xs">
           <thead>
             <tr className="bg-muted/30 border-b">
               <th className="w-6 px-2 py-2" />
@@ -407,8 +407,8 @@ function SecurityLogsTab() {
         </span>
       </div>
 
-      <div className="rounded-md border overflow-hidden">
-        <table className="w-full text-xs">
+      <div className="overflow-x-auto rounded-md border">
+        <table className="min-w-[640px] w-full text-xs">
           <thead>
             <tr className="bg-muted/30 border-b">
               <th className="w-6 px-2 py-2" />
@@ -795,13 +795,13 @@ function SecurityIPTab() {
             Bannir
           </Button>
         </div>
-        <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto rounded-md border">
           {bannedIPs.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-6">
               Aucune IP bannie
             </p>
           ) : (
-            <table className="w-full text-xs">
+            <table className="min-w-[640px] w-full text-xs">
               <thead>
                 <tr className="bg-muted/30 border-b">
                   <th className="text-left px-3 py-1.5 font-medium">IP</th>
@@ -869,13 +869,13 @@ function SecurityIPTab() {
             Bloquer
           </Button>
         </div>
-        <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto rounded-md border">
           {blacklistedEmails.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-6">
               Aucun email blacklisté
             </p>
           ) : (
-            <table className="w-full text-xs">
+            <table className="min-w-[640px] w-full text-xs">
               <thead>
                 <tr className="bg-muted/30 border-b">
                   <th className="text-left px-3 py-1.5 font-medium">Email</th>

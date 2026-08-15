@@ -36,11 +36,11 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background lg:flex-row">
       <AdminNav />
       <AdminSearchDialog />
-      <main className="flex-1 overflow-auto">
-        <div className="container mx-auto p-6 max-w-7xl">{children}</div>
+      <main className="min-w-0 flex-1 overflow-auto">
+        <div className="container mx-auto max-w-7xl p-4 sm:p-6">{children}</div>
       </main>
     </div>
   );

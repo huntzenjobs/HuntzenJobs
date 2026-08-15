@@ -10,6 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Trash2, Plus, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -38,6 +48,7 @@ export default function SuggestionsAdminPage() {
   const [newText, setNewText] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const getToken = async () => {
     const supabase = createClient();
@@ -130,15 +141,19 @@ export default function SuggestionsAdminPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cette suggestion ?")) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
       const token = await getToken();
-      const res = await fetch(`${BACKEND_URL}/api/admin/suggestions/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${BACKEND_URL}/api/admin/suggestions/${deleteTarget}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!res.ok) throw new Error();
+      setDeleteTarget(null);
       await fetchSuggestions();
       toast.success("Suggestion supprimée");
     } catch {
@@ -155,11 +170,11 @@ export default function SuggestionsAdminPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-2xl font-bold">Suggestions assistants</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Gérez les questions exemples affichées sur l'écran d'accueil de chaque
+          Gérez les questions exemples affichées sur l’écran d’accueil de chaque
           coach.
         </p>
       </div>
@@ -199,6 +214,11 @@ export default function SuggestionsAdminPage() {
                       className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30"
                     >
                       <Switch
+                        aria-label={
+                          s.is_active
+                            ? "Désactiver la suggestion"
+                            : "Activer la suggestion"
+                        }
                         checked={s.is_active}
                         onCheckedChange={(val) => handleToggle(s.id, val)}
                         className="shrink-0"
@@ -229,6 +249,7 @@ export default function SuggestionsAdminPage() {
                         {editingId === s.id ? (
                           <>
                             <Button
+                              aria-label="Enregistrer la suggestion"
                               size="icon"
                               variant="ghost"
                               className="h-7 w-7 text-green-600"
@@ -237,6 +258,7 @@ export default function SuggestionsAdminPage() {
                               <Check className="h-4 w-4" />
                             </Button>
                             <Button
+                              aria-label="Annuler la modification"
                               size="icon"
                               variant="ghost"
                               className="h-7 w-7"
@@ -247,6 +269,7 @@ export default function SuggestionsAdminPage() {
                           </>
                         ) : (
                           <Button
+                            aria-label="Modifier la suggestion"
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7"
@@ -259,10 +282,11 @@ export default function SuggestionsAdminPage() {
                           </Button>
                         )}
                         <Button
+                          aria-label="Supprimer la suggestion"
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(s.id)}
+                          onClick={() => setDeleteTarget(s.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -273,6 +297,7 @@ export default function SuggestionsAdminPage() {
                   {/* Add new suggestion */}
                   <div className="flex gap-2 pt-2 border-t">
                     <Input
+                      aria-label={`Nouvelle suggestion pour ${assistant.label}`}
                       placeholder="Nouvelle suggestion…"
                       value={newText[assistant.id] || ""}
                       onChange={(e) =>
@@ -301,6 +326,33 @@ export default function SuggestionsAdminPage() {
           );
         })}
       </Tabs>
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette suggestion ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est définitive. La suggestion ne sera plus proposée
+              aux utilisateurs.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              aria-label="Confirmer la suppression"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

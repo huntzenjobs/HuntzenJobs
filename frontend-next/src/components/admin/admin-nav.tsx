@@ -83,8 +83,8 @@ export default function AdminNav() {
   ];
 
   return (
-    <aside className="w-56 min-h-screen border-r bg-card flex flex-col shrink-0">
-      <div className="p-4 border-b">
+    <aside className="flex w-full shrink-0 flex-col border-b bg-card lg:min-h-screen lg:w-56 lg:border-b-0 lg:border-r">
+      <div className="border-b p-3 lg:p-4">
         <Link
           href="/admin/users"
           className="flex items-center gap-2 font-semibold text-sm"
@@ -93,7 +93,10 @@ export default function AdminNav() {
           <span>Admin Panel</span>
         </Link>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
+      <nav
+        aria-label="Administration"
+        className="flex gap-1 overflow-x-auto p-2 lg:flex-1 lg:flex-col lg:overflow-y-auto lg:p-3"
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.href);
@@ -101,8 +104,9 @@ export default function AdminNav() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                "flex shrink-0 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors lg:w-full",
                 isActive
                   ? "bg-primary text-primary-foreground font-medium"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent",
@@ -126,7 +130,7 @@ export default function AdminNav() {
           );
         })}
       </nav>
-      <div className="p-3 border-t">
+      <div className="hidden border-t p-3 lg:block">
         <Link
           href="/jobs"
           className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
