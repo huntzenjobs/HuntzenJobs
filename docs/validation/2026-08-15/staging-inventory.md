@@ -110,9 +110,9 @@ La capacité initiale acceptée est 10 VU sans campagne publicitaire. Le palier 
 ## Versions d'outillage
 
 - Modal CLI locale : `1.5.4`.
-- Vercel CLI globale : `59.0.0` (une mise à jour vers `59.1.3` est recommandée avant la promotion finale).
+- Vercel CLI globale : `59.1.3`.
 - Railway CLI globale : `5.41.1`.
 - Stripe CLI globale : `1.50.0`.
 - Supabase CLI locale : `2.114.0`.
 
-Les CLI Supabase et Stripe sont à jour pour les dernières opérations staging. La CLI Vercel a une mise à jour mineure disponible (`59.0.0` vers `59.1.3`) ; elle n'a pas bloqué le build ni le déploiement `READY`.
+Les CLI Supabase, Stripe et Vercel sont à jour pour les dernières opérations staging. La CLI Vercel a été portée de `59.0.0` à `59.1.3` après le déploiement `READY`.
