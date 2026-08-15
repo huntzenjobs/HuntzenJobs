@@ -265,7 +265,7 @@ export function SearchFormInline({
 
     if (!canUse("job_search")) {
       const remaining = getRemaining("job_search");
-      toast.error(`Limite de recherches atteinte. Rechargez à ${remaining}`);
+      toast.error(t("searchLimitReached", { count: remaining }));
       return;
     }
 

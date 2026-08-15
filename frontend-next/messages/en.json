@@ -1797,7 +1797,8 @@
     "workSchedule_evening": "Evening (5pm-10pm)",
     "workSchedule_night": "Night (10pm-6am)",
     "workSchedule_fulltime": "Full-time",
-    "allSchedules": "All schedules"
+    "allSchedules": "All schedules",
+    "searchLimitReached": "Limit reached: {count} search remaining today. Upgrade to Pro to continue."
   },
   "advancedFilters": {
     "title": "Advanced filters",

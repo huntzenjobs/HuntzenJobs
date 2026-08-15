@@ -1560,7 +1560,8 @@
     "workSchedule_evening": "Noite (17h-22h)",
     "workSchedule_night": "Madrugada (22h-6h)",
     "workSchedule_fulltime": "Tempo integral",
-    "allSchedules": "Todos os horarios"
+    "allSchedules": "Todos os horarios",
+    "searchLimitReached": "Limite atingido: resta {count} pesquisa hoje. Atualize para Pro para continuar."
   },
   "advancedFilters": {
     "title": "Filtros Avançados",
