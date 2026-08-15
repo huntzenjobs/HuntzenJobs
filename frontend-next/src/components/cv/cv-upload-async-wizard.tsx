@@ -804,7 +804,7 @@ export function CVUploadAsyncWizard({
       transition={{ duration: 0.3 }}
     >
       {/* Method Choice */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-3 sm:gap-4 mb-6">
         <button
           onClick={() => handleMethodChange("file")}
           className={`flex-1 p-4 rounded-lg border-2 transition-all ${
@@ -841,7 +841,7 @@ export function CVUploadAsyncWizard({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={`
-                border-2 border-dashed rounded-lg p-12 text-center transition-colors
+                border-2 border-dashed rounded-lg p-6 sm:p-12 text-center transition-colors
                 ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
               `}
             >
@@ -850,14 +850,14 @@ export function CVUploadAsyncWizard({
                 Glissez-déposez votre CV ici
               </p>
               <p className="text-gray-500 mb-4">ou</p>
-              <label className="inline-block">
+              <label className="inline-block max-w-full">
                 <input
                   type="file"
                   accept=".pdf"
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <span className="px-6 py-3 bg-huntzen-blue text-white rounded-lg cursor-pointer hover:bg-huntzen-blue/90 transition-colors">
+                <span className="inline-flex min-h-11 max-w-full items-center justify-center rounded-lg bg-huntzen-blue px-4 py-3 text-center text-white transition-colors cursor-pointer hover:bg-huntzen-blue/90 sm:px-6">
                   Sélectionner un fichier PDF
                 </span>
               </label>

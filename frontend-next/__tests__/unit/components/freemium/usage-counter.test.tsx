@@ -125,6 +125,24 @@ describe("UsageCounter Component", () => {
     });
   });
 
+  describe("Contraste", () => {
+    it("utilise un texte sombre par défaut sur les surfaces claires", () => {
+      render(<UsageCounter feature="ats_score" />);
+
+      expect(
+        screen.getByText(/features\.atsScore\.label/i).parentElement,
+      ).toHaveClass("text-slate-700");
+    });
+
+    it("conserve un texte clair dans le résumé de la sidebar", () => {
+      render(<UsageSummary appearance="dark" />);
+
+      expect(
+        screen.getByText(/features\.jobSearch\.label/i).parentElement,
+      ).toHaveClass("text-white/90");
+    });
+  });
+
   describe("Unlimited features", () => {
     it("returns null for unlimited features on paid plans", () => {
       mockSubscriptionContext.isFreePlan = false;

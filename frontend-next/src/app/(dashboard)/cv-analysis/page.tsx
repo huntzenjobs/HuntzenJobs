@@ -39,19 +39,21 @@ export default function CVAnalysisPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-start justify-between gap-4 bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl border border-slate-200 shadow-sm"
+        className="flex flex-col items-start justify-between gap-4 bg-gradient-to-br from-white to-slate-50 p-4 sm:flex-row sm:p-8 rounded-2xl border border-slate-200 shadow-sm"
       >
         <div className="flex-1">
-          <div className="flex items-center gap-4 mb-3">
+          <div className="flex items-center gap-3 sm:gap-4 mb-3">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30"
             >
               <FileText className="w-7 h-7 text-white" />
             </motion.div>
-            <h1 className="text-4xl font-black text-slate-900">{t("title")}</h1>
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900">
+              {t("title")}
+            </h1>
           </div>
         </div>
 
@@ -61,10 +63,21 @@ export default function CVAnalysisPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
+            className="w-full sm:w-auto"
           >
-            <div className="flex flex-col gap-2">
-              <UsageCounter feature="ats_score" />
-              <UsageCounter feature="matching_score" />
+            <div className="flex gap-2 sm:flex-col">
+              <div className="sm:hidden">
+                <UsageCounter feature="ats_score" compact />
+              </div>
+              <div className="sm:hidden">
+                <UsageCounter feature="matching_score" compact />
+              </div>
+              <div className="hidden sm:block">
+                <UsageCounter feature="ats_score" />
+              </div>
+              <div className="hidden sm:block">
+                <UsageCounter feature="matching_score" />
+              </div>
             </div>
           </motion.div>
         )}
@@ -86,7 +99,7 @@ export default function CVAnalysisPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm"
+          className="bg-white p-4 sm:p-8 rounded-2xl border border-slate-200 shadow-sm"
         >
           <CVUploadAsyncWizard
             canUse={canUse}
