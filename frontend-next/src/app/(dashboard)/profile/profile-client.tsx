@@ -309,7 +309,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl border border-gray-200 shadow-sm"
+        className="bg-gradient-to-br from-white to-gray-50 p-4 sm:p-8 rounded-2xl border border-gray-200 shadow-sm"
       >
         <div className="flex items-center gap-4 mb-3">
           <motion.div
@@ -320,7 +320,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
           >
             <UserCircle className="w-7 h-7 text-white" />
           </motion.div>
-          <h1 className="text-4xl font-black text-black">
+          <h1 className="text-3xl sm:text-4xl font-black text-black">
             {tProfile("pageTitle")}
           </h1>
         </div>
@@ -337,7 +337,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
         className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm"
       >
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
+          <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-none border-b bg-transparent p-0 [&_[data-slot=tabs-trigger]]:shrink-0 max-sm:[&_[data-slot=tabs-trigger]]:!px-4">
             <TabsTrigger
               value="profile"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"
@@ -395,7 +395,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
           </TabsList>
 
           {/* Profile Tab */}
-          <TabsContent value="profile" className="p-8 space-y-8">
+          <TabsContent value="profile" className="p-4 sm:p-8 space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -428,7 +428,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
           </TabsContent>
 
           {/* Subscription Tab */}
-          <TabsContent value="subscription" className="p-8">
+          <TabsContent value="subscription" className="p-4 sm:p-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -561,7 +561,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
           </TabsContent>
 
           {/* Settings Tab */}
-          <TabsContent value="settings" className="p-8">
+          <TabsContent value="settings" className="p-4 sm:p-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -588,7 +588,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             </motion.div>
           </TabsContent>
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="p-8">
+          <TabsContent value="notifications" className="p-4 sm:p-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -599,7 +599,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="progression" className="p-8">
+          <TabsContent value="progression" className="p-4 sm:p-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -618,7 +618,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="referral" className="p-8">
+          <TabsContent value="referral" className="p-4 sm:p-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

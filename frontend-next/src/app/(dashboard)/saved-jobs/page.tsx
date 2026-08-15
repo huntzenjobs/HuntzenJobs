@@ -245,6 +245,7 @@ export default function SavedJobsPage() {
             <Input
               type="text"
               placeholder={t("searchPlaceholder")}
+              aria-label={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 text-base border-slate-300 focus:border-[#00D9FF] focus:ring-[#00D9FF]"

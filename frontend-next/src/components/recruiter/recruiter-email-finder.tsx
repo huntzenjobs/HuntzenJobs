@@ -108,7 +108,7 @@ export function RecruiterEmailFinder({
         );
         return;
       }
-      if (!res.ok) throw new Error("Erreur de recherche");
+      if (!res.ok) throw new Error("recruiter_search_failed");
       const data = await res.json();
       const recruiters = Array.isArray(data.recruiters) ? data.recruiters : [];
       const allContacts = Array.isArray(data.all_contacts)
@@ -124,7 +124,7 @@ export function RecruiterEmailFinder({
       setResults(baseResults);
       setSearched(true);
     } catch {
-      setError("Impossible de contacter le service. Réessayez.");
+      setError(t("serviceError"));
     } finally {
       setLoading(false);
     }
@@ -254,12 +254,13 @@ export function RecruiterEmailFinder({
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder={t("companyPlaceholder")}
+              aria-label={t("companyPlaceholder")}
               className="flex-1"
             />
           </div>
           <Button onClick={handleSearch} disabled={loading || !company.trim()}>
             <Search className="w-4 h-4 mr-2" />
-            {loading ? "Recherche..." : "Rechercher"}
+            {loading ? t("searching") : t("search")}
           </Button>
         </div>
 
@@ -350,8 +351,7 @@ export function RecruiterEmailFinder({
 
         {searched && (
           <p className="text-xs text-muted-foreground border-t pt-3">
-            Ces emails proviennent de sources publiques. Respectez le RGPD dans
-            vos communications.
+            {t("complianceNotice")}
           </p>
         )}
       </TabsContent>
@@ -416,6 +416,7 @@ export function RecruiterEmailFinder({
                       size="icon"
                       onClick={() => handleDeleteSaved(contact.id)}
                       title={t("remove")}
+                      aria-label={t("remove")}
                     >
                       <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>

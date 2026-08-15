@@ -23,4 +23,15 @@ describe("catalogues de traduction", () => {
   ])("conserve une parité exacte entre fr et %s", (_locale, messages) => {
     expect(flattenKeys(messages).sort()).toEqual(flattenKeys(fr).sort());
   });
+
+  it("localise les libellés visibles du dashboard candidat", () => {
+    expect(fr.dashboardFooter.privacy).toBe("Confidentialité");
+    expect(fr.dashboardFooter.terms).toBe("Conditions");
+    expect(es.dashboard.recruiterContact.finder.companyPlaceholder).toBe(
+      "Nombre de la empresa",
+    );
+    expect(pt.dashboard.recruiterContact.finder.companyPlaceholder).toBe(
+      "Nome da empresa",
+    );
+  });
 });

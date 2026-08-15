@@ -1166,8 +1166,12 @@
         "phonePlaceholder": "+33 6 12 34 56 78"
       },
       "finder": {
-        "companyPlaceholder": "Company name",
+        "companyPlaceholder": "Nombre de la empresa",
         "cityPlaceholder": "Ciudad (opcional)",
+        "search": "Buscar",
+        "searching": "Buscando...",
+        "serviceError": "No se puede contactar con el servicio. Inténtalo de nuevo.",
+        "complianceNotice": "Estas direcciones de correo proceden de fuentes públicas. Respeta la normativa de protección de datos al utilizarlas.",
         "quotaReached": "Cuota alcanzada ({count} búsquedas/día en plan gratuito). Pasa a Pro para acceso ilimitado.",
         "searchTab": "Búsqueda",
         "savedTab": "Contactos guardados",

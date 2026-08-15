@@ -1201,6 +1201,10 @@
       "finder": {
         "companyPlaceholder": "Company name",
         "cityPlaceholder": "City (optional)",
+        "search": "Search",
+        "searching": "Searching...",
+        "serviceError": "The service is unavailable. Please try again.",
+        "complianceNotice": "These email addresses come from public sources. Follow applicable data-protection rules when contacting them.",
         "quotaReached": "Quota reached ({count} searches/day on free plan). Upgrade to Pro for unlimited access.",
         "searchTab": "Search",
         "savedTab": "Saved contacts",
