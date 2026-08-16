@@ -1946,7 +1946,7 @@ export default function JobsPage() {
                 transition={{ delay: 0.2 }}
                 className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-emerald-50 to-green-50 p-4 md:p-6 rounded-2xl border border-emerald-200/50 shadow-sm"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:gap-4">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -1955,7 +1955,7 @@ export default function JobsPage() {
                   >
                     <CheckCircle className="w-6 h-6 text-white" />
                   </motion.div>
-                  <div>
+                  <div className="min-w-0 flex-1 sm:flex-none">
                     <div className="flex items-center gap-2">
                       <h2 className="text-2xl font-black text-emerald-700">
                         {jobs.length === 1
@@ -2016,7 +2016,7 @@ export default function JobsPage() {
                       searchQuery.refetch();
                     }}
                     disabled={searchQuery.isFetching}
-                    className="ml-4 gap-2 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400"
+                    className="gap-2 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 sm:ml-4"
                     title={t("refreshTitle")}
                   >
                     <RefreshCw

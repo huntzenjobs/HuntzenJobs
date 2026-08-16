@@ -36,9 +36,18 @@ export function useAuthenticatedFetch() {
       // Build headers
       const headers: Record<string, string> = {};
 
+      let accessToken = session?.access_token;
+      if (!skipAuth && !accessToken) {
+        accessToken =
+          (await tokenRefreshService.getValidToken()) ?? undefined;
+        if (!accessToken) {
+          throw new Error("Session expirée - veuillez vous reconnecter");
+        }
+      }
+
       // Add Authorization header if session exists and not skipped
-      if (!skipAuth && session?.access_token) {
-        headers["Authorization"] = `Bearer ${session.access_token}`;
+      if (!skipAuth && accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
       }
 
       // Preserve existing headers
