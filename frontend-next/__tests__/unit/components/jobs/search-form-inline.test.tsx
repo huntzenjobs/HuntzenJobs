@@ -1,12 +1,13 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SearchFormInline } from "@/components/jobs/search-form-inline";
 
-const { toastError, canUse } = vi.hoisted(() => ({
+const { toastError, canUse, getCountries } = vi.hoisted(() => ({
   toastError: vi.fn(),
   canUse: vi.fn(() => true),
+  getCountries: vi.fn(),
 }));
 
 vi.mock("next-intl", () => ({
@@ -31,9 +32,7 @@ vi.mock("@/contexts/subscription-context", () => ({
 
 vi.mock("@/lib/api/huntzen-client", () => ({
   huntzenApi: {
-    getCountries: vi.fn().mockResolvedValue([
-      { name: "France", code: "fr" },
-    ]),
+    getCountries,
     searchCities: vi.fn().mockResolvedValue([]),
   },
 }));
@@ -42,6 +41,8 @@ describe("SearchFormInline", () => {
   beforeEach(() => {
     canUse.mockReturnValue(true);
     toastError.mockClear();
+    getCountries.mockReset();
+    getCountries.mockResolvedValue([{ name: "France", code: "fr" }]);
   });
 
   it("conserve une recherche populaire pendant la sélection du pays", async () => {
@@ -96,6 +97,33 @@ describe("SearchFormInline", () => {
 
     expect(toastError).toHaveBeenCalledWith(
       "searchForm.searchLimitReached:0",
+    );
+  });
+
+  it("recherche immédiatement après la sélection d'un pays", async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    const { container } = render(<SearchFormInline onSearch={onSearch} />);
+
+    await user.type(
+      container.querySelector("#query-inline") as HTMLInputElement,
+      "Data Engineer",
+    );
+    const countryInputs = container.querySelectorAll(
+      'input[placeholder="searchForm.countryPlaceholder"]',
+    );
+    await user.type(countryInputs[0] as HTMLInputElement, "France");
+    const franceOption = await screen.findByRole("option", { name: "France" });
+    getCountries.mockImplementation(() => new Promise(() => {}));
+    await user.click(franceOption);
+
+    const desktopButton = container.querySelector(
+      ".hidden.md\\:block button.bg-huntzen-blue",
+    );
+    await user.click(desktopButton as HTMLButtonElement);
+
+    expect(onSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ query: "Data Engineer", country: "fr" }),
     );
   });
 });
