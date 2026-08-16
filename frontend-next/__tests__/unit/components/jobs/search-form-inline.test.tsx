@@ -44,7 +44,8 @@ describe("SearchFormInline", () => {
     toastError.mockClear();
   });
 
-  it("synchronise une recherche populaire sur les champs desktop et mobile", () => {
+  it("conserve une recherche populaire pendant la sélection du pays", async () => {
+    const user = userEvent.setup();
     const { container, rerender } = render(
       <SearchFormInline onSearch={vi.fn()} initialQuery="" />,
     );
@@ -55,6 +56,18 @@ describe("SearchFormInline", () => {
         initialQuery="Data Scientist"
       />,
     );
+
+    expect(container.querySelector("#query-inline")).toHaveValue(
+      "Data Scientist",
+    );
+    expect(container.querySelector("#query-mobile")).toHaveValue(
+      "Data Scientist",
+    );
+
+    const countryInputs = container.querySelectorAll(
+      'input[placeholder="searchForm.countryPlaceholder"]',
+    );
+    await user.type(countryInputs[1] as HTMLInputElement, "France");
 
     expect(container.querySelector("#query-inline")).toHaveValue(
       "Data Scientist",

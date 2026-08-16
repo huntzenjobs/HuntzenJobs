@@ -12,6 +12,7 @@ Pipeline:
 Author: HuntZen
 """
 
+import asyncio
 import json
 import logging
 from typing import Any
@@ -51,6 +52,67 @@ class CVAdapterAgent(BaseAgent):
 
         # Initialize sub-agents
         self._init_sub_agents()
+
+    @staticmethod
+    def _is_json_validation_error(error: Exception) -> bool:
+        """Return whether Groq rejected the provider-side JSON validation."""
+        body = getattr(error, "body", None)
+        if isinstance(body, dict):
+            error_body = body.get("error", {})
+            if isinstance(error_body, dict):
+                return error_body.get("code") == "json_validate_failed"
+        return "json_validate_failed" in str(error)
+
+    async def _create_json_completion(
+        self,
+        *,
+        model: str,
+        messages: list[dict[str, str]],
+        temperature: float,
+    ) -> dict[str, Any]:
+        """Create JSON with one safe fallback when provider JSON mode rejects it."""
+        request = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+
+        try:
+            response = await asyncio.to_thread(
+                self.groq_client.chat.completions.create,
+                **request,
+                response_format={"type": "json_object"},
+            )
+            parsed = self._parse_json(response.choices[0].message.content or "")
+            if parsed is not None:
+                return parsed
+            logger.warning(
+                "[%s] Provider JSON mode returned unparseable content; retrying once",
+                self.name,
+            )
+        except Exception as error:
+            if not self._is_json_validation_error(error):
+                raise
+            logger.warning(
+                "[%s] Provider JSON validation failed; retrying once without JSON mode",
+                self.name,
+            )
+
+        fallback_messages = [
+            *messages,
+            {
+                "role": "user",
+                "content": "Return only the requested valid JSON object, without Markdown or commentary.",
+            },
+        ]
+        response = await asyncio.to_thread(
+            self.groq_client.chat.completions.create,
+            **{**request, "messages": fallback_messages},
+        )
+        parsed = self._parse_json(response.choices[0].message.content or "")
+        if parsed is None:
+            raise ValueError("Groq returned invalid JSON after one fallback attempt")
+        return parsed
 
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
@@ -149,7 +211,9 @@ class CVAdapterAgent(BaseAgent):
 
             # Phase 5: MERGE - Combine factual data with rewritten content
             logger.info(f"[{self.name}] Phase 5: Merging factual data with improved content...")
-            final_cv = self._merge_cv_data(original_data, rewritten_content, job_analysis, cv_mapping)
+            final_cv = await self._merge_cv_data(
+                original_data, rewritten_content, job_analysis, cv_mapping
+            )
 
             # Mark CV as HuntZen-certified (used by PDF template + ATS scorer)
             final_cv["huntzen_certified"] = True
@@ -254,17 +318,15 @@ Return a JSON object:
 
 OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
 
-            response = self.groq_client.chat.completions.create(
+            result = await self._create_json_completion(
                 model=settings.llm_model_fast,
                 messages=[
                     {"role": "system", "content": "You are a precise data extractor. Extract CV information EXACTLY as written. Never modify, translate, or improve any data."},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.0,  # Zero temperature for exact extraction
-                response_format={"type": "json_object"},
             )
 
-            result = json.loads(response.choices[0].message.content)
             result["success"] = True
             return result
 
@@ -391,17 +453,15 @@ Return JSON:
     ]
 }}"""
 
-            response = self.groq_client.chat.completions.create(
+            result = await self._create_json_completion(
                 model=settings.llm_model_powerful,
                 messages=[
                     {"role": "system", "content": "You improve CV bullet points and descriptions. You NEVER change factual information like dates, company names, or titles. You ONLY improve the wording to be more impactful and include relevant keywords."},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.4,
-                response_format={"type": "json_object"},
             )
 
-            result = json.loads(response.choices[0].message.content)
             result["success"] = True
             return result
 
@@ -409,7 +469,7 @@ Return JSON:
             logger.error(f"[{self.name}] Bullet rewriting failed: {e}")
             return {"success": False, "error": str(e)}
 
-    def _merge_cv_data(
+    async def _merge_cv_data(
         self,
         original_data: dict,
         rewritten_content: dict,
@@ -487,7 +547,9 @@ Return JSON:
             final_cv["projects"].append(merged_proj)
 
         # Inject missing skills (this is the only "addition" we allow)
-        final_cv = self._inject_missing_skills(final_cv, cv_mapping, job_analysis)
+        final_cv = await self._inject_missing_skills(
+            final_cv, cv_mapping, job_analysis
+        )
 
         logger.info(f"[{self.name}] Merged CV with {len(final_cv['experiences'])} experiences, {len(final_cv['projects'])} projects")
 
@@ -519,17 +581,15 @@ Return a JSON object with:
     "remote_policy": "remote" | "hybrid" | "onsite" | "unknown"
 }}"""
 
-            response = self.groq_client.chat.completions.create(
+            result = await self._create_json_completion(
                 model=settings.llm_model_fast,
                 messages=[
                     {"role": "system", "content": load_prompt("cv_adapter_job_analyzer.txt")},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.1,
-                response_format={"type": "json_object"},
             )
 
-            result = json.loads(response.choices[0].message.content)
             result["success"] = True
             return result
 
@@ -596,17 +656,15 @@ Return a JSON object with:
     "strengths": ["strength1", "strength2"]
 }}"""
 
-            response = self.groq_client.chat.completions.create(
+            result = await self._create_json_completion(
                 model=settings.llm_model_fast,
                 messages=[
                     {"role": "system", "content": load_prompt("cv_adapter_cv_mapper.txt")},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.1,
-                response_format={"type": "json_object"},
             )
 
-            result = json.loads(response.choices[0].message.content)
             result["success"] = True
             return result
 
@@ -747,20 +805,19 @@ Return a JSON object with this exact structure:
 
 IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'intérêt) from the original CV!"""
 
-            response = self.groq_client.chat.completions.create(
+            cv_data = await self._create_json_completion(
                 model=settings.llm_model_powerful,
                 messages=[
                     {"role": "system", "content": load_prompt("cv_adapter_rewriter.txt")},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.4,
-                response_format={"type": "json_object"},
             )
 
-            cv_data = json.loads(response.choices[0].message.content)
-
             # FORCE ADD missing skills - LLM won't do it, so we do it ourselves
-            cv_data = self._inject_missing_skills(cv_data, cv_mapping, job_analysis)
+            cv_data = await self._inject_missing_skills(
+                cv_data, cv_mapping, job_analysis
+            )
 
             return {"success": True, "cv_data": cv_data}
 
@@ -779,7 +836,7 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
             return skill.get("name", "") or skill.get("skill", "") or ""
         return str(skill)
 
-    def _inject_missing_skills(
+    async def _inject_missing_skills(
         self, cv_data: dict, cv_mapping: dict, job_analysis: dict
     ) -> dict:
         """
@@ -839,7 +896,7 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
         all_skills = all_current_skills + skills_to_add
 
         # Now categorize ALL skills dynamically using LLM
-        categorized_skills = self._categorize_skills_dynamically(
+        categorized_skills = await self._categorize_skills_dynamically(
             all_skills=all_skills,
             job_title=job_title,
             industry=industry,
@@ -849,7 +906,7 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
         cv_data["skills"] = categorized_skills
         return cv_data
 
-    def _categorize_skills_dynamically(
+    async def _categorize_skills_dynamically(
         self,
         all_skills: list,
         job_title: str,
@@ -890,17 +947,14 @@ Return JSON with category names as keys and skill arrays as values:
     "Langues": ["Français", "Anglais"]
 }}"""
 
-            response = self.groq_client.chat.completions.create(
+            categorized = await self._create_json_completion(
                 model=settings.llm_model_fast,
                 messages=[
                     {"role": "system", "content": "You categorize skills into relevant groups for CVs. Create categories that make sense for the specific job type."},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.2,
-                response_format={"type": "json_object"},
             )
-
-            categorized = json.loads(response.choices[0].message.content)
             logger.info(f"[{self.name}] Skills categorized into: {list(categorized.keys())}")
             return categorized
 
@@ -956,17 +1010,15 @@ Return a JSON object:
     "sanitized_cv": {{ ... }} // Only if issues found - corrected version
 }}"""
 
-            response = self.groq_client.chat.completions.create(
+            result = await self._create_json_completion(
                 model=settings.llm_model_fast,
                 messages=[
                     {"role": "system", "content": load_prompt("cv_adapter_fact_checker.txt")},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.0,
-                response_format={"type": "json_object"},
             )
-
-            return json.loads(response.choices[0].message.content)
+            return result
 
         except Exception as e:
             logger.error(f"[{self.name}] Fact check failed: {e}")
@@ -1018,17 +1070,14 @@ Language: {language.upper()}
 
 Return JSON with: personal_info, summary, experiences, education, skills, certifications"""
 
-            response = self.groq_client.chat.completions.create(
+            cv_data = await self._create_json_completion(
                 model=settings.llm_model_fast,
                 messages=[
                     {"role": "system", "content": "You adapt CVs to job offers. Keep all facts accurate. Use job keywords."},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.3,
-                response_format={"type": "json_object"},
             )
-
-            cv_data = json.loads(response.choices[0].message.content)
             return {"success": True, "cv_data": cv_data}
 
         except Exception as e:
@@ -1135,17 +1184,14 @@ City: {personal_info.get('city', personal_info.get('location', ''))}
 
 Return a JSON object with the cover letter content."""
 
-            response = self.groq_client.chat.completions.create(
+            result = await self._create_json_completion(
                 model=settings.llm_model_powerful,
                 messages=[
                     {"role": "system", "content": load_prompt("cover_letter_generator.txt")},
                     {"role": "user", "content": task}
                 ],
                 temperature=0.5,
-                response_format={"type": "json_object"},
             )
-
-            result = json.loads(response.choices[0].message.content)
 
             # Override header with user-provided info (LLM might not use them correctly)
             if "header" not in result:
