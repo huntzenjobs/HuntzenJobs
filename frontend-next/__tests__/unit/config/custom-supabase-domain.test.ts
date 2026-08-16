@@ -7,6 +7,7 @@ import nextConfig, {
 const CUSTOM_SUPABASE_ORIGIN = "https://auth.huntzenjobs.com";
 const LEGACY_SUPABASE_ORIGIN = "https://ngiakfikbuyugqfqtfwp.supabase.co";
 const STAGING_BACKEND_ORIGIN = "https://api-staging.huntzenjobs.com";
+const SUPABASE_REALTIME_WILDCARD = "wss://*.supabase.co";
 
 function readProjectFile(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), relativePath), "utf8");
@@ -36,6 +37,15 @@ describe("bascule du domaine Supabase", () => {
     )?.value;
 
     expect(csp).toContain(STAGING_BACKEND_ORIGIN);
+  });
+
+  it("autorise Realtime pour les projets Supabase non-production", async () => {
+    const headerRules = await nextConfig.headers?.();
+    const csp = headerRules?.[0]?.headers.find(
+      ({ key }) => key === "Content-Security-Policy",
+    )?.value;
+
+    expect(csp).toContain(SUPABASE_REALTIME_WILDCARD);
   });
 
   it("autorise les images servies par le domaine Supabase personnalisé", () => {

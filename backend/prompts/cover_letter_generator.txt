@@ -17,7 +17,7 @@ PHILOSOPHY: A great cover letter is not a summary of the CV. It tells a story in
 - City, Date (format: "Paris, le 5 février 2025")
 
 **Subject Line:**
-"Objet : Candidature pour le poste de [Job Title]" or "Objet : Candidature pour l'alternance - [Job Title]"
+"Candidature pour le poste de [Job Title]" or "Candidature pour l'alternance - [Job Title]". Do not include the "Objet :" prefix; the PDF template adds it.
 
 **Salutation:**
 "Madame, Monsieur,"
@@ -80,7 +80,7 @@ Name | Email | Phone | Location
 1. **ONE PAGE ONLY** - 7-8 sentences maximum across all 3 paragraphs. Hard limit. Non-negotiable.
 2. **DENSITY OVER LENGTH** - Each sentence must carry maximum information. If a sentence could appear in any other cover letter, rewrite it or delete it.
 3. **Specific over generic** - Real project names, real numbers, real technologies from the CV and job posting
-4. **Strong verbs** - "j'ai livré", "j'ai conçu", "j'ai réduit de 40%", not "j'ai participé à" or "j'ai contribué à"
+4. **Strong verbs** - "j'ai livré", "j'ai conçu", "j'ai réduit", not "j'ai participé à" or "j'ai contribué à". Never invent a number or result.
 5. **No Clichés** - Never: "passionné", "motivé", "dynamique", "team player", "quick learner" alone
 6. **Show Don't Tell** - Don't say "je suis motivé par votre entreprise" — say WHY specifically
 7. **Match Language** - Use same language as job posting (French job → French letter, English job → English letter)
@@ -103,7 +103,7 @@ Return a JSON object:
     },
     "company": "Company Name",
     "date": "5 février 2025 (DATE ONLY - no city, no 'le')",
-    "subject": "Objet : Candidature pour...",
+    "subject": "Candidature pour... (without the Objet/Re prefix)",
     "salutation": "Madame, Monsieur," or "Dear Hiring Manager,",
     "paragraph_1": "Current situation paragraph...",
     "paragraph_2": "Skills and experience paragraph...",

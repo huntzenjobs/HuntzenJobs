@@ -6,7 +6,7 @@ Orchestrates sub-agents for intelligent CV adaptation to job offers.
 Pipeline:
 1. JobAnalyzer - Extracts requirements, keywords, tone from job posting
 2. CVMapper - Maps CV experiences to job requirements with relevance scores
-3. CVRewriter - Rewrites content using job's language, adds metrics
+3. CVRewriter - Rewrites content using job vocabulary without inventing facts
 4. FactChecker - Ensures nothing is invented, stays truthful
 
 Author: HuntZen
@@ -15,6 +15,8 @@ Author: HuntZen
 import asyncio
 import json
 import logging
+import re
+import unicodedata
 from typing import Any
 
 from groq import Groq
@@ -113,6 +115,56 @@ class CVAdapterAgent(BaseAgent):
         if parsed is None:
             raise ValueError("Groq returned invalid JSON after one fallback attempt")
         return parsed
+
+    @staticmethod
+    def _missing_factual_sections(
+        cv_text: str,
+        extracted_data: dict[str, Any],
+    ) -> list[str]:
+        """Détecte une extraction structurée manifestement incomplète."""
+        normalized = "".join(
+            character
+            for character in unicodedata.normalize("NFKD", cv_text.upper())
+            if not unicodedata.combining(character)
+        )
+        markers = {
+            "experiences": (
+                "EXPERIENCE PROFESSIONNELLE",
+                "EXPERIENCES PROFESSIONNELLES",
+                "WORK EXPERIENCE",
+                "EMPLOYMENT HISTORY",
+            ),
+            "education": ("FORMATION", "EDUCATION"),
+        }
+        return [
+            section
+            for section, headings in markers.items()
+            if any(heading in normalized for heading in headings)
+            and not extracted_data.get(section)
+        ]
+
+    @staticmethod
+    def _safe_improved_bullets(
+        original_bullets: list[str],
+        improved_bullets: list[str],
+    ) -> list[str]:
+        """Refuse une réécriture qui ajoute un chiffre absent des faits source."""
+        if len(improved_bullets) != len(original_bullets):
+            return original_bullets
+
+        original_numbers = {
+            token.replace(",", ".")
+            for bullet in original_bullets
+            for token in re.findall(r"\d+(?:[.,]\d+)?", bullet)
+        }
+        improved_numbers = {
+            token.replace(",", ".")
+            for bullet in improved_bullets
+            for token in re.findall(r"\d+(?:[.,]\d+)?", bullet)
+        }
+        if not improved_numbers.issubset(original_numbers):
+            return original_bullets
+        return improved_bullets
 
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
@@ -318,14 +370,35 @@ Return a JSON object:
 
 OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
 
+            messages = [
+                {"role": "system", "content": "You are a precise data extractor. Extract CV information EXACTLY as written. Never modify, translate, or improve any data."},
+                {"role": "user", "content": task},
+            ]
             result = await self._create_json_completion(
                 model=settings.llm_model_fast,
-                messages=[
-                    {"role": "system", "content": "You are a precise data extractor. Extract CV information EXACTLY as written. Never modify, translate, or improve any data."},
-                    {"role": "user", "content": task}
-                ],
+                messages=messages,
                 temperature=0.0,  # Zero temperature for exact extraction
             )
+
+            missing_sections = self._missing_factual_sections(cv_text, result)
+            if missing_sections:
+                logger.warning(
+                    "[%s] Fast factual extraction omitted %s; retrying with the powerful model",
+                    self.name,
+                    ", ".join(missing_sections),
+                )
+                result = await self._create_json_completion(
+                    model=settings.llm_model_powerful,
+                    messages=messages,
+                    temperature=0.0,
+                )
+                missing_sections = self._missing_factual_sections(cv_text, result)
+                if missing_sections:
+                    return {
+                        "success": False,
+                        "error": "Incomplete factual extraction: "
+                        + ", ".join(missing_sections),
+                    }
 
             result["success"] = True
             return result
@@ -424,9 +497,9 @@ MUST-USE KEYWORDS: {', '.join(keywords[:15])}
 REQUIRED SKILLS: {', '.join(job_analysis.get('required_skills', [])[:10])}
 
 RULES:
-1. Rewrite bullet points to include keywords and quantifiable metrics
+1. Rewrite bullet points to include relevant keywords while preserving every factual claim
 2. Use action verbs: Developed, Implemented, Designed, Optimized, Led, etc.
-3. Add metrics where plausible (%, numbers, scale)
+3. NEVER add a metric, number, project, technology, outcome, employer, date, or responsibility absent from the original bullet points
 4. Keep same NUMBER of bullets per experience (don't add or remove)
 5. DO NOT change the meaning - just improve the wording
 6. Write a new professional summary (2-3 sentences) tailored to the job
@@ -526,7 +599,10 @@ Return JSON:
                 "end_date": exp.get("end_date", ""),
                 "type": exp.get("type", ""),
                 # Use improved bullets if available, otherwise keep original
-                "bullets": improved_bullets_map.get(i, exp.get("bullets", []))
+                "bullets": self._safe_improved_bullets(
+                    exp.get("bullets", []),
+                    improved_bullets_map.get(i, exp.get("bullets", [])),
+                ),
             }
             final_cv["experiences"].append(merged_exp)
 
@@ -546,7 +622,7 @@ Return JSON:
             }
             final_cv["projects"].append(merged_proj)
 
-        # Inject missing skills (this is the only "addition" we allow)
+        # Re-categorize only skills already present in the source CV.
         final_cv = await self._inject_missing_skills(
             final_cv, cv_mapping, job_analysis
         )
@@ -840,15 +916,11 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
         self, cv_data: dict, cv_mapping: dict, job_analysis: dict
     ) -> dict:
         """
-        DYNAMICALLY categorize and inject ALL missing and required skills.
+        Categorize source CV skills without inventing missing requirements.
 
         The categories are created based on the JOB TYPE, not hardcoded!
         """
-        skills_coverage = cv_mapping.get("skills_coverage", {})
-        missing_skills = [self._skill_to_str(s) for s in skills_coverage.get("missing", [])]
-        transferable_skills = [self._skill_to_str(s) for s in skills_coverage.get("transferable", [])]
         required_skills = [self._skill_to_str(s) for s in job_analysis.get("required_skills", [])]
-        nice_to_have = [self._skill_to_str(s) for s in job_analysis.get("nice_to_have_skills", [])]
         job_title = job_analysis.get("job_title", "")
         industry = job_analysis.get("industry", "")
 
@@ -862,45 +934,21 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
             if isinstance(skills_list, list):
                 all_current_skills.extend(self._skill_to_str(s) for s in skills_list)
 
-        all_current_lower = {s.lower() for s in all_current_skills if s}
+        all_current_lower = {skill.lower() for skill in all_current_skills if skill}
+        matched_required_skills = [
+            skill for skill in required_skills if skill.lower() in all_current_lower
+        ]
 
-        # Collect ALL skills to add
-        skills_to_add = []
+        if not all_current_skills:
+            cv_data["skills"] = {}
+            return cv_data
 
-        # 1. Add transferable skills
-        for skill in transferable_skills:
-            skill_name = skill.split("(")[0].strip() if "(" in skill else skill
-            if skill_name.lower() not in all_current_lower:
-                skills_to_add.append(skill_name)
-
-        # 2. Add ALL missing skills
-        for skill in missing_skills:
-            skill_name = skill.split("(")[0].strip() if "(" in skill else skill
-            if skill_name.lower() not in all_current_lower and skill_name not in skills_to_add:
-                skills_to_add.append(skill_name)
-
-        # 3. Add ALL required skills from job posting
-        for skill in required_skills:
-            if skill.lower() not in all_current_lower and skill not in skills_to_add:
-                skills_to_add.append(skill)
-
-        # 4. Add nice-to-have skills
-        for skill in nice_to_have:
-            if skill.lower() not in all_current_lower and skill not in skills_to_add:
-                skills_to_add.append(skill)
-
-        if skills_to_add:
-            logger.info(f"[{self.name}] Injecting skills: {skills_to_add}")
-
-        # Combine all skills
-        all_skills = all_current_skills + skills_to_add
-
-        # Now categorize ALL skills dynamically using LLM
+        # Re-categorize the source skills only; job requirements are context, not additions.
         categorized_skills = await self._categorize_skills_dynamically(
-            all_skills=all_skills,
+            all_skills=all_current_skills,
             job_title=job_title,
             industry=industry,
-            required_skills=required_skills
+            required_skills=matched_required_skills,
         )
 
         cv_data["skills"] = categorized_skills
@@ -922,14 +970,14 @@ IMPORTANT: Keep ALL projects, ALL formations, and ALL interests (centres d'inté
 ALL SKILLS TO CATEGORIZE:
 {json.dumps(all_skills, ensure_ascii=False)}
 
-REQUIRED SKILLS FOR THIS JOB (must be included):
+JOB-REQUIRED SKILLS ALREADY PRESENT IN THE SOURCE CV:
 {json.dumps(required_skills, ensure_ascii=False)}
 
 RULES:
 1. Create 3-5 relevant categories based on this SPECIFIC job/industry
 2. Category names should be in FRENCH and descriptive (e.g., "Langages", "Data Stack", "Cloud", "Outils", "Méthodologies")
 3. Each category should have 4-8 skills maximum
-4. Prioritize required skills - they MUST appear
+4. Prioritize the provided matched skills, but NEVER add a skill absent from ALL SKILLS TO CATEGORIZE
 5. Languages (Français, Anglais, etc.) should be in a "Langues" category
 6. Soft skills can be in "Soft Skills" or integrated elsewhere
 7. NO DUPLICATE skills across categories
