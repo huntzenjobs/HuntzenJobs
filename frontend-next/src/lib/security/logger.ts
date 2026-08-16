@@ -6,6 +6,8 @@
 import { createClient } from "@/lib/supabase/client";
 import * as Sentry from "@sentry/nextjs";
 
+const LOGIN_JWT_PROPAGATION_DELAY_MS = 1_000;
+
 // Security event types
 export type SecurityEventType =
   | "auth.login_success"
@@ -168,6 +170,10 @@ export async function logLoginSuccess(
   userId: string,
   metadata?: Record<string, any>,
 ) {
+  // Laisse le JWT se propager entre Auth et PostgREST avant la première RPC.
+  await new Promise((resolve) =>
+    setTimeout(resolve, LOGIN_JWT_PROPAGATION_DELAY_MS),
+  );
   await logSecurityEvent({
     eventType: "auth.login_success",
     severity: "info",

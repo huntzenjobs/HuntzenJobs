@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getSession, rpc } = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -16,13 +16,17 @@ vi.mock("@sentry/nextjs", () => ({
   captureMessage: vi.fn(),
 }));
 
-import { logSecurityEvent } from "@/lib/security/logger";
+import { logLoginSuccess, logSecurityEvent } from "@/lib/security/logger";
 
 describe("logSecurityEvent", () => {
   beforeEach(() => {
     getSession.mockReset();
     rpc.mockReset();
     rpc.mockResolvedValue({ data: null, error: null });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("n'appelle pas la RPC protégée sans session authentifiée", async () => {
@@ -52,6 +56,29 @@ describe("logSecurityEvent", () => {
       userId: "00000000-0000-0000-0000-000000000001",
     });
 
+    expect(rpc).toHaveBeenCalledOnce();
+  });
+
+  it("attend la propagation du JWT avant de journaliser une connexion", async () => {
+    vi.useFakeTimers();
+    getSession.mockResolvedValue({
+      data: {
+        session: {
+          user: { id: "00000000-0000-0000-0000-000000000001" },
+        },
+      },
+      error: null,
+    });
+
+    const logging = logLoginSuccess(
+      "00000000-0000-0000-0000-000000000001",
+    );
+
+    await Promise.resolve();
+    expect(getSession).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await logging;
     expect(rpc).toHaveBeenCalledOnce();
   });
 });
