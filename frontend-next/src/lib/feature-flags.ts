@@ -17,15 +17,6 @@ export const featureFlags = {
   // ==========================================================================
 
   /**
-   * Enable new Jobs page V2 with inline form and gradient cards
-   * - Inline search form (horizontal layout)
-   * - Gradient job cards (replaces blur)
-   * - Progressive grid (1→2→3→4 cols)
-   * - Improved autocomplete with loading states
-   */
-  useJobsV2: process.env.NEXT_PUBLIC_FF_JOBS_V2 === "true",
-
-  /**
    * Enable new Coach page V2 with improved UX
    * - Welcome screen for new sessions
    * - Expandable textarea
@@ -234,13 +225,6 @@ export const isInRollout = (userId: string, percentage: number): boolean => {
  * Adjust these values to control rollout speed
  */
 export const rolloutConfig = {
-  // Jobs V2 rollout
-  jobsV2: {
-    phase1: 10, // 10% of users
-    phase2: 50, // 50% of users
-    phase3: 100, // 100% (full rollout)
-  },
-
   // Coach V2 rollout
   coachV2: {
     phase1: 10,
@@ -307,10 +291,6 @@ export const logRolloutConfig = (userId: string): void => {
 
   console.group(`Rollout Configuration (Phase: ${phase})`);
   console.log("User ID:", userId);
-  console.log(
-    "Jobs V2:",
-    shouldEnableForUser(userId, "jobsV2") ? "Enabled" : "Disabled",
-  );
   console.log(
     "Coach V2:",
     shouldEnableForUser(userId, "coachV2") ? "Enabled" : "Disabled",
