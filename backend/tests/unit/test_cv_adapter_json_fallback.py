@@ -45,7 +45,9 @@ async def test_json_completion_retries_without_provider_json_mode() -> None:
 
     assert result == {"personal_info": {"name": "Camille"}}
     assert completions.calls[0]["response_format"] == {"type": "json_object"}
+    assert completions.calls[0]["max_completion_tokens"] == 8192
     assert "response_format" not in completions.calls[1]
+    assert completions.calls[1]["max_completion_tokens"] == 8192
     assert len(completions.calls) == 2
 
 

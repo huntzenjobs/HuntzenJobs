@@ -77,6 +77,7 @@ class CVAdapterAgent(BaseAgent):
             "model": model,
             "messages": messages,
             "temperature": temperature,
+            "max_completion_tokens": 8192,
         }
 
         try:
