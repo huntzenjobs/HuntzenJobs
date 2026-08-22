@@ -733,6 +733,15 @@
       "validPromo": "{description}",
       "alreadyApplied": "Codigo ya aplicado"
     },
+    "confirmEmail": {
+      "title": "Confirma tu dirección de correo",
+      "description": "Para proteger tu cuenta, confirma que tú iniciaste este registro.",
+      "action": "Confirmar mi correo",
+      "securityNote": "Este botón activa tu cuenta de forma segura.",
+      "invalidTitle": "Enlace de confirmación incompleto",
+      "invalidDescription": "Falta información necesaria en este enlace. Solicita un nuevo correo desde la página de registro.",
+      "backToSignup": "Volver al registro"
+    },
     "forgotPassword": {
       "title": "Contraseña olvidada",
       "subtitle": "Introduzca su dirección de correo electrónico y le enviaremos un enlace de restablecimiento.",

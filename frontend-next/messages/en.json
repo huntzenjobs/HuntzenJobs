@@ -766,6 +766,15 @@
       "validPromo": "{description}",
       "alreadyApplied": "Code already applied"
     },
+    "confirmEmail": {
+      "title": "Confirm your email address",
+      "description": "To protect your account, confirm that you initiated this registration.",
+      "action": "Confirm my email",
+      "securityNote": "This button securely activates your account.",
+      "invalidTitle": "Incomplete confirmation link",
+      "invalidDescription": "This link is missing required information. Request a new email from the sign-up page.",
+      "backToSignup": "Back to sign up"
+    },
     "forgotPassword": {
       "title": "Forgot Password",
       "subtitle": "Enter your email address and we'll send you a reset link.",

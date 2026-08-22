@@ -880,6 +880,15 @@
         "code": "Code parrainage : {code}"
       }
     },
+    "confirmEmail": {
+      "title": "Confirmez votre adresse email",
+      "description": "Pour protéger votre compte, confirmez que vous êtes bien à l'origine de cette inscription.",
+      "action": "Confirmer mon email",
+      "securityNote": "Ce bouton active votre compte de manière sécurisée.",
+      "invalidTitle": "Lien de confirmation incomplet",
+      "invalidDescription": "Ce lien ne contient pas les informations nécessaires. Demandez un nouvel email depuis la page d'inscription.",
+      "backToSignup": "Retour à l'inscription"
+    },
     "forgotPassword": {
       "title": "Mot de passe oublié",
       "subtitle": "Saisissez votre adresse email et nous vous enverrons un lien de réinitialisation.",

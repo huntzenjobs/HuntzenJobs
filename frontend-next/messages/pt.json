@@ -733,6 +733,15 @@
       "validPromo": "{description}",
       "alreadyApplied": "Codigo ja aplicado"
     },
+    "confirmEmail": {
+      "title": "Confirme o seu endereço de email",
+      "description": "Para proteger a sua conta, confirme que iniciou este registo.",
+      "action": "Confirmar o meu email",
+      "securityNote": "Este botão ativa a sua conta de forma segura.",
+      "invalidTitle": "Link de confirmação incompleto",
+      "invalidDescription": "Este link não contém as informações necessárias. Peça um novo email na página de registo.",
+      "backToSignup": "Voltar ao registo"
+    },
     "forgotPassword": {
       "title": "Esqueci-me da palavra-passe",
       "subtitle": "Introduza o seu endereço de e-mail e enviar-lhe-emos uma ligação de reposição.",
