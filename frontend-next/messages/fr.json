@@ -881,6 +881,7 @@
       }
     },
     "confirmEmail": {
+      "eyebrow": "Sécurité du compte",
       "title": "Confirmez votre adresse email",
       "description": "Pour protéger votre compte, confirmez que vous êtes bien à l'origine de cette inscription.",
       "action": "Confirmer mon email",

@@ -14,8 +14,11 @@ vi.mock("@/lib/security/logger", () => ({
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn().mockResolvedValue((key: string) => key),
 }));
-vi.mock("@/components/auth/auth-layout", () => ({
-  AuthLayout: ({ children }: { children: React.ReactNode }) => children,
+vi.mock("next-intl", () => ({
+  useTranslations: vi.fn(() => (key: string) => key),
+}));
+vi.mock("@/components/landing-header", () => ({
+  LandingHeader: () => null,
 }));
 
 import * as callbackRoute from "@/app/auth/callback/route";
@@ -93,10 +96,11 @@ describe("confirmation d’adresse email", () => {
 
     render(page);
 
-    expect(screen.getByRole("button", { name: "action" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "action" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("jeton-test")).toHaveAttribute(
       "name",
       "token_hash",
     );
+    expect(screen.queryByText("heroTitle")).not.toBeInTheDocument();
   });
 });

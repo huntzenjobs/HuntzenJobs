@@ -734,6 +734,7 @@
       "alreadyApplied": "Codigo ja aplicado"
     },
     "confirmEmail": {
+      "eyebrow": "Segurança da conta",
       "title": "Confirme o seu endereço de email",
       "description": "Para proteger a sua conta, confirme que iniciou este registo.",
       "action": "Confirmar o meu email",

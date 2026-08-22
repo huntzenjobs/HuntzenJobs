@@ -734,6 +734,7 @@
       "alreadyApplied": "Codigo ya aplicado"
     },
     "confirmEmail": {
+      "eyebrow": "Seguridad de la cuenta",
       "title": "Confirma tu dirección de correo",
       "description": "Para proteger tu cuenta, confirma que tú iniciaste este registro.",
       "action": "Confirmar mi correo",

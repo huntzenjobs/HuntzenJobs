@@ -767,6 +767,7 @@
       "alreadyApplied": "Code already applied"
     },
     "confirmEmail": {
+      "eyebrow": "Account security",
       "title": "Confirm your email address",
       "description": "To protect your account, confirm that you initiated this registration.",
       "action": "Confirm my email",
