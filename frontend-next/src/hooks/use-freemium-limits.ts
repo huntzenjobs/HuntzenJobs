@@ -618,6 +618,12 @@ export function useFreemiumLimits(userId?: string) {
             currentLimits.cover_letter_per_day -
               currentState.usage.coverLettersUsedToday,
           );
+        case "recruiter_search":
+          return Math.max(
+            0,
+            currentLimits.recruiter_searches_per_day -
+              currentState.usage.recruiterSearchesUsedToday,
+          );
         default:
           return 0;
       }
@@ -651,6 +657,9 @@ export function useFreemiumLimits(userId?: string) {
           break;
         case "cover_letter":
           localUsed = prev.usage.coverLettersUsedToday;
+          break;
+        case "recruiter_search":
+          localUsed = prev.usage.recruiterSearchesUsedToday;
           break;
       }
 

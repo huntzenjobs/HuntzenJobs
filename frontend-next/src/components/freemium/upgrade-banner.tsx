@@ -18,7 +18,7 @@ export function UpgradeBanner({
   variant = "default",
 }: UpgradeBannerProps) {
   const t = useTranslations("upgradeBanner");
-  const { isFreePlan, openPricingModal } = useSubscription();
+  const { isFreePlan, isLoaded, openPricingModal } = useSubscription();
   const [isDismissed, setIsDismissed] = useState(true);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function UpgradeBanner({
     setIsDismissed(true);
   };
 
-  if (!isFreePlan || isDismissed) {
+  if (!isLoaded || !isFreePlan || isDismissed) {
     return null;
   }
 

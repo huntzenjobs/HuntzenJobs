@@ -6,6 +6,7 @@ from src.services.job_providers.aggregator import (
     _is_remote_job,
     _location_matches,
     _normalize_location_text,
+    _repair_mojibake,
 )
 
 
@@ -36,6 +37,21 @@ class TestNormalizeLocationText:
     def test_collapse_whitespace(self):
         result = _normalize_location_text("  Nantes   Cedex   ")
         assert "  " not in result
+
+
+class TestRepairMojibake:
+    def test_repairs_latin1_decoded_utf8_text(self):
+        assert (
+            _repair_mojibake("DÃ©veloppeur â projets technologiques ð¯")
+            == "Développeur – projets technologiques 🎯"
+        )
+
+    def test_preserves_valid_utf8_text(self):
+        text = "Développeur – projets technologiques 🎯"
+        assert _repair_mojibake(text) == text
+
+    def test_preserves_text_that_cannot_be_redecoded(self):
+        assert _repair_mojibake("Poste à São Paulo") == "Poste à São Paulo"
 
 
 class TestLocationMatches:

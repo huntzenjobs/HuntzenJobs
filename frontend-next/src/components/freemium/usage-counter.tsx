@@ -292,11 +292,11 @@ export function UsageSummary({
   className = "",
   appearance = "dark",
 }: UsageSummaryProps) {
-  const { plan, isFreePlan } = useSubscription();
+  const { plan, hasFeature, isLoaded } = useSubscription();
   const tUsage = useTranslations("usageCounter");
 
   // Paid unlimited plans (pro/premium) don't need the summary
-  if (plan === "pro" || plan === "premium") return null;
+  if (!isLoaded || plan === "pro" || plan === "premium") return null;
 
   return (
     <div className={className}>
@@ -333,12 +333,20 @@ export function UsageSummary({
           <Clock className="w-3 h-3" />
           <QuotaResetTimer />
         </div>
-        <h4 className="text-sm font-semibold mb-3 text-white/90">
-          {tUsage("generalUsage")}
-        </h4>
-        <div className="space-y-3">
-          <UsageCounter feature="saved_jobs" showBar appearance={appearance} />
-        </div>
+        {hasFeature("has_favorites") && (
+          <>
+            <h4 className="text-sm font-semibold mb-3 text-white/90">
+              {tUsage("generalUsage")}
+            </h4>
+            <div className="space-y-3">
+              <UsageCounter
+                feature="saved_jobs"
+                showBar
+                appearance={appearance}
+              />
+            </div>
+          </>
+        )}
       </>
     </div>
   );

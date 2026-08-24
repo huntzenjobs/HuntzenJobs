@@ -21,9 +21,10 @@ const mockSubscriptionContext = {
   },
   isFreePlan: true,
   plan: "free",
+  isLoaded: true,
   assistantMessagesRemaining: 10,
   assistantMessagesLimit: 10,
-  hasFeature: vi.fn(() => true),
+  hasFeature: vi.fn((_feature?: string) => true),
 };
 
 vi.mock("@/contexts/subscription-context", () => ({
@@ -194,12 +195,14 @@ describe("UsageSummary Component", () => {
     vi.clearAllMocks();
     mockSubscriptionContext.isFreePlan = true;
     mockSubscriptionContext.plan = "free";
+    mockSubscriptionContext.isLoaded = true;
     mockSubscriptionContext.getRemaining.mockReturnValue(2);
     mockSubscriptionContext.limits.job_searches_per_day = 3;
     mockSubscriptionContext.limits.ats_scores_per_day = 1;
     mockSubscriptionContext.limits.assistant_messages_per_day = 10;
     mockSubscriptionContext.assistantMessagesRemaining = 8;
     mockSubscriptionContext.assistantMessagesLimit = 10;
+    mockSubscriptionContext.hasFeature.mockReturnValue(true);
   });
 
   describe("Rendering", () => {
@@ -211,6 +214,12 @@ describe("UsageSummary Component", () => {
     it("does not render for paid plan", () => {
       mockSubscriptionContext.isFreePlan = false;
       mockSubscriptionContext.plan = "pro";
+      const { container } = render(<UsageSummary />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it("does not render misleading quotas while subscription data loads", () => {
+      mockSubscriptionContext.isLoaded = false;
       const { container } = render(<UsageSummary />);
       expect(container.firstChild).toBeNull();
     });
@@ -237,6 +246,19 @@ describe("UsageSummary Component", () => {
       expect(
         screen.getByText(/features\.assistantMessages\.label/i),
       ).toBeInTheDocument();
+    });
+
+    it("hides the saved jobs quota when favorites are unavailable", () => {
+      mockSubscriptionContext.hasFeature.mockImplementation(
+        (feature?: string) => feature !== "has_favorites",
+      );
+
+      render(<UsageSummary />);
+
+      expect(
+        screen.queryByText(/features\.savedJobs\.label/i),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("generalUsage")).not.toBeInTheDocument();
     });
   });
 

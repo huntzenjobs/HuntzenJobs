@@ -8,6 +8,7 @@ const openPricingModal = vi.fn();
 vi.mock("@/contexts/subscription-context", () => ({
   useSubscription: () => ({
     isFreePlan: true,
+    isLoaded: true,
     openPricingModal,
   }),
 }));

@@ -50,6 +50,7 @@ export function DashboardNavbar() {
   const user = auth?.user ?? null;
   const subscription = useOptionalSubscription();
   const plan = subscription?.plan || "free";
+  const isSubscriptionLoaded = subscription?.isLoaded ?? false;
   const t = useTranslations("sidebar");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
@@ -123,15 +124,17 @@ export function DashboardNavbar() {
                     {displayName}
                   </p>
                 </div>
-                <span
-                  className={cn(
-                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5",
-                    PLAN_COLORS[plan] || PLAN_COLORS.free,
-                  )}
-                >
-                  {plan !== "free" && <Sparkles className="w-2.5 h-2.5" />}
-                  {planLabel}
-                </span>
+                {isSubscriptionLoaded && (
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5",
+                      PLAN_COLORS[plan] || PLAN_COLORS.free,
+                    )}
+                  >
+                    {plan !== "free" && <Sparkles className="w-2.5 h-2.5" />}
+                    {planLabel}
+                  </span>
+                )}
                 <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </button>
             </DropdownMenuTrigger>

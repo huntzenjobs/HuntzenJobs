@@ -644,10 +644,10 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
         </p>
         <div className="flex gap-3">
           <a
-            href="mailto:support@huntzen.com"
+            href="mailto:contact@huntzenjobs.com"
             className="text-sm text-[#00D9FF] hover:text-black hover:underline font-medium transition-colors"
           >
-            support@huntzen.com
+            contact@huntzenjobs.com
           </a>
           <span className="text-gray-400">&bull;</span>
           <a

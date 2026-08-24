@@ -5,7 +5,7 @@ Tests the core BaseAgent functionality with mocked LLM.
 Does NOT require API keys.
 """
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -156,6 +156,24 @@ class TestLoadPrompt:
         prompt = load_prompt("nonexistent_prompt_file.txt")
 
         assert prompt == ""
+
+    def test_load_prompt_uses_bounded_database_query(self, monkeypatch):
+        """Charge le premier prompt DB sans dépendre de maybe_single()."""
+        from src.agents.base import load_prompt
+
+        monkeypatch.setenv("SUPABASE_URL", "https://staging.example.test")
+        monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-key")
+        response = MagicMock(data=[{"content": "Prompt depuis la base"}])
+        query = MagicMock()
+        query.select.return_value.eq.return_value.limit.return_value.execute.return_value = response
+        client = MagicMock()
+        client.table.return_value = query
+
+        with patch("src.agents.base.create_client", return_value=client):
+            prompt = load_prompt("coach_main.txt")
+
+        assert prompt == "Prompt depuis la base"
+        query.select.return_value.eq.return_value.limit.assert_called_once_with(1)
 
 
 class TestAgentRegistry:

@@ -85,6 +85,7 @@ export function Sidebar({ className }: SidebarProps) {
   const subscription = useOptionalSubscription();
   const plan = subscription?.plan || "free";
   const isFreePlan = subscription?.isFreePlan ?? true;
+  const isSubscriptionLoaded = subscription?.isLoaded ?? false;
   const openPricingModal = subscription?.openPricingModal || (() => {});
 
   const handleLogout = async () => {
@@ -427,7 +428,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}
 
         {/* Upgrade button for free users */}
-        {user && isFreePlan && (
+        {user && isSubscriptionLoaded && isFreePlan && (
           <button
             onClick={() => openPricingModal()}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] text-white text-sm font-bold hover:shadow-lg hover:shadow-[#00D9FF]/30 transition-all"

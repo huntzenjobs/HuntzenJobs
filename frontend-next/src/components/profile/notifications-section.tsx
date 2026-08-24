@@ -220,10 +220,6 @@ export function NotificationsSection() {
               <SelectItem value="weekly">Hebdomadaire (lundi 8h)</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-400">
-            Le cron filtre les users par préférence — seuls les "daily"
-            reçoivent un email chaque jour.
-          </p>
         </div>
       )}
 

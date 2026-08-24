@@ -315,6 +315,14 @@ async def process_cv_analysis(
             language=language
         )
 
+        if analysis_result.get("success") is False:
+            rejection_reason = (
+                analysis_result.get("error")
+                or analysis_result.get("verdict")
+                or "CV analysis rejected the document"
+            )
+            raise ValueError(str(rejection_reason))
+
         # Add processing metadata
         analysis_result["processing_time_seconds"] = round(time.time() - start_time, 2)
         analysis_result["processed_at"] = datetime.now(UTC).isoformat()

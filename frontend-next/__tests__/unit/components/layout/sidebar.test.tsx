@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 // Mock the subscription context
 const mockSubscriptionContext = {
   isFreePlan: true,
+  isLoaded: true,
   plan: "free",
   getRemaining: vi.fn(() => 2),
   limits: {

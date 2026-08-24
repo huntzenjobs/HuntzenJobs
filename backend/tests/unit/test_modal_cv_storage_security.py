@@ -622,6 +622,39 @@ async def test_modal_processing_fails_when_final_status_cannot_be_persisted(
 
 
 @pytest.mark.asyncio
+async def test_modal_processing_marks_agent_rejection_as_failed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+    rejection = {
+        "success": False,
+        "error": "Document non reconnu comme CV",
+        "ats_score": 0,
+    }
+    run = AsyncMock(return_value=rejection)
+    update_status = AsyncMock(return_value=True)
+    monkeypatch.setattr(modal_app, "claim_cv_analysis", lambda *_args: "claimed")
+    monkeypatch.setattr(modal_app, "update_cv_status", update_status)
+    monkeypatch.setattr(
+        sys.modules["src.agents.cv_analyzer.main_agent"],
+        "CVAnalyzerAgent",
+        lambda: SimpleNamespace(run=run),
+    )
+
+    response = await modal_app.process_cv_analysis(
+        cv_id="cv-id",
+        user_id="owner-id",
+        cv_text="contenu trop pauvre mais assez long pour atteindre l'agent CV",
+    )
+
+    assert response["success"] is False
+    assert "Document non reconnu comme CV" in response["error"]
+    assert update_status.await_args_list[-1].args[2] == "failed"
+    assert update_status.await_args_list[-1].kwargs["error_message"]
+    assert all(call.args[2] != "completed" for call in update_status.await_args_list)
+
+
+@pytest.mark.asyncio
 async def test_modal_processing_returns_existing_completed_job_without_replay(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
