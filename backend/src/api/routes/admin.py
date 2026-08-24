@@ -1697,9 +1697,15 @@ async def get_referral_leaderboard(
     # Subscriptions (referrer's own plan)
     subs_map: dict[str, dict[str, str | None]] = {}
     if referrer_ids:
-        sr = supabase.table("user_subscriptions").select("user_id, plan_name, status").in_("user_id", referrer_ids).eq("status", "active").execute()
+        sr = supabase.table("user_subscriptions").select(
+            "user_id, status, subscription_plans(name)"
+        ).in_("user_id", referrer_ids).eq("status", "active").execute()
         for s in (sr.data or []):
-            subs_map[s["user_id"]] = {"plan": s.get("plan_name"), "status": s.get("status")}
+            plan = s.get("subscription_plans") or {}
+            subs_map[s["user_id"]] = {
+                "plan": plan.get("name"),
+                "status": s.get("status"),
+            }
 
     # Paying referrals + last signup per referral_id
     paying_map: dict[str, list[str]] = {}  # referral_id -> list of converted_plan
