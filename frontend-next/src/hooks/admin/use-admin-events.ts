@@ -25,8 +25,9 @@ export function useAdminEvents() {
   useEffect(() => {
     const supabase = createClient();
 
+    const channelName = `admin-user-events-${Math.random()}`;
     const channel = supabase
-      .channel("admin-user-events")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "user_events" },

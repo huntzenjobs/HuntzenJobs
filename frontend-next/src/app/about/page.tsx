@@ -1,11 +1,5 @@
 "use client";
 
-/**
- * Page À Propos HuntZen Jobs - CRITIQUE pour SEO
- * Optimisée pour dominer les recherches "huntzen" et "huntzenjobs"
- * Contenu: 1700+ mots avec densité mot-clé "huntzen" 2-3%
- */
-
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -36,7 +30,6 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <LandingHeader />
-      {/* Hero Section */}
       <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -54,8 +47,6 @@ export default function AboutPage() {
           </motion.div>
         </div>
       </div>
-
-      {/* Qui est HuntZen Section */}
       <div className="py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
@@ -133,7 +124,6 @@ export default function AboutPage() {
                 </p>
               </motion.div>
 
-              {/* Feature 3 */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -155,7 +145,6 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* L'histoire de HuntZen Section */}
       <div className="py-20 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">

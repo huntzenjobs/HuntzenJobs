@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -24,10 +24,6 @@ async function adminFetch(path: string, options?: RequestInit) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 export interface ReferralLeaderEntry {
   id: string;
@@ -189,10 +185,7 @@ export function useAdminReferrals() {
   );
 
   const linkManual = useCallback(
-    async (
-      referrerEmail: string,
-      referredEmail: string,
-    ): Promise<boolean> => {
+    async (referrerEmail: string, referredEmail: string): Promise<boolean> => {
       try {
         const data = await adminFetch("/api/admin/referrals/link-manual", {
           method: "POST",

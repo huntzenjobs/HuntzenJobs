@@ -29,7 +29,6 @@ COACH_MESSAGES = [
     "Quelle est la meilleure stratégie pour changer de secteur à 35 ans ?",
 ]
 
-# ─── Données réalistes pour les scénarios CV ──────────────────────────────
 
 CV_TEXT_REALISTE = """KARIM BENALI
 Développeur Full-Stack Python / React — 6 ans d'expérience
@@ -310,7 +309,6 @@ async def hit_cv_sequential(session, token, user_id):
     """
     headers = {"Authorization": f"Bearer {token}"}
 
-    # ── Étape 1 : upload CV ───────────────────────────────────────────────
     start = time.time()
     cv_id = None
     try:
@@ -394,7 +392,6 @@ async def hit_cv_sequential(session, token, user_id):
         print(f"  [user {user_id:03d}] cv_poll 💀 TIMEOUT ({poll_timeout}s)")
         return
 
-    # ── Étape 3 : adapter CV ──────────────────────────────────────────────
     start = time.time()
     cv_data = None
     try:

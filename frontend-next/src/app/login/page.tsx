@@ -1,10 +1,4 @@
 "use client";
-
-/**
- * Login Page - Modern Design
- * Email/Password + Google OAuth sign in
- */
-
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -18,7 +12,6 @@ import { Loader2, Mail, Lock as LockIcon, Eye, EyeOff } from "lucide-react";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { useTranslations } from "next-intl";
 
-// Separate component that uses useSearchParams (must be wrapped in Suspense)
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -32,7 +25,6 @@ function LoginForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Check for success/error messages in URL
   useEffect(() => {
     const msg = searchParams.get("message");
     const err = searchParams.get("error");
@@ -69,7 +61,6 @@ function LoginForm() {
       clearError();
       await signInWithEmail(email, password);
 
-      // Reset form après succès
       setEmail("");
       setPassword("");
     } catch (err) {
@@ -80,7 +71,6 @@ function LoginForm() {
   return (
     <AuthLayout>
       <div className="space-y-8">
-        {/* Header */}
         <div>
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
