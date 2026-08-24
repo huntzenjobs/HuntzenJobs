@@ -111,6 +111,23 @@ interface AdaptResult {
   lmData: Record<string, unknown> | null;
 }
 
+export function normalizeAdaptMatchScore(score: unknown): number | null {
+  const value =
+    typeof score === "number"
+      ? score
+      : typeof score === "object" &&
+          score !== null &&
+          "overall" in score &&
+          typeof score.overall === "number"
+        ? score.overall
+        : null;
+
+  if (value === null || !Number.isFinite(value)) return null;
+
+  const percentage = value >= 0 && value <= 1 ? value * 100 : value;
+  return Math.round(Math.min(100, Math.max(0, percentage)));
+}
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -574,7 +591,7 @@ export function CVUploadAsyncWizard({
 
         const adaptData = await adaptRes.json();
         const cvData = adaptData.cv_data;
-        const matchScore = adaptData.match_score;
+        const matchScore = normalizeAdaptMatchScore(adaptData.match_score);
 
         // Step 2: generate CV PDF + LM JSON in parallel
         const [cvPdfRes, lmJsonRes] = await Promise.all([
@@ -639,7 +656,7 @@ export function CVUploadAsyncWizard({
         setAdaptResult({
           cvPdfBlob,
           lmPdfBlob,
-          matchScore: matchScore != null ? Math.round(matchScore * 100) : null,
+          matchScore,
           cvData: cvData as ParsedCvData,
           lmData,
         });
@@ -648,8 +665,7 @@ export function CVUploadAsyncWizard({
         saveDocument({
           jobTitle: "CV adapté",
           company: "",
-          matchScore:
-            matchScore != null ? Math.round(matchScore * 100) : undefined,
+          matchScore: matchScore ?? undefined,
           cvData: cvData as ParsedCvData,
           cvPdfBlob,
           lmPdfBlob: lmPdfBlob ?? undefined,
