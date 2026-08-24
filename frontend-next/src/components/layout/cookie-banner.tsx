@@ -46,16 +46,16 @@ export function CookieBanner() {
       role="dialog"
       aria-label={t("ariaLabel")}
       aria-modal="false"
-      className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 pb-safe"
+      className="fixed bottom-0 left-0 right-0 z-50 p-2 sm:p-6 pb-safe"
     >
-      <div className="max-w-4xl mx-auto bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="max-w-4xl mx-auto bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-3 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4">
         {/* Icon */}
-        <div className="shrink-0 w-10 h-10 bg-[#00D9FF]/10 rounded-xl flex items-center justify-center">
+        <div className="hidden sm:flex shrink-0 w-10 h-10 bg-[#00D9FF]/10 rounded-xl items-center justify-center">
           <Cookie className="w-5 h-5 text-[#00D9FF]" />
         </div>
 
         {/* Text */}
-        <div className="flex-1 text-sm text-gray-300 leading-relaxed">
+        <div className="flex-1 text-xs sm:text-sm text-gray-300 leading-relaxed">
           <p>
             {t("message")}{" "}
             <Link
@@ -68,7 +68,7 @@ export function CookieBanner() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
@@ -87,7 +87,7 @@ export function CookieBanner() {
           <button
             onClick={handleDecline}
             aria-label={t("close")}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-300 transition-colors shrink-0"
+            className="min-w-10 min-h-10 sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-300 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
