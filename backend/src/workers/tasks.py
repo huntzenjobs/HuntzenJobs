@@ -227,7 +227,7 @@ async def notify_expiring_plans(ctx: dict) -> dict:
         j7_end = now + timedelta(days=8)
         rows_j7 = supabase.table("user_subscriptions").select(
             "user_id, plan_id, current_period_end, profiles!inner(email, language)"
-        ).eq("status", "active").eq("stripe_subscription_id", "admin_granted").gte(
+        ).eq("status", "active").like("stripe_subscription_id", "admin_granted%").gte(
             "current_period_end", j7_start.isoformat()
         ).lt(
             "current_period_end", j7_end.isoformat()
@@ -250,7 +250,7 @@ async def notify_expiring_plans(ctx: dict) -> dict:
         j1_end = now + timedelta(days=2)
         rows_j1 = supabase.table("user_subscriptions").select(
             "user_id, plan_id, current_period_end, profiles!inner(email, language)"
-        ).eq("status", "active").eq("stripe_subscription_id", "admin_granted").gte(
+        ).eq("status", "active").like("stripe_subscription_id", "admin_granted%").gte(
             "current_period_end", j1_start.isoformat()
         ).lt(
             "current_period_end", j1_end.isoformat()

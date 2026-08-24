@@ -8,6 +8,7 @@ All endpoints require is_admin = TRUE in profiles table.
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from uuid import uuid4
 
 import stripe as stripe_lib
 from fastapi import APIRouter, HTTPException, Query, status
@@ -32,6 +33,11 @@ from src.services.email import (
     send_weekly_summary,
     send_welcome,
 )
+
+
+def _admin_grant_subscription_id() -> str:
+    """Crée un identifiant non-Stripe unique, reconnaissable par les crons."""
+    return f"admin_granted:{uuid4()}"
 
 
 async def _invalidate_user_cache(user_id: str) -> None:
@@ -553,7 +559,7 @@ async def force_plan_change(
             "user_id": user_id,
             "plan_id": body.plan_id,
             "status": "active",
-            "stripe_subscription_id": "admin_granted",
+            "stripe_subscription_id": _admin_grant_subscription_id(),
             "current_period_start": now.isoformat(),
             "current_period_end": (now + timedelta(days=30)).isoformat(),
         }).execute()
@@ -644,7 +650,7 @@ async def create_user(
                     "user_id": new_user_id,
                     "plan_id": plan_result.data["id"],
                     "status": "active",
-                    "stripe_subscription_id": "admin_granted",
+                    "stripe_subscription_id": _admin_grant_subscription_id(),
                     "current_period_start": now.isoformat(),
                     "current_period_end": (now + timedelta(days=36500)).isoformat(),
                 }).execute()

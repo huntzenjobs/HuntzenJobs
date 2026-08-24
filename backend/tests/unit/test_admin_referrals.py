@@ -77,6 +77,15 @@ class _Supabase:
         return _Query(table_name)
 
 
+def test_admin_grant_subscription_ids_are_unique_and_recognizable() -> None:
+    first = admin._admin_grant_subscription_id()
+    second = admin._admin_grant_subscription_id()
+
+    assert first.startswith("admin_granted:")
+    assert second.startswith("admin_granted:")
+    assert first != second
+
+
 @pytest.mark.asyncio
 async def test_referral_leaderboard_reads_plan_from_subscription_relation(
     monkeypatch: pytest.MonkeyPatch,
@@ -94,4 +103,3 @@ async def test_referral_leaderboard_reads_plan_from_subscription_relation(
     )
 
     assert result["leaderboard"][0]["referrer_plan"] == "pro"
-
