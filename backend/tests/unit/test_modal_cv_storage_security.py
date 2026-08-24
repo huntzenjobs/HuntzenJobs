@@ -39,8 +39,8 @@ class _ModalImage:
 
 
 class _ModalApp:
-    def __init__(self, _name: str) -> None:
-        pass
+    def __init__(self, name: str) -> None:
+        self.name = name
 
     def function(self, **_kwargs: object):
         return lambda function: function
@@ -75,6 +75,29 @@ def _load_modal_pdf_app(monkeypatch: pytest.MonkeyPatch):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+@pytest.mark.parametrize(
+    ("environment", "expected_name"),
+    [
+        ("staging", "huntzen-cv-processor"),
+        ("main", "huntzen-cv-processor"),
+        (None, "huntzen-cv-processor"),
+    ],
+)
+def test_modal_cv_app_keeps_stable_name_across_environments(
+    monkeypatch: pytest.MonkeyPatch,
+    environment: str | None,
+    expected_name: str,
+) -> None:
+    if environment is None:
+        monkeypatch.delenv("MODAL_ENVIRONMENT", raising=False)
+    else:
+        monkeypatch.setenv("MODAL_ENVIRONMENT", environment)
+
+    modal_app = _load_modal_cv_app(monkeypatch)
+
+    assert modal_app.app.name == expected_name
 
 
 def _install_failing_docling(
