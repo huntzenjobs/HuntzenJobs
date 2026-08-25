@@ -431,3 +431,35 @@ def test_stripe_rpc_acl_is_service_role_only(staging_database_url: str) -> None:
             assert service_row is not None
             assert service_row[0] is True
         connection.rollback()
+
+
+def test_subscription_identifiers_are_unique_for_atomic_checkout_upsert(
+    staging_database_url: str,
+) -> None:
+    with psycopg.connect(staging_database_url) as connection:
+        connection.execute("BEGIN READ ONLY")
+        duplicates = connection.execute(
+            """
+            SELECT COUNT(*)
+            FROM (
+              SELECT stripe_subscription_id
+              FROM public.user_subscriptions
+              WHERE stripe_subscription_id IS NOT NULL
+              GROUP BY stripe_subscription_id
+              HAVING COUNT(*) > 1
+            ) duplicate_ids
+            """
+        ).fetchone()
+        assert duplicates is not None
+        assert duplicates[0] == 0
+
+        unique_index = connection.execute(
+            """
+            SELECT to_regclass(
+              'public.user_subscriptions_stripe_subscription_id_key'
+            )
+            """
+        ).fetchone()
+        assert unique_index is not None
+        assert unique_index[0] is not None
+        connection.rollback()
