@@ -20,4 +20,15 @@ describe("route Jobs canonique", () => {
     expect(featureFlags).not.toContain("jobsV2");
     expect(featureFlags).not.toContain("NEXT_PUBLIC_FF_JOBS_V2");
   });
+
+  it("hydrate l'historique de recherche après le premier rendu", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/app/(dashboard)/jobs/page.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("const [searchHistory, setSearchHistory]");
+    expect(source).toContain("{searchHistory.map((historyEntry)");
+    expect(source).not.toContain("localStorage.getItem(\"huntzen_search_history\") || \"[]\",");
+  });
 });

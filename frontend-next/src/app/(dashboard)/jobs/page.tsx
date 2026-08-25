@@ -136,6 +136,24 @@ interface QuickFilters {
   directOnly: boolean;
 }
 
+interface SearchHistoryEntry {
+  query: string;
+  country: string;
+  location: string;
+  timestamp: number;
+}
+
+function isSearchHistoryEntry(value: unknown): value is SearchHistoryEntry {
+  if (!value || typeof value !== "object") return false;
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.query === "string" &&
+    typeof entry.country === "string" &&
+    typeof entry.location === "string" &&
+    typeof entry.timestamp === "number"
+  );
+}
+
 export default function JobsPage() {
   const t = useTranslations("dashboard.jobs");
   const [jobTitle, setJobTitle] = useState("");
@@ -152,6 +170,7 @@ export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
 
   type SortKey =
     | "relevance"
@@ -179,6 +198,20 @@ export default function JobsPage() {
       );
       if (applied.length) setAppliedJobIds(new Set(applied));
     } catch {}
+  }, []);
+
+  // L'historique client est chargé après montage pour garder un HTML SSR stable.
+  useEffect(() => {
+    try {
+      const parsed: unknown = JSON.parse(
+        localStorage.getItem("huntzen_search_history") ?? "[]",
+      );
+      if (Array.isArray(parsed)) {
+        setSearchHistory(parsed.filter(isSearchHistoryEntry).slice(0, 5));
+      }
+    } catch {
+      setSearchHistory([]);
+    }
   }, []);
 
   // Advanced filters state
@@ -708,19 +741,13 @@ export default function JobsPage() {
     // Save to search history (last 5, deduplicated)
     try {
       const historyKey = "huntzen_search_history";
-      const history: Array<{
-        query: string;
-        country: string;
-        location: string;
-        timestamp: number;
-      }> = JSON.parse(localStorage.getItem(historyKey) || "[]");
       const entry = {
         query: params.query,
         country: params.country,
         location: params.location,
         timestamp: Date.now(),
       };
-      const filtered = history.filter(
+      const filtered = searchHistory.filter(
         (h) =>
           !(
             h.query === entry.query &&
@@ -728,8 +755,9 @@ export default function JobsPage() {
             h.location === entry.location
           ),
       );
-      filtered.unshift(entry);
-      localStorage.setItem(historyKey, JSON.stringify(filtered.slice(0, 5)));
+      const nextHistory = [entry, ...filtered].slice(0, 5);
+      setSearchHistory(nextHistory);
+      localStorage.setItem(historyKey, JSON.stringify(nextHistory));
     } catch {}
 
     // Vider les résultats précédents pour afficher le loading modal
@@ -1955,50 +1983,37 @@ export default function JobsPage() {
         {!searchQuery.isFetching &&
           !searchQuery.isSuccess &&
           jobs.length === 0 &&
-          (() => {
-            try {
-              const history: Array<{
-                query: string;
-                country: string;
-                location: string;
-                timestamp: number;
-              }> = JSON.parse(
-                localStorage.getItem("huntzen_search_history") || "[]",
-              );
-              if (history.length === 0) return null;
-              return (
-                <div className="mb-6">
-                  <p className="text-sm font-semibold text-gray-500 mb-3">
-                    {t("recentSearches")}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {history.map((h, i) => (
-                      <button
-                        key={i}
-                        onClick={() =>
-                          handleSearch({
-                            query: h.query,
-                            location: h.location,
-                            country: h.country,
-                            fromHistory: true,
-                          })
-                        }
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-[#00D9FF] hover:text-[#00D9FF] transition-colors"
-                      >
-                        <Clock className="w-3.5 h-3.5 text-gray-400" />
-                        <span>
-                          {h.query || t("allJobs")}
-                          {h.location ? ` · ${h.location}` : ""}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            } catch {
-              return null;
-            }
-          })()}
+          searchHistory.length > 0 && (
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-500 mb-3">
+                {t("recentSearches")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {searchHistory.map((historyEntry) => (
+                  <button
+                    key={`${historyEntry.timestamp}-${historyEntry.query}-${historyEntry.country}`}
+                    onClick={() =>
+                      handleSearch({
+                        query: historyEntry.query,
+                        location: historyEntry.location,
+                        country: historyEntry.country,
+                        fromHistory: true,
+                      })
+                    }
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-sm text-gray-700 hover:border-[#00D9FF] hover:text-[#00D9FF] transition-colors"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-gray-400" />
+                    <span>
+                      {historyEntry.query || t("allJobs")}
+                      {historyEntry.location
+                        ? ` · ${historyEntry.location}`
+                        : ""}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
         {/* Placeholder avant première recherche */}
         {!searchQuery.isFetching &&
