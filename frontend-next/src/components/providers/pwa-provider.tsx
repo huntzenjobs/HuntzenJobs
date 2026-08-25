@@ -23,12 +23,37 @@ interface PwaRegistrationProps {
   disabled: boolean;
 }
 
-function PwaRegistration({ children, disabled }: PwaRegistrationProps) {
+async function purgeDisabledPwa(): Promise<void> {
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      registrations.map((registration) => registration.unregister()),
+    );
+
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+  } catch {
+    // Les navigateurs sans Service Worker/Cache Storage n'ont rien à purger.
+  }
+}
+
+export function PwaRegistration({
+  children,
+  disabled,
+}: PwaRegistrationProps) {
   const { serwist } = useSerwist();
   const registrationStarted = useRef(false);
 
   useEffect(() => {
-    if (disabled || !serwist || registrationStarted.current) return;
+    if (registrationStarted.current) return;
+
+    if (disabled) {
+      registrationStarted.current = true;
+      void purgeDisabledPwa();
+      return;
+    }
+
+    if (!serwist) return;
     registrationStarted.current = true;
     const serwistManager = serwist;
 

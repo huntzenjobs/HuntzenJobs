@@ -11,6 +11,7 @@ vi.mock("@serwist/turbopack/react", () => ({
 }));
 
 import {
+  PwaRegistration,
   PwaProvider,
   shouldDisablePwa,
 } from "@/components/providers/pwa-provider";
@@ -26,6 +27,42 @@ describe("PwaProvider", () => {
     expect(shouldDisablePwa("staging.huntzenjobs.com")).toBe(true);
     expect(shouldDisablePwa("huntzen-preview-abc.vercel.app")).toBe(true);
     expect(shouldDisablePwa("huntzenjobs.com")).toBe(false);
+  });
+
+  it("purge les workers et caches existants quand la PWA est désactivée", async () => {
+    const unregisterLegacy = vi.fn().mockResolvedValue(true);
+    const unregisterSerwist = vi.fn().mockResolvedValue(true);
+    const deleteCache = vi.fn().mockResolvedValue(true);
+
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        getRegistrations: vi.fn().mockResolvedValue([
+          { unregister: unregisterLegacy },
+          { unregister: unregisterSerwist },
+        ]),
+      },
+    });
+    Object.defineProperty(globalThis, "caches", {
+      configurable: true,
+      value: {
+        keys: vi.fn().mockResolvedValue(["pages", "serwist-precache-v2"]),
+        delete: deleteCache,
+      },
+    });
+
+    render(
+      <PwaRegistration disabled>
+        <div>contenu</div>
+      </PwaRegistration>,
+    );
+
+    await waitFor(() => expect(unregisterLegacy).toHaveBeenCalledOnce());
+    expect(unregisterSerwist).toHaveBeenCalledOnce();
+    expect(deleteCache).toHaveBeenCalledTimes(2);
+    expect(deleteCache).toHaveBeenCalledWith("pages");
+    expect(deleteCache).toHaveBeenCalledWith("serwist-precache-v2");
+    expect(registerWorker).not.toHaveBeenCalled();
   });
 
   it("retire seulement l'ancien worker et ses caches avant l'enregistrement Serwist", async () => {
