@@ -5,12 +5,29 @@ Endpoint universel de polling pour tous les jobs async.
 Supporte les jobs ARQ (remplace la queue custom Redis).
 """
 
+import asyncio
 
 from fastapi import APIRouter, Header, HTTPException
 
 from src.utils.cache import get_redis
 
 router = APIRouter()
+_arq_pool = None
+_arq_pool_lock = asyncio.Lock()
+
+
+async def _get_arq_pool():
+    """Réutilise un pool ARQ unique pour éviter une connexion Redis par polling."""
+    global _arq_pool
+    if _arq_pool is None:
+        async with _arq_pool_lock:
+            if _arq_pool is None:
+                from arq import create_pool
+
+                from src.workers.settings import _get_redis_settings
+
+                _arq_pool = await create_pool(_get_redis_settings())
+    return _arq_pool
 
 
 @router.get("/status/{job_id}")
@@ -27,14 +44,10 @@ async def get_status(
     - `completed`  → {status, result}
     - `failed`     → {status, error}
     """
-    pool = None
     try:
-        from arq import create_pool
         from arq.jobs import Job, JobStatus
 
-        from src.workers.settings import _get_redis_settings
-
-        pool = await create_pool(_get_redis_settings())
+        pool = await _get_arq_pool()
         job = Job(job_id, pool)
         job_status = await job.status()
 
@@ -55,9 +68,6 @@ async def get_status(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Queue error: {e}") from None
-    finally:
-        if pool is not None:
-            await pool.aclose()
 
 
 @router.get("/all-stats")

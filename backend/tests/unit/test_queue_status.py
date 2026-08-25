@@ -7,12 +7,12 @@ import pytest
 from arq.jobs import JobStatus
 from fastapi import HTTPException
 
+from src.api.routes import queue as queue_route
 from src.api.routes.queue import get_status
 
 
 class FakePool:
-    def __init__(self) -> None:
-        self.aclose = AsyncMock()
+    pass
 
 
 class FakeJob:
@@ -31,17 +31,16 @@ class FakeJob:
 
 
 @pytest.fixture(autouse=True)
-def mock_arq(monkeypatch: pytest.MonkeyPatch) -> FakePool:
+def mock_arq(monkeypatch: pytest.MonkeyPatch) -> tuple[FakePool, AsyncMock]:
     pool = FakePool()
+    create_pool = AsyncMock(return_value=pool)
 
-    async def fake_create_pool(settings: object) -> object:
-        return pool
-
-    monkeypatch.setattr(arq, "create_pool", fake_create_pool)
+    monkeypatch.setattr(arq, "create_pool", create_pool)
     monkeypatch.setattr(arq.jobs, "Job", FakeJob)
+    monkeypatch.setattr(queue_route, "_arq_pool", None)
     FakeJob.status_value = JobStatus.queued
     FakeJob.result_value = None
-    return pool
+    return pool, create_pool
 
 
 @pytest.mark.asyncio
@@ -94,7 +93,12 @@ async def test_get_status_returns_404_for_unknown_job() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_status_closes_its_arq_pool(mock_arq: FakePool) -> None:
+async def test_get_status_reuses_its_arq_pool(
+    mock_arq: tuple[FakePool, AsyncMock],
+) -> None:
     await get_status("job-123")
+    await get_status("job-456")
 
-    mock_arq.aclose.assert_awaited_once()
+    pool, create_pool = mock_arq
+    create_pool.assert_awaited_once()
+    assert FakeJob("job-789", pool).pool is pool

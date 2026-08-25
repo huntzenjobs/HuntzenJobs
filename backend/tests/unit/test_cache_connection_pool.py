@@ -24,7 +24,7 @@ async def test_get_redis_uses_bounded_blocking_pool(monkeypatch: pytest.MonkeyPa
         "redis://staging.invalid:6379",
         encoding="utf-8",
         decode_responses=True,
-        max_connections=50,
+        max_connections=20,
         timeout=5,
         socket_connect_timeout=5,
         socket_keepalive=True,
