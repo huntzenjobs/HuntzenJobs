@@ -48,7 +48,9 @@ class WorkerSettings:
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = _get_redis_settings()
-    max_jobs = 750       # sweet spot Groq payant : 240 req/sec × 3s = 720 max absorbables
+    # Les tâches IA sont déjà limitées à cinq appels Groq concurrents dans tasks.py.
+    # Réserver davantage de jobs ne crée pas de débit supplémentaire et épuise Redis.
+    max_jobs = 5
     job_timeout = 120    # timeout 2 min par job
     keep_result = 3600   # garder résultat 1h dans Redis
     retry_jobs = True

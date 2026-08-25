@@ -4,7 +4,12 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from src.api import deps
+from src.workers.settings import WorkerSettings
 from src.workers.tasks import cover_letter_task, cv_adapt_task
+
+
+def test_worker_only_reserves_jobs_it_can_process_concurrently() -> None:
+    assert WorkerSettings.max_jobs == 5
 
 
 @pytest.mark.asyncio
