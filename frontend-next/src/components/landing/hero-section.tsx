@@ -21,7 +21,7 @@ interface HeroSectionProps {
 
 export function HeroSection({ texts }: HeroSectionProps) {
   return (
-    <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-slate-900 pt-20">
+    <section className="relative min-h-[36rem] sm:min-h-[70vh] flex items-center justify-center overflow-hidden bg-slate-900 pt-16 sm:pt-20">
       <div className="absolute inset-0">
         <Image
           src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2340&auto=format&fit=crop"
@@ -52,12 +52,12 @@ export function HeroSection({ texts }: HeroSectionProps) {
         className="absolute bottom-1/4 right-1/4 w-64 sm:w-80 h-64 sm:h-80 bg-purple-500/10 rounded-full blur-3xl"
       />
 
-      <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center py-16 sm:py-24">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center py-8 sm:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-6"
+          className="mb-3 sm:mb-6"
         >
           <span className="inline-block px-4 py-1.5 rounded-full bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] text-xs sm:text-sm font-semibold">
             {texts.tag}
@@ -68,7 +68,7 @@ export function HeroSection({ texts }: HeroSectionProps) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight mb-4 leading-tight"
+          className="text-[2rem] sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight mb-2 sm:mb-4 leading-[1.05] sm:leading-tight"
           style={{ textShadow: "0 0 40px rgba(0, 217, 255, 0.2)" }}
         >
           {texts.h1}
@@ -78,7 +78,7 @@ export function HeroSection({ texts }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-xl sm:text-2xl text-white/70 font-semibold mb-3"
+          className="text-lg sm:text-2xl text-white/70 font-semibold mb-2 sm:mb-3"
         >
           {texts.h2}
         </motion.p>
@@ -87,7 +87,7 @@ export function HeroSection({ texts }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-base sm:text-lg text-white/70 max-w-2xl mx-auto mb-10 px-4"
+          className="text-sm sm:text-lg text-white/70 max-w-2xl mx-auto mb-5 sm:mb-10 sm:px-4"
         >
           {texts.subtitle}
         </motion.p>
@@ -96,11 +96,11 @@ export function HeroSection({ texts }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.55 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4"
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-3 sm:mb-4"
         >
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-2xl hover:shadow-[#00D9FF]/50 hover:-translate-y-0.5 w-full sm:w-auto justify-center"
+            className="inline-flex items-center gap-2 px-8 py-3 sm:py-4 rounded-xl text-base font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-2xl hover:shadow-[#00D9FF]/50 hover:-translate-y-0.5 w-full sm:w-auto justify-center"
           >
             {texts.ctaSearch} →
           </Link>

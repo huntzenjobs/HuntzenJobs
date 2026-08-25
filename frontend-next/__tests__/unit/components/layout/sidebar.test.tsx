@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Sidebar } from "@/components/layout/sidebar";
 
 // Mock the subscription context
 const mockSubscriptionContext = {
   isFreePlan: true,
+  isLoaded: true,
   plan: "free",
   getRemaining: vi.fn(() => 2),
   limits: {
@@ -131,6 +132,23 @@ describe("Sidebar Component", () => {
       render(<Sidebar />);
       const sidebar = document.querySelector('aside, [class*="sidebar"]');
       expect(sidebar).toBeInTheDocument();
+    });
+
+    it("ne monte la navigation mobile que pendant son ouverture", async () => {
+      render(<Sidebar />);
+
+      const trigger = screen.getByRole("button", { name: "aria.open" });
+      expect(screen.getAllByText(/nav\.jobs/i)).toHaveLength(1);
+
+      fireEvent.click(trigger);
+      expect(screen.getAllByText(/nav\.jobs/i)).toHaveLength(2);
+
+      fireEvent.keyDown(document, { key: "Escape" });
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/nav\.jobs/i)).toHaveLength(1);
+        expect(trigger).toHaveFocus();
+      });
     });
   });
 

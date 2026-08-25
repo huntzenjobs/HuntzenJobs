@@ -10,7 +10,8 @@ Complete production deployment guide for HuntZen AI Career Platform.
 - [Prerequisites](#prerequisites)
 - [Environment Configuration](#environment-configuration)
 - [Database Setup (Supabase)](#database-setup-supabase)
-- [Backend Deployment (Modal)](#backend-deployment-modal)
+- [Backend Deployment (Railway)](#backend-deployment-railway)
+- [CV Processor Deployment (Modal Labs)](#cv-processor-deployment-modal-labs)
 - [Frontend Deployment (Vercel)](#frontend-deployment-vercel)
 - [Monitoring & Security](#monitoring--security)
 - [CI/CD Pipeline](#cicd-pipeline)
@@ -25,33 +26,37 @@ Complete production deployment guide for HuntZen AI Career Platform.
 │   Vercel CDN    │  ← Next.js 14 Frontend (Static + SSR)
 └────────┬────────┘
          │
-         ├─────────────────────────────────┐
-         │                                 │
-┌────────▼────────┐              ┌────────▼────────┐
-│  Supabase Auth  │              │  FastAPI (8000) │
-│   + Database    │◄─────────────┤   Modal Labs    │
-└─────────────────┘              └────────┬────────┘
-         │                                │
-         │                       ┌────────▼────────┐
-         │                       │  Groq LLMs      │
-         │                       │  (AI Inference) │
-         │                       └─────────────────┘
+         ├──────────────────────────────────┐
+         │                                  │
+┌────────▼────────┐               ┌────────▼─────────┐
+│  Supabase       │               │  Railway         │
+│  (Auth + DB +   │◄──────────────┤  FastAPI Backend │
+│   Storage)      │               │  + ARQ Workers   │
+└─────────────────┘               └────┬─────────┬───┘
+                                       │         │
+                              ┌────────▼──┐  ┌───▼────────────┐
+                              │  Groq     │  │  Modal Labs    │
+                              │  LLMs     │  │  (CV Processor │
+                              │           │  │   serverless)  │
+                              └───────────┘  └────────────────┘
          │
 ┌────────▼────────┐
-│ Upstash Redis   │  ← Caching & Rate Limiting
+│  Upstash Redis  │  ← Cache + ARQ queue
 └─────────────────┘
 
 ┌─────────────────┐
-│  Sentry.io      │  ← Error Tracking & Monitoring
+│  Sentry.io      │  ← Error Tracking
 └─────────────────┘
 ```
 
 **Components:**
+
 - **Frontend**: Vercel (Next.js 14 with SSR + Static)
-- **Backend**: Modal Labs (Serverless FastAPI)
+- **Backend API**: Railway (FastAPI Docker, branch `Production`)
+- **CV Processing**: Modal Labs (serverless — extraction PDF Docling + analyse LLM Groq, app `huntzen-cv-processor`)
 - **Database**: Supabase (PostgreSQL + Auth + Storage)
-- **LLM**: Groq (Llama 3.3 70B + Llama 3.1 8B)
-- **Caching**: Upstash Redis
+- **LLM provider**: Groq (Llama 3.3 70B + Llama 3.1 8B)
+- **Caching / Queue**: Upstash Redis + ARQ workers
 - **Monitoring**: Sentry
 - **CDN**: Vercel Edge Network
 
@@ -61,12 +66,13 @@ Complete production deployment guide for HuntZen AI Career Platform.
 
 ### Accounts Required
 
-1. **Supabase**: [https://supabase.com](https://supabase.com) (Database + Auth)
+1. **Supabase**: [https://supabase.com](https://supabase.com) (Database + Auth + Storage)
 2. **Vercel**: [https://vercel.com](https://vercel.com) (Frontend hosting)
-3. **Modal Labs**: [https://modal.com](https://modal.com) (Backend serverless)
-4. **Groq**: [https://console.groq.com](https://console.groq.com) (LLM provider)
-5. **Upstash**: [https://upstash.com](https://upstash.com) (Redis cache)
-6. **Sentry** (optional): [https://sentry.io](https://sentry.io) (Error tracking)
+3. **Railway**: [https://railway.app](https://railway.app) (Backend API + ARQ workers, branch `Production`)
+4. **Modal Labs**: [https://modal.com](https://modal.com) (Serverless CV processor — PDF + LLM analysis)
+5. **Groq**: [https://console.groq.com](https://console.groq.com) (LLM provider)
+6. **Upstash**: [https://upstash.com](https://upstash.com) (Redis cache + queue)
+7. **Sentry** (optional): [https://sentry.io](https://sentry.io) (Error tracking)
 
 ### Tools Required
 
@@ -111,9 +117,9 @@ SERPAPI_KEY=production_serpapi_key
 RAPIDAPI_KEY=production_rapidapi_key
 
 # ============================================
-# MODAL (Serverless Backend)
+# MODAL (Serverless CV Processor)
 # ============================================
-FASTAPI_CALLBACK_URL=https://your-production-domain.com
+FASTAPI_CALLBACK_URL=https://huntzenjobs-production.up.railway.app
 MODAL_CALLBACK_SECRET=generate-with-openssl-rand-hex-32
 
 # ============================================
@@ -139,8 +145,8 @@ RATE_LIMIT=60
 CACHE_TTL_HOURS=2
 
 # Frontend/Backend URLs
-FASTAPI_URL=https://your-modal-backend.modal.run
-FRONTEND_URL=https://your-app.vercel.app
+FASTAPI_URL=https://huntzenjobs-production.up.railway.app
+FRONTEND_URL=https://huntzenjobs.com
 
 # Feature flags
 ENABLE_ADZUNA=true
@@ -176,6 +182,7 @@ openssl rand -hex 32
 Navigate to: **Settings → API**
 
 Copy these values:
+
 - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
 - **anon public** key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - **service_role** key → `SUPABASE_SERVICE_ROLE_KEY` (⚠️ Keep secret!)
@@ -189,6 +196,7 @@ Copy JWT Secret → `SUPABASE_JWT_SECRET`
 Navigate to: **Settings → Database → Connection string → URI**
 
 Copy and set password:
+
 ```
 postgresql://postgres.[project-ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres
 ```
@@ -205,6 +213,7 @@ python scripts/migrations/apply_migration.py
 ```
 
 This creates:
+
 - `profiles` table (user profiles)
 - `cv_analyses` table (CV analysis results)
 - `job_searches` table (search history)
@@ -216,6 +225,7 @@ This creates:
 Navigate to: **Authentication → Providers**
 
 Enable:
+
 - ✅ Email/Password
 - ✅ Google OAuth (optional)
 - ✅ GitHub OAuth (optional)
@@ -223,64 +233,100 @@ Enable:
 Navigate to: **Authentication → URL Configuration**
 
 Set:
+
 - **Site URL**: `https://your-app.vercel.app`
 - **Redirect URLs**: `https://your-app.vercel.app/auth/callback`
 
 ---
 
-## Backend Deployment (Modal)
+## Backend Deployment (Railway)
 
-### Step 1: Install Modal CLI
+The FastAPI backend runs on Railway as a Dockerized service, deployed from the `Production` branch.
+
+### Step 1: Link the Railway project
+
+```bash
+npm install -g @railway/cli
+railway login
+railway link  # Choose the existing HuntZen project
+```
+
+### Step 2: Configure Railway environment variables
+
+Set every variable from `.env.example` in the Railway dashboard:
+**Settings → Variables**. Critical groups: Supabase, Groq, Stripe, Adzuna/SerpAPI/Hunter, Redis (Upstash), Sentry, Modal (callback secret).
+
+### Step 3: Deploy
+
+Push to `Production` triggers an automatic redeploy:
+
+```bash
+git push origin Production
+```
+
+Force a redeploy without changes:
+
+```bash
+git commit --allow-empty -m "chore: trigger redeploy" && git push origin Production
+```
+
+### Step 4: Verify
+
+```bash
+curl https://huntzenjobs-production.up.railway.app/api/auth/test-debug
+```
+
+Expected: backend version `3.x.x` and `200 OK`.
+
+### Step 5: Update frontend env
+
+In Vercel → frontend project → Variables:
+
+```env
+FASTAPI_URL=https://huntzenjobs-production.up.railway.app
+```
+
+---
+
+## CV Processor Deployment (Modal Labs)
+
+The CV processor is a **separate serverless service** that handles PDF extraction (Docling) + LLM analysis (Groq via LangChain) without blocking the main backend.
+
+### Step 1: Install the Modal CLI
 
 ```bash
 pip install modal
 modal setup  # Authenticates your account
 ```
 
-### Step 2: Configure Modal Secrets
+### Step 2: Configure Modal secrets
 
-Add secrets to Modal dashboard: [https://modal.com/secrets](https://modal.com/secrets)
+In the Modal dashboard ([https://modal.com/secrets](https://modal.com/secrets)), create a secret named `huntzen-secrets`:
 
-Create secret named `huntzen-secrets` with:
 ```
 GROQ_API_KEY=gsk_...
 SUPABASE_URL=https://...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
-ADZUNA_APP_ID=...
-ADZUNA_API_KEY=...
-SERPAPI_KEY=...
-RAPIDAPI_KEY=...
+MODAL_CALLBACK_SECRET=...   # used by Modal to call back the Railway backend
+FASTAPI_CALLBACK_URL=https://huntzenjobs-production.up.railway.app
 ```
 
-### Step 3: Deploy Backend
+### Step 3: Deploy the CV processor
 
 ```bash
-cd backend
-
-# Deploy to Modal
-modal deploy modal_app.py
+modal deploy scripts/deployment/modal_app.py
 ```
 
 This will output:
+
 ```
 ✓ Created function huntzen-cv-processor
-✓ Created web endpoint: https://huntzen--cv-processor.modal.run
+✓ Deployed: https://huntzen--cv-processor.modal.run
 ```
 
-**Copy the URL** → Update `FASTAPI_URL` in frontend `.env`
+### Step 4: Wire the backend → Modal trigger
 
-### Step 4: Configure Callback URL
-
-Update `.env`:
-```env
-FASTAPI_CALLBACK_URL=https://your-app.vercel.app
-MODAL_CALLBACK_SECRET=your-secret-from-step-2
-```
-
-Redeploy:
-```bash
-modal deploy modal_app.py
-```
+The Railway backend spawns the Modal function asynchronously when a CV is uploaded (see `backend/src/modal_integration.py`). No additional env var needed beyond `MODAL_CALLBACK_SECRET`.
 
 ---
 
@@ -303,6 +349,7 @@ vercel link
 ```
 
 Follow prompts:
+
 - Set up and deploy? → Yes
 - Which scope? → Your account/team
 - Link to existing project? → No (first time) / Yes (if exists)
@@ -335,6 +382,7 @@ vercel --prod
 ```
 
 Output:
+
 ```
 ✓ Production: https://huntzen-jobsearch.vercel.app [2m]
 ```
@@ -365,6 +413,7 @@ Follow DNS configuration instructions.
 Already configured in `frontend-next/sentry.client.config.ts` and `sentry.server.config.ts`
 
 Add to Vercel environment:
+
 ```env
 SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
 NEXT_PUBLIC_SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
@@ -373,6 +422,7 @@ NEXT_PUBLIC_SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
 #### 3. Configure Backend
 
 Update Modal secrets with:
+
 ```env
 SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
 ```
@@ -418,7 +468,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install dependencies
         run: |
           cd backend
@@ -434,7 +484,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "18"
       - name: Install dependencies
         run: |
           cd frontend-next
@@ -458,7 +508,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install Modal
         run: pip install modal
       - name: Deploy to Modal
@@ -480,7 +530,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: "--prod"
           working-directory: frontend-next
 ```
 
@@ -518,6 +568,7 @@ modal run modal_app.py
 #### LLM quota exceeded
 
 Groq has rate limits on free tier. Solution:
+
 1. Upgrade Groq plan
 2. Or implement request queuing
 3. Or use fallback model: `llama-3.1-8b-instant`
@@ -576,6 +627,7 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ## Support
 
 For deployment issues:
+
 - **GitHub Issues**: [https://github.com/huntzenjobs/HuntzenJobs/issues](https://github.com/huntzenjobs/HuntzenJobs/issues)
 - **Email**: contact@huntzen.ai
 
@@ -585,7 +637,8 @@ For deployment issues:
 
 - [ ] Supabase project created and configured
 - [ ] Database migrations applied
-- [ ] Modal backend deployed
+- [ ] Railway backend deployed (branch `Production`)
+- [ ] Modal CV processor deployed (`huntzen-cv-processor`)
 - [ ] Vercel frontend deployed
 - [ ] All environment variables set
 - [ ] Custom domain configured (optional)

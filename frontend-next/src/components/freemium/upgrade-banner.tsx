@@ -18,7 +18,7 @@ export function UpgradeBanner({
   variant = "default",
 }: UpgradeBannerProps) {
   const t = useTranslations("upgradeBanner");
-  const { isFreePlan, openPricingModal } = useSubscription();
+  const { isFreePlan, isLoaded, openPricingModal } = useSubscription();
   const [isDismissed, setIsDismissed] = useState(true);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function UpgradeBanner({
     setIsDismissed(true);
   };
 
-  if (!isFreePlan || isDismissed) {
+  if (!isLoaded || !isFreePlan || isDismissed) {
     return null;
   }
 
@@ -60,8 +60,10 @@ export function UpgradeBanner({
             {t("minimal.cta")}
           </Button>
           <button
+            type="button"
             onClick={handleDismiss}
-            className="text-violet-400 hover:text-violet-600"
+            className="flex size-11 items-center justify-center rounded-lg text-violet-400 transition-colors hover:bg-violet-100 hover:text-violet-600"
+            aria-label={t("dismiss")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -101,8 +103,10 @@ export function UpgradeBanner({
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <button
+              type="button"
               onClick={handleDismiss}
-              className="p-1 rounded hover:bg-white/20 transition-colors"
+              className="flex size-11 items-center justify-center rounded-lg transition-colors hover:bg-white/20"
+              aria-label={t("dismiss")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -136,8 +140,10 @@ export function UpgradeBanner({
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
         <button
+          type="button"
           onClick={handleDismiss}
-          className="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+          className="flex size-11 items-center justify-center rounded-full transition-colors hover:bg-gray-200"
+          aria-label={t("dismiss")}
         >
           <X className="w-4 h-4 text-gray-500" />
         </button>

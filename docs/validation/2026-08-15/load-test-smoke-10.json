@@ -1,0 +1,149 @@
+{
+    "metrics": {
+        "http_req_duration{expected_response:true}": {
+            "med": 24.938,
+            "max": 86.978,
+            "p(90)": 30.2784,
+            "p(95)": 32.771499999999996,
+            "avg": 25.607790419161656,
+            "min": 17.373
+        },
+        "iteration_duration": {
+            "max": 289.531417,
+            "p(90)": 231.3677705,
+            "p(95)": 234.1232044,
+            "avg": 227.14827812574842,
+            "min": 217.749625,
+            "med": 226.0835
+        },
+        "vus_max": {
+            "value": 10,
+            "min": 10,
+            "max": 10
+        },
+        "http_req_connecting": {
+            "avg": 0.15575898203592817,
+            "min": 0,
+            "med": 0,
+            "max": 10.546,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_duration": {
+            "med": 24.938,
+            "max": 86.978,
+            "p(90)": 30.2784,
+            "p(95)": 32.771499999999996,
+            "avg": 25.607790419161656,
+            "min": 17.373,
+            "thresholds": {
+                "p(95)<500": false,
+                "p(99)<1000": false
+            }
+        },
+        "http_req_blocked": {
+            "avg": 0.4785898203592666,
+            "min": 0,
+            "med": 0.001,
+            "max": 38.695,
+            "p(90)": 0.002,
+            "p(95)": 0.002
+        },
+        "http_req_sending": {
+            "med": 0.208,
+            "max": 0.868,
+            "p(90)": 0.30360000000000004,
+            "p(95)": 0.3303,
+            "avg": 0.2094026946107784,
+            "min": 0.009
+        },
+        "http_req_waiting": {
+            "avg": 24.942452095808378,
+            "min": 17.147,
+            "med": 24.332,
+            "max": 86.546,
+            "p(90)": 29.334100000000003,
+            "p(95)": 31.570549999999997
+        },
+        "data_received": {
+            "count": 175354,
+            "rate": 11518.163042365182
+        },
+        "http_req_receiving": {
+            "avg": 0.45593562874251453,
+            "min": 0.007,
+            "med": 0.068,
+            "max": 26.614,
+            "p(90)": 1.3483000000000003,
+            "p(95)": 2.1807499999999975
+        },
+        "checks": {
+            "passes": 1336,
+            "fails": 0,
+            "value": 1
+        },
+        "iterations": {
+            "count": 668,
+            "rate": 43.87771543449218
+        },
+        "vus": {
+            "value": 10,
+            "min": 10,
+            "max": 10
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 668,
+            "thresholds": {
+                "rate<0.005": false
+            },
+            "value": 0
+        },
+        "http_reqs": {
+            "rate": 43.87771543449218,
+            "count": 668
+        },
+        "http_req_tls_handshaking": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0.3007275449101796,
+            "min": 0,
+            "med": 0,
+            "max": 26.804
+        },
+        "data_sent": {
+            "count": 42308,
+            "rate": 2779.0095577881666
+        },
+        "critical_errors": {
+            "passes": 0,
+            "fails": 668,
+            "thresholds": {
+                "rate<0.005": false
+            },
+            "value": 0
+        }
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "health returns 200": {
+                    "name": "health returns 200",
+                    "path": "::health returns 200",
+                    "id": "e541dcf719b124ee8f73cfb91a5bbf45",
+                    "passes": 668,
+                    "fails": 0
+                },
+                "health payload is ok": {
+                    "name": "health payload is ok",
+                    "path": "::health payload is ok",
+                    "id": "b1d8c32abc9a035c5b784437a1b865e5",
+                    "passes": 668,
+                    "fails": 0
+                }
+            }
+    }
+}

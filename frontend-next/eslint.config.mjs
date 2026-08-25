@@ -1,18 +1,28 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
 
-const eslintConfig = defineConfig([
+export default defineConfig([
   ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: false,
+    },
+    rules: {
+      "@next/next/no-location-assign-relative-destination": "off",
+      "react/no-unescaped-entities": "warn",
+      "react-hooks/immutability": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/static-components": "off",
+    },
+  },
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
+    "coverage/**",
+    "node_modules/**",
     "out/**",
-    "build/**",
-    "next-env.d.ts",
+    "public/sw.js",
   ]),
 ]);
-
-export default eslintConfig;

@@ -1,15 +1,18 @@
 import { getRequestConfig } from "next-intl/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
-const SUPPORTED_LOCALES = ["fr", "en", "es", "pt"] as const;
-type Locale = (typeof SUPPORTED_LOCALES)[number];
+import { detectLocale, isSupportedLocale } from "./detect-locale";
 
 export default getRequestConfig(async () => {
   const cookieStore = await cookies();
   const rawLocale = cookieStore.get("NEXT_LOCALE")?.value;
-  const locale: Locale = SUPPORTED_LOCALES.includes(rawLocale as Locale)
-    ? (rawLocale as Locale)
-    : "fr";
+  const headerStore = await headers();
+  const locale = isSupportedLocale(rawLocale)
+    ? rawLocale
+    : detectLocale(
+        headerStore.get("x-vercel-ip-country"),
+        headerStore.get("accept-language"),
+      );
 
   return {
     locale,

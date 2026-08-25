@@ -7,6 +7,7 @@ IMPORTANT: This file loads .env BEFORE any imports to ensure
 environment variables are available when settings.py is first imported.
 """
 
+import os
 from pathlib import Path
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -25,6 +26,11 @@ env_test_file = root_dir / ".env.test"
 if env_test_file.exists():
     # Load test env but don't override API keys from main .env
     load_dotenv(env_test_file, override=False)
+
+# Les modules de routes construisent encore certains clients Supabase à
+# l'import. Une URL locale évite toute dépendance à la production pendant la
+# collecte des tests, sans écraser une configuration explicitement fournie.
+os.environ.setdefault("SUPABASE_URL", "http://127.0.0.1:54321")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # NOW import the rest (settings will pick up env vars)

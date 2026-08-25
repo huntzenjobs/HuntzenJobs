@@ -5,10 +5,10 @@
  * Email/Password + Google OAuth registration
  */
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,6 @@ import {
   User,
   Mail,
   Lock as LockIcon,
-  X,
   Eye,
   EyeOff,
   AlertCircle,
@@ -28,6 +27,13 @@ import {
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { PromoCodeInput } from "@/components/auth/promo-code-input";
 import { useTranslations } from "next-intl";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function SignupForm() {
   const router = useRouter();
@@ -95,6 +101,8 @@ function SignupForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
   const handleResendEmail = async () => {
     const emailToResend = emailFromUrl || email;
@@ -133,12 +141,14 @@ function SignupForm() {
     // Validate password match
     if (password !== confirmPassword) {
       setPasswordError(t("passwordMismatch"));
+      confirmPasswordRef.current?.focus();
       return;
     }
 
     // Validate password strength
     if (password.length < 6) {
       setPasswordError(t("passwordTooShort"));
+      passwordRef.current?.focus();
       return;
     }
 
@@ -172,122 +182,110 @@ function SignupForm() {
 
   return (
     <AuthLayout>
-      {/* Success Modal */}
-      <AnimatePresence>
-        {showSuccessModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={closeSuccessModal}
+      <Dialog
+        open={showSuccessModal}
+        onOpenChange={(open) => {
+          if (!open) closeSuccessModal();
+        }}
+      >
+        <DialogContent
+          closeLabel={t("success.close")}
+          className="max-h-[calc(100dvh-2rem)] max-w-md overflow-y-auto rounded-2xl p-8"
+        >
+          <DialogHeader className="text-center">
+            {/* Success icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-green-600" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <DialogTitle className="text-2xl font-bold text-center text-gray-900 mb-4">
+              {t("success.title")}
+            </DialogTitle>
+
+            <DialogDescription className="sr-only">
+              {t("success.sentEmail")}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Message */}
+          <div className="space-y-4 mb-6">
+            <p className="text-center text-gray-700 leading-relaxed">
+              {t("success.sentEmail")}
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-center font-semibold text-blue-900 break-all">
+                {emailFromUrl || email}
+              </p>
+            </div>
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+              <p className="text-sm text-gray-700">
+                <strong>{t("success.checkEmail")}</strong>{" "}
+                {t("success.checkEmailDesc")}
+              </p>
+            </div>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <p className="text-xs text-orange-800 text-center">
+                <strong>{t("success.spamWarning")}</strong>
+              </p>
+            </div>
+          </div>
+
+          {/* Open email client */}
+          <a
+            href={`https://mail.google.com/mail/u/0/#search/from%3Ahuntzenjobs+in%3Aanywhere`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold py-3 rounded-xl mb-3 transition-colors"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-              className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8"
-              onClick={(e) => e.stopPropagation()}
+            {t("success.openMail")}
+          </a>
+
+          {/* Action buttons */}
+          <div className="space-y-3">
+            <Link href="/login" className="block">
+              <Button className="w-full bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 rounded-xl font-semibold">
+                {t("success.goToLogin")}
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              onClick={closeSuccessModal}
+              className="w-full h-12 rounded-xl border-2"
             >
-              {/* Close button */}
-              <button
-                onClick={closeSuccessModal}
-                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
+              {t("success.close")}
+            </Button>
+          </div>
 
-              {/* Success icon */}
-              <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle2 className="w-10 h-10 text-green-600" />
-                </div>
-              </div>
-
-              {/* Title */}
-              <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">
-                {t("success.title")}
-              </h2>
-
-              {/* Message */}
-              <div className="space-y-4 mb-6">
-                <p className="text-center text-gray-700 leading-relaxed">
-                  {t("success.sentEmail")}
+          {/* Resend email */}
+          <div className="mt-4 text-center">
+            {resendSuccess ? (
+              <p className="text-sm text-green-600 font-medium">
+                {t("success.resendSuccess")}
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500 mb-2">
+                  {t("success.noEmail")}
                 </p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-center font-semibold text-blue-900 break-all">
-                    {emailFromUrl || email}
-                  </p>
-                </div>
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
-                  <p className="text-sm text-gray-700">
-                    <strong>{t("success.checkEmail")}</strong>{" "}
-                    {t("success.checkEmailDesc")}
-                  </p>
-                </div>
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                  <p className="text-xs text-orange-800 text-center">
-                    <strong>{t("success.spamWarning")}</strong>
-                  </p>
-                </div>
-              </div>
-
-              {/* Open email client */}
-              <a
-                href={`https://mail.google.com/mail/u/0/#search/from%3Ahuntzenjobs+in%3Aanywhere`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold py-3 rounded-xl mb-3 transition-colors"
-              >
-                {t("success.openMail")}
-              </a>
-
-              {/* Action buttons */}
-              <div className="space-y-3">
-                <Link href="/login" className="block">
-                  <Button className="w-full bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 rounded-xl font-semibold">
-                    {t("success.goToLogin")}
-                  </Button>
-                </Link>
-                <Button
-                  variant="outline"
-                  onClick={closeSuccessModal}
-                  className="w-full h-12 rounded-xl border-2"
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  disabled={resendLoading}
+                  className="text-sm text-[#00D9FF] hover:text-[#00C4EA] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
                 >
-                  {t("success.close")}
-                </Button>
-              </div>
-
-              {/* Resend email */}
-              <div className="mt-4 text-center">
-                {resendSuccess ? (
-                  <p className="text-sm text-green-600 font-medium">
-                    {t("success.resendSuccess")}
-                  </p>
-                ) : (
-                  <>
-                    <p className="text-xs text-gray-500 mb-2">
-                      {t("success.noEmail")}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleResendEmail}
-                      disabled={resendLoading}
-                      className="text-sm text-[#00D9FF] hover:text-[#00C4EA] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
-                    >
-                      {resendLoading && (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      )}
-                      {t("success.resendButton")}
-                    </button>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  {resendLoading && (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  )}
+                  {t("success.resendButton")}
+                </button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-8">
         {/* Promo/Referral code input */}
@@ -370,17 +368,6 @@ function SignupForm() {
           >
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          </motion.div>
-        )}
-
-        {passwordError && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Alert variant="destructive">
-              <AlertDescription>{passwordError}</AlertDescription>
             </Alert>
           </motion.div>
         )}
@@ -477,6 +464,7 @@ function SignupForm() {
               <Input
                 id="fullName"
                 type="text"
+                autoComplete="name"
                 placeholder={t("fullNamePlaceholder")}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -499,6 +487,7 @@ function SignupForm() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -519,8 +508,14 @@ function SignupForm() {
             <div className="relative">
               <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
+                ref={passwordRef}
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                aria-invalid={Boolean(passwordError)}
+                aria-describedby={
+                  passwordError ? "signup-password-error" : undefined
+                }
                 placeholder={t("passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -532,7 +527,7 @@ function SignupForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
                 aria-label={
                   showPassword ? t("hidePassword") : t("showPassword")
                 }
@@ -556,8 +551,14 @@ function SignupForm() {
             <div className="relative">
               <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
+                ref={confirmPasswordRef}
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
+                autoComplete="new-password"
+                aria-invalid={Boolean(passwordError)}
+                aria-describedby={
+                  passwordError ? "signup-password-error" : undefined
+                }
                 placeholder={t("confirmPasswordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -568,7 +569,7 @@ function SignupForm() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
                 aria-label={
                   showConfirmPassword ? t("hidePassword") : t("showPassword")
                 }
@@ -580,6 +581,15 @@ function SignupForm() {
                 )}
               </button>
             </div>
+            {passwordError && (
+              <p
+                id="signup-password-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {passwordError}
+              </p>
+            )}
           </div>
 
           <Button

@@ -4,6 +4,7 @@ Stripe Payment Routes
 API endpoints for Stripe payment processing.
 """
 
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request
 from structlog import get_logger
@@ -11,19 +12,34 @@ from structlog import get_logger
 from src.api.deps import get_current_user
 from src.api.middleware import limiter
 from src.config.settings import settings
-from src.services.stripe import create_checkout_session, handle_stripe_webhook, supabase_client
+from src.services.stripe import (
+    create_checkout_session,
+    extract_subscription_period,
+    handle_stripe_webhook,
+    supabase_client,
+)
 
 logger = get_logger(__name__)
 
 router = APIRouter()
 
 
+def _optional_subscription_period_end(subscription: object) -> int | None:
+    """Lire l'échéance Stripe sans transformer une mutation réussie en erreur."""
+    try:
+        _, period_end = extract_subscription_period(subscription)
+        return period_end
+    except (TypeError, ValueError, KeyError):
+        logger.warning("[STRIPE] Subscription mutation response has no valid period")
+        return None
+
+
 @router.post("/create-checkout-session")
 @limiter.limit("5/minute")
 async def create_stripe_checkout(
     request: Request,
-    plan_name: str = Form(...),
-    billing_period: str = Form("monthly"),
+    plan_name: Literal["starter", "pro", "premium"] = Form(...),
+    billing_period: Literal["monthly", "yearly"] = Form("monthly"),
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -61,6 +77,13 @@ async def create_stripe_checkout(
             cancel_url=cancel_url
         )
 
+        if checkout_data.get("already_subscribed"):
+            return {
+                "success": True,
+                "already_subscribed": True,
+                "plan_name": checkout_data.get("plan_name"),
+            }
+
         # Handle both new subscriptions (checkout_url) and modifications (immediate)
         if checkout_data.get("checkout_url"):
             # New subscription - redirect to Stripe Checkout
@@ -82,8 +105,8 @@ async def create_stripe_checkout(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[STRIPE] Checkout creation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create checkout: {str(e)}") from None
+        logger.error(f"[STRIPE] Checkout creation failed: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail="Failed to create checkout") from None
 
 
 @router.post("/webhook")
@@ -113,8 +136,8 @@ async def stripe_webhook(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[STRIPE] Webhook processing failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Webhook processing failed: {str(e)}") from None
+        logger.error(f"[STRIPE] Webhook processing failed: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail="Webhook processing failed") from None
 
 
 @router.post("/cancel-subscription")
@@ -138,11 +161,11 @@ async def cancel_subscription(
 
         result = (
             supabase_client
-            .table("user_subscriptions")
-            .select("stripe_subscription_id, status, subscription_plans(name)")
-            .eq("user_id", user_id)
-            .eq("status", "active")
-            .order("created_at", desc=True)
+                .table("user_subscriptions")
+                .select("stripe_subscription_id, status, subscription_plans(name)")
+                .eq("user_id", user_id)
+                .in_("status", ["active", "past_due", "trialing"])
+                .order("created_at", desc=True)
             .limit(1)
             .execute()
         )
@@ -166,6 +189,7 @@ async def cancel_subscription(
             stripe_subscription_id,
             cancel_at_period_end=True
         )
+        current_period_end = _optional_subscription_period_end(updated)
 
         logger.info(
             f"[STRIPE] Subscription {stripe_subscription_id} marked for cancellation "
@@ -176,15 +200,15 @@ async def cancel_subscription(
             "success": True,
             "cancel_at_period_end": True,
             "plan_name": plan_name,
-            "current_period_end": updated.get("current_period_end"),
+            "current_period_end": current_period_end,
             "message": f"{plan_name} plan will be cancelled at end of billing period"
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[STRIPE] Cancel subscription failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}") from None
+        logger.error(f"[STRIPE] Cancel subscription failed: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail="Failed to cancel subscription") from None
 
 
 @router.post("/reactivate-subscription")
@@ -211,7 +235,7 @@ async def reactivate_subscription(
             .table("user_subscriptions")
             .select("stripe_subscription_id, status, subscription_plans(name)")
             .eq("user_id", user_id)
-            .in_("status", ["active", "past_due"])
+            .in_("status", ["active", "past_due", "trialing"])
             .order("created_at", desc=True)
             .limit(1)
             .execute()
@@ -235,6 +259,7 @@ async def reactivate_subscription(
             stripe_subscription_id,
             cancel_at_period_end=False
         )
+        current_period_end = _optional_subscription_period_end(updated)
 
         logger.info(
             f"[STRIPE] Subscription {stripe_subscription_id} reactivated for user {user_id}"
@@ -244,15 +269,15 @@ async def reactivate_subscription(
             "success": True,
             "cancel_at_period_end": False,
             "plan_name": plan_name,
-            "current_period_end": updated.get("current_period_end"),
+            "current_period_end": current_period_end,
             "message": f"{plan_name} subscription has been reactivated"
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[STRIPE] Reactivate subscription failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to reactivate subscription: {str(e)}") from None
+        logger.error(f"[STRIPE] Reactivate subscription failed: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail="Failed to reactivate subscription") from None
 
 
 @router.post("/create-portal-session")
@@ -305,5 +330,5 @@ async def create_portal_session(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[STRIPE] Create portal session failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create portal session: {str(e)}") from None
+        logger.error(f"[STRIPE] Create portal session failed: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail="Failed to create portal session") from None

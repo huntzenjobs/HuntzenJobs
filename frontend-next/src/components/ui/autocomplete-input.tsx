@@ -29,6 +29,8 @@ export interface AutocompleteInputProps {
   value: string;
   /** Change handler */
   onChange: (value: string) => void;
+  /** Called synchronously when the user selects a known option. */
+  onOptionSelect?: (option: AutocompleteOption) => void;
   /** Options to display */
   options?: AutocompleteOption[];
   /** Loading state */
@@ -74,6 +76,7 @@ export const AutocompleteInput = React.forwardRef<
       label,
       value,
       onChange,
+      onOptionSelect,
       options: externalOptions = [],
       loading: externalLoading = false,
       error = false,
@@ -97,7 +100,7 @@ export const AutocompleteInput = React.forwardRef<
     >([]);
     const [internalLoading, setInternalLoading] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
-    const debounceRef = React.useRef<NodeJS.Timeout>();
+    const debounceRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
     const isSelectionRef = React.useRef(false);
     // Tracks whether a click-selection already handled this blur event
     const blurHandledRef = React.useRef(false);
@@ -170,6 +173,7 @@ export const AutocompleteInput = React.forwardRef<
         blurHandledRef.current = true; // Prevent blur handler from re-running fuzzy
         isSelectionRef.current = true;
         setSearch(selectedOption.label);
+        onOptionSelect?.(selectedOption);
         onChange(selectedOption.value);
         setOpen(false);
       }

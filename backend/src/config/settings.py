@@ -7,7 +7,7 @@ Centralized configuration using Pydantic Settings with validation.
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr, computed_field
+from pydantic import AliasChoices, Field, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -111,15 +111,21 @@ class Settings(BaseSettings):
     # --------------------------------------------------------------------------
     # Agent Configuration
     # --------------------------------------------------------------------------
-    default_language: Literal["fr", "en", "es", "de"] = "en"
+    default_language: Literal["fr", "en", "es", "pt"] = "en"
     max_search_results: int = Field(default=100, ge=5, le=200)
     cache_ttl_seconds: int = Field(default=3600, ge=60)
 
     # LLM Models (Groq)
     # - Fast: For quick extraction/analysis tasks (needs to be resistant to jailbreaks)
     # - Powerful: For complex rewriting/generation tasks
-    llm_model_fast: str = "meta-llama/llama-4-scout-17b-16e-instruct"  # Llama 4 Scout, 300K TPM
-    llm_model_powerful: str = "llama-3.3-70b-versatile"  # 70B dense, 300K TPM, optimisé français
+    llm_model_fast: str = Field(
+        default="openai/gpt-oss-20b",
+        validation_alias=AliasChoices("FAST_MODEL", "LLM_MODEL_FAST"),
+    )
+    llm_model_powerful: str = Field(
+        default="openai/gpt-oss-120b",
+        validation_alias=AliasChoices("PRIMARY_MODEL", "LLM_MODEL_POWERFUL"),
+    )
     llm_temperature: float = Field(default=0.3, ge=0.0, le=1.0)
     llm_max_tokens: int = Field(default=2048, ge=256, le=8192)
 

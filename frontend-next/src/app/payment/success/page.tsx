@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
+import { track } from "@/lib/track";
 
 type VerificationStatus = "polling" | "success" | "timeout" | "error";
 
@@ -25,6 +26,7 @@ export default function PaymentSuccessPage() {
   const [status, setStatus] = useState<VerificationStatus>("polling");
   const [message, setMessage] = useState(t("verifying"));
   const [pollingAttempts, setPollingAttempts] = useState(0);
+  const purchaseTracked = useRef(false);
 
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
@@ -55,15 +57,12 @@ export default function PaymentSuccessPage() {
           t("verifyingAttempt", { attempt: currentAttempt, max: MAX_ATTEMPTS }),
         );
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/current`,
-          {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
+        const response = await fetch("/api/subscription/current", {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
           },
-        );
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -75,20 +74,22 @@ export default function PaymentSuccessPage() {
         if (planName && planName !== "free") {
           if (pollingInterval) clearInterval(pollingInterval);
 
-          await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/sync-cache`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${session.access_token}`,
-                "Content-Type": "application/json",
-              },
+          await fetch("/api/subscription/sync-cache", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
             },
-          );
+          });
 
           localStorage.removeItem("huntzen_subscription_cache");
           localStorage.removeItem("huntzen_subscription_cache_expiry");
           window.dispatchEvent(new CustomEvent("subscription-changed"));
+
+          if (!purchaseTracked.current) {
+            purchaseTracked.current = true;
+            void track.payment.purchase(planName, session.access_token);
+          }
 
           setStatus("success");
           setMessage(t("verifying"));
@@ -105,16 +106,13 @@ export default function PaymentSuccessPage() {
 
           if (pollingInterval) clearInterval(pollingInterval);
 
-          await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subscription/sync-cache`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${session.access_token}`,
-                "Content-Type": "application/json",
-              },
+          await fetch("/api/subscription/sync-cache", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
             },
-          );
+          });
 
           window.dispatchEvent(new CustomEvent("subscription-changed"));
 

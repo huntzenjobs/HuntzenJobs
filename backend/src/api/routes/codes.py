@@ -14,7 +14,6 @@ from pydantic import BaseModel, Field
 
 from src.api.deps import get_supabase_client, get_user_id_from_token
 from src.api.middleware import limiter
-from src.services.referrals import _apply_free_days
 from src.services.stripe import invalidate_user_quota_cache
 
 logger = logging.getLogger(__name__)
@@ -208,120 +207,65 @@ async def apply_code(
             "message": "Les codes de parrainage doivent etre appliques via /api/referrals/register.",
         }
 
-    # --- Rechercher le code promo ---
+    # Réserver le code et incrémenter son compteur dans une seule transaction.
     try:
-        promo_res = (
-            supabase.table("promo_codes")
-            .select(
-                "id, code, is_active, max_uses, current_uses, expires_at, starts_at, discount_type, discount_value, plan",
-            )
-            .eq("code", code)
-            .limit(1)
-            .execute()
-        )
+        claim_result = supabase.rpc(
+            "claim_promo_code",
+            {"p_user_id": user_id, "p_code": code},
+        ).execute()
     except Exception as e:
-        logger.error(f"[codes] apply lookup error: {e}")
+        logger.error(
+            "[codes] Atomic promo claim failed",
+            extra={"user_id": user_id, "error_type": type(e).__name__},
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erreur interne",
         ) from None
 
-    if not promo_res.data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Code promo invalide.",
-        )
-
-    promo = promo_res.data[0]
-
-    # --- Verifications de validite ---
-    if not promo.get("is_active"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ce code promo n'est plus actif.",
-        )
-
-    expires_at = promo.get("expires_at")
-    if expires_at:
-        try:
-            expiry = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
-            if expiry < datetime.now(UTC):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Ce code promo a expire.",
-                )
-        except (ValueError, TypeError):
-            pass
-
-    starts_at = promo.get("starts_at")
-    if starts_at:
-        try:
-            start = datetime.fromisoformat(starts_at.replace("Z", "+00:00"))
-            if start > datetime.now(UTC):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Ce code promo n'est pas encore actif.",
-                )
-        except (ValueError, TypeError):
-            pass
-
-    max_uses = promo.get("max_uses")
-    current_uses = promo.get("current_uses", 0)
-    if max_uses is not None and current_uses >= max_uses:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ce code promo a atteint sa limite d'utilisation.",
-        )
-
-    # --- Inserer dans user_promo_codes (UNIQUE constraint protege contre les doublons) ---
-    promo_id = promo["id"]
-    try:
-        supabase.table("user_promo_codes").insert({
-            "user_id": user_id,
-            "promo_code_id": promo_id,
-        }).execute()
-    except Exception as e:
-        error_msg = str(e).lower()
-        if "duplicate" in error_msg or "unique" in error_msg or "23505" in error_msg:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Tu as deja utilise ce code promo.",
-            ) from None
-        logger.error(f"[codes] apply insert error for user {user_id}: {e}")
+    promo = claim_result.data
+    if isinstance(promo, list):
+        promo = promo[0] if promo else None
+    if not isinstance(promo, dict):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erreur lors de l'application du code promo.",
-        ) from None
+            detail="Réponse invalide lors de l'application du code promo.",
+        )
 
-    # --- Incrementer current_uses ---
-    try:
-        supabase.table("promo_codes").update({
-            "current_uses": current_uses + 1,
-        }).eq("id", promo_id).execute()
-    except Exception as e:
-        logger.warning(f"[codes] Failed to increment current_uses for promo {promo_id}: {e}")
+    claim_status = promo.get("status")
+    claim_errors = {
+        "not_found": (status.HTTP_404_NOT_FOUND, "Code promo invalide."),
+        "inactive": (status.HTTP_400_BAD_REQUEST, "Ce code promo n'est plus actif."),
+        "not_started": (status.HTTP_400_BAD_REQUEST, "Ce code promo n'est pas encore actif."),
+        "expired": (status.HTTP_400_BAD_REQUEST, "Ce code promo a expire."),
+        "limit_reached": (
+            status.HTTP_400_BAD_REQUEST,
+            "Ce code promo a atteint sa limite d'utilisation.",
+        ),
+        "already_claimed": (
+            status.HTTP_409_CONFLICT,
+            "Tu as deja utilise ce code promo.",
+        ),
+        "misconfigured": (
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "Ce code promo est temporairement indisponible.",
+        ),
+    }
+    if claim_status in claim_errors:
+        status_code, detail = claim_errors[claim_status]
+        raise HTTPException(status_code=status_code, detail=detail)
+    if claim_status != "claimed":
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Réponse invalide lors de l'application du code promo.",
+        )
 
-    # --- Appliquer l'effet du code promo (jours gratuits) ---
-    try:
-        if promo.get("discount_type") == "free_days":
-            try:
-                days = int(promo.get("discount_value") or 0)
-            except (TypeError, ValueError):
-                days = 0
-
-            if days > 0:
-                reward_value = {
-                    "days": days,
-                    # par defaut on offre le plan pro si aucun plan n'est defini
-                    "reward_plan": promo.get("plan") or "pro",
-                }
-                success = await _apply_free_days(supabase, user_id, reward_value)
-                if not success:
-                    logger.error(
-                        f"[codes] _apply_free_days failed for user {user_id} and promo {promo_id}",
-                    )
-    except Exception as e:
-        logger.error(f"[codes] Failed to apply promo side effects for {user_id}: {e}")
+    promo_id = promo.get("promo_id")
+    if not isinstance(promo_id, str) or not promo_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Code promo réservé sans identifiant.",
+        )
 
     # Invalider le cache /api/auth/me pour que le frontend voie le nouveau plan
     try:
@@ -329,5 +273,22 @@ async def apply_code(
     except Exception as e:
         logger.warning(f"[codes] Failed to invalidate auth_me cache for {user_id}: {e}")
 
-    logger.info(f"[codes] User {user_id} applied promo code {code} (promo_id={promo_id})")
-    return {"ok": True, "message": "Code promo applique avec succes."}
+    delivery_status = (
+        "queued" if promo.get("discount_type") == "free_days" else "pending"
+    )
+    logger.info(
+        "[codes] Promo code accepted",
+        extra={
+            "user_id": user_id,
+            "promo_id": promo_id,
+            "delivery_status": delivery_status,
+        },
+    )
+    return {
+        "ok": True,
+        "status": delivery_status,
+        "applied": False,
+        "promo_id": promo_id,
+        "promo_link_id": promo.get("promo_link_id"),
+        "message": "Code promo pris en compte.",
+    }

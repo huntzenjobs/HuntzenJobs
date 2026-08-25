@@ -31,6 +31,32 @@ _LOCATION_NOISE = re.compile(
 # Postal-code pattern (French 5-digit or generic)
 _POSTAL_CODE_RE = re.compile(r"\b\d{4,5}\b")
 
+_MOJIBAKE_MARKERS = frozenset({"Ã", "Â", "â", "ð"})
+_JOB_TEXT_FIELDS = ("title", "company", "location", "description", "salary")
+
+
+def _repair_mojibake(text: str) -> str:
+    """Répare un texte UTF-8 décodé par erreur comme Latin-1."""
+    if not any(marker in text for marker in _MOJIBAKE_MARKERS):
+        return text
+
+    try:
+        repaired = text.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return text
+
+    original_markers = sum(text.count(marker) for marker in _MOJIBAKE_MARKERS)
+    repaired_markers = sum(repaired.count(marker) for marker in _MOJIBAKE_MARKERS)
+    return repaired if repaired_markers < original_markers else text
+
+
+def _repair_job_text(job: dict[str, Any]) -> None:
+    """Normalise en place les champs textuels issus des fournisseurs."""
+    for field in _JOB_TEXT_FIELDS:
+        value = job.get(field)
+        if isinstance(value, str):
+            job[field] = _repair_mojibake(value)
+
 
 def _normalize_location_text(text: str) -> str:
     """
@@ -184,6 +210,8 @@ async def aggregate_jobs(
     source_stats = {}
 
     for source_name, jobs in results:
+        for job in jobs:
+            _repair_job_text(job)
         source_stats[source_name] = len(jobs)
         all_jobs.extend(jobs)
 

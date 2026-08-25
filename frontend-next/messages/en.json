@@ -21,7 +21,10 @@
     "pricing": "Pricing",
     "login": "LOG IN",
     "signup": "SIGN UP",
-    "language": "Language"
+    "language": "Language",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "skipToContent": "Skip to main content"
   },
   "hero": {
     "tag": "For candidates tired of applying into the void",
@@ -425,7 +428,8 @@
     "aria": {
       "close": "Close navigation menu",
       "open": "Open navigation menu",
-      "logout": "Log out"
+      "logout": "Log out",
+      "accountMenu": "Open account menu"
     }
   },
   "pricingModal": {
@@ -556,6 +560,7 @@
     "cvAdapt": "CV Adaptation",
     "customCv": "Custom CV",
     "recruiterSearch": "LinkedIn recruiter searches",
+    "jobSearches": "Job searches",
     "savedJobs": "Saved Jobs",
     "assistantMessages": "Assistant Messages",
     "perDay": "/day",
@@ -622,6 +627,7 @@
     }
   },
   "upgradeBanner": {
+    "dismiss": "Dismiss offer",
     "minimal": {
       "text": "Go Premium to unlock all features",
       "cta": "See plans"
@@ -759,6 +765,16 @@
       "validReferral": "Referred by {name}",
       "validPromo": "{description}",
       "alreadyApplied": "Code already applied"
+    },
+    "confirmEmail": {
+      "eyebrow": "Account security",
+      "title": "Confirm your email address",
+      "description": "To protect your account, confirm that you initiated this registration.",
+      "action": "Confirm my email",
+      "securityNote": "This button securely activates your account.",
+      "invalidTitle": "Incomplete confirmation link",
+      "invalidDescription": "This link is missing required information. Request a new email from the sign-up page.",
+      "backToSignup": "Back to sign up"
     },
     "forgotPassword": {
       "title": "Forgot Password",
@@ -1195,6 +1211,10 @@
       "finder": {
         "companyPlaceholder": "Company name",
         "cityPlaceholder": "City (optional)",
+        "search": "Search",
+        "searching": "Searching...",
+        "serviceError": "The service is unavailable. Please try again.",
+        "complianceNotice": "These email addresses come from public sources. Follow applicable data-protection rules when contacting them.",
         "quotaReached": "Quota reached ({count} searches/day on free plan). Upgrade to Pro for unlimited access.",
         "searchTab": "Search",
         "savedTab": "Saved contacts",
@@ -1372,8 +1392,13 @@
     "cancellationScheduled": "Cancellation scheduled",
     "upgradeTo": "Upgrade to {plan}",
     "featuresIncluded": "Features included",
+    "loading": "Loading your subscription...",
     "cvAnalysesUnlimited": "Unlimited CV analyses",
     "cvAnalysesPerDay": "{count} CV analysis per day",
+    "atsScoresUnlimited": "Unlimited ATS scores",
+    "atsScoresPerDay": "{count} ATS score(s) per day",
+    "matchingScoresUnlimited": "Unlimited matching scores",
+    "matchingScoresPerDay": "{count} matching score(s) per day",
     "assistantMessagesUnlimited": "Unlimited Assistant messages",
     "assistantMessagesPerDay": "{count} Assistant messages per day",
     "jobSearchesUnlimited": "Unlimited job searches",
@@ -1394,6 +1419,11 @@
     "cancellationError": "Error during cancellation"
   },
   "contact": {
+    "errors": {
+      "nameRequired": "Enter your full name.",
+      "emailRequired": "Enter your email address.",
+      "messageRequired": "Describe your request."
+    },
     "toasts": {
       "fillAllFields": "Please fill in all required fields.",
       "sendError": "An error occurred. Please try again or send an email directly."
@@ -1621,6 +1651,7 @@
       "chatbotQuestion": "Ask your question..."
     },
     "widget": {
+      "buttonLabel": "Help and support",
       "minimize": "Minimize",
       "title": "HuntZen Support",
       "tabFaq": "Help & FAQ",
@@ -1749,6 +1780,8 @@
     "contractType_freelance": "Freelance",
     "contractType_internship": "Internship",
     "contractType_remote": "Remote",
+    "contractType_stage": "Internship",
+    "contractType_temps partiel": "Part-time",
     "contractType_permanent": "Permanent",
     "contractType_contract": "Contract",
     "jobTitleOptional": "Job title (optional with filters)",
@@ -1779,7 +1812,8 @@
     "workSchedule_evening": "Evening (5pm-10pm)",
     "workSchedule_night": "Night (10pm-6am)",
     "workSchedule_fulltime": "Full-time",
-    "allSchedules": "All schedules"
+    "allSchedules": "All schedules",
+    "searchLimitReached": "Limit reached: {count} search remaining today. Upgrade to Pro to continue."
   },
   "advancedFilters": {
     "title": "Advanced filters",
@@ -2271,6 +2305,7 @@
     "title": "Frequently Asked Questions",
     "subtitle": "Everything you need to know about <strong>HuntZen Jobs</strong>, your job search ally in France",
     "searchPlaceholder": "Search a question about HuntZen Jobs...",
+    "searchLabel": "Search the FAQ",
     "noResults": "No questions found",
     "noResultsHint": "Try another keyword or contact our support",
     "contactSupport": "Contact support",
@@ -2463,7 +2498,9 @@
     "close": "Close",
     "clear": "Clear",
     "recalculate": "Recalculate",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "changeLanguage": "Change language",
+    "switchTo": "Switch to {language}"
   },
   "terms": {
     "title": "Terms and Conditions",

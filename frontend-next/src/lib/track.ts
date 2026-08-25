@@ -8,6 +8,27 @@ function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "";
 }
 
+const CONSENT_KEY = "huntzen_cookie_consent";
+
+function pushGtmEvent(
+  event: string,
+  properties: Record<string, unknown> = {},
+): void {
+  if (
+    typeof window === "undefined" ||
+    window.localStorage.getItem(CONSENT_KEY) !== "accepted"
+  ) {
+    return;
+  }
+
+  const dataLayer = (window as typeof window & {
+    dataLayer?: Array<Record<string, unknown>>;
+  }).dataLayer ?? [];
+  dataLayer.push({ event, ...properties });
+  (window as typeof window & { dataLayer?: Array<Record<string, unknown>> }).dataLayer =
+    dataLayer;
+}
+
 interface TrackPayload {
   event_name: string;
   event_label?: string;
@@ -42,8 +63,9 @@ async function trackEvent(payload: TrackPayload, token?: string): Promise<void> 
 
 export const track = {
   auth: {
-    signUp: (plan: string = "free", token?: string) =>
-      trackEvent(
+    signUp: async (plan: string = "free", token?: string) => {
+      pushGtmEvent("sign_up", { plan });
+      await trackEvent(
         {
           event_name: "sign_up",
           event_label: "Nouvel inscrit",
@@ -52,7 +74,8 @@ export const track = {
           properties: { plan },
         },
         token,
-      ),
+      );
+    },
 
     signIn: (token?: string) =>
       trackEvent(
@@ -102,6 +125,43 @@ export const track = {
         },
         token,
       ),
+
+    beginCheckout: async (
+      plan: string,
+      billingPeriod: "monthly" | "yearly",
+      token?: string,
+    ) => {
+      pushGtmEvent("begin_checkout", {
+        plan,
+        billing_period: billingPeriod,
+      });
+      await trackEvent(
+        {
+          event_name: "begin_checkout",
+          event_label: `Checkout démarré — plan ${plan}`,
+          category: "payment",
+          feature: "checkout",
+          severity: "info",
+          properties: { plan, billing_period: billingPeriod },
+        },
+        token,
+      );
+    },
+
+    purchase: async (plan: string, token?: string) => {
+      pushGtmEvent("purchase", { plan });
+      await trackEvent(
+        {
+          event_name: "purchase",
+          event_label: `Paiement confirmé — plan ${plan}`,
+          category: "payment",
+          feature: "subscription",
+          severity: "success",
+          properties: { plan },
+        },
+        token,
+      );
+    },
   },
 
   jobs: {

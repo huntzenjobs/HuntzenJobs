@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HuntZen — Frontend
 
-## Getting Started
+Application web HuntZen en Next.js 14 (App Router), TypeScript, Tailwind CSS et shadcn/ui. Déployée sur Vercel.
 
-First, run the development server:
+## Démarrer en local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L'app tourne sur http://localhost:3000. Elle a besoin du backend FastAPI sur le port 8000 (voir le README à la racine du repo) et d'un fichier `.env.local` (copier depuis `.env.example`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Commande | Description |
+|---|---|
+| `npm run dev` | Serveur de dev (port 3000) |
+| `npm run build` | Build de production |
+| `npm run start` | Lancer le build de production |
+| `npm run lint` | ESLint |
+| `npm run test` | Tests Vitest (watch) |
+| `npm run test:run` | Tests Vitest (une passe) |
+| `npm run test:coverage` | Tests avec couverture |
+| `npm run sync-translations` | Synchroniser les fichiers de traduction |
 
-## Learn More
+## Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Framework** : Next.js 14 (App Router)
+- **Langage** : TypeScript
+- **Styling** : Tailwind CSS + shadcn/ui + Radix
+- **State** : Zustand + React Query + SWR
+- **Auth** : Supabase SSR (`@supabase/ssr`)
+- **i18n** : next-intl (fr, en, es, pt)
+- **Tests** : Vitest + Playwright (E2E à la racine du repo)
+- **Monitoring** : Sentry
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Conventions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Les patterns de code (composants, hooks, contexts, auth SSR, i18n) sont décrits dans [`AGENTS.md`](AGENTS.md).
 
-## Deploy on Vercel
+## Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/           App Router (pages, layouts, route handlers)
+├── components/    Composants React par domaine (ui, jobs, cv, coach, etc.)
+├── hooks/         Hooks React custom
+├── contexts/      Contexts (auth, subscription, theme)
+├── lib/           Utilitaires, client API, sécurité
+├── i18n/          Configuration next-intl
+└── types/         Types TypeScript
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Pour l'architecture complète et le déploiement, voir le [README à la racine](../README.md) et [docs/](../docs/).

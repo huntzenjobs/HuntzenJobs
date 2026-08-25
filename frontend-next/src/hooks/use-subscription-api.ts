@@ -230,20 +230,13 @@ export function useSubscriptionApi(): SubscriptionApiData {
       // auth.session is set but isLoading is still false from previous state
       setData((prev) => ({ ...prev, isLoading: true, error: null }));
 
-      // Fetch from backend
-      if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
-        throw new Error("NEXT_PUBLIC_BACKEND_URL is not configured");
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
+      // Same-origin relay avoids browser extensions blocking Railway directly.
+      const response = await fetch("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
         },
-      );
+      });
 
       if (!response.ok) {
         // Handle 401 - Token expired, use centralized refresh service
@@ -298,15 +291,12 @@ export function useSubscriptionApi(): SubscriptionApiData {
             console.log("[SubscriptionAPI] Got new token, retrying request...");
 
           // Retry with new token
-          const retryResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`,
-            {
-              headers: {
-                Authorization: `Bearer ${newToken}`,
-                "Content-Type": "application/json",
-              },
+          const retryResponse = await fetch("/api/auth/me", {
+            headers: {
+              Authorization: `Bearer ${newToken}`,
+              "Content-Type": "application/json",
             },
-          );
+          });
 
           if (retryResponse.ok) {
             const retryData: ApiResponse = await retryResponse.json();

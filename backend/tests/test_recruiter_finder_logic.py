@@ -1,13 +1,14 @@
-import pytest
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
-from datetime import datetime, timedelta, timezone
 
-from src.services.recruiter_finder.serpapi import (
-    generate_company_slug,
-    _get_cached_recruiters,
-    _save_to_cache
-)
+import pytest
+
 from src.services.recruiter_finder.fresh_linkedin import FreshLinkedInProfileValidator
+from src.services.recruiter_finder.serpapi import (
+    _get_cached_recruiters,
+    _save_to_cache,
+    generate_company_slug,
+)
 
 # ============================================================================
 # Logic Tests: Smart Match & Slugs
@@ -23,16 +24,16 @@ def test_generate_company_slug():
 def test_company_matches_smart_logic():
     """Verify that the smart match handles 'Group vs Sub-brand' correctly."""
     validator = FreshLinkedInProfileValidator()
-    
+
     # Case: Pierre Streiff vs Groupe STREIFF (The one we fixed!)
     assert validator._company_matches("PIERRE STREIFF", "Groupe STREIFF") is True
-    
+
     # Case: Direct containment
     assert validator._company_matches("Mcdonald's", "McDonald's France") is True
-    
+
     # Case: Distinctive long token (> 6 chars)
     assert validator._company_matches("Dassault", "Dassault Aviation") is True
-    
+
     # Case: Mismatch (Too different)
     assert validator._company_matches("Apple", "Microsoft") is False
     assert validator._company_matches("Jean Marc", "Jean Dupont") is False # Jean is too short (< 6)
@@ -49,11 +50,11 @@ async def test_get_cached_recruiters_hit():
         {
             "company_slug": "mcdonalds",
             "recruiters": [{"name": "Admin Test"}],
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
+            "expires_at": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
             "strategy_summary": "Test strategy"
         }
     ]
-    
+
     with patch("src.services.recruiter_finder.serpapi.get_supabase_client", return_value=mock_supabase):
         result = await _get_cached_recruiters("mcdonalds")
         assert result is not None
@@ -67,10 +68,32 @@ async def test_get_cached_recruiters_expired():
     mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
         {
             "company_slug": "mcdonalds",
-            "expires_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+            "expires_at": (datetime.now(UTC) - timedelta(days=1)).isoformat()
         }
     ]
-    
+
     with patch("src.services.recruiter_finder.serpapi.get_supabase_client", return_value=mock_supabase):
         result = await _get_cached_recruiters("mcdonalds")
         assert result is None
+
+
+@pytest.mark.asyncio
+async def test_save_to_cache_upserts_by_company_slug():
+    """Une société ne doit conserver qu'une seule entrée de cache."""
+    mock_supabase = MagicMock()
+
+    with patch(
+        "src.services.recruiter_finder.serpapi.get_supabase_client",
+        return_value=mock_supabase,
+    ):
+        await _save_to_cache(
+            "mcdonalds",
+            "McDonald's",
+            [{"name": "Admin Test"}],
+            {"strategy": "Test strategy", "queries": ["test query"]},
+        )
+
+    mock_supabase.table.assert_called_once_with("recruiter_cache")
+    mock_supabase.table.return_value.upsert.assert_called_once()
+    _, kwargs = mock_supabase.table.return_value.upsert.call_args
+    assert kwargs == {"on_conflict": "company_slug"}

@@ -9,10 +9,12 @@ import { homeMetadata } from "@/lib/seo/metadata";
 import { HomePageSchemas } from "@/components/seo/structured-data";
 import { inter, dmSans } from "@/lib/fonts";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import SiteBanner from "@/components/layout/site-banner";
 import { CookieBanner } from "@/components/layout/cookie-banner";
+import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
 import { createClient } from "@/lib/supabase/server";
+import { PwaProvider } from "@/components/providers/pwa-provider";
 
 // Metadata optimisées pour SEO 100/100
 export const metadata: Metadata = homeMetadata;
@@ -42,6 +44,7 @@ export default async function RootLayout({
 
   const locale = await getLocale();
   const messages = await getMessages();
+  const tNav = await getTranslations("nav");
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -61,7 +64,7 @@ export default async function RootLayout({
         {/* DNS Prefetch et Preconnect pour resources externes */}
         <link
           rel="dns-prefetch"
-          href="https://ngiakfikbuyugqfqtfwp.supabase.co"
+          href="https://auth.huntzenjobs.com"
         />
         <link
           rel="dns-prefetch"
@@ -69,7 +72,7 @@ export default async function RootLayout({
         />
         <link
           rel="preconnect"
-          href="https://ngiakfikbuyugqfqtfwp.supabase.co"
+          href="https://auth.huntzenjobs.com"
           crossOrigin="anonymous"
         />
         <link
@@ -98,14 +101,19 @@ export default async function RootLayout({
             </p>
           </div>
         </noscript>
-        <SiteBanner />
-        <SkipLink />
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers initialUser={user}>
-            <div id="main-content">{children}</div>
-          </Providers>
-          <CookieBanner />
-        </NextIntlClientProvider>
+        <PwaProvider>
+          <SiteBanner />
+          <SkipLink label={tNav("skipToContent")} />
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <Providers initialUser={user}>
+              <div id="main-content" tabIndex={-1}>
+                {children}
+              </div>
+            </Providers>
+            <GoogleTagManager />
+            <CookieBanner />
+          </NextIntlClientProvider>
+        </PwaProvider>
       </body>
     </html>
   );

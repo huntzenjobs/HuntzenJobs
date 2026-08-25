@@ -17,10 +17,7 @@ from supabase import Client, create_client
 
 from src.api.deps import get_user_id_from_token
 from src.config.settings import get_settings
-from src.services.email import (
-    send_recruiter_request_confirmation,
-    send_recruiter_request_notification,
-)
+from src.services.stripe import handle_stripe_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +88,17 @@ def get_user_id_from_header(authorization: str | None = Header(None)) -> str | N
     return get_user_id_from_token(authorization)
 
 
+def require_user_id(authorization: str | None) -> str:
+    """Refuser toute opération recruteur non authentifiée."""
+    user_id = get_user_id_from_header(authorization)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+    return user_id
+
+
 # ============================================================================
 # Routes
 # ============================================================================
@@ -107,13 +115,13 @@ async def create_recruiter_request(
     Payment is handled separately via /create-payment endpoint.
     """
     try:
-        user_id = get_user_id_from_header(authorization)
+        user_id = require_user_id(authorization)
         request_id = str(uuid.uuid4())
 
         # Prepare data for insertion
         data = {
             "id": request_id,
-            "user_id": user_id,  # Can be None for anonymous requests
+            "user_id": user_id,
             "full_name": request.full_name,
             "email": request.email,
             "phone": request.phone,
@@ -142,10 +150,11 @@ async def create_recruiter_request(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as exc:
+        logger.error("Recruiter request creation failed: %s", type(exc).__name__)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating request: {str(e)}",
+            detail="Failed to create recruiter request",
         ) from None
 
 
@@ -160,12 +169,13 @@ async def create_payment_session(
     Amount: 50€ (one-time payment)
     """
     try:
-        user_id = get_user_id_from_header(authorization)
+        user_id = require_user_id(authorization)
 
         # Verify request exists
         request_response = supabase.table("recruiter_requests")\
             .select("*")\
             .eq("id", payment.request_id)\
+            .eq("user_id", user_id)\
             .execute()
 
         if not request_response.data:
@@ -183,6 +193,34 @@ async def create_payment_session(
                 detail="This request has already been paid"
             )
 
+        existing_session_id = request_data.get("stripe_checkout_session_id")
+        if isinstance(existing_session_id, str) and existing_session_id:
+            try:
+                existing_session = stripe.checkout.Session.retrieve(
+                    existing_session_id
+                )
+                if (
+                    getattr(existing_session, "status", None) == "open"
+                    and getattr(existing_session, "url", None)
+                ):
+                    return PaymentSessionResponse(
+                        checkout_url=existing_session.url,
+                        session_id=existing_session.id,
+                    )
+                if getattr(existing_session, "status", None) == "complete":
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Payment confirmation is being processed",
+                    )
+            except HTTPException:
+                raise
+            except stripe.error.StripeError as exc:
+                logger.error(
+                    "Stored recruiter Checkout session lookup failed: %s",
+                    type(exc).__name__,
+                )
+                raise
+
         # Create Stripe checkout session
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=["card"],
@@ -198,15 +236,19 @@ async def create_payment_session(
             customer_email=request_data.get("email"),
             metadata={
                 "request_id": payment.request_id,
-                "user_id": user_id or "anonymous",
+                "user_id": user_id,
                 "type": "recruiter_consultation",
             },
+            idempotency_key=(
+                f"recruiter-checkout:{payment.request_id}"
+            ),
         )
 
         # Update request with checkout session ID
         supabase.table("recruiter_requests")\
             .update({"stripe_checkout_session_id": checkout_session.id})\
             .eq("id", payment.request_id)\
+            .eq("user_id", user_id)\
             .execute()
 
         return PaymentSessionResponse(
@@ -216,15 +258,28 @@ async def create_payment_session(
 
     except HTTPException:
         raise
-    except stripe.error.StripeError as e:
+    except (
+        stripe.error.APIConnectionError,
+        stripe.error.APIError,
+        stripe.error.AuthenticationError,
+        stripe.error.RateLimitError,
+    ) as exc:
+        logger.error("Recruiter Stripe provider unavailable: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Payment provider is temporarily unavailable",
+        ) from None
+    except stripe.error.StripeError as exc:
+        logger.warning("Recruiter Stripe checkout rejected: %s", type(exc).__name__)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Stripe error: {str(e)}"
+            detail="Payment provider rejected the request",
         ) from None
-    except Exception as e:
+    except Exception as exc:
+        logger.error("Recruiter payment creation failed: %s", type(exc).__name__)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating payment session: {str(e)}",
+            detail="Failed to create payment session",
         ) from None
 
 
@@ -239,10 +294,13 @@ async def get_request_status(
     Returns payment status and request status.
     """
     try:
+        user_id = require_user_id(authorization)
+
         # Fetch from Supabase
         response = supabase.table("recruiter_requests")\
             .select("*")\
             .eq("id", request_id)\
+            .eq("user_id", user_id)\
             .execute()
 
         if not response.data:
@@ -263,85 +321,34 @@ async def get_request_status(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as exc:
+        logger.error("Recruiter status lookup failed: %s", type(exc).__name__)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching status: {str(e)}",
+            detail="Failed to fetch recruiter request status",
         ) from None
 
 
 @router.post("/webhook")
 async def stripe_webhook(request: Request):
     """
-    Stripe webhook for payment confirmations.
-
-    Handles checkout.session.completed events to mark requests as paid.
+    URL Stripe historique, déléguée au dispatcher central idempotent.
     """
     try:
         payload = await request.body()
         sig_header = request.headers.get("stripe-signature")
+        if not sig_header:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing Stripe signature",
+            )
+        return await handle_stripe_webhook(payload, sig_header)
 
-        # Verify webhook signature
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.get_stripe_webhook_secret()
-        )
-
-        # Handle the event
-        if event["type"] == "checkout.session.completed":
-            session = event["data"]["object"]
-            request_id = session["metadata"].get("request_id")
-
-            if request_id:
-                # Update request status to paid
-                supabase.table("recruiter_requests")\
-                    .update({
-                        "payment_status": "paid",
-                        "payment_intent_id": session.get("payment_intent"),
-                    })\
-                    .eq("id", request_id)\
-                    .execute()
-
-                # Fetch request details for email
-                request_response = supabase.table("recruiter_requests")\
-                    .select("*")\
-                    .eq("id", request_id)\
-                    .execute()
-
-                if request_response.data:
-                    request_data = request_response.data[0]
-
-                    # Send confirmation email to user
-                    send_recruiter_request_confirmation(
-                        to_email=request_data["email"],
-                        full_name=request_data["full_name"],
-                        sector=request_data["sector"],
-                        experience_level=request_data["experience_level"],
-                        preferred_date=request_data.get("preferred_date"),
-                    )
-
-                    # Send notification email to admin
-                    send_recruiter_request_notification(
-                        request_id=request_id,
-                        full_name=request_data["full_name"],
-                        email=request_data["email"],
-                        phone=request_data.get("phone"),
-                        sector=request_data["sector"],
-                        experience_level=request_data["experience_level"],
-                        message=request_data["message"],
-                        preferred_date=request_data.get("preferred_date"),
-                    )
-
-                    logger.info(f"✅ Payment confirmed for request {request_id} - Emails sent")
-
-        return {"status": "success"}
-
-    except stripe.error.SignatureVerificationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid signature: {str(e)}"
-        ) from None
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error("Recruiter webhook failed: %s", type(e).__name__)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Webhook error: {str(e)}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Webhook processing failed",
         ) from None

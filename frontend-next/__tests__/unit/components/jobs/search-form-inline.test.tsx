@@ -1,0 +1,129 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { SearchFormInline } from "@/components/jobs/search-form-inline";
+
+const { toastError, canUse, getCountries } = vi.hoisted(() => ({
+  toastError: vi.fn(),
+  canUse: vi.fn(() => true),
+  getCountries: vi.fn(),
+}));
+
+vi.mock("next-intl", () => ({
+  useTranslations: (namespace: string) =>
+    (key: string, values?: Record<string, number>) =>
+      values?.count === undefined
+        ? `${namespace}.${key}`
+        : `${namespace}.${key}:${values.count}`,
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: toastError },
+}));
+
+vi.mock("@/contexts/subscription-context", () => ({
+  useSubscription: () => ({
+    canUse,
+    getRemaining: () => 0,
+    isFreePlan: true,
+  }),
+}));
+
+vi.mock("@/lib/api/huntzen-client", () => ({
+  huntzenApi: {
+    getCountries,
+    searchCities: vi.fn().mockResolvedValue([]),
+  },
+}));
+
+describe("SearchFormInline", () => {
+  beforeEach(() => {
+    canUse.mockReturnValue(true);
+    toastError.mockClear();
+    getCountries.mockReset();
+    getCountries.mockResolvedValue([{ name: "France", code: "fr" }]);
+  });
+
+  it("conserve une recherche populaire pendant la sélection du pays", async () => {
+    const user = userEvent.setup();
+    const { container, rerender } = render(
+      <SearchFormInline onSearch={vi.fn()} initialQuery="" />,
+    );
+
+    rerender(
+      <SearchFormInline
+        onSearch={vi.fn()}
+        initialQuery="Data Scientist"
+      />,
+    );
+
+    expect(container.querySelector("#query-inline")).toHaveValue(
+      "Data Scientist",
+    );
+    expect(container.querySelector("#query-mobile")).toHaveValue(
+      "Data Scientist",
+    );
+
+    const countryInputs = container.querySelectorAll(
+      'input[placeholder="searchForm.countryPlaceholder"]',
+    );
+    await user.type(countryInputs[1] as HTMLInputElement, "France");
+
+    expect(container.querySelector("#query-inline")).toHaveValue(
+      "Data Scientist",
+    );
+    expect(container.querySelector("#query-mobile")).toHaveValue(
+      "Data Scientist",
+    );
+  });
+
+  it("utilise la traduction du message lorsque le quota est atteint", async () => {
+    canUse.mockReturnValue(false);
+    const user = userEvent.setup();
+    const { container } = render(
+      <SearchFormInline
+        onSearch={vi.fn()}
+        initialQuery="Data Scientist"
+        initialCountry="fr"
+      />,
+    );
+
+    const desktopButton = container.querySelector(
+      ".hidden.md\\:block button.bg-huntzen-blue",
+    );
+    expect(desktopButton).toBeInstanceOf(HTMLButtonElement);
+    await user.click(desktopButton as HTMLButtonElement);
+
+    expect(toastError).toHaveBeenCalledWith(
+      "searchForm.searchLimitReached:0",
+    );
+  });
+
+  it("recherche immédiatement après la sélection d'un pays", async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    const { container } = render(<SearchFormInline onSearch={onSearch} />);
+
+    await user.type(
+      container.querySelector("#query-inline") as HTMLInputElement,
+      "Data Engineer",
+    );
+    const countryInputs = container.querySelectorAll(
+      'input[placeholder="searchForm.countryPlaceholder"]',
+    );
+    await user.type(countryInputs[0] as HTMLInputElement, "France");
+    const franceOption = await screen.findByRole("option", { name: "France" });
+    getCountries.mockImplementation(() => new Promise(() => {}));
+    await user.click(franceOption);
+
+    const desktopButton = container.querySelector(
+      ".hidden.md\\:block button.bg-huntzen-blue",
+    );
+    await user.click(desktopButton as HTMLButtonElement);
+
+    expect(onSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ query: "Data Engineer", country: "fr" }),
+    );
+  });
+});

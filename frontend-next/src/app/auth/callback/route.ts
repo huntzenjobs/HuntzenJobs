@@ -8,6 +8,76 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { logSecurityEvent } from "@/lib/security/logger";
 
+const EMAIL_OTP_TYPES = new Set(["signup", "email", "recovery"] as const);
+
+type EmailOtpType = "signup" | "email" | "recovery";
+
+function isEmailOtpType(value: string): value is EmailOtpType {
+  return EMAIL_OTP_TYPES.has(value as EmailOtpType);
+}
+
+async function verifyEmailToken(
+  request: NextRequest,
+  tokenHash: string,
+  type: EmailOtpType,
+) {
+  const origin = new URL(request.url).origin;
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({
+    token_hash: tokenHash,
+    type,
+  });
+
+  if (error || !data.session) {
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent(error?.message || "Email verification failed")}`,
+    );
+  }
+
+  if (type === "recovery") {
+    return NextResponse.redirect(`${origin}/reset-password`);
+  }
+
+  const isNewUser = !data.user?.user_metadata?.onboarding_completed;
+
+  if (isNewUser && data.user?.email) {
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "";
+    const locale = request.cookies.get("NEXT_LOCALE")?.value || "fr";
+    if (backendUrl) {
+      fetch(`${backendUrl}/api/auth/welcome`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.user.email,
+          full_name: data.user.user_metadata?.full_name || "",
+          language: locale,
+        }),
+      }).catch(() => {});
+    }
+  }
+
+  let isAdmin = false;
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", data.user!.id)
+      .single();
+    isAdmin = profile?.is_admin === true;
+  } catch {
+    // Ignore
+  }
+
+  const defaultDest = isAdmin ? "/admin/dashboard" : "/jobs";
+  const finalRedirect = isNewUser
+    ? `/onboarding?redirectTo=${encodeURIComponent(defaultDest)}`
+    : defaultDest;
+  return NextResponse.redirect(`${origin}${finalRedirect}`);
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
@@ -34,65 +104,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Handle token_hash flow (email confirmation via PKCE)
+  // Never consume a one-time token on GET: email security scanners prefetch links.
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
 
   if (tokenHash && type) {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: type as "signup" | "email" | "recovery",
-    });
-
-    if (!error && data.session) {
-      if (type === "recovery") {
-        return NextResponse.redirect(`${origin}/reset-password`);
-      }
-
-      const isNewUser = !data.user?.user_metadata?.onboarding_completed;
-
-      // Send welcome email for new users (fire-and-forget)
-      if (isNewUser && data.user?.email) {
-        const backendUrl =
-          process.env.NEXT_PUBLIC_API_URL ||
-          process.env.NEXT_PUBLIC_BACKEND_URL ||
-          "";
-        const locale = request.cookies.get("NEXT_LOCALE")?.value || "fr";
-        if (backendUrl) {
-          fetch(`${backendUrl}/api/auth/welcome`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: data.user.email,
-              full_name: data.user.user_metadata?.full_name || "",
-              language: locale,
-            }),
-          }).catch(() => {});
-        }
-      }
-
-      let isAdmin = false;
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("is_admin")
-          .eq("id", data.user!.id)
-          .single();
-        isAdmin = profile?.is_admin === true;
-      } catch {
-        // Ignore
-      }
-      const defaultDest = isAdmin ? "/admin/dashboard" : "/jobs";
-      const finalRedirect = isNewUser
-        ? `/onboarding?redirectTo=${encodeURIComponent(defaultDest)}`
-        : defaultDest;
-      return NextResponse.redirect(`${origin}${finalRedirect}`);
-    }
-
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(error?.message || "Email verification failed")}`,
-    );
+    const confirmUrl = new URL("/auth/confirm", origin);
+    confirmUrl.searchParams.set("token_hash", tokenHash);
+    confirmUrl.searchParams.set("type", type);
+    return NextResponse.redirect(confirmUrl);
   }
 
   if (code) {
@@ -198,4 +218,23 @@ export async function GET(request: NextRequest) {
 
   // No code provided, redirect to login
   return NextResponse.redirect(`${origin}/login`);
+}
+
+export async function POST(request: NextRequest) {
+  const formData = await request.formData();
+  const tokenHash = formData.get("token_hash");
+  const type = formData.get("type");
+
+  if (
+    typeof tokenHash !== "string" ||
+    !tokenHash ||
+    typeof type !== "string" ||
+    !isEmailOtpType(type)
+  ) {
+    return NextResponse.redirect(
+      `${new URL(request.url).origin}/login?error=${encodeURIComponent("Invalid confirmation link")}`,
+    );
+  }
+
+  return verifyEmailToken(request, tokenHash, type);
 }

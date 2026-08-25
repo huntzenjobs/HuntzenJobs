@@ -14,8 +14,19 @@ Set this URL as MODAL_PDF_EXTRACT_URL in Railway environment variables.
 """
 
 import modal
+from fastapi import HTTPException
+from pydantic import BaseModel, ConfigDict, Field
 
 app = modal.App("huntzen-pdf-extractor")
+
+
+class PDFExtractRequest(BaseModel):
+    """Corps strict et borné de l'extracteur PDF privé."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    # 10 Mio deviennent environ 13,4 Mio en base64.
+    pdf_bytes: str = Field(min_length=4, max_length=14_000_000)
 
 
 def _download_docling_models():
@@ -94,10 +105,11 @@ docling_image = (
     cpu=2,
     memory=4096,        # 4 GB — Docling layout models need ~2-4 GB
     timeout=120,        # 2 min max per extraction
-    min_containers=1,   # Always keep 1 warm container — eliminates cold starts (~$3-5/month)
+    min_containers=0,
+    max_containers=10,
 )
-@modal.fastapi_endpoint(method="POST")
-async def extract_pdf_text(body: dict) -> dict:
+@modal.fastapi_endpoint(method="POST", requires_proxy_auth=True)
+async def extract_pdf_text(body: PDFExtractRequest) -> dict:
     """
     Extract text from PDF bytes using Docling.
 
@@ -116,14 +128,19 @@ async def extract_pdf_text(body: dict) -> dict:
     from docling.datamodel.pipeline_options import PdfPipelineOptions
     from docling.document_converter import DocumentConverter, PdfFormatOption
 
-    pdf_bytes_b64 = body.get("pdf_bytes")
-    if not pdf_bytes_b64:
-        return {"success": False, "error": "Missing required field: pdf_bytes"}
-
     try:
-        pdf_bytes = base64.b64decode(pdf_bytes_b64)
+        pdf_bytes = base64.b64decode(body.pdf_bytes, validate=True)
     except Exception as e:
-        return {"success": False, "error": f"Invalid base64 encoding: {str(e)}"}
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid base64 encoding",
+        ) from e
+
+    if len(pdf_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail="PDF exceeds the 10 MiB limit",
+        )
 
     tmp_path = None
     try:
@@ -157,22 +174,27 @@ async def extract_pdf_text(body: dict) -> dict:
                     return {"success": True, "text": fallback_text}
             except Exception as pypdf_exc:
                 print(f"⚠️ pypdf fallback also failed: {pypdf_exc}")
-            return {
-                "success": False,
-                "error": f"All extraction failed ({len((text or '').strip())} chars from Docling, pypdf also failed)",
-            }
+            raise HTTPException(
+                status_code=422,
+                detail="No usable text found in PDF",
+            )
 
         return {"success": True, "text": text}
 
+    except HTTPException:
+        raise
     except Exception as e:
         error_str = str(e)
         # "is not valid" = PDF corrompu/invalide → faute de l'utilisateur, pas du serveur
-        is_user_error = "is not valid" in error_str or "not a valid PDF" in error_str.lower()
-        return {
-            "success": False,
-            "error": f"Docling extraction failed: {error_str}",
-            "user_error": is_user_error,
-        }
+        is_user_error = "is not valid" in error_str or "not a valid pdf" in error_str.lower()
+        raise HTTPException(
+            status_code=422 if is_user_error else 500,
+            detail=(
+                "Invalid or corrupted PDF"
+                if is_user_error
+                else "PDF extraction failed"
+            ),
+        ) from e
 
     finally:
         if tmp_path and os.path.exists(tmp_path):

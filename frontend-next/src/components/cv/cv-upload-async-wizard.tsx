@@ -111,6 +111,26 @@ interface AdaptResult {
   lmData: Record<string, unknown> | null;
 }
 
+export function normalizeAdaptMatchScore(score: unknown): number | null {
+  const value =
+    typeof score === "number"
+      ? score
+      : typeof score === "object" &&
+          score !== null &&
+          "overall" in score &&
+          typeof score.overall === "number"
+        ? score.overall
+        : null;
+
+  if (value === null || !Number.isFinite(value)) return null;
+
+  const percentage = value >= 0 && value <= 1 ? value * 100 : value;
+  return Math.round(Math.min(100, Math.max(0, percentage)));
+}
+
+export const cvWizardHeaderClassName =
+  "mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between";
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -574,7 +594,7 @@ export function CVUploadAsyncWizard({
 
         const adaptData = await adaptRes.json();
         const cvData = adaptData.cv_data;
-        const matchScore = adaptData.match_score;
+        const matchScore = normalizeAdaptMatchScore(adaptData.match_score);
 
         // Step 2: generate CV PDF + LM JSON in parallel
         const [cvPdfRes, lmJsonRes] = await Promise.all([
@@ -639,7 +659,7 @@ export function CVUploadAsyncWizard({
         setAdaptResult({
           cvPdfBlob,
           lmPdfBlob,
-          matchScore: matchScore != null ? Math.round(matchScore * 100) : null,
+          matchScore,
           cvData: cvData as ParsedCvData,
           lmData,
         });
@@ -648,8 +668,7 @@ export function CVUploadAsyncWizard({
         saveDocument({
           jobTitle: "CV adapté",
           company: "",
-          matchScore:
-            matchScore != null ? Math.round(matchScore * 100) : undefined,
+          matchScore: matchScore ?? undefined,
           cvData: cvData as ParsedCvData,
           cvPdfBlob,
           lmPdfBlob: lmPdfBlob ?? undefined,
@@ -804,7 +823,7 @@ export function CVUploadAsyncWizard({
       transition={{ duration: 0.3 }}
     >
       {/* Method Choice */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-3 sm:gap-4 mb-6">
         <button
           onClick={() => handleMethodChange("file")}
           className={`flex-1 p-4 rounded-lg border-2 transition-all ${
@@ -841,7 +860,7 @@ export function CVUploadAsyncWizard({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={`
-                border-2 border-dashed rounded-lg p-12 text-center transition-colors
+                border-2 border-dashed rounded-lg p-6 sm:p-12 text-center transition-colors
                 ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
               `}
             >
@@ -850,14 +869,14 @@ export function CVUploadAsyncWizard({
                 Glissez-déposez votre CV ici
               </p>
               <p className="text-gray-500 mb-4">ou</p>
-              <label className="inline-block">
+              <label className="inline-block max-w-full">
                 <input
                   type="file"
                   accept=".pdf"
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <span className="px-6 py-3 bg-huntzen-blue text-white rounded-lg cursor-pointer hover:bg-huntzen-blue/90 transition-colors">
+                <span className="inline-flex min-h-11 max-w-full items-center justify-center rounded-lg bg-huntzen-blue px-4 py-3 text-center text-white transition-colors cursor-pointer hover:bg-huntzen-blue/90 sm:px-6">
                   Sélectionner un fichier PDF
                 </span>
               </label>
@@ -1744,13 +1763,13 @@ export function CVUploadAsyncWizard({
   return (
     <div>
       {/* Header with History Button */}
-      <div className="flex justify-between items-center mb-6">
-        <WizardSteps currentStep={wizardState.currentStep} />
+      <div className={cvWizardHeaderClassName}>
+        <WizardSteps currentStep={wizardState.currentStep} className="self-start" />
 
         {hasFeatures.hasCVHistory && (
           <button
             onClick={() => setShowHistory(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
+            className="self-start sm:self-auto flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
           >
             <History className="w-4 h-4" />
             <span className="text-sm font-medium">

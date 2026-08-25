@@ -119,7 +119,7 @@ Endpoints critiques SANS rate limit : `cv_analysis.py` (upload CV), `assistant.p
 **Impact:** Potentiel abus pour du spam via le service Resend de HuntZen.
 
 ### A8. Groq retry non visible depuis les routes
-**Fichier:** `backend/src/utils/groq_retry.py` (reference dans CLAUDE.md mais pas audite en detail ici)
+**Fichier:** `backend/src/utils/groq_retry.py` (reference dans `backend/AGENTS.md` mais pas audite en detail ici)
 **Probleme:** La logique de retry Groq est dans `groq_retry.py` avec rotation de cles. Le coach route (`coach.py:194-203`) catch les rate limits Groq pour retourner 429, mais les autres assistants ne le font pas — ils retournent 500 generique.
 **Impact:** Experience utilisateur incoherente entre coach et les autres assistants lors de saturation Groq.
 

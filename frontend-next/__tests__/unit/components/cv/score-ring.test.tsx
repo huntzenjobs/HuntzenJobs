@@ -83,12 +83,12 @@ describe('ScoreRing Component', () => {
   })
 
   describe('Without visual score feature', () => {
-    it('shows simple text when feature not available', () => {
+    it('keeps the score visible and exposes the upgrade interaction', () => {
       mockSubscriptionContext.hasFeature.mockReturnValue(false)
       render(<ScoreRing score={75} showAnimation={false} />)
       expect(screen.getByText('75%')).toBeInTheDocument()
-      // Should not have SVG for ring
-      expect(document.querySelector('svg')).not.toBeInTheDocument()
+      expect(document.querySelector('svg')).toBeInTheDocument()
+      expect(screen.getByRole('button')).toHaveClass('cursor-pointer')
     })
   })
 

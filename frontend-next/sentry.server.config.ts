@@ -12,7 +12,10 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
     // Environment
-    environment: process.env.NODE_ENV || 'development',
+    environment:
+      process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ||
+      process.env.NODE_ENV ||
+      'development',
 
     // Performance Monitoring (lower sample rate on server)
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.05 : 1.0, // 5% in prod

@@ -34,6 +34,19 @@ describe("CookieBanner", () => {
     expect(screen.getByText("Refuser")).toBeInTheDocument()
   })
 
+  it("reste compacte sur mobile tout en conservant les trois actions", () => {
+    render(<CookieBanner />)
+
+    const dialog = screen.getByRole("dialog")
+    const content = dialog.firstElementChild
+
+    expect(dialog).toHaveClass("p-1.5", "sm:p-6")
+    expect(content).toHaveClass("p-2.5", "sm:p-6")
+    expect(screen.getByText("Accepter")).toBeVisible()
+    expect(screen.getByText("Refuser")).toBeVisible()
+    expect(screen.getByRole("button", { name: "Fermer" })).toBeVisible()
+  })
+
   it("hides after accepting cookies", () => {
     const { container } = render(<CookieBanner />)
     fireEvent.click(screen.getByText("Accepter"))

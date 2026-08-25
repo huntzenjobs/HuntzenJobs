@@ -13,6 +13,7 @@ CV Analysis (Modal pipeline) n'est pas ici : il a déjà son propre système asy
 """
 import asyncio
 import logging
+from time import monotonic
 
 # Semaphore global : max 5 appels Groq simultanés par worker ARQ
 _groq_semaphore = asyncio.Semaphore(5)
@@ -155,6 +156,33 @@ async def expat_refresh_task(ctx: dict) -> dict:
         return {"success": False, "error": str(exc)}
 
 
+async def stripe_effect_outbox_task(ctx: dict) -> dict[str, int]:
+    """Vider jusqu'à trois lots Stripe sans dépasser le timeout ARQ."""
+    from src.api.deps import get_supabase_client
+    from src.services.stripe_outbox import process_stripe_effects
+
+    supabase = get_supabase_client()
+    batch_size = 4
+    effect_timeout_seconds = 20
+    started_at = monotonic()
+    budget_seconds = 90
+    totals = {"claimed": 0, "succeeded": 0, "retried": 0, "dead": 0}
+    for batch_index in range(3):
+        if batch_index > 0 and monotonic() - started_at >= budget_seconds:
+            logger.warning("[stripe_outbox] Worker time budget reached")
+            break
+        summary = await process_stripe_effects(
+            supabase,
+            limit=batch_size,
+            effect_timeout_seconds=effect_timeout_seconds,
+        )
+        for key in totals:
+            totals[key] += summary[key]
+        if summary["claimed"] < batch_size:
+            break
+    return totals
+
+
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 async def startup(ctx: dict) -> None:
@@ -199,7 +227,7 @@ async def notify_expiring_plans(ctx: dict) -> dict:
         j7_end = now + timedelta(days=8)
         rows_j7 = supabase.table("user_subscriptions").select(
             "user_id, plan_id, current_period_end, profiles!inner(email, language)"
-        ).eq("status", "active").eq("stripe_subscription_id", "admin_granted").gte(
+        ).eq("status", "active").like("stripe_subscription_id", "admin_granted%").gte(
             "current_period_end", j7_start.isoformat()
         ).lt(
             "current_period_end", j7_end.isoformat()
@@ -222,7 +250,7 @@ async def notify_expiring_plans(ctx: dict) -> dict:
         j1_end = now + timedelta(days=2)
         rows_j1 = supabase.table("user_subscriptions").select(
             "user_id, plan_id, current_period_end, profiles!inner(email, language)"
-        ).eq("status", "active").eq("stripe_subscription_id", "admin_granted").gte(
+        ).eq("status", "active").like("stripe_subscription_id", "admin_granted%").gte(
             "current_period_end", j1_start.isoformat()
         ).lt(
             "current_period_end", j1_end.isoformat()

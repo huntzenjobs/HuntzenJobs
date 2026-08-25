@@ -7,13 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertTriangle,
-  XCircle,
-  UserX,
-  Mail,
-  RefreshCw,
-} from "lucide-react";
+import { AlertTriangle, XCircle, UserX, Mail, RefreshCw } from "lucide-react";
 import SendEmailDialog from "@/components/admin/users/send-email-dialog";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -117,10 +111,13 @@ export default function SegmentsPage() {
   const [atRisk, setAtRisk] = useState<AtRiskUser[]>([]);
   const [churn, setChurn] = useState<ChurnUser[]>([]);
   const [neverConverted, setNeverConverted] = useState<NeverConvertedUser[]>(
-    []
+    [],
   );
   const [loading, setLoading] = useState(true);
-  const [emailTarget, setEmailTarget] = useState<{ userId: string; email: string } | null>(null);
+  const [emailTarget, setEmailTarget] = useState<{
+    userId: string;
+    email: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -207,13 +204,13 @@ export default function SegmentsPage() {
                 />
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="overflow-x-auto p-0">
               {loading ? (
                 <EmptyState message="Chargement..." />
               ) : atRisk.length === 0 ? (
                 <EmptyState message="Aucun abonné à risque. Excellent !" />
               ) : (
-                <table className="w-full text-sm">
+                <table className="min-w-[720px] w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/30">
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">
@@ -301,13 +298,13 @@ export default function SegmentsPage() {
                 />
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="overflow-x-auto p-0">
               {loading ? (
                 <EmptyState message="Chargement..." />
               ) : churn.length === 0 ? (
                 <EmptyState message="Aucune annulation en cours." />
               ) : (
-                <table className="w-full text-sm">
+                <table className="min-w-[720px] w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/30">
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">
@@ -343,7 +340,9 @@ export default function SegmentsPage() {
                         <td className="px-4 py-3">
                           <Badge
                             variant={
-                              u.status === "past_due" ? "destructive" : "outline"
+                              u.status === "past_due"
+                                ? "destructive"
+                                : "outline"
                             }
                             className="text-xs"
                           >
@@ -363,7 +362,8 @@ export default function SegmentsPage() {
                                     : "text-muted-foreground"
                               }
                             >
-                              {u.days_remaining}j ({formatDate(u.current_period_end)})
+                              {u.days_remaining}j (
+                              {formatDate(u.current_period_end)})
                             </span>
                           ) : (
                             formatDate(u.current_period_end)
@@ -399,7 +399,8 @@ export default function SegmentsPage() {
               <CardTitle className="text-sm font-medium flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <UserX className="h-4 w-4 text-muted-foreground" />
-                  Inscrits 14j+ sans abonnement, avec activité ({neverConverted.length})
+                  Inscrits 14j+ sans abonnement, avec activité (
+                  {neverConverted.length})
                 </span>
                 <BulkEmailButton
                   segment="never-converted"
@@ -408,13 +409,13 @@ export default function SegmentsPage() {
                 />
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="overflow-x-auto p-0">
               {loading ? (
                 <EmptyState message="Chargement..." />
               ) : neverConverted.length === 0 ? (
                 <EmptyState message="Tous vos utilisateurs actifs ont souscrit !" />
               ) : (
-                <table className="w-full text-sm">
+                <table className="min-w-[720px] w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/30">
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">

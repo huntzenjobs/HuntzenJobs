@@ -37,6 +37,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useCvProfiles, type CvProfile } from "@/hooks/use-cv-profiles";
 import { useDocuments } from "@/hooks/use-documents";
+import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
 import type { Job, QueueWaitingState } from "@/lib/api/huntzen-client";
 import { cn } from "@/lib/utils";
 import {
@@ -158,6 +159,29 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+export async function saveConfirmedApplication(
+  authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>,
+  job: Job,
+): Promise<void> {
+  const response = await authenticatedFetch(`${BACKEND_URL}/api/applications`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      external_job_id: job.id,
+      job_title: job.title,
+      company: job.company,
+      location: job.location,
+      salary: job.salary,
+      job_url: job.url,
+      job_source: job.source,
+      confirmed_by_user: true,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Application save failed (${response.status})`);
+  }
+}
+
 /**
  * Serialize cv_data profile to readable text for the /adapt endpoint.
  * The LLM can process this structured text format as a CV.
@@ -257,6 +281,7 @@ export function ApplyModal({
   const [queueWaitState, setQueueWaitState] =
     useState<QueueWaitingState | null>(null);
   const [markedApplied, setMarkedApplied] = useState(false);
+  const [markingApplied, setMarkingApplied] = useState(false);
   const [pendingCvData, setPendingCvData] = useState<ParsedCvData | null>(
     initialCvData ?? null,
   );
@@ -277,6 +302,7 @@ export function ApplyModal({
     saveProfile,
   } = useCvProfiles();
   const { session } = useAuth();
+  const { authenticatedFetch } = useAuthenticatedFetch();
   const {
     canUse,
     openPricingModal,
@@ -310,6 +336,7 @@ export function ApplyModal({
       setResult(null);
       setGeneratingLabel("");
       setMarkedApplied(false);
+      setMarkingApplied(false);
       setLanguage(initialLanguage ?? "fr");
       setPendingCvData(null);
       setPendingMatchScore(undefined);
@@ -317,6 +344,21 @@ export function ApplyModal({
       setPreviewLoading(false);
     }
     onOpenChange(open);
+  };
+
+  const handleMarkApplied = async () => {
+    if (markedApplied || markingApplied) return;
+
+    setMarkingApplied(true);
+    try {
+      await saveConfirmedApplication(authenticatedFetch, job);
+      setMarkedApplied(true);
+      toast.success(tJobs("toasts.applicationSent"));
+    } catch {
+      toast.error(tJobs("toasts.applicationSaveError"));
+    } finally {
+      setMarkingApplied(false);
+    }
   };
 
   // ── File selection ──────────────────────────────────────────────────────────
@@ -1448,13 +1490,15 @@ export function ApplyModal({
                 variant="outline"
                 size="sm"
                 className="w-full text-sm"
-                disabled={markedApplied}
-                onClick={() => {
-                  setMarkedApplied(true);
-                  toast.success(tJobs("toasts.applicationSent"));
-                }}
+                disabled={markedApplied || markingApplied}
+                onClick={handleMarkApplied}
               >
-                {markedApplied ? (
+                {markingApplied ? (
+                  <>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : markedApplied ? (
                   <>
                     <CheckCircle2 className="mr-2 h-3.5 w-3.5 text-green-500" />
                     Candidature enregistrée

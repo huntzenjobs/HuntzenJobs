@@ -19,6 +19,7 @@ from src.workers.tasks import (
     notify_expiring_plans,
     shutdown,
     startup,
+    stripe_effect_outbox_task,
 )
 
 
@@ -35,7 +36,15 @@ def _get_redis_settings() -> RedisSettings:
 
 
 class WorkerSettings:
-    functions = [coach_task, assistant_task, cv_adapt_task, cover_letter_task, notify_expiring_plans, expat_refresh_task]
+    functions = [
+        coach_task,
+        assistant_task,
+        cv_adapt_task,
+        cover_letter_task,
+        notify_expiring_plans,
+        expat_refresh_task,
+        stripe_effect_outbox_task,
+    ]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = _get_redis_settings()

@@ -5,13 +5,19 @@ Serverless CV processing using the UNIFIED agent from backend/src.
 Eliminates code duplication and ensures prompt consistency across environments.
 """
 
-import modal
+import json
 import os
 import sys
-import json
 import time
-from datetime import datetime
-from typing import Dict, Any, Optional, List
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any, Literal
+from urllib.parse import urlparse
+from uuid import UUID
+
+import modal
+from fastapi import HTTPException
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # IMPORTANT: Add /root to sys.path so we can import 'src' from the mounted directory
 sys.path.append("/root")
@@ -22,7 +28,41 @@ sys.path.append("/root")
 
 app = modal.App("huntzen-cv-processor")
 
-from pathlib import Path
+
+class CVProcessRequest(BaseModel):
+    """Contrat strict du webhook privé de traitement CV."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    cv_id: UUID
+    user_id: UUID
+    pdf_url: str | None = None
+    cv_text: str | None = Field(default=None, max_length=100_000)
+    job_description: str | None = Field(default=None, max_length=50_000)
+    language: Literal["fr", "en", "es", "pt"] = "fr"
+
+    @field_validator("pdf_url")
+    @classmethod
+    def validate_signed_cv_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        expected = urlparse(os.environ.get("SUPABASE_URL", ""))
+        candidate = urlparse(value)
+        if (
+            candidate.scheme != "https"
+            or not expected.hostname
+            or candidate.hostname != expected.hostname
+            or not candidate.path.startswith("/storage/v1/object/sign/cvs/")
+        ):
+            raise ValueError("Only a signed Supabase CV URL is accepted")
+        return value
+
+    @model_validator(mode="after")
+    def validate_single_source(self) -> "CVProcessRequest":
+        if bool(self.pdf_url) == bool(self.cv_text):
+            raise ValueError("Exactly one CV source is required")
+        return self
+
 MODULE_DIR = Path(__file__).parent
 PROJECT_ROOT = MODULE_DIR.parent.parent
 
@@ -30,23 +70,23 @@ PROJECT_ROOT = MODULE_DIR.parent.parent
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install(
-        "libgl1-mesa-glx", "libglib2.0-0", "poppler-utils", 
+        "libgl1-mesa-glx", "libglib2.0-0", "poppler-utils",
         "tesseract-ocr", "tesseract-ocr-fra", "tesseract-ocr-eng"
     )
     .pip_install(
-        "docling==2.70.0", 
-        "httpx==0.27.0", 
+        "docling==2.70.0",
+        "httpx==0.27.0",
         "psycopg[binary]==3.3.2",
-        "groq==0.13.1", 
-        "structlog==24.4.0", 
+        "groq==0.13.1",
+        "structlog==24.4.0",
         "pydantic==2.10.4",
-        "fastapi[standard]==0.115.6", 
-        "langchain==0.3.13", 
-        "langchain-groq==0.2.2", 
+        "fastapi[standard]==0.115.6",
+        "langchain==0.3.13",
+        "langchain-groq==0.2.2",
         "langchain-core==0.3.28",
-        "redis==5.0.1", 
-        "orjson==3.10.12", 
-        "python-dotenv", 
+        "redis==5.0.1",
+        "orjson==3.10.12",
+        "python-dotenv",
         "pydantic-settings",
         "tenacity",
         "cachetools>=5.3.2",
@@ -79,23 +119,16 @@ def get_db_connection():
         raise ValueError("DATABASE_URL not found in Modal secrets")
     return psycopg.connect(database_url)
 
-async def notify_fastapi_callback(cv_id: str, status: str) -> bool:
+async def notify_fastapi_callback(cv_id: str, user_id: str, status: str) -> bool:
     import httpx
     fastapi_url = os.getenv("FASTAPI_CALLBACK_URL")
     modal_secret = os.getenv("MODAL_CALLBACK_SECRET")
 
     if not fastapi_url or not modal_secret:
-        print(f"⚠️ FASTAPI_CALLBACK_URL or MODAL_CALLBACK_SECRET not configured")
+        print("⚠️ FASTAPI_CALLBACK_URL or MODAL_CALLBACK_SECRET not configured")
         return False
 
     try:
-        conn = get_db_connection()
-        with conn.cursor() as cur:
-            cur.execute("SELECT user_id FROM cv_analyses WHERE id = %s", (str(cv_id),))
-            result = cur.fetchone()
-            user_id = str(result[0]) if result and result[0] else None
-        conn.close()
-
         async with httpx.AsyncClient(timeout=10.0) as client:
             callback_url = f"{fastapi_url}/api/cv-analysis/callback"
             response = await client.post(
@@ -108,33 +141,89 @@ async def notify_fastapi_callback(cv_id: str, status: str) -> bool:
             else:
                 print(f"❌ CALLBACK FAILED: Backend returned {response.status_code} - {response.text}")
             return response.status_code == 200
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - frontière réseau Modal/FastAPI
         print(f"❌ Callback failed: {e}")
         return False
 
-async def update_cv_status(cv_id: str, status: str, result: Optional[Dict[str, Any]] = None, error_message: Optional[str] = None) -> bool:
+def cv_belongs_to_user(cv_id: str, user_id: str) -> bool:
+    """Vérifie l'ownership avant tout traitement ou mutation du CV."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT 1 FROM cv_analyses WHERE id = %s AND user_id = %s",
+                (str(cv_id), str(user_id)),
+            )
+            return cur.fetchone() is not None
+    finally:
+        conn.close()
+
+
+def claim_cv_analysis(cv_id: str, user_id: str) -> str | None:
+    """Réserver durablement une analyse pending et retourner son état courant."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE cv_analyses
+                SET status = 'processing', updated_at = NOW()
+                WHERE id = %s AND user_id = %s AND status = 'pending'
+                RETURNING status
+                """,
+                (str(cv_id), str(user_id)),
+            )
+            if cur.fetchone() is not None:
+                conn.commit()
+                return "claimed"
+
+            cur.execute(
+                "SELECT status FROM cv_analyses WHERE id = %s AND user_id = %s",
+                (str(cv_id), str(user_id)),
+            )
+            current = cur.fetchone()
+            conn.commit()
+            return str(current[0]) if current else None
+    finally:
+        conn.close()
+
+
+async def update_cv_status(
+    cv_id: str,
+    user_id: str,
+    status: str,
+    result: dict[str, Any] | None = None,
+    error_message: str | None = None,
+) -> bool:
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
             if status == "completed" and result:
                 cur.execute(
-                    "UPDATE cv_analyses SET status = %s, result = %s, completed_at = NOW(), updated_at = NOW() WHERE id = %s",
-                    (str(status), json.dumps(result), str(cv_id))
+                    "UPDATE cv_analyses SET status = %s, result = %s, completed_at = NOW(), updated_at = NOW() WHERE id = %s AND user_id = %s RETURNING id",
+                    (str(status), json.dumps(result), str(cv_id), str(user_id))
                 )
             elif status == "failed" and error_message:
                 cur.execute(
-                    "UPDATE cv_analyses SET status = %s, error_message = %s, updated_at = NOW() WHERE id = %s",
-                    (str(status), str(error_message), str(cv_id))
+                    "UPDATE cv_analyses SET status = %s, error_message = %s, updated_at = NOW() WHERE id = %s AND user_id = %s RETURNING id",
+                    (str(status), str(error_message), str(cv_id), str(user_id))
                 )
             else:
-                cur.execute("UPDATE cv_analyses SET status = %s, updated_at = NOW() WHERE id = %s", (str(status), str(cv_id)))
+                cur.execute(
+                    "UPDATE cv_analyses SET status = %s, updated_at = NOW() WHERE id = %s AND user_id = %s RETURNING id",
+                    (str(status), str(cv_id), str(user_id)),
+                )
+            updated = cur.fetchone() is not None
             conn.commit()
         conn.close()
 
+        if not updated:
+            return False
+
         if status in ("completed", "failed"):
-            await notify_fastapi_callback(cv_id, status)
+            await notify_fastapi_callback(cv_id, user_id, status)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - frontière base de données Modal
         print(f"❌ DB update failed: {e}")
         return False
 
@@ -148,26 +237,52 @@ async def update_cv_status(cv_id: str, status: str, result: Optional[Dict[str, A
     memory=4096,
     cpu=2.0,
     timeout=600,
-    max_containers=1000,
+    max_containers=20,
 )
 async def process_cv_analysis(
     cv_id: str,
-    user_id: Optional[str] = None,
-    pdf_url: Optional[str] = None,
-    cv_text: Optional[str] = None,
-    job_description: Optional[str] = None,
+    user_id: str,
+    pdf_url: str | None = None,
+    cv_text: str | None = None,
+    job_description: str | None = None,
     language: str = "fr"
-) -> Dict[str, Any]:
-    import httpx
+) -> dict[str, Any]:
     import tempfile
+
+    import httpx
     from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
 
     print(f"🚀 Unified CV Processing Starting: {cv_id}")
     start_time = time.time()
 
+    ownership_verified = False
     try:
+        claim_state = claim_cv_analysis(cv_id, user_id)
+        if claim_state == "completed":
+            return {
+                "success": True,
+                "cv_id": cv_id,
+                "already_processed": True,
+            }
+        if claim_state == "processing":
+            return {
+                "success": True,
+                "cv_id": cv_id,
+                "already_processing": True,
+            }
+        if claim_state == "failed":
+            return {
+                "success": False,
+                "cv_id": cv_id,
+                "error": "CV analysis already failed",
+            }
+        if claim_state != "claimed":
+            raise PermissionError("CV analysis ownership mismatch")
+        ownership_verified = True
+
         # Step 1: Processing Status
-        await update_cv_status(cv_id, "processing")
+        if not await update_cv_status(cv_id, user_id, "processing"):
+            raise RuntimeError("CV analysis disappeared before processing")
 
         # Step 2: Extract Text (if needed)
         final_cv_text = cv_text
@@ -178,7 +293,7 @@ async def process_cv_analysis(
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
                     tmp_file.write(response.content)
                     tmp_path = tmp_file.name
-            
+
             # Use unified extraction method if possible, or stay with local Docling
             # For simplicity and perf, we keep the docling logic here or move to agent.
             # Let's use the local docling as it's already configured in Modal image.
@@ -200,19 +315,39 @@ async def process_cv_analysis(
             language=language
         )
 
+        if analysis_result.get("success") is False:
+            rejection_reason = (
+                analysis_result.get("error")
+                or analysis_result.get("verdict")
+                or "CV analysis rejected the document"
+            )
+            raise ValueError(str(rejection_reason))
+
         # Add processing metadata
         analysis_result["processing_time_seconds"] = round(time.time() - start_time, 2)
-        analysis_result["processed_at"] = datetime.utcnow().isoformat()
+        analysis_result["processed_at"] = datetime.now(UTC).isoformat()
 
         # Step 4: Final DB Update
-        await update_cv_status(cv_id, "completed", result=analysis_result)
-        
+        if not await update_cv_status(
+            cv_id,
+            user_id,
+            "completed",
+            result=analysis_result,
+        ):
+            raise RuntimeError("CV analysis final status persistence failed")
+
         return {"success": True, "cv_id": cv_id}
 
-    except Exception as e:
-        error_msg = f"Unified Processing Failed: {str(e)}"
+    except Exception as e:  # noqa: BLE001 - frontière du traitement asynchrone
+        error_msg = f"Unified Processing Failed: {e!s}"
         print(f"❌ {error_msg}")
-        await update_cv_status(cv_id, "failed", error_message=error_msg)
+        if ownership_verified:
+            await update_cv_status(
+                cv_id,
+                user_id,
+                "failed",
+                error_message=error_msg,
+            )
         return {"success": False, "error": error_msg}
 
 # ============================================
@@ -220,17 +355,20 @@ async def process_cv_analysis(
 # ============================================
 
 @app.function(image=image, secrets=secrets)
-@modal.fastapi_endpoint(method="POST")
-async def process_cv_webhook(request_body: dict) -> dict:
+@modal.fastapi_endpoint(method="POST", requires_proxy_auth=True)
+async def process_cv_webhook(request_body: CVProcessRequest) -> dict:
     try:
-        process_cv_analysis.spawn(
-            cv_id=request_body["cv_id"],
-            user_id=request_body.get("user_id"),
-            pdf_url=request_body.get("pdf_url"),
-            cv_text=request_body.get("cv_text"),
-            job_description=request_body.get("job_description"),
-            language=request_body.get("language", "fr")
+        await process_cv_analysis.spawn.aio(
+            cv_id=str(request_body.cv_id),
+            user_id=str(request_body.user_id),
+            pdf_url=request_body.pdf_url,
+            cv_text=request_body.cv_text,
+            job_description=request_body.job_description,
+            language=request_body.language,
         )
-        return {"success": True, "cv_id": request_body["cv_id"]}
+        return {"success": True, "cv_id": str(request_body.cv_id)}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to start CV analysis",
+        ) from e

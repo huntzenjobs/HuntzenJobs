@@ -10,6 +10,10 @@ import hashlib
 import logging
 import time
 
+import resend
+
+from src.services.email_delivery import send_email
+
 logger = logging.getLogger(__name__)
 
 _THROTTLE_TTL = 3600  # 1 heure
@@ -125,7 +129,9 @@ async def send_admin_alert(
     severity: str = "info",
     skip_throttle: bool = False,
     category: str = "",
-) -> None:
+    idempotency_key: str | None = None,
+    strict: bool = False,
+) -> bool:
     """
     Envoie un email d'alerte a l'admin.
 
@@ -140,7 +146,7 @@ async def send_admin_alert(
         # Check if this category is enabled
         if category and not await is_alert_enabled(category):
             logger.debug(f"[admin_alerts] Category '{category}' disabled, skipping: '{subject}'")
-            return
+            return True
 
         if not skip_throttle:
             subject_hash = hashlib.md5(subject.encode()).hexdigest()[:12]
@@ -151,30 +157,39 @@ async def send_admin_alert(
                 already_sent = await redis.get(throttle_key)
                 if already_sent:
                     logger.debug(f"[admin_alerts] Throttled: '{subject}'")
-                    return
+                    return True
                 await redis.set(throttle_key, "1", ex=_THROTTLE_TTL)
             else:
                 now = time.time()
                 if _last_sent_fallback.get(throttle_key, 0) + _THROTTLE_TTL > now:
                     logger.warning(f"[admin_alerts] throttle memoire actif pour '{subject}'")
-                    return
+                    return True
                 _last_sent_fallback[throttle_key] = now
 
         # Envoi via Resend
-        import resend
         resend.api_key = settings.get_resend_api_key()
         admin_email = settings.admin_email
 
         severity_emoji = {"info": "ℹ️", "warning": "⚠️", "error": "🔴"}.get(severity, "ℹ️")
 
-        resend.Emails.send({
+        params: resend.Emails.SendParams = {
             "from": settings.from_email,
             "to": [admin_email],
             "subject": f"{severity_emoji} HuntZen Admin — {subject}",
             "html": f"<pre style='font-family:sans-serif'>{body}</pre>",
-        })
+        }
+        options: resend.Emails.SendOptions | None = (
+            {"idempotency_key": idempotency_key}
+            if idempotency_key
+            else None
+        )
+        send_email(params, options)
 
         logger.info(f"[admin_alerts] Alerte envoyee a {admin_email}: '{subject}'")
+        return True
 
     except Exception as e:
         logger.warning(f"[admin_alerts] Echec envoi alerte '{subject}': {e}")
+        if strict:
+            raise
+        return False

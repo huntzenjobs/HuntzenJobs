@@ -41,9 +41,15 @@ def load_prompt(filename: str) -> str:
         supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
         if supabase_url and supabase_key:
             supabase = create_client(supabase_url, supabase_key)
-            res = supabase.table("ai_prompts").select("content").eq("name", name).maybe_single().execute()
-            if res.data and res.data.get("content"):
-                return res.data["content"]
+            res = (
+                supabase.table("ai_prompts")
+                .select("content")
+                .eq("name", name)
+                .limit(1)
+                .execute()
+            )
+            if res.data and res.data[0].get("content"):
+                return res.data[0]["content"]
     except Exception as e:
         logger.warning(f"Could not load prompt '{name}' from DB, falling back to file: {e}")
 

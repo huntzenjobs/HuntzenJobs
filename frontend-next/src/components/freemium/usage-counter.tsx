@@ -20,6 +20,7 @@ interface UsageCounterProps {
   showIcon?: boolean;
   showBar?: boolean;
   compact?: boolean;
+  appearance?: "light" | "dark";
 }
 
 interface FeatureConfig {
@@ -140,6 +141,7 @@ export function UsageCounter({
   showIcon = true,
   showBar = true,
   compact = false,
+  appearance = "light",
 }: UsageCounterProps) {
   const { getRemaining, limits, isFreePlan, quotas } = useSubscription();
   const tUsage = useTranslations("usageCounter");
@@ -179,12 +181,16 @@ export function UsageCounter({
     }
     case "cv_adapt": {
       const q = quotas?.cv_adapt;
-      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      max = q ? (q.limit === -1 ? Infinity : q.limit) : limits.cv_adapt_per_day;
       break;
     }
     case "cover_letter": {
       const q = quotas?.cover_letter;
-      max = q ? (q.limit === -1 ? Infinity : q.limit) : 0;
+      max = q
+        ? q.limit === -1
+          ? Infinity
+          : q.limit
+        : limits.cover_letter_per_day;
       break;
     }
     default:
@@ -233,11 +239,19 @@ export function UsageCounter({
   return (
     <div className={`space-y-1.5 ${className}`}>
       <div className="flex items-center justify-between text-sm">
-        <span className="flex items-center gap-1.5 text-white/90">
+        <span
+          className={`flex items-center gap-1.5 ${
+            appearance === "dark" ? "text-white/90" : "text-slate-700"
+          }`}
+        >
           {showIcon && config.icon}
           <span>
             {`${remaining} ${tUsage(config.labelKey)}`}
-            <span className="text-xs ml-1 text-white/60">
+            <span
+              className={`ml-1 text-xs ${
+                appearance === "dark" ? "text-white/60" : "text-slate-500"
+              }`}
+            >
               {config.maxLabel(max, tUsage)}
             </span>
           </span>
@@ -246,7 +260,9 @@ export function UsageCounter({
 
       {showBar && max !== Infinity && (
         <div
-          className="h-2 bg-gray-100 rounded-full overflow-hidden"
+          className={`h-2 overflow-hidden rounded-full ${
+            appearance === "dark" ? "bg-white/15" : "bg-gray-100"
+          }`}
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={max}
@@ -269,14 +285,18 @@ export function UsageCounter({
 
 interface UsageSummaryProps {
   className?: string;
+  appearance?: "light" | "dark";
 }
 
-export function UsageSummary({ className = "" }: UsageSummaryProps) {
-  const { plan, isFreePlan } = useSubscription();
+export function UsageSummary({
+  className = "",
+  appearance = "dark",
+}: UsageSummaryProps) {
+  const { plan, hasFeature, isLoaded } = useSubscription();
   const tUsage = useTranslations("usageCounter");
 
   // Paid unlimited plans (pro/premium) don't need the summary
-  if (plan === "pro" || plan === "premium") return null;
+  if (!isLoaded || plan === "pro" || plan === "premium") return null;
 
   return (
     <div className={className}>
@@ -285,24 +305,48 @@ export function UsageSummary({ className = "" }: UsageSummaryProps) {
           {tUsage("dailyUsage")}
         </h4>
         <div className="space-y-3">
-          <UsageCounter feature="job_search" showBar />
-          <UsageCounter feature="ats_score" showBar />
-          <UsageCounter feature="matching_score" showBar />
-          <UsageCounter feature="cv_adapt" showBar />
-          <UsageCounter feature="assistant_messages" showBar />
-          <UsageCounter feature="recruiter_search" showBar />
-          <UsageCounter feature="cover_letter" showBar />
+          <UsageCounter feature="job_search" showBar appearance={appearance} />
+          <UsageCounter feature="ats_score" showBar appearance={appearance} />
+          <UsageCounter
+            feature="matching_score"
+            showBar
+            appearance={appearance}
+          />
+          <UsageCounter feature="cv_adapt" showBar appearance={appearance} />
+          <UsageCounter
+            feature="assistant_messages"
+            showBar
+            appearance={appearance}
+          />
+          <UsageCounter
+            feature="recruiter_search"
+            showBar
+            appearance={appearance}
+          />
+          <UsageCounter
+            feature="cover_letter"
+            showBar
+            appearance={appearance}
+          />
         </div>
         <div className="flex items-center gap-1.5 mt-2 mb-3 text-xs text-white/50">
           <Clock className="w-3 h-3" />
           <QuotaResetTimer />
         </div>
-        <h4 className="text-sm font-semibold mb-3 text-white/90">
-          {tUsage("generalUsage")}
-        </h4>
-        <div className="space-y-3">
-          <UsageCounter feature="saved_jobs" showBar />
-        </div>
+        {hasFeature("has_favorites") && (
+          <>
+            <h4 className="text-sm font-semibold mb-3 text-white/90">
+              {tUsage("generalUsage")}
+            </h4>
+            <div className="space-y-3">
+              <UsageCounter
+                feature="saved_jobs"
+                showBar
+                appearance={appearance}
+              />
+            </div>
+          </>
+        )}
       </>
     </div>
   );

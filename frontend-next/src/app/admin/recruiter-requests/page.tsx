@@ -17,6 +17,16 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -41,11 +51,7 @@ async function adminFetch(path: string, options?: RequestInit) {
 
 type PaymentStatus = "pending" | "paid" | "refunded" | "failed";
 type RequestStatus =
-  | "new"
-  | "assigned"
-  | "scheduled"
-  | "completed"
-  | "cancelled";
+  "new" | "assigned" | "scheduled" | "completed" | "cancelled";
 
 interface RecruiterRequest {
   id: string;
@@ -100,6 +106,7 @@ export default function RecruiterRequestsAdminPage() {
   );
   const [selectedRequest, setSelectedRequest] =
     useState<RecruiterRequest | null>(null);
+  const [deleteRequestId, setDeleteRequestId] = useState<string | null>(null);
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -144,22 +151,17 @@ export default function RecruiterRequestsAdminPage() {
     }
   };
 
-  const deleteRequest = async (requestId: string) => {
-    if (
-      !window.confirm(
-        "Supprimer définitivement cette demande de consultation ? Cette action est irréversible.",
-      )
-    ) {
-      return;
-    }
+  const deleteRequest = async () => {
+    if (!deleteRequestId) return;
     try {
-      await adminFetch(`/api/admin/recruiter-requests/${requestId}`, {
+      await adminFetch(`/api/admin/recruiter-requests/${deleteRequestId}`, {
         method: "DELETE",
       });
       toast.success("Demande supprimée");
       setSelectedRequest((prev) =>
-        prev && prev.id === requestId ? null : prev,
+        prev && prev.id === deleteRequestId ? null : prev,
       );
+      setDeleteRequestId(null);
       await fetchRequests();
     } catch (error) {
       toast.error("Erreur lors de la suppression de la demande");
@@ -472,7 +474,7 @@ export default function RecruiterRequestsAdminPage() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteRequest(request.id);
+                              setDeleteRequestId(request.id);
                             }}
                             className="p-1 rounded-md text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
                             aria-label="Supprimer la demande"
@@ -501,12 +503,13 @@ export default function RecruiterRequestsAdminPage() {
                   </h2>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => deleteRequest(selectedRequest.id)}
+                      onClick={() => setDeleteRequestId(selectedRequest.id)}
                       className="px-3 py-1.5 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
                     >
                       Supprimer
                     </button>
                     <button
+                      aria-label="Fermer les détails"
                       onClick={() => setSelectedRequest(null)}
                       className="text-muted-foreground hover:text-foreground transition-colors"
                     >
@@ -659,6 +662,31 @@ export default function RecruiterRequestsAdminPage() {
             </div>
           </div>
         )}
+
+        <AlertDialog
+          open={deleteRequestId !== null}
+          onOpenChange={(open) => {
+            if (!open) setDeleteRequestId(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer cette demande ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette suppression est définitive et ne peut pas être annulée.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={deleteRequest}
+              >
+                Supprimer définitivement
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

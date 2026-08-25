@@ -8,7 +8,7 @@
  * Réduit la latence DNS + TCP + TLS
  */
 export const preconnectOrigins = [
-  "https://ngiakfikbuyugqfqtfwp.supabase.co",
+  "https://auth.huntzenjobs.com",
   "https://huntzenjobs-production.up.railway.app",
 ] as const;
 

@@ -77,6 +77,15 @@ def _increment_job_search_quota(user_id: str) -> None:
         logger.error(f"[quota] INCREMENT FAILED: user={user_id} feature=job_search error={e}", exc_info=True)
 
 
+async def _record_job_search_usage(user_id: str, *, from_history: bool) -> None:
+    """Comptabilise une recherche réussie sans bloquer la boucle asynchrone."""
+    if from_history:
+        return
+
+    await asyncio.to_thread(_increment_job_search_quota, user_id)
+    await invalidate_user_quota_cache(user_id)
+
+
 def _extract_salary(job: dict) -> tuple:
     """Extract min/max salary from job (returns None if not available)."""
     salary_str = job.get('salary', '')
@@ -360,13 +369,13 @@ async def search_jobs(
     search_hash = hashlib.md5(data.model_dump_json(sort_keys=True).encode()).hexdigest()
     lock_key = f"search_lock:{user_id}:{search_hash}"
     redis = await get_redis()
-    
+
     if redis:
         # Tenter d'acquerir un verrou de 30s
         is_locked = await redis.set(lock_key, "1", ex=30, nx=True)
         if not is_locked:
             logger.info(f"Concurrent search detected for user {user_id}, waiting for cache...")
-            
+
             # Attendre que la recherche en cours peuple le cache (max 5s)
             cache_key = f"jobs:search:{search_hash}"
             for _ in range(10):  # 10 * 0.5s = 5s
@@ -385,7 +394,7 @@ async def search_jobs(
                         metadata=SearchMetadata(**metadata) if isinstance(metadata, dict) else metadata,
                         ai_insights=cached_data.get("insights") or cached_data.get("ai_insights")
                     )
-            
+
             # Si toujours pas de cache apres 5s
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -442,6 +451,8 @@ async def search_jobs(
 
             # Re-generate insights or use placeholder
             ai_insights = "Insights disponibles via recherche fraîche."
+
+            await _record_job_search_usage(user_id, from_history=data.from_history)
 
             return JobSearchResponse(
                 success=True,
@@ -535,9 +546,7 @@ async def search_jobs(
         )
 
         # Incrementer quota apres succes (sauf si recherche depuis l'historique)
-        if user_id and not data.from_history:
-            _increment_job_search_quota(user_id)
-            await invalidate_user_quota_cache(user_id)
+        await _record_job_search_usage(user_id, from_history=data.from_history)
 
         return response
     finally:
@@ -613,20 +622,10 @@ async def search_jobs_get(
     }
     search_hash = hashlib.md5(json.dumps(params_dict, sort_keys=True, default=str).encode()).hexdigest()
     lock_key = f"search_lock:{user_id}:{search_hash}"
+    cache_key = f"jobs:search:{search_hash}"
     redis = await get_redis()
 
     if redis:
-        # Check cache first (avant de tenter de verrouiller)
-        cache_key = f"jobs:search:{search_hash}"
-        try:
-            raw = await redis.get(cache_key)
-            if raw:
-                import orjson
-                logger.debug(f"Cache HIT for job search (GET): {cache_key[:40]}")
-                return orjson.loads(raw)
-        except Exception as e:
-            logger.warning(f"[cache] job search GET error: {e}")
-
         # Tenter d'acquerir un verrou de 30s
         is_locked = await redis.set(lock_key, "1", ex=30, nx=True)
         if not is_locked:
@@ -649,6 +648,23 @@ async def search_jobs_get(
 
     try:
         _check_job_search_quota(user_id)
+
+        # Un cache hit reste une recherche utilisateur et doit respecter le quota.
+        cached_response = None
+        if redis:
+            try:
+                raw = await redis.get(cache_key)
+                if raw:
+                    import orjson
+
+                    logger.debug(f"Cache HIT for job search (GET): {cache_key[:40]}")
+                    cached_response = orjson.loads(raw)
+            except Exception as e:
+                logger.warning(f"[cache] job search GET error: {e}")
+
+        if cached_response is not None:
+            await _record_job_search_usage(user_id, from_history=from_history)
+            return cached_response
 
         # ── Cache MISS : executer la recherche ──
         result = await agent.run(
@@ -706,10 +722,7 @@ async def search_jobs_get(
             result['metadata']['total_before_filters'] = len(jobs)
 
         # Incrémenter quota après recherche réussie
-        from_history = request.query_params.get("from_history", "").lower() == "true"
-        if user_id and not from_history:
-            _increment_job_search_quota(user_id)
-            await invalidate_user_quota_cache(user_id)
+        await _record_job_search_usage(user_id, from_history=from_history)
 
         return result
     finally:

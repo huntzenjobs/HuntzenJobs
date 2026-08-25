@@ -10,8 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useJobTranslation } from "@/hooks/use-job-translation";
 import { createClient } from "@/lib/supabase/client";
@@ -82,10 +80,8 @@ import { useSubscription } from "@/contexts/subscription-context";
 import {
   huntzenApi,
   isQuotaExceededError,
-  type ContractType,
   type Job,
 } from "@/lib/api/huntzen-client";
-import { featureFlags } from "@/lib/feature-flags";
 import { track } from "@/lib/track";
 import {
   formatJobSource,
@@ -95,56 +91,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserSearch } from "lucide-react";
 import { toast } from "sonner";
 
-// ─── Fuzzy location helpers ───────────────────────────────────────────────────
-
-function levenshtein(a: string, b: string): number {
-  const dp = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let j = 1; j <= a.length; j++) {
-    let prev = j;
-    for (let i = 1; i <= b.length; i++) {
-      const tmp = dp[i];
-      dp[i] =
-        a[j - 1] === b[i - 1]
-          ? dp[i - 1]
-          : 1 + Math.min(dp[i - 1], dp[i], prev);
-      prev = tmp;
-    }
-  }
-  return dp[b.length];
-}
-
-function fuzzyFindCountry(
-  query: string,
-  countries: { name: string; code: string }[],
-): { name: string; code: string } | null {
-  const q = query.toLowerCase().trim();
-  if (!q) return null;
-  const exact = countries.find((c) => c.name.toLowerCase() === q);
-  if (exact) return exact;
-  const startsWith = countries.filter((c) =>
-    c.name.toLowerCase().startsWith(q),
-  );
-  if (startsWith.length === 1) return startsWith[0];
-  const contains = countries.filter((c) => c.name.toLowerCase().includes(q));
-  if (contains.length === 1) return contains[0];
-  const sorted = countries
-    .map((c) => ({ c, d: levenshtein(q, c.name.toLowerCase()) }))
-    .sort((a, b) => a.d - b.d);
-  return sorted[0]?.d <= 2 ? sorted[0].c : null;
-}
-
-function fuzzyFindCity(query: string, cities: string[]): string | null {
-  const q = query.toLowerCase().trim();
-  if (!q) return null;
-  const exact = cities.find((c) => c.toLowerCase() === q);
-  if (exact) return exact;
-  const startsWith = cities.filter((c) => c.toLowerCase().startsWith(q));
-  if (startsWith.length === 1) return startsWith[0];
-  const sorted = cities
-    .map((c) => ({ c, d: levenshtein(q, c.toLowerCase()) }))
-    .sort((a, b) => a.d - b.d);
-  return sorted[0]?.d <= 2 ? sorted[0].c : null;
-}
 
 // Inline — évite d'importer sanitize.ts qui tire isomorphic-dompurify dans le bundle SSR
 const stripHtmlForPreview = (html: string) =>
@@ -259,26 +205,11 @@ export default function JobsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Country autocomplete state
-  const [countrySearch, setCountrySearch] = useState("");
-  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
-  const [selectedCountryIndex, setSelectedCountryIndex] = useState(-1);
-  const [countryError, setCountryError] = useState("");
-  const countryInputRef = useRef<HTMLInputElement>(null);
-  const countrySuggestionsRef = useRef<HTMLDivElement>(null);
-
-  // City autocomplete state
-  const [citySearch, setCitySearch] = useState("");
-  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
-  const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
-  const cityInputRef = useRef<HTMLInputElement>(null);
-  const citySuggestionsRef = useRef<HTMLDivElement>(null);
 
   // Freemium state
   const {
     canUse,
     incrementUsage,
-    getRemaining,
     hasFeature,
     openPricingModal,
     limits,
@@ -291,141 +222,8 @@ export default function JobsPage() {
 
   const searchLimitPopup = useConversionPopup("search_limit");
 
-  // Simple direct calls - no useMemo needed since functions are stable
-  const searchesRemaining = getRemaining("job_search");
   const jobsVisibleLimit = limits.jobs_visible;
 
-  // Fetch countries
-  const { data: countries = [], isLoading: loadingCountries } = useQuery({
-    queryKey: ["countries"],
-    queryFn: () => huntzenApi.getCountries(),
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  // Get selected country name for cities query
-  const selectedCountryName = useMemo(
-    () => countries.find((c) => c.code === selectedCountry)?.name,
-    [countries, selectedCountry],
-  );
-
-  // Fetch cities for autocomplete (only loads when country is selected)
-  const citiesQuery = useQuery({
-    queryKey: ["cities", selectedCountryName],
-    queryFn: () =>
-      selectedCountryName
-        ? huntzenApi.getCities(selectedCountryName)
-        : Promise.resolve([]),
-    enabled: !!selectedCountryName,
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    placeholderData: [],
-  });
-
-  // Get all cities for autocomplete filtering
-  const allCities = citiesQuery.data ?? [];
-  const loadingCities = citiesQuery.isLoading;
-
-  // Fetch contract types
-  const { data: allContractTypes = [] } = useQuery({
-    queryKey: ["contractTypes"],
-    queryFn: () => huntzenApi.getContractTypes(),
-    staleTime: 1000 * 60 * 60, // 1 hour
-  });
-
-  // Filter countries based on search
-  const filteredCountries = countries
-    .filter((country) =>
-      country.name.toLowerCase().includes(countrySearch.toLowerCase()),
-    )
-    .slice(0, 8); // Limit to 8 suggestions
-
-  // Filter cities based on search
-  const filteredCities = useMemo(() => {
-    if (!citySearch) return [];
-    return allCities
-      .filter((city) => city.toLowerCase().includes(citySearch.toLowerCase()))
-      .slice(0, 8); // Limit to 8 suggestions
-  }, [allCities, citySearch]);
-
-  // Reset city when country changes
-  useEffect(() => {
-    setSelectedCity("");
-    setCitySearch("");
-    setSelectedCityIndex(-1);
-  }, [selectedCountry]);
-
-  // Reset selected index when filtered results change
-  useEffect(() => {
-    setSelectedCountryIndex(-1);
-  }, [countrySearch]);
-
-  useEffect(() => {
-    setSelectedCityIndex(-1);
-  }, [citySearch]);
-
-  // Keyboard navigation handlers
-  const handleCountryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showCountrySuggestions || filteredCountries.length === 0) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedCountryIndex((prev) =>
-          prev < filteredCountries.length - 1 ? prev + 1 : prev,
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedCountryIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (selectedCountryIndex >= 0) {
-          const country = filteredCountries[selectedCountryIndex];
-          setSelectedCountry(country.code);
-          setCountrySearch(country.name);
-          setShowCountrySuggestions(false);
-          setSelectedCountryIndex(-1);
-        }
-        break;
-      case "Escape":
-        e.preventDefault();
-        setShowCountrySuggestions(false);
-        setSelectedCountryIndex(-1);
-        break;
-    }
-  };
-
-  const handleCityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showCitySuggestions || filteredCities.length === 0) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedCityIndex((prev) =>
-          prev < filteredCities.length - 1 ? prev + 1 : prev,
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedCityIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (selectedCityIndex >= 0) {
-          const city = filteredCities[selectedCityIndex];
-          setSelectedCity(city);
-          setCitySearch(city);
-          setShowCitySuggestions(false);
-          setSelectedCityIndex(-1);
-        }
-        break;
-      case "Escape":
-        e.preventDefault();
-        setShowCitySuggestions(false);
-        setSelectedCityIndex(-1);
-        break;
-    }
-  };
 
   // Load advanced filters from URL on mount
   useEffect(() => {
@@ -454,29 +252,6 @@ export default function JobsPage() {
     }
   }, [searchParams]);
 
-  // Handle click outside to close suggestions
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        countryInputRef.current &&
-        !countryInputRef.current.contains(event.target as Node) &&
-        countrySuggestionsRef.current &&
-        !countrySuggestionsRef.current.contains(event.target as Node)
-      ) {
-        setShowCountrySuggestions(false);
-      }
-      if (
-        cityInputRef.current &&
-        !cityInputRef.current.contains(event.target as Node) &&
-        citySuggestionsRef.current &&
-        !citySuggestionsRef.current.contains(event.target as Node)
-      ) {
-        setShowCitySuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // Load saved jobs to populate savedJobIds
   useEffect(() => {
@@ -521,67 +296,6 @@ export default function JobsPage() {
     }
   }, [jobs.length, visibleJobsCount]);
 
-  // Handle country selection
-  const handleCountrySelect = (country: { code: string; name: string }) => {
-    setShowCountrySuggestions(false);
-    setSelectedCountry(country.code);
-    setCountrySearch(country.name);
-    setSelectedCity(""); // Reset city after country change
-    setCitySearch("");
-  };
-
-  // Handle city selection
-  const handleCitySelect = (city: string) => {
-    setShowCitySuggestions(false);
-    setSelectedCity(city);
-    setCitySearch(city);
-  };
-
-  // Auto-resolve country on blur (handles "frnace" → "France", "franc" → "France", etc.)
-  const handleCountryBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    // If focus moved to a suggestion button, skip — the click will handle it
-    if (
-      e.relatedTarget instanceof Node &&
-      countrySuggestionsRef.current?.contains(e.relatedTarget)
-    ) {
-      return;
-    }
-    setShowCountrySuggestions(false);
-    if (!countrySearch.trim()) {
-      setCountryError("");
-      setSelectedCountry("");
-      return;
-    }
-    if (selectedCountry) {
-      setCountryError("");
-      return; // Already selected via click/keyboard
-    }
-    const match = fuzzyFindCountry(countrySearch, countries);
-    if (match) {
-      setSelectedCountry(match.code);
-      setCountrySearch(match.name);
-      setCountryError("");
-    } else {
-      setCountryError(t("countryNotFound"));
-    }
-  };
-
-  // Auto-resolve city on blur (city is optional — no error shown if no match)
-  const handleCityBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (
-      e.relatedTarget instanceof Node &&
-      citySuggestionsRef.current?.contains(e.relatedTarget)
-    ) {
-      return;
-    }
-    setShowCitySuggestions(false);
-    if (!citySearch.trim() || selectedCity || allCities.length === 0) return;
-    const match = fuzzyFindCity(citySearch, allCities);
-    if (match) {
-      setSelectedCity(match);
-      setCitySearch(match);
-    }
-  };
 
   // Search state for caching with React Query
   const [jobSearchParams, setJobSearchParams] = useState<SearchParams | null>(
@@ -721,7 +435,6 @@ export default function JobsPage() {
         if (country) setSelectedCountry(country);
         if (city) {
           setSelectedCity(city);
-          setCitySearch(city);
         }
         if (Object.keys(initialFilters).length > 0) {
           setAdvancedFilters(initialFilters);
@@ -755,7 +468,6 @@ export default function JobsPage() {
         if (restoreCountry) setSelectedCountry(restoreCountry);
         if (restoreCity) {
           setSelectedCity(restoreCity);
-          setCitySearch(restoreCity);
         }
         setAdvancedFilters(restoreFilters);
         setJobs(cachedJobs);
@@ -790,7 +502,6 @@ export default function JobsPage() {
         if (country) setSelectedCountry(country);
         if (city) {
           setSelectedCity(city);
-          setCitySearch(city);
         }
         setAdvancedFilters(initialFilters);
       }
@@ -1028,14 +739,6 @@ export default function JobsPage() {
     setJobSearchParams(params);
   };
 
-  const handleSearchLegacy = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSearch({
-      query: jobTitle,
-      location: selectedCity,
-      country: selectedCountry,
-    });
-  };
 
   // Save job mutation — uses Supabase directly (same schema as saved-jobs page)
   const saveJobMutation = useMutation({
@@ -1391,7 +1094,7 @@ export default function JobsPage() {
           )}
         </motion.div>
 
-        {/* Search Form - V2 (Inline) or V1 (Vertical) - Wrapped with ErrorBoundary */}
+        {/* Formulaire Jobs canonique */}
         <ErrorBoundary
           fallback={
             <Card className="p-6 bg-red-50 border-red-200">
@@ -1400,440 +1103,15 @@ export default function JobsPage() {
             </Card>
           }
         >
-          {featureFlags.useJobsV2 ? (
-            <SearchFormInline
-              initialQuery={jobTitle || popularQuery}
-              initialCountry={selectedCountry}
-              initialLocation={selectedCity}
-              initialIncludeRemote={jobSearchParams?.includeRemote}
-              onSearch={handleSearch}
-              isLoading={searchQuery.isFetching}
-              disabled={false}
-            />
-          ) : (
-            <Card className="shadow-sm border-2 border-slate-200 bg-white">
-              <CardHeader className="pb-6 bg-white border-b-2 border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-2xl font-bold flex items-center gap-2.5 text-slate-900">
-                      <Filter className="w-6 h-6 text-huntzen-blue" />
-                      {t("form.title")}
-                    </CardTitle>
-                    <p className="text-sm text-slate-600 mt-2">
-                      {t("form.subtitle")}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="contractType"
-                      className="text-sm font-semibold"
-                    >
-                      {t("form.contractType")}{" "}
-                      <span className="text-muted-foreground text-xs font-normal">
-                        {t("form.optional")}
-                      </span>
-                    </Label>
-                    <Select
-                      name="contractType"
-                      value={contractType || "all"}
-                      onValueChange={(value) =>
-                        setContractType(value === "all" ? "" : value)
-                      }
-                    >
-                      <SelectTrigger
-                        id="contractType"
-                        className="h-11 border-2 focus:border-primary"
-                      >
-                        <SelectValue placeholder={t("form.allContracts")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          {t("form.allTypes")}
-                        </SelectItem>
-                        {allContractTypes.map((type: ContractType) => (
-                          <SelectItem key={type.id} value={type.id}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 pt-2">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
-                    disabled={
-                      searchQuery.isFetching ||
-                      !jobTitle.trim() ||
-                      !selectedCountry ||
-                      (!canUse("job_search") && isFreePlan)
-                    }
-                  >
-                    {searchQuery.isFetching ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        {t("form.searching")}
-                      </>
-                    ) : (
-                      <>
-                        <Search className="mr-2 h-5 w-5" />
-                        {t("form.search")}
-                        {isFreePlan &&
-                          searchesRemaining <= 3 &&
-                          searchesRemaining > 0 && (
-                            <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-semibold">
-                              {t(
-                                searchesRemaining !== 1
-                                  ? "form.remaining_other"
-                                  : "form.remaining_one",
-                                { count: searchesRemaining },
-                              )}
-                            </span>
-                          )}
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Advanced filters button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAdvancedFilters}
-                    className="gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    {t("form.advancedFilters")}
-                    {!hasFeature("has_advanced_filters") && (
-                      <Lock className="w-3.5 h-3.5" />
-                    )}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSearchLegacy} className="space-y-4">
-                  <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="jobTitle"
-                        className="text-sm font-semibold flex items-center gap-1"
-                      >
-                        {t("form.jobTitle")}{" "}
-                        <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="jobTitle"
-                        name="jobTitle"
-                        placeholder={t("form.jobTitlePlaceholder")}
-                        value={jobTitle}
-                        onChange={(e) => setJobTitle(e.target.value)}
-                        required
-                        className="h-11 border-2 focus:border-primary"
-                      />
-                    </div>
-
-                    <div className="space-y-2 relative">
-                      <Label
-                        htmlFor="country"
-                        className="text-sm font-semibold flex items-center gap-1"
-                      >
-                        {t("form.country")}{" "}
-                        <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        ref={countryInputRef}
-                        id="country"
-                        name="country"
-                        placeholder={
-                          loadingCountries
-                            ? t("form.loadingPlaceholder")
-                            : t("form.countryPlaceholder")
-                        }
-                        value={countrySearch}
-                        className={cn(
-                          "h-11 border-2 focus:border-primary",
-                          countryError && "border-red-400 focus:border-red-500",
-                        )}
-                        onChange={(e) => {
-                          setCountrySearch(e.target.value);
-                          setShowCountrySuggestions(true);
-                          setCountryError("");
-                          if (!e.target.value) {
-                            setSelectedCountry("");
-                          }
-                        }}
-                        onFocus={() => {
-                          setShowCountrySuggestions(true);
-                          setCountryError("");
-                        }}
-                        onBlur={handleCountryBlur}
-                        onKeyDown={handleCountryKeyDown}
-                        autoComplete="off"
-                        role="combobox"
-                        aria-autocomplete="list"
-                        aria-expanded={
-                          showCountrySuggestions && filteredCountries.length > 0
-                        }
-                        aria-controls="country-suggestions"
-                        aria-activedescendant={
-                          selectedCountryIndex >= 0
-                            ? `country-${filteredCountries[selectedCountryIndex]?.code}`
-                            : undefined
-                        }
-                        required
-                      />
-                      {showCountrySuggestions &&
-                        countrySearch &&
-                        filteredCountries.length > 0 && (
-                          <div
-                            ref={countrySuggestionsRef}
-                            id="country-suggestions"
-                            role="listbox"
-                            className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-[200px] overflow-y-auto pointer-events-auto"
-                          >
-                            {filteredCountries.map((country, index) => (
-                              <button
-                                key={country.code}
-                                id={`country-${country.code}`}
-                                type="button"
-                                role="option"
-                                aria-selected={
-                                  selectedCountry === country.code ||
-                                  selectedCountryIndex === index
-                                }
-                                className={cn(
-                                  "w-full px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none transition-colors",
-                                  selectedCountry === country.code &&
-                                    "bg-blue-50 font-medium",
-                                  selectedCountryIndex === index &&
-                                    "bg-[#00D9FF]/10",
-                                )}
-                                onClick={() => handleCountrySelect(country)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    handleCountrySelect(country);
-                                  }
-                                }}
-                              >
-                                {country.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      {showCountrySuggestions &&
-                        countrySearch &&
-                        filteredCountries.length === 0 && (
-                          <div
-                            ref={countrySuggestionsRef}
-                            className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-sm text-slate-600 pointer-events-auto"
-                          >
-                            {t("form.noCountryFound")}
-                          </div>
-                        )}
-                      {countryError && (
-                        <p className="mt-1 text-xs text-red-500" role="alert">
-                          {countryError}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2 relative">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="city" className="text-sm font-semibold">
-                          {t("form.city")}{" "}
-                          <span className="text-muted-foreground text-xs font-normal">
-                            {t("form.optional")}
-                          </span>
-                        </Label>
-                        {selectedCountry && !citySearch && (
-                          <span className="text-xs text-huntzen-blue font-medium">
-                            {t("form.cityHint")}
-                          </span>
-                        )}
-                      </div>
-                      <Input
-                        ref={cityInputRef}
-                        id="city"
-                        name="city"
-                        placeholder={
-                          !selectedCountry
-                            ? t("form.selectCountryFirst")
-                            : loadingCities
-                              ? t("form.loadingPlaceholder")
-                              : t("form.cityPlaceholder")
-                        }
-                        value={citySearch}
-                        className="h-11 border-2 focus:border-primary"
-                        onChange={(e) => {
-                          setCitySearch(e.target.value);
-                          setShowCitySuggestions(true);
-                          if (!e.target.value) {
-                            setSelectedCity("");
-                          }
-                        }}
-                        onFocus={() => setShowCitySuggestions(true)}
-                        onBlur={handleCityBlur}
-                        onKeyDown={handleCityKeyDown}
-                        disabled={!selectedCountry}
-                        autoComplete="off"
-                        role="combobox"
-                        aria-autocomplete="list"
-                        aria-expanded={
-                          showCitySuggestions && filteredCities.length > 0
-                        }
-                        aria-controls="city-suggestions"
-                        aria-activedescendant={
-                          selectedCityIndex >= 0
-                            ? `city-${filteredCities[selectedCityIndex]}`
-                            : undefined
-                        }
-                      />
-                      {showCitySuggestions &&
-                        citySearch &&
-                        filteredCities.length > 0 && (
-                          <div
-                            ref={citySuggestionsRef}
-                            id="city-suggestions"
-                            role="listbox"
-                            className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-[200px] overflow-y-auto pointer-events-auto"
-                          >
-                            {filteredCities.map((city, index) => (
-                              <button
-                                key={city}
-                                id={`city-${city}`}
-                                type="button"
-                                role="option"
-                                aria-selected={
-                                  selectedCity === city ||
-                                  selectedCityIndex === index
-                                }
-                                className={cn(
-                                  "w-full px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none transition-colors",
-                                  selectedCity === city &&
-                                    "bg-blue-50 font-medium",
-                                  selectedCityIndex === index &&
-                                    "bg-[#00D9FF]/10",
-                                )}
-                                onClick={() => handleCitySelect(city)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    handleCitySelect(city);
-                                  }
-                                }}
-                              >
-                                {city}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      {showCitySuggestions &&
-                        citySearch &&
-                        filteredCities.length === 0 &&
-                        !loadingCities &&
-                        allCities.length > 0 && (
-                          <div
-                            ref={citySuggestionsRef}
-                            className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-3 text-sm text-slate-600 pointer-events-auto"
-                          >
-                            {t("form.noCityFound")}
-                          </div>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="contractType"
-                        className="text-sm font-semibold"
-                      >
-                        {t("form.contractType")}{" "}
-                        <span className="text-muted-foreground text-xs font-normal">
-                          {t("form.optional")}
-                        </span>
-                      </Label>
-                      <Select
-                        name="contractType"
-                        value={contractType || "all"}
-                        onValueChange={(value) =>
-                          setContractType(value === "all" ? "" : value)
-                        }
-                      >
-                        <SelectTrigger
-                          id="contractType"
-                          className="h-11 border-2 focus:border-primary"
-                        >
-                          <SelectValue placeholder={t("form.allContracts")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">
-                            {t("form.allTypes")}
-                          </SelectItem>
-                          {allContractTypes.map((type: ContractType) => (
-                            <SelectItem key={type.id} value={type.id}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 pt-2">
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full md:w-auto bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-lg hover:shadow-xl hover:shadow-[#00D9FF]/40 transition-all h-12 px-8"
-                      disabled={
-                        searchQuery.isFetching ||
-                        !jobTitle.trim() ||
-                        !selectedCountry ||
-                        (!canUse("job_search") && isFreePlan)
-                      }
-                    >
-                      {searchQuery.isFetching ? (
-                        <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          {t("form.searching")}
-                        </>
-                      ) : (
-                        <>
-                          <Search className="mr-2 h-5 w-5" />
-                          {t("form.search")}
-                          {isFreePlan &&
-                            searchesRemaining <= 3 &&
-                            searchesRemaining > 0 && (
-                              <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-semibold">
-                                {t(
-                                  searchesRemaining !== 1
-                                    ? "form.remaining_other"
-                                    : "form.remaining_one",
-                                  { count: searchesRemaining },
-                                )}
-                              </span>
-                            )}
-                        </>
-                      )}
-                    </Button>
-
-                    {!canUse("job_search") && isFreePlan && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        onClick={() => searchLimitPopup.open()}
-                        className="gap-2 border-2 border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF]/10 h-12 font-semibold"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        {t("form.unlock")}
-                      </Button>
-                    )}
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
+          <SearchFormInline
+            initialQuery={jobTitle || popularQuery}
+            initialCountry={selectedCountry}
+            initialLocation={selectedCity}
+            initialIncludeRemote={jobSearchParams?.includeRemote}
+            onSearch={handleSearch}
+            isLoading={searchQuery.isFetching}
+            disabled={false}
+          />
         </ErrorBoundary>
 
         {/* Error */}
@@ -1886,11 +1164,7 @@ export default function JobsPage() {
         {/* Skeleton grid — shown while fetching (before results arrive) */}
         {searchQuery.isFetching && (
           <div
-            className={`grid gap-6 auto-rows-fr ${
-              featureFlags.useJobsV2
-                ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                : "grid-cols-1 md:grid-cols-2"
-            }`}
+            className="grid grid-cols-1 gap-6 auto-rows-fr md:grid-cols-2 xl:grid-cols-3"
           >
             {Array.from({ length: 6 }).map((_, i) => (
               <motion.div
@@ -1946,7 +1220,7 @@ export default function JobsPage() {
                 transition={{ delay: 0.2 }}
                 className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-emerald-50 to-green-50 p-4 md:p-6 rounded-2xl border border-emerald-200/50 shadow-sm"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:gap-4">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -1955,7 +1229,7 @@ export default function JobsPage() {
                   >
                     <CheckCircle className="w-6 h-6 text-white" />
                   </motion.div>
-                  <div>
+                  <div className="min-w-0 flex-1 sm:flex-none">
                     <div className="flex items-center gap-2">
                       <h2 className="text-2xl font-black text-emerald-700">
                         {jobs.length === 1
@@ -2016,7 +1290,7 @@ export default function JobsPage() {
                       searchQuery.refetch();
                     }}
                     disabled={searchQuery.isFetching}
-                    className="ml-4 gap-2 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400"
+                    className="gap-2 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 sm:ml-4"
                     title={t("refreshTitle")}
                   >
                     <RefreshCw
@@ -2344,11 +1618,7 @@ export default function JobsPage() {
 
               <div
                 aria-live="polite"
-                className={`grid gap-6 auto-rows-fr ${
-                  featureFlags.useJobsV2
-                    ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-                    : "grid-cols-1 md:grid-cols-2"
-                }`}
+                className="grid grid-cols-1 gap-6 auto-rows-fr md:grid-cols-2 xl:grid-cols-3"
               >
                 {/* Visible jobs (current page) */}
                 {paginatedJobs.map((job, index) => (

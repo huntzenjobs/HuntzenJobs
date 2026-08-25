@@ -48,7 +48,9 @@ export default function ForgotPasswordPage() {
               <CheckCircle2 className="w-10 h-10 text-green-600" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{t("successTitle")}</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t("successTitle")}
+          </h1>
           <p className="text-gray-600 leading-relaxed">{t("successMessage")}</p>
           <Link href="/login">
             <Button className="w-full h-12 bg-[#00D9FF] hover:bg-[#00C4EA] text-white font-bold rounded-xl">
@@ -96,7 +98,10 @@ export default function ForgotPasswordPage() {
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700"
+            >
               {t("emailLabel")}
             </Label>
             <div className="relative">
@@ -104,6 +109,7 @@ export default function ForgotPasswordPage() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

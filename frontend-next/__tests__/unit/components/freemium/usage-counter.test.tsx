@@ -11,14 +11,20 @@ const mockSubscriptionContext = {
   limits: {
     job_searches_per_day: 3,
     jobs_visible: 5,
-    cv_analyses_per_day: 1,
+    ats_scores_per_day: 1,
+    matching_scores_per_day: 3,
     assistant_messages_per_day: 10,
+    saved_jobs_per_day: 5,
+    recruiter_searches_per_day: 1,
+    cv_adapt_per_day: 5,
+    cover_letter_per_day: 10,
   },
   isFreePlan: true,
   plan: "free",
+  isLoaded: true,
   assistantMessagesRemaining: 10,
   assistantMessagesLimit: 10,
-  hasFeature: vi.fn(() => true),
+  hasFeature: vi.fn((_feature?: string) => true),
 };
 
 vi.mock("@/contexts/subscription-context", () => ({
@@ -42,11 +48,11 @@ describe("UsageCounter Component", () => {
       ).toBeInTheDocument();
     });
 
-    it("renders cv_analysis feature counter", () => {
+    it("renders ATS score feature counter", () => {
       mockSubscriptionContext.getRemaining.mockReturnValue(1);
-      render(<UsageCounter feature="cv_analysis" />);
+      render(<UsageCounter feature="ats_score" />);
       // Use getAllByText since "analyses" appears multiple times
-      const elements = screen.getAllByText(/features\.cvAnalysis\.label/i);
+      const elements = screen.getAllByText(/features\.atsScore\.label/i);
       expect(elements.length).toBeGreaterThan(0);
     });
 
@@ -86,13 +92,35 @@ describe("UsageCounter Component", () => {
       const container = document.querySelector(".bg-gray-100");
       expect(container).toBeInTheDocument();
     });
+
+    it("utilise les limites du plan quand les quotas CV ne sont pas encore chargés", () => {
+      mockSubscriptionContext.getRemaining.mockImplementation((feature) =>
+        feature === "cv_adapt" ? 5 : 10,
+      );
+
+      render(
+        <>
+          <UsageCounter feature="cv_adapt" />
+          <UsageCounter feature="cover_letter" />
+        </>,
+      );
+
+      expect(screen.getAllByRole("progressbar")[0]).toHaveAttribute(
+        "aria-valuemax",
+        "5",
+      );
+      expect(screen.getAllByRole("progressbar")[1]).toHaveAttribute(
+        "aria-valuemax",
+        "10",
+      );
+    });
   });
 
   describe("Compact mode", () => {
     it("renders in compact mode", () => {
       render(<UsageCounter feature="job_search" compact={true} />);
       // Compact mode uses inline-flex and rounded-full
-      const element = screen.getByText(/1\/3|2\/3/).closest("span");
+      const element = screen.getByText("2").closest("span");
       expect(element).toHaveClass("inline-flex");
     });
   });
@@ -122,6 +150,24 @@ describe("UsageCounter Component", () => {
     });
   });
 
+  describe("Contraste", () => {
+    it("utilise un texte sombre par défaut sur les surfaces claires", () => {
+      render(<UsageCounter feature="ats_score" />);
+
+      expect(
+        screen.getByText(/features\.atsScore\.label/i).parentElement,
+      ).toHaveClass("text-slate-700");
+    });
+
+    it("conserve un texte clair dans le résumé de la sidebar", () => {
+      render(<UsageSummary appearance="dark" />);
+
+      expect(
+        screen.getByText(/features\.jobSearch\.label/i).parentElement,
+      ).toHaveClass("text-white/90");
+    });
+  });
+
   describe("Unlimited features", () => {
     it("returns null for unlimited features on paid plans", () => {
       mockSubscriptionContext.isFreePlan = false;
@@ -148,12 +194,15 @@ describe("UsageSummary Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSubscriptionContext.isFreePlan = true;
+    mockSubscriptionContext.plan = "free";
+    mockSubscriptionContext.isLoaded = true;
     mockSubscriptionContext.getRemaining.mockReturnValue(2);
     mockSubscriptionContext.limits.job_searches_per_day = 3;
-    mockSubscriptionContext.limits.cv_analyses_per_day = 1;
+    mockSubscriptionContext.limits.ats_scores_per_day = 1;
     mockSubscriptionContext.limits.assistant_messages_per_day = 10;
     mockSubscriptionContext.assistantMessagesRemaining = 8;
     mockSubscriptionContext.assistantMessagesLimit = 10;
+    mockSubscriptionContext.hasFeature.mockReturnValue(true);
   });
 
   describe("Rendering", () => {
@@ -164,6 +213,13 @@ describe("UsageSummary Component", () => {
 
     it("does not render for paid plan", () => {
       mockSubscriptionContext.isFreePlan = false;
+      mockSubscriptionContext.plan = "pro";
+      const { container } = render(<UsageSummary />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it("does not render misleading quotas while subscription data loads", () => {
+      mockSubscriptionContext.isLoaded = false;
       const { container } = render(<UsageSummary />);
       expect(container.firstChild).toBeNull();
     });
@@ -177,10 +233,10 @@ describe("UsageSummary Component", () => {
       ).toBeInTheDocument();
     });
 
-    it("displays cv analysis counter", () => {
+    it("displays ATS score counter", () => {
       render(<UsageSummary />);
       // Use getAllByText since "analyses" appears multiple times
-      const elements = screen.getAllByText(/features\.cvAnalysis\.label/i);
+      const elements = screen.getAllByText(/features\.atsScore\.label/i);
       expect(elements.length).toBeGreaterThan(0);
     });
 
@@ -190,6 +246,19 @@ describe("UsageSummary Component", () => {
       expect(
         screen.getByText(/features\.assistantMessages\.label/i),
       ).toBeInTheDocument();
+    });
+
+    it("hides the saved jobs quota when favorites are unavailable", () => {
+      mockSubscriptionContext.hasFeature.mockImplementation(
+        (feature?: string) => feature !== "has_favorites",
+      );
+
+      render(<UsageSummary />);
+
+      expect(
+        screen.queryByText(/features\.savedJobs\.label/i),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("generalUsage")).not.toBeInTheDocument();
     });
   });
 

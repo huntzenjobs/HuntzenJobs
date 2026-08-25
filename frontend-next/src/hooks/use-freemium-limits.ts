@@ -470,18 +470,23 @@ function saveState(state: FreemiumState, userId?: string): void {
 export function useFreemiumLimits(userId?: string) {
   const [state, setState] = useState<FreemiumState>(getDefaultState);
   const [isLoaded, setIsLoaded] = useState(false);
+  // Le premier rendu doit rester identique au SSR. PLAN_LIMITS consulte
+  // localStorage côté navigateur, donc il ne peut être lu qu'après montage.
+  const [limits, setLimits] = useState<PlanLimitValues>(
+    HARDCODED_DEFAULTS.free,
+  );
 
   // Use refs to access current state without causing re-renders
   const stateRef = useRef(state);
-  const limitsRef = useRef(PLAN_LIMITS[state.plan]);
+  const limitsRef = useRef(limits);
   const userIdRef = useRef(userId);
 
   // Update refs when state changes
   useEffect(() => {
     stateRef.current = state;
-    limitsRef.current = PLAN_LIMITS[state.plan];
+    limitsRef.current = limits;
     userIdRef.current = userId;
-  }, [state, userId]);
+  }, [limits, state, userId]);
 
   // Load state on mount or when userId changes
   useEffect(() => {
@@ -491,6 +496,14 @@ export function useFreemiumLimits(userId?: string) {
     saveState(loadedState, userId);
     setIsLoaded(true);
   }, [userId]);
+
+  // Une fois le rendu initial hydraté, appliquer la configuration dynamique
+  // éventuellement présente dans le cache local des plans.
+  useEffect(() => {
+    if (isLoaded) {
+      setLimits(PLAN_LIMITS[state.plan]);
+    }
+  }, [isLoaded, state.plan]);
 
   // Reset daily usage at midnight for users keeping the app open across days
   useEffect(() => {
@@ -513,9 +526,6 @@ export function useFreemiumLimits(userId?: string) {
     const id = setInterval(checkMidnightReset, 60_000);
     return () => clearInterval(id);
   }, []);
-
-  // Get current plan limits - memoize to prevent reference changes
-  const limits = useMemo(() => PLAN_LIMITS[state.plan], [state.plan]);
 
   // Check if user can use a feature - stable reference using ref
   const canUse = useCallback(
@@ -608,6 +618,12 @@ export function useFreemiumLimits(userId?: string) {
             currentLimits.cover_letter_per_day -
               currentState.usage.coverLettersUsedToday,
           );
+        case "recruiter_search":
+          return Math.max(
+            0,
+            currentLimits.recruiter_searches_per_day -
+              currentState.usage.recruiterSearchesUsedToday,
+          );
         default:
           return 0;
       }
@@ -641,6 +657,9 @@ export function useFreemiumLimits(userId?: string) {
           break;
         case "cover_letter":
           localUsed = prev.usage.coverLettersUsedToday;
+          break;
+        case "recruiter_search":
+          localUsed = prev.usage.recruiterSearchesUsedToday;
           break;
       }
 

@@ -7,10 +7,12 @@ Supports FR (default) and EN via the `language` parameter on user-facing functio
 
 import logging
 from datetime import datetime
+from html import escape
 
 import resend
 
 from src.config.settings import settings
+from src.services.email_delivery import send_email
 
 logger = logging.getLogger(__name__)
 
@@ -620,6 +622,14 @@ def _lang(language: str) -> str:
     return language if language in ("fr", "en", "es", "pt") else "fr"
 
 
+def _resend_options(
+    idempotency_key: str | None,
+) -> resend.Emails.SendOptions | None:
+    if not idempotency_key:
+        return None
+    return {"idempotency_key": idempotency_key}
+
+
 # ---------------------------------------------------------------------------
 # User-facing email functions
 # ---------------------------------------------------------------------------
@@ -632,6 +642,7 @@ def send_recruiter_request_confirmation(
     experience_level: str,
     preferred_date: str | None = None,
     language: str = "fr",
+    idempotency_key: str | None = None,
 ) -> bool:
     """
     Send confirmation email to user after recruiter request submission.
@@ -650,7 +661,11 @@ def send_recruiter_request_confirmation(
     try:
         lang = _lang(language)
         tr = _T["recruiter_confirmation"][lang]
-        date_row = f'<div class="info-item"><span class="label">{tr["date_label"]}</span> {preferred_date}</div>' if preferred_date else ""
+        safe_full_name = escape(full_name)
+        safe_sector = escape(sector)
+        safe_experience_level = escape(experience_level)
+        safe_preferred_date = escape(preferred_date) if preferred_date else None
+        date_row = f'<div class="info-item"><span class="label">{tr["date_label"]}</span> {safe_preferred_date}</div>' if safe_preferred_date else ""
 
         html_content = f"""
         <!DOCTYPE html>
@@ -675,13 +690,13 @@ def send_recruiter_request_confirmation(
                     <h1>{tr["header"]}</h1>
                 </div>
                 <div class="content">
-                    <h2>{tr["greeting"]} {full_name},</h2>
+                    <h2>{tr["greeting"]} {safe_full_name},</h2>
                     <p>{tr["intro"]}</p>
 
                     <div class="info-box">
                         <h3>{tr["recap_title"]}</h3>
-                        <div class="info-item"><span class="label">{tr["sector_label"]}</span> {sector}</div>
-                        <div class="info-item"><span class="label">{tr["experience_label"]}</span> {experience_level}</div>
+                        <div class="info-item"><span class="label">{tr["sector_label"]}</span> {safe_sector}</div>
+                        <div class="info-item"><span class="label">{tr["experience_label"]}</span> {safe_experience_level}</div>
                         {date_row}
                     </div>
 
@@ -708,19 +723,22 @@ def send_recruiter_request_confirmation(
         </html>
         """
 
-        params = {
+        params: resend.Emails.SendParams = {
             "from": settings.from_email,
             "to": [to_email],
             "subject": tr["subject"],
             "html": html_content,
         }
 
-        email = resend.Emails.send(params)
-        logger.info(f"Confirmation email sent to {to_email}: {email}")
+        send_email(params, _resend_options(idempotency_key))
+        logger.info("Recruiter confirmation email sent")
         return True
 
-    except Exception as e:
-        logger.error(f"Failed to send confirmation email to {to_email}: {e}")
+    except Exception as exc:
+        logger.error(
+            "Failed to send recruiter confirmation email: %s",
+            type(exc).__name__,
+        )
         return False
 
 
@@ -809,7 +827,7 @@ def send_application_confirmation(
             "html": html_content,
         }
 
-        email = resend.Emails.send(params)
+        email = send_email(params)
         logger.info(f"Application confirmation sent to {to_email}: {email}")
         return True
 
@@ -886,7 +904,7 @@ def send_job_alerts(
             "html": html_content,
         }
 
-        resend.Emails.send(params)
+        send_email(params)
         logger.info(f"Job alerts sent to {to_email} ({n} jobs)")
         return True
 
@@ -953,7 +971,7 @@ def send_weekly_summary(
             "html": html_content,
         }
 
-        resend.Emails.send(params)
+        send_email(params)
         logger.info(f"Weekly summary sent to {to_email}")
         return True
 
@@ -999,7 +1017,7 @@ def send_welcome(to_email: str, full_name: str = "", language: str = "fr") -> bo
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        send_email({
             "from": settings.from_email,
             "to": [to_email],
             "subject": tr["subject"],
@@ -1046,7 +1064,7 @@ def send_cv_analysis_complete(to_email: str, language: str = "fr") -> bool:
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        send_email({
             "from": settings.from_email,
             "to": [to_email],
             "subject": tr["subject"],
@@ -1099,7 +1117,7 @@ def send_document_generated(
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        send_email({
             "from": settings.from_email,
             "to": [to_email],
             "subject": subject,
@@ -1155,7 +1173,7 @@ def send_application_status_change(
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        send_email({
             "from": settings.from_email,
             "to": [to_email],
             "subject": f"{emoji} {title} — {job_title} chez {company}",
@@ -1176,6 +1194,7 @@ def send_payment_confirmation_email(
     invoice_url: str | None = None,
     invoice_pdf_url: str | None = None,
     billing_reason: str = "subscription_create",
+    idempotency_key: str | None = None,
 ) -> bool:
     """Send payment confirmation email after successful Stripe checkout or renewal."""
     try:
@@ -1238,7 +1257,7 @@ def send_payment_confirmation_email(
             </div>
         </body></html>
         """
-        email_payload: dict = {
+        email_payload: resend.Emails.SendParams = {
             "from": settings.from_email,
             "to": [user_email],
             "subject": subject,
@@ -1264,17 +1283,24 @@ def send_payment_confirmation_email(
             except Exception as e:
                 logger.warning(f"Could not attach invoice PDF (non-fatal): {e}")
 
-        resend.Emails.send(email_payload)
-        logger.info(f"Payment confirmation email sent to {user_email} (plan={plan_name}, reason={billing_reason})")
+        send_email(email_payload, _resend_options(idempotency_key))
+        logger.info(
+            "Payment confirmation email sent",
+            extra={"plan": plan_name, "billing_reason": billing_reason},
+        )
         return True
     except Exception as e:
-        logger.error(f"Failed to send payment confirmation to {user_email}: {e}")
+        logger.error(
+            "Failed to send payment confirmation",
+            extra={"error_type": type(e).__name__},
+        )
         return False
 
 
 def send_payment_failed_email(
     user_email: str,
     language: str = "fr",
+    idempotency_key: str | None = None,
 ) -> bool:
     """Send payment failure alert email."""
     try:
@@ -1306,16 +1332,20 @@ def send_payment_failed_email(
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        params: resend.Emails.SendParams = {
             "from": settings.from_email,
             "to": [user_email],
             "subject": tr["subject"],
             "html": html_content,
-        })
-        logger.info(f"Payment failed email sent to {user_email}")
+        }
+        send_email(params, _resend_options(idempotency_key))
+        logger.info("Payment failed email sent")
         return True
     except Exception as e:
-        logger.error(f"Failed to send payment failed email to {user_email}: {e}")
+        logger.error(
+            "Failed to send payment failed email",
+            extra={"error_type": type(e).__name__},
+        )
         return False
 
 
@@ -1324,6 +1354,7 @@ def send_subscription_cancelled_email(
     plan_name: str,
     end_date: str,
     language: str = "fr",
+    idempotency_key: str | None = None,
 ) -> bool:
     """Send subscription cancellation confirmation email."""
     try:
@@ -1359,16 +1390,23 @@ def send_subscription_cancelled_email(
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        params: resend.Emails.SendParams = {
             "from": settings.from_email,
             "to": [user_email],
             "subject": tr["subject"],
             "html": html_content,
-        })
-        logger.info(f"Subscription cancelled email sent to {user_email} (plan={plan_name})")
+        }
+        send_email(params, _resend_options(idempotency_key))
+        logger.info(
+            "Subscription cancelled email sent",
+            extra={"plan": plan_name},
+        )
         return True
     except Exception as e:
-        logger.error(f"Failed to send cancellation email to {user_email}: {e}")
+        logger.error(
+            "Failed to send cancellation email",
+            extra={"error_type": type(e).__name__},
+        )
         return False
 
 
@@ -1386,6 +1424,7 @@ def send_recruiter_request_notification(
     experience_level: str,
     message: str,
     preferred_date: str | None = None,
+    idempotency_key: str | None = None,
 ) -> bool:
     """
     Send notification email to admin when new recruiter request is received.
@@ -1404,6 +1443,14 @@ def send_recruiter_request_notification(
         bool: True if email sent successfully, False otherwise
     """
     try:
+        safe_request_id = escape(request_id)
+        safe_full_name = escape(full_name)
+        safe_email = escape(email)
+        safe_phone = escape(phone) if phone else None
+        safe_sector = escape(sector)
+        safe_experience_level = escape(experience_level)
+        safe_message = escape(message)
+        safe_preferred_date = escape(preferred_date) if preferred_date else None
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -1431,18 +1478,18 @@ def send_recruiter_request_notification(
 
                     <div class="info-box">
                         <h3>📋 Informations du candidat</h3>
-                        <div class="info-item"><span class="label">ID Demande :</span> <code>{request_id}</code></div>
-                        <div class="info-item"><span class="label">Nom :</span> {full_name}</div>
-                        <div class="info-item"><span class="label">Email :</span> <a href="mailto:{email}">{email}</a></div>
-                        {f'<div class="info-item"><span class="label">Téléphone :</span> {phone}</div>' if phone else ''}
-                        <div class="info-item"><span class="label">Secteur :</span> {sector}</div>
-                        <div class="info-item"><span class="label">Expérience :</span> {experience_level}</div>
-                        {f'<div class="info-item"><span class="label">Date préférée :</span> {preferred_date}</div>' if preferred_date else ''}
+                        <div class="info-item"><span class="label">ID Demande :</span> <code>{safe_request_id}</code></div>
+                        <div class="info-item"><span class="label">Nom :</span> {safe_full_name}</div>
+                        <div class="info-item"><span class="label">Email :</span> <a href="mailto:{safe_email}">{safe_email}</a></div>
+                        {f'<div class="info-item"><span class="label">Téléphone :</span> {safe_phone}</div>' if safe_phone else ''}
+                        <div class="info-item"><span class="label">Secteur :</span> {safe_sector}</div>
+                        <div class="info-item"><span class="label">Expérience :</span> {safe_experience_level}</div>
+                        {f'<div class="info-item"><span class="label">Date préférée :</span> {safe_preferred_date}</div>' if safe_preferred_date else ''}
                     </div>
 
                     <h3>💬 Message du candidat</h3>
                     <div class="message-box">
-                        {message}
+                        {safe_message}
                     </div>
 
                     <h3>⏭️ Actions à effectuer</h3>
@@ -1459,19 +1506,25 @@ def send_recruiter_request_notification(
         </html>
         """
 
-        params = {
+        params: resend.Emails.SendParams = {
             "from": settings.from_email,
             "to": [settings.admin_email],
-            "subject": f"🚨 Nouvelle consultation recruteur - {full_name} ({sector})",
+            "subject": "🚨 Nouvelle consultation recruteur - "
+            f"{full_name.replace(chr(10), ' ').replace(chr(13), ' ')} "
+            f"({sector.replace(chr(10), ' ').replace(chr(13), ' ')})",
             "html": html_content,
         }
 
-        email = resend.Emails.send(params)
-        logger.info(f"Admin notification sent for request {request_id}: {email}")
+        send_email(params, _resend_options(idempotency_key))
+        logger.info("Admin recruiter notification sent for request %s", request_id)
         return True
 
-    except Exception as e:
-        logger.error(f"Failed to send admin notification for request {request_id}: {e}")
+    except Exception as exc:
+        logger.error(
+            "Failed to send admin recruiter notification for request %s: %s",
+            request_id,
+            type(exc).__name__,
+        )
         return False
 
 
@@ -1542,7 +1595,7 @@ def send_support_ticket_notification(
             "html": html_content,
         }
 
-        email = resend.Emails.send(params)
+        email = send_email(params)
         logger.info(f"Support ticket notification sent for ticket {ticket_id}: {email}")
         return True
 
@@ -1611,7 +1664,7 @@ def send_support_ticket_reply(
             "html": html_content,
         }
 
-        email = resend.Emails.send(params)
+        email = send_email(params)
         logger.info(f"Support reply sent to {user_email} for ticket {ticket_id}: {email}")
         return True
 
@@ -1657,7 +1710,7 @@ def send_contact_confirmation(to_email: str, full_name: str, language: str = "fr
         </body></html>
         """
 
-        resend.Emails.send({
+        send_email({
             "from": settings.from_email,
             "to": [to_email],
             "subject": tr["subject"],
@@ -1706,7 +1759,7 @@ def send_contact_admin_notification(
         </body></html>
         """
 
-        resend.Emails.send({
+        send_email({
             "from": settings.from_email,
             "to": ["contact@huntzenjobs.com"],
             "subject": f"[Contact] {full_name} - {reason}",
@@ -1769,7 +1822,7 @@ def send_expiring_plan_email(
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        send_email({
             "from": settings.from_email,
             "to": [user_email],
             "subject": subject,
@@ -1832,7 +1885,7 @@ def send_expiring_plan_tomorrow_email(
             </div>
         </body></html>
         """
-        resend.Emails.send({
+        send_email({
             "from": settings.from_email,
             "to": [user_email],
             "subject": subject,

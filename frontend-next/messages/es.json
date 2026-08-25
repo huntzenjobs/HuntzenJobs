@@ -16,7 +16,10 @@
     "pricing": "Precios",
     "login": "INICIAR SESIÓN",
     "signup": "REGISTRARSE",
-    "language": "Idioma"
+    "language": "Idioma",
+    "openMenu": "Abrir el menú",
+    "closeMenu": "Cerrar el menú",
+    "skipToContent": "Ir al contenido principal"
   },
   "hero": {
     "tag": "Para los candidatos cansados de postularse sin respuesta",
@@ -422,10 +425,12 @@
       "recruiterPrice": "50€",
       "soon": "Próximamente"
     },
+    "soonMessage": "Esta función estará disponible próximamente 🚀",
     "aria": {
       "close": "Cerrar el menú de navegación",
       "open": "Abrir el menú de navegación",
-      "logout": "Cerrar sesión"
+      "logout": "Cerrar sesión",
+      "accountMenu": "Abrir el menú de la cuenta"
     }
   },
   "pricingModal": {
@@ -582,9 +587,6 @@
       },
       "coach": {
         "label": "mensajes coach"
-      },
-      "jobSearches": {
-        "label": "búsquedas"
       }
     },
     "aria": {
@@ -592,6 +594,7 @@
     }
   },
   "upgradeBanner": {
+    "dismiss": "Cerrar oferta",
     "minimal": {
       "text": "Pasa a Premium para desbloquear todas las funcionalidades",
       "cta": "Ver planes"
@@ -729,6 +732,16 @@
       "validReferral": "Referido por {name}",
       "validPromo": "{description}",
       "alreadyApplied": "Codigo ya aplicado"
+    },
+    "confirmEmail": {
+      "eyebrow": "Seguridad de la cuenta",
+      "title": "Confirma tu dirección de correo",
+      "description": "Para proteger tu cuenta, confirma que tú iniciaste este registro.",
+      "action": "Confirmar mi correo",
+      "securityNote": "Este botón activa tu cuenta de forma segura.",
+      "invalidTitle": "Enlace de confirmación incompleto",
+      "invalidDescription": "Falta información necesaria en este enlace. Solicita un nuevo correo desde la página de registro.",
+      "backToSignup": "Volver al registro"
     },
     "forgotPassword": {
       "title": "Contraseña olvidada",
@@ -1056,6 +1069,19 @@
     },
     "recruiterContact": {
       "title": "Contactar un Reclutador",
+      "hero": {
+        "badge": "Sesión individual · Atención en 48 h",
+        "heading1": "Habla directamente con",
+        "headingAccent": "un reclutador",
+        "heading2": "experto",
+        "subtitle": "30 minutos de asesoramiento personalizado para impulsar tu candidatura y conseguir el trabajo de tus sueños.",
+        "cta": "Reservar mi consulta",
+        "reviews": "4,9/5 · 127 opiniones",
+        "stat1Sub": "consultas realizadas",
+        "stat2Sub": "encuentran empleo en 30 días",
+        "stat3Sub": "satisfacción del cliente",
+        "stat4Sub": "plazo de atención"
+      },
       "stats": {
         "consultations": "Consultas exitosas",
         "satisfaction": "Satisfacción promedio",
@@ -1150,8 +1176,12 @@
         "phonePlaceholder": "+33 6 12 34 56 78"
       },
       "finder": {
-        "companyPlaceholder": "Company name",
+        "companyPlaceholder": "Nombre de la empresa",
         "cityPlaceholder": "Ciudad (opcional)",
+        "search": "Buscar",
+        "searching": "Buscando...",
+        "serviceError": "No se puede contactar con el servicio. Inténtalo de nuevo.",
+        "complianceNotice": "Estas direcciones de correo proceden de fuentes públicas. Respeta la normativa de protección de datos al utilizarlas.",
         "quotaReached": "Cuota alcanzada ({count} búsquedas/día en plan gratuito). Pasa a Pro para acceso ilimitado.",
         "searchTab": "Búsqueda",
         "savedTab": "Contactos guardados",
@@ -1508,6 +1538,8 @@
     "contractType_freelance": "Freelance",
     "contractType_internship": "Prácticas",
     "contractType_remote": "Remoto",
+    "contractType_stage": "Prácticas",
+    "contractType_temps partiel": "Tiempo parcial",
     "contractType_permanent": "Permanente",
     "contractType_contract": "Contrato",
     "jobTitleOptional": "Puesto (opcional con filtros)",
@@ -1538,7 +1570,8 @@
     "workSchedule_evening": "Tarde (17h-22h)",
     "workSchedule_night": "Noche (22h-6h)",
     "workSchedule_fulltime": "Tiempo completo",
-    "allSchedules": "Todos los horarios"
+    "allSchedules": "Todos los horarios",
+    "searchLimitReached": "Límite alcanzado: queda {count} búsqueda hoy. Pásate a Pro para continuar."
   },
   "advancedFilters": {
     "title": "Filtros avanzados",
@@ -1827,6 +1860,7 @@
     "title": "Preguntas Frecuentes",
     "subtitle": "Todo lo que necesitas saber sobre <strong>HuntZen Jobs</strong>, tu aliado en la busqueda de empleo en Francia",
     "searchPlaceholder": "Buscar una pregunta sobre HuntZen Jobs...",
+    "searchLabel": "Buscar en las preguntas frecuentes",
     "noResults": "No se encontraron preguntas",
     "noResultsHint": "Prueba con otra palabra clave o contacta con nuestro soporte",
     "contactSupport": "Contactar con soporte",
@@ -1976,6 +2010,11 @@
     "cvAnalysesPerDay": "{count} CV analysis per day",
     "assistantMessagesUnlimited": "Unlimited Assistant messages",
     "assistantMessagesPerDay": "{count} Assistant messages per day",
+    "loading": "Cargando tu suscripción...",
+    "atsScoresUnlimited": "Puntuaciones ATS ilimitadas",
+    "atsScoresPerDay": "{count} puntuación(es) ATS al día",
+    "matchingScoresUnlimited": "Puntuaciones de compatibilidad ilimitadas",
+    "matchingScoresPerDay": "{count} puntuación(es) de compatibilidad al día",
     "jobSearchesUnlimited": "Unlimited job searches",
     "jobSearchesPerDay": "{count} job searches per day",
     "dailyUsage": "Today's usage",
@@ -1994,6 +2033,11 @@
     "cancellationError": "Error during cancellation"
   },
   "contact": {
+    "errors": {
+      "nameRequired": "Indica tu nombre completo.",
+      "emailRequired": "Indica tu dirección de correo electrónico.",
+      "messageRequired": "Describe tu solicitud."
+    },
     "toasts": {
       "fillAllFields": "Please fill in all required fields.",
       "sendError": "An error occurred. Please try again or send an email directly."
@@ -2051,14 +2095,15 @@
     "placeholders": {
       "subjectPlaceholder": "Describa brevemente su solicitud",
       "descriptionPlaceholder": "Describa en detalle su problema o pregunta...",
-      "chatbotQuestion": "Ask your question..."
+      "chatbotQuestion": "Escriba su pregunta..."
     },
     "widget": {
+      "buttonLabel": "Ayuda y soporte",
       "minimize": "Minimizar",
-      "title": "HuntZen Support",
-      "tabFaq": "Help & FAQ",
-      "tabTicket": "Support Ticket",
-      "close": "Close"
+      "title": "Soporte HuntZen",
+      "tabFaq": "Ayuda y FAQ",
+      "tabTicket": "Ticket de soporte",
+      "close": "Cerrar"
     }
   },
   "jobs": {
@@ -2473,7 +2518,9 @@
     "close": "Close",
     "clear": "Clear",
     "recalculate": "Recalculate",
-    "notifications": "Notifications"
+    "notifications": "Notificaciones",
+    "changeLanguage": "Cambiar idioma",
+    "switchTo": "Cambiar a {language}"
   },
   "terms": {
     "title": "Terms and Conditions",

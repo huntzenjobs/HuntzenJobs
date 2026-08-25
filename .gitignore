@@ -321,9 +321,15 @@ apply_migrations_guide.md
 # Playwright test results
 test-results/
 test-results-production/
+test-results-production.json
 playwright-report/
 playwright-report-production/
 .env.test
+
+# Coverage reports
+coverage.json
+.coverage
+htmlcov/
 
 # Exceptions: Keep important docs
 !README.md
@@ -347,6 +353,20 @@ backups/*.sql
 
 # Notes de travail locales
 docs/superpowers/
+.superpowers/
+
+# Artefacts de build (ne jamais committer)
+.next/trace
+.next/trace-build
+
+# Fichiers de configuration IDE locaux
+CLAUDE.md
+**/CLAUDE.md
+.claude/
+.cursorrules
+.cursor/
+.aider*
+.continue/
 
 # Pull Railway local artifacts
 *.env.railway

@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
-from typing import Any, Tuple
+from typing import Any
 
 import httpx
 
@@ -53,7 +53,7 @@ class FreshLinkedInProfileValidator:
         self,
         contacts: list[dict[str, Any]],
         expected_company: str,
-    ) -> Tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
         """Return (validated, rejected, summary) tuples."""
         if not contacts:
             return [], [], {"enabled": self.enabled, "validated": 0, "rejected": 0}
@@ -130,7 +130,7 @@ class FreshLinkedInProfileValidator:
         company_name = payload.get("company") or payload.get("company_name") or ""
         match_company = self._company_matches(expected_company, company_name)
         is_hr = self._role_matches(contact, payload)
-        
+
         enriched_contact = contact.copy()
         enriched_contact.setdefault("validation_details", {})
         enriched_contact["validation_details"].update(
@@ -158,7 +158,7 @@ class FreshLinkedInProfileValidator:
         """Smart match for company names handling common legal noise and partials."""
         if not expected or not actual:
             return False
-        
+
         # Helper to clean and tokenize a raw company name
         def get_clean_tokens(text: str) -> list[str]:
             # 1. Soft normalize (accents + lowercase only, keep spaces)
@@ -172,7 +172,7 @@ class FreshLinkedInProfileValidator:
 
         exp_tokens = get_clean_tokens(expected)
         act_tokens = get_clean_tokens(actual)
-        
+
         if not exp_tokens or not act_tokens:
             return False
 
@@ -189,11 +189,11 @@ class FreshLinkedInProfileValidator:
         for t in exp_tokens:
             if len(t) >= 6 and t in act_tokens:
                 return True
-        
+
         # 3. Minority/Majority match (Score based)
         matches = [t for t in exp_tokens if t in act_tokens]
         score = len(matches) / len(exp_tokens) if exp_tokens else 0
-        
+
         return score >= 0.6 # Lowered threshold slightly for groups
 
     def _role_matches(self, contact: dict[str, Any], profile: dict[str, Any]) -> bool:

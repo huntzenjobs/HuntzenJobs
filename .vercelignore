@@ -1,0 +1,7 @@
+.venv/
+.mypy_cache/
+.ruff_cache/
+backend/.venv/
+frontend-next/.next/
+frontend-next/node_modules/
+node_modules/

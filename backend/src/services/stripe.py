@@ -1,8 +1,8 @@
 """
-Stripe Payment Integration Service - SIMPLIFIED VERSION
-========================================================
+Stripe Payment Integration Service
+==================================
 
-Philosophy: Stripe is the source of truth. We just copy data, no complex logic.
+Stripe reste la source de vérité et Supabase en conserve une projection.
 
 Handles:
 1. Create checkout sessions (subscriptions)
@@ -11,11 +11,11 @@ Handles:
 
 Author: HuntZen Team
 Date: 2026-02-11
-Simplified: Removed idempotency tables, webhook_failures logging, complex upgrade logic
+Les webhooks utilisent un verrou d'idempotence atomique dans Supabase.
 """
 
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 import stripe
@@ -24,9 +24,91 @@ from structlog import get_logger
 from supabase import Client, create_client
 
 from src.services.admin_alerts import send_admin_alert
+from src.services.email import (
+    send_payment_confirmation_email,
+    send_payment_failed_email,
+    send_recruiter_request_confirmation,
+    send_recruiter_request_notification,
+    send_subscription_cancelled_email,
+)
 from src.services.user_events import log_event
 
 logger = get_logger(__name__)
+
+
+def _stripe_value(payload: Any, key: str, default: Any = None) -> Any:
+    """Lire un champ depuis un dictionnaire ou un objet Stripe."""
+    if isinstance(payload, dict):
+        return payload.get(key, default)
+    return getattr(payload, key, default)
+
+
+def _valid_stripe_timestamp(value: Any) -> int | None:
+    """Normaliser un timestamp Stripe positif, sinon signaler une valeur absente."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+        return None
+    return int(value)
+
+
+def extract_subscription_period(subscription: Any) -> tuple[int, int]:
+    """Extraire la période Stripe Clover, avec compatibilité des anciens événements."""
+    items = _stripe_value(subscription, "items", {})
+    item_data = _stripe_value(items, "data", []) or []
+    current_item = item_data[0] if item_data else {}
+
+    period_start = _valid_stripe_timestamp(
+        _stripe_value(current_item, "current_period_start")
+    )
+    period_end = _valid_stripe_timestamp(
+        _stripe_value(current_item, "current_period_end")
+    )
+
+    if period_start is None or period_end is None:
+        period_start = _valid_stripe_timestamp(
+            _stripe_value(subscription, "current_period_start")
+        )
+        period_end = _valid_stripe_timestamp(
+            _stripe_value(subscription, "current_period_end")
+        )
+
+    if period_start is None or period_end is None:
+        raise ValueError("période Stripe absente ou invalide")
+
+    return period_start, period_end
+
+
+def _stripe_resource_id(resource: Any) -> str | None:
+    """Retourner l'identifiant d'une ressource Stripe chaîne ou développée."""
+    if isinstance(resource, str):
+        return resource or None
+    resource_id = _stripe_value(resource, "id")
+    return resource_id if isinstance(resource_id, str) and resource_id else None
+
+
+def _extract_invoice_subscription_id(invoice: Any) -> str | None:
+    """Extraire l'abonnement d'une facture Clover ou d'un événement historique."""
+    parent = _stripe_value(invoice, "parent")
+    subscription_details = _stripe_value(parent, "subscription_details", {})
+    subscription = _stripe_value(subscription_details, "subscription")
+    subscription_id = _stripe_resource_id(subscription)
+    if subscription_id:
+        return subscription_id
+
+    return _stripe_resource_id(_stripe_value(invoice, "subscription"))
+
+
+def _normalize_subscription_status(status: Any) -> str:
+    """Mapper les statuts Stripe vers la contrainte locale explicite."""
+    if not isinstance(status, str):
+        raise RuntimeError("Stripe subscription status missing")
+    if status in {"active", "canceled", "past_due", "paused", "trialing", "incomplete"}:
+        return status
+    if status == "unpaid":
+        return "past_due"
+    if status == "incomplete_expired":
+        return "canceled"
+    raise RuntimeError(f"Unsupported Stripe subscription status: {status}")
+
 
 async def invalidate_user_quota_cache(user_id: str) -> bool:
     """Invalidate Redis auth_me cache for a user so /api/auth/me returns fresh data."""
@@ -40,30 +122,13 @@ async def invalidate_user_quota_cache(user_id: str) -> bool:
         logger.warning(f"[cache] invalidate_user_quota_cache failed for {user_id}: {e}")
     return False
 
-# Import email service for recruiter confirmations and payment emails
-try:
-    from src.services.email import (
-        send_payment_confirmation_email,
-        send_payment_failed_email,
-        send_recruiter_request_confirmation,
-        send_subscription_cancelled_email,
-    )
-except ImportError:
-    logger.warning("Could not import email functions - email notifications disabled")
-    def send_recruiter_request_confirmation(*args, **kwargs):
-        logger.warning("Email notification skipped (service not available)")
-    def send_payment_confirmation_email(*args, **kwargs):
-        logger.warning("Email notification skipped (service not available)")
-    def send_payment_failed_email(*args, **kwargs):
-        logger.warning("Email notification skipped (service not available)")
-    def send_subscription_cancelled_email(*args, **kwargs):
-        logger.warning("Email notification skipped (service not available)")
-
 # ============================================
 # CONFIGURATION
 # ============================================
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+stripe.default_http_client = stripe.RequestsClient(timeout=60)
+stripe.max_network_retries = 1
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 if not stripe.api_key:
@@ -90,38 +155,27 @@ else:
 # ============================================
 
 async def get_active_subscription(user_id: str) -> dict[str, Any] | None:
-    """Get user's active subscription from database."""
+    """Get the user's current Stripe-manageable subscription from database."""
     if not supabase_client:
-        return None
+        raise RuntimeError("Supabase client unavailable")
 
     try:
         response = supabase_client.table("user_subscriptions")\
             .select("*, subscription_plans(name)")\
             .eq("user_id", user_id)\
-            .eq("status", "active")\
+            .in_("status", ["active", "past_due", "trialing"])\
+            .order("created_at", desc=True)\
+            .limit(1)\
             .maybe_single()\
             .execute()
 
         return response.data if response.data else None
-    except Exception as e:
-        logger.error(f"Failed to get active subscription: {e}")
-        return None
-
-
-async def _get_billing_period_from_price_id(price_id: str) -> str | None:
-    """Look up billing period (monthly/yearly) for a Stripe price ID."""
-    if not supabase_client or not price_id:
-        return None
-    try:
-        response = supabase_client.table("stripe_prices")\
-            .select("billing_period")\
-            .eq("stripe_price_id", price_id)\
-            .maybe_single()\
-            .execute()
-        return response.data["billing_period"] if response.data else None
-    except Exception as e:
-        logger.warning(f"Could not determine billing period for price {price_id}: {e}")
-        return None
+    except Exception as exc:
+        logger.error(
+            "Failed to get active subscription",
+            error_type=type(exc).__name__,
+        )
+        raise
 
 
 async def _get_or_create_stripe_customer(user_email: str) -> str | None:
@@ -150,10 +204,8 @@ async def create_checkout_session(
     Create or modify a Stripe subscription with smart routing:
 
     - No existing sub          → New Stripe Checkout (first-time)
-    - Upgrade (any → higher)   → stripe.Subscription.modify() + immediate proration
-    - Downgrade (any → lower)  → stripe.Subscription.modify() at period end (no charge)
-    - Monthly → Annual         → Cancel monthly + new annual Checkout
-    - Annual → Monthly         → BLOCKED (only allowed at renewal)
+    - Existing Stripe sub      → Stripe Billing Portal confirmation flow
+    - Upgrade / downgrade      → Stripe handles payment, SCA and configured timing
     - Same plan + period       → Return already_subscribed
     """
     if not STRIPE_ENABLED:
@@ -223,13 +275,11 @@ async def create_checkout_session(
             )
 
         # ── Has existing subscription → determine change type ────────────────
-        current_plan = (existing.get("subscription_plans") or {}).get("name", "free")
         current_stripe_sub_id = existing.get("stripe_subscription_id") or ""
-        current_price_id = existing.get("stripe_price_id") or ""
 
-        # If existing subscription has no Stripe ID (e.g. admin-assigned),
-        # treat as new user — create fresh checkout
-        if not current_stripe_sub_id:
+        # Les droits accordés manuellement ne sont pas des abonnements Stripe.
+        # Ils ne doivent jamais empêcher une souscription payante normale.
+        if not current_stripe_sub_id.startswith("sub_"):
             logger.info(f"[CHECKOUT] User {user_id} has DB subscription without Stripe ID — creating new checkout")
             return await _create_new_checkout(
                 user_email=user_email,
@@ -240,57 +290,91 @@ async def create_checkout_session(
                 success_url=success_url,
                 cancel_url=cancel_url
             )
-        current_billing = await _get_billing_period_from_price_id(current_price_id) or "monthly"
 
-        # Same plan, same billing period → nothing to do
-        if current_plan == plan_name and current_billing == billing_period:
-            return {"success": True, "already_subscribed": True, "plan_name": plan_name}
-
-        is_real_stripe_sub = (
-            current_stripe_sub_id.startswith("sub_") and
-            len(current_stripe_sub_id) > 20
+        # Stripe reste la source de vérité : le prix, le client et l'item sont
+        # lus directement sur l'abonnement au lieu de la projection locale.
+        stripe_subscription = stripe.Subscription.retrieve(current_stripe_sub_id)
+        subscription_items = _stripe_value(
+            _stripe_value(stripe_subscription, "items", {}),
+            "data",
+            [],
+        ) or []
+        subscription_item_id = (
+            _stripe_resource_id(subscription_items[0])
+            if subscription_items
+            else None
         )
+        if not subscription_item_id:
+            raise RuntimeError("Stripe subscription item missing")
 
-        # ── BLOCK: Annual → Monthly (mid-year downgrade of billing period) ──
-        if current_billing == "yearly" and billing_period == "monthly":
-            # Retrieve actual period end from Stripe for accurate messaging
-            period_end_display = existing.get("current_period_end", "")
-            raise HTTPException(
-                status_code=400,
-                detail=f"ANNUAL_TO_MONTHLY_BLOCKED|{period_end_display}"
-            )
-
-        # ── Changement de plan (upgrade ou downgrade) → TOUJOURS via Checkout ──
-        # 1. Programmer la cancellation de l'ancien abonnement en fin de periode
-        if current_stripe_sub_id and is_real_stripe_sub:
-            try:
-                stripe.Subscription.modify(
-                    current_stripe_sub_id,
-                    cancel_at_period_end=True,
-                )
-                logger.info(f"[CHECKOUT] Scheduled old sub {current_stripe_sub_id} for end-of-period cancel")
-            except Exception as e:
-                logger.warning(f"[CHECKOUT] Could not schedule old sub cancellation: {e}")
-
-        # 2. Creer un nouveau checkout Stripe (l'user verra la page de paiement)
-        return await _create_new_checkout(
-            user_email=user_email,
-            price_id=new_price_id,
-            user_id=user_id,
-            plan_name=plan_name,
-            billing_period=billing_period,
-            success_url=success_url,
-            cancel_url=cancel_url,
+        current_price_id = _stripe_resource_id(
+            _stripe_value(subscription_items[0], "price")
         )
+        if current_price_id == new_price_id:
+            return {
+                "success": True,
+                "already_subscribed": True,
+                "plan_name": plan_name,
+            }
+
+        customer_id = _stripe_resource_id(
+            _stripe_value(stripe_subscription, "customer")
+        )
+        if not customer_id:
+            raise RuntimeError("Stripe subscription customer missing")
+
+        portal_session = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=cancel_url,
+            flow_data={
+                "type": "subscription_update_confirm",
+                "subscription_update_confirm": {
+                    "subscription": current_stripe_sub_id,
+                    "items": [
+                        {"id": subscription_item_id, "price": new_price_id}
+                    ],
+                },
+                "after_completion": {
+                    "type": "redirect",
+                    "redirect": {"return_url": cancel_url},
+                },
+            },
+        )
+        logger.info(
+            "[CHECKOUT] Stripe portal update flow created",
+            extra={
+                "subscription_id": current_stripe_sub_id,
+                "target_plan": plan_name,
+                "target_billing_period": billing_period,
+            },
+        )
+        return {
+            "success": True,
+            "checkout_url": portal_session.url,
+            "session_id": portal_session.id,
+            "portal": True,
+        }
 
     except HTTPException:
         raise
     except stripe.error.StripeError as e:
-        logger.error(f"[CHECKOUT] Stripe API error: {e}")
-        raise HTTPException(status_code=500, detail=f"Stripe error: {str(e)}") from None
+        logger.error(
+            "[CHECKOUT] Stripe API error",
+            extra={"error_type": type(e).__name__},
+        )
+        raise HTTPException(
+            status_code=502,
+            detail="Le service de paiement est temporairement indisponible",
+        ) from None
     except Exception as e:
-        logger.error(f"[CHECKOUT] Failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Checkout failed: {str(e)}") from None
+        logger.error(
+            "[CHECKOUT] Failed",
+            extra={"error_type": type(e).__name__},
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Impossible de démarrer le paiement",
+        ) from None
 
 
 async def _create_new_checkout(
@@ -311,28 +395,72 @@ async def _create_new_checkout(
     if user_id and supabase_client:
         try:
             promo_result = supabase_client.table("user_promo_codes").select(
-                "id, promo_code_id"
-            ).eq("user_id", user_id).is_("used_at", "null").limit(1).execute()
+                "id, promo_code_id, applied_at"
+            ).eq("user_id", user_id).is_("used_at", "null").order(
+                "applied_at", desc=True
+            ).limit(20).execute()
 
             if promo_result.data:
-                promo_link = promo_result.data[0]
-                promo_link_id = promo_link["id"]
-                # Get the stripe_coupon_id from promo_codes table
-                promo_detail = supabase_client.table("promo_codes").select(
-                    "stripe_coupon_id"
-                ).eq("id", promo_link["promo_code_id"]).maybe_single().execute()
-                if promo_detail.data and promo_detail.data.get("stripe_coupon_id"):
-                    promo_coupon_id = promo_detail.data["stripe_coupon_id"]
-                    logger.info(f"[CHECKOUT] Promo coupon {promo_coupon_id} found for user {user_id}")
+                for promo_link in promo_result.data:
+                    promo_detail = supabase_client.table("promo_codes").select(
+                        "stripe_coupon_id,is_active,starts_at,expires_at,plan,"
+                        "max_uses,current_uses"
+                    ).eq(
+                        "id", promo_link["promo_code_id"]
+                    ).maybe_single().execute()
+                    promo = (
+                        promo_detail.data
+                        if isinstance(promo_detail.data, dict)
+                        else {}
+                    )
+                    if not promo.get("stripe_coupon_id"):
+                        continue
+                    now = datetime.now(UTC)
+                    starts_at = promo.get("starts_at")
+                    expires_at = promo.get("expires_at")
+                    starts = (
+                        datetime.fromisoformat(starts_at.replace("Z", "+00:00"))
+                        if isinstance(starts_at, str)
+                        else None
+                    )
+                    expires = (
+                        datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+                        if isinstance(expires_at, str)
+                        else None
+                    )
+                    max_uses = promo.get("max_uses")
+                    current_uses = promo.get("current_uses", 0)
+                    if (
+                        promo.get("is_active") is not True
+                        or (starts is not None and starts > now)
+                        or (expires is not None and expires <= now)
+                        or (promo.get("plan") not in (None, plan_name))
+                        or (
+                            isinstance(max_uses, int)
+                            and isinstance(current_uses, int)
+                            and current_uses > max_uses
+                        )
+                    ):
+                        continue
+                    promo_link_id = promo_link["id"]
+                    promo_coupon_id = promo["stripe_coupon_id"]
+                    logger.info("[CHECKOUT] Valid promo coupon found")
+                    break
         except Exception as e:
-            logger.warning(f"[CHECKOUT] Failed to check promo code for {user_id}: {e}")
+            logger.error(
+                "[CHECKOUT] Failed to validate promo code",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=500,
+                detail="Impossible de valider le code promotionnel",
+            ) from None
 
     # Build checkout session params
     checkout_params: dict[str, Any] = {
         "customer": customer_id,
         "customer_email": user_email if not customer_id else None,
         "mode": "subscription",
-        "payment_method_types": ["card"],
         "line_items": [{"price": price_id, "quantity": 1}],
         "success_url": success_url,
         "cancel_url": cancel_url,
@@ -352,38 +480,188 @@ async def _create_new_checkout(
     # Apply promo coupon discount if found
     if promo_coupon_id:
         checkout_params["discounts"] = [{"coupon": promo_coupon_id}]
+        checkout_params["metadata"]["promo_link_id"] = promo_link_id
+
+    if not supabase_client:
+        raise HTTPException(
+            status_code=503,
+            detail="Le service de paiement est temporairement indisponible",
+        )
+
+    selection_key = ":".join(
+        (plan_name, billing_period, str(promo_link_id or "no-promo"))
+    )
+
+    def _reservation_data(result: Any) -> dict[str, Any]:
+        data = result.data
+        if isinstance(data, list):
+            data = data[0] if data else None
+        if not isinstance(data, dict):
+            raise RuntimeError("Invalid checkout reservation response")
+        return data
+
+    reservation = _reservation_data(
+        supabase_client.rpc(
+            "claim_subscription_checkout",
+            {
+                "p_user_id": user_id,
+                "p_selection_key": selection_key,
+                "p_plan_name": plan_name,
+                "p_price_id": price_id,
+            },
+        ).execute()
+    )
+    if reservation.get("action") == "busy":
+        raise HTTPException(
+            status_code=409,
+            detail="Une session de paiement est déjà en cours de création",
+        )
+    if reservation.get("action") == "selection_conflict":
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Une tentative de paiement précédente doit être reprise "
+                "avant de changer d'offre"
+            ),
+        )
+
+    if reservation.get("action") == "reuse":
+        existing_session_id = reservation.get("session_id")
+        if not isinstance(existing_session_id, str) or not existing_session_id:
+            raise RuntimeError("Checkout reservation missing session ID")
+        try:
+            existing_session = stripe.checkout.Session.retrieve(
+                existing_session_id
+            )
+        except stripe.error.StripeError as e:
+            logger.error(
+                "[CHECKOUT] Existing Stripe session lookup failed",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=502,
+                detail="Stripe est temporairement indisponible",
+            ) from None
+        existing_status = _stripe_value(existing_session, "status")
+        existing_url = _stripe_value(existing_session, "url")
+        if existing_status == "open" and isinstance(existing_url, str):
+            return {
+                "success": True,
+                "checkout_url": existing_url,
+                "session_id": existing_session_id,
+            }
+        if existing_status == "complete":
+            raise HTTPException(
+                status_code=409,
+                detail="Ce paiement est déjà en cours de confirmation",
+            )
+        invalidated = supabase_client.rpc(
+            "invalidate_subscription_checkout",
+            {"p_user_id": user_id, "p_session_id": existing_session_id},
+        ).execute()
+        if invalidated.data is not True:
+            raise RuntimeError("Checkout reservation invalidation failed")
+        reservation = _reservation_data(
+            supabase_client.rpc(
+                "claim_subscription_checkout",
+                {
+                    "p_user_id": user_id,
+                    "p_selection_key": selection_key,
+                    "p_plan_name": plan_name,
+                    "p_price_id": price_id,
+                },
+            ).execute()
+        )
+
+    action = reservation.get("action")
+    claim_token = reservation.get("claim_token")
+    if action not in ("create", "replace") or not isinstance(claim_token, str):
+        raise RuntimeError("Invalid checkout reservation claim")
+
+    previous_session_id = reservation.get("previous_session_id")
+    if action == "replace" and isinstance(previous_session_id, str):
+        try:
+            previous_session = stripe.checkout.Session.retrieve(
+                previous_session_id
+            )
+            previous_status = _stripe_value(previous_session, "status")
+            if previous_status == "open":
+                stripe.checkout.Session.expire(previous_session_id)
+            elif previous_status == "complete":
+                raise HTTPException(
+                    status_code=409,
+                    detail="Un paiement précédent est en cours de confirmation",
+                )
+        except HTTPException:
+            raise
+        except stripe.error.StripeError as e:
+            logger.error(
+                "[CHECKOUT] Previous Stripe session could not be closed",
+                extra={"error_type": type(e).__name__},
+            )
+            raise HTTPException(
+                status_code=502,
+                detail="Stripe est temporairement indisponible",
+            ) from None
+
+    checkout_params["idempotency_key"] = (
+        f"subscription-checkout:{user_id}:{claim_token}"
+    )
+    checkout_params["metadata"]["checkout_reservation_token"] = claim_token
 
     try:
         session = stripe.checkout.Session.create(**checkout_params)
     except stripe.error.InvalidRequestError as e:
-        logger.error(f"[CHECKOUT] Stripe InvalidRequestError: {e}. price_id={price_id}, customer={customer_id}")
+        logger.error(
+            "[CHECKOUT] Stripe rejected checkout creation",
+            extra={"error_type": type(e).__name__, "price_id": price_id},
+        )
+        supabase_client.rpc(
+            "release_subscription_checkout",
+            {"p_user_id": user_id, "p_claim_token": claim_token},
+        ).execute()
         raise HTTPException(
             status_code=400,
-            detail=f"Stripe rejected the request: {str(e)}. The price ID may be invalid or inactive."
+            detail="La configuration de paiement est indisponible",
         ) from None
     except Exception as e:
-        logger.error(f"[CHECKOUT] Stripe Session.create failed: {e}. price_id={price_id}, user={user_id}")
+        logger.error(
+            "[CHECKOUT] Stripe session creation failed",
+            extra={"error_type": type(e).__name__, "price_id": price_id},
+        )
         raise HTTPException(
             status_code=500,
             detail="Failed to create checkout session. Please try again or contact support."
         ) from None
 
-    # Mark promo code as used after successful session creation
-    if promo_link_id and promo_coupon_id:
-        try:
-            supabase_client.table("user_promo_codes").update({
-                "used_at": datetime.now(UTC).isoformat()
-            }).eq("id", promo_link_id).execute()
-            logger.info(f"[CHECKOUT] Promo code link {promo_link_id} marked as used for user {user_id}")
-        except Exception as e:
-            logger.warning(f"[CHECKOUT] Failed to mark promo as used: {e}")
+    session_expires_at = _stripe_value(session, "expires_at")
+    if isinstance(session_expires_at, int) and not isinstance(
+        session_expires_at, bool
+    ):
+        expires_at = datetime.fromtimestamp(session_expires_at, UTC)
+    else:
+        expires_at = datetime.now(UTC) + timedelta(hours=23)
+    finalized = supabase_client.rpc(
+        "finalize_subscription_checkout",
+        {
+            "p_user_id": user_id,
+            "p_claim_token": claim_token,
+            "p_session_id": session.id,
+            "p_expires_at": expires_at.isoformat(),
+        },
+    ).execute()
+    if finalized.data is not True:
+        raise RuntimeError("Checkout reservation finalization failed")
 
-    logger.info(f"[CHECKOUT] New checkout created: {session.id} for {plan_name}/{billing_period}")
+    logger.info(
+        "[CHECKOUT] New checkout created",
+        extra={"session_id": session.id, "plan": plan_name},
+    )
     return {"success": True, "checkout_url": session.url, "session_id": session.id}
 
 
 # ============================================
-# WEBHOOK HANDLING - SIMPLE VERSION
+# WEBHOOK HANDLING
 # ============================================
 
 async def handle_stripe_webhook(
@@ -391,11 +669,10 @@ async def handle_stripe_webhook(
     signature: str
 ) -> dict[str, str]:
     """
-    Handle Stripe webhook events - SIMPLIFIED.
+    Vérifie, réserve puis traite un événement Stripe de façon idempotente.
 
-    No idempotency table, no webhook_failures logging.
-    Stripe handles retries if we return non-200.
-    We just copy data from Stripe to our DB.
+    Une réservation atomique empêche deux livraisons simultanées d'exécuter
+    les mêmes effets. Les erreurs restent non-2xx afin que Stripe retente.
     """
     if not STRIPE_ENABLED:
         raise HTTPException(status_code=500, detail="Stripe not configured")
@@ -421,59 +698,120 @@ async def handle_stripe_webhook(
 
     logger.info(f"[WEBHOOK] Received Stripe webhook: {event_type} (ID: {event_id})")
 
-    # ✅ FIX 3: Vérifier idempotence (évite de traiter 2x le même event)
-    if supabase_client:
-        try:
-            is_processed = supabase_client.rpc(
-                "is_webhook_event_processed",
-                {"p_event_id": event_id}
-            ).execute()
+    # Réserver atomiquement l'événement avant tout effet métier.
+    if not supabase_client:
+        logger.error("[WEBHOOK] Database unavailable for idempotency check")
+        raise HTTPException(status_code=503, detail="Webhook processing temporarily unavailable")
 
-            if is_processed.data:
-                logger.info(f"[WEBHOOK] Event {event_id} already processed, skipping")
-                return {
-                    "status": "success",
-                    "event": event_type,
-                    "note": "already_processed"
-                }
-        except Exception as e:
-            logger.warning(f"[WEBHOOK] Failed to check idempotence: {e} (continuing anyway)")
+    try:
+        claim = supabase_client.rpc(
+            "claim_stripe_webhook_event",
+            {
+                "p_event_id": event_id,
+                "p_event_type": event_type,
+            }
+        ).execute()
+        claim_data = claim.data[0] if isinstance(claim.data, list) and claim.data else claim.data
+        claim_status = _stripe_value(claim_data, "status")
+        claim_token = _stripe_value(claim_data, "claim_token")
+
+        if claim_status == "processed":
+            logger.info(f"[WEBHOOK] Event {event_id} already processed, skipping")
+            return {
+                "status": "success",
+                "event": event_type,
+                "note": "already_processed"
+            }
+        if claim_status == "processing":
+            logger.info(f"[WEBHOOK] Event {event_id} is already being processed")
+            raise HTTPException(status_code=503, detail="Webhook event already in progress")
+        if claim_status != "claimed" or not isinstance(claim_token, str):
+            logger.error(f"[WEBHOOK] Unexpected claim status for {event_id}: {claim_status}")
+            raise HTTPException(status_code=503, detail="Webhook claim unavailable")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[WEBHOOK] Failed to claim event {event_id}: {type(e).__name__}")
+        raise HTTPException(
+            status_code=503,
+            detail="Webhook claim temporarily unavailable",
+        ) from None
 
     # Handle different event types
     try:
+        finalized_transactionally = False
         if event_type == "checkout.session.completed":
-            await handle_checkout_completed(event["data"]["object"])
+            finalized_transactionally = await handle_checkout_completed(
+                event["data"]["object"],
+                event_id=event_id,
+                claim_token=claim_token,
+            ) is True
         elif event_type == "customer.subscription.updated":
-            await handle_subscription_updated(event["data"]["object"])
+            finalized_transactionally = await handle_subscription_updated(
+                event["data"]["object"],
+                event_id=event_id,
+                claim_token=claim_token,
+            ) is True
         elif event_type == "customer.subscription.deleted":
-            await handle_subscription_deleted(event["data"]["object"])
+            finalized_transactionally = await handle_subscription_deleted(
+                event["data"]["object"],
+                event_id=event_id,
+                claim_token=claim_token,
+            ) is True
         elif event_type == "invoice.payment_failed":
-            await handle_payment_failed(event["data"]["object"])
+            finalized_transactionally = await handle_payment_failed(
+                event["data"]["object"],
+                event_id=event_id,
+                claim_token=claim_token,
+            ) is True
         elif event_type == "invoice.paid":
-            await handle_invoice_paid(event["data"]["object"])
+            finalized_transactionally = await handle_invoice_paid(
+                event["data"]["object"],
+                event_id=event_id,
+                claim_token=claim_token,
+            ) is True
         else:
             logger.info(f"[WEBHOOK] Unhandled webhook event: {event_type}")
 
-        # ✅ FIX 3: Marquer comme traité après succès
-        if supabase_client:
+        if not finalized_transactionally:
             try:
-                supabase_client.rpc(
+                finalized = supabase_client.rpc(
                     "mark_webhook_event_processed",
                     {
                         "p_event_id": event_id,
-                        "p_event_type": event_type,
-                        "p_payload": dict(event)
-                    }
+                        "p_claim_token": claim_token,
+                    },
                 ).execute()
+                if finalized.data is not True:
+                    raise RuntimeError("webhook event finalization did not update a row")
                 logger.info(f"[WEBHOOK] Marked event {event_id} as processed")
             except Exception as e:
-                logger.warning(f"[WEBHOOK] Failed to mark as processed: {e}")
+                logger.error(
+                    f"[WEBHOOK] Failed to finalize event {event_id}: {type(e).__name__}"
+                )
+                raise HTTPException(
+                    status_code=503,
+                    detail="Webhook finalization temporarily unavailable",
+                ) from None
 
         return {"status": "success", "event": event_type}
 
     except Exception as e:
-        # Log error and re-raise so Stripe knows it failed
-        logger.error(f"Webhook processing failed: {event_type} - {str(e)}")
+        try:
+            supabase_client.rpc(
+                "mark_webhook_event_failed",
+                {
+                    "p_event_id": event_id,
+                    "p_claim_token": claim_token,
+                    "p_error_type": type(e).__name__,
+                },
+            ).execute()
+        except Exception as mark_error:
+            logger.error(
+                f"[WEBHOOK] Failed to mark event {event_id} as failed: "
+                f"{type(mark_error).__name__}"
+            )
+        logger.error(f"Webhook processing failed: {event_type} ({type(e).__name__})")
         raise
 
 
@@ -481,33 +819,36 @@ async def handle_stripe_webhook(
 # WEBHOOK HANDLERS
 # ============================================
 
-async def handle_checkout_completed(session: dict[str, Any]):
+async def handle_checkout_completed(
+    session: dict[str, Any],
+    *,
+    event_id: str | None = None,
+    claim_token: str | None = None,
+) -> bool:
     """Handle successful checkout - create or update subscription."""
     metadata = session["metadata"] if "metadata" in session else {}
 
     # Detect type based on metadata
     if "request_id" in metadata:
-        await handle_recruiter_checkout(session)
-        return
+        return await handle_recruiter_checkout(
+            session,
+            event_id=event_id,
+            claim_token=claim_token,
+        )
 
     user_id = metadata.get("user_id") if isinstance(metadata, dict) else getattr(metadata, "user_id", None)
     plan_name = metadata.get("plan_name") if isinstance(metadata, dict) else getattr(metadata, "plan_name", None)
+    promo_link_id = metadata.get("promo_link_id") if isinstance(metadata, dict) else getattr(metadata, "promo_link_id", None)
+    checkout_reservation_token = (
+        metadata.get("checkout_reservation_token")
+        if isinstance(metadata, dict)
+        else getattr(metadata, "checkout_reservation_token", None)
+    )
     session_id = session["id"] if "id" in session else "unknown"
 
     if not user_id or not plan_name:
         error_msg = "Missing user_id or plan_name in checkout metadata"
         logger.error(f"[WEBHOOK] {error_msg}")
-
-        # ✅ FIX 2: Logger dans webhook_failures
-        if supabase_client:
-            try:
-                supabase_client.rpc("log_webhook_failure", {
-                    "p_event_id": session_id,
-                    "p_event_type": "checkout.session.completed",
-                    "p_error_message": error_msg
-                }).execute()
-            except Exception as log_err:
-                logger.error(f"Failed to log webhook failure: {log_err}")
 
         raise HTTPException(status_code=400, detail="Missing metadata")
 
@@ -524,7 +865,7 @@ async def handle_checkout_completed(session: dict[str, Any]):
 
     if not supabase_client:
         logger.error("Supabase client not configured")
-        return
+        raise RuntimeError("Supabase client unavailable")
 
     # ✅ FIX 2: Vérifier que l'utilisateur existe AVANT de traiter
     logger.info(f"[WEBHOOK] Verifying user {user_id} exists in database")
@@ -538,17 +879,6 @@ async def handle_checkout_completed(session: dict[str, Any]):
             error_msg = f"User {user_id} not found in database (may have been deleted or never existed)"
             logger.error(f"[WEBHOOK] {error_msg}")
 
-            # Logger dans webhook_failures
-            try:
-                supabase_client.rpc("log_webhook_failure", {
-                    "p_event_id": session_id,
-                    "p_event_type": "checkout.session.completed",
-                    "p_error_message": error_msg
-                }).execute()
-                logger.info(f"[WEBHOOK] Logged failure for event {session_id}")
-            except Exception as log_err:
-                logger.error(f"Failed to log webhook failure: {log_err}")
-
             raise HTTPException(status_code=400, detail="User not found in database")
 
         logger.info(f"[WEBHOOK] User {user_id} verified successfully")
@@ -561,18 +891,19 @@ async def handle_checkout_completed(session: dict[str, Any]):
         raise HTTPException(status_code=500, detail="User verification failed") from None
 
     try:
-        # Get plan_id from database
-        plan_response = supabase_client.table("subscription_plans")\
-            .select("id")\
-            .eq("name", plan_name)\
-            .maybe_single()\
-            .execute()
+        plan_id = None
+        if not checkout_reservation_token:
+            plan_response = supabase_client.table("subscription_plans")\
+                .select("id")\
+                .eq("name", plan_name)\
+                .maybe_single()\
+                .execute()
 
-        if not plan_response.data:
-            logger.error(f"[WEBHOOK] Plan not found in DB: {plan_name}")
-            return
+            if not plan_response.data:
+                logger.error(f"[WEBHOOK] Plan not found in DB: {plan_name}")
+                raise RuntimeError(f"Plan Stripe introuvable: {plan_name}")
 
-        plan_id = plan_response.data["id"]
+            plan_id = plan_response.data["id"]
 
         # Get subscription data from Stripe (source of truth)
         # 🔧 FIX: Add try/except for Stripe API call
@@ -585,170 +916,120 @@ async def handle_checkout_completed(session: dict[str, Any]):
                 detail=f"Failed to retrieve subscription: {str(e)}"
             ) from None
 
-        # 🔧 FIX: Safely extract subscription data with defaults
-        subscription_data = {
-            "user_id": user_id,
-            "plan_id": plan_id,
-            "status": getattr(stripe_subscription, "status", "active"),
-            "stripe_subscription_id": stripe_subscription_id,
-            "stripe_customer_id": stripe_customer_id,
-            "stripe_price_id": stripe_subscription["items"]["data"][0]["price"]["id"],
-            "current_period_start": datetime.fromtimestamp(
-                getattr(stripe_subscription, "current_period_start", None) or int(datetime.now(UTC).timestamp()),
-                tz=UTC
-            ).isoformat(),
-            "current_period_end": datetime.fromtimestamp(
-                getattr(stripe_subscription, "current_period_end", None) or int(datetime.now(UTC).timestamp()) + 2592000,
-                tz=UTC
-            ).isoformat(),
-            "cancel_at_period_end": getattr(stripe_subscription, "cancel_at_period_end", False),
-            "updated_at": datetime.now(UTC).isoformat()
-        }
+        period_start, period_end = extract_subscription_period(stripe_subscription)
 
-        # Check if user already has an active subscription
-        existing = supabase_client.table("user_subscriptions")\
-            .select("*")\
-            .eq("user_id", user_id)\
-            .eq("status", "active")\
-            .execute()
+        if not event_id or not claim_token:
+            raise RuntimeError("Checkout webhook transaction context missing")
 
-        if existing.data and len(existing.data) > 0:
-            # OPTION B: Preserve history - Cancel old subscription + Insert new
-            # Step 1: Archive old subscription (keeps history for analytics/audit)
-            supabase_client.table("user_subscriptions")\
-                .update({
-                    "status": "canceled",
-                    "canceled_at": datetime.now(UTC).isoformat(),
-                    "updated_at": datetime.now(UTC).isoformat()
-                })\
-                .eq("user_id", user_id)\
-                .eq("status", "active")\
-                .execute()
-
-            # Step 2: Create new subscription record
-            supabase_client.table("user_subscriptions")\
-                .insert(subscription_data)\
-                .execute()
-
-            logger.info(f"Subscription upgraded for user {user_id}: {plan_name} (history preserved)")
-        else:
-            # Insert new subscription (first time)
-            supabase_client.table("user_subscriptions")\
-                .insert(subscription_data)\
-                .execute()
-            logger.info(f"Subscription created for user {user_id}: {plan_name}")
-
-
-        # Email de confirmation de paiement
-        amount_str = ""
-        try:
-            amount_cents = getattr(stripe_subscription["items"]["data"][0]["price"], "unit_amount", 0) or 0
-            amount_str = f" ({amount_cents // 100}€/mois)" if amount_cents else ""
-            if amount_cents:
-                user_email = getattr(session, "customer_email", None) or session.get("customer_email", "") if isinstance(session, dict) else getattr(session, "customer_email", "")
-                if not user_email:
-                    try:
-                        cust = stripe.Customer.retrieve(stripe_customer_id)
-                        user_email = getattr(cust, "email", "")
-                    except Exception:
-                        pass
-                if user_email:
-                    amount_display = f"{amount_cents / 100:.2f} EUR"
-                    invoice_url = None
-                    invoice_pdf_url = None
-                    try:
-                        latest_invoice_id = getattr(stripe_subscription, "latest_invoice", None)
-                        if latest_invoice_id:
-                            inv = stripe.Invoice.retrieve(latest_invoice_id)
-                            invoice_url = getattr(inv, "hosted_invoice_url", None) or getattr(inv, "invoice_pdf", None)
-                            invoice_pdf_url = getattr(inv, "invoice_pdf", None)
-                    except Exception:
-                        pass
-                    send_payment_confirmation_email(
-                        user_email=user_email,
-                        plan_name=plan_name,
-                        amount=amount_display,
-                        invoice_url=invoice_url,
-                        invoice_pdf_url=invoice_pdf_url,
-                    )
-        except Exception as email_err:
-            logger.warning(f"[WEBHOOK] Payment confirmation email failed (non-fatal): {email_err}")
-        log_event(
-            supabase_client,
-            event_name="subscription_created",
-            event_label=f"Un utilisateur vient de passer au plan {plan_name}{amount_str} 🎉",
-            category="payment",
-            user_id=user_id,
-            feature="stripe",
-            severity="success",
-            properties={"plan_name": plan_name, "stripe_subscription_id": stripe_subscription_id},
+        result = supabase_client.rpc(
+            "apply_stripe_checkout_completed",
+            {
+                "p_event_id": event_id,
+                "p_claim_token": claim_token,
+                "p_user_id": user_id,
+                "p_plan_id": plan_id,
+                "p_plan_name": plan_name,
+                "p_subscription_status": _normalize_subscription_status(
+                    getattr(stripe_subscription, "status", None)
+                ),
+                "p_subscription_id": stripe_subscription_id,
+                "p_customer_id": stripe_customer_id,
+                "p_price_id": stripe_subscription["items"]["data"][0]["price"]["id"],
+                "p_period_start": datetime.fromtimestamp(
+                    period_start,
+                    tz=UTC,
+                ).isoformat(),
+                "p_period_end": datetime.fromtimestamp(
+                    period_end,
+                    tz=UTC,
+                ).isoformat(),
+                "p_cancel_at_period_end": bool(
+                    getattr(stripe_subscription, "cancel_at_period_end", False)
+                ),
+                "p_promo_link_id": promo_link_id,
+                "p_checkout_session_id": session_id,
+                "p_checkout_reservation_token": checkout_reservation_token,
+            },
+        ).execute()
+        result_data = (
+            result.data[0]
+            if isinstance(result.data, list) and result.data
+            else result.data
         )
+        if _stripe_value(result_data, "finalized") is not True:
+            raise RuntimeError("Stripe checkout transaction failed")
 
-        # Alerte admin conversion (best-effort)
-        await send_admin_alert(
-            subject=f"Nouvelle conversion — {plan_name}",
-            body=f"User {user_id} vient de passer au plan {plan_name}.\nStripe sub: {stripe_subscription_id}",
-            severity="info",
-            skip_throttle=True,
-            category="new_subscription",
-        )
-
-        # Trigger referral conversion reward (fire-and-forget)
-        try:
-            from src.services.referrals import apply_referral_reward
-            signup_res = supabase_client.table("referral_signups") \
-                .select("id, referral_id, referrals(referrer_id)") \
-                .eq("referred_user_id", user_id) \
-                .is_("converted_to_paid_at", "null") \
-                .maybe_single() \
-                .execute()
-            if signup_res.data:
-                signup = signup_res.data
-                referrer_id = signup["referrals"]["referrer_id"]
-                supabase_client.table("referral_signups").update({
-                    "converted_to_paid_at": datetime.now(UTC).isoformat(),
-                    "converted_plan": plan_name,
-                }).eq("id", signup["id"]).execute()
-                supabase_client.rpc(
-                    "increment_referral_conversions",
-                    {"p_referral_id": str(signup["referral_id"])}
-                ).execute()
-                await apply_referral_reward(
-                    supabase_client,
-                    referral_signup_id=signup["id"],
-                    referrer_id=referrer_id,
-                    plan_name=plan_name,
-                )
-        except Exception as ref_err:
-            logger.error(f"[REFERRAL] Conversion reward failed (non-fatal): {ref_err}")
-
-        # Invalidate quota cache
         await invalidate_user_quota_cache(user_id)
+        return True
 
     except Exception as e:
         logger.error(f"Failed to update subscription in database: {e}")
         raise
 
 
-async def handle_subscription_updated(subscription: dict[str, Any]):
+async def handle_subscription_updated(
+    subscription: dict[str, Any],
+    *,
+    event_id: str | None = None,
+    claim_token: str | None = None,
+) -> bool:
     """Handle subscription updates (renewals, plan changes via modify)."""
     stripe_subscription_id = subscription["id"]
 
     if not supabase_client:
-        return
+        raise RuntimeError("Supabase client unavailable")
 
     try:
         new_price_id = subscription["items"]["data"][0]["price"]["id"]
+        period_start, period_end = extract_subscription_period(subscription)
+
+        if event_id is not None or claim_token is not None:
+            if not event_id or not claim_token:
+                raise RuntimeError("Incomplete Stripe transaction context")
+            result = supabase_client.rpc(
+                "apply_stripe_subscription_updated",
+                {
+                    "p_event_id": event_id,
+                    "p_claim_token": claim_token,
+                    "p_subscription_id": stripe_subscription_id,
+                    "p_status": _normalize_subscription_status(
+                        subscription["status"]
+                    ),
+                    "p_price_id": new_price_id,
+                    "p_period_start": datetime.fromtimestamp(
+                        period_start,
+                        tz=UTC,
+                    ).isoformat(),
+                    "p_period_end": datetime.fromtimestamp(
+                        period_end,
+                        tz=UTC,
+                    ).isoformat(),
+                    "p_cancel_at_period_end": bool(
+                        getattr(subscription, "cancel_at_period_end", False)
+                    ),
+                },
+            ).execute()
+            result_data = (
+                result.data[0]
+                if isinstance(result.data, list) and result.data
+                else result.data
+            )
+            if _stripe_value(result_data, "finalized") is not True:
+                raise RuntimeError("Stripe subscription update transaction failed")
+            user_id = _stripe_value(result_data, "user_id")
+            if isinstance(user_id, str):
+                await invalidate_user_quota_cache(user_id)
+            return True
 
         update_data = {
-            "status": subscription["status"],
+            "status": _normalize_subscription_status(subscription["status"]),
             "stripe_price_id": new_price_id,
             "current_period_start": datetime.fromtimestamp(
-                getattr(subscription, "current_period_start", None) or int(datetime.now(UTC).timestamp()),
+                period_start,
                 tz=UTC
             ).isoformat(),
             "current_period_end": datetime.fromtimestamp(
-                getattr(subscription, "current_period_end", None) or int(datetime.now(UTC).timestamp()),
+                period_end,
                 tz=UTC
             ).isoformat(),
             "cancel_at_period_end": getattr(subscription, "cancel_at_period_end", False),
@@ -769,24 +1050,34 @@ async def handle_subscription_updated(subscription: dict[str, Any]):
         except Exception as e:
             logger.warning(f"[WEBHOOK] Could not resolve plan_id from price {new_price_id}: {e}")
 
-        supabase_client.table("user_subscriptions")\
-            .update(update_data)\
-            .eq("stripe_subscription_id", stripe_subscription_id)\
-            .execute()
-
-        # Get user_id for cache invalidation
+        # Lire l'état précédent avant mutation afin de n'envoyer l'e-mail
+        # d'annulation que lors de la transition false -> true.
         user_subscription = supabase_client.table("user_subscriptions")\
-            .select("user_id")\
+            .select("user_id, cancel_at_period_end")\
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .maybe_single()\
             .execute()
+        previous_cancel_at_period_end = bool(
+            user_subscription.data
+            and user_subscription.data.get("cancel_at_period_end")
+        )
+
+        updated_subscription = supabase_client.table("user_subscriptions")\
+            .update(update_data)\
+            .eq("stripe_subscription_id", stripe_subscription_id)\
+            .execute()
+        if not updated_subscription.data:
+            raise RuntimeError("Stripe subscription missing from local projection")
 
         if user_subscription.data:
             user_id = user_subscription.data["user_id"]
             await invalidate_user_quota_cache(user_id)
 
             # Email d'annulation si cancel_at_period_end vient de passer a True
-            if getattr(subscription, "cancel_at_period_end", False):
+            if (
+                getattr(subscription, "cancel_at_period_end", False)
+                and not previous_cancel_at_period_end
+            ):
                 try:
                     customer_id = getattr(subscription, "customer", None)
                     if customer_id:
@@ -803,10 +1094,9 @@ async def handle_subscription_updated(subscription: dict[str, Any]):
                                     .execute()
                                 if plan_row.data:
                                     plan_display = plan_row.data.get("display_name", plan_display)
-                            period_end = subscription.get("current_period_end", 0)
                             end_date = datetime.fromtimestamp(
                                 period_end, tz=UTC
-                            ).strftime("%d/%m/%Y") if period_end else ""
+                            ).strftime("%d/%m/%Y")
                             send_subscription_cancelled_email(
                                 user_email=user_email,
                                 plan_name=plan_display,
@@ -816,18 +1106,47 @@ async def handle_subscription_updated(subscription: dict[str, Any]):
                     logger.warning(f"[WEBHOOK] Cancellation email error (non-fatal): {email_err}")
 
         logger.info(f"Subscription updated: {stripe_subscription_id}")
+        return False
 
     except Exception as e:
         logger.error(f"Failed to update subscription: {e}")
         raise
 
 
-async def handle_subscription_deleted(subscription: dict[str, Any]):
+async def handle_subscription_deleted(
+    subscription: dict[str, Any],
+    *,
+    event_id: str | None = None,
+    claim_token: str | None = None,
+) -> bool:
     """Handle subscription cancellation."""
     stripe_subscription_id = subscription["id"]
 
     if not supabase_client:
-        return
+        raise RuntimeError("Supabase client unavailable")
+
+    if event_id is not None or claim_token is not None:
+        if not event_id or not claim_token:
+            raise RuntimeError("Incomplete Stripe transaction context")
+        result = supabase_client.rpc(
+            "apply_stripe_subscription_deleted",
+            {
+                "p_event_id": event_id,
+                "p_claim_token": claim_token,
+                "p_subscription_id": stripe_subscription_id,
+            },
+        ).execute()
+        result_data = (
+            result.data[0]
+            if isinstance(result.data, list) and result.data
+            else result.data
+        )
+        if _stripe_value(result_data, "finalized") is not True:
+            raise RuntimeError("Stripe subscription deletion transaction failed")
+        user_id = _stripe_value(result_data, "user_id")
+        if isinstance(user_id, str):
+            await invalidate_user_quota_cache(user_id)
+        return True
 
     try:
         result = supabase_client.table("user_subscriptions")\
@@ -838,6 +1157,9 @@ async def handle_subscription_deleted(subscription: dict[str, Any]):
             })\
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .execute()
+
+        if not result.data:
+            raise RuntimeError("Stripe subscription missing from local projection")
 
         if result.data and len(result.data) > 0:
             user_id = result.data[0].get("user_id")
@@ -862,20 +1184,70 @@ async def handle_subscription_deleted(subscription: dict[str, Any]):
                 )
 
         logger.info(f"Subscription cancelled: {stripe_subscription_id}")
+        return False
 
     except Exception as e:
         logger.error(f"Failed to cancel subscription: {e}")
         raise
 
 
-async def handle_payment_failed(invoice: dict[str, Any]):
+async def handle_payment_failed(
+    invoice: dict[str, Any],
+    *,
+    event_id: str | None = None,
+    claim_token: str | None = None,
+) -> bool:
     """Handle failed payment."""
-    stripe_subscription_id = invoice["subscription"]
+    stripe_subscription_id = _extract_invoice_subscription_id(invoice)
+
+    if event_id is not None or claim_token is not None:
+        if not event_id or not claim_token:
+            raise RuntimeError("Incomplete Stripe transaction context")
+        if not supabase_client:
+            raise RuntimeError("Stripe database unavailable")
+        invoice_id = _stripe_value(invoice, "id")
+        if not isinstance(invoice_id, str) or not invoice_id:
+            raise RuntimeError("Stripe invoice ID missing")
+        result = supabase_client.rpc(
+            "apply_stripe_payment_failed",
+            {
+                "p_event_id": event_id,
+                "p_claim_token": claim_token,
+                "p_subscription_id": stripe_subscription_id,
+                "p_invoice_id": invoice_id,
+            },
+        ).execute()
+        result_data = (
+            result.data[0]
+            if isinstance(result.data, list) and result.data
+            else result.data
+        )
+        if _stripe_value(result_data, "finalized") is not True:
+            raise RuntimeError("Stripe payment failure transaction failed")
+        user_id = _stripe_value(result_data, "user_id")
+        if isinstance(user_id, str):
+            await invalidate_user_quota_cache(user_id)
+        return True
+
+    if not stripe_subscription_id:
+        logger.info("[WEBHOOK] Invoice payment failed without subscription, skipping sync")
+        return False
 
     if not supabase_client:
-        return
+        return False
 
     try:
+        previous_subscription = supabase_client.table("user_subscriptions")\
+            .select("status")\
+            .eq("stripe_subscription_id", stripe_subscription_id)\
+            .maybe_single()\
+            .execute()
+        previous_status = (
+            previous_subscription.data.get("status")
+            if previous_subscription.data
+            else None
+        )
+
         result = supabase_client.table("user_subscriptions")\
             .update({
                 "status": "past_due",
@@ -884,7 +1256,10 @@ async def handle_payment_failed(invoice: dict[str, Any]):
             .eq("stripe_subscription_id", stripe_subscription_id)\
             .execute()
 
-        if result.data and len(result.data) > 0:
+        if not result.data:
+            raise RuntimeError("Stripe subscription missing from local projection")
+
+        if previous_status != "past_due" and result.data and len(result.data) > 0:
             user_id = result.data[0].get("user_id")
             if user_id:
                 await invalidate_user_quota_cache(user_id)
@@ -926,21 +1301,41 @@ async def handle_payment_failed(invoice: dict[str, Any]):
                 )
 
         logger.info(f"Subscription marked as past_due: {stripe_subscription_id}")
+        return False
 
     except Exception as e:
         logger.error(f"Failed to update subscription status: {e}")
         raise
 
 
-async def handle_invoice_paid(invoice: dict[str, Any]):
+async def handle_invoice_paid(
+    invoice: dict[str, Any],
+    *,
+    event_id: str | None = None,
+    claim_token: str | None = None,
+) -> bool:
     """Handle successful invoice payment — update subscription period + notify admin."""
     try:
         amount = (invoice["amount_paid"] if "amount_paid" in invoice else 0) / 100  # cents to euros
         currency = (invoice["currency"] if "currency" in invoice else "eur").upper()
         customer_email = invoice["customer_email"] if "customer_email" in invoice else "inconnu"
         billing_reason = invoice["billing_reason"] if "billing_reason" in invoice else "unknown"
-        subscription_id = invoice["subscription"] if "subscription" in invoice else "N/A"
+        subscription_id = _extract_invoice_subscription_id(invoice) or "N/A"
         invoice_id = invoice["id"] if "id" in invoice else "N/A"
+        payment_already_recorded = False
+        if (
+            event_id is None
+            and claim_token is None
+            and supabase_client
+            and amount > 0
+            and invoice_id != "N/A"
+        ):
+            previous_payment = supabase_client.table("stripe_payments")\
+                .select("stripe_invoice_id")\
+                .eq("stripe_invoice_id", invoice_id)\
+                .maybe_single()\
+                .execute()
+            payment_already_recorded = bool(previous_payment.data)
 
         user_id_value: str | None = None
         stripe_customer_id = invoice.get("customer") if isinstance(invoice, dict) else None
@@ -951,18 +1346,113 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
         new_period_end: datetime | None = None
         interval: str | None = None
         interval_count: int | None = None
+        subscription_status: str | None = None
+        payment_logged = payment_already_recorded
+
+        if event_id is not None or claim_token is not None:
+            if not event_id or not claim_token:
+                raise RuntimeError("Incomplete Stripe transaction context")
+            if not supabase_client:
+                raise RuntimeError("Stripe database unavailable")
+            if invoice_id == "N/A":
+                raise RuntimeError("Stripe invoice ID missing")
+
+            if subscription_id != "N/A":
+                stripe_sub = stripe.Subscription.retrieve(subscription_id)
+                subscription_status = _normalize_subscription_status(
+                    _stripe_value(stripe_sub, "status")
+                )
+                period_start, period_end = extract_subscription_period(stripe_sub)
+                new_period_start = datetime.fromtimestamp(period_start, tz=UTC)
+                new_period_end = datetime.fromtimestamp(period_end, tz=UTC)
+                items = _stripe_value(
+                    _stripe_value(stripe_sub, "items", {}),
+                    "data",
+                    [],
+                ) or []
+                first_item = items[0] if items else {}
+                price = _stripe_value(first_item, "price", {})
+                recurring = _stripe_value(price, "recurring", {})
+                interval_value = _stripe_value(recurring, "interval")
+                interval_count_value = _stripe_value(recurring, "interval_count")
+                interval = interval_value if isinstance(interval_value, str) else None
+                interval_count = (
+                    interval_count_value
+                    if isinstance(interval_count_value, int)
+                    and not isinstance(interval_count_value, bool)
+                    else None
+                )
+
+            transaction = supabase_client.rpc(
+                "apply_stripe_invoice_paid",
+                {
+                    "p_event_id": event_id,
+                    "p_claim_token": claim_token,
+                    "p_subscription_id": (
+                        subscription_id if subscription_id != "N/A" else None
+                    ),
+                    "p_subscription_status": subscription_status,
+                    "p_invoice_id": invoice_id,
+                    "p_customer_id": stripe_customer_id,
+                    "p_billing_reason": billing_reason,
+                    "p_amount_paid": amount,
+                    "p_currency": currency,
+                    "p_period_start": (
+                        new_period_start.isoformat() if new_period_start else None
+                    ),
+                    "p_period_end": (
+                        new_period_end.isoformat() if new_period_end else None
+                    ),
+                    "p_interval": interval,
+                    "p_interval_count": interval_count,
+                },
+            ).execute()
+            transaction_data = (
+                transaction.data[0]
+                if isinstance(transaction.data, list) and transaction.data
+                else transaction.data
+            )
+            if _stripe_value(transaction_data, "finalized") is not True:
+                raise RuntimeError("Stripe invoice transaction failed")
+            user_id = _stripe_value(transaction_data, "user_id")
+            if isinstance(user_id, str):
+                await invalidate_user_quota_cache(user_id)
+            return True
+
+        def persist_payment_ledger() -> None:
+            """Écrire le journal requis avant les notifications financières."""
+            if not supabase_client or amount <= 0 or invoice_id == "N/A":
+                return
+
+            payment_result = supabase_client.table("stripe_payments").upsert({
+                "stripe_invoice_id": invoice_id,
+                "user_id": user_id_value,
+                "stripe_customer_id": stripe_customer_id,
+                "stripe_subscription_id": subscription_id if subscription_id != "N/A" else None,
+                "billing_reason": billing_reason,
+                "amount_paid": amount,
+                "currency": currency,
+                "interval": interval,
+                "interval_count": interval_count,
+                "period_start": new_period_start.isoformat() if new_period_start else None,
+                "period_end": new_period_end.isoformat() if new_period_end else None,
+                "raw_invoice": invoice,
+            }, on_conflict="stripe_invoice_id").execute()
+            if not payment_result.data:
+                raise RuntimeError("Stripe payment ledger was not persisted")
 
         # Update current_period_end on renewal/create/update
         if billing_reason in ("subscription_create", "subscription_cycle", "subscription_update") and subscription_id and subscription_id != "N/A":
             try:
                 # Fetch fresh subscription data from Stripe
                 stripe_sub = stripe.Subscription.retrieve(subscription_id)
+                period_start, period_end = extract_subscription_period(stripe_sub)
                 new_period_end = datetime.fromtimestamp(
-                    getattr(stripe_sub, "current_period_end", None) or int(datetime.now(UTC).timestamp()) + 2592000,
+                    period_end,
                     tz=UTC,
                 )
                 new_period_start = datetime.fromtimestamp(
-                    getattr(stripe_sub, "current_period_start", None) or int(datetime.now(UTC).timestamp()),
+                    period_start,
                     tz=UTC,
                 )
 
@@ -985,11 +1475,16 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                         "user_id"
                     ).eq("stripe_subscription_id", subscription_id).maybe_single().execute()
 
-                    supabase_client.table("user_subscriptions").update({
+                    updated_subscription = supabase_client.table("user_subscriptions").update({
                         "current_period_start": new_period_start.isoformat(),
                         "current_period_end": new_period_end.isoformat(),
                         "status": "active",
                     }).eq("stripe_subscription_id", subscription_id).execute()
+
+                    if not updated_subscription.data:
+                        raise RuntimeError(
+                            "Stripe subscription missing from local projection"
+                        )
 
                     logger.info(f"[WEBHOOK] Updated period_end={new_period_end.isoformat()} for sub={subscription_id}")
 
@@ -999,6 +1494,11 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                         await invalidate_user_quota_cache(user_id_value)
             except Exception as e:
                 logger.error(f"[WEBHOOK] Failed to update period_end for {subscription_id}: {e}")
+                raise
+
+            if not payment_logged:
+                persist_payment_ledger()
+                payment_logged = True
 
             reason_label = {
                 "subscription_create": "Nouvel abonnement",
@@ -1007,7 +1507,12 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
             }.get(billing_reason, billing_reason)
 
             # Email client avec lien facture Stripe
-            if customer_email and customer_email != "inconnu" and amount > 0:
+            if (
+                not payment_already_recorded
+                and customer_email
+                and customer_email != "inconnu"
+                and amount > 0
+            ):
                 try:
                     invoice_url = (invoice["hosted_invoice_url"] if "hosted_invoice_url" in invoice else None) or (invoice["invoice_pdf"] if "invoice_pdf" in invoice else None)
                     invoice_pdf_url = invoice["invoice_pdf"] if "invoice_pdf" in invoice else None
@@ -1046,82 +1551,156 @@ async def handle_invoice_paid(invoice: dict[str, Any]):
                 except Exception as email_err:
                     logger.warning(f"[WEBHOOK] Invoice email failed (non-fatal): {email_err}")
 
-            await send_admin_alert(
-                subject=f"Paiement recu — {amount:.2f} {currency}",
-                body=(
-                    f"Type: {reason_label}\n"
-                    f"Montant: {amount:.2f} {currency}\n"
-                    f"Client: {customer_email}\n"
-                    f"Stripe sub: {subscription_id}\n"
-                    f"Invoice ID: {invoice['id'] if 'id' in invoice else 'N/A'}"
-                ),
-                severity="info",
-                skip_throttle=True,
-                category="payment_received",
-            )
-            logger.info(f"[WEBHOOK] Invoice paid: {amount} {currency} from {customer_email} ({reason_label})")
-
-        # Log payment in stripe_payments for analytics (best effort)
-        try:
-            if supabase_client and amount > 0 and invoice_id != "N/A":
-                supabase_client.table("stripe_payments").upsert({
-                    "stripe_invoice_id": invoice_id,
-                    "user_id": user_id_value,
-                    "stripe_customer_id": stripe_customer_id,
-                    "stripe_subscription_id": subscription_id if subscription_id != "N/A" else None,
-                    "billing_reason": billing_reason,
-                    "amount_paid": amount,
+            if not payment_already_recorded:
+                await send_admin_alert(
+                    subject=f"Paiement recu — {amount:.2f} {currency}",
+                    body=(
+                        f"Type: {reason_label}\n"
+                        f"Montant: {amount:.2f} {currency}\n"
+                        f"Client: {customer_email}\n"
+                        f"Stripe sub: {subscription_id}\n"
+                        f"Invoice ID: {invoice['id'] if 'id' in invoice else 'N/A'}"
+                    ),
+                    severity="info",
+                    skip_throttle=True,
+                    category="payment_received",
+                )
+            logger.info(
+                "[WEBHOOK] Invoice paid",
+                extra={
+                    "amount": amount,
                     "currency": currency,
-                    "interval": interval,
-                    "interval_count": interval_count,
-                    "period_start": new_period_start.isoformat() if new_period_start else None,
-                    "period_end": new_period_end.isoformat() if new_period_end else None,
-                    "raw_invoice": invoice,
-                }, on_conflict="stripe_invoice_id").execute()
-        except Exception as e:
-            logger.warning(f"[WEBHOOK] Failed to log stripe payment: {e}")
+                    "billing_reason": reason_label,
+                },
+            )
+
+        if not payment_logged:
+            persist_payment_ledger()
+
+        return False
 
     except Exception as e:
-        logger.warning(f"[WEBHOOK] handle_invoice_paid non-fatal error: {e}")
+        logger.error(f"[WEBHOOK] handle_invoice_paid failed: {type(e).__name__}")
+        raise
 
 
-async def handle_recruiter_checkout(session: dict[str, Any]):
+async def handle_recruiter_checkout(
+    session: dict[str, Any],
+    *,
+    event_id: str | None = None,
+    claim_token: str | None = None,
+) -> bool:
     """Handle successful recruiter request payment."""
-    request_id = session["metadata"].get("request_id")
+    metadata = _stripe_value(session, "metadata", {})
+    request_id = _stripe_value(metadata, "request_id")
 
     if not request_id:
         logger.warning("Recruiter checkout missing request_id")
-        return
+        raise RuntimeError("Recruiter checkout request ID missing")
 
     if not supabase_client:
-        return
+        raise RuntimeError("Supabase client unavailable")
+
+    if event_id is not None or claim_token is not None:
+        if not event_id or not claim_token:
+            raise RuntimeError("Incomplete Stripe transaction context")
+        snapshot_response = (
+            supabase_client.table("recruiter_requests")
+            .select("user_id,stripe_checkout_session_id,amount_cents")
+            .eq("id", request_id)
+            .maybe_single()
+            .execute()
+        )
+        snapshot = snapshot_response.data
+        if not isinstance(snapshot, dict):
+            raise RuntimeError("Recruiter checkout request snapshot missing")
+
+        session_id = _stripe_resource_id(_stripe_value(session, "id"))
+        metadata_user_id = _stripe_value(metadata, "user_id")
+        mode = _stripe_value(session, "mode")
+        payment_status = _stripe_value(session, "payment_status")
+        amount_total = _stripe_value(session, "amount_total")
+        currency = _stripe_value(session, "currency")
+        if (
+            session_id != snapshot.get("stripe_checkout_session_id")
+            or metadata_user_id != snapshot.get("user_id")
+            or mode != "payment"
+            or payment_status != "paid"
+            or isinstance(amount_total, bool)
+            or not isinstance(amount_total, int)
+            or amount_total != snapshot.get("amount_cents")
+            or not isinstance(currency, str)
+            or currency.lower() != "eur"
+        ):
+            raise RuntimeError("Recruiter checkout does not match stored request")
+
+        payment_intent_id = _stripe_resource_id(
+            _stripe_value(session, "payment_intent")
+        )
+        if not payment_intent_id:
+            raise RuntimeError("Recruiter payment intent missing")
+        result = supabase_client.rpc(
+            "apply_stripe_recruiter_checkout",
+            {
+                "p_event_id": event_id,
+                "p_claim_token": claim_token,
+                "p_request_id": request_id,
+                "p_payment_intent_id": payment_intent_id,
+            },
+        ).execute()
+        result_data = (
+            result.data[0]
+            if isinstance(result.data, list) and result.data
+            else result.data
+        )
+        if _stripe_value(result_data, "finalized") is not True:
+            raise RuntimeError("Stripe recruiter transaction failed")
+        return True
 
     try:
+        request_response = supabase_client.table("recruiter_requests")\
+            .select("*")\
+            .eq("id", request_id)\
+            .execute()
+
+        if not request_response.data:
+            raise RuntimeError("Recruiter request not found")
+
+        request_data = request_response.data[0]
+        if request_data.get("payment_status") == "paid":
+            logger.info(f"Recruiter payment replay skipped: {request_id}")
+            return False
+
         supabase_client.table("recruiter_requests")\
             .update({
                 "payment_status": "paid",
-                "payment_intent_id": session.get("payment_intent"),
+                "payment_intent_id": _stripe_value(session, "payment_intent"),
             })\
             .eq("id", request_id)\
             .execute()
 
         logger.info(f"Recruiter request marked as paid: {request_id}")
 
-        # Fetch request details for email
-        request_response = supabase_client.table("recruiter_requests")\
-            .select("*")\
-            .eq("id", request_id)\
-            .execute()
-
-        if request_response.data:
-            request_data = request_response.data[0]
-            send_recruiter_request_confirmation(
-                to_email=request_data["email"],
-                full_name=request_data["full_name"],
-                sector=request_data["sector"],
-                experience_level=request_data["experience_level"],
-            )
-            logger.info(f"Confirmation email sent for request: {request_id}")
+        send_recruiter_request_confirmation(
+            to_email=request_data["email"],
+            full_name=request_data["full_name"],
+            sector=request_data["sector"],
+            experience_level=request_data["experience_level"],
+            preferred_date=request_data.get("preferred_date"),
+        )
+        send_recruiter_request_notification(
+            request_id=request_id,
+            full_name=request_data["full_name"],
+            email=request_data["email"],
+            phone=request_data.get("phone"),
+            sector=request_data["sector"],
+            experience_level=request_data["experience_level"],
+            message=request_data["message"],
+            preferred_date=request_data.get("preferred_date"),
+        )
+        logger.info(f"Recruiter payment emails sent for request: {request_id}")
+        return False
 
     except Exception as e:
-        logger.error(f"Failed to process recruiter checkout: {e}")
+        logger.error(f"Failed to process recruiter checkout: {type(e).__name__}")
+        raise

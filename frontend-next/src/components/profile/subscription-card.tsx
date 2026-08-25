@@ -28,6 +28,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -56,8 +57,15 @@ const FEATURE_KEYS = [
 ] as const;
 
 export function SubscriptionCard() {
-  const { plan, planName, isFreePlan, isPaidPlan, openPricingModal, limits } =
-    useSubscription();
+  const {
+    plan,
+    planName,
+    isFreePlan,
+    isPaidPlan,
+    isLoaded,
+    openPricingModal,
+    limits,
+  } = useSubscription();
   const { session } = useAuth();
   const apiData = useSubscriptionApi();
   const t = useTranslations("profile");
@@ -216,6 +224,15 @@ export function SubscriptionCard() {
       setIsCancelling(false);
     }
   };
+
+  if (!isLoaded) {
+    return (
+      <Card className="flex min-h-48 items-center justify-center p-6" role="status">
+        <Loader2 className="h-6 w-6 animate-spin text-[#00D9FF]" />
+        <span className="sr-only">{tSub("loading")}</span>
+      </Card>
+    );
+  }
 
   return (
     <>

@@ -12,6 +12,7 @@ Features:
 
 import html
 import logging
+import re
 import threading
 from pathlib import Path
 from typing import Any
@@ -232,6 +233,18 @@ class PDFGenerator:
 
         return cv_data
 
+    @staticmethod
+    def _normalize_cover_letter_subject(
+        letter_data: dict[str, Any],
+        language: str,
+    ) -> dict[str, Any]:
+        """Retire le libellé que le template ajoute déjà devant l'objet."""
+        normalized = dict(letter_data)
+        subject = str(normalized.get("subject", "")).strip()
+        prefix = r"^\s*Objet\s*:\s*" if language == "fr" else r"^\s*Re\s*:\s*"
+        normalized["subject"] = re.sub(prefix, "", subject, flags=re.IGNORECASE)
+        return normalized
+
     def generate_cover_letter(
         self,
         letter_data: dict[str, Any],
@@ -267,6 +280,7 @@ class PDFGenerator:
             letter_data.setdefault("paragraph_3", "")
             letter_data.setdefault("closing", "")
             letter_data.setdefault("signature", letter_data["header"].get("name", ""))
+            letter_data = self._normalize_cover_letter_subject(letter_data, language)
 
             # Load template
             try:

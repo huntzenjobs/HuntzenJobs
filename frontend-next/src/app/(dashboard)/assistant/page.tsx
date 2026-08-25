@@ -662,9 +662,9 @@ export default function AssistantPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: transitioning ? 0 : 1, y: 0 }}
             transition={{ duration: 0.3, delay: transitioning ? 0 : 0.2 }}
-            className="flex-1 min-w-0"
+            className="w-full min-w-0 flex-1 md:w-auto"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex w-full min-w-0 items-center gap-3">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -678,7 +678,7 @@ export default function AssistantPage() {
               >
                 <assistantConfig.icon className="w-6 h-6" />
               </motion.div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-black text-slate-900 truncate">
                     {tc(assistantConfig.nameKey)}

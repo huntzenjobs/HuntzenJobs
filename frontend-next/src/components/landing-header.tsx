@@ -27,6 +27,7 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
 
   const outilsRef = useRef<HTMLDivElement>(null);
   const ressourcesRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
 
   // Detect scroll to change header style
   useEffect(() => {
@@ -57,6 +58,14 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
       if (event.key === "Escape") {
         setOutilsOpen(false);
         setRessourcesOpen(false);
+        setMobileMenuOpen((wasOpen) => {
+          if (wasOpen) {
+            window.requestAnimationFrame(() => {
+              mobileMenuButtonRef.current?.focus();
+            });
+          }
+          return false;
+        });
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -90,12 +99,21 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
     >
       <div className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex shrink-0 items-center gap-3">
+          <AdaptiveLogo
+            isDark={shouldBeWhite}
+            size="sm"
+            showText
+            showPulse
+            className="lg:hidden"
+            textColor={shouldBeWhite ? "text-black" : "text-white"}
+          />
           <AdaptiveLogo
             isDark={shouldBeWhite}
             size="lg"
             showText
             showPulse
+            className="hidden lg:flex"
             textColor={shouldBeWhite ? "text-black" : "text-white"}
           />
         </Link>
@@ -262,13 +280,15 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
         {/* Auth Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Language Switcher — always visible (compact globe icon) */}
-          <LanguageSwitcher
-            className={
-              shouldBeWhite
-                ? "text-gray-900 hover:text-black"
-                : "text-white hover:text-white"
-            }
-          />
+          <div className="hidden lg:block">
+            <LanguageSwitcher
+              className={
+                shouldBeWhite
+                  ? "text-gray-900 hover:text-black"
+                  : "text-white hover:text-white"
+              }
+            />
+          </div>
 
           {/* Theme Toggle — désactivé (dark mode non prêt) */}
 
@@ -291,13 +311,13 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
             <>
               <Link
                 href="/login"
-                className={`inline-flex items-center px-3 sm:px-4 lg:px-5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white hover:text-[#00D9FF]"}`}
+                className={`hidden lg:inline-flex items-center px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${shouldBeWhite ? "text-gray-900 hover:text-[#00D9FF]" : "text-white hover:text-[#00D9FF]"}`}
               >
                 {t("login")}
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex items-center px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-white bg-[#00D9FF] hover:bg-[#00C4EA] transition-all shadow-lg hover:shadow-[#00D9FF]/50 whitespace-nowrap"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-lg bg-[#00D9FF] px-3 text-xs font-bold text-white shadow-lg transition-all hover:bg-[#00C4EA] hover:shadow-[#00D9FF]/50 sm:px-5 sm:text-sm"
               >
                 {t("signup")}
               </Link>
@@ -306,9 +326,12 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
 
           {/* Mobile Menu Button */}
           <button
+            ref={mobileMenuButtonRef}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`lg:hidden p-2 transition-colors ${shouldBeWhite ? "text-black" : "text-white"}`}
-            aria-label="Toggle menu"
+            className={`flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors lg:hidden ${shouldBeWhite ? "text-black hover:bg-black/5" : "text-white hover:bg-white/10"}`}
+            aria-controls="landing-mobile-menu"
+            aria-expanded={mobileMenuOpen}
+            aria-label={t(mobileMenuOpen ? "closeMenu" : "openMenu")}
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" />
@@ -322,12 +345,31 @@ export function LandingHeader({ forceWhite = false }: LandingHeaderProps) {
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
         <motion.div
+          id="landing-mobile-menu"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className={`lg:hidden absolute top-20 left-0 right-0 backdrop-blur-md border-b ${shouldBeWhite ? "bg-white/95 border-gray-200" : "bg-black/95 border-white/10"}`}
+          className={`absolute top-full left-0 right-0 max-h-[calc(100dvh-5rem)] overflow-y-auto border-b backdrop-blur-md lg:hidden ${shouldBeWhite ? "bg-white/95 border-gray-200" : "bg-black/95 border-white/10"}`}
         >
           <nav className="container mx-auto px-6 py-4 flex flex-col gap-3">
+            {!user && (
+              <div className="grid grid-cols-2 gap-3 pb-1">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex min-h-11 items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${shouldBeWhite ? "border-gray-200 text-gray-900 hover:bg-gray-100" : "border-white/20 text-white hover:bg-white/10"}`}
+                >
+                  {t("login")}
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex min-h-11 items-center justify-center rounded-lg bg-[#00D9FF] px-3 text-sm font-bold text-white transition-colors hover:bg-[#00C4EA]"
+                >
+                  {t("signup")}
+                </Link>
+              </div>
+            )}
             <Link
               href="/jobs"
               onClick={() => setMobileMenuOpen(false)}

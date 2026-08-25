@@ -21,7 +21,10 @@
     "pricing": "Tarifs",
     "login": "CONNEXION",
     "signup": "S'INSCRIRE",
-    "language": "Langue"
+    "language": "Langue",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "skipToContent": "Aller au contenu principal"
   },
   "hero": {
     "tag": "Pour les candidats qui en ont assez de postuler dans le vide",
@@ -508,7 +511,8 @@
     "aria": {
       "close": "Fermer le menu de navigation",
       "open": "Ouvrir le menu de navigation",
-      "logout": "Se déconnecter"
+      "logout": "Se déconnecter",
+      "accountMenu": "Ouvrir le menu du compte"
     }
   },
   "team": {
@@ -780,19 +784,20 @@
     }
   },
   "upgradeBanner": {
+    "dismiss": "Fermer l’offre",
     "minimal": {
-      "text": "Passez Carrière pour débloquer toutes les fonctionnalités",
-      "cta": "Voir les offres"
+      "text": "Passez à Carrière pour débloquer toutes les fonctionnalités",
+      "cta": "Voir les plans"
     },
     "gradient": {
       "title": "Passez à HuntZen Carrière",
-      "subtitle": "Débloquez toutes les fonctionnalités et booste votre carrière",
-      "cta": "Voir les offres"
+      "subtitle": "Débloquez toutes les fonctionnalités et boostez votre carrière",
+      "cta": "Voir les plans"
     },
     "default": {
       "title": "Débloquez tout le potentiel de HuntZen",
       "subtitle": "Recherches illimitées, export PDF, simulation entretien et plus",
-      "cta": "Voir les offres"
+      "cta": "Voir les plans"
     },
     "featurePrompt": {
       "unlock": "Débloquer cette fonctionnalité"
@@ -874,6 +879,16 @@
         "description": "Inscrivez-vous et profitez de HuntZen gratuitement. Votre ami recevra une récompense quand vous vous inscrirez.",
         "code": "Code parrainage : {code}"
       }
+    },
+    "confirmEmail": {
+      "eyebrow": "Sécurité du compte",
+      "title": "Confirmez votre adresse email",
+      "description": "Pour protéger votre compte, confirmez que vous êtes bien à l'origine de cette inscription.",
+      "action": "Confirmer mon email",
+      "securityNote": "Ce bouton active votre compte de manière sécurisée.",
+      "invalidTitle": "Lien de confirmation incomplet",
+      "invalidDescription": "Ce lien ne contient pas les informations nécessaires. Demandez un nouvel email depuis la page d'inscription.",
+      "backToSignup": "Retour à l'inscription"
     },
     "forgotPassword": {
       "title": "Mot de passe oublié",
@@ -1416,6 +1431,10 @@
       "finder": {
         "companyPlaceholder": "Nom de l'entreprise",
         "cityPlaceholder": "Ville (optionnel)",
+        "search": "Rechercher",
+        "searching": "Recherche...",
+        "serviceError": "Impossible de contacter le service. Réessayez.",
+        "complianceNotice": "Ces emails proviennent de sources publiques. Respectez le RGPD dans vos communications.",
         "quotaReached": "Quota atteint ({count} recherches/jour en version gratuite). Passez à Pro pour un accès illimité.",
         "searchTab": "Recherche",
         "savedTab": "Contacts sauvegardés",
@@ -1530,8 +1549,13 @@
     "cancellationScheduled": "Annulation prévue",
     "upgradeTo": "Passer à {plan}",
     "featuresIncluded": "Fonctionnalités incluses",
+    "loading": "Chargement de votre abonnement...",
     "cvAnalysesUnlimited": "Analyses CV illimitées",
     "cvAnalysesPerDay": "{count} analyse(s) CV par jour",
+    "atsScoresUnlimited": "Scores ATS illimités",
+    "atsScoresPerDay": "{count} score(s) ATS par jour",
+    "matchingScoresUnlimited": "Scores de matching illimités",
+    "matchingScoresPerDay": "{count} score(s) de matching par jour",
     "assistantMessagesUnlimited": "Messages Assistant illimités",
     "assistantMessagesPerDay": "{count} messages Assistant par jour",
     "jobSearchesUnlimited": "Recherches d'emploi illimitées",
@@ -1552,6 +1576,11 @@
     "cancellationError": "Erreur lors de l'annulation"
   },
   "contact": {
+    "errors": {
+      "nameRequired": "Indiquez votre nom complet.",
+      "emailRequired": "Indiquez votre adresse email.",
+      "messageRequired": "Décrivez votre demande."
+    },
     "toasts": {
       "fillAllFields": "Merci de remplir tous les champs obligatoires.",
       "sendError": "Une erreur est survenue. Veuillez réessayer ou envoyer un email directement."
@@ -1779,6 +1808,7 @@
       "chatbotQuestion": "Posez votre question..."
     },
     "widget": {
+      "buttonLabel": "Aide et support",
       "minimize": "Réduire",
       "title": "Support HuntZen",
       "tabFaq": "Aide & FAQ",
@@ -1945,7 +1975,8 @@
     "workSchedule_evening": "Soir (17h-22h)",
     "workSchedule_night": "Nuit (22h-6h)",
     "workSchedule_fulltime": "Temps plein",
-    "allSchedules": "Tous les horaires"
+    "allSchedules": "Tous les horaires",
+    "searchLimitReached": "Limite atteinte : {count} recherche restante aujourd’hui. Passez à Pro pour continuer."
   },
   "advancedFilters": {
     "title": "Filtres avancés",
@@ -2266,6 +2297,7 @@
     "title": "Questions Fréquentes",
     "subtitle": "Tout ce que vous devez savoir sur <strong>HuntZen Jobs</strong>, votre allié pour la recherche d'emploi en France",
     "searchPlaceholder": "Rechercher une question sur HuntZen Jobs...",
+    "searchLabel": "Rechercher dans la FAQ",
     "noResults": "Aucune question trouvée",
     "noResultsHint": "Essayez un autre mot-clé ou contactez notre support",
     "contactSupport": "Contactez le support",
@@ -2467,7 +2499,9 @@
     "close": "Fermer",
     "clear": "Effacer",
     "recalculate": "Recalculer",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "changeLanguage": "Changer de langue",
+    "switchTo": "Passer en {language}"
   },
   "terms": {
     "title": "Conditions Générales",
@@ -2772,12 +2806,12 @@
     }
   },
   "cookies": {
-    "message": "We use cookies to improve your experience on HuntZen Jobs. Essential cookies are required for the site to function.",
-    "learnMore": "Learn more",
-    "decline": "Decline",
-    "accept": "Accept",
-    "close": "Close",
-    "ariaLabel": "Cookie management"
+    "message": "Nous utilisons des cookies pour améliorer votre expérience sur HuntZen Jobs. Les cookies essentiels sont nécessaires au fonctionnement du site.",
+    "learnMore": "En savoir plus",
+    "decline": "Refuser",
+    "accept": "Accepter",
+    "close": "Fermer",
+    "ariaLabel": "Gestion des cookies"
   },
   "errorBoundary": {
     "title": "Oops, something went wrong",
@@ -2786,8 +2820,8 @@
     "backHome": "Back to home"
   },
   "dashboardFooter": {
-    "privacy": "Privacy",
-    "terms": "Terms",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
     "contact": "Contact"
   },
   "faqData": {

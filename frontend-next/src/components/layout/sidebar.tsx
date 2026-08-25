@@ -15,11 +15,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useOptionalAuth } from "@/contexts/auth-context";
 import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Activity,
   Bookmark,
@@ -78,6 +85,7 @@ export function Sidebar({ className }: SidebarProps) {
   const subscription = useOptionalSubscription();
   const plan = subscription?.plan || "free";
   const isFreePlan = subscription?.isFreePlan ?? true;
+  const isSubscriptionLoaded = subscription?.isLoaded ?? false;
   const openPricingModal = subscription?.openPricingModal || (() => {});
 
   const handleLogout = async () => {
@@ -204,7 +212,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const planBadge = PLAN_BADGES[plan];
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div className="flex flex-col h-full bg-[#0D1F3C]">
       {/* Header with Logo */}
       <div className="sidebar-header flex items-center justify-between p-6 border-b border-white/10">
@@ -217,13 +225,16 @@ export function Sidebar({ className }: SidebarProps) {
         </Link>
         <div className="flex items-center gap-1">
           {user && <NotificationBell />}
-          <button
-            className="lg:hidden text-white/70 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-label={t("aria.close")}
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {mobile && (
+            <SheetClose asChild>
+              <button
+                className="flex size-11 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label={t("aria.close")}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </SheetClose>
+          )}
         </div>
       </div>
 
@@ -417,7 +428,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}
 
         {/* Upgrade button for free users */}
-        {user && isFreePlan && (
+        {user && isSubscriptionLoaded && isFreePlan && (
           <button
             onClick={() => openPricingModal()}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] text-white text-sm font-bold hover:shadow-lg hover:shadow-[#00D9FF]/30 transition-all"
@@ -432,70 +443,60 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile header */}
-      <div className="mobile-header lg:hidden fixed top-0 left-0 right-0 z-[50] h-14 flex items-center justify-between px-4 bg-white border-b border-slate-200 shadow-sm pt-safe">
-        <button
-          className="hamburger-btn text-slate-700 p-2 hover:text-[#00D9FF] transition-colors rounded-lg hover:bg-slate-100"
-          onClick={() => setIsMobileMenuOpen(true)}
-          aria-label={t("aria.open")}
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        {/* Mobile header */}
+        <div className="mobile-header lg:hidden fixed top-0 left-0 right-0 z-[50] h-14 flex items-center justify-between px-4 bg-white border-b border-slate-200 shadow-sm pt-safe">
+          <SheetTrigger asChild>
+            <button
+              className="hamburger-btn flex size-11 items-center justify-center rounded-lg text-slate-700 transition-colors hover:bg-slate-100 hover:text-[#00D9FF]"
+              aria-label={t("aria.open")}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </SheetTrigger>
+
+          <Link href="/" className="mobile-logo flex items-center gap-2 group">
+            <TextLogo
+              isDark
+              size="sm"
+              showPulse
+              className="group-hover:opacity-80 transition-opacity"
+            />
+          </Link>
+
+          {user ? (
+            <span className="mobile-tool-name text-slate-500 text-sm font-medium">
+              {navigation.find((n) => pathname.startsWith(n.href))?.name ||
+                "HuntZen"}
+            </span>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="px-3 py-1.5 bg-[#00D9FF] text-white text-xs font-semibold rounded-lg hover:bg-[#00C4EA] transition-colors"
+              >
+                {t("mobile.login")}
+              </Link>
+              <Link
+                href="/signup"
+                className="px-3 py-1.5 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                {t("mobile.signup")}
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          aria-describedby={undefined}
+          className="huntzen-sidebar w-[280px] gap-0 border-0 bg-[#0D1F3C] p-0 shadow-2xl sm:max-w-[280px] lg:hidden"
         >
-          <Menu className="w-6 h-6" />
-        </button>
-
-        <Link href="/" className="mobile-logo flex items-center gap-2 group">
-          <TextLogo
-            isDark
-            size="sm"
-            showPulse
-            className="group-hover:opacity-80 transition-opacity"
-          />
-        </Link>
-
-        {user ? (
-          <span className="mobile-tool-name text-slate-500 text-sm font-medium">
-            {navigation.find((n) => pathname.startsWith(n.href))?.name ||
-              "HuntZen"}
-          </span>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="px-3 py-1.5 bg-[#00D9FF] text-white text-xs font-semibold rounded-lg hover:bg-[#00C4EA] transition-colors"
-            >
-              {t("mobile.login")}
-            </Link>
-            <Link
-              href="/signup"
-              className="px-3 py-1.5 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors"
-            >
-              {t("mobile.signup")}
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Mobile backdrop */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="sidebar-backdrop lg:hidden fixed inset-0 z-[45] bg-black/50"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Mobile sidebar */}
-      <motion.aside
-        initial={{ x: -280 }}
-        animate={{ x: isMobileMenuOpen ? 0 : -280 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="huntzen-sidebar lg:hidden fixed inset-y-0 left-0 z-[50] w-[280px] bg-[#0D1F3C] shadow-2xl"
-      >
-        <SidebarContent />
-      </motion.aside>
+          <SheetTitle className="sr-only">{t("label")}</SheetTitle>
+          <SidebarContent mobile />
+        </SheetContent>
+      </Sheet>
 
       {/* Desktop sidebar */}
       <aside className="huntzen-sidebar hidden lg:flex lg:flex-col lg:w-[280px] lg:fixed lg:inset-y-0 bg-[#0D1F3C] border-r border-white/10">

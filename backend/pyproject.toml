@@ -62,7 +62,7 @@ dependencies = [
     "stripe>=8.0.0",
 
     # Email Service (Sprint 3)
-    "resend>=2.0.0",
+    "resend>=2.8.0",
     "email-validator>=2.0.0",
 
     # Utilities
@@ -93,7 +93,7 @@ dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.1.0",
-    "ruff>=0.1.0",
+    "ruff==0.16.3",
     "mypy>=1.8.0",
     "pre-commit>=3.6.0",
 ]
@@ -111,6 +111,8 @@ packages = ["src"]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -122,7 +124,7 @@ select = [
 ]
 ignore = ["E501", "B008", "C901"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["src"]
 
 [tool.mypy]
@@ -133,5 +135,6 @@ disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 addopts = "-v --cov=src --cov-report=term-missing"

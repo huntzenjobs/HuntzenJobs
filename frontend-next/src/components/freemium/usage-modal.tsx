@@ -155,6 +155,7 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
     isLoaded,
     savedJobsUsed,
     savedJobsLimit,
+    hasFeature,
   } = useSubscription();
 
   const t = useTranslations("usageModal");
@@ -341,21 +342,23 @@ export function UsageModal({ isOpen, onClose }: UsageModalProps) {
           </div>
 
           {/* General Quotas (total, not daily) */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {t("generalUsageTitle")}
-            </h3>
-            <div className="grid gap-4">
-              <QuotaCard
-                title={t("savedJobs")}
-                icon={<Bookmark className="w-4 h-4 text-white" />}
-                used={usage?.savedJobsCount || 0}
-                limit={limits.saved_jobs_per_day}
-                color="bg-amber-500"
-                t={t}
-              />
+          {hasFeature("has_favorites") && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {t("generalUsageTitle")}
+              </h3>
+              <div className="grid gap-4">
+                <QuotaCard
+                  title={t("savedJobs")}
+                  icon={<Bookmark className="w-4 h-4 text-white" />}
+                  used={usage?.savedJobsCount || 0}
+                  limit={limits.saved_jobs_per_day}
+                  color="bg-amber-500"
+                  t={t}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Upgrade CTA for free users */}
           {isFreePlan && (

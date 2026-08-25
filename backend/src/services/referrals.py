@@ -10,6 +10,129 @@ from datetime import UTC, datetime
 logger = logging.getLogger(__name__)
 
 
+async def enqueue_referral_reward_debt(
+    supabase_client,
+    *,
+    referral_signup_id: str,
+    referrer_id: str,
+    reward_type: str,
+    reward_value: dict,
+    source_key: str,
+) -> dict:
+    """Créer une dette de récompense unique, livrée par l'outbox."""
+    result = supabase_client.rpc(
+        "enqueue_referral_reward",
+        {
+            "p_referral_signup_id": referral_signup_id,
+            "p_referrer_id": referrer_id,
+            "p_reward_type": reward_type,
+            "p_reward_value": reward_value,
+            "p_source_key": source_key,
+        },
+    ).execute()
+    data = result.data[0] if isinstance(result.data, list) and result.data else result.data
+    if not isinstance(data, dict) or not data.get("reward_id"):
+        raise RuntimeError("Invalid referral reward enqueue response")
+    return data
+
+
+async def apply_pending_referral_reward(
+    supabase_client,
+    reward_id: str,
+) -> bool:
+    """Appliquer une dette de récompense durable et idempotente."""
+    result = supabase_client.rpc(
+        "apply_referral_reward_record",
+        {"p_reward_id": reward_id},
+    ).execute()
+    result_data = result.data[0] if isinstance(result.data, list) and result.data else result.data
+    if not isinstance(result_data, dict):
+        raise RuntimeError("Invalid referral reward transaction response")
+    if result_data.get("applied") is True:
+        return True
+    if result_data.get("requires_external") is not True:
+        raise RuntimeError("Referral reward was not applied")
+
+    external_type = result_data.get("external_type")
+    if external_type == "stripe_trial_extension":
+        import stripe as stripe_lib
+
+        subscription_id = result_data.get("subscription_id")
+        trial_end = result_data.get("trial_end")
+        lease_token = result_data.get("lease_token")
+        idempotency_key = result_data.get("idempotency_key")
+        if (
+            not isinstance(subscription_id, str)
+            or not isinstance(trial_end, int)
+            or isinstance(trial_end, bool)
+            or not isinstance(lease_token, str)
+            or not isinstance(idempotency_key, str)
+            or not idempotency_key
+        ):
+            raise RuntimeError("Invalid Stripe trial extension response")
+        stripe_lib.Subscription.modify(
+            subscription_id,
+            trial_end=trial_end,
+            proration_behavior="none",
+            idempotency_key=idempotency_key,
+        )
+        finalized = supabase_client.rpc(
+            "mark_referral_trial_extension_applied",
+            {
+                "p_reward_id": reward_id,
+                "p_subscription_id": subscription_id,
+                "p_trial_end": trial_end,
+                "p_lease_token": lease_token,
+            },
+        ).execute()
+        finalized_data = (
+            finalized.data[0]
+            if isinstance(finalized.data, list) and finalized.data
+            else finalized.data
+        )
+        if finalized_data is not True:
+            raise RuntimeError("Referral trial extension finalization failed")
+        return True
+    elif external_type == "stripe_coupon":
+        reward_result = supabase_client.table("referral_rewards")\
+            .select("id,referrer_id,reward_value,applied")\
+            .eq("id", reward_id)\
+            .maybe_single()\
+            .execute()
+        reward = reward_result.data
+        if not isinstance(reward, dict):
+            raise RuntimeError("Referral reward missing")
+        if reward.get("applied") is True:
+            return True
+        applied = await _apply_stripe_coupon(
+            supabase_client,
+            str(reward["referrer_id"]),
+            reward["reward_value"],
+            reward_id,
+        )
+    else:
+        raise RuntimeError("Unsupported external referral reward")
+    if applied is not True:
+        raise RuntimeError("Stripe referral reward application failed")
+    update_result = supabase_client.table("referral_rewards")\
+        .update({
+            "applied": True,
+            "applied_at": datetime.now(UTC).isoformat(),
+        })\
+        .eq("id", reward_id)\
+        .eq("applied", False)\
+        .execute()
+    if not update_result.data:
+        replay_result = supabase_client.table("referral_rewards")\
+            .select("applied")\
+            .eq("id", reward_id)\
+            .maybe_single()\
+            .execute()
+        if not isinstance(replay_result.data, dict) or replay_result.data.get("applied") is not True:
+            raise RuntimeError("Referral reward finalization failed")
+    return True
+
+
 async def apply_referral_reward(
     supabase_client,
     referral_signup_id: str,
@@ -146,18 +269,24 @@ async def _apply_stripe_coupon(
             return False
 
         sub_res = supabase_client.table("user_subscriptions") \
-            .select("stripe_customer_id") \
+            .select("stripe_subscription_id") \
             .eq("user_id", referrer_id) \
-            .eq("status", "active") \
+            .in_("status", ["active", "trialing"]) \
             .limit(1) \
             .execute()
 
-        if not sub_res.data or not sub_res.data[0].get("stripe_customer_id"):
-            logger.warning(f"[REFERRAL] No Stripe customer for referrer {referrer_id}")
+        if not sub_res.data or not str(
+            sub_res.data[0].get("stripe_subscription_id", "")
+        ).startswith("sub_"):
+            logger.warning(f"[REFERRAL] No Stripe subscription for referrer {referrer_id}")
             return False
 
-        customer_id = sub_res.data[0]["stripe_customer_id"]
-        stripe_lib.Customer.modify(customer_id, coupon=coupon_id)
+        subscription_id = sub_res.data[0]["stripe_subscription_id"]
+        stripe_lib.Subscription.modify(
+            subscription_id,
+            discounts=[{"coupon": coupon_id}],
+            idempotency_key=f"referral-reward:{reward_id}",
+        )
 
         supabase_client.table("referral_rewards").update({
             "stripe_coupon_id": coupon_id,

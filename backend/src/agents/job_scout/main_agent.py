@@ -221,16 +221,16 @@ class JobScoutAgent(BaseAgent):
             logger.info(f"[{self.name}] Using {len(active_providers)} providers")
 
             # Step 3: Aggregate — fan-out original + expanded in parallel for max coverage
-            aggregate_kwargs = dict(
-                providers=active_providers,
-                location=city,
-                country_code=country_code,
-                max_per_provider=max_results,
-                max_days=max_days,
-                contract_type=contract_type,
-                radius_km=radius_km,
-                include_remote=include_remote,
-            )
+            aggregate_kwargs = {
+                "providers": active_providers,
+                "location": city,
+                "country_code": country_code,
+                "max_per_provider": max_results,
+                "max_days": max_days,
+                "contract_type": contract_type,
+                "radius_km": radius_km,
+                "include_remote": include_remote,
+            }
 
             # Always search with the corrected query (abbreviation preserved)
             search_tasks = [aggregate_jobs(query=search_query, **aggregate_kwargs)]

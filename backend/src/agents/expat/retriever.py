@@ -79,10 +79,15 @@ class DocumentRetriever:
 
             try:
                 embedding = await embed_query(query)
-            except RuntimeError:
-                # RuntimeError = erreur de configuration (ex. JINA_API_KEY manquante).
-                # On la laisse remonter pour éviter un faux "aucune source" silencieux.
-                raise
+            except RuntimeError as exc:
+                # Une dépendance d'embedding absente ne doit pas exposer une
+                # erreur technique au client. L'agent retournera son message
+                # prudent « aucune source officielle vérifiée ».
+                logger.warning(
+                    "[DocumentRetriever] Embeddings indisponibles, mode dégradé: %s",
+                    exc,
+                )
+                return []
             except Exception as exc:
                 # Erreurs réseau transitoires : on logue et on continue avec la sous-requête suivante.
                 logger.error(

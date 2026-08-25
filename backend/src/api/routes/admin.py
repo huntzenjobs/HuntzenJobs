@@ -8,6 +8,7 @@ All endpoints require is_admin = TRUE in profiles table.
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from uuid import uuid4
 
 import stripe as stripe_lib
 from fastapi import APIRouter, HTTPException, Query, status
@@ -32,6 +33,11 @@ from src.services.email import (
     send_weekly_summary,
     send_welcome,
 )
+
+
+def _admin_grant_subscription_id() -> str:
+    """Crée un identifiant non-Stripe unique, reconnaissable par les crons."""
+    return f"admin_granted:{uuid4()}"
 
 
 async def _invalidate_user_cache(user_id: str) -> None:
@@ -553,7 +559,7 @@ async def force_plan_change(
             "user_id": user_id,
             "plan_id": body.plan_id,
             "status": "active",
-            "stripe_subscription_id": "admin_granted",
+            "stripe_subscription_id": _admin_grant_subscription_id(),
             "current_period_start": now.isoformat(),
             "current_period_end": (now + timedelta(days=30)).isoformat(),
         }).execute()
@@ -644,7 +650,7 @@ async def create_user(
                     "user_id": new_user_id,
                     "plan_id": plan_result.data["id"],
                     "status": "active",
-                    "stripe_subscription_id": "admin_granted",
+                    "stripe_subscription_id": _admin_grant_subscription_id(),
                     "current_period_start": now.isoformat(),
                     "current_period_end": (now + timedelta(days=36500)).isoformat(),
                 }).execute()
@@ -1166,7 +1172,10 @@ async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
     month_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
     users_res = supabase.table("profiles").select("id", count="exact").execute()
-    webhooks_res = supabase.table("webhook_failures").select("id", count="exact").eq("resolved", False).execute()
+    webhooks_res = supabase.table("stripe_webhook_events").select(
+        "id",
+        count="exact",
+    ).eq("status", "failed").execute()
 
     # Active paid subscriptions + MRR (based on real Stripe payments)
     # NB: all users have at least a "free" plan in user_subscriptions.
@@ -1600,20 +1609,43 @@ async def get_webhook_logs(
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=50, ge=1, le=100),
 ) -> dict[str, Any]:
-    """List Stripe webhook failures."""
+    """Lister les échecs depuis le journal idempotent utilisé en production."""
     supabase = get_supabase_client()
 
     try:
         offset = (page - 1) * per_page
-        result = supabase.table("webhook_failures").select("*").order(
-            "created_at", desc=True
+        result = supabase.table("stripe_webhook_events").select(
+            "id,stripe_event_id,event_type,status,error_type,"
+            "processing_started_at,failed_at,created_at",
+            count="exact",
+        ).eq("status", "failed").order(
+            "failed_at",
+            desc=True,
         ).range(offset, offset + per_page - 1).execute()
 
-        count_result = supabase.table("webhook_failures").select("id", count="exact").execute()
+        failures = []
+        for event in result.data or []:
+            last_attempt_at = event.get("failed_at") or event.get("created_at")
+            failures.append({
+                "id": event["id"],
+                "stripe_event_id": event["stripe_event_id"],
+                "event_type": event["event_type"],
+                "error_message": event.get("error_type") or "Webhook processing failed",
+                "error_traceback": None,
+                "retry_count": 0,
+                "first_attempt_at": (
+                    event.get("processing_started_at") or event.get("created_at")
+                ),
+                "last_attempt_at": last_attempt_at,
+                "resolved": False,
+                "resolved_at": None,
+                "created_at": event["created_at"],
+                "updated_at": last_attempt_at,
+            })
 
         return {
-            "failures": result.data or [],
-            "total": count_result.count or 0,
+            "failures": failures,
+            "total": result.count or 0,
         }
 
     except Exception:
@@ -1625,45 +1657,22 @@ async def retry_webhook(
     failure_id: str,
     admin: AdminUserDep,
 ) -> dict[str, Any]:
-    """Rejoue un webhook Stripe échoué via stripe.Event.retrieve + redispatch."""
+    """Refuser le faux retry historique tant qu'un redispatch sûr n'est pas exposé."""
     supabase = get_supabase_client()
-    settings = get_settings()
 
-    failure = supabase.table("webhook_failures").select(
-        "stripe_event_id, event_type, resolved"
-    ).eq("id", failure_id).maybe_single().execute()
+    failure = supabase.table("stripe_webhook_events").select(
+        "id,stripe_event_id,event_type,status"
+    ).eq("id", failure_id).eq("status", "failed").maybe_single().execute()
 
     if not failure.data:
         raise HTTPException(status_code=404, detail="Webhook failure introuvable")
-    if failure.data.get("resolved"):
-        raise HTTPException(status_code=400, detail="Webhook déjà résolu")
-
-    stripe_lib.api_key = settings.get_stripe_secret_key()
-    stripe_event_id = failure.data.get("stripe_event_id")
-
-    if not stripe_event_id:
-        raise HTTPException(status_code=400, detail="Pas de stripe_event_id pour ce webhook")
-
-    try:
-        # Récupérer l'événement Stripe original
-        event = stripe_lib.Event.retrieve(stripe_event_id)
-        # Marquer comme résolu (le redispatch est loggué — le retry réel
-        # nécessite l'endpoint webhook complet, ici on simule via resolve)
-        supabase.table("webhook_failures").update({
-            "resolved": True,
-            "resolved_at": datetime.now(UTC).isoformat(),
-            "resolution_note": f"Retry by admin {admin.get('email', admin['id'])}",
-        }).eq("id", failure_id).execute()
-
-        _log_admin_action(supabase, admin["id"], "admin.webhook_retried", None, {
-            "failure_id": failure_id,
-            "stripe_event_id": stripe_event_id,
-            "event_type": event.type,
-        })
-        return {"ok": True, "stripe_event_id": stripe_event_id, "event_type": event.type}
-
-    except stripe_lib.error.StripeError as e:
-        raise HTTPException(status_code=502, detail=f"Erreur Stripe : {str(e)}") from None
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=(
+            "Retry automatique désactivé : renvoyer cet événement depuis le "
+            "Stripe Dashboard afin de conserver la vérification de signature."
+        ),
+    )
 
 
 # ============================================================
@@ -1694,9 +1703,15 @@ async def get_referral_leaderboard(
     # Subscriptions (referrer's own plan)
     subs_map: dict[str, dict[str, str | None]] = {}
     if referrer_ids:
-        sr = supabase.table("user_subscriptions").select("user_id, plan_name, status").in_("user_id", referrer_ids).eq("status", "active").execute()
+        sr = supabase.table("user_subscriptions").select(
+            "user_id, status, subscription_plans(name)"
+        ).in_("user_id", referrer_ids).eq("status", "active").execute()
         for s in (sr.data or []):
-            subs_map[s["user_id"]] = {"plan": s.get("plan_name"), "status": s.get("status")}
+            plan = s.get("subscription_plans") or {}
+            subs_map[s["user_id"]] = {
+                "plan": plan.get("name"),
+                "status": s.get("status"),
+            }
 
     # Paying referrals + last signup per referral_id
     paying_map: dict[str, list[str]] = {}  # referral_id -> list of converted_plan
@@ -1794,20 +1809,36 @@ async def update_referral_config(body: ReferralConfigUpdate, admin: AdminUserDep
 
 @router.post("/referrals/grant-reward/{signup_id}")
 async def grant_manual_reward(signup_id: str, admin: AdminUserDep) -> dict[str, Any]:
-    """Manually apply a referral reward."""
+    """Créer une dette de récompense manuelle idempotente."""
     supabase = get_supabase_client()
-    from src.services.referrals import apply_referral_reward
+    from src.services.referrals import enqueue_referral_reward_debt
     signup_res = supabase.table("referral_signups")         .select("id, referral_id, referred_user_id, converted_plan, referrals(referrer_id)")         .eq("id", signup_id).single().execute()
     if not signup_res.data:
         raise HTTPException(status_code=404, detail="Referral signup not found")
     signup = signup_res.data
     referrer_id = signup["referrals"]["referrer_id"]
-    success = await apply_referral_reward(
-        supabase, referral_signup_id=signup_id, referrer_id=referrer_id,
-        plan_name=signup.get("converted_plan") or "manual",
+    config_res = supabase.table("referral_config").select(
+        "conversion_reward_type,conversion_reward_value"
+    ).eq("id", 1).maybe_single().execute()
+    config = config_res.data or {}
+    reward_type = config.get("conversion_reward_type")
+    reward_value = config.get("conversion_reward_value")
+    if not isinstance(reward_type, str) or not isinstance(reward_value, dict):
+        raise HTTPException(status_code=409, detail="Referral reward is not configured")
+    reward = await enqueue_referral_reward_debt(
+        supabase,
+        referral_signup_id=signup_id,
+        referrer_id=referrer_id,
+        reward_type=reward_type,
+        reward_value=reward_value,
+        source_key=f"manual:{signup_id}",
     )
     _log_admin_action(supabase, admin["id"], "admin.referral_reward_granted", {"signup_id": signup_id})
-    return {"ok": success}
+    return {
+        "ok": True,
+        "queued": reward.get("applied") is not True,
+        "reward_id": reward["reward_id"],
+    }
 
 
 @router.get("/referrals/signups")

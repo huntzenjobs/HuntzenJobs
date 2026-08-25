@@ -48,6 +48,7 @@ export default function RecruiterContactPage() {
   const router = useRouter();
   const auth = useOptionalAuth();
   const user = auth?.user;
+  const accessToken = auth?.session?.access_token;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -95,7 +96,7 @@ export default function RecruiterContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+    if (!user || !accessToken) {
       router.push(
         "/login?redirectTo=" + encodeURIComponent("/recruiter-contact"),
       );
@@ -127,11 +128,15 @@ export default function RecruiterContactPage() {
 
     try {
       // Create recruiter request
-      const response = await huntzenApi.createRecruiterRequest(formData);
+      const response = await huntzenApi.createRecruiterRequest(
+        formData,
+        accessToken,
+      );
 
       // Create Stripe payment session
       const paymentResponse = await huntzenApi.createRecruiterPayment(
         response.request_id,
+        accessToken,
       );
 
       // Redirect to Stripe checkout

@@ -73,7 +73,9 @@ export function FAQClient() {
             <div className="max-w-2xl mx-auto relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
-                type="text"
+                type="search"
+                aria-label={t("searchLabel")}
+                autoComplete="off"
                 placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -121,12 +123,18 @@ export function FAQClient() {
                         >
                           {/* Question */}
                           <button
+                            type="button"
+                            aria-expanded={isOpen}
+                            aria-controls={`faq-answer-${key}`}
                             onClick={() =>
                               toggleQuestion(categoryIndex, questionIndex)
                             }
                             className="w-full px-6 py-5 flex items-center justify-between gap-4 text-left group"
                           >
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#00D9FF] transition-colors flex-1">
+                            <h3
+                              id={`faq-question-${key}`}
+                              className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#00D9FF] transition-colors flex-1"
+                            >
                               {item.q}
                             </h3>
                             <motion.div
@@ -150,7 +158,12 @@ export function FAQClient() {
                                 transition={{ duration: 0.3 }}
                                 className="overflow-hidden"
                               >
-                                <div className="px-6 pb-5 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                <div
+                                  id={`faq-answer-${key}`}
+                                  role="region"
+                                  aria-labelledby={`faq-question-${key}`}
+                                  className="px-6 pb-5 pt-2 border-t border-gray-100 dark:border-gray-700"
+                                >
                                   <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                                     {item.a}
                                   </p>

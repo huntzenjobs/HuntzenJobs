@@ -43,8 +43,9 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_SENTRY_DSN) {
   if (Sentry.replayIntegration) {
     integrations.push(
       Sentry.replayIntegration({
-        // Mask all text content and block all media by default for privacy
-        maskAllText: false,
+        // Les parcours HuntZen contiennent des CV et données de carrière : tout masquer.
+        maskAllText: true,
+        maskAllInputs: true,
         blockAllMedia: true,
       }),
     );
@@ -55,7 +56,10 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_SENTRY_DSN) {
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
     // Environment (development, staging, production)
-    environment: process.env.NODE_ENV || "development",
+    environment:
+      process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ||
+      process.env.NODE_ENV ||
+      "development",
 
     // Performance Monitoring - respect cookie consent for tracing
     tracesSampleRate: hasAnalyticsConsent()

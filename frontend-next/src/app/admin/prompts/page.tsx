@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Save, RefreshCw, ChevronRight } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -60,6 +70,9 @@ export default function PromptsPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [pendingPromptName, setPendingPromptName] = useState<string | null>(
+    null,
+  );
 
   const loadList = useCallback(async () => {
     setLoading(true);
@@ -77,15 +90,7 @@ export default function PromptsPage() {
     loadList();
   }, [loadList]);
 
-  const selectPrompt = async (name: string) => {
-    if (dirty && selected) {
-      if (
-        !confirm(
-          "Des modifications non sauvegardées seront perdues. Continuer ?",
-        )
-      )
-        return;
-    }
+  const loadPrompt = async (name: string) => {
     setLoadingDetail(true);
     try {
       const data = await adminFetch(`/api/admin/prompts/${name}`);
@@ -97,6 +102,21 @@ export default function PromptsPage() {
     } finally {
       setLoadingDetail(false);
     }
+  };
+
+  const selectPrompt = (name: string) => {
+    if (dirty && selected) {
+      setPendingPromptName(name);
+      return;
+    }
+    void loadPrompt(name);
+  };
+
+  const discardChangesAndContinue = () => {
+    if (!pendingPromptName) return;
+    const name = pendingPromptName;
+    setPendingPromptName(null);
+    void loadPrompt(name);
   };
 
   const savePrompt = async () => {
@@ -133,12 +153,13 @@ export default function PromptsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-[280px_1fr] gap-6 items-start">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[280px_1fr]">
         {/* Liste */}
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium">Prompts</CardTitle>
             <Button
+              aria-label="Actualiser la liste des prompts"
               variant="ghost"
               size="sm"
               onClick={loadList}
@@ -223,6 +244,7 @@ export default function PromptsPage() {
                   </div>
                 ) : (
                   <Textarea
+                    aria-label="Contenu du prompt"
                     value={editContent}
                     onChange={(e) => {
                       setEditContent(e.target.value);
@@ -236,11 +258,33 @@ export default function PromptsPage() {
             </>
           ) : (
             <CardContent className="flex items-center justify-center h-64 text-muted-foreground text-sm">
-              Sélectionnez un prompt dans la liste pour l'éditer.
+              Sélectionnez un prompt dans la liste pour l’éditer.
             </CardContent>
           )}
         </Card>
       </div>
+
+      <AlertDialog
+        open={pendingPromptName !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingPromptName(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ignorer les modifications ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Les modifications non enregistrées de ce prompt seront perdues.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuer l’édition</AlertDialogCancel>
+            <AlertDialogAction onClick={discardChangesAndContinue}>
+              Ignorer les modifications
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -132,7 +132,6 @@ export function SearchFormInline({
   const [query, setQuery] = useState(initialQuery ?? "");
   const [location, setLocation] = useState(initialLocation ?? "");
   const [country, setCountry] = useState(initialCountry ?? "");
-  const [selectedCountryName, setSelectedCountryName] = useState("");
   const [isCountryValid, setIsCountryValid] = useState(!!initialCountry);
   const [selectedContracts, setSelectedContracts] = useState<string[]>([]);
   const [selectedWorkDays, setSelectedWorkDays] = useState<string[]>([]);
@@ -200,7 +199,6 @@ export function SearchFormInline({
     setCountry(value);
 
     if (!value) {
-      setSelectedCountryName("");
       setIsCountryValid(false);
       return;
     }
@@ -211,7 +209,6 @@ export function SearchFormInline({
           (c) => c.code.toLowerCase() === value.toLowerCase(),
         );
         if (found) {
-          setSelectedCountryName(found.name);
           setIsCountryValid(true);
         } else {
           setIsCountryValid(false);
@@ -265,7 +262,7 @@ export function SearchFormInline({
 
     if (!canUse("job_search")) {
       const remaining = getRemaining("job_search");
-      toast.error(`Limite de recherches atteinte. Rechargez à ${remaining}`);
+      toast.error(t("searchLimitReached", { count: remaining }));
       return;
     }
 
@@ -473,6 +470,7 @@ export function SearchFormInline({
               placeholder={t("countryPlaceholder")}
               value={country}
               onChange={handleCountryChange}
+              onOptionSelect={() => setIsCountryValid(true)}
               onSearch={fetchCountries}
               onBlurResolve={handleCountryBlurResolve}
               disabled={disabled || isLoading}
@@ -591,6 +589,7 @@ export function SearchFormInline({
           placeholder={t("countryPlaceholder")}
           value={country}
           onChange={handleCountryChange}
+          onOptionSelect={() => setIsCountryValid(true)}
           onSearch={fetchCountries}
           onBlurResolve={handleCountryBlurResolve}
           disabled={disabled || isLoading}
