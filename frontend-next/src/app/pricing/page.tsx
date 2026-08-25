@@ -26,6 +26,7 @@ import { useTranslations } from "next-intl";
 import { useConversionPopup } from "@/components/freemium/conversion-popups";
 import { usePricingPlans } from "@/hooks/use-pricing-data";
 import { createClient } from "@/lib/supabase/client";
+import { track } from "@/lib/track";
 import { useRouter } from "next/navigation";
 
 // Icon mapping
@@ -193,6 +194,11 @@ export default function PricingPage() {
       }
 
       if (data.checkout_url) {
+        void track.payment.beginCheckout(
+          planId,
+          billingPeriod,
+          accessToken,
+        );
         window.location.href = data.checkout_url;
       } else {
         throw new Error("No checkout URL returned");

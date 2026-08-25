@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
+import { track } from "@/lib/track";
 
 type VerificationStatus = "polling" | "success" | "timeout" | "error";
 
@@ -25,6 +26,7 @@ export default function PaymentSuccessPage() {
   const [status, setStatus] = useState<VerificationStatus>("polling");
   const [message, setMessage] = useState(t("verifying"));
   const [pollingAttempts, setPollingAttempts] = useState(0);
+  const purchaseTracked = useRef(false);
 
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
@@ -83,6 +85,11 @@ export default function PaymentSuccessPage() {
           localStorage.removeItem("huntzen_subscription_cache");
           localStorage.removeItem("huntzen_subscription_cache_expiry");
           window.dispatchEvent(new CustomEvent("subscription-changed"));
+
+          if (!purchaseTracked.current) {
+            purchaseTracked.current = true;
+            void track.payment.purchase(planName, session.access_token);
+          }
 
           setStatus("success");
           setMessage(t("verifying"));

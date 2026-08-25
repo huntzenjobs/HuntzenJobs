@@ -220,6 +220,11 @@ export function PricingModal() {
       }
 
       if (data.checkout_url) {
+        void track.payment.beginCheckout(
+          planId,
+          billingPeriod,
+          session.access_token,
+        );
         window.location.href = data.checkout_url;
       } else {
         throw new Error(tModal("toasts.noCheckoutUrl"));
