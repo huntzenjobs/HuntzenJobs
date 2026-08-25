@@ -104,6 +104,18 @@ def test_authenticated_cannot_mutate_usage_quotas(staging_connection) -> None:
         )
 
 
+def test_authenticated_has_no_privilege_on_legacy_user_sessions(
+    staging_connection,
+) -> None:
+    for privilege in ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE"):
+        assert not _has_table_privilege(
+            staging_connection,
+            "authenticated",
+            "user_sessions",
+            privilege,
+        ), f"authenticated conserve {privilege} sur user_sessions"
+
+
 def test_authenticated_cannot_mutate_recruiter_payment_or_workflow(
     staging_connection,
 ) -> None:
