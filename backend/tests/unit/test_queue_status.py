@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import arq
 import arq.jobs
@@ -7,6 +8,11 @@ from arq.jobs import JobStatus
 from fastapi import HTTPException
 
 from src.api.routes.queue import get_status
+
+
+class FakePool:
+    def __init__(self) -> None:
+        self.aclose = AsyncMock()
 
 
 class FakeJob:
@@ -25,14 +31,17 @@ class FakeJob:
 
 
 @pytest.fixture(autouse=True)
-def mock_arq(monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_arq(monkeypatch: pytest.MonkeyPatch) -> FakePool:
+    pool = FakePool()
+
     async def fake_create_pool(settings: object) -> object:
-        return object()
+        return pool
 
     monkeypatch.setattr(arq, "create_pool", fake_create_pool)
     monkeypatch.setattr(arq.jobs, "Job", FakeJob)
     FakeJob.status_value = JobStatus.queued
     FakeJob.result_value = None
+    return pool
 
 
 @pytest.mark.asyncio
@@ -82,3 +91,10 @@ async def test_get_status_returns_404_for_unknown_job() -> None:
         await get_status("missing-job")
 
     assert error.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_status_closes_its_arq_pool(mock_arq: FakePool) -> None:
+    await get_status("job-123")
+
+    mock_arq.aclose.assert_awaited_once()

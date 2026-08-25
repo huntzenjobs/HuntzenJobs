@@ -27,6 +27,7 @@ async def get_status(
     - `completed`  → {status, result}
     - `failed`     → {status, error}
     """
+    pool = None
     try:
         from arq import create_pool
         from arq.jobs import Job, JobStatus
@@ -54,6 +55,9 @@ async def get_status(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Queue error: {e}") from None
+    finally:
+        if pool is not None:
+            await pool.aclose()
 
 
 @router.get("/all-stats")
