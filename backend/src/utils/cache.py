@@ -75,14 +75,16 @@ async def get_redis() -> aioredis.Redis | None:
         return None
 
     try:
-        _redis_client = aioredis.from_url(
+        pool = aioredis.BlockingConnectionPool.from_url(
             url,
             encoding="utf-8",
             decode_responses=True,
-            max_connections=20,
+            max_connections=50,
+            timeout=5,
             socket_connect_timeout=5,
             socket_keepalive=True,
         )
+        _redis_client = aioredis.Redis(connection_pool=pool)
         await _redis_client.ping()
         logger.info("✅ Redis client initialized (Railway Redis)")
     except Exception as e:
