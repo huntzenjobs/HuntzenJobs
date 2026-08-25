@@ -50,7 +50,7 @@ export default function AdminLivePage() {
 
   // Charger l'état réel de maintenance au montage
   useEffect(() => {
-    adminFetch("/admin/maintenance")
+    adminFetch("/api/admin/maintenance")
       .then((d) => setMaintenance(d.active ?? false))
       .catch(() => {});
   }, []);
@@ -58,8 +58,8 @@ export default function AdminLivePage() {
   async function toggleMaintenance() {
     try {
       const path = maintenance
-        ? "/admin/maintenance/disable"
-        : "/admin/maintenance/enable";
+        ? "/api/admin/maintenance/disable"
+        : "/api/admin/maintenance/enable";
       await adminFetch(path, { method: "POST" });
       setMaintenance(!maintenance);
     } catch {
@@ -69,7 +69,7 @@ export default function AdminLivePage() {
 
   async function saveBanner() {
     try {
-      await adminFetch("/admin/banner", {
+      await adminFetch("/api/admin/banner", {
         method: "POST",
         body: JSON.stringify({
           text: bannerText,
