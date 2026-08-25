@@ -12,6 +12,7 @@ Couverture :
 CV Analysis (Modal pipeline) n'est pas ici : il a déjà son propre système async.
 """
 import asyncio
+import json
 import logging
 from time import monotonic
 
@@ -105,10 +106,11 @@ async def cv_adapt_task(
     agent = get_cv_adapter_main()
 
     async with _groq_semaphore:
-        result = await agent.adapt(
+        result = await agent.run(
             cv_text=cv_text,
             job_description=job_description,
             language=language,
+            template="ats",
         )
 
     return result
@@ -118,24 +120,36 @@ async def cv_adapt_task(
 
 async def cover_letter_task(
     ctx: dict,
-    cv_text: str,
-    job_description: str,
+    cv_text: str | None = None,
+    job_description: str = "",
     language: str = "fr",
     company_name: str | None = None,
     job_title: str | None = None,
+    cv_data: dict | None = None,
 ) -> dict:
     """Génère une lettre de motivation JSON (CVAdapterAgent)."""
     from src.api.deps import get_cv_adapter_main
+
+    del job_title  # Compatibilité avec les tâches déjà placées dans la file.
+    if cv_data is None:
+        if not cv_text:
+            raise ValueError("Les données du CV sont requises")
+        try:
+            parsed_cv_data = json.loads(cv_text)
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise ValueError("Les données du CV en file sont invalides") from exc
+        if not isinstance(parsed_cv_data, dict):
+            raise ValueError("Les données du CV en file doivent être un objet JSON")
+        cv_data = parsed_cv_data
 
     agent = get_cv_adapter_main()
 
     async with _groq_semaphore:
         result = await agent.generate_cover_letter(
-            cv_text=cv_text,
+            cv_data=cv_data,
             job_description=job_description,
             language=language,
-            company_name=company_name,
-            job_title=job_title,
+            company_name=company_name or "",
         )
 
     return result

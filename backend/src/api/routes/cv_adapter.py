@@ -5,7 +5,6 @@ Endpoints for smart CV adaptation to job offers.
 """
 
 import io
-import json
 import logging
 import re
 from typing import TYPE_CHECKING
@@ -751,14 +750,12 @@ async def generate_cover_letter_json(
         pool = await _get_arq_pool()
         if pool:
             try:
-                job_title = request.job_description.split("\n")[0][:60] if request.job_description else None
                 job = await pool.enqueue_job(
                     "cover_letter_task",
-                    cv_text=json.dumps(request.cv_data, ensure_ascii=False),
+                    cv_data=request.cv_data,
                     job_description=request.job_description,
                     language=request.language,
                     company_name=request.company_name,
-                    job_title=job_title,
                 )
                 logger.info(f"[cv_adapter/cover-letter-json] ARQ queued — active={active} job={job.job_id}")
                 return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8}
