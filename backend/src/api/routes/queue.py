@@ -29,25 +29,27 @@ async def get_status(
     """
     try:
         from arq import create_pool
-        from arq.jobs import Job
+        from arq.jobs import Job, JobStatus
 
         from src.workers.settings import _get_redis_settings
 
         pool = await create_pool(_get_redis_settings())
         job = Job(job_id, pool)
-        info = await job.info()
+        job_status = await job.status()
 
-        if info is None:
+        if job_status == JobStatus.not_found:
             raise HTTPException(status_code=404, detail="Job not found or expired")
+        if job_status in {JobStatus.queued, JobStatus.deferred}:
+            return {"status": "queued"}
+        if job_status == JobStatus.in_progress:
+            return {"status": "processing"}
 
+        info = await job.result_info()
+        if info is None:
+            return {"status": "processing"}
         if info.success is True:
             return {"status": "completed", "result": info.result}
-        elif info.success is False:
-            return {"status": "failed", "error": str(info.result)}
-        elif info.start_time is not None:
-            return {"status": "processing"}
-        else:
-            return {"status": "queued"}
+        return {"status": "failed", "error": str(info.result)}
     except HTTPException:
         raise
     except Exception as e:
