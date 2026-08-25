@@ -52,6 +52,30 @@ def test_analysis_normalization_recomputes_inconsistent_ats_total() -> None:
     }
 
 
+def test_analysis_normalization_is_idempotent_for_ats_objects() -> None:
+    """Une seconde normalisation conserve le total pondéré canonique."""
+    result = modal_integration._normalize_analysis_result(
+        {
+            "ats_score": {
+                "overall_score": 63,
+                "formatting_score": 95,
+                "keywords_score": 93,
+                "structure_score": 96,
+                "readability_score": 93,
+            },
+            "ats_details": {
+                "format_score": 19,
+                "keywords_score": 28,
+                "experience_score": 24,
+                "skills_score": 14,
+                "education_score": 8,
+            },
+        }
+    )
+
+    assert result["ats_score"]["overall_score"] == 93
+
+
 class _ModalImage:
     def apt_install(self, *_args: str) -> "_ModalImage":
         return self
