@@ -119,6 +119,25 @@ def _normalize_analysis_result(raw_result: Any) -> dict[str, Any]:
         structure_raw = _safe_int(ats_details.get("structure_score", ats_details.get("experience_score", 0)), 0)
         readability_raw = _safe_int(ats_details.get("readability_score", ats_details.get("skills_score", 0)), 0)
 
+        legacy_score_keys = {
+            "format_score",
+            "keywords_score",
+            "experience_score",
+            "skills_score",
+            "education_score",
+        }
+        if legacy_score_keys.issubset(ats_details):
+            component_total = (
+                min(20, max(0, formatting_raw))
+                + min(30, max(0, keywords_raw))
+                + min(25, max(0, structure_raw))
+                + min(15, max(0, readability_raw))
+                + min(10, max(0, _safe_int(ats_details.get("education_score"), 0)))
+            )
+            # Le protocole HuntZen peut imposer un plancher au total. En revanche,
+            # un total inférieur à la somme de ses catégories est incohérent.
+            overall = max(overall, component_total)
+
     # Convertir en pourcentage (format/20, keywords/30, experience/25, skills/15)
     formatting = _to_pct(formatting_raw, 20)
     keywords = _to_pct(keywords_raw, 30)

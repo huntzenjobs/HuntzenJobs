@@ -1175,7 +1175,7 @@ async def get_admin_stats(admin: AdminUserDep) -> dict[str, Any]:
     webhooks_res = supabase.table("stripe_webhook_events").select(
         "id",
         count="exact",
-    ).eq("status", "failed").execute()
+    ).eq("status", "failed").gte("failed_at", week_ago).execute()
 
     # Active paid subscriptions + MRR (based on real Stripe payments)
     # NB: all users have at least a "free" plan in user_subscriptions.

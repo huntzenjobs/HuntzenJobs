@@ -24,6 +24,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { normalizeJobDescription } from "@/lib/utils/sanitize";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -262,7 +263,9 @@ export function JobDetailsModal({
   const displaySource = formatJobSource(job.source);
 
   // Use full description if available, fallback to job.description
-  const displayDescription = fullDescription || job.description;
+  const displayDescription = normalizeJobDescription(
+    fullDescription || job.description || "",
+  );
 
   // Sanitize HTML to prevent XSS
   const sanitizedDescription = DOMPurify.sanitize(displayDescription || "", {
@@ -387,7 +390,7 @@ export function JobDetailsModal({
                           </div>
                         ) : (
                           <div
-                            className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:hover:underline prose-ul:list-disc prose-ol:list-decimal"
+                            className="prose prose-sm max-w-none whitespace-pre-line prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:hover:underline prose-ul:list-disc prose-ol:list-decimal"
                             dangerouslySetInnerHTML={{
                               __html: sanitizedDescription,
                             }}

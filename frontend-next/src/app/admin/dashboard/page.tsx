@@ -382,7 +382,7 @@ export default function AdminDashboardPage() {
             <KpiCard
               label="Webhooks"
               value={String(stats.webhook_failures_pending)}
-              sub="Échecs Stripe non résolus"
+              sub="Échecs Stripe sur 7 jours"
               icon={AlertTriangle}
               danger={stats.webhook_failures_pending > 0}
             />

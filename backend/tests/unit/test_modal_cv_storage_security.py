@@ -24,6 +24,34 @@ from src.services import modal_pdf_extractor  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
+def test_analysis_normalization_recomputes_inconsistent_ats_total() -> None:
+    """Le total ATS doit rester la somme des cinq catégories pondérées."""
+    result = modal_integration._normalize_analysis_result(
+        {
+            "ats_score": 23,
+            "ats_details": {
+                "format_score": 19,
+                "keywords_score": 28,
+                "experience_score": 23,
+                "skills_score": 14,
+                "education_score": 9,
+            },
+        }
+    )
+
+    assert result["ats_score"] == {
+        "overall_score": 93,
+        "formatting_score": 95,
+        "formatting_explanation": None,
+        "keywords_score": 93,
+        "keywords_explanation": None,
+        "structure_score": 92,
+        "structure_explanation": None,
+        "readability_score": 93,
+        "readability_explanation": None,
+    }
+
+
 class _ModalImage:
     def apt_install(self, *_args: str) -> "_ModalImage":
         return self

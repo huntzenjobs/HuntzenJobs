@@ -41,7 +41,8 @@ class _Query:
         self.filters[key] = value
         return self
 
-    def gte(self, *_args):
+    def gte(self, key: str, value: Any):
+        self.filters[f"{key}__gte"] = value
         return self
 
     def in_(self, *_args):
@@ -129,13 +130,20 @@ async def test_admin_webhook_logs_expose_failed_stripe_events(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_admin_stats_count_failed_stripe_events(monkeypatch):
-    """Le badge admin ne doit plus compter la table legacy non alimentée."""
+    """Le badge admin compte seulement les échecs Stripe récents."""
     database = _Supabase()
     monkeypatch.setattr(admin, "get_supabase_client", Mock(return_value=database))
 
     result = await admin.get_admin_stats(admin={"id": "admin"})
 
     assert result["webhook_failures_pending"] == 1
+    stripe_failures_query = next(
+        filters
+        for table_name, filters in database.queries
+        if table_name == "stripe_webhook_events"
+        and filters.get("status") == "failed"
+    )
+    assert "failed_at__gte" in stripe_failures_query
 
 
 @pytest.mark.asyncio
