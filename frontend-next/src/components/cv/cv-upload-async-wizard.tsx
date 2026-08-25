@@ -128,6 +128,9 @@ export function normalizeAdaptMatchScore(score: unknown): number | null {
   return Math.round(Math.min(100, Math.max(0, percentage)));
 }
 
+export const cvWizardHeaderClassName =
+  "mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between";
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -1760,13 +1763,13 @@ export function CVUploadAsyncWizard({
   return (
     <div>
       {/* Header with History Button */}
-      <div className="flex justify-between items-center mb-6">
-        <WizardSteps currentStep={wizardState.currentStep} />
+      <div className={cvWizardHeaderClassName}>
+        <WizardSteps currentStep={wizardState.currentStep} className="self-start" />
 
         {hasFeatures.hasCVHistory && (
           <button
             onClick={() => setShowHistory(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
+            className="self-start sm:self-auto flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
           >
             <History className="w-4 h-4" />
             <span className="text-sm font-medium">
