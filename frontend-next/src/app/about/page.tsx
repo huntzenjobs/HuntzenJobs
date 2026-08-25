@@ -106,7 +106,6 @@ export default function AboutPage() {
                 </p>
               </motion.div>
 
-              {/* Feature 2 */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -248,7 +247,6 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* CTA Section */}
       <div className="py-20 bg-gradient-to-br from-[#00D9FF] to-blue-600 text-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
