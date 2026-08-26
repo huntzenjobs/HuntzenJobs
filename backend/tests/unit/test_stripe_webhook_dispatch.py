@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from unittest.mock import AsyncMock
 
 import pytest
+import stripe
 from fastapi import HTTPException
 
 from src.services import stripe as stripe_service
@@ -73,6 +74,33 @@ def _invoice_paid_event():
         "id": "evt_test_invoice_paid",
         "type": "invoice.paid",
         "data": {"object": {"id": "in_test_paid"}},
+    }
+
+
+def _async_checkout_event(event_type: str, payment_status: str) -> dict[str, object]:
+    return {
+        "id": f"evt_test_{event_type.rsplit('.', maxsplit=1)[-1]}",
+        "type": event_type,
+        "data": {
+            "object": {
+                "id": "cs_test_async",
+                "payment_status": payment_status,
+            }
+        },
+    }
+
+
+def _completed_checkout_event(payment_status: str, session: object | None = None) -> dict[str, object]:
+    return {
+        "id": "evt_test_checkout_completed",
+        "type": "checkout.session.completed",
+        "data": {
+            "object": session
+            or {
+                "id": "cs_test_completed",
+                "payment_status": payment_status,
+            }
+        },
     }
 
 
@@ -262,5 +290,197 @@ async def test_transactional_handler_owns_webhook_finalization(monkeypatch):
         claim_token="claim_test_token",
     )
     assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_async_checkout_success_dispatches_paid_session_transactionally(monkeypatch):
+    """Un succès différé payé doit suivre la finalisation atomique du checkout."""
+    database = _FakeSupabase()
+    handler = AsyncMock(return_value=True)
+    event = _async_checkout_event("checkout.session.async_payment_succeeded", "paid")
+    monkeypatch.setattr(stripe_service, "STRIPE_ENABLED", True)
+    monkeypatch.setattr(stripe_service, "STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setattr(stripe_service, "supabase_client", database)
+    monkeypatch.setattr(
+        stripe_service.stripe.Webhook,
+        "construct_event",
+        lambda *_args: event,
+    )
+    monkeypatch.setattr(stripe_service, "handle_checkout_completed", handler)
+
+    result = await stripe_service.handle_stripe_webhook(b"payload", "signature")
+
+    assert result == {
+        "status": "success",
+        "event": "checkout.session.async_payment_succeeded",
+    }
+    handler.assert_awaited_once_with(
+        event["data"]["object"],
+        event_id="evt_test_async_payment_succeeded",
+        claim_token="claim_test_token",
+    )
+    assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_async_checkout_success_does_not_grant_unpaid_session(monkeypatch):
+    """Un succès différé impayé ne doit jamais accorder les droits du checkout."""
+    database = _FakeSupabase()
+    handler = AsyncMock(return_value=True)
+    event = _async_checkout_event("checkout.session.async_payment_succeeded", "unpaid")
+    monkeypatch.setattr(stripe_service, "STRIPE_ENABLED", True)
+    monkeypatch.setattr(stripe_service, "STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setattr(stripe_service, "supabase_client", database)
+    monkeypatch.setattr(
+        stripe_service.stripe.Webhook,
+        "construct_event",
+        lambda *_args: event,
+    )
+    monkeypatch.setattr(stripe_service, "handle_checkout_completed", handler)
+
+    result = await stripe_service.handle_stripe_webhook(b"payload", "signature")
+
+    assert result == {
+        "status": "success",
+        "event": "checkout.session.async_payment_succeeded",
+    }
+    handler.assert_not_awaited()
+    assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+        "mark_webhook_event_processed",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_async_checkout_failure_never_grants_rights_and_is_finalized(monkeypatch):
+    """Un échec différé est idempotent et ne peut jamais finaliser un checkout."""
+    database = _FakeSupabase()
+    handler = AsyncMock(return_value=True)
+    event = _async_checkout_event("checkout.session.async_payment_failed", "unpaid")
+    monkeypatch.setattr(stripe_service, "STRIPE_ENABLED", True)
+    monkeypatch.setattr(stripe_service, "STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setattr(stripe_service, "supabase_client", database)
+    monkeypatch.setattr(
+        stripe_service.stripe.Webhook,
+        "construct_event",
+        lambda *_args: event,
+    )
+    monkeypatch.setattr(stripe_service, "handle_checkout_completed", handler)
+
+    result = await stripe_service.handle_stripe_webhook(b"payload", "signature")
+
+    assert result == {
+        "status": "success",
+        "event": "checkout.session.async_payment_failed",
+    }
+    handler.assert_not_awaited()
+    assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+        "mark_webhook_event_processed",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_completed_unpaid_sdk_session_is_processed_without_granting_rights(monkeypatch):
+    """Un checkout terminé mais impayé reste sans droits, même via le SDK Stripe."""
+    database = _FakeSupabase()
+    handler = AsyncMock(return_value=True)
+    session = stripe.StripeObject.construct_from(
+        {"id": "cs_test_completed", "payment_status": "unpaid"},
+        key=None,
+    )
+    event = _completed_checkout_event("unpaid", session)
+    monkeypatch.setattr(stripe_service, "STRIPE_ENABLED", True)
+    monkeypatch.setattr(stripe_service, "STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setattr(stripe_service, "supabase_client", database)
+    monkeypatch.setattr(
+        stripe_service.stripe.Webhook,
+        "construct_event",
+        lambda *_args: event,
+    )
+    monkeypatch.setattr(stripe_service, "handle_checkout_completed", handler)
+
+    result = await stripe_service.handle_stripe_webhook(b"payload", "signature")
+
+    assert result == {"status": "success", "event": "checkout.session.completed"}
+    handler.assert_not_awaited()
+    assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+        "mark_webhook_event_processed",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_completed_unpaid_then_async_failure_never_grants_rights(monkeypatch):
+    """Le cycle différé impayé puis échoué ne doit appeler aucun handler métier."""
+    database = _FakeSupabase()
+    handler = AsyncMock(return_value=True)
+    events = iter(
+        [
+            _completed_checkout_event("unpaid"),
+            _async_checkout_event("checkout.session.async_payment_failed", "unpaid"),
+        ]
+    )
+    monkeypatch.setattr(stripe_service, "STRIPE_ENABLED", True)
+    monkeypatch.setattr(stripe_service, "STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setattr(stripe_service, "supabase_client", database)
+    monkeypatch.setattr(
+        stripe_service.stripe.Webhook,
+        "construct_event",
+        lambda *_args: next(events),
+    )
+    monkeypatch.setattr(stripe_service, "handle_checkout_completed", handler)
+
+    await stripe_service.handle_stripe_webhook(b"completed", "signature")
+    await stripe_service.handle_stripe_webhook(b"async-failed", "signature")
+
+    handler.assert_not_awaited()
+    assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+        "mark_webhook_event_processed",
+        "claim_stripe_webhook_event",
+        "mark_webhook_event_processed",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_completed_unpaid_then_async_success_grants_rights_once(monkeypatch):
+    """Seul le succès différé payé peut finaliser les droits du même checkout."""
+    database = _FakeSupabase()
+    handler = AsyncMock(return_value=True)
+    events = iter(
+        [
+            _completed_checkout_event("unpaid"),
+            _async_checkout_event("checkout.session.async_payment_succeeded", "paid"),
+        ]
+    )
+    monkeypatch.setattr(stripe_service, "STRIPE_ENABLED", True)
+    monkeypatch.setattr(stripe_service, "STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setattr(stripe_service, "supabase_client", database)
+    monkeypatch.setattr(
+        stripe_service.stripe.Webhook,
+        "construct_event",
+        lambda *_args: next(events),
+    )
+    monkeypatch.setattr(stripe_service, "handle_checkout_completed", handler)
+
+    await stripe_service.handle_stripe_webhook(b"completed", "signature")
+    await stripe_service.handle_stripe_webhook(b"async-succeeded", "signature")
+
+    handler.assert_awaited_once_with(
+        {
+            "id": "cs_test_async",
+            "payment_status": "paid",
+        },
+        event_id="evt_test_async_payment_succeeded",
+        claim_token="claim_test_token",
+    )
+    assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+        "mark_webhook_event_processed",
         "claim_stripe_webhook_event",
     ]

@@ -741,11 +741,36 @@ async def handle_stripe_webhook(
     try:
         finalized_transactionally = False
         if event_type == "checkout.session.completed":
-            finalized_transactionally = await handle_checkout_completed(
-                event["data"]["object"],
-                event_id=event_id,
-                claim_token=claim_token,
-            ) is True
+            session = event["data"]["object"]
+            if _stripe_value(session, "payment_status") == "paid":
+                finalized_transactionally = await handle_checkout_completed(
+                    session,
+                    event_id=event_id,
+                    claim_token=claim_token,
+                ) is True
+            else:
+                logger.warning(
+                    "[WEBHOOK] Ignoring checkout completion without paid payment status",
+                    extra={"event_id": event_id},
+                )
+        elif event_type == "checkout.session.async_payment_succeeded":
+            session = event["data"]["object"]
+            if _stripe_value(session, "payment_status") == "paid":
+                finalized_transactionally = await handle_checkout_completed(
+                    session,
+                    event_id=event_id,
+                    claim_token=claim_token,
+                ) is True
+            else:
+                logger.warning(
+                    "[WEBHOOK] Ignoring async checkout success without paid payment status",
+                    extra={"event_id": event_id},
+                )
+        elif event_type == "checkout.session.async_payment_failed":
+            logger.info(
+                "[WEBHOOK] Async checkout payment failed; no subscription rights granted",
+                extra={"event_id": event_id},
+            )
         elif event_type == "customer.subscription.updated":
             finalized_transactionally = await handle_subscription_updated(
                 event["data"]["object"],
