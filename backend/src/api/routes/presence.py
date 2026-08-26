@@ -13,6 +13,7 @@ import json
 import logging
 import time
 from collections.abc import AsyncGenerator
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, Request, Response
 from pydantic import BaseModel
@@ -32,8 +33,15 @@ banner_router   = APIRouter()
 # ──────────────────────────────────────────────────────────────────────────────
 
 class HeartbeatRequest(BaseModel):
-    page: str
-    feature: str | None = None
+    page: Literal[
+        "/jobs",
+        "/dashboard",
+        "/assistant",
+        "/cv-analysis",
+        "/profile",
+        "/pricing",
+    ]
+    feature: Literal["coach", "cv_analysis", "job_scout"] | None = None
 
 
 class TrackEventRequest(BaseModel):
@@ -65,26 +73,26 @@ async def heartbeat(
 ):
     """
     Enregistre la présence d'un utilisateur sur une page.
-    Appelé toutes les 30s depuis le dashboard frontend.
+    Appelé toutes les 45 à 55 secondes depuis le dashboard frontend.
     """
     try:
         from src.utils.cache import get_redis
 
         user_id = current_user.get("id")
         if not user_id:
-            return {"ok": True}
+            return {"ok": True, "recorded": False, "reason": "missing_user"}
 
         redis = await get_redis()
         if not redis:
-            return {"ok": True}
+            return {"ok": True, "recorded": False, "reason": "redis_unavailable"}
 
         # Détection abus — sliding window 10 heartbeats/min max
         from src.services.abuse_detection import HEARTBEAT_MAX, HEARTBEAT_WINDOW, is_rate_limited
         if await is_rate_limited(redis, "ratelimit:heartbeat", user_id, HEARTBEAT_MAX, HEARTBEAT_WINDOW):
-            return {"ok": True}  # silencieux, ne pas casser l'UX
+            return {"ok": True, "recorded": False, "reason": "rate_limited"}
 
         now = int(time.time())
-        expire_at = now - 60  # présent = actif dans la dernière minute
+        expire_at = now - 120  # marge réseau/timer autour du heartbeat client
 
         await redis.zadd("presence:all", {user_id: now})
         await redis.zremrangebyscore("presence:all", 0, expire_at)
@@ -92,18 +100,19 @@ async def heartbeat(
         page_key = f"presence:page:{body.page}"
         await redis.zadd(page_key, {user_id: now})
         await redis.zremrangebyscore(page_key, 0, expire_at)
-        await redis.expire(page_key, 120)
+        await redis.expire(page_key, 180)
 
         if body.feature:
             feature_key = f"presence:feature:{body.feature}"
             await redis.zadd(feature_key, {user_id: now})
             await redis.zremrangebyscore(feature_key, 0, expire_at)
-            await redis.expire(feature_key, 120)
+            await redis.expire(feature_key, 180)
 
+        return {"ok": True, "recorded": True}
     except Exception as e:
         logger.warning(f"[presence] heartbeat failed: {e}")
 
-    return {"ok": True}
+    return {"ok": True, "recorded": False, "reason": "service_error"}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -119,7 +128,7 @@ async def _get_presence_snapshot() -> dict:
             return {"total": 0, "by_page": {}, "by_feature": {}}
 
         now = int(time.time())
-        expire_at = now - 60
+        expire_at = now - 120
 
         # Nettoyage global
         await redis.zremrangebyscore("presence:all", 0, expire_at)

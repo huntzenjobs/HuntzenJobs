@@ -9,7 +9,10 @@ import {
   PlanType,
   useFreemiumLimits,
 } from "@/hooks/use-freemium-limits";
-import { useSubscriptionApi } from "@/hooks/use-subscription-api";
+import {
+  clearSubscriptionCache,
+  useSubscriptionApi,
+} from "@/hooks/use-subscription-api";
 import { useTranslations } from "next-intl";
 import {
   createContext,
@@ -31,6 +34,9 @@ interface SubscriptionContextType {
   planName: string;
   isFreePlan: boolean;
   isPaidPlan: boolean;
+  subscriptionStatus: string | null;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
 
   // Usage tracking
   canUse: (feature: FeatureType) => boolean;
@@ -100,6 +106,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   // NEW: Fetch subscription data from backend API
   const apiData = useSubscriptionApi();
+  const { refetch: refetchSubscription } = apiData;
   const userId = auth?.user?.id;
 
   // KEEP: Local state for setPlan() and coach session until Stripe integration
@@ -115,10 +122,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [showPlanChangedModal, setShowPlanChangedModal] = useState(false);
 
   // Stable ref for refetch — prevents re-triggering inconsistency check when refetch changes reference
-  const apiRefetchRef = useRef<(() => Promise<void>) | undefined>(undefined);
+  const apiRefetchRef = useRef<(() => Promise<boolean>) | undefined>(undefined);
   useEffect(() => {
-    apiRefetchRef.current = apiData.refetch;
-  });
+    apiRefetchRef.current = refetchSubscription;
+  }, [refetchSubscription]);
 
   const openPricingModal = useCallback((feature?: string) => {
     setPricingModalFeature(feature || null);
@@ -138,15 +145,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const reconcileSubscription = useCallback(async () => {
     // Clear local cache
     try {
-      localStorage.removeItem("huntzen_subscription_cache");
-      localStorage.removeItem("huntzen_subscription_cache_expiry");
+      clearSubscriptionCache(userId);
     } catch (error) {
       console.error("[SUBSCRIPTION] Failed to clear cache:", error);
     }
 
     // Force refetch from API
-    if (apiData.refetch) {
-      await apiData.refetch();
+    if (refetchSubscription) {
+      const synced = await refetchSubscription();
+      if (!synced) {
+        toast.error(t("toasts.syncFailed"), {
+          description: t("toasts.syncFailedDesc"),
+        });
+        return;
+      }
       toast.success(t("toasts.synced"), {
         description: t("toasts.syncedDesc"),
       });
@@ -158,7 +170,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     // Reset warning flag
     setHasShownInconsistencyWarning(false);
-  }, [apiData.refetch]);
+  }, [refetchSubscription, t, userId]);
+
+  const refreshQuotas = useCallback(async (): Promise<void> => {
+    await refetchSubscription();
+  }, [refetchSubscription]);
 
   // Map API data to interface (distinguish loading/error/no-subscription states)
   const plan: PlanType = (() => {
@@ -341,11 +357,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handler = () => {
       setShowPlanChangedModal(true);
-      apiData.refetch();
+      refetchSubscription();
     };
     window.addEventListener("subscription-downgraded", handler);
     return () => window.removeEventListener("subscription-downgraded", handler);
-  }, [apiData.refetch]);
+  }, [refetchSubscription]);
 
   // Build limits from API quotas (source of truth)
   const limitsFromApi: PlanLimits = useMemo(() => {
@@ -611,6 +627,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       planName,
       isFreePlan: plan === "free",
       isPaidPlan: plan !== "free",
+      subscriptionStatus: apiData.subscription?.status ?? null,
+      cancelAtPeriodEnd:
+        apiData.subscription?.cancel_at_period_end ?? false,
+      currentPeriodEnd: apiData.subscription?.current_period_end ?? null,
 
       canUse,
       getRemaining,
@@ -643,13 +663,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       pricingModalFeature,
 
       reconcileSubscription,
-      refreshQuotas: apiData.refetch,
+      refreshQuotas,
       resetUsage: freemium.resetUsage,
     }),
     [
       // Plan data from API
       plan,
       planName,
+      apiData.subscription?.status,
+      apiData.subscription?.cancel_at_period_end,
+      apiData.subscription?.current_period_end,
 
       // Helpers
       canUse,
@@ -684,7 +707,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       openPricingModal,
       closePricingModal,
       reconcileSubscription,
-      apiData.refetch,
+      refreshQuotas,
     ],
   );
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
+import { useOptionalSubscription } from "@/contexts/subscription-context";
 import { usePlansConfig, type PlanConfig } from "./use-plans-config";
-import { useSubscriptionApi } from "./use-subscription-api";
 
 // Static visual config — icons and colors only, never changes
 const PLAN_META: Record<
@@ -54,14 +54,16 @@ export function usePricingPlans() {
  */
 export function usePricingData() {
   const { plans, isLoading: plansLoading, formatPrice } = usePlansConfig();
-  const apiData = useSubscriptionApi();
+  const subscription = useOptionalSubscription();
 
   // GARDE-FOU BUG 2: null during loading → CTA buttons show skeleton
-  const currentPlan: string | null = apiData.isLoading
-    ? null
-    : (apiData.subscription?.plan_name ?? "free");
+  const currentPlan: string | null = subscription
+    ? subscription.isLoaded
+      ? subscription.plan
+      : null
+    : "free";
 
-  const isLoading = plansLoading || apiData.isLoading;
+  const isLoading = plansLoading || Boolean(subscription && !subscription.isLoaded);
 
   const enrichedPlans: PricingPlanWithCurrent[] = plans.map((plan) => ({
     ...enrichPlan(plan),

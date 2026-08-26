@@ -11,7 +11,7 @@ from fastapi import APIRouter, Header, HTTPException, Request, status
 from pydantic import BaseModel
 from supabase import Client, create_client
 
-from src.api.middleware import limiter
+from src.api.middleware import get_verified_supabase_user_rate_limit_key, limiter
 from src.config.settings import get_settings
 from src.utils.cache import get_redis
 
@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
+AUTH_ME_USER_LIMIT = 60
+AUTH_ME_USER_WINDOW_SECONDS = 60
 
 
 @router.get("/api/auth/test-debug")
@@ -98,7 +100,7 @@ def get_user_from_token(authorization: str | None) -> dict | None:
 
 
 @router.get("/api/auth/me")
-@limiter.limit("60/minute")
+@limiter.limit("60/minute", key_func=get_verified_supabase_user_rate_limit_key)
 async def get_current_user_info(
     request: Request,
     authorization: str | None = Header(None)
@@ -127,9 +129,29 @@ async def get_current_user_info(
 
     user_id = user["id"]
 
-    # Cache Redis TTL 30s (réduit la charge Supabase ×10 sous charge)
+    # Le plafond IP élevé borne les Bearer invalides avant validation. Après
+    # validation, ce quota Redis isole chaque utilisateur derrière le relais Vercel.
+    redis = None
     try:
         redis = await get_redis()
+        if redis:
+            rate_key = f"ratelimit:auth_me:user:{user_id}"
+            request_count = await redis.incr(rate_key)
+            if request_count == 1:
+                await redis.expire(rate_key, AUTH_ME_USER_WINDOW_SECONDS)
+            if request_count > AUTH_ME_USER_LIMIT:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Too many subscription refreshes",
+                    headers={"Retry-After": str(AUTH_ME_USER_WINDOW_SECONDS)},
+                )
+    except HTTPException:
+        raise
+    except Exception:
+        redis = None
+
+    # Cache Redis TTL 30s (réduit la charge Supabase ×10 sous charge)
+    try:
         if redis:
             cached = await redis.get(f"auth_me:{user_id}")
             if cached:

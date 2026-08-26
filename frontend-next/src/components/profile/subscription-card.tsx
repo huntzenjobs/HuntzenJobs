@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAuth } from "@/contexts/auth-context";
-import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import { PLAN_LIMITS } from "@/hooks/use-freemium-limits"; // feature flags only
 import { UsageCounter } from "@/components/freemium/usage-counter";
 import {
@@ -65,9 +64,11 @@ export function SubscriptionCard() {
     isLoaded,
     openPricingModal,
     limits,
+    subscriptionStatus,
+    cancelAtPeriodEnd,
+    currentPeriodEnd,
   } = useSubscription();
   const { session } = useAuth();
-  const apiData = useSubscriptionApi();
   const t = useTranslations("profile");
   const tSub = useTranslations("subscription");
 
@@ -91,9 +92,8 @@ export function SubscriptionCard() {
   const [reactivateError, setReactivateError] = useState<string | null>(null);
 
   // Enriched data from API (cancel_at_period_end, past_due status)
-  const subStatus = apiData.subscription?.status ?? "active";
-  const cancelAtPeriodEnd = apiData.subscription?.cancel_at_period_end ?? false;
-  const periodEnd = apiData.subscription?.current_period_end ?? null;
+  const subStatus = subscriptionStatus ?? "active";
+  const periodEnd = currentPeriodEnd;
   const isPastDue = subStatus === "past_due";
 
   const formattedPeriodEnd = periodEnd

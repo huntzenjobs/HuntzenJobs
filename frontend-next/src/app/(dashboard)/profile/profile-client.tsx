@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth-context";
-import { useSubscriptionApi } from "@/hooks/use-subscription-api";
+import { useSubscription } from "@/contexts/subscription-context";
 import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 import {
@@ -286,10 +286,9 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
   const tProfile = useTranslations("profile");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [fullName, setFullName] = useState(profile.full_name || "");
-  const { subscription } = useSubscriptionApi();
+  const { subscriptionStatus, cancelAtPeriodEnd } = useSubscription();
   const { session } = useAuth();
-  const isPastDue = subscription?.status === "past_due";
-  const cancelAtPeriodEnd = subscription?.cancel_at_period_end ?? false;
+  const isPastDue = subscriptionStatus === "past_due";
   const hasSubscriptionAlert = isPastDue || cancelAtPeriodEnd;
 
   // Handle avatar upload success

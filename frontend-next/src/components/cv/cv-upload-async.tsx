@@ -25,9 +25,9 @@ import {
   Clock,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { useSubscription } from '@/contexts/subscription-context';
 import { useRouter } from 'next/navigation';
 import { useCVAnalysis } from '@/hooks/use-cv-analysis';
-import { useSubscriptionApi } from '@/hooks/use-subscription-api';
 import { type FeatureType, PLAN_LIMITS } from '@/hooks/use-freemium-limits';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -59,8 +59,7 @@ export function CVUploadAsync({
   const [jobDescription, setJobDescription] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
-  // Hook to refetch subscription data after CV upload
-  const { refetch: refetchSubscription } = useSubscriptionApi();
+  const { refreshQuotas } = useSubscription();
 
   // All hooks must be called before any conditional return (Rules of Hooks)
   const {
@@ -105,7 +104,7 @@ export function CVUploadAsync({
 
       // Force refresh subscription data to get updated usage from backend
       // (Backend increments usage after successful upload, so we fetch fresh data)
-      await refetchSubscription();
+      await refreshQuotas();
     } catch (error) {
       console.error('Upload error:', error);
     }
@@ -114,7 +113,7 @@ export function CVUploadAsync({
     jobDescription,
     uploadCV,
     canUse,
-    refetchSubscription,
+    refreshQuotas,
     openPricingModal,
   ]);
 

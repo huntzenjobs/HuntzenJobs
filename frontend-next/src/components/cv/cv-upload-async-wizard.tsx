@@ -39,7 +39,6 @@ import {
 import type { CVAnalysisResult } from "@/hooks/use-cv-history";
 import { useDocuments } from "@/hooks/use-documents";
 import { PLAN_LIMITS, type FeatureType } from "@/hooks/use-freemium-limits";
-import { useSubscriptionApi } from "@/hooks/use-subscription-api";
 import type { Job } from "@/lib/api/huntzen-client";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -240,9 +239,6 @@ export function CVUploadAsyncWizard({
     // On se contente de rafraîchir les limites locales pour l'UI.
     refreshQuotas();
   });
-
-  // Hook to refetch subscription data after CV upload
-  const { refetch: refetchSubscription } = useSubscriptionApi();
 
   // Session guard: hard redirect when session expires to prevent components
   // from rendering with null session (soft router.push keeps them mounted).
@@ -714,12 +710,12 @@ export function CVUploadAsyncWizard({
         // PDF mode
         await uploadCV(wizardState.file, jobDesc, "fr");
         // Force refresh subscription data to get updated usage from backend
-        await refetchSubscription();
+        await refreshQuotas();
       } else if (wizardState.uploadMethod === "text" && wizardState.cvText) {
         // Text mode
         await uploadCVText(wizardState.cvText, jobDesc, "fr");
         // Force refresh subscription data to get updated usage from backend
-        await refetchSubscription();
+        await refreshQuotas();
       } else {
         throw new Error("Veuillez fournir un fichier PDF ou du texte de CV");
       }

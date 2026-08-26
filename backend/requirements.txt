@@ -21,6 +21,7 @@ python-dotenv
 tenacity
 cachetools
 structlog  # Structured logging
+PyJWT[crypto]==2.13.0  # Local Supabase JWT verification for distributed rate limits
 # Rate Limiting & Cache (Phase 1) - Updated 2026-02-07
 slowapi==0.1.9  # Rate limiting for FastAPI
 redis==5.0.1  # Redis client for SlowAPI + async cache (REQUIRED)

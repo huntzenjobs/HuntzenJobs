@@ -9,7 +9,9 @@ import json as _json
 import logging
 import time
 from collections.abc import Callable
+from functools import lru_cache
 
+import jwt
 import sentry_sdk
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +25,57 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=4)
+def _get_supabase_jwks_client(jwks_url: str) -> jwt.PyJWKClient:
+    """Cache le jeu de clés Supabase et refuse les rafraîchissements par `kid` arbitraire."""
+    return jwt.PyJWKClient(
+        jwks_url,
+        cache_keys=True,
+        cache_jwk_set=True,
+        lifespan=300,
+        timeout=2,
+    )
+
+
+def get_verified_supabase_user_rate_limit_key(request: Request) -> str:
+    """Utilise le `sub` uniquement après vérification locale de la signature Supabase."""
+    authorization = request.headers.get("authorization", "")
+    if not authorization.startswith("Bearer ") or not settings.supabase_url:
+        return get_remote_address(request)
+
+    token = authorization[7:].strip()
+    try:
+        header = jwt.get_unverified_header(token)
+        algorithm = header.get("alg")
+        key_id = header.get("kid")
+        if algorithm not in {"ES256", "RS256"} or not key_id:
+            raise jwt.InvalidTokenError("Unsupported Supabase signing key")
+
+        issuer = f"{settings.supabase_url.rstrip('/')}/auth/v1"
+        jwks_client = _get_supabase_jwks_client(f"{issuer}/.well-known/jwks.json")
+        signing_key = next(
+            (key for key in jwks_client.get_signing_keys(refresh=False) if key.key_id == key_id),
+            None,
+        )
+        if signing_key is None:
+            raise jwt.InvalidTokenError("Unknown Supabase signing key")
+
+        claims = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=[algorithm],
+            audience="authenticated",
+            issuer=issuer,
+            options={"require": ["exp", "sub"]},
+        )
+        user_id = claims.get("sub")
+        if not isinstance(user_id, str) or not user_id:
+            raise jwt.InvalidTokenError("Missing Supabase subject")
+        return f"user:{user_id}"
+    except (jwt.PyJWTError, StopIteration, ValueError, TypeError):
+        return get_remote_address(request)
 
 
 async def custom_rate_limit_handler(request: Request, exc: Exception) -> Response:

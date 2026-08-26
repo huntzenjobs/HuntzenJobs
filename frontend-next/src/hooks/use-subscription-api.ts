@@ -78,36 +78,62 @@ interface SubscriptionApiData {
   plan_feature_flags: Record<string, boolean>;
   isLoading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: () => Promise<boolean>;
   isFromCache: boolean;
 }
 
-const CACHE_KEY = "huntzen_subscription_cache";
-// Persistent cache — no TTL expiry.
-// Data is saved permanently and used as fallback when API fails.
-// Background refresh every 5 min keeps data fresh.
-const REFRESH_INTERVAL = 30 * 1000; // 30 seconds — pre-commercialisation, propagation rapide des changements admin
+const CACHE_KEY_PREFIX = "huntzen_subscription_cache";
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const REFRESH_INTERVAL = 5 * 60 * 1000;
+const REFRESH_JITTER_MS = 30 * 1000;
+const VISIBILITY_REFRESH_COOLDOWN_MS = REFRESH_INTERVAL;
+
+interface CachedSubscription {
+  userId: string;
+  cachedAt: number;
+  data: ApiResponse;
+}
+
+function getCacheKey(userId: string): string {
+  return `${CACHE_KEY_PREFIX}:${userId}`;
+}
 
 /**
- * Load cached subscription data from localStorage (persistent, no TTL)
+ * Charge uniquement le cache récent de l'utilisateur courant.
  */
-function loadPersistentCache(): ApiResponse | null {
+function loadPersistentCache(userId: string | undefined): ApiResponse | null {
   try {
-    if (typeof window === "undefined") return null;
-    const cached = localStorage.getItem(CACHE_KEY);
+    if (typeof window === "undefined" || !userId) return null;
+    const cacheKey = getCacheKey(userId);
+    const cached = localStorage.getItem(cacheKey);
     if (!cached) return null;
-    return JSON.parse(cached);
+    const parsed = JSON.parse(cached) as CachedSubscription;
+    const isValid =
+      parsed.userId === userId &&
+      parsed.data?.user?.id === userId &&
+      Date.now() - parsed.cachedAt <= CACHE_TTL_MS;
+    if (!isValid) {
+      localStorage.removeItem(cacheKey);
+      return null;
+    }
+    return parsed.data;
   } catch {
     return null;
   }
 }
 
 /**
- * Save subscription data to localStorage (persistent, no TTL)
+ * Enregistre un cache court et strictement associé à l'utilisateur courant.
  */
-function savePersistentCache(data: ApiResponse): void {
+function savePersistentCache(userId: string, data: ApiResponse): void {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    if (data.user?.id !== userId) return;
+    const cached: CachedSubscription = {
+      userId,
+      cachedAt: Date.now(),
+      data,
+    };
+    localStorage.setItem(getCacheKey(userId), JSON.stringify(cached));
   } catch {
     // localStorage full or unavailable — silently ignore
   }
@@ -116,9 +142,14 @@ function savePersistentCache(data: ApiResponse): void {
 /**
  * Clear persistent cache (on logout)
  */
-function clearPersistentCache(): void {
+export function clearSubscriptionCache(userId?: string): void {
   try {
-    localStorage.removeItem(CACHE_KEY);
+    if (userId) {
+      localStorage.removeItem(getCacheKey(userId));
+    }
+    // Supprime l'ancien cache global pour empêcher toute fuite inter-compte.
+    localStorage.removeItem(CACHE_KEY_PREFIX);
+    localStorage.removeItem(`${CACHE_KEY_PREFIX}_expiry`);
   } catch {
     // silently ignore
   }
@@ -132,6 +163,9 @@ function clearPersistentCache(): void {
  */
 export function useSubscriptionApi(): SubscriptionApiData {
   const { session, loading: authLoading } = useAuth();
+  const userId = session?.user?.id;
+  const accessToken = session?.access_token;
+  const hasSession = Boolean(session);
 
   // Initialize with defaults (no localStorage during SSR to avoid hydration #418)
   const [data, setData] = useState<Omit<SubscriptionApiData, "refetch">>({
@@ -146,9 +180,10 @@ export function useSubscriptionApi(): SubscriptionApiData {
     isFromCache: false,
   });
 
-  // Hydrate from persistent cache after mount
+  // Hydrate from the current user's cache after mount.
   useEffect(() => {
-    const cached = loadPersistentCache();
+    if (authLoading) return;
+    const cached = loadPersistentCache(userId);
     if (cached) {
       setData({
         user: cached.user ?? null,
@@ -161,23 +196,70 @@ export function useSubscriptionApi(): SubscriptionApiData {
         error: null,
         isFromCache: true,
       });
+      return;
     }
+    setData({
+      user: null,
+      subscription: null,
+      quotas: null,
+      saved_jobs_quota: { used: 0, limit: -1 },
+      feature_overrides: {},
+      plan_feature_flags: {},
+      isLoading: Boolean(accessToken),
+      error: null,
+      isFromCache: false,
+    });
+  }, [accessToken, authLoading, userId]);
+
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeRequestRef = useRef<{
+    identityKey: string;
+    controller: AbortController;
+    promise: Promise<void>;
+  } | null>(null);
+  const forceDrainRef = useRef<{
+    identityKey: string;
+    promise: Promise<boolean>;
+  } | null>(null);
+  const forceGenerationRef = useRef(0);
+  const mountedRef = useRef(false);
+  const lastFetchSucceededRef = useRef(false);
+  const lastFetchStartedAtRef = useRef(0);
+  const previousUserIdRef = useRef<string | undefined>(undefined);
+  const identityKey = `${userId ?? "anonymous"}:${accessToken ?? "no-token"}`;
+  const identityKeyRef = useRef(identityKey);
+
+  useEffect(() => {
+    identityKeyRef.current = identityKey;
+  }, [identityKey]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      activeRequestRef.current?.controller.abort();
+      activeRequestRef.current = null;
+    };
   }, []);
 
-  // Use ref to avoid recreating interval on every render
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Clear persistent cache on logout
+  // Invalidate the previous identity's cache on logout/account switch.
   useEffect(() => {
-    if (!session) {
-      clearPersistentCache();
+    const previousUserId = previousUserIdRef.current;
+    if (previousUserId && previousUserId !== userId) {
+      clearSubscriptionCache(previousUserId);
     }
-  }, [session]);
+    if (!userId) clearSubscriptionCache();
+    previousUserIdRef.current = userId;
+  }, [userId]);
 
   /**
    * Fetch subscription data from backend API
    */
-  const fetchSubscription = useCallback(async () => {
+  const performFetch = useCallback(async (signal: AbortSignal) => {
+    const commitData: typeof setData = (nextData) => {
+      if (!signal.aborted) setData(nextData);
+    };
+
     // CRITICAL FIX: Wait for auth to finish loading before checking session
     if (authLoading) {
       if (isDev)
@@ -188,15 +270,15 @@ export function useSubscriptionApi(): SubscriptionApiData {
     try {
       // If session object exists but token is not yet available, stay in loading
       // state — this is a brief race condition during Supabase session hydration.
-      if (session && !session.access_token) {
+      if (hasSession && !accessToken) {
         return;
       }
 
       // If no session at all, use persistent cache or reset
-      if (!session?.access_token) {
-        const cachedData = loadPersistentCache();
+      if (!accessToken) {
+        const cachedData = loadPersistentCache(userId);
         if (cachedData) {
-          setData({
+          commitData({
             user: cachedData.user,
             subscription: cachedData.subscription,
             quotas: cachedData.quotas,
@@ -211,7 +293,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
             isFromCache: true,
           });
         } else {
-          setData({
+          commitData({
             user: null,
             subscription: null,
             quotas: null,
@@ -228,12 +310,13 @@ export function useSubscriptionApi(): SubscriptionApiData {
 
       // Signal loading immediately — prevents race condition where
       // auth.session is set but isLoading is still false from previous state
-      setData((prev) => ({ ...prev, isLoading: true, error: null }));
+      commitData((prev) => ({ ...prev, isLoading: true, error: null }));
 
       // Same-origin relay avoids browser extensions blocking Railway directly.
       const response = await fetch("/api/auth/me", {
+        signal,
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       });
@@ -247,16 +330,17 @@ export function useSubscriptionApi(): SubscriptionApiData {
             );
 
           const newToken = await tokenRefreshService.getValidToken();
+          if (signal.aborted) return;
 
           if (!newToken) {
             // Fallback to persistent cache — never drop to "free"
-            const cachedData = loadPersistentCache();
+            const cachedData = loadPersistentCache(userId);
             if (cachedData) {
               if (isDev)
                 console.warn(
                   "[SubscriptionAPI] Using persistent cache after token refresh failed",
                 );
-              setData({
+              commitData({
                 user: cachedData.user,
                 subscription: cachedData.subscription,
                 quotas: cachedData.quotas,
@@ -273,7 +357,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
               return;
             }
 
-            setData({
+            commitData({
               user: null,
               subscription: null,
               quotas: null,
@@ -292,6 +376,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
 
           // Retry with new token
           const retryResponse = await fetch("/api/auth/me", {
+            signal,
             headers: {
               Authorization: `Bearer ${newToken}`,
               "Content-Type": "application/json",
@@ -300,10 +385,12 @@ export function useSubscriptionApi(): SubscriptionApiData {
 
           if (retryResponse.ok) {
             const retryData: ApiResponse = await retryResponse.json();
+            if (signal.aborted) return;
 
             if (retryData.success) {
-              savePersistentCache(retryData);
-              setData({
+              lastFetchSucceededRef.current = true;
+              if (userId) savePersistentCache(userId, retryData);
+              commitData({
                 user: retryData.user,
                 subscription: retryData.subscription,
                 quotas: retryData.quotas,
@@ -324,7 +411,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
 
         // Handle 403 - Subscription downgraded or plan changed
         if (response.status === 403) {
-          clearPersistentCache();
+          clearSubscriptionCache(userId);
           window.dispatchEvent(new CustomEvent("subscription-downgraded"));
         }
 
@@ -332,6 +419,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
       }
 
       const apiData: ApiResponse = await response.json();
+      if (signal.aborted) return;
 
       if (!apiData.success) {
         throw new Error(
@@ -339,11 +427,12 @@ export function useSubscriptionApi(): SubscriptionApiData {
         );
       }
 
+      lastFetchSucceededRef.current = true;
       // Save to persistent cache
-      savePersistentCache(apiData);
+      if (userId) savePersistentCache(userId, apiData);
 
       // Update state
-      setData({
+      commitData({
         user: apiData.user,
         subscription: apiData.subscription,
         quotas: apiData.quotas,
@@ -355,14 +444,15 @@ export function useSubscriptionApi(): SubscriptionApiData {
         isFromCache: false,
       });
     } catch (error) {
+      if (signal.aborted) return;
       if (isDev) console.error("[SubscriptionAPI] Fetch error:", error);
 
       // Fallback to persistent cache — never drop to "free" on transient errors
-      const cachedData = loadPersistentCache();
+      const cachedData = loadPersistentCache(userId);
       if (cachedData) {
         if (isDev)
           console.warn("[SubscriptionAPI] Using persistent cache as fallback");
-        setData({
+        commitData({
           user: cachedData.user,
           subscription: cachedData.subscription,
           quotas: cachedData.quotas,
@@ -377,7 +467,7 @@ export function useSubscriptionApi(): SubscriptionApiData {
           isFromCache: true,
         });
       } else {
-        setData({
+        commitData({
           user: null,
           subscription: null,
           quotas: null,
@@ -390,7 +480,90 @@ export function useSubscriptionApi(): SubscriptionApiData {
         });
       }
     }
-  }, [session?.access_token, authLoading]);
+  }, [accessToken, authLoading, hasSession, userId]);
+
+  const startFetch = useCallback((): Promise<void> => {
+    lastFetchStartedAtRef.current = Date.now();
+    lastFetchSucceededRef.current = false;
+    const controller = new AbortController();
+    const request = performFetch(controller.signal);
+    const activeRequest = { identityKey, controller, promise: request };
+    activeRequestRef.current = activeRequest;
+    void request.then(
+      () => {
+        if (activeRequestRef.current === activeRequest) {
+          activeRequestRef.current = null;
+        }
+      },
+      () => {
+        if (activeRequestRef.current === activeRequest) {
+          activeRequestRef.current = null;
+        }
+      },
+    );
+    return request;
+  }, [identityKey, performFetch]);
+
+  const refreshSubscription = useCallback((): Promise<void> => {
+    const activeRequest = activeRequestRef.current;
+    if (!activeRequest) return startFetch();
+    if (activeRequest.identityKey === identityKey) {
+      return activeRequest.promise;
+    }
+    activeRequest.controller.abort();
+    activeRequestRef.current = null;
+    return startFetch();
+  }, [identityKey, startFetch]);
+
+  const forceRefetch = useCallback((): Promise<boolean> => {
+    forceGenerationRef.current += 1;
+    if (!mountedRef.current) return Promise.resolve(false);
+
+    const existingDrain = forceDrainRef.current;
+    if (existingDrain?.identityKey === identityKey) {
+      return existingDrain.promise;
+    }
+
+    const drainPromise = (async () => {
+      while (
+        mountedRef.current &&
+        identityKeyRef.current === identityKey
+      ) {
+        const targetGeneration = forceGenerationRef.current;
+        const activeRequest = activeRequestRef.current;
+        if (activeRequest?.identityKey === identityKey) {
+          await activeRequest.promise;
+        } else if (activeRequest) {
+          activeRequest.controller.abort();
+          activeRequestRef.current = null;
+        }
+
+        if (
+          !mountedRef.current ||
+          identityKeyRef.current !== identityKey
+        ) {
+          return false;
+        }
+
+        await startFetch();
+        if (forceGenerationRef.current === targetGeneration) {
+          return lastFetchSucceededRef.current;
+        }
+      }
+      return false;
+    })();
+    const drain = { identityKey, promise: drainPromise };
+    forceDrainRef.current = drain;
+    void drainPromise.then(
+      () => {
+        if (forceDrainRef.current === drain) forceDrainRef.current = null;
+      },
+      () => {
+        if (forceDrainRef.current === drain) forceDrainRef.current = null;
+      },
+    );
+    return drainPromise;
+  }, [identityKey, startFetch]);
 
   // Initial fetch and auto-refresh setup
   useEffect(() => {
@@ -402,86 +575,70 @@ export function useSubscriptionApi(): SubscriptionApiData {
     }
 
     // Initial fetch
-    fetchSubscription();
+    void refreshSubscription();
 
-    // Setup auto-refresh interval (5 minutes)
-    // Only if we have a session
-    if (session?.access_token) {
-      intervalRef.current = setInterval(() => {
-        if (isDev) console.log("[SubscriptionAPI] Auto-refresh triggered");
-        fetchSubscription();
-      }, REFRESH_INTERVAL);
+    const refreshIfStale = () => {
+      if (document.visibilityState !== "visible") return;
+      if (
+        Date.now() - lastFetchStartedAtRef.current <
+        VISIBILITY_REFRESH_COOLDOWN_MS
+      ) {
+        return;
+      }
+      void refreshSubscription();
+    };
+
+    const scheduleRefresh = () => {
+      const delay =
+        REFRESH_INTERVAL + Math.floor(Math.random() * REFRESH_JITTER_MS);
+      refreshTimerRef.current = setTimeout(() => {
+        refreshIfStale();
+        scheduleRefresh();
+      }, delay);
+    };
+
+    if (accessToken) {
+      scheduleRefresh();
+      document.addEventListener("visibilitychange", refreshIfStale);
+      window.addEventListener("focus", refreshIfStale);
     }
 
-    // Cleanup interval on unmount
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+      document.removeEventListener("visibilitychange", refreshIfStale);
+      window.removeEventListener("focus", refreshIfStale);
+      const activeRequest = activeRequestRef.current;
+      if (activeRequest?.identityKey === identityKey) {
+        activeRequest.controller.abort();
+        activeRequestRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     authLoading,
-    session ? "logged-in" : "logged-out",
-    !!session?.access_token,
-  ]); // Re-run when token becomes available after hydration
+    accessToken,
+    identityKey,
+    refreshSubscription,
+  ]);
 
-  return {
-    ...data,
-    refetch: fetchSubscription,
-  };
-}
-
-/**
- * Hook to invalidate cache on subscription changes (event-based)
- *
- * Listens for custom 'subscription-changed' events and immediately
- * invalidates the cache + refetches fresh data.
- *
- * This ensures users see their new subscription immediately after
- * Stripe checkout success, without waiting for cache TTL.
- *
- * Usage:
- * ```tsx
- * const { invalidateCache } = useSubscriptionSync()
- * // Cache is automatically invalidated on 'subscription-changed' events
- * ```
- */
-export function useSubscriptionSync() {
-  const { refetch } = useSubscriptionApi();
-
-  // Keep ref always up-to-date so the listener can call the latest refetch
-  // without needing to re-register itself every time refetch changes
-  const refetchRef = useRef<() => Promise<void>>(refetch);
-  useEffect(() => {
-    refetchRef.current = refetch;
-  });
-
-  // Register listener ONCE — never re-registers even if refetch changes
   useEffect(() => {
     const handleSubscriptionChange = () => {
-      if (isDev)
-        console.log("[SubscriptionSync] Subscription changed event detected");
-      clearPersistentCache();
-      refetchRef.current();
-      if (isDev)
-        console.log(
-          "[SubscriptionSync] Cache invalidated and refetch triggered",
-        );
+      clearSubscriptionCache(userId);
+      void forceRefetch();
     };
-
     window.addEventListener("subscription-changed", handleSubscriptionChange);
-
     return () => {
       window.removeEventListener(
         "subscription-changed",
         handleSubscriptionChange,
       );
     };
-  }, []); // empty deps — registers exactly once on mount
+  }, [forceRefetch, userId]);
 
   return {
-    invalidateCache: refetch,
+    ...data,
+    refetch: forceRefetch,
   };
 }
