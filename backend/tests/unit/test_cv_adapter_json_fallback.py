@@ -349,7 +349,7 @@ async def test_cover_letter_regenerates_once_after_factual_rejection() -> None:
 
 
 @pytest.mark.asyncio
-async def test_cover_letter_fails_after_second_factual_rejection() -> None:
+async def test_cover_letter_uses_source_only_fallback_after_second_factual_rejection() -> None:
     agent = object.__new__(CVAdapterAgent)
     agent.name = "CVAdapter"
     rejection = {
@@ -366,12 +366,38 @@ async def test_cover_letter_fails_after_second_factual_rejection() -> None:
     )
 
     result = await agent.generate_cover_letter(
-        {"personal_info": {"name": "Camille"}, "experiences": []},
+        {
+            "personal_info": {
+                "name": "Camille Martin",
+                "title": "Développeuse backend",
+                "email": "camille@example.com",
+                "city": "Lyon",
+            },
+            "summary": "Développeuse Python spécialisée dans les API.",
+            "experiences": [
+                {
+                    "title": "Développeuse backend",
+                    "company": "Source SA",
+                    "bullets": ["Conception d'API FastAPI."],
+                }
+            ],
+            "skills": {"Langages": ["Python"], "Frameworks": ["FastAPI"]},
+        },
         "Offre Data Analyst",
         language="fr",
         company_name="Exemple",
     )
 
     assert agent._create_json_completion.await_count == 4
-    assert result["success"] is False
-    assert result["fact_check"] == rejection
+    assert result["success"] is True
+    assert result["fact_check"] == {
+        "valid": True,
+        "issues": [],
+        "mode": "source_only_fallback",
+    }
+    rendered = json.dumps(result, ensure_ascii=False)
+    assert "Camille Martin" in rendered
+    assert "Développeuse backend" in rendered
+    assert "Conception d'API FastAPI." in rendered
+    assert "équipe paiement" not in rendered
+    assert "piloté les paiements" not in rendered

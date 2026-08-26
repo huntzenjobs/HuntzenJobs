@@ -1280,6 +1280,107 @@ attributed to the candidate without support in CANDIDATE SOURCE DATA."""
             normalized["header"]["city"] = personal_info["location"]
         return normalized
 
+    @staticmethod
+    def _build_source_only_cover_letter(
+        cv_data: dict,
+        *,
+        language: str,
+        company_name: str,
+        date_str: str,
+    ) -> dict[str, Any]:
+        """Construit une lettre conservatrice sans dépendre d'un nouveau jugement LLM."""
+        personal_info = cv_data.get("personal_info", {})
+        experiences = cv_data.get("experiences", [])
+        first_experience = experiences[0] if experiences else {}
+        name = personal_info.get("name") or "Candidate"
+        title = personal_info.get("title") or first_experience.get("title") or ""
+        summary = str(cv_data.get("summary") or "").strip()
+        employer = str(first_experience.get("company") or "").strip()
+        bullets = [
+            str(bullet).strip()
+            for experience in experiences[:2]
+            for bullet in experience.get("bullets", [])[:2]
+            if str(bullet).strip()
+        ]
+
+        if language == "fr":
+            paragraph_1 = (
+                f"Je vous adresse ma candidature en tant que {title}."
+                if title
+                else "Je vous adresse ma candidature pour le poste proposé."
+            )
+            if summary:
+                paragraph_1 = f"{paragraph_1} {summary}"
+
+            if bullets:
+                context = f" chez {employer}" if employer else ""
+                paragraph_2 = (
+                    f"Mon expérience{context} comprend notamment : "
+                    f"{' '.join(bullets)}"
+                )
+            else:
+                paragraph_2 = (
+                    "Les éléments présentés dans mon CV constituent la base de ma candidature."
+                )
+
+            target = f" au sein de {company_name}" if company_name else ""
+            paragraph_3 = (
+                f"Je souhaite mettre ce parcours au service du poste présenté{target}. "
+                "Je reste disponible pour échanger avec vous sur cette candidature."
+            )
+            subject = f"Candidature – {title}" if title else "Candidature au poste proposé"
+            salutation = "Madame, Monsieur,"
+            closing = (
+                "Dans l'attente de votre retour, je vous prie d'agréer, Madame, Monsieur, "
+                "l'expression de mes salutations distinguées."
+            )
+        else:
+            paragraph_1 = (
+                f"I am applying as a {title}."
+                if title
+                else "I am applying for the advertised position."
+            )
+            if summary:
+                paragraph_1 = f"{paragraph_1} {summary}"
+
+            if bullets:
+                context = f" at {employer}" if employer else ""
+                paragraph_2 = (
+                    f"My experience{context} includes: {' '.join(bullets)}"
+                )
+            else:
+                paragraph_2 = "The experience described in my CV supports this application."
+
+            target = f" at {company_name}" if company_name else ""
+            paragraph_3 = (
+                f"I would welcome the opportunity to apply this background to the role{target}. "
+                "I look forward to discussing my application with you."
+            )
+            subject = f"Application – {title}" if title else "Application for the advertised position"
+            salutation = "Dear Hiring Manager,"
+            closing = "Thank you for considering my application."
+
+        result = {
+            "language": language,
+            "header": {},
+            "company": company_name,
+            "date": date_str,
+            "subject": subject,
+            "salutation": salutation,
+            "paragraph_1": paragraph_1,
+            "paragraph_2": paragraph_2,
+            "paragraph_3": paragraph_3,
+            "closing": closing,
+            "signature": name,
+            "fact_check": {
+                "valid": True,
+                "issues": [],
+                "mode": "source_only_fallback",
+            },
+            "success": True,
+        }
+        return CVAdapterAgent._apply_cover_letter_header(result, personal_info)
+
     def _calculate_match_score(self, job_analysis: dict, cv_mapping: dict) -> dict:
         """Calculate overall match score."""
         skills_coverage = cv_mapping.get("skills_coverage", {})
@@ -1489,11 +1590,17 @@ Return a JSON object with the cover letter content."""
                     result,
                 )
                 if fact_check.get("valid") is not True:
-                    return {
-                        "success": False,
-                        "error": "Cover letter failed factual verification",
-                        "fact_check": fact_check,
-                    }
+                    logger.warning(
+                        "[%s] Second cover letter fact check rejected the draft; "
+                        "using source-only fallback",
+                        self.name,
+                    )
+                    return self._build_source_only_cover_letter(
+                        cv_data,
+                        language=language,
+                        company_name=company_name,
+                        date_str=date_str,
+                    )
 
             result["fact_check"] = fact_check
             result["success"] = True
