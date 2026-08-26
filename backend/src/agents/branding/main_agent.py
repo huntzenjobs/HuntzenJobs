@@ -17,7 +17,7 @@ the user comes back, the agent knows where it left off.
 import logging
 from typing import Any
 
-from src.agents.base import AgentConfig, BaseAgent
+from src.agents.base import CONVERSATIONAL_FACTUAL_GUARDRAILS, AgentConfig, BaseAgent
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -47,11 +47,14 @@ class BrandingAgent(BaseAgent):
         config = AgentConfig(
             name="BrandingAgent",
             model=settings.llm_model_powerful,  # Needs strong FR + nuanced writing
-            temperature=0.6,  # Creative but controlled
+            temperature=0.2,
             max_tokens=2048,
             system_prompt_file="branding_main.txt",
         )
         super().__init__(config)
+        self.system_prompt = (
+            f"{self.system_prompt}\n\n{CONVERSATIONAL_FACTUAL_GUARDRAILS}"
+        )
 
     async def run(
         self,

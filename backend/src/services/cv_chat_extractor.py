@@ -8,7 +8,7 @@ import json
 import logging
 from typing import Any
 
-from groq import Groq
+from groq import AsyncGroq
 
 from src.config.settings import settings
 
@@ -27,8 +27,6 @@ async def extract_cv_structured(cv_text: str) -> dict[str, Any]:
         Dict structuré avec name, current_role, years_experience, key_skills, etc.
     """
     try:
-        client = Groq(api_key=settings.get_groq_key())
-
         prompt = f"""Extrais les informations clés de ce CV. Retourne UNIQUEMENT du JSON valide.
 
 CV (extrait):
@@ -48,13 +46,18 @@ Structure JSON attendue:
   "summary": "Résumé en 1 phrase du profil candidat"
 }}"""
 
-        response = client.chat.completions.create(
-            model=settings.llm_model_fast,
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"},
-            temperature=0.0,
-            max_tokens=1024,
-        )
+        async with AsyncGroq(
+            api_key=settings.get_groq_key(),
+            timeout=30.0,
+            max_retries=0,
+        ) as client:
+            response = await client.chat.completions.create(
+                model=settings.llm_model_fast,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.0,
+                max_tokens=1024,
+            )
 
         structured = json.loads(response.choices[0].message.content)
         logger.info(

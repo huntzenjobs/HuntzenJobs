@@ -35,6 +35,17 @@ JOBS_CACHE_TTL = 7200  # 2 hours
 router = APIRouter()
 
 
+def _build_search_hash(data: JobSearchRequest) -> str:
+    """Construit une empreinte stable des paramètres de recherche."""
+    payload = json.dumps(
+        data.model_dump(mode="json"),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+    return hashlib.md5(payload.encode()).hexdigest()
+
+
 def _check_job_search_quota(user_id: str) -> None:
     """Check job_search quota. Raises 429 if exhausted."""
     try:
@@ -366,7 +377,7 @@ async def search_jobs(
 
     # ── Verrou de recherche (Race condition protection) ──
     # Empeche deux recherches identiques d'etre facturees en meme temps
-    search_hash = hashlib.md5(data.model_dump_json(sort_keys=True).encode()).hexdigest()
+    search_hash = _build_search_hash(data)
     lock_key = f"search_lock:{user_id}:{search_hash}"
     redis = await get_redis()
 

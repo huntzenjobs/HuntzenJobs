@@ -4,10 +4,14 @@ API Dependencies
 Dependency injection for FastAPI routes.
 """
 
+import asyncio
+import inspect
 import logging
 import threading
 from collections import defaultdict
-from typing import Annotated
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Annotated, Any
 
 from fastapi import Depends, Header, HTTPException, status
 from supabase import Client, create_client
@@ -27,6 +31,22 @@ from src.config.settings import Settings, get_settings
 logger = logging.getLogger(__name__)
 
 
+async def run_sync_io(
+    function: Callable[..., Any],
+    *args: Any,
+    timeout_seconds: float = 10,
+    **kwargs: Any,
+) -> Any:
+    """Exécute un client synchrone hors de l'event loop avec délai borné."""
+    result = await asyncio.wait_for(
+        asyncio.to_thread(function, *args, **kwargs),
+        timeout=timeout_seconds,
+    )
+    if inspect.isawaitable(result):
+        return await asyncio.wait_for(result, timeout=timeout_seconds)
+    return result
+
+
 def get_settings_dep() -> Settings:
     """Get application settings."""
     return get_settings()
@@ -39,43 +59,48 @@ SettingsDep = Annotated[Settings, Depends(get_settings_dep)]
 # Primary: reads/writes to coach_conversations table
 # Fallback: in-memory dict (for tests or when Supabase unavailable)
 _sessions_lock = threading.Lock()
-_sessions: dict[str, list[dict]] = defaultdict(list)
+_sessions: dict[tuple[str | None, str], list[dict]] = defaultdict(list)
 
 
-def get_session_history(session_id: str) -> list[dict]:
+def get_session_history(session_id: str, *, user_id: str | None = None) -> list[dict]:
     """
     Get conversation history for a session.
 
     Tries Supabase first (persistent across restarts/workers),
     falls back to in-memory if unavailable.
     """
-    # Try Supabase first
-    try:
-        client = get_supabase_client()
-        result = (
-            client.table("coach_conversations")
-            .select("messages")
-            .eq("session_id", session_id)
-            .order("updated_at", desc=True)
-            .limit(1)
-            .execute()
-        )
-        if result and result.data and result.data[0].get("messages"):
-            messages = result.data[0]["messages"]
-            # Return last 20 messages (10 exchanges)
-            return messages[-20:] if len(messages) > 20 else messages
-    except Exception as e:
-        logger.warning(f"⚠️ Supabase history read failed, using in-memory: {e}")
+    # Le client service-role ne peut lire la DB qu'avec un propriétaire explicite.
+    if user_id is not None:
+        try:
+            client = get_supabase_client()
+            result = (
+                client.table("coach_conversations")
+                .select("messages")
+                .eq("session_id", session_id)
+                .eq("user_id", user_id)
+                .order("updated_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if result and result.data and result.data[0].get("messages"):
+                messages = result.data[0]["messages"]
+                # Return last 20 messages (10 exchanges)
+                return messages[-20:] if len(messages) > 20 else messages
+        except Exception as e:
+            logger.warning(f"⚠️ Supabase history read failed, using in-memory: {e}")
 
     # Fallback to in-memory
     with _sessions_lock:
-        return _sessions[session_id].copy()
+        return _sessions[(user_id, session_id)].copy()
 
 
 def update_session_history(
     session_id: str,
     user_message: str,
     assistant_response: str,
+    *,
+    user_id: str | None = None,
+    assistant_type: str = "career-coach",
 ) -> None:
     """
     Update conversation history (Supabase + in-memory fallback).
@@ -83,44 +108,61 @@ def update_session_history(
     Tries to update the Supabase row matching this session_id.
     Always updates in-memory as hot cache.
     """
+    timestamp = datetime.now(UTC).isoformat()
+    new_messages = [
+        {"role": "user", "content": user_message, "timestamp": timestamp},
+        {"role": "assistant", "content": assistant_response, "timestamp": timestamp},
+    ]
+
     # Always update in-memory (hot cache for same-session follow-ups)
     with _sessions_lock:
-        _sessions[session_id].append({"role": "user", "content": user_message})
-        _sessions[session_id].append({"role": "assistant", "content": assistant_response})
-        if len(_sessions[session_id]) > 20:
-            _sessions[session_id] = _sessions[session_id][-20:]
+        session_key = (user_id, session_id)
+        _sessions[session_key].extend(new_messages)
+        if len(_sessions[session_key]) > 20:
+            _sessions[session_key] = _sessions[session_key][-20:]
 
-    # Try to update Supabase (best-effort, non-blocking for caller)
+    # Sans propriétaire, le client service-role ne doit jamais accéder à la DB.
+    if user_id is None:
+        return
+
+    # L'append est atomique côté PostgreSQL : aucun read-modify-write applicatif
+    # ne peut perdre un tour quand deux workers terminent presque simultanément.
     try:
         client = get_supabase_client()
-        result = (
-            client.table("coach_conversations")
-            .select("id, messages")
-            .eq("session_id", session_id)
-            .order("updated_at", desc=True)
-            .limit(1)
-            .execute()
-        )
-        if result.data:
-            # Append to existing conversation
-            existing_msgs = result.data[0].get("messages", [])
-            existing_msgs.append({"role": "user", "content": user_message})
-            existing_msgs.append({"role": "assistant", "content": assistant_response})
-            # Cap at 50 messages in DB (more generous than in-memory)
-            if len(existing_msgs) > 50:
-                existing_msgs = existing_msgs[-50:]
-            client.table("coach_conversations").update({
-                "messages": existing_msgs,
-            }).eq("id", result.data[0]["id"]).execute()
+        client.rpc(
+            "append_coach_conversation_messages",
+            {
+                "p_user_id": user_id,
+                "p_session_id": session_id,
+                "p_assistant_type": assistant_type,
+                "p_messages": new_messages,
+            },
+        ).execute()
     except Exception as e:
         logger.warning(f"⚠️ Supabase history write failed (in-memory still updated): {e}")
 
 
-def clear_session(session_id: str) -> None:
-    """Clear a session's history (thread-safe)."""
+def clear_session(session_id: str, *, user_id: str | None = None) -> None:
+    """Clear an owned session's history in memory and persistent storage."""
     with _sessions_lock:
-        if session_id in _sessions:
-            del _sessions[session_id]
+        session_key = (user_id, session_id)
+        if session_key in _sessions:
+            del _sessions[session_key]
+
+    if user_id is None:
+        return
+
+    try:
+        (
+            get_supabase_client()
+            .table("coach_conversations")
+            .delete()
+            .eq("session_id", session_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+    except Exception as e:
+        logger.warning(f"⚠️ Supabase history delete failed (memory already cleared): {e}")
 
 
 # Agent singletons - Thread-safe initialization
@@ -590,6 +632,22 @@ async def get_current_admin(current_user: dict = Depends(get_current_user)) -> d
 AdminUserDep = Annotated[dict, Depends(get_current_admin)]
 
 
+def _canonical_feature_flag(feature: str) -> str:
+    """Résout les noms historiques vers les clés stockées dans les plans."""
+    prefixed_features = {
+        "interview_sim",
+        "pdf_export",
+        "visual_score",
+        "advanced_filters",
+        "favorites",
+        "cv_history",
+        "email_alerts",
+        "personalized_advice",
+        "coach_history",
+    }
+    return f"has_{feature}" if feature in prefixed_features else feature
+
+
 async def check_feature_flag(user_id: str, feature: str) -> bool:
     """Check if user's plan has a specific feature flag enabled.
 
@@ -627,7 +685,7 @@ async def check_feature_flag(user_id: str, feature: str) -> bool:
         )
         if sub and sub.data:
             flags = (sub.data.get("subscription_plans") or {}).get("feature_flags", {})
-            return flags.get(feature, False)
+            return flags.get(_canonical_feature_flag(feature), False)
     except Exception as e:
         logger.warning(f"[feature_flag] plan check failed for {user_id}/{feature}: {e}")
 
@@ -720,7 +778,7 @@ def _require_feature_flag_sync(
         )
         if sub and sub.data:
             flags = (sub.data.get("subscription_plans") or {}).get("feature_flags", {})
-            allowed = flags.get(feature, False)
+            allowed = flags.get(_canonical_feature_flag(feature), False)
     except Exception as e:
         logger.warning(f"[feature_flag] sync plan check failed: {e}")
 

@@ -5,13 +5,16 @@ Unified endpoints for all assistant types (career-coach, job-scout, cv-analyzer,
 Handles routing to the appropriate agent based on assistant_type parameter.
 """
 
+import asyncio
+import json
 import logging
 import uuid
+from contextlib import asynccontextmanager, suppress
 from typing import Literal
 
 from arq import create_pool
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
+from pydantic import BaseModel, Field, model_validator
 
 from src.api.deps import (
     BrandingAgentDep,
@@ -23,59 +26,149 @@ from src.api.deps import (
     ScoutConversationalAgentDep,
     _require_feature_flag_sync,
     check_assistant_quota,
+    clear_session,
     get_session_history,
     increment_assistant_messages,
+    run_sync_io,
     update_session_history,
 )
+from src.api.middleware import limiter
 from src.services.cv_chat_extractor import extract_cv_structured
 from src.services.modal_pdf_extractor import extract_text_via_modal, is_modal_pdf_enabled
 from src.services.stripe import invalidate_user_quota_cache
-from src.utils.request_dedup import build_dedup_request_id, register_request, store_job_id
+from src.utils.ai_capacity import (
+    CV_EXTRACTION_SYNC_LIMIT,
+    GLOBAL_AI_SYNC_LIMIT,
+)
+from src.utils.ai_capacity import (
+    decrement_cv_extraction_active as _decr_extraction_active,
+)
+from src.utils.ai_capacity import (
+    decrement_global_ai_active as _decr_active,
+)
+from src.utils.ai_capacity import (
+    increment_cv_extraction_active as _incr_extraction_active,
+)
+from src.utils.ai_capacity import (
+    increment_global_ai_active as _incr_active,
+)
+from src.utils.ai_capacity import (
+    renew_cv_extraction_active as _renew_extraction_active,
+)
+from src.utils.request_dedup import (
+    RequestEnqueuePendingError,
+    build_dedup_request_id,
+    clear_job_owner,
+    clear_pending_request,
+    estimate_arq_wait_seconds,
+    register_request,
+    store_job_id,
+    store_job_owner,
+)
+from src.utils.uploads import read_upload_limited, run_extraction_sync
 
 logger = logging.getLogger(__name__)
 
 # ── ARQ queue — soupape de sécurité anti-429 Groq ────────────────────────────
 _arq_pool = None
-_GROQ_ACTIVE_KEY = "groq:active_assistant"
-_GROQ_ACTIVE_TTL = 120  # expire 2min en cas de crash
-ASSISTANT_SYNC_THRESHOLD = 12  # max appels Groq simultanés cross-replicas
+_arq_pool_lock = asyncio.Lock()
+ASSISTANT_SYNC_THRESHOLD = GLOBAL_AI_SYNC_LIMIT
+CV_EXTRACTION_SYNC_THRESHOLD = CV_EXTRACTION_SYNC_LIMIT
+ASSISTANT_SYNC_TIMEOUT_SECONDS = 110
 
 
 async def _get_arq_pool():
     global _arq_pool
     if _arq_pool is None:
-        try:
-            from src.workers.settings import _get_redis_settings
-            _arq_pool = await create_pool(_get_redis_settings())
-        except Exception as e:
-            logger.warning(f"[assistant] ARQ pool init failed: {e}")
-            _arq_pool = None
+        async with _arq_pool_lock:
+            if _arq_pool is None:
+                try:
+                    from src.workers.settings import _get_redis_settings
+
+                    _arq_pool = await create_pool(_get_redis_settings())
+                except Exception as e:
+                    logger.warning(f"[assistant] ARQ pool init failed: {e}")
+                    _arq_pool = None
     return _arq_pool
 
 
-async def _incr_active() -> int:
-    from src.utils.cache import get_redis
-    redis = await get_redis()
-    if not redis:
-        return 0
-    count = await redis.incr(_GROQ_ACTIVE_KEY)
-    await redis.expire(_GROQ_ACTIVE_KEY, _GROQ_ACTIVE_TTL)
-    return count
+def _capacity_error() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Le service IA est momentanément très sollicité. Réessayez dans quelques secondes.",
+        headers={"Retry-After": "5"},
+    )
 
 
-async def _decr_active() -> None:
-    from src.utils.cache import get_redis
-    redis = await get_redis()
-    if redis:
-        val = await redis.decr(_GROQ_ACTIVE_KEY)
-        if val < 0:
-            await redis.set(_GROQ_ACTIVE_KEY, 0)
+async def _acquire_active_or_503(scope: str) -> int:
+    try:
+        return await _incr_active()
+    except Exception as exc:
+        logger.warning("[%s] Compteur de charge indisponible: %s", scope, exc)
+        raise _capacity_error() from None
+
+
+@asynccontextmanager
+async def _cv_extraction_slot():
+    """Borne la mémoire et les appels Modal/pypdf du partage de CV."""
+    try:
+        active = await _incr_extraction_active()
+    except Exception as exc:
+        logger.warning("[attach-cv] Compteur d'extraction indisponible: %s", exc)
+        raise _capacity_error() from None
+
+    if active > CV_EXTRACTION_SYNC_THRESHOLD:
+        await _decr_extraction_active()
+        raise _capacity_error()
+
+    owner_task = asyncio.current_task()
+    renewal_errors: list[Exception] = []
+
+    async def keep_lease_alive() -> None:
+        try:
+            while True:
+                await asyncio.sleep(30)
+                await _renew_extraction_active()
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            renewal_errors.append(exc)
+            if owner_task is not None:
+                owner_task.cancel()
+
+    heartbeat = asyncio.create_task(keep_lease_alive())
+    try:
+        yield
+        if renewal_errors:
+            raise _capacity_error()
+    except asyncio.CancelledError:
+        if renewal_errors:
+            raise _capacity_error() from None
+        raise
+    finally:
+        heartbeat.cancel()
+        with suppress(asyncio.CancelledError):
+            await heartbeat
+        await _decr_extraction_active()
+
+
+async def _run_agent_with_timeout(agent, **kwargs):
+    try:
+        return await asyncio.wait_for(
+            agent.run(**kwargs),
+            timeout=ASSISTANT_SYNC_TIMEOUT_SECONDS,
+        )
+    except TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="La réponse IA a dépassé le délai maximal. Veuillez réessayer.",
+        ) from None
 
 async def _dedup_or_enqueue(
     pool,
     task_name: str,
-    assistant_type: str,
-    user_id: str,
+    dedup_assistant_type: str,
+    dedup_user_id: str,
     request_id: str | None,
     active: int,
     **task_kwargs,
@@ -86,19 +179,54 @@ async def _dedup_or_enqueue(
     NE touche JAMAIS au quota — c'est la responsabilité de l'appelant UNIQUEMENT
     lors d'un nouveau job (pas sur dedup hit).
     """
-    req_id = request_id or build_dedup_request_id(
-        "assistant", assistant_type, user_id,
-        task_kwargs.get("session_id", ""), task_kwargs.get("message", ""),
+    req_id = (
+        build_dedup_request_id(
+            "assistant",
+            dedup_assistant_type,
+            dedup_user_id,
+            request_id,
+        )
+        if request_id
+        else build_dedup_request_id(
+            "assistant",
+            dedup_assistant_type,
+            dedup_user_id,
+            task_kwargs.get("session_id", ""),
+            task_kwargs.get("message", ""),
+            task_kwargs.get("cv_text", ""),
+            task_kwargs.get("job_description", ""),
+        )
     )
     existing = await register_request(req_id)
-    if existing and existing != "__pending__":
+    if existing:
         # Doublon détecté — NE PAS incrémenter le quota (P1-1)
-        logger.info(f"[assistant/{assistant_type}] dedup hit — returning existing job={existing}")
-        return {"queued": True, "job_id": existing, "estimated_wait_seconds": active * 8}
+        logger.info(
+            f"[assistant/{dedup_assistant_type}] dedup hit — returning existing job={existing}"
+        )
+        return {
+            "queued": True,
+            "job_id": existing,
+            "estimated_wait_seconds": await estimate_arq_wait_seconds(pool, active),
+        }
 
-    job = await pool.enqueue_job(task_name, **task_kwargs)
-    await store_job_id(req_id, job.job_id)
-    return {"queued": True, "job_id": job.job_id, "estimated_wait_seconds": active * 8, "_new_job": True}
+    job_id = uuid.uuid4().hex
+    try:
+        if not await store_job_owner(job_id, dedup_user_id):
+            raise RuntimeError("Impossible d'enregistrer le propriétaire du job ARQ")
+        job = await pool.enqueue_job(task_name, _job_id=job_id, **task_kwargs)
+        if job is None:
+            raise RuntimeError("ARQ n'a pas accepté le job assistant")
+        await store_job_id(req_id, job.job_id)
+    except Exception:
+        await clear_pending_request(req_id)
+        await clear_job_owner(job_id)
+        raise
+    return {
+        "queued": True,
+        "job_id": job.job_id,
+        "estimated_wait_seconds": await estimate_arq_wait_seconds(pool, active),
+        "_new_job": True,
+    }
 
 
 # ── Prompts de réception du CV par assistant ─────────────────────────────────
@@ -161,12 +289,41 @@ class AssistantRequest(BaseModel):
     request_id: str | None = Field(
         default=None, max_length=128, description="Clé d'idempotence optionnelle pour déduplication ARQ"
     )
+    cv_data: dict | None = None
+    job_description: str | None = Field(default=None, max_length=30_000)
+    job_info: dict | None = None
 
-    # Optional context data for specific assistants
-    cv_data: dict | None = Field(default=None, description="CV data for cv-analyzer/cv-adapter")
-    job_description: str | None = Field(default=None, description="Job description for cv-adapter")
-    job_info: dict | None = Field(default=None, description="Job info for interview-sim")
+    @model_validator(mode="after")
+    def validate_context_size(self) -> "AssistantRequest":
+        for label, payload in (("cv_data", self.cv_data), ("job_info", self.job_info)):
+            if payload is None:
+                continue
+            size = len(json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8"))
+            if size > 50_000:
+                raise ValueError(f"{label} dépasse la taille maximale de 50 Ko")
+        return self
 
+
+def _assistant_context(request: AssistantRequest) -> tuple[str | None, str | None]:
+    cv_text = (
+        json.dumps(request.cv_data, ensure_ascii=False, default=str)
+        if request.cv_data
+        else None
+    )
+    job_parts = [request.job_description] if request.job_description else []
+    if request.job_info:
+        job_parts.append(json.dumps(request.job_info, ensure_ascii=False, default=str))
+    return cv_text, "\n".join(job_parts) or None
+
+
+def _contextual_message(request: AssistantRequest) -> str:
+    cv_text, job_description = _assistant_context(request)
+    message = request.message
+    if cv_text:
+        message += f"\n\n[CV FOURNI]\n{cv_text}\n[FIN DU CV]"
+    if job_description:
+        message += f"\n\n[OFFRE FOURNIE]\n{job_description}\n[FIN DE L'OFFRE]"
+    return message
 
 class AssistantResponse(BaseModel):
     """Response from any assistant type."""
@@ -177,11 +334,22 @@ class AssistantResponse(BaseModel):
     metadata: dict | None = None
 
 
+class AssistantQueuedResponse(BaseModel):
+    """Réponse différée compatible avec le polling ARQ du frontend."""
+
+    queued: Literal[True]
+    job_id: str
+    estimated_wait_seconds: int = Field(ge=0)
+
+
+AssistantRouteResponse = AssistantResponse | AssistantQueuedResponse
+
+
 # ============================================================================
 # Routes
 # ============================================================================
 
-@router.post("/job-scout", response_model=AssistantResponse)
+@router.post("/job-scout", response_model=AssistantRouteResponse)
 async def job_scout_chat(
     request: AssistantRequest,
     agent: ScoutConversationalAgentDep,
@@ -194,17 +362,14 @@ async def job_scout_chat(
     market insights, and personalized recommendations.
     """
     user_id = current_user["id"]
-    check_assistant_quota(user_id, "job-scout")
+    await run_sync_io(check_assistant_quota, user_id, "job-scout")
 
-    history = get_session_history(request.session_id)
-
-    try:
-        active = await _incr_active()
-    except Exception:
-        active = 0
+    active = await _acquire_active_or_503("assistant/job-scout")
+    counted = True
 
     if active > ASSISTANT_SYNC_THRESHOLD:
-        await _decr_active()
+        if counted:
+            await _decr_active()
         pool = await _get_arq_pool()
         if pool:
             try:
@@ -219,31 +384,40 @@ async def job_scout_chat(
                     session_id=request.session_id,
                     assistant_type="job-scout",
                     language=request.language,
-                    history=history,
+                    user_id=user_id,
                 )
                 if result_queue is not None:
                     if result_queue.pop("_new_job", False):
                         # Nouveau job uniquement : incrémenter le quota
-                        increment_assistant_messages(user_id, "job-scout")
+                        await run_sync_io(increment_assistant_messages, user_id, "job-scout")
                         await invalidate_user_quota_cache(user_id)
                         logger.info(
                             f"[assistant/job-scout] ARQ queued — active={active} "
                             f"job={result_queue['job_id']}"
                         )
                     return result_queue
+            except RequestEnqueuePendingError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Une requête identique est déjà en cours de mise en file.",
+                    headers={"Retry-After": "1"},
+                ) from exc
             except Exception as e:
-                logger.warning(f"[assistant/job-scout] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+                logger.warning(f"[assistant/job-scout] ARQ enqueue failed: {e}")
+        raise _capacity_error()
 
     # Mode synchrone
+    history = await run_sync_io(get_session_history, request.session_id, user_id=user_id)
     try:
-        result = await agent.run(
+        result = await _run_agent_with_timeout(
+            agent,
             message=request.message,
             history=history,
             language=request.language,
         )
     finally:
-        await _decr_active()
+        if counted:
+            await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -251,9 +425,16 @@ async def job_scout_chat(
             detail=result.get("error", "Job Scout error"),
         )
 
-    increment_assistant_messages(user_id, "job-scout")
+    await run_sync_io(increment_assistant_messages, user_id, "job-scout")
     await invalidate_user_quota_cache(user_id)
-    update_session_history(request.session_id, request.message, result["response"])
+    await run_sync_io(
+        update_session_history,
+        request.session_id,
+        request.message,
+        result["response"],
+        user_id=user_id,
+        assistant_type="job-scout",
+    )
 
     return AssistantResponse(
         success=True,
@@ -264,7 +445,7 @@ async def job_scout_chat(
     )
 
 
-@router.post("/cv-analyzer", response_model=AssistantResponse)
+@router.post("/cv-analyzer", response_model=AssistantRouteResponse)
 async def cv_analyzer_chat(
     request: AssistantRequest,
     agent: CVAgentDep,
@@ -277,17 +458,15 @@ async def cv_analyzer_chat(
     Can guide users through the CV optimization process step by step.
     """
     user_id = current_user["id"]
-    check_assistant_quota(user_id, "cv-analyzer")
+    cv_text, _ = _assistant_context(request)
+    await run_sync_io(check_assistant_quota, user_id, "cv-analyzer")
 
-    history = get_session_history(request.session_id)
-
-    try:
-        active = await _incr_active()
-    except Exception:
-        active = 0
+    active = await _acquire_active_or_503("assistant/cv-analyzer")
+    counted = True
 
     if active > ASSISTANT_SYNC_THRESHOLD:
-        await _decr_active()
+        if counted:
+            await _decr_active()
         pool = await _get_arq_pool()
         if pool:
             try:
@@ -302,30 +481,40 @@ async def cv_analyzer_chat(
                     session_id=request.session_id,
                     assistant_type="cv-analyzer",
                     language=request.language,
-                    history=history,
+                    user_id=user_id,
+                    cv_text=cv_text,
                 )
                 if result_queue is not None:
                     if result_queue.pop("_new_job", False):
-                        increment_assistant_messages(user_id, "cv-analyzer")
+                        await run_sync_io(increment_assistant_messages, user_id, "cv-analyzer")
                         await invalidate_user_quota_cache(user_id)
                         logger.info(
                             f"[assistant/cv-analyzer] ARQ queued — active={active} "
                             f"job={result_queue['job_id']}"
                         )
                     return result_queue
+            except RequestEnqueuePendingError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Une requête identique est déjà en cours de mise en file.",
+                    headers={"Retry-After": "1"},
+                ) from exc
             except Exception as e:
-                logger.warning(f"[assistant/cv-analyzer] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+                logger.warning(f"[assistant/cv-analyzer] ARQ enqueue failed: {e}")
+        raise _capacity_error()
 
     # Mode synchrone
+    history = await run_sync_io(get_session_history, request.session_id, user_id=user_id)
     try:
-        result = await agent.run(
-            message=request.message,
+        result = await _run_agent_with_timeout(
+            agent,
+            message=_contextual_message(request),
             history=history,
             language=request.language,
         )
     finally:
-        await _decr_active()
+        if counted:
+            await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -333,9 +522,16 @@ async def cv_analyzer_chat(
             detail=result.get("error", "CV Analyzer error"),
         )
 
-    increment_assistant_messages(user_id, "cv-analyzer")
+    await run_sync_io(increment_assistant_messages, user_id, "cv-analyzer")
     await invalidate_user_quota_cache(user_id)
-    update_session_history(request.session_id, request.message, result["response"])
+    await run_sync_io(
+        update_session_history,
+        request.session_id,
+        request.message,
+        result["response"],
+        user_id=user_id,
+        assistant_type="cv-analyzer",
+    )
 
     return AssistantResponse(
         success=True,
@@ -346,7 +542,7 @@ async def cv_analyzer_chat(
     )
 
 
-@router.post("/cv-adapter", response_model=AssistantResponse)
+@router.post("/cv-adapter", response_model=AssistantRouteResponse)
 async def cv_adapter_chat(
     request: AssistantRequest,
     agent: CVAdapterAgentDep,
@@ -359,17 +555,15 @@ async def cv_adapter_chat(
     Guides users through the adaptation process with strategic recommendations.
     """
     user_id = current_user["id"]
-    check_assistant_quota(user_id, "cv-adapter")
+    cv_text, contextual_job = _assistant_context(request)
+    await run_sync_io(check_assistant_quota, user_id, "cv-adapter")
 
-    history = get_session_history(request.session_id)
-
-    try:
-        active = await _incr_active()
-    except Exception:
-        active = 0
+    active = await _acquire_active_or_503("assistant/cv-adapter")
+    counted = True
 
     if active > ASSISTANT_SYNC_THRESHOLD:
-        await _decr_active()
+        if counted:
+            await _decr_active()
         pool = await _get_arq_pool()
         if pool:
             try:
@@ -384,30 +578,41 @@ async def cv_adapter_chat(
                     session_id=request.session_id,
                     assistant_type="cv-adapter",
                     language=request.language,
-                    history=history,
+                    user_id=user_id,
+                    cv_text=cv_text,
+                    job_description=contextual_job,
                 )
                 if result_queue is not None:
                     if result_queue.pop("_new_job", False):
-                        increment_assistant_messages(user_id, "cv-adapter")
+                        await run_sync_io(increment_assistant_messages, user_id, "cv-adapter")
                         await invalidate_user_quota_cache(user_id)
                         logger.info(
                             f"[assistant/cv-adapter] ARQ queued — active={active} "
                             f"job={result_queue['job_id']}"
                         )
                     return result_queue
+            except RequestEnqueuePendingError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Une requête identique est déjà en cours de mise en file.",
+                    headers={"Retry-After": "1"},
+                ) from exc
             except Exception as e:
-                logger.warning(f"[assistant/cv-adapter] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+                logger.warning(f"[assistant/cv-adapter] ARQ enqueue failed: {e}")
+        raise _capacity_error()
 
     # Mode synchrone
+    history = await run_sync_io(get_session_history, request.session_id, user_id=user_id)
     try:
-        result = await agent.run(
-            message=request.message,
+        result = await _run_agent_with_timeout(
+            agent,
+            message=_contextual_message(request),
             history=history,
             language=request.language,
         )
     finally:
-        await _decr_active()
+        if counted:
+            await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -415,9 +620,16 @@ async def cv_adapter_chat(
             detail=result.get("error", "CV Adapter error"),
         )
 
-    increment_assistant_messages(user_id, "cv-adapter")
+    await run_sync_io(increment_assistant_messages, user_id, "cv-adapter")
     await invalidate_user_quota_cache(user_id)
-    update_session_history(request.session_id, request.message, result["response"])
+    await run_sync_io(
+        update_session_history,
+        request.session_id,
+        request.message,
+        result["response"],
+        user_id=user_id,
+        assistant_type="cv-adapter",
+    )
 
     return AssistantResponse(
         success=True,
@@ -428,7 +640,7 @@ async def cv_adapter_chat(
     )
 
 
-@router.post("/interview-sim", response_model=AssistantResponse)
+@router.post("/interview-sim", response_model=AssistantRouteResponse)
 async def interview_sim_chat(
     request: AssistantRequest,
     agent: InterviewSimAgentDep,
@@ -442,18 +654,21 @@ async def interview_sim_chat(
     Includes behavioral questions, technical questions, and constructive feedback.
     """
     user_id = current_user["id"]
-    _require_feature_flag_sync(user_id, "interview_sim", "Le simulateur d'entretien necessite un plan superieur.")
-    check_assistant_quota(user_id, "interview-sim")
+    _, contextual_job = _assistant_context(request)
+    await run_sync_io(
+        _require_feature_flag_sync,
+        user_id,
+        "interview_sim",
+        "Le simulateur d'entretien necessite un plan superieur.",
+    )
+    await run_sync_io(check_assistant_quota, user_id, "interview-sim")
 
-    history = get_session_history(request.session_id)
-
-    try:
-        active = await _incr_active()
-    except Exception:
-        active = 0
+    active = await _acquire_active_or_503("assistant/interview-sim")
+    counted = True
 
     if active > ASSISTANT_SYNC_THRESHOLD:
-        await _decr_active()
+        if counted:
+            await _decr_active()
         pool = await _get_arq_pool()
         if pool:
             try:
@@ -468,30 +683,40 @@ async def interview_sim_chat(
                     session_id=request.session_id,
                     assistant_type="interview-sim",
                     language=request.language,
-                    history=history,
+                    user_id=user_id,
+                    job_description=contextual_job,
                 )
                 if result_queue is not None:
                     if result_queue.pop("_new_job", False):
-                        increment_assistant_messages(user_id, "interview-sim")
+                        await run_sync_io(increment_assistant_messages, user_id, "interview-sim")
                         await invalidate_user_quota_cache(user_id)
                         logger.info(
                             f"[assistant/interview-sim] ARQ queued — active={active} "
                             f"job={result_queue['job_id']}"
                         )
                     return result_queue
+            except RequestEnqueuePendingError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Une requête identique est déjà en cours de mise en file.",
+                    headers={"Retry-After": "1"},
+                ) from exc
             except Exception as e:
-                logger.warning(f"[assistant/interview-sim] ARQ enqueue failed ({e}) — fallback sync")
-        await _incr_active()
+                logger.warning(f"[assistant/interview-sim] ARQ enqueue failed: {e}")
+        raise _capacity_error()
 
     # Mode synchrone
+    history = await run_sync_io(get_session_history, request.session_id, user_id=user_id)
     try:
-        result = await agent.run(
-            message=request.message,
+        result = await _run_agent_with_timeout(
+            agent,
+            message=_contextual_message(request),
             history=history,
             language=request.language,
         )
     finally:
-        await _decr_active()
+        if counted:
+            await _decr_active()
 
     if not result.get("success"):
         raise HTTPException(
@@ -499,9 +724,16 @@ async def interview_sim_chat(
             detail=result.get("error", "Interview Simulator error"),
         )
 
-    increment_assistant_messages(user_id, "interview-sim")
+    await run_sync_io(increment_assistant_messages, user_id, "interview-sim")
     await invalidate_user_quota_cache(user_id)
-    update_session_history(request.session_id, request.message, result["response"])
+    await run_sync_io(
+        update_session_history,
+        request.session_id,
+        request.message,
+        result["response"],
+        user_id=user_id,
+        assistant_type="interview-sim",
+    )
 
     return AssistantResponse(
         success=True,
@@ -528,12 +760,7 @@ async def _extract_pdf_text(pdf_bytes: bytes, filename: str) -> str:
             logger.warning(f"[attach-cv] Modal failed, fallback to pypdf: {e}")
 
     try:
-        import io
-
-        import pypdf
-
-        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-        text = "\n".join(page.extract_text() or "" for page in reader.pages).strip()
+        text = await run_extraction_sync(_extract_pdf_text_sync, pdf_bytes)
         if text and len(text) >= 50:
             logger.info(f"[attach-cv] pypdf OK: {len(text)} chars")
             return text
@@ -546,8 +773,30 @@ async def _extract_pdf_text(pdf_bytes: bytes, filename: str) -> str:
     )
 
 
+def _extract_pdf_text_sync(pdf_bytes: bytes) -> str:
+    """Parse un PDF borné hors event loop pour le fallback assistant."""
+    import io
+
+    import pypdf
+
+    reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+    if len(reader.pages) > 100:
+        raise ValueError("Le PDF dépasse la limite de 100 pages")
+    chunks: list[str] = []
+    total_chars = 0
+    for page in reader.pages:
+        page_text = page.extract_text() or ""
+        chunks.append(page_text)
+        total_chars += len(page_text)
+        if total_chars > 100_000:
+            raise ValueError("Le texte extrait du PDF dépasse 100 000 caractères")
+    return "\n".join(chunks).strip()
+
+
 @router.post("/attach-cv")
+@limiter.limit("5/minute")
 async def attach_cv_to_chat(
+    request: Request,
     coach_agent: CoachAgentDep,
     cv_agent: CVAgentDep,
     cv_adapter_agent: CVAdapterAgentDep,
@@ -556,7 +805,14 @@ async def attach_cv_to_chat(
     interview_agent: InterviewSimAgentDep,
     current_user: CurrentUserDep,
     file: UploadFile = File(..., description="Fichier PDF du CV"),
-    assistant_type: str = Form(default="career-coach"),
+    assistant_type: Literal[
+        "career-coach",
+        "job-scout",
+        "cv-analyzer",
+        "cv-adapter",
+        "branding",
+        "interview-sim",
+    ] = Form(default="career-coach"),
     session_id: str = Form(..., description="Session ID du chat"),
     language: str = Form(default="fr"),
 ):
@@ -575,6 +831,14 @@ async def attach_cv_to_chat(
     """
     user_id = current_user["id"]
 
+    if assistant_type == "interview-sim":
+        await run_sync_io(
+            _require_feature_flag_sync,
+            user_id,
+            "interview_sim",
+            "Le simulateur d'entretien necessite un plan superieur.",
+        )
+
     # ── Validation ────────────────────────────────────────────────────────────
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
@@ -582,23 +846,18 @@ async def attach_cv_to_chat(
             detail="Seuls les fichiers PDF sont acceptés",
         )
 
-    pdf_bytes = await file.read()
-
-    if len(pdf_bytes) > 10 * 1024 * 1024:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Fichier trop volumineux ({len(pdf_bytes) / 1024 / 1024:.1f}MB, max 10MB)",
-        )
-
-    check_assistant_quota(user_id, assistant_type)
+    await run_sync_io(check_assistant_quota, user_id, assistant_type)
 
     try:
         # ── Étape 1 : Extraction texte ────────────────────────────────────────
-        logger.info(f"[attach-cv] {file.filename} ({len(pdf_bytes)} bytes), assistant={assistant_type}")
-        cv_text = await _extract_pdf_text(pdf_bytes, file.filename or "cv.pdf")
-
-        # ── Étape 2 : Extraction structurée (Groq JSON mode, ~1s) ────────────
-        cv_structured = await extract_cv_structured(cv_text)
+        async with _cv_extraction_slot():
+            pdf_bytes = await read_upload_limited(file)
+            logger.info(
+                f"[attach-cv] {file.filename} ({len(pdf_bytes)} bytes), "
+                f"assistant={assistant_type}"
+            )
+            cv_text = await _extract_pdf_text(pdf_bytes, file.filename or "cv.pdf")
+        cv_text = cv_text[:100_000]
 
         # ── Étape 3 : Préparer le message CV pour l'historique ────────────────
         # Formaté pour être lisible par tous les agents dans l'historique.
@@ -633,12 +892,37 @@ async def attach_cv_to_chat(
         }
         agent = agent_map.get(assistant_type, coach_agent)
 
-        current_history = get_session_history(session_id)
-        result = await agent.run(
-            message=first_message,
-            history=current_history,
-            language=language,
+        current_history = await run_sync_io(
+            get_session_history,
+            session_id,
+            user_id=user_id,
         )
+        active = await _acquire_active_or_503("assistant/attach-cv")
+        if active > ASSISTANT_SYNC_THRESHOLD:
+            await _decr_active()
+            raise _capacity_error()
+        try:
+            async def run_attach_ai() -> tuple[dict, dict]:
+                structured = await extract_cv_structured(cv_text)
+                agent_result = await agent.run(
+                    message=first_message,
+                    history=current_history,
+                    language=language,
+                )
+                return structured, agent_result
+
+            # Le timeout couvre les deux appels Groq et reste inférieur au lease.
+            cv_structured, result = await asyncio.wait_for(
+                run_attach_ai(),
+                timeout=ASSISTANT_SYNC_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="L'analyse du CV a dépassé le délai maximal. Veuillez réessayer.",
+            ) from None
+        finally:
+            await _decr_active()
 
         if not result.get("success"):
             raise RuntimeError(result.get("error", "Erreur lors de l'analyse du CV"))
@@ -648,14 +932,32 @@ async def attach_cv_to_chat(
         # ── Étape 5 : Persister dans l'historique de session ─────────────────
         # CV (user) + réponse IA (assistant) → stockés ensemble.
         # Tous les tours suivants verront le CV via get_session_history().
-        update_session_history(session_id, cv_message_content, initial_response)
+        persisted_assistant_type = (
+            assistant_type
+            if assistant_type in {
+                "career-coach",
+                "job-scout",
+                "cv-analyzer",
+                "cv-adapter",
+                "interview-sim",
+            }
+            else "career-coach"
+        )
+        await run_sync_io(
+            update_session_history,
+            session_id,
+            cv_message_content,
+            initial_response,
+            user_id=user_id,
+            assistant_type=persisted_assistant_type,
+        )
 
         logger.info(
             f"[attach-cv] Done — session={session_id[:8]}... "
             f"cv={len(cv_text)}chars structured={bool(cv_structured)}"
         )
 
-        increment_assistant_messages(user_id, assistant_type)
+        await run_sync_io(increment_assistant_messages, user_id, assistant_type)
         await invalidate_user_quota_cache(user_id)
 
         return {
@@ -689,8 +991,7 @@ async def create_assistant_session():
 
 
 @router.delete("/session/{session_id}")
-async def delete_assistant_session(session_id: str):
+async def delete_assistant_session(session_id: str, current_user: CurrentUserDep):
     """Clear an assistant chat session."""
-    from src.api.deps import clear_session
-    clear_session(session_id)
+    await run_sync_io(clear_session, session_id, user_id=current_user["id"])
     return {"success": True, "message": f"Session {session_id} cleared"}

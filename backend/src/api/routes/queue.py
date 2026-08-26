@@ -7,9 +7,11 @@ Supporte les jobs ARQ (remplace la queue custom Redis).
 
 import asyncio
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, HTTPException
 
+from src.api.deps import CurrentUserDep
 from src.utils.cache import get_redis
+from src.utils.request_dedup import get_job_owner
 
 router = APIRouter()
 _arq_pool = None
@@ -33,7 +35,7 @@ async def _get_arq_pool():
 @router.get("/status/{job_id}")
 async def get_status(
     job_id: str,
-    authorization: str | None = Header(None),
+    current_user: CurrentUserDep,
 ):
     """
     Statut d'un job ARQ.
@@ -44,6 +46,11 @@ async def get_status(
     - `completed`  → {status, result}
     - `failed`     → {status, error}
     """
+    owner_id = await get_job_owner(job_id)
+    if owner_id is None or owner_id != current_user.get("id"):
+        # Même réponse pour un job absent ou appartenant à un autre compte.
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+
     try:
         from arq.jobs import Job, JobStatus
 

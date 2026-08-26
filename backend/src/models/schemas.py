@@ -29,7 +29,10 @@ class CoachRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000, description="User message")
     session_id: str = Field(..., pattern=r"^[a-f0-9-]{36}$", description="Session UUID")
     language: Literal["fr", "en", "es", "pt"] = Field(default="fr")
-    assistant_type: str = Field(default="career-coach", description="Coach/assistant type for per-coach quota tracking")
+    assistant_type: Literal["career-coach"] = Field(
+        default="career-coach",
+        description="Coach type for per-coach quota tracking",
+    )
     request_id: str | None = Field(default=None, max_length=128, description="Clé d'idempotence optionnelle pour déduplication ARQ")
 
     model_config = {"json_schema_extra": {"example": {

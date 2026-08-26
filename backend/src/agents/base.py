@@ -29,6 +29,20 @@ from src.utils.groq_retry import with_groq_key_rotation, with_groq_retry
 
 logger = logging.getLogger(__name__)
 
+CONVERSATIONAL_FACTUAL_GUARDRAILS = """
+🛡️ GARDE-FOUS FACTUELS OBLIGATOIRES:
+- N'attribue jamais au candidat une technologie, un poste, une entreprise, une date, un volume, une certification, une responsabilité ou un résultat absent de son message et de l'historique fourni.
+- N'invente jamais de score numérique de CV. Utilise uniquement un score ATS déjà présent dans le contexte; sinon dirige l'utilisateur vers l'analyse ATS dédiée.
+- Tout exemple hypothétique doit être explicitement présenté comme « exemple hypothétique » et jamais comme une réalisation du candidat.
+- Une offre d'emploi décrit les attentes de l'employeur; elle ne prouve jamais que le candidat possède les compétences demandées.
+- HuntZen ne soumet pas de candidatures à la place de l'utilisateur. Ne prétends jamais le contraire.
+- Ne recommande pas une plateforme comme active ou disponible sans information actuelle et vérifiable dans le contexte; invite à vérifier sa disponibilité.
+"""
+
+
+class SubAgentTransientError(RuntimeError):
+    """Échec fournisseur temporaire qui ne doit pas déclencher un retry applicatif."""
+
 
 def load_prompt(filename: str) -> str:
     """
@@ -90,6 +104,7 @@ class BaseAgent(ABC):
         """
         self.name = config.name
         self.config = config
+        self.logger = logging.getLogger(f"{__name__}.{config.name}")
         self._sub_agents: dict[str, SubAgent] = {}
         self._tools: list[LangChainBaseTool] = []
 
@@ -340,7 +355,9 @@ class SubAgent:
             )
         except TimeoutError:
             logger.warning(f"LLM timeout after 60s for sub-agent {self.name}")
-            return "Le service IA est temporairement surchargé. Réessayez dans quelques instants."
+            raise SubAgentTransientError(
+                f"LLM timeout after 60s for sub-agent {self.name}"
+            ) from None
         return response.content
 
 

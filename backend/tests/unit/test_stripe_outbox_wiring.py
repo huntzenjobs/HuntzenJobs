@@ -1,16 +1,14 @@
-"""Câblage du consommateur d'effets Stripe vers ARQ et le cron sécurisé."""
+"""Câblage prioritaire du consommateur d'effets Stripe et du cron sécurisé."""
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
-import arq
 import pytest
 from fastapi import HTTPException
 
 from src.api import deps
 from src.api.routes import cron
 from src.services import stripe_outbox
-from src.workers import settings, tasks
+from src.workers import tasks
 
 
 @pytest.mark.asyncio
@@ -86,64 +84,55 @@ async def test_cron_rejects_invalid_secret(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_cron_enqueues_outbox_worker(monkeypatch):
-    enqueue = AsyncMock(return_value=SimpleNamespace(job_id="job_test_outbox"))
-    close = AsyncMock()
-    pool = SimpleNamespace(enqueue_job=enqueue, aclose=close)
+async def test_cron_processes_outbox_outside_ai_queue(monkeypatch):
+    process = AsyncMock(
+        return_value={"claimed": 1, "succeeded": 1, "retried": 0, "dead": 0}
+    )
     monkeypatch.setattr(cron, "CRON_SECRET", "cron_test_secret")
-    monkeypatch.setattr(cron, "time", Mock(return_value=60_001), raising=False)
-
-    monkeypatch.setattr(arq, "create_pool", AsyncMock(return_value=pool))
-    monkeypatch.setattr(settings, "_get_redis_settings", Mock(return_value=object()))
+    monkeypatch.setattr(tasks, "stripe_effect_outbox_task", process)
 
     result = await cron.stripe_effects_cron("Bearer cron_test_secret")
 
-    assert result == {"success": True, "job_id": "job_test_outbox"}
-    enqueue.assert_awaited_once_with(
-        "stripe_effect_outbox_task",
-        _job_id="stripe-effect-outbox:500",
-        _expires=120,
-    )
-    close.assert_awaited_once_with()
-
-
-@pytest.mark.asyncio
-async def test_cron_uses_same_job_id_for_duplicate_trigger(monkeypatch):
-    enqueue = AsyncMock(
-        side_effect=[SimpleNamespace(job_id="stripe-effect-outbox:500"), None]
-    )
-    close = AsyncMock()
-    pool = SimpleNamespace(enqueue_job=enqueue, aclose=close)
-    monkeypatch.setattr(cron, "CRON_SECRET", "cron_test_secret")
-    monkeypatch.setattr(cron, "time", Mock(return_value=60_001), raising=False)
-    monkeypatch.setattr(arq, "create_pool", AsyncMock(return_value=pool))
-    monkeypatch.setattr(settings, "_get_redis_settings", Mock(return_value=object()))
-
-    first = await cron.stripe_effects_cron("Bearer cron_test_secret")
-    duplicate = await cron.stripe_effects_cron("Bearer cron_test_secret")
-
-    assert first == {"success": True, "job_id": "stripe-effect-outbox:500"}
-    assert duplicate == {
+    assert result == {
         "success": True,
-        "job_id": "stripe-effect-outbox:500",
-        "already_enqueued": True,
+        "summary": {"claimed": 1, "succeeded": 1, "retried": 0, "dead": 0},
     }
-    assert enqueue.await_count == 2
+    process.assert_awaited_once_with({})
 
 
 @pytest.mark.asyncio
-async def test_cron_closes_redis_pool_when_enqueue_fails(monkeypatch):
-    close = AsyncMock()
-    pool = SimpleNamespace(
-        enqueue_job=AsyncMock(side_effect=RuntimeError("redis unavailable")),
-        aclose=close,
-    )
+async def test_cron_reports_outbox_timeout(monkeypatch):
+    async def never_finishes(_ctx):
+        import asyncio
+
+        await asyncio.Future()
+
     monkeypatch.setattr(cron, "CRON_SECRET", "cron_test_secret")
-    monkeypatch.setattr(arq, "create_pool", AsyncMock(return_value=pool))
-    monkeypatch.setattr(settings, "_get_redis_settings", Mock(return_value=object()))
+    monkeypatch.setattr(tasks, "stripe_effect_outbox_task", never_finishes)
+    real_wait_for = cron.asyncio.wait_for
+
+    async def short_wait(awaitable, timeout):
+        del timeout
+        return await real_wait_for(awaitable, timeout=0.01)
+
+    monkeypatch.setattr(cron.asyncio, "wait_for", short_wait)
+
+    with pytest.raises(HTTPException) as error:
+        await cron.stripe_effects_cron("Bearer cron_test_secret")
+
+    assert error.value.status_code == 504
+
+
+@pytest.mark.asyncio
+async def test_cron_reports_outbox_processing_failure(monkeypatch):
+    monkeypatch.setattr(cron, "CRON_SECRET", "cron_test_secret")
+    monkeypatch.setattr(
+        tasks,
+        "stripe_effect_outbox_task",
+        AsyncMock(side_effect=RuntimeError("database unavailable")),
+    )
 
     with pytest.raises(HTTPException) as error:
         await cron.stripe_effects_cron("Bearer cron_test_secret")
 
     assert error.value.status_code == 500
-    close.assert_awaited_once_with()

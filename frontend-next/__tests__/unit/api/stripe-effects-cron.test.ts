@@ -15,7 +15,7 @@ describe("cron stripe-effects", () => {
     vi.resetModules();
   });
 
-  it("abandonne rapidement un backend qui ne répond pas", async () => {
+  it("laisse au backend son budget borné avant d'abandonner", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((_url: string, init?: RequestInit) =>
@@ -33,7 +33,7 @@ describe("cron stripe-effects", () => {
       }),
     );
 
-    await vi.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(115_000);
     const response = await responsePromise;
 
     expect(response.status).toBe(504);

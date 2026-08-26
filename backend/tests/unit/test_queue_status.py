@@ -38,6 +38,11 @@ def mock_arq(monkeypatch: pytest.MonkeyPatch) -> tuple[FakePool, AsyncMock]:
     monkeypatch.setattr(arq, "create_pool", create_pool)
     monkeypatch.setattr(arq.jobs, "Job", FakeJob)
     monkeypatch.setattr(queue_route, "_arq_pool", None)
+    monkeypatch.setattr(
+        queue_route,
+        "get_job_owner",
+        AsyncMock(return_value="owner-123"),
+    )
     FakeJob.status_value = JobStatus.queued
     FakeJob.result_value = None
     return pool, create_pool
@@ -58,7 +63,7 @@ async def test_get_status_maps_non_final_arq_states(
 ) -> None:
     FakeJob.status_value = arq_status
 
-    assert await get_status("job-123") == {"status": expected}
+    assert await get_status("job-123", {"id": "owner-123"}) == {"status": expected}
 
 
 @pytest.mark.asyncio
@@ -79,7 +84,7 @@ async def test_get_status_reads_result_only_after_completion(
         result={"success": True} if success else "provider timeout",
     )
 
-    assert await get_status("job-123") == expected
+    assert await get_status("job-123", {"id": "owner-123"}) == expected
 
 
 @pytest.mark.asyncio
@@ -87,7 +92,7 @@ async def test_get_status_returns_404_for_unknown_job() -> None:
     FakeJob.status_value = JobStatus.not_found
 
     with pytest.raises(HTTPException) as error:
-        await get_status("missing-job")
+        await get_status("missing-job", {"id": "owner-123"})
 
     assert error.value.status_code == 404
 
@@ -96,8 +101,8 @@ async def test_get_status_returns_404_for_unknown_job() -> None:
 async def test_get_status_reuses_its_arq_pool(
     mock_arq: tuple[FakePool, AsyncMock],
 ) -> None:
-    await get_status("job-123")
-    await get_status("job-456")
+    await get_status("job-123", {"id": "owner-123"})
+    await get_status("job-456", {"id": "owner-123"})
 
     pool, create_pool = mock_arq
     create_pool.assert_awaited_once()

@@ -178,7 +178,7 @@ async def stress_test_task(
             arq_depth = 0
             if redis:
                 try:
-                    arq_depth = int(await redis.llen("arq:queue:default") or 0)
+                    arq_depth = int(await redis.zcard("arq:queue") or 0)
                 except Exception:
                     pass
 

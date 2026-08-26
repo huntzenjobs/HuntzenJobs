@@ -4,10 +4,10 @@ Cron endpoints — appelés par Vercel Cron via le frontend Next.js.
 POST /api/cron/retention-notifications — notifie les users inactifs depuis 7 jours
 """
 
+import asyncio
 import logging
 import os
 from datetime import UTC, datetime, timedelta
-from time import time
 
 from fastapi import APIRouter, Header, HTTPException
 
@@ -270,35 +270,21 @@ async def notify_expiring_plans_cron(authorization: str | None = Header(None)):
 
 @router.post("/stripe-effects")
 async def stripe_effects_cron(authorization: str | None = Header(None)):
-    """Signaler au worker ARQ qu'un lot d'effets Stripe est prêt."""
+    """Traiter l'outbox Stripe hors de la file IA pour garantir sa priorité."""
     _verify_cron_secret(authorization)
 
-    pool = None
     try:
-        from arq import create_pool
+        from src.workers.tasks import stripe_effect_outbox_task
 
-        from src.workers.settings import _get_redis_settings
-
-        pool = await create_pool(_get_redis_settings())
-        job_id = f"stripe-effect-outbox:{int(time() // 120)}"
-        job = await pool.enqueue_job(
-            "stripe_effect_outbox_task",
-            _job_id=job_id,
-            _expires=120,
+        summary = await asyncio.wait_for(
+            stripe_effect_outbox_task({}),
+            timeout=110,
         )
-        if job is None:
-            logger.info("[cron] stripe-effects already enqueued", extra={"job_id": job_id})
-            return {
-                "success": True,
-                "job_id": job_id,
-                "already_enqueued": True,
-            }
-        job_id = job.job_id
-        logger.info("[cron] stripe-effects enqueued", extra={"job_id": job_id})
-        return {"success": True, "job_id": job_id}
+        logger.info("[cron] stripe-effects processed", extra=summary)
+        return {"success": True, "summary": summary}
+    except TimeoutError:
+        logger.error("[cron] stripe-effects time budget exceeded", exc_info=True)
+        raise HTTPException(status_code=504, detail="Stripe effects processing timed out") from None
     except Exception:
-        logger.error("[cron] stripe-effects enqueue failed", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to enqueue Stripe effects") from None
-    finally:
-        if pool is not None:
-            await pool.aclose()
+        logger.error("[cron] stripe-effects processing failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to process Stripe effects") from None

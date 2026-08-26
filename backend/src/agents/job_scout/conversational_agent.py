@@ -14,7 +14,7 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from src.agents.base import AgentConfig, BaseAgent
+from src.agents.base import CONVERSATIONAL_FACTUAL_GUARDRAILS, AgentConfig, BaseAgent
 from src.config.settings import settings
 
 LANG_INSTRUCTIONS = {
@@ -38,7 +38,7 @@ class JobScoutConversationalAgent(BaseAgent):
             name="JobScoutConversational",
             description="Expert conversationnel en recherche d'emploi et stratégies de carrière",
             model=settings.llm_model_powerful,  # Use powerful model for expert advice
-            temperature=0.7,  # More creative for personalized advice
+            temperature=0.2,
             max_tokens=2048,
         )
         super().__init__(config)
@@ -78,6 +78,8 @@ Tu guides les chercheurs d'emploi avec des stratégies personnalisées et des co
 - Propose des actions concrètes et mesurables
 - Reste positif et constructif
 - {lang_instruction}
+
+{CONVERSATIONAL_FACTUAL_GUARDRAILS}
 """
 
     async def run(

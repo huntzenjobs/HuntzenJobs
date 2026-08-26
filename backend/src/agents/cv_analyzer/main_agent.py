@@ -334,8 +334,21 @@ class CVAnalyzerAgent(BaseAgent):
     async def _match_job(self, cv_text: str, job_description: str, language: str = "en") -> dict:
         """Match CV against job description."""
         task = f"Respond in {language}.\n\nCV:\n{cv_text}\n\nJob Description:\n{job_description}"
+        # Les pannes temporaires remontent comme exception typée par SubAgent.run :
+        # seule une réponse fournisseur réellement reçue mais malformée est retentée.
         result = await self.job_matcher.run(task=task)
-        return self._parse_json(result) or {}
+        parsed = self._parse_json(result)
+        if isinstance(parsed, dict):
+            return parsed
+
+        logger.warning("[%s] Job matcher returned invalid JSON; retrying once", self.name)
+        strict_task = (
+            f"{task}\n\n"
+            "Répondez uniquement avec l'objet JSON valide demandé, sans Markdown ni commentaire."
+        )
+        retry_result = await self.job_matcher.run(task=strict_task)
+        retry_parsed = self._parse_json(retry_result)
+        return retry_parsed if isinstance(retry_parsed, dict) else {}
 
     async def _get_improvements(self, cv_text: str, language: str = "en") -> dict:
         """Get CV improvements."""

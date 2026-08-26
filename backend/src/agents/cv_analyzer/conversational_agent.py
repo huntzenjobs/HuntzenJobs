@@ -14,7 +14,7 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from src.agents.base import AgentConfig, BaseAgent
+from src.agents.base import CONVERSATIONAL_FACTUAL_GUARDRAILS, AgentConfig, BaseAgent
 from src.config.settings import settings
 
 
@@ -31,7 +31,7 @@ class CVAnalyzerConversationalAgent(BaseAgent):
             name="CVAnalyzerConversational",
             description="Expert conversationnel en analyse et optimisation de CV",
             model=settings.llm_model_powerful,
-            temperature=0.6,  # Balanced for analysis and advice
+            temperature=0.1,
             max_tokens=2048,
         )
         super().__init__(config)
@@ -70,11 +70,12 @@ Tu analyses les CV et fournis des conseils d'optimisation pour maximiser l'impac
 
 ⚠️ IMPORTANT:
 - Demande le CV si pas encore fourni
-- Donne un score global /100
+- Ne donne un score global /100 que si un résultat ATS vérifié est déjà présent dans le contexte
 - Priorise les améliorations par impact
 - Propose des reformulations concrètes
 - Réponds TOUJOURS en français (sauf si demandé autrement)
-"""
+
+""" + CONVERSATIONAL_FACTUAL_GUARDRAILS
 
     async def run(
         self,

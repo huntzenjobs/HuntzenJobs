@@ -42,12 +42,28 @@ export function isQuotaExceededError(err: unknown): err is QuotaExceededError {
   return false;
 }
 
+export class HuntzenApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "HuntzenApiError";
+  }
+}
+
 /** Context about a job passed to the interview simulator */
 export interface JobContext {
   title?: string;
   company?: string;
   description?: string;
   [key: string]: unknown;
+}
+
+interface AssistantContext {
+  cv_data?: Partial<CvData>;
+  job_description?: string;
+  job_info?: JobContext;
 }
 
 // Resolved lazily inside fetch() to avoid crashing at module load time during
@@ -164,7 +180,7 @@ export interface JobFairSearchResult {
   };
 }
 
-class HuntzenApiClient {
+export class HuntzenApiClient {
   private _baseUrl?: string;
 
   constructor(baseUrl?: string) {
@@ -204,10 +220,11 @@ class HuntzenApiClient {
         throw err;
       }
 
-      throw new Error(
+      throw new HuntzenApiError(
         typeof detail === "string"
           ? detail
           : `API Error: ${response.status} ${response.statusText}`,
+        response.status,
       );
     }
 
@@ -418,39 +435,85 @@ class HuntzenApiClient {
 
   // ── ARQ job polling ───────────────────────────────────────────────────────
   // Poll immédiat puis toutes les 3s. Timeout max 2 min.
-  private async _waitForJob(
+  async waitForJobResult<T>(
     jobId: string,
     initialEstimatedWait: number = 30,
     token?: string,
     maxWaitMs = 120_000,
     pollIntervalMs = 3_000,
     onQueueUpdate?: (state: QueueWaitingState) => void,
-  ): Promise<{ success: boolean; response: string; agent: string }> {
-    const deadline = Date.now() + maxWaitMs;
+    signal?: AbortSignal,
+  ): Promise<T> {
+    const queueAwareWaitMs = Math.min(
+      3_600_000,
+      Math.max(maxWaitMs, (Math.max(initialEstimatedWait, 0) + 180) * 1_000),
+    );
+    const deadline = Date.now() + queueAwareWaitMs;
     const startTime = Date.now();
+    let consecutiveErrors = 0;
+
+    const wait = (delayMs: number): Promise<void> =>
+      new Promise((resolve, reject) => {
+        if (signal?.aborted) {
+          const error = new Error("Traitement annulé");
+          error.name = "AbortError";
+          reject(error);
+          return;
+        }
+        const handleAbort = () => {
+          globalThis.clearTimeout(timeoutId);
+          const error = new Error("Traitement annulé");
+          error.name = "AbortError";
+          reject(error);
+        };
+        const timeoutId = globalThis.setTimeout(() => {
+          signal?.removeEventListener("abort", handleAbort);
+          resolve();
+        }, delayMs);
+        signal?.addEventListener("abort", handleAbort, { once: true });
+      });
 
     while (Date.now() < deadline) {
+      if (signal?.aborted) {
+        const error = new Error("Traitement annulé");
+        error.name = "AbortError";
+        throw error;
+      }
       let status: {
         status: "queued" | "processing" | "completed" | "failed";
-        result?: { success: boolean; response: string; agent: string };
+        result?: T;
         error?: string;
       };
 
       try {
         status = await this.fetch<typeof status>(`/api/queue/status/${jobId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal,
         });
       } catch (e) {
-        // Job expiré (TTL 1h dépassé) → erreur claire
-        if (e instanceof Error && e.message?.includes("404")) {
+        // Une 4xx est définitive : la répéter charge inutilement l'API.
+        if (e instanceof HuntzenApiError && e.status === 404) {
           throw new Error(
             "Ce traitement a expiré. Merci de renvoyer votre message.",
           );
         }
-        // Erreur réseau / 5xx transitoire → on continue de poller
-        await new Promise((r) => setTimeout(r, pollIntervalMs));
+        if (
+          e instanceof HuntzenApiError &&
+          e.status >= 400 &&
+          e.status < 500
+        ) {
+          throw e;
+        }
+        // Erreur réseau / 5xx transitoire → backoff borné pour ne pas marteler l'API.
+        consecutiveErrors += 1;
+        const retryDelay = Math.min(
+          15_000,
+          pollIntervalMs * 2 ** Math.min(consecutiveErrors - 1, 3),
+        );
+        await wait(retryDelay);
         continue;
       }
+      consecutiveErrors = 0;
 
       const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
       onQueueUpdate?.({
@@ -468,10 +531,12 @@ class HuntzenApiClient {
         );
       }
       // queued | processing → attendre avant prochain poll
-      await new Promise((r) => setTimeout(r, pollIntervalMs));
+      await wait(pollIntervalMs);
     }
 
-    throw new Error("Timeout : la réponse a pris trop de temps (> 2 min)");
+    throw new Error(
+      `Timeout : la réponse a pris trop de temps (> ${Math.ceil(queueAwareWaitMs / 60_000)} min)`,
+    );
   }
 
   // Assistant Chat - Unified endpoint for all assistants
@@ -487,6 +552,8 @@ class HuntzenApiClient {
     language: string = "fr",
     token?: string,
     onQueueUpdate?: (state: QueueWaitingState) => void,
+    context?: AssistantContext,
+    signal?: AbortSignal,
   ): Promise<{ success: boolean; response: string; agent: string }> {
     // Route to appropriate endpoint based on assistant type
     const endpointMap = {
@@ -509,6 +576,7 @@ class HuntzenApiClient {
         session_id: sessionId,
         assistant_type: assistantType,
         language,
+        ...context,
       }),
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
@@ -517,13 +585,18 @@ class HuntzenApiClient {
     if (!("queued" in raw)) return raw;
 
     // Réponse différée (ARQ path) — poll jusqu'au résultat
-    return this._waitForJob(
+    return this.waitForJobResult<{
+      success: boolean;
+      response: string;
+      agent: string;
+    }>(
       raw.job_id,
       raw.estimated_wait_seconds ?? 30,
       token,
       120_000,
       3_000,
       onQueueUpdate,
+      signal,
     );
   }
 
@@ -555,35 +628,40 @@ class HuntzenApiClient {
   async sendCoachMessage(
     message: string,
     sessionId: string,
+    token?: string,
   ): Promise<{ success: boolean; response: string; agent: string }> {
-    return this.sendAssistantMessage(message, sessionId, "career-coach");
+    return this.sendAssistantMessage(
+      message,
+      sessionId,
+      "career-coach",
+      "fr",
+      token,
+    );
   }
 
   // Specific assistant methods for better type safety
-  async sendCareerCoachMessage(message: string, sessionId: string) {
-    return this.sendAssistantMessage(message, sessionId, "career-coach");
+  async sendCareerCoachMessage(message: string, sessionId: string, token?: string) {
+    return this.sendAssistantMessage(message, sessionId, "career-coach", "fr", token);
   }
 
-  async sendJobScoutMessage(message: string, sessionId: string) {
-    return this.sendAssistantMessage(message, sessionId, "job-scout");
+  async sendJobScoutMessage(message: string, sessionId: string, token?: string) {
+    return this.sendAssistantMessage(message, sessionId, "job-scout", "fr", token);
   }
 
   async sendCVAnalyzerMessage(
     message: string,
     sessionId: string,
     cvData?: Partial<CvData>,
+    token?: string,
   ) {
-    return this.fetch<{ success: boolean; response: string; agent: string }>(
-      "/api/assistant/cv-analyzer",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          message,
-          session_id: sessionId,
-          assistant_type: "cv-analyzer",
-          cv_data: cvData,
-        }),
-      },
+    return this.sendAssistantMessage(
+      message,
+      sessionId,
+      "cv-analyzer",
+      "fr",
+      token,
+      undefined,
+      { cv_data: cvData },
     );
   }
 
@@ -592,19 +670,16 @@ class HuntzenApiClient {
     sessionId: string,
     cvData?: Partial<CvData>,
     jobDescription?: string,
+    token?: string,
   ) {
-    return this.fetch<{ success: boolean; response: string; agent: string }>(
-      "/api/assistant/cv-adapter",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          message,
-          session_id: sessionId,
-          assistant_type: "cv-adapter",
-          cv_data: cvData,
-          job_description: jobDescription,
-        }),
-      },
+    return this.sendAssistantMessage(
+      message,
+      sessionId,
+      "cv-adapter",
+      "fr",
+      token,
+      undefined,
+      { cv_data: cvData, job_description: jobDescription },
     );
   }
 
@@ -612,18 +687,16 @@ class HuntzenApiClient {
     message: string,
     sessionId: string,
     jobInfo?: JobContext,
+    token?: string,
   ) {
-    return this.fetch<{ success: boolean; response: string; agent: string }>(
-      "/api/assistant/interview-sim",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          message,
-          session_id: sessionId,
-          assistant_type: "interview-sim",
-          job_info: jobInfo,
-        }),
-      },
+    return this.sendAssistantMessage(
+      message,
+      sessionId,
+      "interview-sim",
+      "fr",
+      token,
+      undefined,
+      { job_info: jobInfo },
     );
   }
 

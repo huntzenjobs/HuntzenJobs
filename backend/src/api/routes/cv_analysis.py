@@ -26,6 +26,7 @@ from src.api.middleware import limiter
 from src.modal_integration import get_cv_analysis_status, list_user_cv_analyses, process_cv_async
 from src.services.stripe import invalidate_user_quota_cache
 from src.services.user_events import log_event
+from src.utils.uploads import read_upload_limited
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -177,8 +178,6 @@ async def analyze_cv_async(
             "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
-        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
-
         filename = file.filename or ""
         if not filename.lower().endswith(ALLOWED_EXTENSIONS):
             raise HTTPException(
@@ -193,12 +192,7 @@ async def analyze_cv_async(
             )
 
         # Read file to check size, then reset position for downstream processing
-        file_bytes = await file.read()
-        if len(file_bytes) > MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Fichier trop volumineux ({len(file_bytes) / 1024 / 1024:.1f}MB, max 10MB)",
-            )
+        await read_upload_limited(file)
         await file.seek(0)
 
     # ✅ DETERMINE FEATURE BASED ON JOB DESCRIPTION

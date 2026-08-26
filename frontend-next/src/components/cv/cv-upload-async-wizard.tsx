@@ -39,7 +39,7 @@ import {
 import type { CVAnalysisResult } from "@/hooks/use-cv-history";
 import { useDocuments } from "@/hooks/use-documents";
 import { PLAN_LIMITS, type FeatureType } from "@/hooks/use-freemium-limits";
-import type { Job } from "@/lib/api/huntzen-client";
+import huntzenApi, { type Job } from "@/lib/api/huntzen-client";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -56,7 +56,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 // Dynamic import: @react-pdf/renderer est lourd (~200KB), chargé uniquement au clic export
 const lazyExportCVAnalysisToPDF = () =>
@@ -211,6 +211,7 @@ export function CVUploadAsyncWizard({
   const [adaptLoading, setAdaptLoading] = useState(false);
   const [adaptResult, setAdaptResult] = useState<AdaptResult | null>(null);
   const [adaptError, setAdaptError] = useState<string | null>(null);
+  const adaptAbortControllerRef = useRef<AbortController | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showLmEditor, setShowLmEditor] = useState(false);
   const [editingLmData, setEditingLmData] = useState<Record<
@@ -221,6 +222,13 @@ export function CVUploadAsyncWizard({
   const { saveDocument } = useDocuments();
 
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(
+    () => () => {
+      adaptAbortControllerRef.current?.abort();
+    },
+    [],
+  );
 
   const {
     uploadCV,
@@ -552,6 +560,9 @@ export function CVUploadAsyncWizard({
       setWizardState((prev) => ({ ...prev, currentStep: 3 }));
       setAdaptLoading(true);
       setAdaptError(null);
+      adaptAbortControllerRef.current?.abort();
+      const adaptController = new AbortController();
+      adaptAbortControllerRef.current = adaptController;
 
       try {
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
@@ -584,12 +595,32 @@ export function CVUploadAsyncWizard({
             throw new Error("Quota insuffisant pour l'adaptation de CV.");
           }
           throw new Error(
-            errData.detail?.message || "Erreur lors de l'adaptation du CV",
+            typeof errData.detail === "string"
+              ? errData.detail
+              : errData.detail?.message || "Erreur lors de l'adaptation du CV",
           );
         }
 
-        const adaptData = await adaptRes.json();
-        const cvData = adaptData.cv_data;
+        let adaptData = await adaptRes.json();
+        if (adaptData.queued && adaptData.job_id) {
+          adaptData = await huntzenApi.waitForJobResult<{
+            success: boolean;
+            cv_data?: ParsedCvData;
+            match_score?: unknown;
+          }>(
+            adaptData.job_id,
+            adaptData.estimated_wait_seconds ?? 30,
+            token,
+            120_000,
+            3_000,
+            undefined,
+            adaptController.signal,
+          );
+        }
+        const cvData = adaptData.cv_data as ParsedCvData | undefined;
+        if (!cvData) {
+          throw new Error("Impossible d'extraire les données du CV adapté");
+        }
         const matchScore = normalizeAdaptMatchScore(adaptData.match_score);
 
         // Step 2: generate CV PDF + LM JSON in parallel
@@ -630,7 +661,17 @@ export function CVUploadAsyncWizard({
         let lmPdfBlob: Blob | null = null;
         if (lmJsonRes.ok) {
           const lmJson = await lmJsonRes.json();
-          lmData = lmJson.cover_letter ?? null;
+          lmData = lmJson.queued
+            ? await huntzenApi.waitForJobResult<Record<string, unknown>>(
+                lmJson.job_id,
+                lmJson.estimated_wait_seconds ?? 30,
+                token,
+                120_000,
+                3_000,
+                undefined,
+                adaptController.signal,
+              )
+            : (lmJson.cover_letter ?? null);
           if (lmData) {
             const lmPdfRes = await fetch(
               `${backendUrl}/api/cv-adapter/generate-cover-letter/pdf-from-data`,
@@ -656,7 +697,7 @@ export function CVUploadAsyncWizard({
           cvPdfBlob,
           lmPdfBlob,
           matchScore,
-          cvData: cvData as ParsedCvData,
+          cvData,
           lmData,
         });
 
@@ -665,7 +706,7 @@ export function CVUploadAsyncWizard({
           jobTitle: "CV adapté",
           company: "",
           matchScore: matchScore ?? undefined,
-          cvData: cvData as ParsedCvData,
+          cvData,
           cvPdfBlob,
           lmPdfBlob: lmPdfBlob ?? undefined,
           language: adaptLang,
@@ -673,6 +714,7 @@ export function CVUploadAsyncWizard({
         // Rafraîchir les quotas depuis le backend (source de vérité)
         await refreshQuotas();
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
         setAdaptError(
           err instanceof Error ? err.message : "Une erreur est survenue",
         );
@@ -680,6 +722,9 @@ export function CVUploadAsyncWizard({
           err instanceof Error ? err.message : "Erreur lors de la génération",
         );
       } finally {
+        if (adaptAbortControllerRef.current === adaptController) {
+          adaptAbortControllerRef.current = null;
+        }
         setAdaptLoading(false);
       }
       return;

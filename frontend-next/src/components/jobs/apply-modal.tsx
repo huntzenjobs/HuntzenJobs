@@ -38,7 +38,10 @@ import { useSubscription } from "@/contexts/subscription-context";
 import { useCvProfiles, type CvProfile } from "@/hooks/use-cv-profiles";
 import { useDocuments } from "@/hooks/use-documents";
 import { useAuthenticatedFetch } from "@/hooks/use-authenticated-fetch";
-import type { Job, QueueWaitingState } from "@/lib/api/huntzen-client";
+import huntzenApi, {
+  type Job,
+  type QueueWaitingState,
+} from "@/lib/api/huntzen-client";
 import { cn } from "@/lib/utils";
 import {
   Building,
@@ -291,6 +294,7 @@ export function ApplyModal({
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queueAbortControllerRef = useRef<AbortController | null>(null);
 
   const t = useTranslations("applyModal");
   const tJobs = useTranslations("jobs");
@@ -326,9 +330,18 @@ export function ApplyModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(
+    () => () => {
+      queueAbortControllerRef.current?.abort();
+    },
+    [],
+  );
+
   // Reset state when modal closes
   const handleOpenChange = (open: boolean) => {
     if (!open) {
+      queueAbortControllerRef.current?.abort();
+      queueAbortControllerRef.current = null;
       setStep("upload");
       setSelectedFile(null);
       setSelectedProfile(null);
@@ -411,46 +424,28 @@ export function ApplyModal({
     jobId: string,
     estimatedWait: number,
   ): Promise<{ cv_data: unknown; match_score?: number }> => {
-    const startTime = Date.now();
-    const deadline = Date.now() + 120_000;
-
-    while (Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 3_000));
-      const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-
-      let status: {
-        status: "queued" | "processing" | "completed" | "failed";
-        result?: { cv_data: unknown; match_score?: number };
-        error?: string;
-      };
-
-      try {
-        const res = await fetch(`${BACKEND_URL}/api/queue/status/${jobId}`);
-        status = await res.json();
-      } catch {
-        continue;
+    queueAbortControllerRef.current?.abort();
+    const controller = new AbortController();
+    queueAbortControllerRef.current = controller;
+    try {
+      return await huntzenApi.waitForJobResult<{
+        cv_data: unknown;
+        match_score?: number;
+      }>(
+        jobId,
+        estimatedWait,
+        session?.access_token,
+        120_000,
+        3_000,
+        setQueueWaitState,
+        controller.signal,
+      );
+    } finally {
+      if (queueAbortControllerRef.current === controller) {
+        queueAbortControllerRef.current = null;
       }
-
-      setQueueWaitState({
-        status: status.status === "processing" ? "processing" : "queued",
-        estimatedWaitSeconds: estimatedWait,
-        elapsedSeconds,
-      });
-
-      if (status.status === "completed" && status.result) {
-        setQueueWaitState(null);
-        return status.result;
-      }
-      if (status.status === "failed") {
-        setQueueWaitState(null);
-        throw new Error(
-          status.error || "La requête a échoué dans la file d'attente",
-        );
-      }
+      setQueueWaitState(null);
     }
-
-    setQueueWaitState(null);
-    throw new Error("Délai d'attente dépassé. Veuillez réessayer.");
   };
 
   const getAuthHeaders = (): Record<string, string> => {
@@ -511,6 +506,7 @@ export function ApplyModal({
       setPendingMatchScore(matchScore);
       await generatePdfsAndSave(cvData, matchScore);
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
       const message =
         err instanceof Error ? err.message : "Une erreur est survenue";
       toast.error(message);
@@ -572,6 +568,7 @@ export function ApplyModal({
       setPendingMatchScore(matchScore);
       await generatePdfsAndSave(cvData, matchScore);
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
       const message =
         err instanceof Error ? err.message : "Une erreur est survenue";
       toast.error(message);

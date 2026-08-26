@@ -12,19 +12,25 @@ Pipeline:
 Author: HuntZen
 """
 
-import asyncio
 import json
 import logging
 import re
 import unicodedata
 from typing import Any
 
-from groq import Groq
+from groq import AsyncGroq
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
+
+FACTUAL_SAFETY_POLICY = """SAFETY OVERRIDE — this policy supersedes any earlier prompt text.
+Candidate claims must be supported by the supplied candidate CV/data. A job
+description is never evidence that the candidate has a skill or experience.
+Never invent or infer technologies, certifications, metrics, responsibilities,
+domains, achievements, results, projects, employers, dates or seniority.
+Unsupported claims must be removed or rejected."""
 
 
 class CVAdapterAgent(BaseAgent):
@@ -50,7 +56,12 @@ class CVAdapterAgent(BaseAgent):
         super().__init__(config)
 
         # Groq client for JSON mode
-        self.groq_client = Groq(api_key=settings.get_groq_key())
+        # Client réellement asynchrone : l'annulation HTTP suit le timeout de la route.
+        self.groq_client = AsyncGroq(
+            api_key=settings.get_groq_key(),
+            timeout=55.0,
+            max_retries=0,
+        )
 
         # Initialize sub-agents
         self._init_sub_agents()
@@ -81,8 +92,7 @@ class CVAdapterAgent(BaseAgent):
         }
 
         try:
-            response = await asyncio.to_thread(
-                self.groq_client.chat.completions.create,
+            response = await self.groq_client.chat.completions.create(
                 **request,
                 response_format={"type": "json_object"},
             )
@@ -108,8 +118,7 @@ class CVAdapterAgent(BaseAgent):
                 "content": "Return only the requested valid JSON object, without Markdown or commentary.",
             },
         ]
-        response = await asyncio.to_thread(
-            self.groq_client.chat.completions.create,
+        response = await self.groq_client.chat.completions.create(
             **{**request, "messages": fallback_messages},
         )
         parsed = self._parse_json(response.choices[0].message.content or "")
@@ -167,6 +176,96 @@ class CVAdapterAgent(BaseAgent):
             return original_bullets
         return improved_bullets
 
+    @staticmethod
+    def _sanitized_cv_preserves_source_facts(
+        original_data: dict[str, Any],
+        sanitized_cv: Any,
+    ) -> bool:
+        """Validate a complete sanitized CV before HuntZen certification."""
+        if not isinstance(sanitized_cv, dict) or not sanitized_cv:
+            return False
+
+        expected_types: dict[str, type] = {
+            "personal_info": dict,
+            "experiences": list,
+            "education": list,
+            "certifications": list,
+            "projects": list,
+            "skills": dict,
+            "interests": list,
+        }
+        if any(
+            key not in sanitized_cv or not isinstance(sanitized_cv[key], expected_type)
+            for key, expected_type in expected_types.items()
+        ):
+            return False
+
+        original_personal = original_data.get("personal_info", {})
+        sanitized_personal = sanitized_cv["personal_info"]
+        if any(
+            value not in (None, "") and sanitized_personal.get(key) != value
+            for key, value in original_personal.items()
+        ):
+            return False
+
+        original_experiences = original_data.get("experiences", [])
+        sanitized_experiences = sanitized_cv["experiences"]
+        if len(sanitized_experiences) != len(original_experiences):
+            return False
+        immutable_experience_fields = (
+            "title",
+            "company",
+            "location",
+            "start_date",
+            "end_date",
+            "type",
+        )
+        for original, sanitized in zip(original_experiences, sanitized_experiences, strict=True):
+            if not isinstance(original, dict) or not isinstance(sanitized, dict):
+                return False
+            if any(
+                original.get(field) not in (None, "")
+                and sanitized.get(field) != original.get(field)
+                for field in immutable_experience_fields
+            ):
+                return False
+
+        for section in ("education", "certifications", "interests"):
+            if sanitized_cv[section] != original_data.get(section, []):
+                return False
+
+        original_projects = original_data.get("projects", [])
+        sanitized_projects = sanitized_cv["projects"]
+        if len(sanitized_projects) != len(original_projects):
+            return False
+        for original, sanitized in zip(original_projects, sanitized_projects, strict=True):
+            if not isinstance(original, dict) or not isinstance(sanitized, dict):
+                return False
+            if any(
+                original.get(field) not in (None, "", [])
+                and sanitized.get(field) != original.get(field)
+                for field in ("name", "technologies", "url")
+            ):
+                return False
+
+        def flattened_skills(value: Any) -> set[str]:
+            if not isinstance(value, dict):
+                return set()
+            return {
+                CVAdapterAgent._skill_to_str(skill).strip().casefold()
+                for skills in value.values()
+                if isinstance(skills, list)
+                for skill in skills
+                if CVAdapterAgent._skill_to_str(skill).strip()
+            }
+
+        if flattened_skills(original_data.get("skills", {})) != flattened_skills(
+            sanitized_cv["skills"]
+        ):
+            return False
+
+        return True
+
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
         # Job Analyzer - Extracts requirements from job posting
@@ -202,7 +301,9 @@ class CVAdapterAgent(BaseAgent):
         # Fact Checker - Validates no hallucinations
         self.fact_checker = SubAgent(
             name="FactChecker",
-            system_prompt=load_prompt("cv_adapter_fact_checker.txt"),
+            system_prompt=(
+                f"{load_prompt('cv_adapter_fact_checker.txt')}\n\n{FACTUAL_SAFETY_POLICY}"
+            ),
             model=settings.llm_model_fast,
             temperature=0.0,
             max_tokens=1024,
@@ -268,7 +369,30 @@ class CVAdapterAgent(BaseAgent):
                 original_data, rewritten_content, job_analysis, cv_mapping
             )
 
-            # Mark CV as HuntZen-certified (used by PDF template + ATS scorer)
+            # Phase 6: reject or sanitize any unsupported candidate claim.
+            logger.info(f"[{self.name}] Phase 6: Fact-checking adapted CV...")
+            fact_check = await self._fact_check(cv_text, final_cv)
+            if fact_check.get("valid") is not True:
+                sanitized_cv = fact_check.get("sanitized_cv")
+                if not self._sanitized_cv_preserves_source_facts(
+                    original_data,
+                    sanitized_cv,
+                ):
+                    return {
+                        "success": False,
+                        "error": "Adapted CV returned an invalid sanitized document",
+                        "fact_check": fact_check,
+                    }
+                final_cv = dict(sanitized_cv)
+                fact_check = await self._fact_check(cv_text, dict(final_cv))
+                if fact_check.get("valid") is not True:
+                    return {
+                        "success": False,
+                        "error": "Sanitized CV failed factual verification",
+                        "fact_check": fact_check,
+                    }
+
+            # Mark only the verified/sanitized CV as HuntZen-certified.
             final_cv["huntzen_certified"] = True
 
             # Calculate match score
@@ -281,7 +405,7 @@ class CVAdapterAgent(BaseAgent):
                 "job_analysis": job_analysis,
                 "cv_mapping": cv_mapping,
                 "match_score": match_score,
-                "fact_check": {"valid": True, "issues": []},  # No need for fact-check with hybrid!
+                "fact_check": fact_check,
                 "template": template,
                 "language": language,
             }
@@ -1016,14 +1140,7 @@ Return JSON with category names as keys and skill arrays as values:
             }
 
     async def _fact_check(self, original_cv: str, adapted_cv: dict) -> dict[str, Any]:
-        """
-        Verify adapted CV doesn't contain hallucinated content.
-
-        IMPORTANT: We do NOT check skills because:
-        1. Skills are strategically added to maximize ATS score
-        2. Skills represent what the candidate should know/learn
-        3. The goal is a PERFECT CV matching the job requirements
-        """
+        """Verify that every candidate claim is supported by the source CV."""
         try:
             task = f"""Fact-check the adapted CV against the original.
 
@@ -1033,16 +1150,10 @@ ORIGINAL CV:
 ADAPTED CV:
 {json.dumps(adapted_cv, indent=2)}
 
-Check ONLY for:
-1. Invented job titles or companies (CRITICAL - never invent these!)
-2. Fake metrics or numbers that weren't in original
-3. Exaggerated claims about achievements
-4. Dates that don't match
-
-DO NOT FLAG:
-- Skills section changes (skills are intentionally optimized for ATS)
-- Professional title adaptation (titles should match job posting)
-- Minor wording changes in bullet points
+Check every candidate claim, including job titles, companies, dates, skills,
+technologies, certifications, responsibilities, projects, metrics and results.
+Anything absent from the original CV must be removed, even if it appears in the
+job description. Rewording may improve clarity but cannot change meaning.
 
 Return a JSON object:
 {{
@@ -1062,16 +1173,112 @@ Return a JSON object:
             result = await self._create_json_completion(
                 model=settings.llm_model_fast,
                 messages=[
-                    {"role": "system", "content": load_prompt("cv_adapter_fact_checker.txt")},
+                    {
+                        "role": "system",
+                        "content": (
+                            f"{load_prompt('cv_adapter_fact_checker.txt')}\n\n"
+                            f"{FACTUAL_SAFETY_POLICY}"
+                        ),
+                    },
                     {"role": "user", "content": task}
                 ],
                 temperature=0.0,
             )
-            return result
+            issues = result.get("issues")
+            if result.get("valid") is True and isinstance(issues, list) and not issues:
+                return {"valid": True, "issues": []}
+            return {
+                "valid": False,
+                "issues": issues if isinstance(issues, list) else [],
+                "sanitized_cv": result.get("sanitized_cv"),
+            }
 
         except Exception as e:
             logger.error(f"[{self.name}] Fact check failed: {e}")
-            return {"valid": True, "issues": [], "error": str(e)}
+            return {
+                "valid": False,
+                "issues": [
+                    {
+                        "type": "validation_error",
+                        "severity": "high",
+                        "adapted": "Factual verification could not be completed",
+                    }
+                ],
+                "error": str(e),
+            }
+
+    async def _fact_check_cover_letter(
+        self,
+        cv_data: dict,
+        job_description: str,
+        cover_letter: dict,
+    ) -> dict[str, Any]:
+        """Verify that the letter attributes only source-backed facts to the candidate."""
+        try:
+            task = f"""Fact-check this cover letter.
+
+CANDIDATE SOURCE DATA:
+{json.dumps(cv_data, indent=2, ensure_ascii=False)}
+
+JOB DESCRIPTION (may support company/job facts, never candidate facts):
+{job_description}
+
+COVER LETTER:
+{json.dumps(cover_letter, indent=2, ensure_ascii=False)}
+
+Return JSON with `valid` and `issues`. Mark invalid when any technology,
+certification, metric, responsibility, domain, achievement or experience is
+attributed to the candidate without support in CANDIDATE SOURCE DATA."""
+            result = await self._create_json_completion(
+                model=settings.llm_model_fast,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            f"{load_prompt('cv_adapter_fact_checker.txt')}\n\n"
+                            f"{FACTUAL_SAFETY_POLICY}"
+                        ),
+                    },
+                    {"role": "user", "content": task},
+                ],
+                temperature=0.0,
+            )
+            issues = result.get("issues")
+            if result.get("valid") is True and isinstance(issues, list) and not issues:
+                return {"valid": True, "issues": []}
+            return {
+                "valid": False,
+                "issues": issues if isinstance(issues, list) else [],
+            }
+        except Exception as error:
+            logger.error(f"[{self.name}] Cover letter fact check failed: {error}")
+            return {
+                "valid": False,
+                "issues": [
+                    {
+                        "type": "validation_error",
+                        "severity": "high",
+                        "adapted": "Factual verification could not be completed",
+                    }
+                ],
+                "error": str(error),
+            }
+
+    @staticmethod
+    def _apply_cover_letter_header(result: dict, personal_info: dict) -> dict:
+        """Apply immutable user-provided contact data to a generated letter."""
+        normalized = dict(result)
+        header = normalized.get("header")
+        normalized["header"] = dict(header) if isinstance(header, dict) else {}
+
+        for field in ("name", "email", "phone", "address"):
+            if personal_info.get(field):
+                normalized["header"][field] = personal_info[field]
+        if personal_info.get("city"):
+            normalized["header"]["city"] = personal_info["city"]
+        elif personal_info.get("location"):
+            normalized["header"]["city"] = personal_info["location"]
+        return normalized
 
     def _calculate_match_score(self, job_analysis: dict, cv_mapping: dict) -> dict:
         """Calculate overall match score."""
@@ -1081,7 +1288,14 @@ Return a JSON object:
         total_required = len(job_analysis.get("required_skills", []))
 
         skills_score = (matched / max(total_required, 1)) * 100 if total_required > 0 else 50
-        overall_fit = cv_mapping.get("overall_fit_score", 50)
+        skills_score = max(0.0, min(100.0, skills_score))
+
+        raw_overall_fit = cv_mapping.get("overall_fit_score", 50)
+        try:
+            overall_fit = float(raw_overall_fit)
+        except (TypeError, ValueError):
+            overall_fit = 50.0
+        overall_fit = max(0.0, min(100.0, overall_fit))
 
         return {
             "overall": round((skills_score + overall_fit) / 2),
@@ -1233,33 +1447,55 @@ City: {personal_info.get('city', personal_info.get('location', ''))}
 
 Return a JSON object with the cover letter content."""
 
+            system_prompt = (
+                f"{load_prompt('cover_letter_generator.txt')}\n\n{FACTUAL_SAFETY_POLICY}"
+            )
+            generation_messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": task},
+            ]
             result = await self._create_json_completion(
                 model=settings.llm_model_powerful,
-                messages=[
-                    {"role": "system", "content": load_prompt("cover_letter_generator.txt")},
-                    {"role": "user", "content": task}
-                ],
-                temperature=0.5,
+                messages=generation_messages,
+                temperature=0.2,
             )
+            result = self._apply_cover_letter_header(result, personal_info)
 
-            # Override header with user-provided info (LLM might not use them correctly)
-            if "header" not in result:
-                result["header"] = {}
+            fact_check = await self._fact_check_cover_letter(
+                cv_data,
+                job_description,
+                result,
+            )
+            if fact_check.get("valid") is not True:
+                correction_task = (
+                    "The previous draft failed factual verification. Rewrite it once, "
+                    "removing every unsupported candidate claim. Return only the complete "
+                    "corrected JSON object.\n\n"
+                    f"FACT-CHECK ISSUES:\n{json.dumps(fact_check.get('issues', []), ensure_ascii=False)}"
+                )
+                result = await self._create_json_completion(
+                    model=settings.llm_model_powerful,
+                    messages=[
+                        *generation_messages,
+                        {"role": "assistant", "content": json.dumps(result, ensure_ascii=False)},
+                        {"role": "user", "content": correction_task},
+                    ],
+                    temperature=0.1,
+                )
+                result = self._apply_cover_letter_header(result, personal_info)
+                fact_check = await self._fact_check_cover_letter(
+                    cv_data,
+                    job_description,
+                    result,
+                )
+                if fact_check.get("valid") is not True:
+                    return {
+                        "success": False,
+                        "error": "Cover letter failed factual verification",
+                        "fact_check": fact_check,
+                    }
 
-            # Force user-provided values
-            if personal_info.get("name"):
-                result["header"]["name"] = personal_info["name"]
-            if personal_info.get("email"):
-                result["header"]["email"] = personal_info["email"]
-            if personal_info.get("phone"):
-                result["header"]["phone"] = personal_info["phone"]
-            if personal_info.get("address"):
-                result["header"]["address"] = personal_info["address"]
-            if personal_info.get("city"):
-                result["header"]["city"] = personal_info["city"]
-            elif personal_info.get("location"):
-                result["header"]["city"] = personal_info["location"]
-
+            result["fact_check"] = fact_check
             result["success"] = True
             return result
 

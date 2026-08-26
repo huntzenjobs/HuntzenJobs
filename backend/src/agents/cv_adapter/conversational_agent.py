@@ -14,7 +14,7 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from src.agents.base import AgentConfig, BaseAgent
+from src.agents.base import CONVERSATIONAL_FACTUAL_GUARDRAILS, AgentConfig, BaseAgent
 from src.config.settings import settings
 
 
@@ -31,7 +31,7 @@ class CVAdapterConversationalAgent(BaseAgent):
             name="CVAdapterConversational",
             description="Expert conversationnel en adaptation et personnalisation de CV",
             model=settings.llm_model_powerful,
-            temperature=0.7,  # Creative for reformulation
+            temperature=0.2,
             max_tokens=2048,
         )
         super().__init__(config)
@@ -75,7 +75,8 @@ Tu aides à personnaliser les CV pour maximiser les chances sur des offres spéc
 - Propose des reformulations, pas des inventions
 - Explique le "pourquoi" de chaque adaptation
 - Réponds TOUJOURS en français (sauf si demandé autrement)
-"""
+
+""" + CONVERSATIONAL_FACTUAL_GUARDRAILS
 
     async def run(
         self,

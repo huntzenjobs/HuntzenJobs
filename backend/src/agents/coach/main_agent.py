@@ -14,7 +14,13 @@ import logging
 import re
 from typing import Any
 
-from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
+from src.agents.base import (
+    CONVERSATIONAL_FACTUAL_GUARDRAILS,
+    AgentConfig,
+    BaseAgent,
+    SubAgent,
+    load_prompt,
+)
 from src.config.settings import settings
 from src.models.schemas import TrainingRecommendation
 from src.services.salary.service import get_realtime_salary
@@ -42,6 +48,9 @@ class CareerCoachAgent(BaseAgent):
             system_prompt_file="coach_main.txt",
         )
         super().__init__(config)
+        self.system_prompt = (
+            f"{self.system_prompt}\n\n{CONVERSATIONAL_FACTUAL_GUARDRAILS}"
+        )
 
         # Initialize sub-agents
         self._init_sub_agents()
@@ -51,7 +60,10 @@ class CareerCoachAgent(BaseAgent):
         # Training Advisor
         self.training_advisor = SubAgent(
             name="TrainingAdvisor",
-            system_prompt=load_prompt("coach_training_advisor.txt"),
+            system_prompt=(
+                f"{load_prompt('coach_training_advisor.txt')}\n\n"
+                f"{CONVERSATIONAL_FACTUAL_GUARDRAILS}"
+            ),
             model=settings.llm_model_fast,
             temperature=0.2,
         )
@@ -60,7 +72,10 @@ class CareerCoachAgent(BaseAgent):
         # Career Planner
         self.career_planner = SubAgent(
             name="CareerPlanner",
-            system_prompt=load_prompt("coach_career_planner.txt"),
+            system_prompt=(
+                f"{load_prompt('coach_career_planner.txt')}\n\n"
+                f"{CONVERSATIONAL_FACTUAL_GUARDRAILS}"
+            ),
             model=settings.llm_model_fast,
             temperature=0.3,
         )
@@ -69,7 +84,10 @@ class CareerCoachAgent(BaseAgent):
         # Skill Analyzer
         self.skill_analyzer = SubAgent(
             name="SkillAnalyzer",
-            system_prompt=load_prompt("coach_skill_analyzer.txt"),
+            system_prompt=(
+                f"{load_prompt('coach_skill_analyzer.txt')}\n\n"
+                f"{CONVERSATIONAL_FACTUAL_GUARDRAILS}"
+            ),
             model=settings.llm_model_fast,
             temperature=0.1,
         )
@@ -78,7 +96,10 @@ class CareerCoachAgent(BaseAgent):
         # Salary Advisor
         self.salary_advisor = SubAgent(
             name="SalaryAdvisor",
-            system_prompt=load_prompt("coach_salary_advisor.txt"),
+            system_prompt=(
+                f"{load_prompt('coach_salary_advisor.txt')}\n\n"
+                f"{CONVERSATIONAL_FACTUAL_GUARDRAILS}"
+            ),
             model=settings.llm_model_powerful,
             temperature=0.3,
         )
@@ -87,7 +108,10 @@ class CareerCoachAgent(BaseAgent):
         # Parameter Extractor
         self.parameter_extractor = SubAgent(
             name="ParameterExtractor",
-            system_prompt=load_prompt("parameter_extractor.txt"),
+            system_prompt=(
+                f"{load_prompt('parameter_extractor.txt')}\n\n"
+                f"{CONVERSATIONAL_FACTUAL_GUARDRAILS}"
+            ),
             model=settings.llm_model_fast,
             temperature=0.0,
         )

@@ -13,9 +13,9 @@ from structlog import get_logger
 from src.api.deps import (
     BrandingAgentDep,
     CurrentUserDep,
-    _require_feature_flag_sync,
     clear_session,
     get_session_history,
+    run_sync_io,
     update_session_history,
 )
 from src.api.middleware import limiter
@@ -57,7 +57,6 @@ async def branding_chat(
     """
     Chat with the Personal Branding AI.
 
-    [PREMIUM FEATURE]
     The agent guides users through building their personal brand
     on LinkedIn and X (Twitter) with a conversational state machine:
     1. Onboarding — discover background & goals
@@ -66,10 +65,9 @@ async def branding_chat(
     4. Generation — create personalized content
     """
     user_id = current_user["id"]
-    _require_feature_flag_sync(user_id, "branding", "Le personal branding necessite un plan superieur.")
 
     # Get conversation history
-    history = get_session_history(data.session_id)
+    history = await run_sync_io(get_session_history, data.session_id, user_id=user_id)
 
     # Run agent with branding state
     result = await agent.run(
@@ -86,10 +84,13 @@ async def branding_chat(
         )
 
     # Update history
-    update_session_history(
+    await run_sync_io(
+        update_session_history,
         data.session_id,
         data.message,
         result["response"],
+        user_id=user_id,
+        assistant_type="career-coach",
     )
 
     return BrandingResponse(
@@ -108,7 +109,7 @@ async def create_branding_session():
 
 
 @router.delete("/session/{session_id}")
-async def delete_branding_session(session_id: str):
+async def delete_branding_session(session_id: str, current_user: CurrentUserDep):
     """Clear a branding session."""
-    clear_session(session_id)
+    await run_sync_io(clear_session, session_id, user_id=current_user["id"])
     return {"success": True, "message": "Session cleared"}

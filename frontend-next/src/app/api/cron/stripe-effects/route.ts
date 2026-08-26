@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 
 const cronSecret = process.env.CRON_SECRET;
 const backendUrl =
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5_000);
+  const timeoutId = setTimeout(() => controller.abort(), 115_000);
   try {
     const response = await fetch(`${backendUrl}/api/cron/stripe-effects`, {
       method: "POST",

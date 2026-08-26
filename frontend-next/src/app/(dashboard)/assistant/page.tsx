@@ -90,6 +90,7 @@ export default function AssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const cvFileInputRef = useRef<HTMLInputElement>(null);
+  const queueAbortControllerRef = useRef<AbortController | null>(null);
 
   // Assistant state
   const { selectedAssistant, setSelectedAssistant } = useAssistant();
@@ -188,6 +189,13 @@ export default function AssistantPage() {
   // Keep a stable ref to saveConversation to avoid re-triggering the auto-save
   // effect every time saveMutation state changes (which would cause an infinite loop)
   const saveConversationRef = useRef(saveConversation);
+
+  useEffect(
+    () => () => {
+      queueAbortControllerRef.current?.abort();
+    },
+    [],
+  );
   useEffect(() => {
     saveConversationRef.current = saveConversation;
   }, [saveConversation]);
@@ -242,6 +250,9 @@ export default function AssistantPage() {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
+    queueAbortControllerRef.current?.abort();
+    const queueController = new AbortController();
+    queueAbortControllerRef.current = queueController;
 
     try {
       // Use the appropriate API method based on selected assistant
@@ -272,6 +283,8 @@ export default function AssistantPage() {
           locale,
           accessToken,
           (state) => setQueueState(state),
+          undefined,
+          queueController.signal,
         );
       }
 
@@ -290,6 +303,9 @@ export default function AssistantPage() {
       // On se contente de rafraîchir les limites locales pour l'UI.
       refreshQuotas();
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
       const errorMessage: ChatMessageType = {
         id: uuidv4(),
         role: "assistant",
@@ -298,6 +314,9 @@ export default function AssistantPage() {
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
+      if (queueAbortControllerRef.current === queueController) {
+        queueAbortControllerRef.current = null;
+      }
       setLoading(false);
       setQueueState(null);
     }

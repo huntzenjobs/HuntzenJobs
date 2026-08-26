@@ -8,6 +8,7 @@ Lancement sur Railway (service séparé, même repo) :
 """
 import os
 
+from arq import func
 from arq.connections import RedisSettings
 
 from src.workers.tasks import (
@@ -19,7 +20,6 @@ from src.workers.tasks import (
     notify_expiring_plans,
     shutdown,
     startup,
-    stripe_effect_outbox_task,
 )
 
 
@@ -37,13 +37,12 @@ def _get_redis_settings() -> RedisSettings:
 
 class WorkerSettings:
     functions = [
-        coach_task,
-        assistant_task,
-        cv_adapt_task,
-        cover_letter_task,
+        func(coach_task, max_tries=30),
+        func(assistant_task, max_tries=30),
+        func(cv_adapt_task, max_tries=30),
+        func(cover_letter_task, max_tries=30),
         notify_expiring_plans,
         expat_refresh_task,
-        stripe_effect_outbox_task,
     ]
     on_startup = startup
     on_shutdown = shutdown
@@ -54,4 +53,5 @@ class WorkerSettings:
     job_timeout = 120    # timeout 2 min par job
     keep_result = 3600   # garder résultat 1h dans Redis
     retry_jobs = True
-    max_tries = 3        # retry ARQ si crash du worker
+    # Valeur par défaut pour les tâches non enveloppées par func(...).
+    max_tries = 3

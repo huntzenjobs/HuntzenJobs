@@ -14,7 +14,7 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from src.agents.base import AgentConfig, BaseAgent
+from src.agents.base import CONVERSATIONAL_FACTUAL_GUARDRAILS, AgentConfig, BaseAgent
 from src.config.settings import settings
 
 
@@ -31,7 +31,7 @@ class InterviewSimAgent(BaseAgent):
             name="InterviewSimulator",
             description="Recruteur virtuel pour simulation d'entretien d'embauche",
             model=settings.llm_model_powerful,
-            temperature=0.8,  # More dynamic for realistic conversation
+            temperature=0.3,
             max_tokens=2048,
         )
         super().__init__(config)
@@ -45,7 +45,7 @@ Tu simules des entretiens d'embauche réalistes et fournis un feedback construct
 - Entretiens comportementaux (méthode STAR)
 - Questions techniques selon le domaine
 - Évaluation des soft skills
-- Analyse du langage non-verbal (via les réponses écrites)
+- Analyse uniquement du contenu écrit, sans prétendre observer le langage non-verbal
 - Feedback constructif et actio nable
 - Techniques de préparation aux entretiens
 
@@ -81,7 +81,7 @@ Tu simules des entretiens d'embauche réalistes et fournis un feedback construct
 - Adapte les questions au profil et au secteur
 - Donne du feedback après chaque réponse
 - Propose des reformulations améliorées
-- Termine par un bilan global avec score /10
+- Termine par un bilan d'entretien avec score /10 fondé uniquement sur les réponses réellement fournies pendant la simulation; ne le présente jamais comme un score de CV
 - Réponds TOUJOURS en français (sauf si demandé autrement)
 
 🎓 MÉTHODE STAR (pour coaching):
@@ -89,7 +89,8 @@ Tu simules des entretiens d'embauche réalistes et fournis un feedback construct
 - **T**âche: Objectif
 - **A**ction: Ce que tu as fait
 - **R**ésultat: Impact mesurable
-"""
+
+""" + CONVERSATIONAL_FACTUAL_GUARDRAILS
 
     async def run(
         self,
