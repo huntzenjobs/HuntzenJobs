@@ -23,8 +23,7 @@ import {
   Download,
   AlertTriangle,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { normalizeJobDescription } from "@/lib/utils/sanitize";
+import { cn, normalizeJobDescription } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {

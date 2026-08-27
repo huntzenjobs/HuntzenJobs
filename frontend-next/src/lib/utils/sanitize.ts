@@ -5,6 +5,8 @@
 
 import DOMPurify from "isomorphic-dompurify";
 
+export { normalizeJobDescription } from "@/lib/utils";
+
 /**
  * Sanitize user input by stripping all HTML tags
  * @param input - Raw user input
@@ -59,18 +61,6 @@ export function stripHtmlForPreview(html: string): string {
     .replace(/&[a-z]+;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-/**
- * Restore line breaks escaped as text by some job providers.
- * The returned value still needs HTML sanitization before rendering.
- */
-export function normalizeJobDescription(description: string): string {
-  if (!description) return "";
-
-  return description
-    .replace(/\\r\\n|\\n|\\r/g, "\n")
-    .replace(/\r\n?|\u2028|\u2029/g, "\n");
 }
 
 /**
