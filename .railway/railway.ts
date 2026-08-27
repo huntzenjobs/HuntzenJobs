@@ -151,7 +151,7 @@ function productionResources() {
   const source = github("huntzenjobs/HuntzenJobs", {
     branch: "Production",
     checkSuites: false,
-    rootDirectory: "/backend",
+    rootDirectory: "backend",
   });
   const cache = redis("Redis", { region: REGION });
   cache.deploy = { startCommand: REDIS_START_COMMAND };
@@ -218,7 +218,7 @@ function stagingResources() {
   const workerSource = github("huntzenjobs/HuntzenJobs", {
     branch: "Pre-production",
     checkSuites: false,
-    rootDirectory: "/backend",
+    rootDirectory: "backend",
   });
   const cache = redis("Redis-SU2L", { region: REGION });
   cache.deploy = { startCommand: REDIS_START_COMMAND };
