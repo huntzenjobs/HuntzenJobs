@@ -121,15 +121,16 @@ export default function PlanCardEditor({
   onGenerateWording,
 }: Props) {
   const [limits, setLimits] = useState({
-    cv_analyses: plan.limits?.cv_analyses ?? 0,
-    assistant_messages: plan.limits?.assistant_messages ?? 0,
-    job_searches: plan.limits?.job_searches ?? 0,
-    cv_adapt: plan.limits?.cv_adapt ?? 0,
-    cover_letter: plan.limits?.cover_letter ?? 0,
-    saved_jobs: plan.limits?.saved_jobs ?? -1,
+    ats_scores_per_day: plan.limits?.ats_scores_per_day ?? 0,
+    assistant_messages_per_day: plan.limits?.assistant_messages_per_day ?? 0,
+    job_searches_per_day: plan.limits?.job_searches_per_day ?? 0,
+    cv_adapt_per_day: plan.limits?.cv_adapt_per_day ?? 0,
+    cover_letter_per_day: plan.limits?.cover_letter_per_day ?? 0,
+    saved_jobs_per_day: plan.limits?.saved_jobs_per_day ?? -1,
     jobs_visible: plan.limits?.jobs_visible ?? -1,
     job_views: plan.limits?.job_views ?? -1,
-    recruiter_searches: plan.limits?.recruiter_searches ?? 0,
+    recruiter_searches_per_day:
+      plan.limits?.recruiter_searches_per_day ?? 0,
   });
   const [priceMonthly, setPriceMonthly] = useState(String(plan.price_monthly));
   const [priceYearly, setPriceYearly] = useState(
@@ -270,17 +271,17 @@ export default function PlanCardEditor({
                   <Input
                     type="number"
                     min="-1"
-                    value={limits.cv_analyses}
+                    value={limits.ats_scores_per_day}
                     onChange={(e) =>
                       setLimits((l) => ({
                         ...l,
-                        cv_analyses: parseInt(e.target.value) || 0,
+                        ats_scores_per_day: parseInt(e.target.value) || 0,
                       }))
                     }
                     className="h-8 text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formatLimit(limits.cv_analyses)}
+                    {formatLimit(limits.ats_scores_per_day)}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -288,17 +289,18 @@ export default function PlanCardEditor({
                   <Input
                     type="number"
                     min="-1"
-                    value={limits.assistant_messages}
+                    value={limits.assistant_messages_per_day}
                     onChange={(e) =>
                       setLimits((l) => ({
                         ...l,
-                        assistant_messages: parseInt(e.target.value) || 0,
+                        assistant_messages_per_day:
+                          parseInt(e.target.value) || 0,
                       }))
                     }
                     className="h-8 text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formatLimit(limits.assistant_messages)}
+                    {formatLimit(limits.assistant_messages_per_day)}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -306,17 +308,17 @@ export default function PlanCardEditor({
                   <Input
                     type="number"
                     min="-1"
-                    value={limits.job_searches}
+                    value={limits.job_searches_per_day}
                     onChange={(e) =>
                       setLimits((l) => ({
                         ...l,
-                        job_searches: parseInt(e.target.value) || 0,
+                        job_searches_per_day: parseInt(e.target.value) || 0,
                       }))
                     }
                     className="h-8 text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formatLimit(limits.job_searches)}
+                    {formatLimit(limits.job_searches_per_day)}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -324,17 +326,17 @@ export default function PlanCardEditor({
                   <Input
                     type="number"
                     min="-1"
-                    value={limits.cv_adapt}
+                    value={limits.cv_adapt_per_day}
                     onChange={(e) =>
                       setLimits((l) => ({
                         ...l,
-                        cv_adapt: parseInt(e.target.value) || 0,
+                        cv_adapt_per_day: parseInt(e.target.value) || 0,
                       }))
                     }
                     className="h-8 text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formatLimit(limits.cv_adapt)}
+                    {formatLimit(limits.cv_adapt_per_day)}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -342,17 +344,17 @@ export default function PlanCardEditor({
                   <Input
                     type="number"
                     min="-1"
-                    value={limits.cover_letter}
+                    value={limits.cover_letter_per_day}
                     onChange={(e) =>
                       setLimits((l) => ({
                         ...l,
-                        cover_letter: parseInt(e.target.value) || 0,
+                        cover_letter_per_day: parseInt(e.target.value) || 0,
                       }))
                     }
                     className="h-8 text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formatLimit(limits.cover_letter)}
+                    {formatLimit(limits.cover_letter_per_day)}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -360,17 +362,17 @@ export default function PlanCardEditor({
                   <Input
                     type="number"
                     min="-1"
-                    value={limits.saved_jobs}
+                    value={limits.saved_jobs_per_day}
                     onChange={(e) =>
                       setLimits((l) => ({
                         ...l,
-                        saved_jobs: parseInt(e.target.value) || 0,
+                        saved_jobs_per_day: parseInt(e.target.value) || 0,
                       }))
                     }
                     className="h-8 text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formatLimit(limits.saved_jobs)}
+                    {formatLimit(limits.saved_jobs_per_day)}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -414,17 +416,18 @@ export default function PlanCardEditor({
                   <Input
                     type="number"
                     min="-1"
-                    value={limits.recruiter_searches}
+                    value={limits.recruiter_searches_per_day}
                     onChange={(e) =>
                       setLimits((l) => ({
                         ...l,
-                        recruiter_searches: parseInt(e.target.value) || 0,
+                        recruiter_searches_per_day:
+                          parseInt(e.target.value) || 0,
                       }))
                     }
                     className="h-8 text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formatLimit(limits.recruiter_searches)}
+                    {formatLimit(limits.recruiter_searches_per_day)}
                   </p>
                 </div>
               </div>

@@ -23,6 +23,14 @@ AUTH_ME_USER_LIMIT = 60
 AUTH_ME_USER_WINDOW_SECONDS = 60
 
 
+def _get_saved_jobs_plan_limit(plan_limits: dict[str, int]) -> int:
+    """Lit la clé canonique tout en gardant la compatibilité avec une ancienne DB."""
+    return plan_limits.get(
+        "saved_jobs_per_day",
+        plan_limits.get("saved_jobs", -1),
+    )
+
+
 @router.get("/api/auth/test-debug")
 async def test_debug():
     """Test endpoint to verify deployment. Returns minimal info only."""
@@ -351,7 +359,9 @@ async def get_current_user_info(
                     "limits"
                 ).eq("name", plan_name_for_limit).single().execute()
                 if plan_limits_res and plan_limits_res.data:
-                    saved_jobs_quota["limit"] = (plan_limits_res.data.get("limits") or {}).get("saved_jobs", -1)
+                    saved_jobs_quota["limit"] = _get_saved_jobs_plan_limit(
+                        plan_limits_res.data.get("limits") or {}
+                    )
             except Exception as e:
                 logger.warning(f"Could not fetch saved_jobs fallback quota for {user_id}: {e}")
 

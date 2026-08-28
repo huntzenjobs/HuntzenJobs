@@ -89,6 +89,70 @@ class SetCustomLimitsRequest(BaseModel):
     assistant_messages_daily: int | None = None
     job_searches_daily: int | None = None
 
+
+PLAN_LIMIT_KEY_ALIASES = {
+    "ats_scores": "ats_scores_per_day",
+    "cv_analyses_per_day": "ats_scores_per_day",
+    "cv_analyses": "ats_scores_per_day",
+    "assistant_messages": "assistant_messages_per_day",
+    "job_searches": "job_searches_per_day",
+    "cv_adapts": "cv_adapt_per_day",
+    "cv_adapt": "cv_adapt_per_day",
+    "cover_letters": "cover_letter_per_day",
+    "cover_letter": "cover_letter_per_day",
+    "max_saved_jobs": "saved_jobs_per_day",
+    "saved_jobs": "saved_jobs_per_day",
+    "recruiter_searches": "recruiter_searches_per_day",
+    "matching_scores": "matching_scores_per_day",
+    "custom_cvs": "custom_cvs_per_day",
+}
+
+EDITABLE_PLAN_LIMIT_KEYS = {
+    "ats_scores_per_day",
+    "assistant_messages_per_day",
+    "job_searches_per_day",
+    "cv_adapt_per_day",
+    "cover_letter_per_day",
+    "saved_jobs_per_day",
+    "recruiter_searches_per_day",
+    "matching_scores_per_day",
+    "custom_cvs_per_day",
+    "coach_seconds",
+    "jobs_visible",
+    "job_views",
+}
+
+
+def _normalize_plan_limits(
+    current_limits: dict[str, Any],
+    updates: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, int]]:
+    """Normalise les alias historiques sans perdre les autres réglages du plan."""
+    normalized = {
+        key: value
+        for key, value in current_limits.items()
+        if key not in PLAN_LIMIT_KEY_ALIASES
+    }
+
+    for legacy_key, canonical_key in PLAN_LIMIT_KEY_ALIASES.items():
+        if canonical_key not in normalized and legacy_key in current_limits:
+            normalized[canonical_key] = current_limits[legacy_key]
+
+    changes: dict[str, int] = {}
+    for key, value in updates.items():
+        canonical_key = PLAN_LIMIT_KEY_ALIASES.get(key, key)
+        if canonical_key not in EDITABLE_PLAN_LIMIT_KEYS:
+            continue
+        if isinstance(value, bool) or not isinstance(value, int) or value < -1:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid value for plan limit {canonical_key}",
+            )
+        changes[canonical_key] = value
+
+    normalized.update(changes)
+    return normalized, changes
+
 class UpdateEmailRequest(BaseModel):
     new_email: str
 
@@ -724,14 +788,8 @@ async def update_plan_limits(
     body: dict[str, Any],
     admin: AdminUserDep,
 ) -> dict[str, Any]:
-    """Update numeric limits for a plan (cv_analyses, assistant_messages, job_searches)."""
+    """Met à jour les limites numériques avec les clés lues par les quotas runtime."""
     supabase = get_supabase_client()
-
-    allowed_keys = {"cv_analyses", "coach_seconds", "job_searches", "assistant_messages", "cv_adapt", "cover_letter", "saved_jobs", "jobs_visible", "job_views", "recruiter_searches"}
-    limits = {k: v for k, v in body.items() if k in allowed_keys}
-
-    if not limits:
-        raise HTTPException(status_code=400, detail="No valid limit keys provided")
 
     try:
         # Get current limits and merge
@@ -742,7 +800,12 @@ async def update_plan_limits(
         if not current.data:
             raise HTTPException(status_code=404, detail="Plan not found")
 
-        merged_limits = {**(current.data.get("limits") or {}), **limits}
+        merged_limits, changes = _normalize_plan_limits(
+            current.data.get("limits") or {},
+            body,
+        )
+        if not changes:
+            raise HTTPException(status_code=400, detail="No valid limit keys provided")
 
         supabase.table("subscription_plans").update({
             "limits": merged_limits,
@@ -752,7 +815,7 @@ async def update_plan_limits(
         _log_admin_action(supabase, admin["id"], "admin.plan_limits_updated", None, {
             "plan_id": plan_id,
             "plan_name": current.data["name"],
-            "changes": limits,
+            "changes": changes,
         })
 
         # Invalider TOUS les caches auth_me (changement de limites = impact global)
@@ -3344,11 +3407,11 @@ async def set_custom_limits(
 
     limits: dict[str, Any] = {}
     if req.cv_analyses_daily is not None:
-        limits["cv_analyses_daily"] = req.cv_analyses_daily
+        limits["ats_scores_per_day"] = req.cv_analyses_daily
     if req.assistant_messages_daily is not None:
-        limits["assistant_messages_daily"] = req.assistant_messages_daily
+        limits["assistant_messages_per_day"] = req.assistant_messages_daily
     if req.job_searches_daily is not None:
-        limits["job_searches_daily"] = req.job_searches_daily
+        limits["job_searches_per_day"] = req.job_searches_daily
 
     if not limits:
         raise HTTPException(status_code=400, detail="Aucune limite spécifiée")
@@ -4443,15 +4506,15 @@ async def generate_plan_wording(
 
     # Mapping limits → wording
     limit_wording = {
-        "job_searches": ("recherches d'offres par jour", "Recherches illimitees"),
-        "cv_analyses": ("analyses CV par jour", "Analyses CV illimitees"),
-        "assistant_messages": ("messages coaching par jour", "Messages coaching illimites"),
-        "cv_adapt": ("adaptations CV par jour", "Adaptations CV illimitees"),
-        "cover_letter": ("lettres de motivation par jour", "Lettres de motivation illimitees"),
-        "saved_jobs": ("offres sauvegardees", "Sauvegardes illimitees"),
+        "job_searches_per_day": ("recherches d'offres par jour", "Recherches illimitees"),
+        "ats_scores_per_day": ("analyses CV par jour", "Analyses CV illimitees"),
+        "assistant_messages_per_day": ("messages coaching par jour", "Messages coaching illimites"),
+        "cv_adapt_per_day": ("adaptations CV par jour", "Adaptations CV illimitees"),
+        "cover_letter_per_day": ("lettres de motivation par jour", "Lettres de motivation illimitees"),
+        "saved_jobs_per_day": ("offres sauvegardees par jour", "Sauvegardes illimitees"),
         "jobs_visible": ("offres visibles par jour", "Toutes les offres visibles"),
         "job_views": ("vues d'offres par jour", "Vues illimitees"),
-        "recruiter_searches": ("recherches recruteur par jour", "Recherches recruteur illimitees"),
+        "recruiter_searches_per_day": ("recherches recruteur par jour", "Recherches recruteur illimitees"),
     }
 
     # Mapping flags → wording

@@ -31,15 +31,15 @@ async function adminFetch(path: string, options?: RequestInit) {
 }
 
 export interface PlanLimit {
-  cv_analyses: number;
-  assistant_messages: number;
-  job_searches: number;
-  cv_adapt: number;
-  cover_letter: number;
-  saved_jobs: number;
+  ats_scores_per_day: number;
+  assistant_messages_per_day: number;
+  job_searches_per_day: number;
+  cv_adapt_per_day: number;
+  cover_letter_per_day: number;
+  saved_jobs_per_day: number;
   jobs_visible: number;
   job_views: number;
-  recruiter_searches: number;
+  recruiter_searches_per_day: number;
 }
 
 export interface StripePrice {
