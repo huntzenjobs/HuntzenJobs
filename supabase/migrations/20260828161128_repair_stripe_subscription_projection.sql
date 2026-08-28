@@ -1,3 +1,9 @@
+-- La production historique ne possédait pas encore cette colonne, alors que
+-- le staging l'utilise déjà pour tracer la provenance des projections.
+-- L'ajout idempotent aligne les deux schémas avant de recréer une projection.
+ALTER TABLE public.user_subscriptions
+  ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::JSONB;
+
 -- Aligne la projection locale sur les statuts Stripe réellement traités.
 -- L'état "expired" est conservé pour l'historique local existant.
 DO $$
