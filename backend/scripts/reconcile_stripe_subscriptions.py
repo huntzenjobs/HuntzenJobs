@@ -97,10 +97,15 @@ def reconcile_subscriptions(
         )
 
     for subscription_id in database_by_id.keys() - stripe_by_id.keys():
+        classification = (
+            "stripe_missing"
+            if subscription_id.startswith("sub_")
+            else "local_non_stripe"
+        )
         items.append(
             {
                 "stripe_subscription_id": subscription_id,
-                "classification": ["stripe_missing"],
+                "classification": [classification],
             }
         )
 

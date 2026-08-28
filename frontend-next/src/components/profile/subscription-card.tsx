@@ -88,6 +88,7 @@ export function SubscriptionCard() {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelSuccess, setCancelSuccess] = useState<string | null>(null);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
   const [isReactivating, setIsReactivating] = useState(false);
   const [reactivateError, setReactivateError] = useState<string | null>(null);
 
@@ -106,6 +107,7 @@ export function SubscriptionCard() {
 
   const handleOpenPortal = async () => {
     setIsOpeningPortal(true);
+    setPortalError(null);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/stripe/create-portal-session`,
@@ -118,7 +120,9 @@ export function SubscriptionCard() {
       if (!response.ok) throw new Error(data.detail || tSub("portalError"));
       window.location.href = data.portal_url;
     } catch (err) {
-      console.error("Portal error:", err);
+      setPortalError(
+        err instanceof Error ? err.message : tSub("portalError"),
+      );
     } finally {
       setIsOpeningPortal(false);
     }
@@ -266,6 +270,15 @@ export function SubscriptionCard() {
               >
                 {isOpeningPortal ? tSub("openingPortal") : tSub("updateCard")}
               </Button>
+              {portalError && (
+                <p
+                  role="alert"
+                  aria-label={portalError}
+                  className="text-xs font-medium text-red-800"
+                >
+                  {portalError}
+                </p>
+              )}
             </div>
           </div>
         )}

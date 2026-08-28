@@ -77,6 +77,22 @@ def _invoice_paid_event():
     }
 
 
+def _invoice_action_required_event():
+    return {
+        "id": "evt_test_invoice_action_required",
+        "type": "invoice.payment_action_required",
+        "data": {"object": {"id": "in_test_action_required"}},
+    }
+
+
+def _financial_review_event(event_type: str):
+    return {
+        "id": f"evt_test_{event_type.replace('.', '_')}",
+        "type": event_type,
+        "data": {"object": {"id": "ch_test_review"}},
+    }
+
+
 def _async_checkout_event(event_type: str, payment_status: str) -> dict[str, object]:
     return {
         "id": f"evt_test_{event_type.rsplit('.', maxsplit=1)[-1]}",
@@ -291,6 +307,80 @@ async def test_transactional_handler_owns_webhook_finalization(monkeypatch):
     )
     assert [name for name, _params in database.calls] == [
         "claim_stripe_webhook_event",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_payment_action_required_uses_payment_recovery_projection(monkeypatch):
+    """Une authentification bancaire requise doit déclencher la récupération."""
+    database = _FakeSupabase()
+    handler = AsyncMock(return_value=True)
+    monkeypatch.setattr(stripe_service, "STRIPE_ENABLED", True)
+    monkeypatch.setattr(stripe_service, "STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setattr(stripe_service, "supabase_client", database)
+    monkeypatch.setattr(
+        stripe_service.stripe.Webhook,
+        "construct_event",
+        lambda *_args: _invoice_action_required_event(),
+    )
+    monkeypatch.setattr(stripe_service, "handle_payment_failed", handler)
+
+    result = await stripe_service.handle_stripe_webhook(b"payload", "signature")
+
+    assert result == {
+        "status": "success",
+        "event": "invoice.payment_action_required",
+    }
+    handler.assert_awaited_once_with(
+        {"id": "in_test_action_required"},
+        event_id="evt_test_invoice_action_required",
+        claim_token="claim_test_token",
+    )
+    assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+    ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "event_type",
+    [
+        "charge.refunded",
+        "charge.dispute.created",
+        "charge.dispute.updated",
+        "charge.dispute.closed",
+    ],
+)
+async def test_refund_and_dispute_events_are_reviewed_without_entitlement_mutation(
+    monkeypatch,
+    event_type,
+):
+    """Un remboursement ou litige doit être audité sans changer les droits."""
+    database = _FakeSupabase()
+    handler = AsyncMock(return_value=False)
+    event = _financial_review_event(event_type)
+    monkeypatch.setattr(stripe_service, "STRIPE_ENABLED", True)
+    monkeypatch.setattr(stripe_service, "STRIPE_WEBHOOK_SECRET", "whsec_test")
+    monkeypatch.setattr(stripe_service, "supabase_client", database)
+    monkeypatch.setattr(
+        stripe_service.stripe.Webhook,
+        "construct_event",
+        lambda *_args: event,
+    )
+    monkeypatch.setattr(
+        stripe_service,
+        "handle_financial_review_event",
+        handler,
+        raising=False,
+    )
+
+    result = await stripe_service.handle_stripe_webhook(b"payload", "signature")
+
+    assert result == {"status": "success", "event": event_type}
+    handler.assert_awaited_once_with(event_type, {"id": "ch_test_review"})
+    assert [name for name, _params in database.calls] == [
+        "claim_stripe_webhook_event",
+        "mark_webhook_event_processed",
     ]
 
 

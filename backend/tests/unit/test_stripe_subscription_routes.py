@@ -1,7 +1,7 @@
 """Régressions des routes de gestion d'abonnement Stripe."""
 
 from dataclasses import dataclass
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 import stripe
@@ -63,6 +63,46 @@ class _FakeSupabase:
     def table(self, table_name: str):
         assert table_name == "user_subscriptions"
         return _SubscriptionQuery()
+
+
+@pytest.mark.asyncio
+async def test_checkout_cancellation_returns_to_dedicated_page(monkeypatch):
+    """Un abandon Checkout doit afficher l'écran d'annulation prévu."""
+    create_checkout = AsyncMock(
+        return_value={
+            "checkout_url": "https://checkout.stripe.test/session",
+            "session_id": "cs_test_session",
+        }
+    )
+    request = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/stripe/create-checkout-session",
+            "headers": [],
+            "client": ("test", 1234),
+        }
+    )
+    monkeypatch.setattr(stripe_routes, "create_checkout_session", create_checkout)
+    monkeypatch.setattr(
+        type(stripe_routes.settings),
+        "get_primary_frontend_url",
+        Mock(return_value="https://www.huntzenjobs.com"),
+    )
+    checkout_route = getattr(stripe_routes.create_stripe_checkout, "__wrapped__", None)
+    assert checkout_route is not None
+
+    result = await checkout_route(
+        request=request,
+        plan_name="starter",
+        billing_period="monthly",
+        current_user={"id": "user_test", "email": "client@example.test"},
+    )
+
+    assert result["checkout_url"] == "https://checkout.stripe.test/session"
+    assert create_checkout.await_args.kwargs["cancel_url"] == (
+        "https://www.huntzenjobs.com/payment/cancel"
+    )
 
 
 @pytest.mark.asyncio

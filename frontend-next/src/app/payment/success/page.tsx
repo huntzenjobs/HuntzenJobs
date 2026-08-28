@@ -17,6 +17,8 @@ import { track } from "@/lib/track";
 
 type VerificationStatus = "polling" | "success" | "timeout" | "error";
 
+const MAX_POLLING_ATTEMPTS = 20;
+
 export default function PaymentSuccessPage() {
   const t = useTranslations("payment.success");
   const searchParams = useSearchParams();
@@ -43,7 +45,6 @@ export default function PaymentSuccessPage() {
     }
 
     // Polling avec retry intelligent au lieu de wait fixe 2s
-    const MAX_ATTEMPTS = 20;
     const POLL_INTERVAL = 1000; // 1 seconde
 
     let currentAttempt = 0;
@@ -54,7 +55,10 @@ export default function PaymentSuccessPage() {
         currentAttempt++;
         setPollingAttempts(currentAttempt);
         setMessage(
-          t("verifyingAttempt", { attempt: currentAttempt, max: MAX_ATTEMPTS }),
+          t("verifyingAttempt", {
+            attempt: currentAttempt,
+            max: MAX_POLLING_ATTEMPTS,
+          }),
         );
 
         const response = await fetch("/api/subscription/current", {
@@ -101,7 +105,7 @@ export default function PaymentSuccessPage() {
           return true;
         }
 
-        if (currentAttempt >= MAX_ATTEMPTS) {
+        if (currentAttempt >= MAX_POLLING_ATTEMPTS) {
           console.warn("[PaymentSuccess] Timeout atteint, fallback vers sync");
 
           if (pollingInterval) clearInterval(pollingInterval);
@@ -130,7 +134,7 @@ export default function PaymentSuccessPage() {
       } catch (error) {
         console.error("[PaymentSuccess] Polling error:", error);
 
-        if (currentAttempt >= MAX_ATTEMPTS) {
+        if (currentAttempt >= MAX_POLLING_ATTEMPTS) {
           if (pollingInterval) clearInterval(pollingInterval);
           setStatus("error");
           setMessage(t("errorMessage"));
@@ -146,7 +150,7 @@ export default function PaymentSuccessPage() {
     return () => {
       if (pollingInterval) clearInterval(pollingInterval);
     };
-  }, [searchParams, router, session?.access_token]);
+  }, [searchParams, router, session?.access_token, t]);
 
   // Polling state
   if (status === "polling") {
@@ -156,10 +160,24 @@ export default function PaymentSuccessPage() {
           <Loader2 className="w-16 h-16 text-violet-600 animate-spin mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{message}</h2>
           {pollingAttempts > 0 && (
-            <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="mt-4 w-full bg-gray-200 rounded-full h-2"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.min(
+                100,
+                (pollingAttempts / MAX_POLLING_ATTEMPTS) * 100,
+              )}
+            >
               <div
                 className="bg-violet-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(pollingAttempts / 10) * 100}%` }}
+                style={{
+                  width: `${Math.min(
+                    100,
+                    (pollingAttempts / MAX_POLLING_ATTEMPTS) * 100,
+                  )}%`,
+                }}
               />
             </div>
           )}

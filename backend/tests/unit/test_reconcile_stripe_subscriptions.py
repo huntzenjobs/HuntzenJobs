@@ -46,6 +46,27 @@ def test_reconcile_classifies_mismatches_without_personal_data():
             "current_period_start": None,
             "current_period_end": None,
         },
+        {
+            "stripe_subscription_id": "admin_granted:manual-access",
+            "status": "active",
+            "stripe_price_id": None,
+            "current_period_start": None,
+            "current_period_end": None,
+        },
+        {
+            "stripe_subscription_id": "archived:sub_old:duplicate-row",
+            "status": "canceled",
+            "stripe_price_id": "price_old",
+            "current_period_start": None,
+            "current_period_end": None,
+        },
+        {
+            "stripe_subscription_id": "load_test:synthetic-user",
+            "status": "active",
+            "stripe_price_id": None,
+            "current_period_start": None,
+            "current_period_end": None,
+        },
     ]
 
     report = reconcile_subscriptions(stripe_rows, database_rows)
@@ -54,6 +75,7 @@ def test_reconcile_classifies_mismatches_without_personal_data():
     assert report["counts"] == {
         "database_missing_active": 1,
         "database_missing_cancelled_history": 1,
+        "local_non_stripe": 3,
         "stripe_missing": 1,
         "synchronized": 1,
     }

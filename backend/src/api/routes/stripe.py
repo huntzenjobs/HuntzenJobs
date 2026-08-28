@@ -64,7 +64,7 @@ async def create_stripe_checkout(
         # Use primary frontend URL (first one if multiple URLs defined)
         frontend_url = settings.get_primary_frontend_url()
         success_url = f"{frontend_url}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
-        cancel_url = f"{frontend_url}/pricing"
+        cancel_url = f"{frontend_url}/payment/cancel"
 
         logger.info(f"[STRIPE] Creating checkout for user {user_id}: {plan_name} ({billing_period})")
 

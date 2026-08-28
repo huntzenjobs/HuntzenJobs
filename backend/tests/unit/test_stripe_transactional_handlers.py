@@ -265,7 +265,14 @@ async def test_subscription_updated_uses_atomic_projection_outbox_rpc(monkeypatc
 
     finalized = await stripe_service.handle_subscription_updated(
         stripe.StripeObject.construct_from(
-            {**CLOVER_SUBSCRIPTION, "cancel_at_period_end": True},
+            {
+                **CLOVER_SUBSCRIPTION,
+                "cancel_at_period_end": True,
+                "customer": "cus_test_client",
+                "metadata": {
+                    "user_id": "11111111-1111-1111-1111-111111111111"
+                },
+            },
             key=None,
         ),
         event_id="evt_test_subscription_updated",
@@ -280,6 +287,8 @@ async def test_subscription_updated_uses_atomic_projection_outbox_rpc(monkeypatc
                 "p_event_id": "evt_test_subscription_updated",
                 "p_claim_token": "claim_test_token",
                 "p_subscription_id": "sub_test_clover",
+                "p_user_id": "11111111-1111-1111-1111-111111111111",
+                "p_customer_id": "cus_test_client",
                 "p_status": "active",
                 "p_price_id": "price_test_monthly",
                 "p_period_start": "2026-08-09T16:00:00+00:00",

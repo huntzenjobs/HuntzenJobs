@@ -783,7 +783,10 @@ async def handle_stripe_webhook(
                 event_id=event_id,
                 claim_token=claim_token,
             ) is True
-        elif event_type == "invoice.payment_failed":
+        elif event_type in {
+            "invoice.payment_failed",
+            "invoice.payment_action_required",
+        }:
             finalized_transactionally = await handle_payment_failed(
                 event["data"]["object"],
                 event_id=event_id,
@@ -795,6 +798,16 @@ async def handle_stripe_webhook(
                 event_id=event_id,
                 claim_token=claim_token,
             ) is True
+        elif event_type in {
+            "charge.refunded",
+            "charge.dispute.created",
+            "charge.dispute.updated",
+            "charge.dispute.closed",
+        }:
+            await handle_financial_review_event(
+                event_type,
+                event["data"]["object"],
+            )
         else:
             logger.info(f"[WEBHOOK] Unhandled webhook event: {event_type}")
 
@@ -1017,6 +1030,13 @@ async def handle_subscription_updated(
                     "p_event_id": event_id,
                     "p_claim_token": claim_token,
                     "p_subscription_id": stripe_subscription_id,
+                    "p_user_id": _stripe_value(
+                        _stripe_value(subscription, "metadata", {}),
+                        "user_id",
+                    ),
+                    "p_customer_id": _stripe_resource_id(
+                        _stripe_value(subscription, "customer")
+                    ),
                     "p_status": _normalize_subscription_status(
                         subscription["status"]
                     ),
@@ -1214,6 +1234,27 @@ async def handle_subscription_deleted(
     except Exception as e:
         logger.error(f"Failed to cancel subscription: {e}")
         raise
+
+
+async def handle_financial_review_event(
+    event_type: str,
+    stripe_object: dict[str, Any],
+) -> bool:
+    """Signaler un remboursement ou un litige sans modifier les droits client."""
+    object_id = _stripe_resource_id(stripe_object) or "unknown"
+    logger.warning(
+        "[WEBHOOK] Financial event requires review",
+        event_type=event_type,
+        stripe_object_id=object_id,
+    )
+    await send_admin_alert(
+        subject="Événement Stripe à contrôler",
+        body=f"Type: {event_type}\nObjet Stripe: {object_id}",
+        severity="warning",
+        category="error",
+        idempotency_key=f"stripe-review/{event_type}/{object_id}",
+    )
+    return False
 
 
 async def handle_payment_failed(
