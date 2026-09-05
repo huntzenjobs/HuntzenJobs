@@ -847,6 +847,55 @@ class _CoachQuotaSupabase:
         return _RpcExecution()
 
 
+def test_coach_cv_context_reads_score_from_result_jsonb(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Le contexte coach doit suivre le schéma réel de cv_analyses."""
+
+    class _LatestCvQuery:
+        selected_columns = ""
+
+        def select(self, columns: str) -> "_LatestCvQuery":
+            self.selected_columns = columns
+            return self
+
+        def eq(self, *_args: Any) -> "_LatestCvQuery":
+            return self
+
+        def order(self, *_args: Any, **_kwargs: Any) -> "_LatestCvQuery":
+            return self
+
+        def limit(self, *_args: Any) -> "_LatestCvQuery":
+            return self
+
+        def maybe_single(self) -> "_LatestCvQuery":
+            return self
+
+        def execute(self) -> SimpleNamespace:
+            return SimpleNamespace(
+                data={
+                    "cv_text": "Python et gestion de projet",
+                    "result": {"ats_score": {"total": 84}},
+                    "created_at": "2026-09-05T08:00:00Z",
+                }
+            )
+
+    query = _LatestCvQuery()
+
+    class _CvSupabase:
+        def table(self, table_name: str) -> _LatestCvQuery:
+            assert table_name == "cv_analyses"
+            return query
+
+    monkeypatch.setattr(coach, "get_supabase_client", lambda: _CvSupabase())
+
+    context = coach._get_user_cv_context("owner-123")
+
+    assert query.selected_columns == "cv_text, result, created_at"
+    assert "Score ATS: 84/100" in context
+    assert "Python et gestion de projet" in context
+
+
 class _QueuedJob:
     job_id = "job-123"
 

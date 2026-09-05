@@ -81,7 +81,7 @@ def _get_user_cv_context(user_id: str) -> str:
         supabase = get_supabase_client()
         result = (
             supabase.table("cv_analyses")
-            .select("cv_text, score, recommendations, created_at")
+            .select("cv_text, result, created_at")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
             .limit(1)
@@ -90,7 +90,18 @@ def _get_user_cv_context(user_id: str) -> str:
         )
         if result.data and result.data.get("cv_text"):
             cv_text = result.data["cv_text"][:2000]  # Limiter pour ne pas dépasser le context window
-            score = result.data.get("score", "N/A")
+            score: int | float | str = "N/A"
+            analysis_result = result.data.get("result")
+            if isinstance(analysis_result, dict):
+                ats_score = analysis_result.get("ats_score")
+                if isinstance(ats_score, dict):
+                    score_value = ats_score.get("total")
+                    if score_value is None:
+                        score_value = ats_score.get("overall_score")
+                    if isinstance(score_value, (int, float)) and not isinstance(score_value, bool):
+                        score = score_value
+                elif isinstance(ats_score, (int, float)) and not isinstance(ats_score, bool):
+                    score = ats_score
             return (
                 f"\n\n[CONTEXTE CV DE L'UTILISATEUR — Score ATS: {score}/100]\n"
                 f"{cv_text}\n"
