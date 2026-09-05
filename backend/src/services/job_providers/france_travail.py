@@ -180,11 +180,10 @@ class FranceTravailProvider(BaseJobProvider):
                 params["motsCles"] = f"{query} {location}"
                 logger.info(f"[{self.name}] Geocode failed, fallback to motsCles: '{params['motsCles']}'")
 
-        # Filtre natif France Travail par type de contrat
+        # L'API France Travail rejette ALT pour typeContrat. L'alternance et
+        # l'apprentissage restent filtrés après agrégation par le texte métier.
         contract_type = kwargs.get("contract_type", "")
         ft_contract_map = {
-            "alternance": "ALT",
-            "apprentissage": "ALT",
             "cdi": "CDI",
             "cdd": "CDD",
             "interim": "MIS",

@@ -98,12 +98,13 @@ class AdzunaProvider(BaseJobProvider):
             "content-type": "application/json",
         }
 
-        # Map contract types to Adzuna values
+        # Adzuna attend des indicateurs booléens de recherche, pas le champ
+        # ``contract_type`` présent uniquement dans ses réponses.
         # Alternance : on ne touche PAS la query. Le post-filtre dans
         # aggregator.py (_is_alternance_job) se charge de filtrer après.
         # Enrichir avec "alternance" retournait souvent 0 résultats.
         if contract_type and contract_type not in ("alternance", "apprentissage"):
-            contract_map = {
+            contract_flags = {
                 "cdi": "permanent",
                 "cdd": "contract",
                 "freelance": "contract",
@@ -111,8 +112,9 @@ class AdzunaProvider(BaseJobProvider):
                 "permanent": "permanent",
                 "contract": "contract",
             }
-            if contract_type.lower() in contract_map:
-                params["contract_type"] = contract_map[contract_type.lower()]
+            contract_flag = contract_flags.get(contract_type.lower())
+            if contract_flag:
+                params[contract_flag] = 1
 
         async with httpx.AsyncClient(timeout=25.0) as client:
             response = await client.get(url, params=params)
