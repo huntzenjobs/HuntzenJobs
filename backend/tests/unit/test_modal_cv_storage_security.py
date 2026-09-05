@@ -5,7 +5,7 @@ import importlib.util
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 from fastapi import HTTPException
@@ -590,67 +590,82 @@ def test_modal_downloads_exact_private_cv_object(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     modal_app = _load_modal_cv_app(monkeypatch)
-
-    class _DownloadBucket:
-        def __init__(self) -> None:
-            self.path: str | None = None
-
-        def download(self, path: str) -> bytes:
-            self.path = path
-            return b"private-cv"
-
-    bucket = _DownloadBucket()
-    create_client = Mock(
-        return_value=SimpleNamespace(
-            storage=SimpleNamespace(
-                from_=Mock(side_effect=lambda bucket_name: bucket if bucket_name == "cvs" else None)
-            )
-        )
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "supabase",
-        SimpleNamespace(create_client=create_client),
-    )
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.iter_bytes.return_value = iter((b"private-", b"cv"))
+    client = MagicMock()
+    client.__enter__.return_value = client
+    client.stream.return_value = response
+    client_factory = Mock(return_value=client)
+    monkeypatch.setattr(modal_app.httpx, "Client", client_factory)
     monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
-    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-test")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "sb_secret_service-role-test")
 
     object_path = (
         "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8/"
         "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf"
     )
-    content = modal_app.download_private_cv_object(object_path)
+    content = modal_app.download_private_cv_object(
+        object_path,
+        "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+    )
 
     assert content == b"private-cv"
-    assert bucket.path == object_path
-    assert create_client.call_args.args == (
-        "https://project.supabase.co",
-        "service-role-test",
+    client_factory.assert_called_once_with(timeout=30.0)
+    client.stream.assert_called_once_with(
+        "GET",
+        "https://project.supabase.co/storage/v1/object/authenticated/cvs/"
+        + object_path,
+        headers={
+            "apikey": "sb_secret_service-role-test",
+            "Authorization": "Bearer sb_secret_service-role-test",
+        },
+        follow_redirects=False,
     )
+    response.raise_for_status.assert_called_once_with()
 
 
 def test_modal_rejects_oversized_private_cv_object(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     modal_app = _load_modal_cv_app(monkeypatch)
-    bucket = SimpleNamespace(download=Mock(return_value=b"x" * (10 * 1024 * 1024 + 1)))
-    monkeypatch.setitem(
-        sys.modules,
-        "supabase",
-        SimpleNamespace(
-            create_client=lambda *_args: SimpleNamespace(
-                storage=SimpleNamespace(from_=lambda _bucket: bucket)
-            )
-        ),
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.iter_bytes.return_value = iter(
+        (b"x" * (10 * 1024 * 1024), b"x")
     )
+    client = MagicMock()
+    client.__enter__.return_value = client
+    client.stream.return_value = response
+    monkeypatch.setattr(modal_app.httpx, "Client", Mock(return_value=client))
     monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
-    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-test")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "sb_secret_service-role-test")
 
     with pytest.raises(ValueError, match="10 MiB"):
         modal_app.download_private_cv_object(
             "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8/"
-            "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf"
+            "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf",
+            "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
         )
+
+
+def test_modal_download_revalidates_private_cv_owner_before_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+    client_factory = Mock()
+    monkeypatch.setattr(modal_app.httpx, "Client", client_factory)
+    monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "sb_secret_service-role-test")
+
+    with pytest.raises(ValueError, match="owner"):
+        modal_app.download_private_cv_object(
+            "aaaaaaaa-ad64-45b8-ad79-e9a4410f9cf8/"
+            "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf",
+            "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+        )
+
+    client_factory.assert_not_called()
 
 
 def test_modal_claim_binds_private_path_to_cv_owner(

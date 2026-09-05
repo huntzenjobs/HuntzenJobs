@@ -13,9 +13,10 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 from uuid import UUID
 
+import httpx
 import modal
 import sentry_sdk
 from fastapi import HTTPException
@@ -161,23 +162,48 @@ def get_db_connection():
     return psycopg.connect(database_url)
 
 
-def download_private_cv_object(object_path: str) -> bytes:
+def download_private_cv_object(object_path: str, user_id: UUID | str) -> bytes:
     """Télécharger un CV depuis le bucket privé sans accepter d'URL externe."""
-    from supabase import create_client
-
+    validate_private_cv_object_path(object_path, user_id)
     supabase_url = os.getenv("SUPABASE_URL")
     service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
     if not supabase_url or not service_role_key:
         raise ValueError("Supabase storage configuration is incomplete")
 
-    content = create_client(supabase_url, service_role_key).storage.from_("cvs").download(
-        object_path
+    encoded_path = quote(object_path, safe="/")
+    download_url = (
+        f"{supabase_url.rstrip('/')}/storage/v1/object/authenticated/cvs/"
+        f"{encoded_path}"
     )
-    if not isinstance(content, (bytes, bytearray)):
-        raise TypeError("Supabase did not return CV bytes")
-    if len(content) > MAX_PRIVATE_CV_BYTES:
-        raise ValueError("Private CV exceeds the 10 MiB limit")
-    return bytes(content)
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+    }
+
+    try:
+        chunks: list[bytes] = []
+        downloaded_bytes = 0
+        with httpx.Client(timeout=30.0) as client, client.stream(
+            "GET",
+            download_url,
+            headers=headers,
+            follow_redirects=False,
+        ) as response:
+            response.raise_for_status()
+            for chunk in response.iter_bytes():
+                downloaded_bytes += len(chunk)
+                if downloaded_bytes > MAX_PRIVATE_CV_BYTES:
+                    raise ValueError("Private CV exceeds the 10 MiB limit")
+                chunks.append(chunk)
+        return b"".join(chunks)
+    except ValueError:
+        raise
+    except httpx.HTTPStatusError as exc:
+        raise RuntimeError(
+            f"Private CV download failed with status {exc.response.status_code}"
+        ) from None
+    except httpx.RequestError:
+        raise RuntimeError("Private CV download request failed") from None
 
 async def notify_fastapi_callback(cv_id: str, user_id: str, status: str) -> bool:
     import httpx
@@ -373,7 +399,7 @@ async def process_cv_analysis(
         # Step 2: Extract Text (if needed)
         final_cv_text = cv_text
         if not final_cv_text and pdf_object_path:
-            file_content = download_private_cv_object(pdf_object_path)
+            file_content = download_private_cv_object(pdf_object_path, user_id)
             suffix = Path(pdf_object_path).suffix
             with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
                 tmp_file.write(file_content)
