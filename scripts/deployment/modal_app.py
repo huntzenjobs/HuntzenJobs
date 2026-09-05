@@ -6,27 +6,79 @@ Eliminates code duplication and ensures prompt consistency across environments.
 """
 
 import json
+import logging
 import os
 import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 from uuid import UUID
 
 import modal
+import sentry_sdk
 from fastapi import HTTPException
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # IMPORTANT: Add /root to sys.path so we can import 'src' from the mounted directory
 sys.path.append("/root")
+
+from src.utils.sentry import initialize_sentry
+
+logger = logging.getLogger(__name__)
 
 # ============================================
 # MODAL APP CONFIGURATION
 # ============================================
 
 app = modal.App("huntzen-cv-processor")
+MAX_PRIVATE_CV_BYTES = 10 * 1024 * 1024
+
+
+def validate_private_cv_object_path(object_path: str, user_id: UUID | str) -> str:
+    """Valider un chemin de stockage privé et son propriétaire."""
+    owner_id = str(UUID(str(user_id)))
+    if (
+        not object_path
+        or object_path.startswith(("/", "http://", "https://"))
+        or "\\" in object_path
+        or ".." in object_path
+    ):
+        raise ValueError("Invalid private CV object path")
+
+    parts = object_path.split("/")
+    if len(parts) != 2 or parts[0] != owner_id:
+        raise ValueError("Invalid private CV object path owner")
+
+    stem, separator, extension = parts[1].rpartition(".")
+    if not separator or extension.lower() not in {"pdf", "doc", "docx"}:
+        raise ValueError("Invalid private CV object path extension")
+    try:
+        UUID(stem)
+    except ValueError as exc:
+        raise ValueError("Invalid private CV object path identifier") from exc
+    return object_path
+
+
+def extract_private_cv_object_path(signed_url: str, user_id: UUID | str) -> str:
+    """Extraire un chemin privé sans télécharger l'URL fournie."""
+    candidate = urlparse(signed_url)
+    expected_prefix = "/storage/v1/object/sign/cvs/"
+    configured_host = urlparse(os.getenv("SUPABASE_URL", "")).hostname
+    trusted_hosts = {"auth.huntzenjobs.com"}
+    if configured_host:
+        trusted_hosts.add(configured_host)
+    if (
+        candidate.scheme != "https"
+        or not candidate.hostname
+        or candidate.hostname not in trusted_hosts
+        or not candidate.path.startswith(expected_prefix)
+    ):
+        raise ValueError("Invalid signed private CV URL")
+
+    object_path = unquote(candidate.path[len(expected_prefix):])
+    return validate_private_cv_object_path(object_path, user_id)
 
 
 class CVProcessRequest(BaseModel):
@@ -41,26 +93,15 @@ class CVProcessRequest(BaseModel):
     job_description: str | None = Field(default=None, max_length=50_000)
     language: Literal["fr", "en", "es", "pt"] = "fr"
 
-    @field_validator("pdf_url")
-    @classmethod
-    def validate_signed_cv_url(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        expected = urlparse(os.environ.get("SUPABASE_URL", ""))
-        candidate = urlparse(value)
-        if (
-            candidate.scheme != "https"
-            or not expected.hostname
-            or candidate.hostname != expected.hostname
-            or not candidate.path.startswith("/storage/v1/object/sign/cvs/")
-        ):
-            raise ValueError("Only a signed Supabase CV URL is accepted")
-        return value
-
     @model_validator(mode="after")
     def validate_single_source(self) -> "CVProcessRequest":
         if bool(self.pdf_url) == bool(self.cv_text):
             raise ValueError("Exactly one CV source is required")
+        if self.pdf_url:
+            extract_private_cv_object_path(
+                self.pdf_url,
+                self.user_id,
+            )
         return self
 
 MODULE_DIR = Path(__file__).parent
@@ -119,13 +160,32 @@ def get_db_connection():
         raise ValueError("DATABASE_URL not found in Modal secrets")
     return psycopg.connect(database_url)
 
+
+def download_private_cv_object(object_path: str) -> bytes:
+    """Télécharger un CV depuis le bucket privé sans accepter d'URL externe."""
+    from supabase import create_client
+
+    supabase_url = os.getenv("SUPABASE_URL")
+    service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    if not supabase_url or not service_role_key:
+        raise ValueError("Supabase storage configuration is incomplete")
+
+    content = create_client(supabase_url, service_role_key).storage.from_("cvs").download(
+        object_path
+    )
+    if not isinstance(content, (bytes, bytearray)):
+        raise TypeError("Supabase did not return CV bytes")
+    if len(content) > MAX_PRIVATE_CV_BYTES:
+        raise ValueError("Private CV exceeds the 10 MiB limit")
+    return bytes(content)
+
 async def notify_fastapi_callback(cv_id: str, user_id: str, status: str) -> bool:
     import httpx
     fastapi_url = os.getenv("FASTAPI_CALLBACK_URL")
     modal_secret = os.getenv("MODAL_CALLBACK_SECRET")
 
     if not fastapi_url or not modal_secret:
-        print("⚠️ FASTAPI_CALLBACK_URL or MODAL_CALLBACK_SECRET not configured")
+        logger.error("modal_callback_configuration_missing")
         return False
 
     try:
@@ -137,12 +197,16 @@ async def notify_fastapi_callback(cv_id: str, user_id: str, status: str) -> bool
                 headers={"X-Modal-Secret": modal_secret}
             )
             if response.status_code == 200:
-                print(f"✅ CALLBACK SUCCESS: Analysis {cv_id} sent to backend.")
+                logger.info("modal_callback_succeeded")
             else:
-                print(f"❌ CALLBACK FAILED: Backend returned {response.status_code} - {response.text}")
+                logger.warning(
+                    "modal_callback_failed status_code=%s",
+                    response.status_code,
+                )
             return response.status_code == 200
     except Exception as e:  # noqa: BLE001 - frontière réseau Modal/FastAPI
-        print(f"❌ Callback failed: {e}")
+        sentry_sdk.capture_exception(e)
+        logger.error("modal_callback_exception error_type=%s", type(e).__name__)
         return False
 
 def cv_belongs_to_user(cv_id: str, user_id: str) -> bool:
@@ -159,8 +223,13 @@ def cv_belongs_to_user(cv_id: str, user_id: str) -> bool:
         conn.close()
 
 
-def claim_cv_analysis(cv_id: str, user_id: str) -> str | None:
-    """Réserver durablement une analyse pending et retourner son état courant."""
+def claim_cv_analysis(
+    cv_id: str,
+    user_id: str,
+    pdf_object_path: str | None,
+    cv_text: str | None,
+) -> str | None:
+    """Réserver une analyse dont la source correspond exactement à la base."""
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
@@ -168,18 +237,29 @@ def claim_cv_analysis(cv_id: str, user_id: str) -> str | None:
                 """
                 UPDATE cv_analyses
                 SET status = 'processing', updated_at = NOW()
-                WHERE id = %s AND user_id = %s AND status = 'pending'
+                WHERE id = %s
+                  AND user_id = %s
+                  AND pdf_url IS NOT DISTINCT FROM %s
+                  AND cv_text IS NOT DISTINCT FROM %s
+                  AND status = 'pending'
                 RETURNING status
                 """,
-                (str(cv_id), str(user_id)),
+                (str(cv_id), str(user_id), pdf_object_path, cv_text),
             )
             if cur.fetchone() is not None:
                 conn.commit()
                 return "claimed"
 
             cur.execute(
-                "SELECT status FROM cv_analyses WHERE id = %s AND user_id = %s",
-                (str(cv_id), str(user_id)),
+                """
+                SELECT status
+                FROM cv_analyses
+                WHERE id = %s
+                  AND user_id = %s
+                  AND pdf_url IS NOT DISTINCT FROM %s
+                  AND cv_text IS NOT DISTINCT FROM %s
+                """,
+                (str(cv_id), str(user_id), pdf_object_path, cv_text),
             )
             current = cur.fetchone()
             conn.commit()
@@ -224,7 +304,8 @@ async def update_cv_status(
             await notify_fastapi_callback(cv_id, user_id, status)
         return True
     except Exception as e:  # noqa: BLE001 - frontière base de données Modal
-        print(f"❌ DB update failed: {e}")
+        sentry_sdk.capture_exception(e)
+        logger.error("modal_database_update_failed error_type=%s", type(e).__name__)
         return False
 
 # ============================================
@@ -249,16 +330,20 @@ async def process_cv_analysis(
 ) -> dict[str, Any]:
     import tempfile
 
-    import httpx
-
     from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
 
-    print(f"🚀 Unified CV Processing Starting: {cv_id}")
+    initialize_sentry("modal-cv")
+    logger.info("modal_cv_processing_started")
     start_time = time.time()
 
     ownership_verified = False
     try:
-        claim_state = claim_cv_analysis(cv_id, user_id)
+        pdf_object_path = (
+            extract_private_cv_object_path(pdf_url, user_id)
+            if pdf_url
+            else None
+        )
+        claim_state = claim_cv_analysis(cv_id, user_id, pdf_object_path, cv_text)
         if claim_state == "completed":
             return {
                 "success": True,
@@ -287,22 +372,24 @@ async def process_cv_analysis(
 
         # Step 2: Extract Text (if needed)
         final_cv_text = cv_text
-        if not final_cv_text and pdf_url:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(pdf_url)
-                response.raise_for_status()
-                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
-                    tmp_file.write(response.content)
-                    tmp_path = tmp_file.name
+        if not final_cv_text and pdf_object_path:
+            file_content = download_private_cv_object(pdf_object_path)
+            suffix = Path(pdf_object_path).suffix
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
+                tmp_file.write(file_content)
+                tmp_path = tmp_file.name
 
             # Use unified extraction method if possible, or stay with local Docling
             # For simplicity and perf, we keep the docling logic here or move to agent.
             # Let's use the local docling as it's already configured in Modal image.
-            from docling.document_converter import DocumentConverter
-            converter = DocumentConverter()
-            extract_res = converter.convert(tmp_path)
-            final_cv_text = extract_res.document.export_to_markdown()
-            os.unlink(tmp_path)
+            try:
+                from docling.document_converter import DocumentConverter
+
+                converter = DocumentConverter()
+                extract_res = converter.convert(tmp_path)
+                final_cv_text = extract_res.document.export_to_markdown()
+            finally:
+                os.unlink(tmp_path)
 
         if not final_cv_text or len(final_cv_text) < 50:
             raise ValueError("CV content extraction failed or empty")
@@ -341,7 +428,8 @@ async def process_cv_analysis(
 
     except Exception as e:  # noqa: BLE001 - frontière du traitement asynchrone
         error_msg = f"Unified Processing Failed: {e!s}"
-        print(f"❌ {error_msg}")
+        sentry_sdk.capture_exception(e)
+        logger.error("modal_cv_processing_failed error_type=%s", type(e).__name__)
         if ownership_verified:
             await update_cv_status(
                 cv_id,
@@ -358,6 +446,7 @@ async def process_cv_analysis(
 @app.function(image=image, secrets=secrets)
 @modal.fastapi_endpoint(method="POST", requires_proxy_auth=True)
 async def process_cv_webhook(request_body: CVProcessRequest) -> dict:
+    initialize_sentry("modal-cv")
     try:
         await process_cv_analysis.spawn.aio(
             cv_id=str(request_body.cv_id),
@@ -369,6 +458,8 @@ async def process_cv_webhook(request_body: CVProcessRequest) -> dict:
         )
         return {"success": True, "cv_id": str(request_body.cv_id)}
     except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error("modal_cv_spawn_failed error_type=%s", type(e).__name__)
         raise HTTPException(
             status_code=500,
             detail="Unable to start CV analysis",

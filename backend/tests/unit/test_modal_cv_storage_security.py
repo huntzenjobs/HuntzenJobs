@@ -512,6 +512,200 @@ async def test_modal_cv_webhook_uses_async_spawn_interface(
 
 
 @pytest.mark.asyncio
+async def test_modal_cv_webhook_keeps_legacy_signed_url_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+    async_spawn = AsyncMock()
+    monkeypatch.setattr(
+        modal_app,
+        "process_cv_analysis",
+        SimpleNamespace(spawn=SimpleNamespace(aio=async_spawn)),
+    )
+    object_path = (
+        "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8/"
+        "0f644336-c7a9-4d0e-a971-717e0d9e32e6.PDF"
+    )
+    signed_url = f"https://auth.huntzenjobs.com/storage/v1/object/sign/cvs/{object_path}?token=test"
+    request = modal_app.CVProcessRequest(
+        cv_id="0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+        user_id="e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+        pdf_url=signed_url,
+    )
+
+    await modal_app.process_cv_webhook(request)
+
+    assert async_spawn.await_args.kwargs["pdf_url"] == signed_url
+    assert modal_app.extract_private_cv_object_path(
+        signed_url,
+        request.user_id,
+    ) == object_path
+
+
+def test_modal_request_model_rejects_foreign_private_object_path_in_signed_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+
+    with pytest.raises(ValueError, match="private CV object path"):
+        modal_app.CVProcessRequest(
+            cv_id="0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+            user_id="e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+            pdf_url=(
+                "https://auth.huntzenjobs.com/storage/v1/object/sign/cvs/"
+                "aaaaaaaa-ad64-45b8-ad79-e9a4410f9cf8/"
+                "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf?token=test"
+            ),
+        )
+
+
+@pytest.mark.parametrize(
+    "invalid_url",
+    [
+        "http://auth.huntzenjobs.com/storage/v1/object/sign/cvs/file.pdf",
+        "https://auth.huntzenjobs.com/other-bucket/file.pdf",
+        (
+            "https://attacker.example/storage/v1/object/sign/cvs/"
+            "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8/"
+            "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf"
+        ),
+        "not-a-url",
+    ],
+)
+def test_modal_request_model_rejects_invalid_signed_url_shape(
+    monkeypatch: pytest.MonkeyPatch,
+    invalid_url: str,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+
+    with pytest.raises(ValueError):
+        modal_app.CVProcessRequest(
+            cv_id="0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+            user_id="e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+            pdf_url=invalid_url,
+        )
+
+
+def test_modal_downloads_exact_private_cv_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+
+    class _DownloadBucket:
+        def __init__(self) -> None:
+            self.path: str | None = None
+
+        def download(self, path: str) -> bytes:
+            self.path = path
+            return b"private-cv"
+
+    bucket = _DownloadBucket()
+    create_client = Mock(
+        return_value=SimpleNamespace(
+            storage=SimpleNamespace(
+                from_=Mock(side_effect=lambda bucket_name: bucket if bucket_name == "cvs" else None)
+            )
+        )
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "supabase",
+        SimpleNamespace(create_client=create_client),
+    )
+    monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-test")
+
+    object_path = (
+        "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8/"
+        "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf"
+    )
+    content = modal_app.download_private_cv_object(object_path)
+
+    assert content == b"private-cv"
+    assert bucket.path == object_path
+    assert create_client.call_args.args == (
+        "https://project.supabase.co",
+        "service-role-test",
+    )
+
+
+def test_modal_rejects_oversized_private_cv_object(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+    bucket = SimpleNamespace(download=Mock(return_value=b"x" * (10 * 1024 * 1024 + 1)))
+    monkeypatch.setitem(
+        sys.modules,
+        "supabase",
+        SimpleNamespace(
+            create_client=lambda *_args: SimpleNamespace(
+                storage=SimpleNamespace(from_=lambda _bucket: bucket)
+            )
+        ),
+    )
+    monkeypatch.setenv("SUPABASE_URL", "https://project.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-test")
+
+    with pytest.raises(ValueError, match="10 MiB"):
+        modal_app.download_private_cv_object(
+            "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8/"
+            "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf"
+        )
+
+
+def test_modal_claim_binds_private_path_to_cv_owner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    modal_app = _load_modal_cv_app(monkeypatch)
+
+    class _Cursor:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, tuple[object, ...]]] = []
+
+        def __enter__(self) -> "_Cursor":
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def execute(self, query: str, params: tuple[object, ...]) -> None:
+            self.calls.append((query, params))
+
+        def fetchone(self) -> tuple[str]:
+            return ("processing",)
+
+    cursor = _Cursor()
+    connection = SimpleNamespace(
+        cursor=lambda: cursor,
+        commit=Mock(),
+        close=Mock(),
+    )
+    monkeypatch.setattr(modal_app, "get_db_connection", lambda: connection)
+    object_path = (
+        "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8/"
+        "0f644336-c7a9-4d0e-a971-717e0d9e32e6.pdf"
+    )
+
+    state = modal_app.claim_cv_analysis(
+        "0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+        "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+        object_path,
+        None,
+    )
+
+    assert state == "claimed"
+    query, params = cursor.calls[0]
+    assert "pdf_url IS NOT DISTINCT FROM %s" in query
+    assert "cv_text IS NOT DISTINCT FROM %s" in query
+    assert params == (
+        "0f644336-c7a9-4d0e-a971-717e0d9e32e6",
+        "e2eb2ae1-ad64-45b8-ad79-e9a4410f9cf8",
+        object_path,
+        None,
+    )
+
+
+@pytest.mark.asyncio
 async def test_modal_pdf_webhook_reports_invalid_base64_as_http_422(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
