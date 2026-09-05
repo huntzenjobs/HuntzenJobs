@@ -169,7 +169,17 @@ async def get_active_subscription(user_id: str) -> dict[str, Any] | None:
             .maybe_single()\
             .execute()
 
-        return response.data if response.data else None
+        if response is None:
+            return None
+
+        if not hasattr(response, "data"):
+            raise RuntimeError("Unexpected Supabase response for active subscription")
+        data = response.data
+        if data is None:
+            return None
+        if not isinstance(data, dict):
+            raise RuntimeError("Unexpected Supabase response for active subscription")
+        return data
     except Exception as exc:
         logger.error(
             "Failed to get active subscription",

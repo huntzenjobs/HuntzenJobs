@@ -89,6 +89,50 @@ async def test_subscription_lookup_failure_is_not_treated_as_free_user(monkeypat
 
 
 @pytest.mark.asyncio
+async def test_subscription_lookup_accepts_supabase_no_row_response(monkeypatch):
+    """Une absence de ligne Supabase doit être interprétée comme sans abonnement."""
+
+    class _NoRowsQuery(_SubscriptionQuery):
+        def execute(self):
+            return None
+
+    class _NoRowsSupabase:
+        def table(self, table_name: str):
+            assert table_name == "user_subscriptions"
+            return _NoRowsQuery()
+
+    monkeypatch.setattr(stripe_service, "supabase_client", _NoRowsSupabase())
+
+    assert await stripe_service.get_active_subscription("user_without_row") is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "malformed_response",
+    [object(), _Response([]), _Response([{"unexpected": "row"}])],
+)
+async def test_subscription_lookup_rejects_malformed_supabase_response(
+    monkeypatch,
+    malformed_response,
+):
+    """Une réponse inconnue ne doit pas autoriser la création d'un doublon Stripe."""
+
+    class _MalformedQuery(_SubscriptionQuery):
+        def execute(self):
+            return malformed_response
+
+    class _MalformedSupabase:
+        def table(self, table_name: str):
+            assert table_name == "user_subscriptions"
+            return _MalformedQuery()
+
+    monkeypatch.setattr(stripe_service, "supabase_client", _MalformedSupabase())
+
+    with pytest.raises(RuntimeError, match="Unexpected Supabase response"):
+        await stripe_service.get_active_subscription("user_test")
+
+
+@pytest.mark.asyncio
 async def test_existing_subscription_uses_stripe_portal_confirmation(monkeypatch):
     class _Rpc:
         def execute(self):
