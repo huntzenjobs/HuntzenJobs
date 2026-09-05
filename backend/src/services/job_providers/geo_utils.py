@@ -2,7 +2,7 @@
 Geo Utils — Geocodage hybride pour le filtrage par rayon
 =========================================================
 - API adresse.data.gouv.fr (Base Adresse Nationale) pour la France
-- Fallback Nominatim pour l'international
+- Données geonamescache embarquées pour l'international
 - Cache mémoire agressif (les villes ne bougent pas)
 - Calcul de distance haversine
 """
@@ -13,6 +13,8 @@ import re
 import unicodedata
 
 import httpx
+
+from src.utils.geo import get_city_coordinates_local
 
 logger = logging.getLogger(__name__)
 
@@ -140,34 +142,18 @@ async def geocode_fr(city: str) -> tuple[float, float] | None:
 
 
 async def geocode_international(city: str, country_code: str) -> tuple[float, float] | None:
-    """Geocode via Nominatim pour les pays hors France."""
+    """Geocode an international city from the bundled local dataset."""
     cache_key = f"{_normalize_text(city)}|{country_code.lower()}"
     if cache_key in _geo_cache:
         return _geo_cache[cache_key]
 
-    try:
-        url = "https://nominatim.openstreetmap.org/search"
-        params = {"q": city, "countrycodes": country_code.lower(), "format": "json", "limit": 1}
-        headers = {"User-Agent": "HuntZen/3.0 (job search platform)"}
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.get(url, params=params, headers=headers)
-            resp.raise_for_status()
-            data = resp.json()
-
-        if data:
-            result = (float(data[0]["lat"]), float(data[0]["lon"]))
-            _geo_cache[cache_key] = result
-            return result
-
-        _geo_cache[cache_key] = None
-        return None
-    except Exception as e:
-        logger.warning(f"[GeoUtils] Nominatim geocode failed for '{city}': {e}")
-        return None
+    result = get_city_coordinates_local(city, country_code)
+    _geo_cache[cache_key] = result
+    return result
 
 
 async def geocode(city: str, country_code: str = "fr") -> tuple[float, float] | None:
-    """Geocode une ville. BAN pour la France, Nominatim sinon."""
+    """Geocode une ville. BAN pour la France, données locales sinon."""
     if country_code.lower() == "fr":
         return await geocode_fr(city)
     return await geocode_international(city, country_code)

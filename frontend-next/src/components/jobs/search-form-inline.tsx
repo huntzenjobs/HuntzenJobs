@@ -146,56 +146,65 @@ export function SearchFormInline({
   const { canUse, getRemaining, isFreePlan } = useSubscription();
 
   // Fetch countries for autocomplete
-  const fetchCountries = async (
-    query: string,
-  ): Promise<AutocompleteOption[]> => {
-    if (!query) return [];
-    try {
-      const countries = await huntzenApi.getCountries();
-      return countries
-        .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 8)
-        .map((c) => ({ label: c.name, value: c.code }));
-    } catch {
-      return [];
-    }
-  };
+  const fetchCountries = useCallback(
+    async (query: string): Promise<AutocompleteOption[]> => {
+      if (!query) return [];
+      try {
+        const countries = await huntzenApi.getCountries();
+        return countries
+          .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+          .slice(0, 8)
+          .map((c) => ({ label: c.name, value: c.code }));
+      } catch {
+        return [];
+      }
+    },
+    [],
+  );
 
   // Fetch cities/regions/departments for autocomplete
-  const fetchCities = async (query: string): Promise<AutocompleteOption[]> => {
-    if (!query || query.length < 1 || !country) {
-      return [];
-    }
-    try {
-      const locations = await huntzenApi.searchCities(query, country);
-      return locations.map((loc) => {
-        const suffix =
-          loc.type === "region"
-            ? " · Région"
-            : loc.type === "department"
-              ? ` · Dép. ${loc.code ?? ""}`
-              : "";
-        return { label: loc.name + suffix, value: loc.name };
-      });
-    } catch {
-      return [];
-    }
-  };
+  const fetchCities = useCallback(
+    async (query: string): Promise<AutocompleteOption[]> => {
+      if (
+        query.trim().length < 2 ||
+        !isCountryValid ||
+        !/^[a-z]{2}$/i.test(country)
+      ) {
+        return [];
+      }
+      try {
+        const locations = await huntzenApi.searchCities(query, country);
+        return locations.map((loc) => {
+          const suffix =
+            loc.type === "region"
+              ? " · Région"
+              : loc.type === "department"
+                ? ` · Dép. ${loc.code ?? ""}`
+                : "";
+          return { label: loc.name + suffix, value: loc.name };
+        });
+      } catch {
+        return [];
+      }
+    },
+    [country, isCountryValid],
+  );
 
   // Fuzzy-resolve a typed country name on blur (called by AutocompleteInput)
-  const handleCountryBlurResolve = async (
-    text: string,
-  ): Promise<AutocompleteOption | null> => {
-    try {
-      const countries = await huntzenApi.getCountries();
-      const match = fuzzyFindCountry(text, countries);
-      if (match) return { label: match.name, value: match.code };
-    } catch {}
-    return null;
-  };
+  const handleCountryBlurResolve = useCallback(
+    async (text: string): Promise<AutocompleteOption | null> => {
+      try {
+        const countries = await huntzenApi.getCountries();
+        const match = fuzzyFindCountry(text, countries);
+        if (match) return { label: match.name, value: match.code };
+      } catch {}
+      return null;
+    },
+    [],
+  );
 
   // Handle country selection
-  const handleCountryChange = (value: string) => {
+  const handleCountryChange = useCallback((value: string) => {
     setCountry(value);
 
     if (!value) {
@@ -217,7 +226,7 @@ export function SearchFormInline({
     } else {
       setIsCountryValid(false);
     }
-  };
+  }, []);
 
   // Toggle a value in a multi-select array
   const toggleArrayValue = useCallback(

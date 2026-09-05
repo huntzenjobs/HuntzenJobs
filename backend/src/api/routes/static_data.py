@@ -1,7 +1,7 @@
 """
 Static Data API Routes
 ======================
-Hybrid approach: OpenStreetMap Nominatim + Local fallback (pycountry + geonamescache)
+Local country and city data backed by pycountry and geonamescache.
 """
 
 import logging
@@ -13,7 +13,7 @@ from fastapi import APIRouter, Query
 from src.utils.geo import (
     country_code_to_name,
     get_cities_for_country,
-    search_cities_nominatim,
+    search_cities_local,
     search_french_locations,
 )
 
@@ -57,14 +57,12 @@ async def get_countries():
 
 @router.get("/api/cities/search")
 async def search_cities(
-    q: str = Query(..., min_length=1, description="City search query"),
+    q: str = Query(..., min_length=2, description="City search query"),
     country_code: str = Query(..., min_length=2, max_length=2, description="ISO country code"),
     limit: int = Query(default=10, ge=1, le=20, description="Max results")
 ):
     """
-    Search cities dynamically using OpenStreetMap Nominatim.
-
-    Real-time city search as user types. This is the CORRECT approach.
+    Search cities in the bundled local dataset.
 
     Args:
         q: City name query (e.g., "Garges", "Par", "Minsk")
@@ -81,10 +79,20 @@ async def search_cities(
         GET /api/cities/search?q=Par&country_code=fr
         → ["Paris", "Paray-le-Monial", ...]
     """
-    if country_code.lower() == "fr":
-        # France: régions + départements (pycountry ISO 3166-2) + villes (Nominatim)
+    normalized_country_code = country_code.lower()
+    if not pycountry.countries.get(alpha_2=normalized_country_code.upper()):
+        return {
+            "success": True,
+            "data": [],
+            "query": q,
+            "country_code": normalized_country_code,
+            "count": 0,
+        }
+
+    if normalized_country_code == "fr":
+        # France: régions + départements ISO 3166-2 + villes locales.
         admin = search_french_locations(q, limit=5)
-        cities_raw = await search_cities_nominatim(q, country_code, limit)
+        cities_raw = search_cities_local(q, normalized_country_code, limit)
         cities = [{"name": c, "type": "city"} for c in cities_raw]
 
         # Admin results first, then cities — deduplicate by lowercase name
@@ -98,14 +106,14 @@ async def search_cities(
 
         data = merged[:limit]
     else:
-        cities_raw = await search_cities_nominatim(q, country_code, limit)
+        cities_raw = search_cities_local(q, normalized_country_code, limit)
         data = [{"name": c, "type": "city"} for c in cities_raw]
 
     return {
         "success": True,
         "data": data,
         "query": q,
-        "country_code": country_code,
+        "country_code": normalized_country_code,
         "count": len(data)
     }
 
@@ -113,9 +121,7 @@ async def search_cities(
 @router.get("/api/cities/{country_name}")
 async def get_cities(country_name: str):
     """
-    Get cities for a country using hybrid approach.
-
-    Uses centralized geo utilities (OpenStreetMap Nominatim + geonamescache fallback).
+    Get cities for a country from the bundled local dataset.
 
     Args:
         country_name: Country name (e.g., "France", "Biélorussie", "Belarus")
@@ -149,7 +155,7 @@ async def get_cities(country_name: str):
             "message": f"Country not found: {country_name}"
         }
 
-    # Use centralized geo utility (Nominatim + geonames fallback)
+    # Use centralized local geo utility.
     cities = await get_cities_for_country(country_code, limit=500)
 
     return {

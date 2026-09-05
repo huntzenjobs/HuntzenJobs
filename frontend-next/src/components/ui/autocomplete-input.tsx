@@ -126,11 +126,16 @@ export const AutocompleteInput = React.forwardRef<
 
     // Debounced search
     React.useEffect(() => {
-      if (!onSearch) return;
+      if (!onSearch || disabled) {
+        setInternalLoading(false);
+        return;
+      }
       if (search.length === 0) {
         setInternalOptions([]);
         return;
       }
+
+      let cancelled = false;
 
       // Clear previous timeout
       if (debounceRef.current) {
@@ -142,21 +147,22 @@ export const AutocompleteInput = React.forwardRef<
         setInternalLoading(true);
         try {
           const results = await onSearch(search);
-          setInternalOptions(results);
+          if (!cancelled) setInternalOptions(results);
         } catch (error) {
           console.error("Autocomplete search error:", error);
-          setInternalOptions([]);
+          if (!cancelled) setInternalOptions([]);
         } finally {
-          setInternalLoading(false);
+          if (!cancelled) setInternalLoading(false);
         }
       }, debounceMs);
 
       return () => {
+        cancelled = true;
         if (debounceRef.current) {
           clearTimeout(debounceRef.current);
         }
       };
-    }, [search, onSearch, debounceMs]);
+    }, [search, onSearch, debounceMs, disabled]);
 
     // Handle input change
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

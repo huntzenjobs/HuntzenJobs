@@ -102,6 +102,9 @@ export interface LocationResult {
   code?: string; // department number (e.g., "75" for Paris)
 }
 
+const CITY_SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+const CITY_SEARCH_CACHE_MAX_ENTRIES = 100;
+
 export interface Job {
   id: string;
   title: string;
@@ -182,6 +185,16 @@ export interface JobFairSearchResult {
 
 export class HuntzenApiClient {
   private _baseUrl?: string;
+  private countriesCache?: Country[];
+  private countriesRequest?: Promise<Country[]>;
+  private readonly citySearchCache = new Map<
+    string,
+    { expiresAt: number; results: LocationResult[] }
+  >();
+  private readonly citySearchRequests = new Map<
+    string,
+    Promise<LocationResult[]>
+  >();
 
   constructor(baseUrl?: string) {
     this._baseUrl = baseUrl;
@@ -233,10 +246,22 @@ export class HuntzenApiClient {
 
   // Countries & Cities
   async getCountries(): Promise<Country[]> {
-    const response = await this.fetch<{ success: boolean; data: Country[] }>(
-      "/api/countries",
-    );
-    return response.data || [];
+    if (this.countriesCache) return this.countriesCache;
+    if (this.countriesRequest) return this.countriesRequest;
+
+    this.countriesRequest = this.fetch<{
+      success: boolean;
+      data: Country[];
+    }>("/api/countries")
+      .then((response) => {
+        this.countriesCache = response.data || [];
+        return this.countriesCache;
+      })
+      .finally(() => {
+        this.countriesRequest = undefined;
+      });
+
+    return this.countriesRequest;
   }
 
   async getCities(countryName: string): Promise<string[]> {
@@ -247,7 +272,7 @@ export class HuntzenApiClient {
   }
 
   /**
-   * Search cities dynamically using OpenStreetMap Nominatim
+   * Search cities in the backend's local geographic dataset.
    * @param query - City search query (e.g., "Garges", "Par")
    * @param countryCode - ISO country code (e.g., "fr", "by")
    * @returns List of matching city names
@@ -256,15 +281,46 @@ export class HuntzenApiClient {
     query: string,
     countryCode: string,
   ): Promise<LocationResult[]> {
-    if (!query || query.length < 1) return [];
+    const normalizedQuery = query.trim();
+    const normalizedCountryCode = countryCode.trim().toLowerCase();
+    if (
+      normalizedQuery.length < 2 ||
+      !/^[a-z]{2}$/.test(normalizedCountryCode)
+    ) {
+      return [];
+    }
 
-    const response = await this.fetch<{
+    const cacheKey = `${normalizedCountryCode}:${normalizedQuery.toLowerCase()}`;
+    const cached = this.citySearchCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.results;
+
+    const currentRequest = this.citySearchRequests.get(cacheKey);
+    if (currentRequest) return currentRequest;
+
+    const request = this.fetch<{
       success: boolean;
       data: LocationResult[];
     }>(
-      `/api/cities/search?q=${encodeURIComponent(query)}&country_code=${countryCode}`,
-    );
-    return response.data || [];
+      `/api/cities/search?q=${encodeURIComponent(normalizedQuery)}&country_code=${normalizedCountryCode}`,
+    )
+      .then((response) => {
+        const results = response.data || [];
+        if (this.citySearchCache.size >= CITY_SEARCH_CACHE_MAX_ENTRIES) {
+          const oldestKey = this.citySearchCache.keys().next().value;
+          if (oldestKey) this.citySearchCache.delete(oldestKey);
+        }
+        this.citySearchCache.set(cacheKey, {
+          expiresAt: Date.now() + CITY_SEARCH_CACHE_TTL_MS,
+          results,
+        });
+        return results;
+      })
+      .finally(() => {
+        this.citySearchRequests.delete(cacheKey);
+      });
+
+    this.citySearchRequests.set(cacheKey, request);
+    return request;
   }
 
   async getContractTypes(): Promise<ContractType[]> {

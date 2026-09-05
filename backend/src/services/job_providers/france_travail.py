@@ -23,13 +23,9 @@ from src.services.job_providers.base import (
     handle_provider_errors,
     normalize_contract_type,
 )
+from src.services.job_providers.geo_utils import geocode_fr
 
 logger = logging.getLogger(__name__)
-
-# Cache mémoire ville → (lat, lon). Persiste tant que le process tourne.
-# Les coordonnées de villes ne changent pas, pas besoin de TTL.
-_geocode_cache: dict[str, tuple[float, float] | None] = {}
-
 
 class FranceTravailProvider(BaseJobProvider):
     """
@@ -54,37 +50,10 @@ class FranceTravailProvider(BaseJobProvider):
 
     @staticmethod
     async def _geocode_city(city: str, country_code: str = "fr") -> tuple[float, float] | None:
-        """Geocode a city name to (lat, lon) via Nominatim, with in-memory cache."""
-        cache_key = f"{city.lower().strip()}|{country_code.lower()}"
-        if cache_key in _geocode_cache:
-            return _geocode_cache[cache_key]
-
-        try:
-            url = "https://nominatim.openstreetmap.org/search"
-            params = {
-                "q": city,
-                "countrycodes": country_code.lower(),
-                "format": "json",
-                "limit": 1,
-            }
-            headers = {"User-Agent": "HuntZen/3.0 (job search platform)"}
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(url, params=params, headers=headers)
-                resp.raise_for_status()
-                data = resp.json()
-
-            if data:
-                lat = float(data[0]["lat"])
-                lon = float(data[0]["lon"])
-                _geocode_cache[cache_key] = (lat, lon)
-                logger.info(f"[france_travail] Geocoded '{city}' → ({lat}, {lon})")
-                return (lat, lon)
-
-            _geocode_cache[cache_key] = None
+        """Geocode a French city through the official BAN service."""
+        if country_code.lower() != "fr":
             return None
-        except Exception as e:
-            logger.warning(f"[france_travail] Geocode failed for '{city}': {e}")
-            return None
+        return await geocode_fr(city)
 
     async def _get_token(self) -> str | None:
         """
@@ -164,7 +133,7 @@ class FranceTravailProvider(BaseJobProvider):
             city_lat = kwargs.get("city_lat")
             city_lon = kwargs.get("city_lon")
 
-            # Priorité 2 : geocodage automatique via Nominatim (cache mémoire)
+            # Priorité 2 : géocodage automatique via la BAN (cache mémoire)
             if not city_lat or not city_lon:
                 coords = await self._geocode_city(location, country_code)
                 if coords:
