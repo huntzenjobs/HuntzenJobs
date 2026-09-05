@@ -447,61 +447,88 @@ async def notify_expiring_plans(ctx: dict) -> dict:
     supabase = get_supabase_client()
     now = datetime.now(UTC)
 
-    def _get_plan_name(plan_id: str) -> str:
-        plan_res = supabase.table("subscription_plans").select(
-            "display_name"
-        ).eq("id", plan_id).maybe_single().execute()
-        return (plan_res.data or {}).get("display_name", "Pro")
-
-    sent = 0
-
     try:
-        # ── J-7 : plan expire dans 7 jours ──
-        j7_start = now + timedelta(days=7)
-        j7_end = now + timedelta(days=8)
-        rows_j7 = supabase.table("user_subscriptions").select(
-            "user_id, plan_id, current_period_end, profiles!inner(email, language)"
-        ).eq("status", "active").like("stripe_subscription_id", "admin_granted%").gte(
-            "current_period_end", j7_start.isoformat()
-        ).lt(
-            "current_period_end", j7_end.isoformat()
-        ).execute()
-
-        for row in (rows_j7.data or []):
-            profile = row.get("profiles") or {}
-            email = profile.get("email")
-            if not email:
-                continue
-            send_expiring_plan_email(
-                user_email=email,
-                plan_name=_get_plan_name(row["plan_id"]),
-                language=profile.get("language", "fr"),
+        def _get_rows(days_before_expiry: int) -> list[dict]:
+            window_start = now + timedelta(days=days_before_expiry)
+            window_end = now + timedelta(days=days_before_expiry + 1)
+            result = (
+                supabase.table("user_subscriptions")
+                .select("user_id, plan_id, current_period_end")
+                .eq("status", "active")
+                .like("stripe_subscription_id", "admin_granted%")
+                .gte("current_period_end", window_start.isoformat())
+                .lt("current_period_end", window_end.isoformat())
+                .execute()
             )
-            sent += 1
+            return result.data or []
 
-        # ── J-1 : plan expire demain ──
-        j1_start = now + timedelta(days=1)
-        j1_end = now + timedelta(days=2)
-        rows_j1 = supabase.table("user_subscriptions").select(
-            "user_id, plan_id, current_period_end, profiles!inner(email, language)"
-        ).eq("status", "active").like("stripe_subscription_id", "admin_granted%").gte(
-            "current_period_end", j1_start.isoformat()
-        ).lt(
-            "current_period_end", j1_end.isoformat()
-        ).execute()
+        rows_by_delay = {7: _get_rows(7), 1: _get_rows(1)}
+        rows = [row for batch in rows_by_delay.values() for row in batch]
+        user_ids = sorted({row.get("user_id") for row in rows if row.get("user_id")})
+        plan_ids = sorted({row.get("plan_id") for row in rows if row.get("plan_id")})
 
-        for row in (rows_j1.data or []):
-            profile = row.get("profiles") or {}
-            email = profile.get("email")
-            if not email:
-                continue
-            send_expiring_plan_tomorrow_email(
-                user_email=email,
-                plan_name=_get_plan_name(row["plan_id"]),
-                language=profile.get("language", "fr"),
+        profiles_by_id: dict[str, dict] = {}
+        if user_ids:
+            profiles = (
+                supabase.table("profiles")
+                .select("id, email, language")
+                .in_("id", user_ids)
+                .execute()
             )
-            sent += 1
+            profiles_by_id = {
+                profile["id"]: profile
+                for profile in (profiles.data or [])
+                if profile.get("id")
+            }
 
-        return {"success": True, "emails_sent": sent}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+        plan_names_by_id: dict[str, str] = {}
+        if plan_ids:
+            plans = (
+                supabase.table("subscription_plans")
+                .select("id, display_name")
+                .in_("id", plan_ids)
+                .execute()
+            )
+            plan_names_by_id = {
+                plan["id"]: plan.get("display_name") or "Pro"
+                for plan in (plans.data or [])
+                if plan.get("id")
+            }
+
+        sent = 0
+        skipped = 0
+        seen_notifications: set[tuple[str, int]] = set()
+        senders = {
+            7: send_expiring_plan_email,
+            1: send_expiring_plan_tomorrow_email,
+        }
+        for delay, batch in rows_by_delay.items():
+            for row in batch:
+                user_id = row.get("user_id")
+                notification_key = (user_id, delay)
+                if not user_id or notification_key in seen_notifications:
+                    skipped += 1
+                    continue
+                seen_notifications.add(notification_key)
+
+                profile = profiles_by_id.get(user_id) or {}
+                email = profile.get("email")
+                if not email:
+                    skipped += 1
+                    logger.warning(
+                        "[notify_expiring_plans] Missing profile email",
+                        extra={"user_id": user_id, "delay_days": delay},
+                    )
+                    continue
+
+                senders[delay](
+                    user_email=email,
+                    plan_name=plan_names_by_id.get(row.get("plan_id"), "Pro"),
+                    language=profile.get("language") or "fr",
+                )
+                sent += 1
+
+        return {"success": True, "emails_sent": sent, "skipped": skipped}
+    except Exception:
+        logger.error("[notify_expiring_plans] Processing failed", exc_info=True)
+        raise

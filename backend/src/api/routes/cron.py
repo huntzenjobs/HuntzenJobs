@@ -262,8 +262,28 @@ async def notify_expiring_plans_cron(authorization: str | None = Header(None)):
     Appeler quotidiennement via cron (08:00 UTC).
     """
     _verify_cron_secret(authorization)
-    from src.workers.tasks import notify_expiring_plans
-    result = await notify_expiring_plans({})
+
+    try:
+        from src.workers.tasks import notify_expiring_plans
+
+        result = await notify_expiring_plans({})
+    except Exception:
+        logger.error("[cron] notify-expiring-plans failed", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to notify expiring plans",
+        ) from None
+
+    if not result.get("success"):
+        logger.error(
+            "[cron] notify-expiring-plans reported failure",
+            extra={"error_type": "worker_result"},
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to notify expiring plans",
+        )
+
     logger.info(f"[cron] notify-expiring-plans: {result}")
     return result
 
