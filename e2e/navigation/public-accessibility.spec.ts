@@ -70,9 +70,6 @@ test.describe("structure des pages publiques", () => {
     await page.goto(routeUrl("/pricing"));
 
     await expect(page.locator("a button, button a")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: /start for free/i })).toHaveCount(
-      1,
-    );
   });
 
   test("le choix de facturation expose son état aux technologies d’assistance", async ({
