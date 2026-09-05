@@ -4,6 +4,11 @@
  */
 
 import * as Sentry from "@sentry/nextjs";
+import {
+  scrubSentryBreadcrumb,
+  scrubSentryEvent,
+  scrubSentryReplayEvent,
+} from "./src/lib/sentry-privacy";
 
 // Check cookie consent status for analytics/replay features
 function hasAnalyticsConsent(): boolean {
@@ -47,6 +52,7 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_SENTRY_DSN) {
         maskAllText: true,
         maskAllInputs: true,
         blockAllMedia: true,
+        beforeAddRecordingEvent: scrubSentryReplayEvent,
       }),
     );
   }
@@ -83,46 +89,17 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_SENTRY_DSN) {
     // Browser-side integrations only (no server instrumentations needed)
     integrations,
 
-    // Disable default integrations to explicitly control what's loaded
-    defaultIntegrations: false,
-
     // Filter out sensitive information
-    beforeSend(event, hint) {
+    beforeSend(event) {
       // Don't send events in development
       if (process.env.NODE_ENV === "development") {
         return null;
       }
-
-      // Remove sensitive data from URLs
-      if (event.request?.url) {
-        event.request.url = event.request.url.replace(
-          /[?&](token|key|password)=[^&]*/gi,
-          "$1=REDACTED",
-        );
-      }
-
-      // Remove sensitive data from breadcrumbs
-      if (event.breadcrumbs) {
-        event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
-          if (breadcrumb.data) {
-            breadcrumb.data = Object.keys(breadcrumb.data).reduce(
-              (acc, key) => {
-                if (["password", "token", "apiKey", "secret"].includes(key)) {
-                  acc[key] = "REDACTED";
-                } else {
-                  acc[key] = breadcrumb.data![key];
-                }
-                return acc;
-              },
-              {} as Record<string, any>,
-            );
-          }
-          return breadcrumb;
-        });
-      }
-
-      return event;
+      return scrubSentryEvent(event);
     },
+    beforeBreadcrumb: scrubSentryBreadcrumb,
+    beforeSendTransaction: scrubSentryEvent,
+    sendDefaultPii: false,
 
     // Ignore certain errors that are not actionable
     ignoreErrors: [
@@ -154,3 +131,5 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_SENTRY_DSN) {
   // eslint-disable-next-line no-console
   console.warn("[Sentry] DSN not configured - error tracking disabled");
 }
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

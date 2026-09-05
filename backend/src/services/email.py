@@ -630,6 +630,11 @@ def _resend_options(
     return {"idempotency_key": idempotency_key}
 
 
+def _safe_email_header(value: str, *, max_length: int = 200) -> str:
+    """Neutraliser les retours ligne avant insertion dans un en-tête email."""
+    return " ".join(value.splitlines())[:max_length]
+
+
 # ---------------------------------------------------------------------------
 # User-facing email functions
 # ---------------------------------------------------------------------------
@@ -1538,14 +1543,33 @@ def send_support_ticket_notification(
     user_plan: str,
     page_url: str,
     description: str,
+    idempotency_key: str | None = None,
 ) -> bool:
     """
     Notify admin of a new support ticket.
     Sends to settings.admin_email.
     """
     try:
-        priority_emoji = {"urgent": "🔴", "normal": "🟡", "low": "🟢"}.get(priority, "🟡")
-        category_label = {"bug": "Bug", "question": "Question", "suggestion": "Suggestion"}.get(category, category)
+        priority_emoji = {"urgent": "🔴", "normal": "🟡", "low": "🟢"}.get(
+            priority,
+            "🟡",
+        )
+        priority_label = {"urgent": "URGENT", "normal": "NORMAL", "low": "LOW"}.get(
+            priority,
+            "NORMAL",
+        )
+        category_label = {
+            "bug": "Bug",
+            "question": "Question",
+            "suggestion": "Suggestion",
+        }.get(category, "Autre")
+        safe_ticket_id = escape(ticket_id)
+        safe_subject = escape(subject)
+        safe_user_name = escape(user_name or "N/A")
+        safe_user_email = escape(user_email)
+        safe_user_plan = escape(user_plan or "N/A")
+        safe_page_url = escape(page_url or "N/A")
+        safe_description = escape(description)
 
         html_content = f"""
         <!DOCTYPE html>
@@ -1567,20 +1591,20 @@ def send_support_ticket_notification(
         <body>
             <div class="container">
                 <div class="header">
-                    <h2>🎫 Nouveau ticket support #{ticket_id}</h2>
-                    <p>{priority_emoji} {priority.upper()} — {category_label}</p>
+                    <h2>🎫 Nouveau ticket support #{safe_ticket_id}</h2>
+                    <p>{priority_emoji} {priority_label} — {category_label}</p>
                 </div>
                 <div class="content">
                     <div class="info-box">
-                        <div class="info-item"><span class="label">Utilisateur :</span> {user_name or "N/A"}</div>
-                        <div class="info-item"><span class="label">Email :</span> {user_email}</div>
-                        <div class="info-item"><span class="label">Plan :</span> {user_plan or "N/A"}</div>
-                        <div class="info-item"><span class="label">Page :</span> {page_url or "N/A"}</div>
+                        <div class="info-item"><span class="label">Utilisateur :</span> {safe_user_name}</div>
+                        <div class="info-item"><span class="label">Email :</span> {safe_user_email}</div>
+                        <div class="info-item"><span class="label">Plan :</span> {safe_user_plan}</div>
+                        <div class="info-item"><span class="label">Page :</span> {safe_page_url}</div>
                     </div>
                     <h3>📋 Sujet</h3>
-                    <p>{subject}</p>
+                    <p>{safe_subject}</p>
                     <h3>💬 Description</h3>
-                    <div class="message-box">{description}</div>
+                    <div class="message-box">{safe_description}</div>
                     <a href="{settings.get_primary_frontend_url()}/admin/support" class="button">Gérer dans l'admin</a>
                 </div>
             </div>
@@ -1591,16 +1615,21 @@ def send_support_ticket_notification(
         params = {
             "from": settings.from_email,
             "to": [settings.admin_email],
-            "subject": f"[Support] Nouveau ticket #{ticket_id} — {category_label} — {priority.upper()}",
+            "subject": _safe_email_header(
+                f"[Support] Nouveau ticket #{ticket_id} — {category_label} — {priority_label}"
+            ),
             "html": html_content,
         }
 
-        email = send_email(params)
-        logger.info(f"Support ticket notification sent for ticket {ticket_id}: {email}")
+        send_email(params, _resend_options(idempotency_key))
+        logger.info("Support ticket notification sent")
         return True
 
-    except Exception as e:
-        logger.error(f"Failed to send support ticket notification for {ticket_id}: {e}")
+    except Exception as exc:
+        logger.error(
+            "Support ticket notification failed",
+            extra={"error_type": type(exc).__name__},
+        )
         return False
 
 
@@ -1611,6 +1640,7 @@ def send_support_ticket_reply(
     ticket_subject: str,
     admin_reply: str,
     language: str = "fr",
+    idempotency_key: str | None = None,
 ) -> bool:
     """
     Send admin reply to the user who submitted the ticket.
@@ -1618,7 +1648,10 @@ def send_support_ticket_reply(
     try:
         lang = _lang(language)
         tr = _T["support_reply"][lang]
-        first_name = user_name.split()[0] if user_name else "Utilisateur"
+        first_name = escape(user_name.split()[0] if user_name else "Utilisateur")
+        safe_ticket_id = escape(ticket_id)
+        safe_ticket_subject = escape(ticket_subject)
+        safe_admin_reply = escape(admin_reply)
 
         frontend_url = settings.get_primary_frontend_url()
         if lang == "fr":
@@ -1635,16 +1668,16 @@ def send_support_ticket_reply(
         <body style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;">
             <div style="max-width:600px;margin:0 auto;padding:20px;">
                 <div style="background:linear-gradient(135deg,#0EA5E9 0%,#2563EB 100%);color:white;padding:28px;text-align:center;border-radius:12px 12px 0 0;">
-                    <h1 style="margin:0;font-size:22px;">💬 {tr["header_tpl"].format(ticket_id=ticket_id)}</h1>
+                    <h1 style="margin:0;font-size:22px;">💬 {tr["header_tpl"].format(ticket_id=safe_ticket_id)}</h1>
                 </div>
                 <div style="background:#f8fafc;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;">
                     <p style="margin:0 0 12px;">{tr["greeting"]} {first_name},</p>
-                    <p style="margin:0 0 16px;">{tr["intro"]} <strong>{ticket_subject}</strong></p>
+                    <p style="margin:0 0 16px;">{tr["intro"]} <strong>{safe_ticket_subject}</strong></p>
                     <div style="background:white;border-radius:8px;padding:20px;margin:16px 0;border-left:4px solid #00d4aa;border:1px solid #e2e8f0;border-left:4px solid #00d4aa;">
-                        {admin_reply}
+                        {safe_admin_reply}
                     </div>
                     <div style="text-align:center;margin-top:24px;">
-                        <a href="{frontend_url}/support" style="display:inline-block;background:linear-gradient(135deg,#0EA5E9,#2563EB);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
+                        <a href="{frontend_url}/profile?support=open" style="display:inline-block;background:linear-gradient(135deg,#0EA5E9,#2563EB);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
                             {cta_label}
                         </a>
                     </div>
@@ -1660,16 +1693,24 @@ def send_support_ticket_reply(
         params = {
             "from": settings.from_email,
             "to": [user_email],
-            "subject": tr["subject_tpl"].format(ticket_id=ticket_id, ticket_subject=ticket_subject),
+            "subject": _safe_email_header(
+                tr["subject_tpl"].format(
+                    ticket_id=ticket_id,
+                    ticket_subject=ticket_subject,
+                )
+            ),
             "html": html_content,
         }
 
-        email = send_email(params)
-        logger.info(f"Support reply sent to {user_email} for ticket {ticket_id}: {email}")
+        send_email(params, _resend_options(idempotency_key))
+        logger.info("Support reply email sent")
         return True
 
-    except Exception as e:
-        logger.error(f"Failed to send support reply for ticket {ticket_id}: {e}")
+    except Exception as exc:
+        logger.error(
+            "Support reply email failed",
+            extra={"error_type": type(exc).__name__},
+        )
         return False
 
 

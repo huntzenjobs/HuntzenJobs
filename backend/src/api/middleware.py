@@ -4,12 +4,11 @@ API Middleware
 Custom middleware for logging, CORS, rate limiting.
 """
 
-import base64
-import json as _json
 import logging
 import time
 from collections.abc import Callable
 from functools import lru_cache
+from uuid import UUID, uuid4
 
 import jwt
 import sentry_sdk
@@ -25,6 +24,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _canonical_request_id(requested_id: str) -> str:
+    """N'accepte qu'un UUID afin d'éviter PII et cardinalité arbitraire dans Sentry."""
+    try:
+        return UUID(requested_id).hex
+    except (AttributeError, TypeError, ValueError):
+        return uuid4().hex
 
 
 @lru_cache(maxsize=4)
@@ -111,6 +118,11 @@ async def custom_rate_limit_handler(request: Request, exc: Exception) -> Respons
     )
 
 
+def _get_rate_limit_redis_url() -> str:
+    """Retourne le Redis de limitation partagé, puis le cache en repli legacy."""
+    return settings.redis_limiter_url or settings.redis_url
+
+
 def get_limiter() -> Limiter:
     """
     Get rate limiter with Redis storage for distributed rate limiting.
@@ -121,8 +133,8 @@ def get_limiter() -> Limiter:
     # Use standard Redis URL (redis:// or rediss://...) for SlowAPI
     # SlowAPI expects Redis protocol URL with embedded auth, not Upstash REST URL
     # rediss:// is for TLS/SSL connections (required by Upstash)
-    redis_url = settings.redis_url
-    if redis_url and redis_url.startswith("redis://"):
+    redis_url = _get_rate_limit_redis_url()
+    if redis_url and redis_url.startswith(("redis://", "rediss://")):
         try:
             logger.info("✅ Initializing distributed rate limiting with Railway Redis")
             return Limiter(
@@ -136,7 +148,7 @@ def get_limiter() -> Limiter:
             logger.warning("⚠️ Falling back to in-memory rate limiting")
     else:
         if not redis_url:
-            logger.warning("⚠️ No REDIS_URL configured")
+            logger.warning("⚠️ No REDIS_LIMITER_URL or REDIS_URL configured")
         logger.warning("⚠️ Using in-memory rate limiting (not distributed)")
 
     return Limiter(
@@ -163,26 +175,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
+        request_id = _canonical_request_id(
+            request.headers.get("x-request-id", "")
+        )
+        request.state.request_id = request_id
 
-        # Enrichir Sentry avec l'user_id extrait du JWT (best-effort, non-bloquant)
-        try:
-            auth_header = request.headers.get("authorization", "")
-            if auth_header.startswith("Bearer "):
-                token = auth_header[7:]
-                # Décoder le JWT sans vérification de signature (payload public)
-                parts = token.split(".")
-                if len(parts) == 3:
-                    padded = parts[1] + "=" * (-len(parts[1]) % 4)
-                    payload = _json.loads(base64.urlsafe_b64decode(padded))
-                    user_id = payload.get("sub")
-                    if user_id:
-                        with sentry_sdk.new_scope() as scope:
-                            scope.set_user({"id": user_id})
-        except Exception:
-            pass
-
-        # Process request
-        response = await call_next(request)
+        # Le scope couvre toute la requête sans extraire d'identité d'un JWT non vérifié.
+        with sentry_sdk.isolation_scope() as scope:
+            scope.set_tag("request_id", request_id)
+            response = await call_next(request)
 
         # Calculate duration
         duration_ms = int((time.time() - start_time) * 1000)
@@ -197,6 +198,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         # Add timing header
         response.headers["X-Response-Time"] = f"{duration_ms}ms"
+        response.headers["X-Request-ID"] = request_id
 
         return response
 

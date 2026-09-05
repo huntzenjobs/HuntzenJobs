@@ -15,7 +15,7 @@ export function SupportBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chatbot" | "ticket">("chatbot");
   const [hasConsentChoice, setHasConsentChoice] = useState(false);
-  const { myTickets } = useSupportTicket();
+  const ticketController = useSupportTicket();
   const t = useTranslations("support.widget");
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export function SupportBubble() {
     return () => window.removeEventListener(COOKIE_CONSENT_EVENT, handleConsent);
   }, []);
 
-  const openTicketCount = myTickets.filter(
+  const openTicketCount = ticketController.myTickets.filter(
     (t) => t.status === "open" || t.status === "in_progress"
   ).length;
 
@@ -42,8 +42,8 @@ export function SupportBubble() {
         className={cn(
           "fixed bottom-6 right-6 z-[60]",
           "w-14 h-14 rounded-full",
-          "bg-gradient-to-br from-huntzen-blue to-blue-600",
-          "text-white shadow-glow-blue",
+          "border border-huntzen-turquoise/40 bg-slate-950",
+          "text-white shadow-lg shadow-slate-950/20",
           "flex items-center justify-center",
           "transition-transform duration-150 hover:scale-110 active:scale-95",
           isOpen && "scale-95"
@@ -61,6 +61,7 @@ export function SupportBubble() {
       {isOpen && (
         <SupportWidget
           activeTab={activeTab}
+          ticketController={ticketController}
           onTabChange={setActiveTab}
           onClose={() => setIsOpen(false)}
         />

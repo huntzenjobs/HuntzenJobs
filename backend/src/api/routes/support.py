@@ -9,19 +9,23 @@ PATCH /api/admin/support/tickets/{id} — admin: update status + reply
 """
 
 import logging
-from datetime import UTC, datetime
+import re
+from pathlib import PurePosixPath
+from uuid import UUID, uuid5
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-from src.api.deps import AdminUserDep, CurrentUserDep, get_supabase_client
+from src.api.deps import AdminUserDep, CurrentUserDep, get_supabase_client, run_sync_io
 from src.api.middleware import limiter
 from src.config.settings import get_settings
-from src.services.email import send_support_ticket_notification, send_support_ticket_reply
-from src.services.notifications import create_notification
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+MAX_ADMIN_PAGE = 10_000
+MAX_ADMIN_PAGE_SIZE = 100
+MAX_HISTORY_MESSAGES = 100
 
 
 # ---------------------------------------------------------------------------
@@ -29,101 +33,160 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 class SupportTicketCreate(BaseModel):
+    request_id: UUID
     category: str = Field(..., pattern="^(bug|question|suggestion)$")
     priority: str = Field(default="normal", pattern="^(low|normal|urgent)$")
     subject: str = Field(..., min_length=5, max_length=150)
     description: str = Field(..., min_length=20, max_length=2000)
-    attachment_url: str | None = None
-    page_url: str | None = None
+    attachment_url: str | None = Field(default=None, max_length=1024)
+    page_url: str | None = Field(default=None, max_length=2048)
+
+    @field_validator("subject", "description", mode="before")
+    @classmethod
+    def strip_required_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
 
 class AdminTicketUpdate(BaseModel):
+    request_id: UUID
     status: str | None = Field(default=None, pattern="^(open|in_progress|resolved|closed)$")
-    admin_reply: str | None = None
+    admin_reply: str | None = Field(default=None, min_length=1, max_length=10_000)
+
+    @field_validator("admin_reply", mode="before")
+    @classmethod
+    def strip_optional_reply(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @model_validator(mode="after")
+    def require_mutation(self) -> "AdminTicketUpdate":
+        if self.status is None and self.admin_reply is None:
+            raise ValueError("Une réponse ou un statut est requis")
+        return self
 
 
 class ChatbotRequest(BaseModel):
-    question: str = Field(..., max_length=500)
+    question: str = Field(..., min_length=1, max_length=500)
+
+    @field_validator("question", mode="before")
+    @classmethod
+    def strip_question(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
 
 # ---------------------------------------------------------------------------
 # User endpoints
 # ---------------------------------------------------------------------------
 
+
+def _single_row(data: object) -> dict:
+    if isinstance(data, list):
+        data = data[0] if data else None
+    return data if isinstance(data, dict) else {}
+
+
+def _execute_query(query):
+    return query.execute()
+
+
+def _attachment_owned_by_user(path: str | None, user_id: str) -> bool:
+    if path is None:
+        return True
+    if "\\" in path or path.startswith("/"):
+        return False
+    raw_parts = path.split("/")
+    normalized_parts = PurePosixPath(path).parts
+    return (
+        len(raw_parts) >= 2
+        and raw_parts == list(normalized_parts)
+        and raw_parts[0] == user_id
+        and all(part not in {"", ".", ".."} for part in raw_parts)
+    )
+
+
+def _sanitize_postgrest_search(value: str) -> str:
+    return re.sub(r"[^\w\s@+.-]", "", value, flags=re.UNICODE).strip()
+
+
+def _is_support_rate_limit_error(error: Exception) -> bool:
+    return (
+        getattr(error, "code", None) == "P0001"
+        and "support_ticket_rate_limit_exceeded"
+        in str(getattr(error, "message", ""))
+    )
+
+
 @router.post("/tickets")
 async def create_ticket(
     payload: SupportTicketCreate,
     current_user: CurrentUserDep,
 ):
-    """Create a support ticket, email admin, send in-app notification to user."""
+    """Créer ou rejouer un ticket via la primitive transactionnelle 9A."""
     supabase = get_supabase_client()
-    user_id = current_user["id"]
-    user_email = current_user.get("email", "")
-    user_name = current_user.get("user_metadata", {}).get("full_name") or current_user.get("user_metadata", {}).get("name")
+    user_id = str(current_user["id"])
+    user_email = str(current_user.get("email") or "")
+    request_id = str(payload.request_id)
 
-    # Get user plan from profiles / subscriptions
-    user_plan = None
-    try:
-        sub = supabase.rpc("get_user_current_subscription", {"p_user_id": user_id}).execute()
-        if sub.data:
-            user_plan = sub.data.get("plan_name")
-    except Exception:
-        pass
+    if not _attachment_owned_by_user(payload.attachment_url, user_id):
+        raise HTTPException(status_code=400, detail="Pièce jointe invalide")
 
-    # Insert ticket
     try:
-        result = supabase.table("support_tickets").insert({
-            "user_id": user_id,
-            "user_email": user_email,
-            "user_name": user_name,
-            "user_plan": user_plan or "freemium",
-            "page_url": payload.page_url,
-            "category": payload.category,
-            "priority": payload.priority,
-            "subject": payload.subject,
-            "description": payload.description,
-            "attachment_url": payload.attachment_url,
-        }).execute()
-    except Exception as e:
-        logger.error(f"Failed to create support ticket for user {user_id}: {e}")
+        profile_query = (
+            supabase.table("profiles")
+            .select("full_name")
+            .eq("id", user_id)
+            .maybe_single()
+        )
+        profile = await run_sync_io(_execute_query, profile_query)
+        user_name = str(_single_row(profile.data).get("full_name") or "")
+        subscription_query = supabase.rpc(
+            "get_user_current_subscription",
+            {"p_user_id": user_id},
+        )
+        subscription = await run_sync_io(_execute_query, subscription_query)
+        subscription_row = _single_row(subscription.data)
+        user_plan = str(subscription_row.get("plan_name") or "free")
+
+        creation_query = supabase.rpc(
+            "create_support_ticket_idempotent",
+            {
+                "p_request_id": request_id,
+                "p_user_id": user_id,
+                "p_user_email": user_email,
+                "p_user_name": user_name,
+                "p_user_plan": user_plan,
+                "p_page_url": payload.page_url,
+                "p_category": payload.category,
+                "p_priority": payload.priority,
+                "p_subject": payload.subject,
+                "p_description": payload.description,
+                "p_attachment_url": payload.attachment_url,
+            },
+        )
+        result = await run_sync_io(_execute_query, creation_query)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        if _is_support_rate_limit_error(exc):
+            raise HTTPException(
+                status_code=429,
+                detail="Limite de tickets atteinte",
+            ) from None
+        logger.error(
+            "Support ticket creation failed",
+            extra={"error_type": type(exc).__name__},
+        )
         raise HTTPException(status_code=500, detail="Erreur lors de la création du ticket") from None
 
-    ticket = result.data[0] if result.data else {}
-    ticket_id = ticket.get("id", "")
+    ticket = _single_row(result.data)
+    ticket_id = str(ticket.get("id") or "")
+    if not ticket_id:
+        raise HTTPException(status_code=500, detail="Erreur lors de la création du ticket")
     short_id = str(ticket_id)[:8].upper()
-
-    # Email admin (non-blocking)
-    try:
-        send_support_ticket_notification(
-            ticket_id=short_id,
-            subject=payload.subject,
-            category=payload.category,
-            priority=payload.priority,
-            user_name=user_name or "",
-            user_email=user_email,
-            user_plan=user_plan or "freemium",
-            page_url=payload.page_url or "",
-            description=payload.description,
-        )
-    except Exception as e:
-        logger.error(f"Failed to send ticket notification email: {e}")
-
-    # In-app notification (non-blocking)
-    try:
-        create_notification(
-            supabase_client=supabase,
-            user_id=user_id,
-            type="support_ticket_received",
-            title=f"Ticket #{short_id} reçu",
-            body=f"Votre demande '{payload.subject}' a bien été reçue. Nous vous répondrons rapidement.",
-        )
-    except Exception as e:
-        logger.error(f"Failed to create ticket confirmation notification: {e}")
 
     return {
         "ticket_id": ticket_id,
         "short_id": short_id,
-        "status": "open",
+        "status": str(ticket.get("status") or "open"),
     }
 
 
@@ -134,16 +197,19 @@ async def get_my_tickets(current_user: CurrentUserDep):
     user_id = current_user["id"]
 
     try:
-        result = (
+        query = (
             supabase.table("support_tickets")
             .select("id, category, priority, subject, status, admin_reply, created_at, updated_at")
             .eq("user_id", user_id)
             .order("created_at", desc=True)
             .limit(10)
-            .execute()
         )
-    except Exception as e:
-        logger.error(f"Failed to fetch tickets for user {user_id}: {e}")
+        result = await run_sync_io(_execute_query, query)
+    except Exception as exc:
+        logger.error(
+            "Support ticket list failed",
+            extra={"error_type": type(exc).__name__},
+        )
         raise HTTPException(status_code=500, detail="Erreur lors du chargement des tickets") from None
 
     tickets = result.data or []
@@ -152,6 +218,38 @@ async def get_my_tickets(current_user: CurrentUserDep):
         t["short_id"] = str(t["id"])[:8].upper()
 
     return {"tickets": tickets}
+
+
+async def _ticket_messages(supabase, ticket_id: str) -> list[dict]:
+    query = (
+        supabase.table("support_ticket_messages")
+        .select("id, author_role, content, created_at")
+        .eq("ticket_id", ticket_id)
+        .order("created_at")
+        .limit(MAX_HISTORY_MESSAGES)
+    )
+    result = await run_sync_io(_execute_query, query)
+    return result.data if isinstance(result.data, list) else []
+
+
+@router.get("/tickets/{ticket_id}/messages")
+async def get_ticket_messages(ticket_id: str, current_user: CurrentUserDep):
+    """Retourner l'historique uniquement au propriétaire du ticket."""
+    supabase = get_supabase_client()
+    owned_query = (
+        supabase.table("support_tickets")
+        .select("id")
+        .eq("id", ticket_id)
+        .eq("user_id", str(current_user["id"]))
+        .maybe_single()
+    )
+    owned = await run_sync_io(_execute_query, owned_query)
+    if not _single_row(owned.data):
+        raise HTTPException(status_code=404, detail="Ticket introuvable")
+    return {
+        "ticket_id": ticket_id,
+        "messages": await _ticket_messages(supabase, ticket_id),
+    }
 
 
 @router.post("/chatbot")
@@ -186,14 +284,14 @@ Réponds en français. Sois précis et concis. Ne mentionne pas d'autres sites o
     try:
         from langchain_groq import ChatGroq
         llm = ChatGroq(
-            model_name="llama-3.3-70b-versatile",
+            model=settings.llm_model_fast,
             api_key=settings.get_groq_key(),
             temperature=0.1,
             max_tokens=400,
         )
 
         from langchain_core.messages import HumanMessage, SystemMessage
-        response = llm.invoke([
+        response = await llm.ainvoke([
             SystemMessage(content=guardrail_prompt),
             HumanMessage(content=payload.question),
         ])
@@ -205,8 +303,11 @@ Réponds en français. Sois précis et concis. Ne mentionne pas d'autres sites o
 
         return {"type": "ai", "answer": answer}
 
-    except Exception as e:
-        logger.error(f"Chatbot error: {e}")
+    except Exception as exc:
+        logger.error(
+            "Support chatbot failed",
+            extra={"error_type": type(exc).__name__},
+        )
         raise HTTPException(status_code=500, detail="Service temporairement indisponible") from None
 
 
@@ -227,10 +328,22 @@ async def admin_list_tickets(
     """Admin: list all support tickets with filters and pagination."""
     supabase = get_supabase_client()
 
+    if page < 1 or page > MAX_ADMIN_PAGE or page_size < 1 or page_size > MAX_ADMIN_PAGE_SIZE:
+        raise HTTPException(status_code=422, detail="Pagination invalide")
+    if status_filter not in {None, "all", "open", "in_progress", "resolved", "closed"}:
+        raise HTTPException(status_code=422, detail="Filtre de statut invalide")
+    if category not in {None, "bug", "question", "suggestion"}:
+        raise HTTPException(status_code=422, detail="Filtre de catégorie invalide")
+    if priority not in {None, "low", "normal", "urgent"}:
+        raise HTTPException(status_code=422, detail="Filtre de priorité invalide")
+    if search is not None and len(search) > 100:
+        raise HTTPException(status_code=422, detail="Recherche trop longue")
+
     query = supabase.table("support_tickets").select(
         "id, user_id, user_email, user_name, user_plan, page_url, "
         "category, priority, subject, description, attachment_url, "
-        "status, admin_reply, resolved_at, created_at, updated_at"
+        "status, admin_reply, resolved_at, created_at, updated_at",
+        count="exact",
     )
 
     if status_filter and status_filter != "all":
@@ -240,15 +353,24 @@ async def admin_list_tickets(
     if priority:
         query = query.eq("priority", priority)
     if search:
-        query = query.or_(f"subject.ilike.%{search}%,user_email.ilike.%{search}%,description.ilike.%{search}%")
+        safe_search = _sanitize_postgrest_search(search)
+        if safe_search:
+            query = query.or_(
+                f"subject.ilike.%{safe_search}%,"
+                f"user_email.ilike.%{safe_search}%,"
+                f"description.ilike.%{safe_search}%"
+            )
 
     offset = (page - 1) * page_size
     query = query.order("created_at", desc=True).range(offset, offset + page_size - 1)
 
     try:
-        result = query.execute()
-    except Exception as e:
-        logger.error(f"Admin ticket list failed: {e}")
+        result = await run_sync_io(_execute_query, query)
+    except Exception as exc:
+        logger.error(
+            "Admin support ticket list failed",
+            extra={"error_type": type(exc).__name__},
+        )
         raise HTTPException(status_code=500, detail="Erreur lors du chargement des tickets") from None
 
     tickets = result.data or []
@@ -257,8 +379,10 @@ async def admin_list_tickets(
     for ticket in tickets:
         if ticket.get("attachment_url"):
             try:
-                signed = supabase.storage.from_("support-attachments").create_signed_url(
-                    ticket["attachment_url"], expires_in=3600
+                signed = await run_sync_io(
+                    supabase.storage.from_("support-attachments").create_signed_url,
+                    ticket["attachment_url"],
+                    expires_in=3600,
                 )
                 ticket["attachment_signed_url"] = signed.get("signedURL") or signed.get("signedUrl")
             except Exception:
@@ -266,16 +390,34 @@ async def admin_list_tickets(
 
         ticket["short_id"] = str(ticket["id"])[:8].upper()
 
-    # Stats for header cards
+    # Les cartes utilisent des COUNT exacts globaux; aucune ligne n'est chargée.
     try:
-        stats_result = supabase.table("support_tickets").select("status", count="exact").execute()
-        all_tickets = stats_result.data or []
-        open_count = sum(1 for t in all_tickets if t.get("status") == "open")
-        in_progress_count = sum(1 for t in all_tickets if t.get("status") == "in_progress")
-        resolved_count = sum(1 for t in all_tickets if t.get("status") == "resolved")
-        total = len(all_tickets)
+        total_query = (
+            supabase.table("support_tickets")
+            .select("id", count="exact")
+            .limit(0)
+        )
+        total_result = await run_sync_io(_execute_query, total_query)
+        total = total_result.count or 0
+        counts: dict[str, int] = {}
+        for ticket_status in ("open", "in_progress", "resolved"):
+            count_query = (
+                supabase.table("support_tickets")
+                .select("id", count="exact")
+                .eq("status", ticket_status)
+                .limit(0)
+            )
+            count_result = await run_sync_io(_execute_query, count_query)
+            counts[ticket_status] = count_result.count or 0
+        open_count = counts["open"]
+        in_progress_count = counts["in_progress"]
+        resolved_count = counts["resolved"]
         resolved_pct = round(resolved_count / total * 100) if total > 0 else 0
-    except Exception:
+    except Exception as exc:
+        logger.error(
+            "Support statistics failed",
+            extra={"error_type": type(exc).__name__},
+        )
         open_count = in_progress_count = resolved_count = resolved_pct = 0
 
     return {
@@ -289,6 +431,25 @@ async def admin_list_tickets(
     }
 
 
+@router.get("/admin/support/tickets/{ticket_id}/messages")
+async def admin_get_ticket_messages(ticket_id: str, current_admin: AdminUserDep):
+    """Retourner l'historique à un admin déjà vérifié par la dépendance."""
+    supabase = get_supabase_client()
+    ticket_query = (
+        supabase.table("support_tickets")
+        .select("id")
+        .eq("id", ticket_id)
+        .maybe_single()
+    )
+    ticket = await run_sync_io(_execute_query, ticket_query)
+    if not _single_row(ticket.data):
+        raise HTTPException(status_code=404, detail="Ticket introuvable")
+    return {
+        "ticket_id": ticket_id,
+        "messages": await _ticket_messages(supabase, ticket_id),
+    }
+
+
 @router.patch("/admin/support/tickets/{ticket_id}")
 async def admin_update_ticket(
     ticket_id: str,
@@ -299,70 +460,72 @@ async def admin_update_ticket(
     supabase = get_supabase_client()
     admin_id = current_admin["id"]
 
-    # Get existing ticket
+    # L'existence n'est vérifiée qu'après la dépendance admin pour éviter toute fuite.
     try:
-        existing = supabase.table("support_tickets").select("*").eq("id", ticket_id).single().execute()
+        existing_query = (
+            supabase.table("support_tickets")
+            .select("id")
+            .eq("id", ticket_id)
+            .maybe_single()
+        )
+        existing = await run_sync_io(_execute_query, existing_query)
     except Exception:
         raise HTTPException(status_code=404, detail="Ticket introuvable") from None
 
-    ticket = existing.data
-    if not ticket:
+    if not _single_row(existing.data):
         raise HTTPException(status_code=404, detail="Ticket introuvable")
 
-    # Build update payload
-    update_data: dict = {"updated_at": datetime.now(UTC).isoformat()}
-    if payload.status:
-        update_data["status"] = payload.status
-        if payload.status == "resolved":
-            update_data["resolved_at"] = datetime.now(UTC).isoformat()
-    if payload.admin_reply:
-        update_data["admin_reply"] = payload.admin_reply
-
     try:
-        supabase.table("support_tickets").update(update_data).eq("id", ticket_id).execute()
-    except Exception as e:
-        logger.error(f"Failed to update ticket {ticket_id}: {e}")
+        if payload.admin_reply is not None:
+            reply_query = supabase.rpc(
+                "reply_support_ticket_idempotent",
+                {
+                    "p_ticket_id": ticket_id,
+                    "p_admin_id": admin_id,
+                    "p_content": payload.admin_reply,
+                    "p_request_id": str(uuid5(payload.request_id, "reply")),
+                },
+            )
+            await run_sync_io(_execute_query, reply_query)
+        if payload.status is not None:
+            status_query = supabase.rpc(
+                "set_support_ticket_status_idempotent",
+                {
+                    "p_ticket_id": ticket_id,
+                    "p_admin_id": admin_id,
+                    "p_status": payload.status,
+                    "p_request_id": str(uuid5(payload.request_id, "status")),
+                    "p_note": None,
+                },
+            )
+            await run_sync_io(_execute_query, status_query)
+    except Exception as exc:
+        logger.error(
+            "Support ticket mutation failed",
+            extra={"error_type": type(exc).__name__},
+        )
         raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour du ticket") from None
-
-    short_id = str(ticket_id)[:8].upper()
-
-    # If a reply was provided, email the user and notify in-app
-    if payload.admin_reply:
-        try:
-            send_support_ticket_reply(
-                user_email=ticket["user_email"],
-                user_name=ticket.get("user_name") or "",
-                ticket_id=short_id,
-                ticket_subject=ticket["subject"],
-                admin_reply=payload.admin_reply,
-            )
-        except Exception as e:
-            logger.error(f"Failed to send reply email for ticket {ticket_id}: {e}")
-
-        try:
-            create_notification(
-                supabase_client=supabase,
-                user_id=ticket["user_id"],
-                type="support_ticket_reply",
-                title=f"Réponse à votre ticket #{short_id}",
-                body=f"Notre équipe a répondu à votre demande : {ticket['subject']}",
-            )
-        except Exception as e:
-            logger.error(f"Failed to create reply notification for ticket {ticket_id}: {e}")
 
     # Log admin action
     try:
-        supabase.rpc("log_security_event", {
-            "p_event_type": "admin_support_reply",
-            "p_severity": "info",
-            "p_user_id": admin_id,
-            "p_event_data": {
-                "ticket_id": ticket_id,
-                "new_status": payload.status,
-                "has_reply": bool(payload.admin_reply),
-            }
-        }).execute()
-    except Exception:
-        pass
+        audit_query = supabase.rpc(
+            "log_security_event",
+            {
+                "p_event_type": "admin_support_reply",
+                "p_severity": "info",
+                "p_user_id": admin_id,
+                "p_event_data": {
+                    "ticket_id": ticket_id,
+                    "new_status": payload.status,
+                    "has_reply": bool(payload.admin_reply),
+                },
+            },
+        )
+        await run_sync_io(_execute_query, audit_query)
+    except Exception as exc:
+        logger.warning(
+            "Support admin audit failed",
+            extra={"error_type": type(exc).__name__},
+        )
 
     return {"ticket_id": ticket_id, "updated": True}

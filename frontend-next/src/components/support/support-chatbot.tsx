@@ -23,18 +23,19 @@ interface FaqEntry {
   category: string;
 }
 
-const QUICK_CHIPS = [
-  "Comment analyser mon CV ?",
-  "Quel coach IA choisir ?",
-  "Comment rechercher des offres ?",
-  "Différence Gratuit vs Pro ?",
-  "Comment suivre mes candidatures ?",
-  "Comment adapter mon CV à une offre ?",
-];
+const QUICK_CHIP_KEYS = [
+  "analyzeCv",
+  "chooseCoach",
+  "searchJobs",
+  "comparePlans",
+  "trackApplications",
+  "adaptCv",
+] as const;
 
 export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
   const { user } = useAuth();
   const tSupport = useTranslations("support.placeholders");
+  const t = useTranslations("support.chatbotUi");
   const { messages, isLoading, sendMessage } = useSupportChat();
   const [input, setInput] = useState("");
   const [faqEntries, setFaqEntries] = useState<FaqEntry[]>([]);
@@ -45,7 +46,7 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
   const firstName =
     user?.user_metadata?.full_name?.split(" ")[0] ||
     user?.email?.split("@")[0] ||
-    "vous";
+    t("guestName");
 
   // Load FAQ JSON and initialize Fuse
   useEffect(() => {
@@ -100,24 +101,24 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
         {messages.length === 0 && (
           <div className="space-y-3">
             <div className="bg-muted/50 rounded-xl p-3">
-              <p className="text-sm">
-                👋 Bonjour <strong>{firstName}</strong> ! Comment puis-je vous
-                aider ?
-              </p>
+              <p className="text-sm">{t("welcome", { name: firstName })}</p>
             </div>
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground font-medium px-1">
-                Questions fréquentes :
+                {t("frequentQuestions")}
               </p>
-              {QUICK_CHIPS.map((chip) => (
+              {QUICK_CHIP_KEYS.map((key) => {
+                const chip = t(`quick.${key}`);
+                return (
                 <button
-                  key={chip}
+                  key={key}
                   onClick={() => handleSend(chip)}
                   className="block w-full text-left text-xs px-3 py-2 rounded-lg border border-border hover:border-huntzen-blue hover:bg-huntzen-blue/5 transition-colors"
                 >
                   {chip}
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -155,6 +156,8 @@ export function SupportChatbot({ onOpenTicket }: SupportChatbotProps) {
           />
           <Button
             size="sm"
+            aria-label={t("send")}
+            title={t("send")}
             onClick={() => handleSend(input)}
             disabled={!input.trim() || isLoading}
             className="px-3"
@@ -175,6 +178,7 @@ function ChatMessage({
   onOpenTicket: () => void;
 }) {
   const isUser = message.role === "user";
+  const t = useTranslations("support.chatbotUi");
 
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
@@ -193,7 +197,7 @@ function ChatMessage({
                 variant="outline"
                 className="text-[10px] h-4 border-green-500 text-green-600"
               >
-                FAQ
+                {t("faqBadge")}
               </Badge>
             )}
             {message.type === "ai" && (
@@ -201,7 +205,7 @@ function ChatMessage({
                 variant="outline"
                 className="text-[10px] h-4 border-blue-400 text-blue-500"
               >
-                IA
+                {t("aiBadge")}
               </Badge>
             )}
           </div>
@@ -214,7 +218,7 @@ function ChatMessage({
               onClick={onOpenTicket}
               className="text-xs text-huntzen-blue hover:underline flex items-center gap-1"
             >
-              Ouvrir un ticket <ExternalLink className="w-3 h-3" />
+              {t("openTicket")} <ExternalLink className="w-3 h-3" />
             </button>
           </div>
         ) : (

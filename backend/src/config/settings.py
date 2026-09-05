@@ -86,8 +86,24 @@ class Settings(BaseSettings):
 
     # Database Connection Pooling
     supabase_pooler_url: str = Field(default="", description="Supabase Pooler URL (transaction mode)")
-    db_pool_size: int = Field(default=20, ge=5, le=100, description="Connection pool size per worker")
-    db_pool_timeout: int = Field(default=30, ge=5, le=120, description="Pool timeout (seconds)")
+    db_pool_min_size: int = Field(
+        default=1,
+        ge=0,
+        le=10,
+        description="Minimum database connections kept open per API worker",
+    )
+    db_pool_size: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum database connections per API worker",
+    )
+    db_pool_timeout: int = Field(
+        default=10,
+        ge=1,
+        le=60,
+        description="Maximum wait for a database connection in seconds",
+    )
 
     # --------------------------------------------------------------------------
     # Stripe Payments (Sprint 3 - Recruiter Contact)
@@ -154,6 +170,14 @@ class Settings(BaseSettings):
     # --------------------------------------------------------------------------
     # Format: redis://redis.railway.internal:6379 (prod) ou redis://localhost:6379 (dev)
     redis_url: str = Field(default="", description="Redis URL (redis://host:port)")
+    redis_limiter_url: str = Field(
+        default="",
+        description="Dedicated distributed rate-limit Redis URL; falls back to REDIS_URL",
+    )
+    arq_redis_url: str = Field(
+        default="",
+        description="Dedicated ARQ queue Redis URL; falls back to REDIS_URL",
+    )
 
     # --------------------------------------------------------------------------
     # LangSmith Tracing

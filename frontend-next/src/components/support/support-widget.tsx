@@ -1,24 +1,27 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { X, Minus } from "lucide-react";
+import { LifeBuoy, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { SupportChatbot } from "./support-chatbot";
 import { SupportTicketForm } from "./support-ticket-form";
 import { SupportTicketList } from "./support-ticket-list";
+import { type SupportTicketController } from "@/hooks/use-support";
 
 interface SupportWidgetProps {
   activeTab: "chatbot" | "ticket";
   onTabChange: (tab: "chatbot" | "ticket") => void;
   onClose: () => void;
+  ticketController: SupportTicketController;
 }
 
 export function SupportWidget({
   activeTab,
   onTabChange,
   onClose,
+  ticketController,
 }: SupportWidgetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("support.widget");
@@ -70,19 +73,12 @@ export function SupportWidget({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-huntzen-blue/10 to-huntzen-turquoise/10 rounded-t-xl max-sm:rounded-none">
+      <div className="flex items-center justify-between border-b border-border border-l-4 border-l-huntzen-turquoise px-4 py-3 rounded-t-xl max-sm:rounded-none">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <LifeBuoy className="h-4 w-4 text-huntzen-turquoise" />
           <span className="font-semibold text-sm">{t("title")}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onClose}
-            aria-label={t("minimize")}
-            className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
+        <div className="flex items-center">
           <button
             onClick={onClose}
             aria-label={t("close")}
@@ -126,8 +122,8 @@ export function SupportWidget({
           className="flex-1 min-h-0 m-0 overflow-y-auto"
         >
           <div className="p-4 space-y-4">
-            <SupportTicketForm />
-            <SupportTicketList />
+            <SupportTicketForm controller={ticketController} />
+            <SupportTicketList controller={ticketController} />
           </div>
         </TabsContent>
       </Tabs>

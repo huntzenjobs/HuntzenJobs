@@ -420,8 +420,11 @@ async def stripe_effect_outbox_task(ctx: dict) -> dict[str, int]:
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 async def startup(ctx: dict) -> None:
-    """Startup du worker ARQ : initialiser le pool DB."""
+    """Startup du worker ARQ : initialiser l'observabilité puis le pool DB."""
     from app.database import init_connection_pool_async
+    from src.utils.sentry import initialize_sentry
+
+    initialize_sentry("arq-worker")
     await init_connection_pool_async()
 
 

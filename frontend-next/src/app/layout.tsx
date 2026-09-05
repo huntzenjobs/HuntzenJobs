@@ -1,6 +1,3 @@
-// Import Sentry configuration FIRST - must be before any other imports
-import "../../sentry.client.config";
-
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";

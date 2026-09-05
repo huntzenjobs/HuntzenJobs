@@ -1,4 +1,5 @@
 import { withSerwist } from "@serwist/turbopack";
+import { withSentryConfig } from "@sentry/nextjs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import createNextIntlPlugin from "next-intl/plugin";
@@ -92,4 +93,14 @@ const nextConfig = {
   },
 };
 
-export default withSerwist(withNextIntl(nextConfig));
+export default withSentryConfig(withSerwist(withNextIntl(nextConfig)), {
+  silent: !process.env.CI,
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
+});

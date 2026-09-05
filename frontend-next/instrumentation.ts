@@ -4,21 +4,21 @@
  * This file is automatically loaded by Next.js before the app starts
  */
 
+import * as Sentry from "@sentry/nextjs";
+import type { Instrumentation } from "next";
+
 export async function register() {
   // Detect runtime environment
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     // Server-side Node.js runtime
-    await import('./sentry.server.config')
+    await import("./sentry.server.config");
   }
 
   if (process.env.NEXT_RUNTIME === 'edge') {
     // Edge runtime (middleware, edge functions)
-    await import('./sentry.edge.config')
+    await import("./sentry.edge.config");
   }
 }
 
-// This is called on the client side
-export function onRequestError(err: Error & { digest?: string }, request: any) {
-  // This will be picked up by sentry.client.config.ts
-  console.error('[Instrumentation] Request error:', err)
-}
+export const onRequestError: Instrumentation.onRequestError =
+  Sentry.captureRequestError;

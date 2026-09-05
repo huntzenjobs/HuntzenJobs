@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
+import { timingSafeEqual } from "node:crypto";
 
 interface SecurityEvent {
   id: string;
@@ -17,7 +18,7 @@ interface SecurityEvent {
   session_id?: string;
   ip_address?: string;
   user_agent?: string;
-  event_data: Record<string, any>;
+  event_data: Record<string, unknown>;
   created_at: string;
 }
 
@@ -31,12 +32,23 @@ interface WebhookPayload {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify webhook secret (optional but recommended)
+    // Le webhook doit rester fermé tant que le secret partagé n'est pas posé.
     const webhookSecret = request.headers.get("x-supabase-signature");
     const expectedSecret = process.env.SUPABASE_WEBHOOK_SECRET;
 
-    if (expectedSecret && webhookSecret !== expectedSecret) {
-      console.warn("[Security Alerts] Invalid webhook signature");
+    if (!expectedSecret) {
+      return NextResponse.json(
+        { error: "Webhook not configured" },
+        { status: 503 },
+      );
+    }
+
+    const received = Buffer.from(webhookSecret || "");
+    const expected = Buffer.from(expectedSecret);
+    const signatureIsValid =
+      received.length === expected.length && timingSafeEqual(received, expected);
+
+    if (!signatureIsValid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -54,13 +66,7 @@ export async function POST(request: NextRequest) {
 
     // Only process critical and emergency events
     if (event.severity === "critical" || event.severity === "emergency") {
-      console.log(`[Security Alerts] ${event.severity.toUpperCase()} event:`, {
-        type: event.event_type,
-        user_id: event.user_id,
-        ip: event.ip_address,
-      });
-
-      // Send to Sentry
+      // Sentry ne reçoit que les dimensions nécessaires au routage de l'alerte.
       Sentry.captureMessage(`Security Alert: ${event.event_type}`, {
         level: event.severity === "emergency" ? "fatal" : "error",
         tags: {
@@ -68,16 +74,7 @@ export async function POST(request: NextRequest) {
           severity: event.severity,
           security: true,
         },
-        contexts: {
-          security_event: {
-            event_type: event.event_type,
-            user_id: event.user_id || "anonymous",
-            ip_address: event.ip_address || "unknown",
-            session_id: event.session_id || "none",
-          },
-        },
         extra: {
-          event_data: event.event_data,
           created_at: event.created_at,
         },
       });

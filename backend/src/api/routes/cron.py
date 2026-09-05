@@ -13,17 +13,53 @@ from fastapi import APIRouter, Header, HTTPException
 
 from src.api.deps import get_supabase_client
 from src.services.notifications import create_notification
+from src.services.support_delivery_outbox import process_support_deliveries
 from src.services.user_events import purge_old_user_events
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 CRON_SECRET = os.getenv("CRON_SECRET", "")
+SUPPORT_OUTBOX_CRON_TIMEOUT_SECONDS = 90
 
 
 def _verify_cron_secret(authorization: str | None) -> None:
     if not CRON_SECRET or authorization != f"Bearer {CRON_SECRET}":
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@router.post("/support-effects")
+async def support_effects_cron(authorization: str | None = Header(None)):
+    """Drainer un lot borné de l'outbox support hors des slots IA."""
+    _verify_cron_secret(authorization)
+
+    try:
+        summary = await asyncio.wait_for(
+            process_support_deliveries(
+                get_supabase_client(),
+                limit=4,
+                lease_seconds=120,
+                effect_timeout_seconds=15,
+            ),
+            timeout=SUPPORT_OUTBOX_CRON_TIMEOUT_SECONDS,
+        )
+        logger.info("[cron] support-effects processed", extra=summary)
+        return {"success": True, "summary": summary}
+    except TimeoutError:
+        logger.error("[cron] support-effects time budget exceeded")
+        raise HTTPException(
+            status_code=504,
+            detail="Support effects processing timed out",
+        ) from None
+    except Exception as exc:
+        logger.error(
+            "[cron] support-effects processing failed",
+            extra={"error_type": type(exc).__name__},
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to process support effects",
+        ) from None
 
 
 # ---------------------------------------------------------------------------

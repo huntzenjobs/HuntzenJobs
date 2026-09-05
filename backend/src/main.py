@@ -19,29 +19,24 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from src.api import router
 from src.api.middleware import setup_middleware
 from src.config.settings import settings
 from src.utils.logger import get_logger, setup_logging
+from src.utils.sentry import initialize_sentry
 
 # Setup logging
 setup_logging()
 logger = get_logger(__name__)
 
-# Sentry — error tracking (active si SENTRY_DSN configuré sur Railway)
-if settings.sentry_dsn:
-    import sentry_sdk
-    from sentry_sdk.integrations.fastapi import FastApiIntegration
-    from sentry_sdk.integrations.starlette import StarletteIntegration
-    sentry_sdk.init(
-        dsn=settings.sentry_dsn,
-        environment=settings.environment,
-        traces_sample_rate=0.3,
-        profiles_sample_rate=0.1,
-        integrations=[StarletteIntegration(), FastApiIntegration()],
-        send_default_pii=False,
-    )
+# Sentry — configuration commune, sans corps de requête ni PII.
+if initialize_sentry(
+    "api",
+    integrations=[StarletteIntegration(), FastApiIntegration()],
+):
     logger.info(f"Sentry initialized (environment={settings.environment})")
 
 

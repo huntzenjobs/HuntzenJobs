@@ -3,7 +3,7 @@ Database connection pool management for HuntZen JobSearch.
 
 Sprint 6: Migration from psycopg2 to psycopg3 with AsyncConnectionPool.
 This module provides:
-- Async connection pooling (min=10, max=50 connections)
+- Async connection pooling with bounded per-worker settings
 - Pool statistics for monitoring
 - Graceful startup/shutdown lifecycle management
 - Context manager for safe connection handling
@@ -20,6 +20,8 @@ import structlog
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
+from src.config.settings import get_settings
+
 logger = structlog.get_logger(__name__)
 
 # Global connection pool instance
@@ -31,9 +33,9 @@ async def init_connection_pool_async() -> None:
     Initialize the async connection pool (async version).
 
     Pool configuration:
-    - min_size: 10 connections (always available)
-    - max_size: 50 connections (scales under load)
-    - timeout: 30 seconds (wait time for connection)
+    - min_size: DB_POOL_MIN_SIZE connections kept warm
+    - max_size: DB_POOL_SIZE connections per API worker
+    - timeout: DB_POOL_TIMEOUT seconds maximum wait
     - max_idle: 300 seconds (5 minutes idle before closing)
     - row_factory: dict_row (returns dict instead of tuples)
 
@@ -51,14 +53,16 @@ async def init_connection_pool_async() -> None:
         return
 
     try:
+        settings = get_settings()
+
         async def no_reset(conn):
             pass  # PgBouncer transaction mode : chaque transaction repart d'une connexion fraîche, RESET ALL inutile et cassant
 
         pool = AsyncConnectionPool(
             conninfo=database_url,
-            min_size=3,
-            max_size=10,  # 10/worker × 4 workers × 2 replicas = 80 clients PgBouncer → 60 conn Postgres max
-            timeout=30,
+            min_size=settings.db_pool_min_size,
+            max_size=settings.db_pool_size,
+            timeout=settings.db_pool_timeout,
             max_idle=300,  # 5 minutes
             reset=no_reset,  # empêche RESET ALL → rejeté par PgBouncer transaction mode
             kwargs={
@@ -73,9 +77,9 @@ async def init_connection_pool_async() -> None:
 
         logger.info(
             "connection_pool_initialized",
-            min_size=5,
-            max_size=10,
-            timeout=30,
+            min_size=settings.db_pool_min_size,
+            max_size=settings.db_pool_size,
+            timeout=settings.db_pool_timeout,
             max_idle=300
         )
     except Exception as e:
@@ -183,8 +187,8 @@ async def get_pool_stats() -> dict[str, Any]:
             "available": 8,
             "requests_waiting": 0,
             "utilization": 0.2,
-            "min_size": 10,
-            "max_size": 50
+            "min_size": 1,
+            "max_size": 5
         }
     """
     if not pool:

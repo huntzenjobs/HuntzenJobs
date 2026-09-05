@@ -44,7 +44,7 @@ export interface SecurityEventData {
   sessionId?: string;
   ipAddress?: string;
   userAgent?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -85,8 +85,6 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
     eventType,
     severity = "info",
     userId,
-    ipAddress,
-    userAgent,
     metadata = {},
   } = data;
 
@@ -101,11 +99,6 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
       error: sessionError,
     } = await supabase.auth.getSession();
     if (sessionError || !session?.user) return;
-
-    // Get user agent if not provided (browser only)
-    const finalUserAgent =
-      userAgent ||
-      (typeof navigator !== "undefined" ? navigator.userAgent : undefined);
 
     // Call PostgreSQL function to log event
     // Wrapped in try/catch to handle AbortError and other failures gracefully
@@ -138,23 +131,13 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
         tags: {
           event_type: eventType,
           severity,
-          user_id: userId || "anonymous",
-        },
-        extra: {
-          ip_address: ipAddress,
-          user_agent: finalUserAgent,
-          metadata,
         },
       });
     }
 
     // Console log for development
     if (process.env.NODE_ENV === "development") {
-      console.log(`[SECURITY] ${severity.toUpperCase()}: ${eventType}`, {
-        userId,
-        ipAddress,
-        metadata,
-      });
+      console.log(`[SECURITY] ${severity.toUpperCase()}: ${eventType}`);
     }
   } catch (error) {
     console.error("Error in logSecurityEvent:", error);
@@ -168,7 +151,7 @@ export async function logSecurityEvent(data: SecurityEventData): Promise<void> {
 
 export async function logLoginSuccess(
   userId: string,
-  metadata?: Record<string, any>,
+  metadata?: Record<string, unknown>,
 ) {
   // Laisse le JWT se propager entre Auth et PostgREST avant la première RPC.
   await new Promise((resolve) =>

@@ -18,6 +18,13 @@ function preservedVariables(names: readonly string[]) {
   return Object.fromEntries(names.map((name) => [name, preserve()]));
 }
 
+function referencedVariables(
+  source: ReturnType<typeof service>,
+  names: readonly string[],
+) {
+  return Object.fromEntries(names.map((name) => [name, source.env[name]]));
+}
+
 const productionApiVariables = [
   "ADMIN_EMAIL",
   "ADZUNA_API_KEY",
@@ -114,6 +121,7 @@ const stagingApiVariables = [
   "MODAL_PROXY_TOKEN_ID",
   "MODAL_PROXY_TOKEN_SECRET",
   "MODAL_WEBHOOK_URL",
+  "RECRUITER_CONTACT_PRICE_ID",
   "REDIS_URL",
   "RESEND_API_KEY",
   "SENTRY_DSN",
@@ -154,7 +162,9 @@ function productionResources() {
     rootDirectory: "backend",
   });
   const cache = redis("Redis", { region: REGION });
-  cache.deploy = { startCommand: REDIS_START_COMMAND };
+  cache.deploy = { ...cache.deploy, startCommand: REDIS_START_COMMAND };
+  const queue = redis("Redis-Queue", { region: REGION });
+  queue.deploy = { ...queue.deploy, startCommand: REDIS_START_COMMAND };
   const cacheVolume = volume("redis-volume", {
     alerts: { usage: { "80": {}, "95": {}, "100": {} } },
     allowOnlineResize: true,
@@ -173,9 +183,16 @@ function productionResources() {
       runtime: "V2",
       useLegacyStacker: false,
     },
-    replicas: { [REGION]: 2 },
+    replicas: { [REGION]: 4 },
     networking: { privateNetworkEndpoint: "huntzenjobs" },
-    env: preservedVariables(productionApiVariables),
+    env: {
+      ...preservedVariables(productionApiVariables),
+      ARQ_REDIS_URL: queue.env.REDIS_URL,
+      DB_POOL_MIN_SIZE: "1",
+      DB_POOL_SIZE: "5",
+      DB_POOL_TIMEOUT: "10",
+      REDIS_URL: cache.env.REDIS_URL,
+    },
   });
 
   const worker = service("arq-worker", {
@@ -188,8 +205,38 @@ function productionResources() {
       runtime: "V2",
       useLegacyStacker: false,
     },
+    replicas: { [REGION]: 2 },
+    env: {
+      ...preservedVariables(productionWorkerVariables),
+      ARQ_REDIS_URL: queue.env.REDIS_URL,
+      DB_POOL_MIN_SIZE: "1",
+      DB_POOL_SIZE: "5",
+      DB_POOL_TIMEOUT: "10",
+      REDIS_URL: cache.env.REDIS_URL,
+    },
+  });
+
+  // Phase de transition : draine l'ancienne file pendant le rolling deployment.
+  // Ce service est retiré après preuve que l'ancienne file ARQ est vide.
+  const legacyWorker = service("arq-worker-legacy-drain", {
+    source,
+    build: { builder: "DOCKERFILE", dockerfilePath: "Dockerfile" },
+    start: "python -m arq src.workers.settings.WorkerSettings",
+    deploy: {
+      ipv6EgressEnabled: false,
+      restartPolicyMaxRetries: 5,
+      runtime: "V2",
+      useLegacyStacker: false,
+    },
     replicas: { [REGION]: 1 },
-    env: preservedVariables(productionWorkerVariables),
+    env: {
+      ...referencedVariables(worker, productionWorkerVariables),
+      ARQ_REDIS_URL: cache.env.REDIS_URL,
+      DB_POOL_MIN_SIZE: "1",
+      DB_POOL_SIZE: "5",
+      DB_POOL_TIMEOUT: "10",
+      REDIS_URL: cache.env.REDIS_URL,
+    },
   });
 
   const stressWorker = service("worker-stress", {
@@ -203,10 +250,14 @@ function productionResources() {
       useLegacyStacker: false,
     },
     replicas: { [REGION]: 1 },
-    env: preservedVariables(productionStressWorkerVariables),
+    env: {
+      ...preservedVariables(productionStressWorkerVariables),
+      ARQ_REDIS_URL: queue.env.REDIS_URL,
+      REDIS_URL: cache.env.REDIS_URL,
+    },
   });
 
-  return [api, worker, stressWorker, cache, cacheVolume];
+  return [api, worker, legacyWorker, stressWorker, cache, queue, cacheVolume];
 }
 
 function stagingResources() {
@@ -221,7 +272,9 @@ function stagingResources() {
     rootDirectory: "backend",
   });
   const cache = redis("Redis-SU2L", { region: REGION });
-  cache.deploy = { startCommand: REDIS_START_COMMAND };
+  cache.deploy = { ...cache.deploy, startCommand: REDIS_START_COMMAND };
+  const queue = redis("Redis-Queue-Staging", { region: REGION });
+  queue.deploy = { ...queue.deploy, startCommand: REDIS_START_COMMAND };
   const cacheVolume = volume("redis-volume-ehtB", {
     alerts: { usage: { "80": {}, "95": {}, "100": {} } },
     allowOnlineResize: true,
@@ -244,9 +297,17 @@ function stagingResources() {
       runtime: "V2",
       useLegacyStacker: false,
     },
-    replicas: { [REGION]: 2 },
+    replicas: { [REGION]: 4 },
     domains: [{ domain: "api-staging.huntzenjobs.com", port: 8080 }],
-    env: preservedVariables(stagingApiVariables),
+    env: {
+      ...preservedVariables(stagingApiVariables),
+      ARQ_REDIS_URL: queue.env.REDIS_URL,
+      DB_POOL_MIN_SIZE: "1",
+      DB_POOL_SIZE: "5",
+      DB_POOL_TIMEOUT: "10",
+      REDIS_LIMITER_URL: cache.env.REDIS_URL,
+      REDIS_URL: cache.env.REDIS_URL,
+    },
   });
 
   const worker = service("respectful-rebirth", {
@@ -263,11 +324,44 @@ function stagingResources() {
       runtime: "V2",
       useLegacyStacker: false,
     },
-    replicas: { [REGION]: 1 },
-    env: preservedVariables(stagingWorkerVariables),
+    replicas: { [REGION]: 2 },
+    env: {
+      ...preservedVariables(stagingWorkerVariables),
+      ARQ_REDIS_URL: queue.env.REDIS_URL,
+      DB_POOL_MIN_SIZE: "1",
+      DB_POOL_SIZE: "5",
+      DB_POOL_TIMEOUT: "10",
+      REDIS_URL: cache.env.REDIS_URL,
+    },
   });
 
-  return [api, worker, cache, cacheVolume];
+  // Même drain temporaire qu'en production pour rendre la bascule ARQ sans perte.
+  const legacyWorker = service("arq-worker-legacy-drain-staging", {
+    source: workerSource,
+    build: {
+      builder: "DOCKERFILE",
+      buildEnvironment: "V3",
+      dockerfilePath: "Dockerfile",
+    },
+    start: STAGING_WORKER_START_COMMAND,
+    deploy: {
+      ipv6EgressEnabled: false,
+      restartPolicyMaxRetries: 5,
+      runtime: "V2",
+      useLegacyStacker: false,
+    },
+    replicas: { [REGION]: 1 },
+    env: {
+      ...referencedVariables(worker, stagingWorkerVariables),
+      ARQ_REDIS_URL: cache.env.REDIS_URL,
+      DB_POOL_MIN_SIZE: "1",
+      DB_POOL_SIZE: "5",
+      DB_POOL_TIMEOUT: "10",
+      REDIS_URL: cache.env.REDIS_URL,
+    },
+  });
+
+  return [api, worker, legacyWorker, cache, queue, cacheVolume];
 }
 
 export default defineRailway((ctx) => {

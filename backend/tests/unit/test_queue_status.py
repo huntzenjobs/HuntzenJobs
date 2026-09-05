@@ -38,6 +38,7 @@ def mock_arq(monkeypatch: pytest.MonkeyPatch) -> tuple[FakePool, AsyncMock]:
     monkeypatch.setattr(arq, "create_pool", create_pool)
     monkeypatch.setattr(arq.jobs, "Job", FakeJob)
     monkeypatch.setattr(queue_route, "_arq_pool", None)
+    monkeypatch.setattr(queue_route, "_legacy_arq_pool", None)
     monkeypatch.setattr(
         queue_route,
         "get_job_owner",
@@ -90,6 +91,102 @@ async def test_get_status_reads_result_only_after_completion(
 @pytest.mark.asyncio
 async def test_get_status_returns_404_for_unknown_job() -> None:
     FakeJob.status_value = JobStatus.not_found
+
+    with pytest.raises(HTTPException) as error:
+        await get_status("missing-job", {"id": "owner-123"})
+
+    assert error.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_status_falls_back_to_legacy_queue_during_transition(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    primary_pool = FakePool()
+    legacy_pool = FakePool()
+
+    class QueueAwareJob(FakeJob):
+        async def status(self) -> JobStatus:
+            return (
+                JobStatus.not_found
+                if self.pool is primary_pool
+                else JobStatus.complete
+            )
+
+        async def result_info(self) -> object:
+            return SimpleNamespace(success=True, result={"source": "legacy"})
+
+    monkeypatch.setattr(arq.jobs, "Job", QueueAwareJob)
+    monkeypatch.setattr(
+        queue_route,
+        "_get_arq_pool",
+        AsyncMock(return_value=primary_pool),
+    )
+    monkeypatch.setattr(
+        queue_route,
+        "_get_legacy_arq_pool",
+        AsyncMock(return_value=legacy_pool),
+    )
+
+    assert await get_status("legacy-job", {"id": "owner-123"}) == {
+        "status": "completed",
+        "result": {"source": "legacy"},
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_status_prefers_primary_queue_when_job_exists(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    primary_pool = FakePool()
+    legacy_pool = FakePool()
+
+    class QueueAwareJob(FakeJob):
+        async def status(self) -> JobStatus:
+            return JobStatus.complete
+
+        async def result_info(self) -> object:
+            source = "primary" if self.pool is primary_pool else "legacy"
+            return SimpleNamespace(success=True, result={"source": source})
+
+    legacy_pool_getter = AsyncMock(return_value=legacy_pool)
+    monkeypatch.setattr(arq.jobs, "Job", QueueAwareJob)
+    monkeypatch.setattr(
+        queue_route,
+        "_get_arq_pool",
+        AsyncMock(return_value=primary_pool),
+    )
+    monkeypatch.setattr(queue_route, "_get_legacy_arq_pool", legacy_pool_getter)
+
+    assert await get_status("primary-job", {"id": "owner-123"}) == {
+        "status": "completed",
+        "result": {"source": "primary"},
+    }
+    legacy_pool_getter.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_status_returns_404_when_job_is_absent_from_both_queues(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    primary_pool = FakePool()
+    legacy_pool = FakePool()
+
+    class MissingJob(FakeJob):
+        async def status(self) -> JobStatus:
+            return JobStatus.not_found
+
+    monkeypatch.setattr(arq.jobs, "Job", MissingJob)
+    monkeypatch.setattr(
+        queue_route,
+        "_get_arq_pool",
+        AsyncMock(return_value=primary_pool),
+    )
+    monkeypatch.setattr(
+        queue_route,
+        "_get_legacy_arq_pool",
+        AsyncMock(return_value=legacy_pool),
+    )
 
     with pytest.raises(HTTPException) as error:
         await get_status("missing-job", {"id": "owner-123"})

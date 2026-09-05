@@ -6,6 +6,7 @@ Supporte les jobs ARQ (remplace la queue custom Redis).
 """
 
 import asyncio
+import os
 
 from fastapi import APIRouter, HTTPException
 
@@ -16,6 +17,8 @@ from src.utils.request_dedup import get_job_owner
 router = APIRouter()
 _arq_pool = None
 _arq_pool_lock = asyncio.Lock()
+_legacy_arq_pool = None
+_legacy_arq_pool_lock = asyncio.Lock()
 
 
 async def _get_arq_pool():
@@ -30,6 +33,27 @@ async def _get_arq_pool():
 
                 _arq_pool = await create_pool(_get_redis_settings())
     return _arq_pool
+
+
+async def _get_legacy_arq_pool():
+    """Lit temporairement les résultats produits dans l'ancienne file Redis."""
+    primary_url = os.getenv("ARQ_REDIS_URL")
+    legacy_url = os.getenv("REDIS_URL")
+    if not primary_url or not legacy_url or primary_url == legacy_url:
+        return None
+
+    global _legacy_arq_pool
+    if _legacy_arq_pool is None:
+        async with _legacy_arq_pool_lock:
+            if _legacy_arq_pool is None:
+                from arq import create_pool
+
+                from src.workers.settings import _redis_settings_from_url
+
+                _legacy_arq_pool = await create_pool(
+                    _redis_settings_from_url(legacy_url)
+                )
+    return _legacy_arq_pool
 
 
 @router.get("/status/{job_id}")
@@ -59,7 +83,19 @@ async def get_status(
         job_status = await job.status()
 
         if job_status == JobStatus.not_found:
-            raise HTTPException(status_code=404, detail="Job not found or expired")
+            legacy_pool = await _get_legacy_arq_pool()
+            if legacy_pool is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Job not found or expired",
+                )
+            job = Job(job_id, legacy_pool)
+            job_status = await job.status()
+            if job_status == JobStatus.not_found:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Job not found or expired",
+                )
         if job_status in {JobStatus.queued, JobStatus.deferred}:
             return {"status": "queued"}
         if job_status == JobStatus.in_progress:
