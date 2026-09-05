@@ -115,9 +115,18 @@ class _Storage:
 
 
 class _Database:
-    def __init__(self, *, rate_limited: bool = False, ticket_owner: str = USER_ID):
+    def __init__(
+        self,
+        *,
+        rate_limited: bool = False,
+        ticket_owner: str = USER_ID,
+        profile_exists: bool = True,
+        ticket_exists: bool = True,
+    ):
         self.rate_limited = rate_limited
         self.ticket_owner = ticket_owner
+        self.profile_exists = profile_exists
+        self.ticket_exists = ticket_exists
         self.queries: list[tuple[str, list[tuple[str, Any]]]] = []
         self.rpc_calls: list[tuple[str, dict[str, Any]]] = []
         self.direct_writes: list[tuple[str, str, dict[str, Any]]] = []
@@ -134,6 +143,8 @@ class _Database:
         select = next((value for name, value in operations if name == "select"), ("", {}))
         columns, options = select
         if table == "profiles":
+            if not self.profile_exists:
+                return None
             return _Response({"full_name": "Alice Exemple"})
         if table == "support_ticket_messages":
             return _Response(
@@ -149,8 +160,10 @@ class _Database:
         if table == "support_tickets" and columns == "id" and "request_id" in equals:
             return _Response([])
         if table == "support_tickets" and columns == "id" and "id" in equals:
+            if not self.ticket_exists:
+                return None
             if equals.get("user_id") and equals["user_id"] != self.ticket_owner:
-                return _Response(None)
+                return None
             return _Response({"id": TICKET_ID})
         if table == "support_tickets":
             return _Response({"id": TICKET_ID, "user_id": self.ticket_owner, "subject": "Sujet test"})
@@ -217,6 +230,25 @@ async def test_create_ticket_offloads_bounded_sync_database_calls(monkeypatch) -
     )
 
     assert len(offloaded) == 3
+
+
+@pytest.mark.asyncio
+async def test_create_ticket_accepts_confirmed_user_without_profile(monkeypatch) -> None:
+    database = _Database(profile_exists=False)
+    monkeypatch.setattr(support, "get_supabase_client", lambda: database)
+
+    response = await support.create_ticket(
+        _ticket_payload(attachment_url=None),
+        {"id": USER_ID, "email": "alice@example.test"},
+    )
+
+    assert response["ticket_id"] == TICKET_ID
+    creation_call = next(
+        params
+        for name, params in database.rpc_calls
+        if name == "create_support_ticket_idempotent"
+    )
+    assert creation_call["p_user_name"] == ""
 
 
 @pytest.mark.asyncio
@@ -373,6 +405,38 @@ async def test_owner_history_hides_foreign_ticket_and_admin_can_read(monkeypatch
     monkeypatch.setattr(support, "get_supabase_client", lambda: admin_database)
     result = await support.admin_get_ticket_messages(TICKET_ID, {"id": ADMIN_ID})
     assert result["messages"][0]["content"] == "Réponse"
+
+
+@pytest.mark.asyncio
+async def test_admin_history_returns_404_when_ticket_is_absent(monkeypatch) -> None:
+    database = _Database(ticket_exists=False)
+    monkeypatch.setattr(support, "get_supabase_client", lambda: database)
+
+    with pytest.raises(HTTPException) as error:
+        await support.admin_get_ticket_messages(TICKET_ID, {"id": ADMIN_ID})
+
+    assert error.value.status_code == 404
+    assert not any(table == "support_ticket_messages" for table, _ops in database.queries)
+
+
+@pytest.mark.asyncio
+async def test_admin_update_returns_404_when_ticket_is_absent(monkeypatch) -> None:
+    database = _Database(ticket_exists=False)
+    monkeypatch.setattr(support, "get_supabase_client", lambda: database)
+    payload = support.AdminTicketUpdate(
+        request_id=REQUEST_ID,
+        status="resolved",
+        admin_reply="Une réponse bornée.",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        await support.admin_update_ticket(TICKET_ID, payload, {"id": ADMIN_ID})
+
+    assert error.value.status_code == 404
+    assert not any(
+        name in {"reply_support_ticket_idempotent", "set_support_ticket_status_idempotent"}
+        for name, _params in database.rpc_calls
+    )
 
 
 @pytest.mark.asyncio

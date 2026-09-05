@@ -84,6 +84,10 @@ def _single_row(data: object) -> dict:
     return data if isinstance(data, dict) else {}
 
 
+def _response_data(response: object) -> object:
+    return getattr(response, "data", None)
+
+
 def _execute_query(query):
     return query.execute()
 
@@ -137,7 +141,7 @@ async def create_ticket(
             .maybe_single()
         )
         profile = await run_sync_io(_execute_query, profile_query)
-        user_name = str(_single_row(profile.data).get("full_name") or "")
+        user_name = str(_single_row(_response_data(profile)).get("full_name") or "")
         subscription_query = supabase.rpc(
             "get_user_current_subscription",
             {"p_user_id": user_id},
@@ -244,7 +248,7 @@ async def get_ticket_messages(ticket_id: str, current_user: CurrentUserDep):
         .maybe_single()
     )
     owned = await run_sync_io(_execute_query, owned_query)
-    if not _single_row(owned.data):
+    if not _single_row(_response_data(owned)):
         raise HTTPException(status_code=404, detail="Ticket introuvable")
     return {
         "ticket_id": ticket_id,
@@ -442,7 +446,7 @@ async def admin_get_ticket_messages(ticket_id: str, current_admin: AdminUserDep)
         .maybe_single()
     )
     ticket = await run_sync_io(_execute_query, ticket_query)
-    if not _single_row(ticket.data):
+    if not _single_row(_response_data(ticket)):
         raise HTTPException(status_code=404, detail="Ticket introuvable")
     return {
         "ticket_id": ticket_id,
@@ -472,7 +476,7 @@ async def admin_update_ticket(
     except Exception:
         raise HTTPException(status_code=404, detail="Ticket introuvable") from None
 
-    if not _single_row(existing.data):
+    if not _single_row(_response_data(existing)):
         raise HTTPException(status_code=404, detail="Ticket introuvable")
 
     try:

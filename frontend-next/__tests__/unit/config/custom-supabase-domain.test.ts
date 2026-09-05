@@ -8,6 +8,14 @@ const CUSTOM_SUPABASE_ORIGIN = "https://auth.huntzenjobs.com";
 const LEGACY_SUPABASE_ORIGIN = "https://ngiakfikbuyugqfqtfwp.supabase.co";
 const STAGING_BACKEND_ORIGIN = "https://api-staging.huntzenjobs.com";
 const GOOGLE_TAG_MANAGER_ORIGIN = "https://www.googletagmanager.com";
+const GOOGLE_ADS_COLLECT_ORIGINS = [
+  "https://www.google.com",
+  "https://www.google.fr",
+  "https://ad.doubleclick.net",
+  "https://region1.analytics.google.com",
+  "https://stats.g.doubleclick.net",
+];
+const SENTRY_EU_INGEST_ORIGIN = "https://*.ingest.de.sentry.io";
 const SUPABASE_REALTIME_WILDCARD = "wss://*.supabase.co";
 
 function readProjectFile(relativePath: string): string {
@@ -50,6 +58,21 @@ describe("bascule du domaine Supabase", () => {
       .find((directive) => directive.startsWith("connect-src "));
 
     expect(connectSrc).toContain(GOOGLE_TAG_MANAGER_ORIGIN);
+    for (const origin of GOOGLE_ADS_COLLECT_ORIGINS) {
+      expect(connectSrc).toContain(origin);
+    }
+  });
+
+  it("autorise la collecte Sentry sur l'instance européenne", async () => {
+    const headerRules = await nextConfig.headers?.();
+    const csp = headerRules?.[0]?.headers.find(
+      ({ key }) => key === "Content-Security-Policy",
+    )?.value;
+    const connectSrc = csp
+      ?.split("; ")
+      .find((directive) => directive.startsWith("connect-src "));
+
+    expect(connectSrc).toContain(SENTRY_EU_INGEST_ORIGIN);
   });
 
   it("autorise Realtime pour les projets Supabase non-production", async () => {
