@@ -53,6 +53,8 @@ dependencies = [
     # HTTP & Scraping
     "aiohttp>=3.9.0",          # Async HTTP client
     "beautifulsoup4>=4.12.0",
+    "markdownify>=1.2.3",      # HTML to Markdown for Expadation ingestion
+    "selectolax>=0.4.11",      # Fast HTML parser for Expadation ingestion
     
     # Database (Optional)
     "supabase>=2.3.0",
@@ -80,9 +82,6 @@ dependencies = [
 
     # Rate Limiting
     "slowapi>=0.1.9",
-
-    # Error Tracking
-    "sentry-sdk[fastapi]>=2.0.0",
 
     # Country & City Data (Phase 2 - Hybrid approach)
     "pycountry>=24.6.1",      # ISO 3166 country codes
