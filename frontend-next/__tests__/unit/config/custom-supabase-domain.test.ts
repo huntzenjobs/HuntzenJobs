@@ -84,6 +84,15 @@ describe("bascule du domaine Supabase", () => {
     expect(csp).toContain(SUPABASE_REALTIME_WILDCARD);
   });
 
+  it("autorise le worker blob utilisé par Sentry Replay", async () => {
+    const headerRules = await nextConfig.headers?.();
+    const csp = headerRules?.[0]?.headers.find(
+      ({ key }) => key === "Content-Security-Policy",
+    )?.value;
+
+    expect(csp).toContain("worker-src 'self' blob:");
+  });
+
   it("autorise les images servies par le domaine Supabase personnalisé", () => {
     expect(nextConfig.images?.remotePatterns).toContainEqual({
       hostname: "auth.huntzenjobs.com",
