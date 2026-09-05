@@ -422,7 +422,10 @@ async def admin_list_tickets(
             "Support statistics failed",
             extra={"error_type": type(exc).__name__},
         )
-        open_count = in_progress_count = resolved_count = resolved_pct = 0
+        raise HTTPException(
+            status_code=500,
+            detail="Erreur lors du chargement des statistiques",
+        ) from None
 
     return {
         "tickets": tickets,
@@ -465,16 +468,13 @@ async def admin_update_ticket(
     admin_id = current_admin["id"]
 
     # L'existence n'est vérifiée qu'après la dépendance admin pour éviter toute fuite.
-    try:
-        existing_query = (
-            supabase.table("support_tickets")
-            .select("id")
-            .eq("id", ticket_id)
-            .maybe_single()
-        )
-        existing = await run_sync_io(_execute_query, existing_query)
-    except Exception:
-        raise HTTPException(status_code=404, detail="Ticket introuvable") from None
+    existing_query = (
+        supabase.table("support_tickets")
+        .select("id")
+        .eq("id", ticket_id)
+        .maybe_single()
+    )
+    existing = await run_sync_io(_execute_query, existing_query)
 
     if not _single_row(_response_data(existing)):
         raise HTTPException(status_code=404, detail="Ticket introuvable")

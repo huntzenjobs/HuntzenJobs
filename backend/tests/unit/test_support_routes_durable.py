@@ -392,6 +392,28 @@ async def test_admin_search_is_sanitized_and_stats_use_exact_counts(monkeypatch)
 
 
 @pytest.mark.asyncio
+async def test_admin_list_does_not_report_zero_stats_when_counting_fails(monkeypatch) -> None:
+    database = _Database()
+    calls = 0
+
+    async def fail_first_count(function, *args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("database unavailable")
+        return function(*args)
+
+    monkeypatch.setattr(support, "get_supabase_client", lambda: database)
+    monkeypatch.setattr(support, "run_sync_io", fail_first_count)
+
+    with pytest.raises(HTTPException) as error:
+        await support.admin_list_tickets({"id": ADMIN_ID})
+
+    assert error.value.status_code == 500
+    assert error.value.detail == "Erreur lors du chargement des statistiques"
+
+
+@pytest.mark.asyncio
 async def test_owner_history_hides_foreign_ticket_and_admin_can_read(monkeypatch) -> None:
     foreign_database = _Database(ticket_owner="99999999-9999-4999-8999-999999999999")
     monkeypatch.setattr(support, "get_supabase_client", lambda: foreign_database)
@@ -437,6 +459,24 @@ async def test_admin_update_returns_404_when_ticket_is_absent(monkeypatch) -> No
         name in {"reply_support_ticket_idempotent", "set_support_ticket_status_idempotent"}
         for name, _params in database.rpc_calls
     )
+
+
+@pytest.mark.asyncio
+async def test_admin_update_does_not_hide_ticket_lookup_failure(monkeypatch) -> None:
+    database = _Database()
+    monkeypatch.setattr(support, "get_supabase_client", lambda: database)
+
+    async def fail_lookup(*_args, **_kwargs):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(support, "run_sync_io", fail_lookup)
+    payload = support.AdminTicketUpdate(
+        request_id=REQUEST_ID,
+        status="resolved",
+    )
+
+    with pytest.raises(RuntimeError, match="database unavailable"):
+        await support.admin_update_ticket(TICKET_ID, payload, {"id": ADMIN_ID})
 
 
 @pytest.mark.asyncio
