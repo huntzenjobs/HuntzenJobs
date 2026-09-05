@@ -11,6 +11,14 @@ vi.mock("@/contexts/auth-context", () => ({
   useOptionalAuth: () => ({ user: null }),
 }));
 
+vi.mock("next-intl", () => ({
+  useTranslations: () => {
+    const translate = (key: string) => key;
+    translate.rich = (key: string) => key;
+    return translate;
+  },
+}));
+
 vi.mock("@/components/landing-header", () => ({ LandingHeader: () => null }));
 vi.mock("@/components/layout/footer", () => ({ Footer: () => null }));
 

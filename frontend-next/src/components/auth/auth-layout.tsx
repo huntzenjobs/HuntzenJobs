@@ -50,7 +50,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       <LandingHeader forceWhite />
 
       {/* Main Content */}
-      <div className="pt-20 min-h-screen flex">
+      <main className="pt-20 min-h-screen flex">
         {/* Left Side - Form */}
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 bg-white">
           <motion.div
@@ -202,7 +202,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             </motion.div>
           </div>
         </div>
-      </div>
+      </main>
 
       <style jsx global>{`
         body {

@@ -2,7 +2,13 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Mail, MessageSquare, Clock, ChevronRight } from "lucide-react";
+import {
+  Mail,
+  MessageSquare,
+  Clock,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -89,6 +95,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-white">
       <LandingHeader />
+      <main>
 
       {/* Hero */}
       <div className="pt-20 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
@@ -120,7 +127,7 @@ export default function ContactPage() {
               <p className="text-sm text-gray-600 mb-3">{t("urgentRequest")}</p>
               <a
                 href="mailto:support@huntzenjobs.com"
-                className="text-[#00D9FF] font-medium hover:underline text-sm"
+                className="inline-flex min-h-11 items-center text-[#00D9FF] font-medium hover:underline text-sm"
               >
                 support@huntzenjobs.com
               </a>
@@ -134,7 +141,9 @@ export default function ContactPage() {
                 {t("responseTime")}
               </h2>
               <p className="text-sm text-gray-600">
-                {t("responseDescription")}
+                {t.rich("responseDescription", {
+                  strong: (chunks) => <strong>{chunks}</strong>,
+                })}
               </p>
               <p className="text-sm text-gray-500 mt-2">{t("proPriority")}</p>
             </div>
@@ -153,7 +162,7 @@ export default function ContactPage() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#00D9FF] transition-colors"
+                    className="flex min-h-11 items-center gap-1.5 text-sm text-gray-600 hover:text-[#00D9FF] transition-colors"
                   >
                     <ChevronRight className="w-3.5 h-3.5" />
                     {link.label}
@@ -220,6 +229,7 @@ export default function ContactPage() {
                         clearFieldError("name");
                       }}
                       required
+                      className="min-h-11"
                     />
                     {errors.name && (
                       <p
@@ -254,6 +264,7 @@ export default function ContactPage() {
                         clearFieldError("email");
                       }}
                       required
+                      className="min-h-11"
                     />
                     {errors.email && (
                       <p
@@ -274,21 +285,27 @@ export default function ContactPage() {
                   >
                     {t("labelReason")}
                   </label>
-                  <select
-                    id="reason"
-                    value={form.reason}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, reason: e.target.value }))
-                    }
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  >
-                    <option value="">{t("selectReason")}</option>
-                    {CONTACT_REASON_KEYS.map((key) => (
-                      <option key={key} value={key}>
-                        {t(`reasons.${key}`)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="reason"
+                      value={form.reason}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, reason: e.target.value }))
+                      }
+                      className="h-11 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="">{t("selectReason")}</option>
+                      {CONTACT_REASON_KEYS.map((key) => (
+                        <option key={key} value={key}>
+                          {t(`reasons.${key}`)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-gray-500"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -341,7 +358,7 @@ export default function ContactPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#00D9FF] text-black font-semibold hover:bg-[#00D9FF]/90"
+                  className="min-h-11 w-full bg-[#00D9FF] text-black font-semibold hover:bg-[#00D9FF]/90"
                 >
                   {loading ? t("sending") : t("sendMessage")}
                 </Button>
@@ -351,6 +368,7 @@ export default function ContactPage() {
         </div>
       </div>
 
+      </main>
       <Footer />
     </div>
   );

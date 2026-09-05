@@ -206,7 +206,7 @@ function LoginForm() {
               </Label>
               <Link
                 href="/forgot-password"
-                className="text-sm text-[#00D9FF] hover:text-[#00C4EA] font-medium transition-colors"
+                className="inline-flex min-h-11 items-center text-sm text-[#00D9FF] hover:text-[#00C4EA] font-medium transition-colors"
               >
                 {t("forgotPassword")}
               </Link>

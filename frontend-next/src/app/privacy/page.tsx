@@ -13,6 +13,7 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-white">
       <LandingHeader />
+      <main>
 
       {/* Hero Section */}
       <div className="pt-20 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
@@ -78,7 +79,7 @@ export default function PrivacyPage() {
           <div className="mb-12 p-6 bg-blue-50 border-l-4 border-[#00D9FF] rounded-r-lg">
             <p
               className="text-gray-700 leading-relaxed m-0"
-              dangerouslySetInnerHTML={{ __html: t("intro") }}
+              dangerouslySetInnerHTML={{ __html: t.raw("intro") }}
             />
           </div>
 
@@ -254,6 +255,7 @@ export default function PrivacyPage() {
         </motion.div>
       </div>
 
+      </main>
       <Footer />
 
       <style jsx global>{`

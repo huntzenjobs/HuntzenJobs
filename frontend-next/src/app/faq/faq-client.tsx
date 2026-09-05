@@ -51,6 +51,7 @@ export function FAQClient() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <LandingHeader />
+      <main>
       {/* Header */}
       <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white pt-32 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -239,6 +240,7 @@ export function FAQClient() {
 
       {/* Internal Links Footer for SEO */}
       <InternalLinksFooter />
+      </main>
       <Footer />
     </div>
   );

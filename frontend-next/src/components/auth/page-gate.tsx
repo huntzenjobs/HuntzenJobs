@@ -41,9 +41,9 @@ export function PageGate({ featureFlag, children }: PageGateProps) {
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center">
               <LogIn className="h-10 w-10 text-slate-400" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">
               {t("loginTitle")}
-            </h2>
+            </h1>
             <p className="text-slate-600 mb-6">{t("loginDescription")}</p>
             <Button
               asChild
@@ -63,9 +63,9 @@ export function PageGate({ featureFlag, children }: PageGateProps) {
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center">
             <Lock className="h-10 w-10 text-slate-400" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">
             {t("title")}
-          </h2>
+          </h1>
           <p className="text-slate-600 mb-6">{t("description")}</p>
           <Button
             asChild

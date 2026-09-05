@@ -623,6 +623,20 @@ export const forgotPasswordMetadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
+export const contactMetadata: Metadata = {
+  title: "Contact & Support",
+  description:
+    "Contactez l'équipe HuntZen Jobs pour une question sur votre compte, votre abonnement ou l'utilisation de la plateforme.",
+  openGraph: {
+    title: "Contact & Support | HuntZen Jobs",
+    description:
+      "L'équipe HuntZen Jobs vous accompagne pour toute question sur la plateforme.",
+    url: `${SITE_URL}/contact`,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  alternates: { canonical: `${SITE_URL}/contact` },
+};
+
 export function generateSectorMetadata(
   sector: string,
   sectorSlug: string,

@@ -45,7 +45,7 @@ export function Footer() {
                 href="https://www.linkedin.com/company/huntzen/posts/?feedView=all"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/70 hover:text-white transition-colors"
+                className="flex size-11 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-4 h-4" />
@@ -54,7 +54,7 @@ export function Footer() {
                 href="https://www.instagram.com/huntzenjobs?igsh=MXNmZTNtZDUwYWxpdg=="
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/70 hover:text-white transition-colors"
+                className="flex size-11 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                 aria-label="Instagram"
               >
                 <Instagram className="w-4 h-4" />

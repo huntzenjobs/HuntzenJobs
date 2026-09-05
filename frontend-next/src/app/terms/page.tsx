@@ -20,6 +20,7 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white">
       <LandingHeader />
+      <main>
 
       {/* Hero Section */}
       <div className="pt-20 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
@@ -98,14 +99,14 @@ export default function TermsPage() {
             <div className="p-6 bg-blue-50 border-l-4 border-[#00D9FF] rounded-r-lg">
               <p
                 className="text-gray-700 leading-relaxed m-0"
-                dangerouslySetInnerHTML={{ __html: t("whoWeAre.intro") }}
+                dangerouslySetInnerHTML={{ __html: t.raw("whoWeAre.intro") }}
               />
             </div>
             <div className="mt-6 space-y-4 text-gray-700">
-              <p dangerouslySetInnerHTML={{ __html: t("whoWeAre.thanks") }} />
+              <p dangerouslySetInnerHTML={{ __html: t.raw("whoWeAre.thanks") }} />
               <p>{t("whoWeAre.important")}</p>
               <p
-                dangerouslySetInnerHTML={{ __html: t("whoWeAre.contactIntro") }}
+                dangerouslySetInnerHTML={{ __html: t.raw("whoWeAre.contactIntro") }}
               />
               <ul className="list-none pl-0 space-y-2">
                 <li className="flex items-start gap-2">
@@ -298,7 +299,7 @@ export default function TermsPage() {
                       {/* Static i18n content with <strong> tags - safe */}
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: t("pricingSection.recruiterBullet1"),
+                          __html: t.raw("pricingSection.recruiterBullet1"),
                         }}
                       />
                     </li>
@@ -306,7 +307,7 @@ export default function TermsPage() {
                       <ChevronRight className="w-5 h-5 text-[#00D9FF] mt-0.5 flex-shrink-0" />
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: t("pricingSection.recruiterBullet2"),
+                          __html: t.raw("pricingSection.recruiterBullet2"),
                         }}
                       />
                     </li>
@@ -325,7 +326,7 @@ export default function TermsPage() {
                       <ChevronRight className="w-5 h-5 text-[#00D9FF] mt-0.5 flex-shrink-0" />
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: t("pricingSection.candidateBullet1"),
+                          __html: t.raw("pricingSection.candidateBullet1"),
                         }}
                       />
                     </li>
@@ -460,6 +461,7 @@ export default function TermsPage() {
         </motion.div>
       </div>
 
+      </main>
       <Footer />
 
       <style jsx global>{`

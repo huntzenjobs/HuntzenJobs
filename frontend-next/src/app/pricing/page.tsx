@@ -120,6 +120,82 @@ export default function PricingPage() {
     return { amount: savings.toFixed(2).replace(".", ","), percentage };
   };
 
+  // Execute the actual plan change (called directly or after confirmation)
+  const executeSelectPlan = useCallback(
+    async (planId: string) => {
+      try {
+        toast.loading(tPricing("toasts.redirecting"), {
+          id: "stripe-redirect",
+        });
+
+        const supabase = createClient();
+        const {
+          data: { session: refreshedSession },
+          error: refreshErr,
+        } = await supabase.auth.refreshSession();
+        if (refreshErr || !refreshedSession) {
+          toast.dismiss("stripe-redirect");
+          toast.error(tPricing("toasts.sessionExpired"));
+          router.push("/login?redirectTo=/pricing");
+          return;
+        }
+        const accessToken = refreshedSession.access_token;
+
+        const response = await fetch(
+          "/api/stripe/create-checkout-session",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: new URLSearchParams({
+              plan_name: planId,
+              billing_period: billingPeriod,
+            }),
+          },
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Failed to create checkout session");
+        }
+
+        toast.dismiss("stripe-redirect");
+
+        if (data.already_subscribed) {
+          toast.info(tPricing("toasts.alreadyOnPlan"));
+          return;
+        }
+
+        if (data.modified) {
+          toast.success(tPricing("toasts.upgraded"));
+          return;
+        }
+
+        if (data.checkout_url) {
+          void track.payment.beginCheckout(
+            planId,
+            billingPeriod,
+            accessToken,
+          );
+          window.location.href = data.checkout_url;
+        } else {
+          throw new Error("No checkout URL returned");
+        }
+      } catch (error: unknown) {
+        toast.dismiss("stripe-redirect");
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la création de la session de paiement";
+        toast.error(message);
+      }
+    },
+    [billingPeriod, router, tPricing],
+  );
+
   // Initiate plan selection: always go through Stripe Checkout
   const handleSelectPlan = useCallback(
     (planId: string) => {
@@ -137,86 +213,14 @@ export default function PricingPage() {
       // All plan changes go through Stripe Checkout
       executeSelectPlan(planId);
     },
-    [currentPlan, user, auth?.session, tPricing],
+    [auth?.session, currentPlan, executeSelectPlan, tPricing, user],
   );
-
-  // Execute the actual plan change (called directly or after confirmation)
-  const executeSelectPlan = async (planId: string) => {
-    try {
-      toast.loading(tPricing("toasts.redirecting"), {
-        id: "stripe-redirect",
-      });
-
-      const supabase = createClient();
-      const {
-        data: { session: refreshedSession },
-        error: refreshErr,
-      } = await supabase.auth.refreshSession();
-      if (refreshErr || !refreshedSession) {
-        toast.dismiss("stripe-redirect");
-        toast.error(tPricing("toasts.sessionExpired"));
-        router.push("/login?redirectTo=/pricing");
-        return;
-      }
-      const accessToken = refreshedSession.access_token;
-
-      const response = await fetch(
-        "/api/stripe/create-checkout-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: new URLSearchParams({
-            plan_name: planId,
-            billing_period: billingPeriod,
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Failed to create checkout session");
-      }
-
-      toast.dismiss("stripe-redirect");
-
-      if (data.already_subscribed) {
-        toast.info(tPricing("toasts.alreadyOnPlan"));
-        return;
-      }
-
-      if (data.modified) {
-        toast.success(tPricing("toasts.upgraded"));
-        return;
-      }
-
-      if (data.checkout_url) {
-        void track.payment.beginCheckout(
-          planId,
-          billingPeriod,
-          accessToken,
-        );
-        window.location.href = data.checkout_url;
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (error: unknown) {
-      toast.dismiss("stripe-redirect");
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Erreur lors de la création de la session de paiement";
-      toast.error(message);
-    }
-  };
 
   return (
     <>
       <div className="min-h-screen bg-white dark:bg-gray-900">
         <LandingHeader />
+        <main>
 
         {/* Hero Section */}
         <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pt-20 pb-16">
@@ -313,12 +317,15 @@ export default function PricingPage() {
                 {tPricing("monthly")}
               </span>
               <button
+                type="button"
+                role="switch"
+                aria-checked={billingPeriod === "yearly"}
                 onClick={() =>
                   setBillingPeriod(
                     billingPeriod === "monthly" ? "yearly" : "monthly",
                   )
                 }
-                className="relative w-16 h-8 bg-gray-200 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#00D9FF] focus:ring-offset-2"
+                className="relative h-11 w-[72px] bg-gray-200 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#00D9FF] focus:ring-offset-2"
                 style={{
                   backgroundColor:
                     billingPeriod === "yearly" ? "#00D9FF" : "#e5e7eb",
@@ -326,11 +333,11 @@ export default function PricingPage() {
                 aria-label={tPricing("toggleBillingLabel")}
               >
                 <span
-                  className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300"
+                  className="absolute left-2 top-2 h-7 w-7 rounded-full bg-white shadow-md transition-transform duration-300"
                   style={{
                     transform:
                       billingPeriod === "yearly"
-                        ? "translateX(32px)"
+                        ? "translateX(28px)"
                         : "translateX(0)",
                   }}
                 />
@@ -640,11 +647,12 @@ export default function PricingPage() {
                 {tPricing("faqMore")}
               </p>
               <Button
+                asChild
                 variant="outline"
                 size="lg"
-                className="rounded-xl border-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                className="min-h-11 rounded-xl border-2 hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               >
-                {tPricing("faqContact")}
+                <Link href="/contact">{tPricing("faqContact")}</Link>
               </Button>
             </div>
           </div>
@@ -699,24 +707,26 @@ export default function PricingPage() {
               transition={{ delay: 0.2 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link href="/signup">
-                <Button
-                  size="lg"
-                  className="bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-bold rounded-xl shadow-2xl hover:scale-105 transition-transform w-full sm:w-auto"
-                >
+              <Button
+                asChild
+                size="lg"
+                className="bg-[#00D9FF] hover:bg-[#00C4EA] text-white h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-bold rounded-xl shadow-2xl hover:scale-105 transition-transform w-full sm:w-auto"
+              >
+                <Link href="/signup">
                   <Rocket className="w-5 h-5 mr-2" />
                   {tPricing("ctaButton")}
-                </Button>
-              </Link>
-              <Link href="/">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-white text-white hover:bg-white/10 h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-semibold rounded-xl backdrop-blur-sm w-full sm:w-auto"
-                >
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white/10 h-12 sm:h-14 px-8 sm:px-10 text-base sm:text-lg font-semibold rounded-xl backdrop-blur-sm w-full sm:w-auto"
+              >
+                <Link href="/">
                   {tPricing("learnMore")}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </motion.div>
 
             <motion.div
@@ -737,6 +747,7 @@ export default function PricingPage() {
           </div>
         </section>
 
+        </main>
         <Footer />
 
         <style jsx global>{`
