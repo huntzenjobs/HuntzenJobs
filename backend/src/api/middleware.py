@@ -161,6 +161,16 @@ def get_limiter() -> Limiter:
 limiter = get_limiter()
 
 
+class SafeSlowAPIMiddleware(SlowAPIMiddleware):
+    """Préserve le fail-open lorsque le stockage SlowAPI est indisponible."""
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # SlowAPI 0.1.9 peut avaler l'erreur Redis sans initialiser cette valeur,
+        # puis lever un AttributeError en essayant d'injecter les en-têtes.
+        request.state.view_rate_limit = None
+        return await super().dispatch(request, call_next)
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Log all incoming requests."""
 
@@ -256,7 +266,7 @@ def setup_middleware(app: FastAPI) -> None:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, custom_rate_limit_handler)
     # ConnectionError retiré — trop large, retournait 503 sur TOUTE erreur réseau (Redis, Groq, DB...)
-    app.add_middleware(SlowAPIMiddleware)
+    app.add_middleware(SafeSlowAPIMiddleware)
 
     # CORS
     # Note: allow_credentials=True + allow_origins=["*"] is invalid per the
