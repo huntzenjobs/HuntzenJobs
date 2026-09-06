@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -60,6 +61,79 @@ def test_source_only_letter_does_not_attribute_two_jobs_to_one_employer(language
     assert "Réception des colis." in result["paragraph_2"]
     assert "Mise en rayon." in result["paragraph_2"]
     assert "Source A" not in result["paragraph_2"]
+
+
+@pytest.mark.asyncio
+async def test_extraction_restores_explicit_source_skill_levels_and_deduplicates() -> None:
+    agent = object.__new__(CVAdapterAgent)
+    agent.name = "CVAdapter"
+    agent._create_json_completion = AsyncMock(return_value={
+        "personal_info": {"name": "Alex"},
+        "skills": {"technical": ["Excel", "Python"], "tools": ["Excel"]},
+    })
+    result = await agent._extract_factual_data(
+        "Alex\nCompétences\nExcel : débutant. Python : intermédiaire.", "fr"
+    )
+    skills = [skill for values in result["skills"].values() for skill in values]
+    assert skills == ["Excel débutant", "Python intermédiaire"]
+
+
+@pytest.mark.asyncio
+async def test_extraction_does_not_guess_skill_levels_when_not_in_source() -> None:
+    agent = object.__new__(CVAdapterAgent)
+    agent.name = "CVAdapter"
+    agent._create_json_completion = AsyncMock(return_value={
+        "personal_info": {"name": "Alex"}, "skills": {"tools": ["Excel"]},
+    })
+    result = await agent._extract_factual_data("Alex\nCompétences : Excel.", "fr")
+    assert result["skills"] == {"tools": ["Excel"]}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("source", ["Skills\nExcel\nAdvanced English", "Skills\nExcel Advanced English"])
+async def test_extraction_does_not_attach_another_skill_level(source: str) -> None:
+    agent = object.__new__(CVAdapterAgent)
+    agent.name = "CVAdapter"
+    agent._create_json_completion = AsyncMock(return_value={
+        "personal_info": {"name": "Alex"}, "skills": {"tools": ["Excel"]},
+    })
+    result = await agent._extract_factual_data(source, "en")
+    assert result["skills"] == {"tools": ["Excel"]}
+
+
+def test_source_only_letter_removes_objective_label_from_candidate_title() -> None:
+    letter = CVAdapterAgent._build_source_only_cover_letter(
+        {"personal_info": {"title": "Objectif : manutentionnaire"}},
+        language="fr", company_name="Exemple", date_str="6 septembre 2026",
+    )
+    assert "Objectif :" not in letter["paragraph_1"]
+    assert "manutentionnaire" in letter["paragraph_1"]
+
+
+@pytest.mark.asyncio
+async def test_french_fallback_letter_date_does_not_depend_on_system_locale(monkeypatch, request) -> None:
+    import locale
+    original_setlocale = locale.setlocale
+    previous_locale = locale.setlocale(locale.LC_TIME)
+    request.addfinalizer(lambda: original_setlocale(locale.LC_TIME, previous_locale))
+    locale.setlocale(locale.LC_TIME, "C")
+    def unavailable_locale(*args):
+        raise locale.Error("French locale unavailable")
+    monkeypatch.setattr(locale, "setlocale", unavailable_locale)
+    class FixedDate(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 9, 6)
+    monkeypatch.setattr("datetime.datetime", FixedDate)
+    agent = object.__new__(CVAdapterAgent)
+    agent.name = "CVAdapter"
+    agent._create_json_completion = AsyncMock(side_effect=[
+        {}, {"valid": False, "issues": [{}]}, {}, {"valid": False, "issues": [{}]},
+    ])
+    letter = await agent.generate_cover_letter(
+        {"personal_info": {"name": "Alex"}}, "Offre fictive", language="fr"
+    )
+    assert letter["date"] == "6 septembre 2026"
 
 
 class FakeCompletions:
@@ -267,7 +341,7 @@ async def test_adaptation_uses_source_only_after_invalid_sanitization_and_reveri
     agent.name = "CVAdapter"
     original = {"success": True, "personal_info": {"name": "Alex"},
                 "experiences": [{"company": "Source", "bullets": ["Réception."]}],
-                "skills": {"Outils": ["Excel débutant"]}}
+                "skills": {"tools": ["Excel débutant"]}}
     agent._extract_factual_data = AsyncMock(return_value=original)
     agent._analyze_job = AsyncMock(return_value={"success": True})
     agent._map_cv_to_job = AsyncMock(return_value={"success": True})

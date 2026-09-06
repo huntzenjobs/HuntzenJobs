@@ -395,6 +395,14 @@ class CVAdapterAgent(BaseAgent):
                 if source_fallback:
                     fact_check["mode"] = "source_only_fallback"
 
+            if language == "fr" and isinstance(final_cv.get("skills"), dict):
+                labels = {"technical": "Compétences techniques", "tools": "Outils",
+                          "soft": "Savoir-être", "languages": "Langues"}
+                localized: dict[str, list[str]] = {}
+                for category, values in final_cv["skills"].items():
+                    localized.setdefault(labels.get(category, category), []).extend(values)
+                final_cv["skills"] = localized
+
             # Mark only the verified/sanitized CV as HuntZen-certified.
             final_cv["huntzen_certified"] = True
 
@@ -528,6 +536,34 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
                         + ", ".join(missing_sections),
                     }
 
+            # Restaurer uniquement les niveaux écrits explicitement à côté de la compétence.
+            skills = result.get("skills", {})
+            if isinstance(skills, dict):
+                normalized: dict[str, list[str]] = {}
+                seen: set[str] = set()
+                levels = (
+                    "débutant(?:e)?|intermédiaire|avancé(?:e)?|expert(?:e)?|"
+                    "beginner|intermediate|advanced|expert|basic|"
+                    "principiante|intermedio|avanzado|iniciante|intermediário|avançado"
+                )
+                for category, values in skills.items():
+                    if not isinstance(values, list):
+                        continue
+                    for value in values:
+                        skill = self._skill_to_str(value).strip()
+                        if not skill:
+                            continue
+                        match = re.search(
+                            rf"(?<!\w){re.escape(skill)}[ \t]*(?:[:(][ \t]*)?"
+                            rf"(?:niveau[ \t]+)?({levels})\b(?=[ \t]*(?:[.,;)/\r\n]|$))",
+                            cv_text, re.IGNORECASE,
+                        )
+                        if match:
+                            skill = f"{skill} {match.group(1)}"
+                        if skill.casefold() not in seen:
+                            normalized.setdefault(category, []).append(skill)
+                            seen.add(skill.casefold())
+                result["skills"] = normalized
             result["success"] = True
             return result
 
@@ -1308,6 +1344,7 @@ attributed to the candidate without support in CANDIDATE SOURCE DATA."""
         first_experience = experiences[0] if experiences else {}
         name = personal_info.get("name") or "Candidate"
         title = personal_info.get("title") or first_experience.get("title") or ""
+        title = re.sub(r"^(?:objectif|objective)\s*:\s*", "", title, flags=re.IGNORECASE)
         summary = str(cv_data.get("summary") or "").strip()
         employer = str(first_experience.get("company") or "").strip()
         # Le paragraphe peut agréger deux postes, pas les attribuer au premier employeur.
@@ -1513,16 +1550,13 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
                 education_summary += f"- {edu.get('degree', '')} — {edu.get('institution', '')} ({edu.get('end_date', '')})\n"
 
             # Get today's date in proper format
-            import locale
             from datetime import datetime
 
             if language == "fr":
-                try:
-                    locale.setlocale(locale.LC_TIME, 'fr_FR.UTF-8')
-                except Exception:
-                    pass
                 today = datetime.now()
-                date_str = today.strftime("%d %B %Y").lstrip("0")  # "5 février 2025"
+                months = ("janvier", "février", "mars", "avril", "mai", "juin",
+                          "juillet", "août", "septembre", "octobre", "novembre", "décembre")
+                date_str = f"{today.day} {months[today.month - 1]} {today.year}"
             else:
                 today = datetime.now()
                 date_str = today.strftime("%B %d, %Y")  # "February 5, 2025"
