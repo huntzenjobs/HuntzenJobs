@@ -812,7 +812,7 @@
   "dashboard": {
     "jobs": {
       "title": "Job Search",
-      "subtitle": "Access thousands of job listings from the best recruitment platforms, aggregated and updated daily.",
+      "subtitle": "Find relevant jobs, compare opportunities and prepare your application.",
       "form": {
         "title": "Define your search criteria",
         "subtitle": "Fill in the fields below to find offers that match your profile",
@@ -910,6 +910,8 @@
         "companyAsc": "Company A→Z"
       },
       "perPage": "Jobs per page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
       "salaryMinPlaceholder": "e.g.: 35000",
       "relativeDate": {
         "today": "Today",
@@ -1970,7 +1972,8 @@
     "lockedOffer": "Offer Locked",
     "upgradeToPremium": "Upgrade to see this offer",
     "unlock": "Unlock",
-    "moreOffers": "+{count} more deals"
+    "moreOffers": "{count} more jobs",
+    "limitDescription": "Your plan shows the first {count} jobs. Compare plans to access the remaining listings."
   },
   "applyModal": {
     "title": "Apply For This Job",

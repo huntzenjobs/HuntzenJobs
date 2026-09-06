@@ -976,7 +976,7 @@ export function ApplyModal({
               </div>
 
               <Button
-                className="w-full bg-gradient-to-r from-[#00D9FF] to-blue-600 hover:from-[#00D9FF]/90 hover:to-blue-700 text-white font-semibold"
+                className="w-full min-h-11 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold"
                 size="lg"
                 onClick={handleGenerate}
                 disabled={!canGenerate}
@@ -1342,7 +1342,7 @@ export function ApplyModal({
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-[#00D9FF] to-blue-600 text-white font-semibold"
+                  className="min-h-11 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold"
                   onClick={async () => {
                     if (!pendingCvData) return;
                     setStep("generating");
@@ -1472,7 +1472,7 @@ export function ApplyModal({
               {job.url && (
                 <Button
                   asChild
-                  className="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
+                  className="w-full min-h-11 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold"
                   size="lg"
                 >
                   <a href={job.url} target="_blank" rel="noopener noreferrer">

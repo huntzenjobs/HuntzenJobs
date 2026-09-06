@@ -969,7 +969,7 @@
   "dashboard": {
     "jobs": {
       "title": "Recherche d'Emplois",
-      "subtitle": "Accédez à des milliers d'offres d'emploi provenant des meilleures plateformes de recrutement, agrégées et mises à jour quotidiennement.",
+      "subtitle": "Trouvez les offres qui vous correspondent, comparez-les et préparez votre candidature.",
       "form": {
         "title": "Définis vos critères de recherche",
         "subtitle": "Remplis les champs ci-dessous pour trouver les offres qui correspondent à votre profil",
@@ -1067,6 +1067,8 @@
         "companyAsc": "Entreprise A→Z"
       },
       "perPage": "Offres par page",
+      "previousPage": "Page précédente",
+      "nextPage": "Page suivante",
       "salaryMinPlaceholder": "ex: 35000",
       "relativeDate": {
         "today": "Aujourd'hui",
@@ -2133,7 +2135,8 @@
     "lockedOffer": "Offre verrouillée",
     "upgradeToPremium": "Passez Carrière pour voir cette offre",
     "unlock": "Débloquer",
-    "moreOffers": "+{count} offres supplémentaires"
+    "moreOffers": "{count} offres supplémentaires",
+    "limitDescription": "Votre formule affiche les {count} premières offres. Comparez les formules pour accéder aux suivantes."
   },
   "applyModal": {
     "title": "Postuler à cette offre",

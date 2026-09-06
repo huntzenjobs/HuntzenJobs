@@ -355,7 +355,7 @@ export function ContactFinderDrawer({
               )}
               <Button
                 onClick={handleSearch}
-                className="bg-gradient-to-r from-blue-600 to-violet-600 text-white w-full"
+                className="bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold min-h-11 w-full"
                 disabled={loading || !companyName.trim() || quotaError}
               >
                 {loading ? (
@@ -391,8 +391,8 @@ export function ContactFinderDrawer({
               )}
 
               {result.strategy && (
-                <div className="bg-violet-50 border border-violet-100 rounded-lg p-3 flex items-start gap-2 text-sm text-violet-800">
-                  <Sparkles className="h-4 w-4 shrink-0 mt-0.5 text-violet-500" />
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-start gap-2 text-sm text-slate-700">
+                  <Sparkles className="h-4 w-4 shrink-0 mt-0.5 text-cyan-800" />
                   <p>{result.strategy}</p>
                 </div>
               )}

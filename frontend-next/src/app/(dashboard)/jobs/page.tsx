@@ -56,10 +56,7 @@ import {
   AdvancedFiltersModal,
   type AdvancedFilters,
 } from "@/components/jobs/advanced-filters-modal";
-import {
-  GradientJobCard,
-  JobsLimitReached,
-} from "@/components/jobs/gradient-job-card";
+import { JobsLimitReached } from "@/components/jobs/gradient-job-card";
 import { JobDetailsModal } from "@/components/jobs/job-details-modal";
 import { JobsPlaceholder } from "@/components/jobs/jobs-placeholder";
 import {
@@ -1194,7 +1191,7 @@ export default function JobsPage() {
         {/* Skeleton grid — shown while fetching (before results arrive) */}
         {searchQuery.isFetching && (
           <div
-            className="grid grid-cols-1 gap-6 auto-rows-fr md:grid-cols-2 xl:grid-cols-3"
+            className="grid grid-cols-1 gap-3 lg:grid-cols-2"
           >
             {Array.from({ length: 6 }).map((_, i) => (
               <motion.div
@@ -1204,7 +1201,7 @@ export default function JobsPage() {
                 transition={{ delay: i * 0.07 }}
               >
                 <Card className="flex flex-col border border-slate-200 overflow-hidden h-full bg-white">
-                  <CardHeader className="pb-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
+                  <CardHeader className="pb-4 bg-white border-b border-slate-100">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 space-y-3">
                         <Skeleton className="h-6 w-3/4" />
@@ -1320,7 +1317,8 @@ export default function JobsPage() {
                       searchQuery.refetch();
                     }}
                     disabled={searchQuery.isFetching}
-                    className="gap-2 bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 sm:ml-4"
+                    className="gap-2 min-h-11 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 sm:ml-4"
+                    aria-label={t("results.refresh")}
                     title={t("refreshTitle")}
                   >
                     <RefreshCw
@@ -1345,8 +1343,8 @@ export default function JobsPage() {
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all",
                       contractType === "alternance"
-                        ? "bg-blue-500 text-white border-blue-500 shadow-sm"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+                        ? "bg-cyan-50 text-cyan-900 border-cyan-300 min-h-11"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-cyan-300 min-h-11",
                     )}
                   >
                     🎓 {t("alternanceToggle")}
@@ -1356,9 +1354,11 @@ export default function JobsPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => setQuickFiltersOpen(!quickFiltersOpen)}
+                    aria-label={t("filterButton")}
+                    aria-expanded={quickFiltersOpen}
                     className={cn(
-                      "gap-2 bg-white",
-                      quickFiltersOpen && "border-[#00D9FF] text-[#00D9FF]",
+                      "gap-2 min-h-11 bg-white",
+                      quickFiltersOpen && "border-cyan-400 text-cyan-900",
                       activeQuickFiltersCount > 0 && "border-[#00D9FF]",
                     )}
                   >
@@ -1379,9 +1379,9 @@ export default function JobsPage() {
                   >
                     <SelectTrigger
                       className={cn(
-                        "h-9 gap-2 bg-white text-sm border",
+                        "h-11 w-auto min-w-40 gap-2 bg-white text-sm border",
                         sortKey !== "relevance" &&
-                          "border-[#00D9FF] text-[#00D9FF]",
+                          "border-cyan-400 text-cyan-900",
                       )}
                     >
                       <ArrowUpDown className="w-4 h-4" />
@@ -1663,12 +1663,14 @@ export default function JobsPage() {
                           : "bg-white",
                       )}
                     >
-                      <CardHeader className="p-5 pb-3">
+                      <CardHeader className="p-4 pb-2">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
                               <CardTitle className="text-lg leading-snug line-clamp-2 font-semibold text-slate-900">
-                                {job.title}
+                                <button type="button" onClick={() => handleViewDetails(job)} className="text-left hover:text-cyan-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                                  {job.title}
+                                </button>
                               </CardTitle>
                               {appliedJobIds.has(job.id) && (
                                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
@@ -1761,7 +1763,7 @@ export default function JobsPage() {
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex flex-col px-5 pb-4 pt-0">
+                      <CardContent className="flex flex-col px-4 pb-3 pt-0">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-slate-600">
                             <MapPin className="h-4 w-4 text-slate-500 flex-shrink-0" />
@@ -1846,7 +1848,7 @@ export default function JobsPage() {
                       transition={{ delay: i * 0.06 }}
                     >
                       <Card className="flex flex-col border border-slate-200 overflow-hidden h-full bg-white">
-                        <CardHeader className="pb-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
+                        <CardHeader className="pb-4 bg-white border-b border-slate-100">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 space-y-3">
                               <Skeleton className="h-6 w-3/4" />
@@ -1869,38 +1871,25 @@ export default function JobsPage() {
                     </motion.div>
                   ))}
 
-                {/* Gradient job cards for free users (last page only) */}
+                {/* Un seul encart, sans annonces fictives ni sollicitations répétées. */}
                 {showBlurredCards && isLastPage && (
-                  <>
-                    {Array.from({ length: Math.min(4, blurredJobsCount) }).map(
-                      (_, index) => (
-                        <GradientJobCard
-                          key={`gradient-job-${jobs.length + index}`}
-                          index={index}
-                        />
-                      ),
-                    )}
-
-                    {/* Show remaining count */}
-                    {blurredJobsCount > 4 && (
-                      <JobsLimitReached
-                        totalJobs={jobs.length}
-                        visibleJobs={jobsVisibleLimit}
-                      />
-                    )}
-                  </>
+                  <JobsLimitReached
+                    totalJobs={jobs.length}
+                    visibleJobs={jobsVisibleLimit}
+                  />
                 )}
               </div>
 
               {/* Pagination controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 pt-6">
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-6">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={safePage === 1}
-                    className="h-8 w-8 p-0"
+                    className="h-11 w-11 p-0"
+                    aria-label={t("previousPage")}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
@@ -1939,9 +1928,10 @@ export default function JobsPage() {
                           onClick={() => setCurrentPage(item as number)}
                           className={
                             item === safePage
-                              ? "h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700 text-white"
-                              : "h-8 w-8 p-0"
+                              ? "h-11 w-11 p-0 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950"
+                              : "h-11 w-11 p-0"
                           }
+                          aria-current={item === safePage ? "page" : undefined}
                         >
                           {item}
                         </Button>
@@ -1955,7 +1945,8 @@ export default function JobsPage() {
                       setCurrentPage((p) => Math.min(totalPages, p + 1))
                     }
                     disabled={safePage === totalPages}
-                    className="h-8 w-8 p-0"
+                    className="h-11 w-11 p-0"
+                    aria-label={t("nextPage")}
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>

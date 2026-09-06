@@ -206,15 +206,15 @@ export function AdvancedFiltersModal({
       <DialogContent className="max-w-[95vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Sparkles className="w-5 h-5 text-purple-600" />
+            <div className="p-2 bg-cyan-50 rounded-lg">
+              <Sparkles className="w-5 h-5 text-cyan-800" />
             </div>
             <div>
               <DialogTitle className="text-xl font-bold">
                 {t("title")}
               </DialogTitle>
               <DialogDescription>
-                Affinez votre recherche avec des critères supplémentaires
+                {t("description")}
               </DialogDescription>
             </div>
           </div>

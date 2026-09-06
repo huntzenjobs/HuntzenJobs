@@ -779,7 +779,7 @@
   "dashboard": {
     "jobs": {
       "title": "Busca de Empregos",
-      "subtitle": "Acesse milhares de vagas das melhores plataformas de recrutamento, agregadas e atualizadas diariamente.",
+      "subtitle": "Encontre ofertas relevantes, compare oportunidades e prepare a sua candidatura.",
       "form": {
         "title": "Defina seus critérios de busca",
         "subtitle": "Preencha os campos abaixo para encontrar vagas que correspondam ao seu perfil",
@@ -877,6 +877,8 @@
         "companyAsc": "Empresa A→Z"
       },
       "perPage": "Ofertas por página",
+      "previousPage": "Página anterior",
+      "nextPage": "Página seguinte",
       "salaryMinPlaceholder": "ex: 35000",
       "relativeDate": {
         "today": "Hoje",
@@ -1613,7 +1615,7 @@
     "keywordsPlaceholder": "E.g.: React, Python, AWS...",
     "addKeyword": "Add",
     "selectLevel": "Select a level...",
-    "description": "Refine your search with additional criteria",
+    "description": "Refine a sua pesquisa com critérios adicionais",
     "salaryMinPlaceholder": "30,000",
     "salaryMaxPlaceholder": "100,000",
     "salaryError": "Minimum salary must be less than maximum",
@@ -1625,7 +1627,8 @@
     "lockedOffer": "Oferta bloqueada",
     "upgradeToPremium": "Faça upgrade para ver esta oferta",
     "unlock": "levantar o bloqueio",
-    "moreOffers": "Mais{count} ofertas"
+    "moreOffers": "Mais {count} ofertas",
+    "limitDescription": "O seu plano mostra as primeiras {count} ofertas. Compare os planos para aceder às restantes."
   },
   "applyModal": {
     "title": "Candidate-se a esta vaga",

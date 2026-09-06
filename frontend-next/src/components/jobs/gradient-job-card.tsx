@@ -244,32 +244,33 @@ export const JobsLimitReached = React.forwardRef<
   const { openPricingModal } = useSubscription();
   const hiddenJobs = totalJobs - visibleJobs;
 
+  if (hiddenJobs <= 0) return null;
+
   return (
     <div
       ref={ref}
       className={cn(
-        "col-span-full p-4 md:p-8 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-dashed border-violet-200 text-center",
+        "col-span-full flex flex-col sm:flex-row sm:items-center gap-4 p-5 rounded-lg bg-slate-50 border border-slate-200",
         className,
       )}
     >
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mb-4 shadow-lg">
-        <Lock className="w-8 h-8 text-white" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-cyan-800 border border-slate-200">
+        <Lock className="w-5 h-5" />
       </div>
-      <h3 className="text-base md:text-xl font-bold mb-2">
-        {t("moreOffers", { count: hiddenJobs })}
-      </h3>
-      <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-        Vous avez atteint la limite de {visibleJobs} offres visibles. Passez
-        Premium pour accéder à toutes les offres et ne manquer aucune
-        opportunité.
-      </p>
+      <div className="flex-1">
+        <h3 className="text-base font-semibold text-slate-900 mb-1">
+          {t("moreOffers", { count: hiddenJobs })}
+        </h3>
+        <p className="text-sm text-slate-600">
+          {t("limitDescription", { count: visibleJobs })}
+        </p>
+      </div>
       <Button
         size="lg"
         onClick={() => openPricingModal("jobs_visible")}
-        className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg"
+        className="min-h-11 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold shadow-none"
       >
-        <Sparkles className="w-5 h-5 mr-2" />
-        Voir toutes les offres
+        {t("unlock")}
       </Button>
     </div>
   );
