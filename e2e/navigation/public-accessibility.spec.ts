@@ -94,8 +94,9 @@ test.describe("structure des pages publiques", () => {
     });
 
     for (const route of ["/contact", "/privacy", "/terms"] as const) {
-      await page.goto(routeUrl(route));
-      await page.waitForLoadState("networkidle");
+      await page.goto(routeUrl(route), { waitUntil: "domcontentloaded" });
+      await expect(page.locator("main")).toBeVisible();
+      await page.waitForTimeout(250);
     }
 
     expect(formattingErrors).toEqual([]);
