@@ -374,16 +374,17 @@ class CVAdapterAgent(BaseAgent):
             fact_check = await self._fact_check(cv_text, final_cv)
             if fact_check.get("valid") is not True:
                 sanitized_cv = fact_check.get("sanitized_cv")
-                if not self._sanitized_cv_preserves_source_facts(
+                source_fallback = not self._sanitized_cv_preserves_source_facts(
                     original_data,
                     sanitized_cv,
-                ):
-                    return {
-                        "success": False,
-                        "error": "Adapted CV returned an invalid sanitized document",
-                        "fact_check": fact_check,
+                )
+                if source_fallback:
+                    # Préserver la source plutôt qu'une reformulation qui perd des faits.
+                    final_cv = {
+                        key: value for key, value in original_data.items() if key != "success"
                     }
-                final_cv = dict(sanitized_cv)
+                else:
+                    final_cv = dict(sanitized_cv)
                 fact_check = await self._fact_check(cv_text, dict(final_cv))
                 if fact_check.get("valid") is not True:
                     return {
@@ -391,6 +392,8 @@ class CVAdapterAgent(BaseAgent):
                         "error": "Sanitized CV failed factual verification",
                         "fact_check": fact_check,
                     }
+                if source_fallback:
+                    fact_check["mode"] = "source_only_fallback"
 
             # Mark only the verified/sanitized CV as HuntZen-certified.
             final_cv["huntzen_certified"] = True

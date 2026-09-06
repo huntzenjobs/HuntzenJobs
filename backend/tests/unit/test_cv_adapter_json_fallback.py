@@ -261,6 +261,32 @@ async def test_adaptation_uses_sanitized_cv_when_fact_check_rejects_draft() -> N
     assert result["fact_check"] == {"valid": True, "issues": []}
 
 
+@pytest.mark.asyncio
+async def test_adaptation_uses_source_only_after_invalid_sanitization_and_reverification() -> None:
+    agent = object.__new__(CVAdapterAgent)
+    agent.name = "CVAdapter"
+    original = {"success": True, "personal_info": {"name": "Alex"},
+                "experiences": [{"company": "Source", "bullets": ["Réception."]}],
+                "skills": {"Outils": ["Excel débutant"]}}
+    agent._extract_factual_data = AsyncMock(return_value=original)
+    agent._analyze_job = AsyncMock(return_value={"success": True})
+    agent._map_cv_to_job = AsyncMock(return_value={"success": True})
+    agent._rewrite_bullets_only = AsyncMock(return_value={"success": True})
+    agent._merge_cv_data = AsyncMock(return_value={"summary": "Maîtrise Excel"})
+    agent._fact_check = AsyncMock(side_effect=[
+        {"valid": False, "issues": [{"type": "hallucination"}], "sanitized_cv": {}},
+        {"valid": True, "issues": []},
+    ])
+    result = await agent.run("CV source", "Offre", language="fr")
+    assert result["success"] is True
+    assert result["cv_data"]["skills"] == {"Outils": ["Excel débutant"]}
+    assert "summary" not in result["cv_data"]
+    assert agent._fact_check.await_count == 2
+    checked = agent._fact_check.await_args_list[1].args[1]
+    assert checked["experiences"] == original["experiences"]
+    assert result["fact_check"]["mode"] == "source_only_fallback"
+
+
 def test_sanitized_cv_rejects_skills_absent_from_source() -> None:
     agent = object.__new__(CVAdapterAgent)
     original_data = {
