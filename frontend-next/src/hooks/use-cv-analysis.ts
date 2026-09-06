@@ -293,6 +293,7 @@ export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
             setError(
               err instanceof Error ? err.message : "Failed to fetch CV status",
             );
+            setStatus("failed");
             setIsPolling(false);
 
             if (pollingIntervalRef.current) {
