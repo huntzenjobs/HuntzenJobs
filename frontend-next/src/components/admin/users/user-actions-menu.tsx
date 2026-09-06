@@ -314,7 +314,7 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setChangeEmailOpen(true)}>
             <AtSign className="h-4 w-4 mr-2" />
-            Changer l'email
+            Changer l&apos;email
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setGrantDaysOpen(true)}>
             <Gift className="h-4 w-4 mr-2" />
@@ -391,7 +391,7 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Suspendre {user.email} ?</AlertDialogTitle>
             <AlertDialogDescription>
-              L'utilisateur ne pourra plus accéder à l'application.
+              L&apos;utilisateur ne pourra plus accéder à l&apos;application.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2 py-2">
@@ -457,7 +457,7 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
               Forcer la déconnexion de {user.email} ?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Tous les tokens actifs seront révoqués. L'utilisateur devra se
+              Tous les tokens actifs seront révoqués. L&apos;utilisateur devra se
               reconnecter sur tous ses appareils.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -474,7 +474,7 @@ export default function UserActionsMenu({ user, plans, onAction }: Props) {
       <AlertDialog open={changeEmailOpen} onOpenChange={setChangeEmailOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Changer l'email de {user.email}</AlertDialogTitle>
+            <AlertDialogTitle>Changer l&apos;email de {user.email}</AlertDialogTitle>
           </AlertDialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="new-email">Nouvel email *</Label>

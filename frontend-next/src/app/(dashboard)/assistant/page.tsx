@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -229,6 +230,7 @@ export default function AssistantPage() {
     currentConversationId,
     hasFeature,
     setCurrentConversationId,
+    selectedAssistant,
   ]);
 
   const sendMessage = async (messageText: string) => {
@@ -572,7 +574,7 @@ export default function AssistantPage() {
                     {/* Avatar + Name */}
                     <div className="flex items-center gap-3 mb-3">
                       {assistant.avatarUrl ? (
-                        <img
+                        <Image width={56} height={56} unoptimized
                           src={assistant.avatarUrl}
                           alt={
                             assistant.personaName ?? tc(assistant.shortNameKey)

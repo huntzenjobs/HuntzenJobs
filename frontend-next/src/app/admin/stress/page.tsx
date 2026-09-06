@@ -128,13 +128,22 @@ export default function AdminStressPage() {
 
   const { metrics, status, connected } = useStressTest(currentRunId);
 
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const d = await adminFetch("/api/admin/stress/runs");
+      setHistory(d.runs || []);
+    } catch {}
+    setHistoryLoading(false);
+  }, []);
+
   // Charger les scénarios et l'historique au montage
   useEffect(() => {
     adminFetch("/api/admin/stress/scenarios")
       .then((d) => setScenarios(d.scenarios || []))
       .catch(() => {});
     loadHistory();
-  }, []);
+  }, [loadHistory]);
 
   // Basculer sur l'onglet Live quand un test démarre
   useEffect(() => {
@@ -150,16 +159,7 @@ export default function AdminStressPage() {
     ) {
       loadHistory();
     }
-  }, [status]);
-
-  const loadHistory = useCallback(async () => {
-    setHistoryLoading(true);
-    try {
-      const d = await adminFetch("/api/admin/stress/runs");
-      setHistory(d.runs || []);
-    } catch {}
-    setHistoryLoading(false);
-  }, []);
+  }, [status, loadHistory]);
 
   async function launchTest() {
     setLaunching(true);
@@ -449,7 +449,7 @@ export default function AdminStressPage() {
             </Button>
             {isRunning && (
               <span className="text-sm text-muted-foreground">
-                Un test est en cours — arrête-le depuis l'onglet Live.
+                Un test est en cours — arrête-le depuis l&apos;onglet Live.
               </span>
             )}
           </div>
@@ -460,7 +460,7 @@ export default function AdminStressPage() {
           {!currentRunId && !last ? (
             <div className="text-center py-16 text-muted-foreground">
               <Activity className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <p>Aucun test en cours — lance un test depuis l'onglet Lancer.</p>
+              <p>Aucun test en cours — lance un test depuis l&apos;onglet Lancer.</p>
             </div>
           ) : (
             <>
@@ -856,7 +856,7 @@ export default function AdminStressPage() {
                         colSpan={8}
                         className="text-center py-8 text-muted-foreground"
                       >
-                        Aucun run pour l'instant
+                        Aucun run pour l&apos;instant
                       </td>
                     </tr>
                   ) : (

@@ -238,7 +238,7 @@ export function ContactFinderDrawer({
     setResult(null);
     setSearched(false);
     setQuotaError(false);
-  }, [job.id]);
+  }, [job.id, job.company]);
 
   const handleSearch = useCallback(async () => {
     if (!session?.access_token) {

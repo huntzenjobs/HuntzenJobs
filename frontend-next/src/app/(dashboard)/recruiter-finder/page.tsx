@@ -12,7 +12,7 @@ export default function RecruiterFinderPage() {
             Contact recruteur via LinkedIn
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Entrez le nom de l'entreprise pour que HuntZen trouve
+            Entrez le nom de l&apos;entreprise pour que HuntZen trouve
             automatiquement des recruteurs et contacts RH pertinents à partir de
             LinkedIn.
           </p>

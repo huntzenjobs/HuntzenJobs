@@ -91,7 +91,7 @@ export function NotificationsSection() {
         setSaving(false);
       }
     },
-    [fetchJSON],
+    [fetchJSON, tProfile],
   );
 
   // Auto-save when debounced value changes (skip initial load)

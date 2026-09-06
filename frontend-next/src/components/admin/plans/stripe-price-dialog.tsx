@@ -62,7 +62,7 @@ export default function StripePriceDialog({
                 <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
                 <span>
                   Stripe ne permet <strong>pas</strong> de modifier un prix existant.
-                  Un <strong>nouveau prix</strong> sera créé et l'ancien sera archivé automatiquement.
+                  Un <strong>nouveau prix</strong> sera créé et l&apos;ancien sera archivé automatiquement.
                 </span>
               </div>
               {currentPrice && (

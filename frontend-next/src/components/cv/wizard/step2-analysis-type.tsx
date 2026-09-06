@@ -90,9 +90,9 @@ export function Step2AnalysisType({
     <div className={cn("space-y-6", className)}>
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Type d'analyse</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Type d&apos;analyse</h2>
         <p className="text-sm text-gray-600 mt-1">
-          Choisissez le type d'analyse qui correspond à vos besoins
+          Choisissez le type d&apos;analyse qui correspond à vos besoins
         </p>
       </div>
 
@@ -124,7 +124,7 @@ export function Step2AnalysisType({
               htmlFor="job-offer"
               className="block text-sm font-medium text-gray-900 mb-2"
             >
-              Description de l'offre d'emploi
+              Description de l&apos;offre d&apos;emploi
               <span className="text-red-500 ml-1">*</span>
             </label>
             <Textarea
@@ -135,7 +135,7 @@ export function Step2AnalysisType({
               className="min-h-[150px] resize-y"
             />
             <p className="text-xs text-gray-500 mt-2">
-              Plus la description est détaillée, plus l'analyse sera précise
+              Plus la description est détaillée, plus l&apos;analyse sera précise
             </p>
           </div>
         </div>
@@ -166,7 +166,7 @@ export function Step2AnalysisType({
           disabled={!canProceed}
           className="px-8"
         >
-          Lancer l'analyse
+          Lancer l&apos;analyse
           <svg
             className="ml-2 h-4 w-4"
             fill="none"

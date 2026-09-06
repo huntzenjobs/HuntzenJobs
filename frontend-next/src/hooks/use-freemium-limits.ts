@@ -1,7 +1,7 @@
 "use client";
 
 import { getClientId } from "@/lib/utils/client-id";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Plan types
 export type PlanType = "free" | "starter" | "pro" | "premium";
@@ -781,23 +781,7 @@ export function useFreemiumLimits(userId?: string) {
     });
   }, []);
 
-  // Memoize usage object to prevent reference changes
-  const usage = useMemo(
-    () => state.usage,
-    [
-      state.usage.searchesToday,
-      state.usage.jobsViewedToday,
-      state.usage.atsScoresUsedToday,
-      state.usage.matchingScoresUsedToday,
-      state.usage.assistantMessagesUsedToday,
-      state.usage.savedJobsCount,
-      state.usage.cvAdaptsUsedToday,
-      state.usage.coverLettersUsedToday,
-      state.usage.recruiterSearchesUsedToday,
-      state.usage.lastResetDate,
-      state.usage.lastIncrementTimestamps,
-    ],
-  );
+  const usage = state.usage;
 
   // Reset usage for a feature (e.g. when API shows a reset)
   const resetUsage = useCallback((feature: FeatureType): void => {

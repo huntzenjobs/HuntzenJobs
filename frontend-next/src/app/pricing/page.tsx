@@ -63,6 +63,7 @@ export default function PricingPage() {
   } = usePricingPlans();
 
   const pricingHoverPopup = useConversionPopup("pricing_hover");
+  const openPricingHoverPopup = pricingHoverPopup.open;
 
   const plans = dbPlans.map((p) => ({
     id: p.name,
@@ -95,10 +96,10 @@ export default function PricingPage() {
       return;
     const t = setTimeout(() => {
       sessionStorage.setItem("pricing_popup_shown", "1");
-      pricingHoverPopup.open();
+      openPricingHoverPopup();
     }, 20000);
     return () => clearTimeout(t);
-  }, []);
+  }, [openPricingHoverPopup]);
 
   const currentPlan = subscription?.plan || "free";
 

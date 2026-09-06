@@ -61,7 +61,7 @@ export function Step1Upload({
             Télécharger votre CV
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            Importez votre CV ou collez le texte pour commencer l'analyse
+            Importez votre CV ou collez le texte pour commencer l&apos;analyse
           </p>
         </div>
         <Button

@@ -144,7 +144,7 @@ export function CVUploadAsync({
               Créez un compte gratuit pour analyser votre CV
             </h3>
             <p className="text-gray-600 text-lg">
-              Bénéficiez d'une analyse professionnelle de votre CV avec notre IA
+              Bénéficiez d&apos;une analyse professionnelle de votre CV avec notre IA
             </p>
           </div>
 
@@ -181,7 +181,7 @@ export function CVUploadAsync({
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <span>
-                  <strong>Analyse de compatibilité</strong> avec offres d'emploi
+                  <strong>Analyse de compatibilité</strong> avec offres d&apos;emploi
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -213,7 +213,7 @@ export function CVUploadAsync({
               }
               className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-blue-500 transition-all"
             >
-              J'ai déjà un compte
+              J&apos;ai déjà un compte
             </button>
           </div>
 
@@ -578,7 +578,7 @@ export function CVUploadAsync({
                 <span className="text-3xl">🚀</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Quota d'analyses gratuit épuisé
+                Quota d&apos;analyses gratuit épuisé
               </h3>
               <p className="text-gray-600 text-lg">
                 Passez à un plan payant pour continuer vos analyses de CV sans
@@ -649,7 +649,7 @@ export function CVUploadAsync({
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                     <span>
-                      <strong>Simulations d'entretien</strong> IA
+                      <strong>Simulations d&apos;entretien</strong> IA
                     </span>
                   </li>
                 </ul>
@@ -722,7 +722,7 @@ export function CVUploadAsync({
           <div className="flex items-center gap-3 mb-4">
             <XCircle className="w-8 h-8 text-red-600" />
             <h3 className="text-lg font-semibold text-red-900">
-              Erreur d'analyse
+              Erreur d&apos;analyse
             </h3>
           </div>
 
@@ -798,7 +798,7 @@ export function CVUploadAsync({
         {/* Improvements */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <h4 className="text-lg font-semibold mb-4 text-orange-700">
-            Suggestions d'amélioration
+            Suggestions d&apos;amélioration
           </h4>
           {improvements.length === 0 ? (
             <p className="text-sm text-gray-600">

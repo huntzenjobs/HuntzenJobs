@@ -8,7 +8,7 @@
  * - Cookie-based session persistence
  */
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User, Session, AuthError } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
@@ -68,6 +68,10 @@ export function AuthProvider({
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
+  const routerRef = useRef(router);
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
 
   // Hybrid Solution: Auto-refresh + Activity detection + Inactivity timeout
   useAutoRefreshSession();
@@ -211,7 +215,7 @@ export function AuthProvider({
             !window.location.pathname.startsWith("/onboarding") &&
             !window.location.pathname.startsWith("/auth/callback")
           ) {
-            router.push("/onboarding");
+            routerRef.current.push("/onboarding");
           }
 
           // Clear old subscription cache and trigger refresh

@@ -63,7 +63,7 @@ export default function ForcePlanDialog({
           <AlertDialogTitle>Changer le plan de {user.email}</AlertDialogTitle>
           <AlertDialogDescription>
             Plan actuel : <strong>{currentPlanName}</strong>. Cette action
-            modifie uniquement la base de données — Stripe n'est pas modifié.
+            modifie uniquement la base de données — Stripe n&apos;est pas modifié.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -87,7 +87,7 @@ export default function ForcePlanDialog({
           </Select>
           {selectedPlan && (
             <p className="text-xs text-muted-foreground">
-              L'utilisateur aura les limites du plan{" "}
+              L&apos;utilisateur aura les limites du plan{" "}
               <strong>{selectedPlan.display_name}</strong> immédiatement.
             </p>
           )}

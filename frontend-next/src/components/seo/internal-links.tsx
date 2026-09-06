@@ -86,9 +86,9 @@ export function InternalLinksFooter() {
 
           <p className="text-gray-600 text-sm text-center mt-8 leading-relaxed">
             <strong>HuntZen Jobs</strong> est votre allié pour la recherche
-            d'emploi en France. Que vous cherchiez des{" "}
+            d&apos;emploi en France. Que vous cherchiez des{" "}
             <Link href="/jobs" className="text-[#00D9FF] hover:underline">
-              offres d'emploi
+              offres d&apos;emploi
             </Link>
             , une{" "}
             <Link

@@ -111,7 +111,7 @@ function ErrorState({
       <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
         <AlertCircle className="h-8 w-8 text-red-600" />
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">Erreur d'analyse</h3>
+      <h3 className="text-xl font-bold text-gray-900 mb-2">Erreur d&apos;analyse</h3>
       <p className="text-sm text-gray-600 max-w-md mb-6">{error}</p>
       <Button onClick={onReset} variant="outline" className="gap-2">
         <RotateCcw className="h-4 w-4" />

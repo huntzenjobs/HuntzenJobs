@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -117,7 +117,7 @@ export function PricingModal() {
   });
 
   // Initiate plan selection: always go through Stripe Checkout
-  const handleSelectPlan = useCallback(
+  const handleSelectPlan =
     (planId: PlanType) => {
       // Track CTA click
       track.payment.ctaClicked(
@@ -142,9 +142,7 @@ export function PricingModal() {
 
       // All plan changes go through Stripe Checkout
       executeSelectPlan(planId);
-    },
-    [currentPlan, user, auth?.session, tModal, closePricingModal],
-  );
+    };
 
   // Execute the actual plan change (called directly or after confirmation)
   const executeSelectPlan = async (planId: PlanType) => {

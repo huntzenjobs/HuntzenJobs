@@ -182,7 +182,7 @@ export default async function OpenGraphImage() {
             }}
           />
           <div style={{ fontSize: "28px", color: "#FFFFFF", display: "flex" }}>
-            Des milliers d'offres d'emploi
+            Des milliers d&apos;offres d&apos;emploi
           </div>
         </div>
 

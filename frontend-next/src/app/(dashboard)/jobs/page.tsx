@@ -418,8 +418,12 @@ export default function JobsPage() {
     }
   }, [jobSearchParams, currentSearchHash]);
 
+  // La restauration utilise uniquement l'URL et le routeur du premier rendu.
+  const [initialNavigation] = useState(() => ({ searchParams, router }));
+
   // Restore search state from URL params + localStorage on mount
   useEffect(() => {
+    const { searchParams, router } = initialNavigation;
     const q = searchParams.get("q");
     const country = searchParams.get("country");
     const city = searchParams.get("city");
@@ -545,7 +549,7 @@ export default function JobsPage() {
       isInitializingRef.current = false;
     }, 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialNavigation]);
 
   // Search query with intelligent caching
   const searchQuery = useQuery({
@@ -687,6 +691,7 @@ export default function JobsPage() {
     jobSearchParams,
     currentSearchHash,
     incrementUsage,
+    refreshQuotas,
   ]);
 
   // Handle search query results + persist to localStorage
@@ -1647,11 +1652,8 @@ export default function JobsPage() {
               >
                 {/* Visible jobs (current page) */}
                 {paginatedJobs.map((job, index) => (
-                  <motion.div
+                  <div
                     key={job.id || index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
                   >
                     <Card
                       className={cn(
@@ -1661,11 +1663,11 @@ export default function JobsPage() {
                           : "bg-white",
                       )}
                     >
-                      <CardHeader className="p-4 pb-2">
+                      <CardHeader className="p-5 pb-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <CardTitle className="text-lg sm:text-xl leading-snug line-clamp-2 font-semibold text-slate-900">
+                              <CardTitle className="text-lg leading-snug line-clamp-2 font-semibold text-slate-900">
                                 {job.title}
                               </CardTitle>
                               {appliedJobIds.has(job.id) && (
@@ -1699,13 +1701,6 @@ export default function JobsPage() {
                             </CardDescription>
                           </div>
                           <div className="flex flex-col items-end gap-2">
-                            <Badge
-                              className={cn(
-                                "shrink-0 font-medium px-2 py-1 text-slate-600 bg-slate-100 border-0 hover:bg-slate-100",
-                              )}
-                            >
-                              {formatJobSource(job.source)}
-                            </Badge>
                             {job.contract_type && (
                               <Badge
                                 variant="outline"
@@ -1717,7 +1712,7 @@ export default function JobsPage() {
                             <button
                               onClick={() => handleSaveJob(job)}
                               className={cn(
-                                "relative p-2 rounded-full hover:bg-red-50 transition-all",
+                                "relative min-h-11 min-w-11 flex items-center justify-center rounded-md hover:bg-slate-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
                                 savedJobIds.has(job.id)
                                   ? "opacity-100"
                                   : "opacity-60 hover:opacity-100 group-hover:opacity-100",
@@ -1766,7 +1761,7 @@ export default function JobsPage() {
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex flex-col px-4 pb-4 pt-0">
+                      <CardContent className="flex flex-col px-5 pb-4 pt-0">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-slate-600">
                             <MapPin className="h-4 w-4 text-slate-500 flex-shrink-0" />
@@ -1783,7 +1778,7 @@ export default function JobsPage() {
                             </div>
                           )}
 
-                          <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                          <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed pt-1">
                             {stripHtmlForPreview(job.description || "")}
                           </p>
                         </div>
@@ -1798,21 +1793,20 @@ export default function JobsPage() {
 
                         {/* Posted date */}
                         {job.posted_date && (
-                          <p className="text-xs text-slate-400 flex items-center justify-end gap-1 mt-1">
+                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-3">
                             <Clock className="h-3 w-3" />
                             {formatRelativeDate(job.posted_date, t)}
                           </p>
                         )}
 
                         {/* Button always at bottom */}
-                        <div className="flex gap-2 pt-3">
+                        <div className="flex gap-2 pt-3 mt-3 border-t border-slate-100">
                           <Button
                             size="lg"
                             className="flex-1 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold rounded-md transition-colors h-11 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
                             onClick={() => handleViewDetails(job)}
                           >
                             {t("card.details")}
-                            <ExternalLink className="ml-2 h-4 w-4" />
                           </Button>
                         </div>
 
@@ -1822,9 +1816,6 @@ export default function JobsPage() {
                             <button className="flex min-h-11 items-center gap-1.5 text-sm text-slate-600 hover:text-slate-950 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
                               <UserSearch className="w-3.5 h-3.5" />
                               {t("findRecruiters")}
-                              <span className="px-1 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-semibold rounded">
-                                {t("betaTag")}
-                              </span>
                             </button>
                           </SheetTrigger>
                           <SheetContent>
@@ -1840,7 +1831,7 @@ export default function JobsPage() {
                         </Sheet>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </div>
                 ))}
 
                 {/* Skeleton placeholders for jobs not yet revealed */}

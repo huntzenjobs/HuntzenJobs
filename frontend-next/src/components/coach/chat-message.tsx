@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -67,10 +68,6 @@ export function ChatMessage({
   const [copied, setCopied] = React.useState(false);
 
   const isUser = message.role === "user";
-  const timestamp =
-    typeof message.timestamp === "string"
-      ? new Date(message.timestamp)
-      : message.timestamp;
 
   // Copy to clipboard
   const handleCopy = async () => {
@@ -85,6 +82,9 @@ export function ChatMessage({
 
   // Relative time
   const relativeTime = React.useMemo(() => {
+    const timestamp = typeof message.timestamp === "string"
+      ? new Date(message.timestamp)
+      : message.timestamp;
     try {
       return formatDistanceToNow(timestamp, {
         addSuffix: true,
@@ -93,7 +93,7 @@ export function ChatMessage({
     } catch (error) {
       return t("justNow");
     }
-  }, [timestamp, locale, t]);
+  }, [message.timestamp, locale, t]);
 
   return (
     <div
@@ -120,7 +120,7 @@ export function ChatMessage({
             }}
           >
             {assistantAvatarUrl ? (
-              <img
+              <Image width={32} height={32} unoptimized
                 src={assistantAvatarUrl}
                 alt="assistant"
                 className="size-8 rounded-full object-cover"

@@ -8,7 +8,6 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { useRouter } from "next/navigation";
 import { useLocale as useNextIntlLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
@@ -41,7 +40,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     ? (serverLocale as Locale)
     : DEFAULT_LOCALE;
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
-  const router = useRouter();
 
   // Garder la même langue que les messages sélectionnés par le serveur.
   useEffect(() => {
@@ -80,7 +78,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       // Full reload pour appliquer la traduction partout (y compris jobs, filtres, etc.)
       window.location.reload();
     },
-    [router],
+    [],
   );
 
   const value = {

@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image'
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/auth-context'
@@ -108,7 +109,7 @@ function QuotaBar({ feature, quota }: QuotaBarProps) {
 
       {remaining === 0 && limit !== -1 && (
         <p className="text-xs text-red-600">
-          Quota atteint pour aujourd'hui
+          Quota atteint pour aujourd&apos;hui
         </p>
       )}
     </div>
@@ -207,7 +208,7 @@ export function UserProfileWidget({ className = '' }: UserProfileWidgetProps) {
       <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
           {profile.avatar_url ? (
-            <img
+            <Image width={64} height={64} unoptimized
               src={profile.avatar_url}
               alt={profile.full_name || 'Avatar'}
               className="w-full h-full rounded-full object-cover"

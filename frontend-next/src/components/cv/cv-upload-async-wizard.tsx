@@ -310,7 +310,7 @@ export function CVUploadAsyncWizard({
 
       loadHistory();
     }
-  }, [hasFeatures.hasCVHistory]);
+  }, [hasFeatures.hasCVHistory, t]);
 
   // Reload history when analysis completes
   useEffect(() => {
@@ -358,7 +358,7 @@ export function CVUploadAsyncWizard({
 
       reloadHistory();
     }
-  }, [status, hasFeatures.hasCVHistory]);
+  }, [status, hasFeatures.hasCVHistory, t]);
 
   // ============================================
   // GUARDS — after all hooks (Rules of Hooks)
@@ -387,7 +387,7 @@ export function CVUploadAsyncWizard({
               Créez un compte gratuit pour analyser votre CV
             </h3>
             <p className="text-gray-600 text-lg">
-              Bénéficiez d'une analyse professionnelle de votre CV avec notre IA
+              Bénéficiez d&apos;une analyse professionnelle de votre CV avec notre IA
             </p>
           </div>
           <div className="bg-white rounded-xl p-6 mb-6">
@@ -415,7 +415,7 @@ export function CVUploadAsyncWizard({
               <li className="flex items-center gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <span>
-                  <strong>Analyse de compatibilité</strong> avec offres d'emploi
+                  <strong>Analyse de compatibilité</strong> avec offres d&apos;emploi
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -445,7 +445,7 @@ export function CVUploadAsyncWizard({
               }
               className="flex-1 px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-blue-500 transition-all"
             >
-              J'ai déjà un compte
+              J&apos;ai déjà un compte
             </button>
           </div>
           <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-600">
@@ -996,7 +996,7 @@ export function CVUploadAsyncWizard({
       exit="exit"
       transition={{ duration: 0.3 }}
     >
-      <h3 className="text-xl font-bold mb-6">Choisissez le type d'analyse</h3>
+      <h3 className="text-xl font-bold mb-6">Choisissez le type d&apos;analyse</h3>
 
       {/* Analysis Type Choice */}
       <div className="space-y-4 mb-6">
@@ -1025,7 +1025,7 @@ export function CVUploadAsyncWizard({
         >
           <p className="font-bold text-lg mb-2">{t("matchingJobOffer")}</p>
           <p className="text-sm text-gray-600">
-            Score de compatibilité avec une offre d'emploi spécifique
+            Score de compatibilité avec une offre d&apos;emploi spécifique
           </p>
         </button>
 
@@ -1528,7 +1528,7 @@ export function CVUploadAsyncWizard({
         >
           <XCircle className="w-16 h-16 text-red-600 mx-auto mb-6" />
           <h3 className="text-2xl font-bold text-red-900 mb-2">
-            Erreur d'analyse
+            Erreur d&apos;analyse
           </h3>
           <p className="text-red-700 mb-8">
             {error || "Une erreur est survenue"}
@@ -1608,7 +1608,7 @@ export function CVUploadAsyncWizard({
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-blue-900">
-                    Matching avec l'offre
+                    Matching avec l&apos;offre
                   </p>
                   {displayResult.job_match_explanation && (
                     <p className="text-xs text-blue-700 mt-1 leading-relaxed">

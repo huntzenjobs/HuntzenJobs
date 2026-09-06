@@ -182,7 +182,7 @@ export function UnlockOverlay({
               className="unlock-btn unlock-btn-secondary"
               size="lg"
             >
-              J'ai déjà un compte
+              J&apos;ai déjà un compte
             </Button>
           </motion.div>
 

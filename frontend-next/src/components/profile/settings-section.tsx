@@ -106,7 +106,7 @@ export function SettingsSection({
         return false;
       }
     },
-    [userId],
+    [userId, t],
   );
 
   // Delete account handler
@@ -283,10 +283,10 @@ export function SettingsSection({
           <Globe className="w-5 h-5 text-gray-600" aria-hidden="true" />
           <div>
             <Label htmlFor="language" className="text-base font-semibold">
-              Langue de l'interface
+              Langue de l&apos;interface
             </Label>
             <p className="text-sm text-gray-500 mt-1">
-              Choisissez votre langue préférée pour l'application
+              Choisissez votre langue préférée pour l&apos;application
             </p>
           </div>
         </div>
@@ -355,7 +355,7 @@ export function SettingsSection({
           <div className="ml-7 pl-4 border-l-2 border-huntzen-blue/20 space-y-2 text-sm text-gray-600">
             <p className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-huntzen-blue rounded-full" />
-              Nouvelles offres d'emploi correspondant à votre profil
+              Nouvelles offres d&apos;emploi correspondant à votre profil
             </p>
             <p className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-huntzen-blue rounded-full" />
@@ -382,7 +382,7 @@ export function SettingsSection({
                 Newsletter HuntZen
               </Label>
               <p id="newsletter-description" className="text-sm text-gray-500">
-                Recevez nos conseils exclusifs, astuces de recherche d'emploi,
+                Recevez nos conseils exclusifs, astuces de recherche d&apos;emploi,
                 et les dernières fonctionnalités (1 email par semaine maximum)
               </p>
             </div>

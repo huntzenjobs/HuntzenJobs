@@ -287,7 +287,6 @@ function OnboardingWizard() {
     location,
     experience,
     discoverySource,
-    redirectTo,
     router,
   ]);
 

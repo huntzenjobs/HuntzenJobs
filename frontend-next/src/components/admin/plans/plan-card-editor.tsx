@@ -657,7 +657,7 @@ export default function PlanCardEditor({
                   })}
                 </div>
                 <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1.5 rounded leading-relaxed">
-                  Crée un nouveau price et archive l'ancien. Abonnements
+                  Crée un nouveau price et archive l&apos;ancien. Abonnements
                   existants non affectés.
                 </p>
               </div>

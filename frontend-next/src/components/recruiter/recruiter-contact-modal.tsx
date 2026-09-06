@@ -165,7 +165,7 @@ export function RecruiterContactModal({
                     Expertise professionnelle
                   </p>
                   <p className="text-sm text-gray-600">
-                    10+ ans d'expérience en recrutement
+                    10+ ans d&apos;expérience en recrutement
                   </p>
                 </div>
               </div>

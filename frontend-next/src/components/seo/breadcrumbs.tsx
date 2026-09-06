@@ -5,7 +5,6 @@
 
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
-import Script from "next/script";
 
 export interface BreadcrumbItem {
   label: string;
@@ -39,13 +38,11 @@ export function Breadcrumbs({ items, className = "" }: BreadcrumbsProps) {
   return (
     <>
       {/* Schema.org JSON-LD */}
-      <Script
+      <script
         id="breadcrumb-schema"
         type="application/ld+json"
-        strategy="beforeInteractive"
-      >
-        {JSON.stringify(schema)}
-      </Script>
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
+      />
 
       {/* Breadcrumbs visuel */}
       <nav

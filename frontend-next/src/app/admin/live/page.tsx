@@ -159,7 +159,7 @@ export default function AdminLivePage() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Activity className="h-4 w-4" /> Fil d'événements
+            <Activity className="h-4 w-4" /> Fil d&apos;événements
             <Badge variant="outline" className="ml-auto text-xs">
               {events.length} événements
             </Badge>
@@ -168,7 +168,7 @@ export default function AdminLivePage() {
         <CardContent>
           {events.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              En attente d'événements...
+              En attente d&apos;événements...
             </p>
           ) : (
             <div className="space-y-1 max-h-96 overflow-y-auto">
@@ -205,7 +205,7 @@ export default function AdminLivePage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Active un écran de maintenance pour tous les utilisateurs (l'admin
+              Active un écran de maintenance pour tous les utilisateurs (l&apos;admin
               reste accessible).
             </p>
             <Button

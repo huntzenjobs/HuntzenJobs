@@ -85,7 +85,7 @@ export function useJobSearch(params: JobSearchParams | null) {
         country_code: params?.country_code,
       });
     }
-  }, [data, cacheKey, session?.access_token]);
+  }, [data, cacheKey, session?.access_token, params?.country_code, params?.job_title]);
 
   return {
     jobs: data?.jobs || [],

@@ -138,7 +138,7 @@ function OverviewTab({ stats, leaderboard, loading }: {
         </CardHeader>
         <CardContent>
           {leaderboard.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">Aucun référent pour l'instant.</p>
+            <p className="text-sm text-muted-foreground py-4 text-center">Aucun référent pour l&apos;instant.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

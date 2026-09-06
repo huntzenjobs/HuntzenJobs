@@ -113,10 +113,11 @@ export default function SalonsPage() {
     }
   }
 
-  // Initial load
+  // Le chargement initial reste distinct de la recherche soumise par l'utilisateur.
+  const [loadInitialEvents] = useState(() => searchEvents);
   useEffect(() => {
-    searchEvents();
-  }, []);
+    loadInitialEvents();
+  }, [loadInitialEvents]);
 
   // Progressive reveal of events for better UX
   useEffect(() => {

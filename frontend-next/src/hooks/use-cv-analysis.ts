@@ -411,7 +411,7 @@ export function useCVAnalysis(onComplete?: () => void): UseCVAnalysisReturn {
         setIsUploading(false);
       }
     },
-    [authenticatedFetch, session, startPolling],
+    [authenticatedFetch, session, startPolling, locale],
   );
 
   // ============================================

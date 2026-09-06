@@ -209,7 +209,7 @@ export function ProfileForm({
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
         <p className="font-medium mb-1">💡 Astuce</p>
         <p>
-          Un profil complet améliore vos chances d'être repéré par les
+          Un profil complet améliore vos chances d&apos;être repéré par les
           recruteurs. Ajoutez votre nom complet et une photo professionnelle.
         </p>
       </div>

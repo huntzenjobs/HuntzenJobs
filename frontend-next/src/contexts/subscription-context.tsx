@@ -269,8 +269,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     window.addEventListener("token-expired", handleTokenExpired);
     return () =>
       window.removeEventListener("token-expired", handleTokenExpired);
-  }, []);
+  }, [t]);
 
+  const { usage: localUsage, resetUsage, syncUsage } = freemium;
   // Sync local state with API quotas
   // Handles resets (administrative/daily) and "catch-up" scenarios
   useEffect(() => {
@@ -295,28 +296,28 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       let localUsed = 0;
       switch (feature) {
         case "job_search":
-          localUsed = freemium.usage.searchesToday;
+          localUsed = localUsage.searchesToday;
           break;
         case "saved_jobs":
-          localUsed = freemium.usage.savedJobsCount;
+          localUsed = localUsage.savedJobsCount;
           break;
         case "ats_score":
-          localUsed = freemium.usage.atsScoresUsedToday;
+          localUsed = localUsage.atsScoresUsedToday;
           break;
         case "matching_score":
-          localUsed = freemium.usage.matchingScoresUsedToday;
+          localUsed = localUsage.matchingScoresUsedToday;
           break;
         case "assistant_messages":
-          localUsed = freemium.usage.assistantMessagesUsedToday;
+          localUsed = localUsage.assistantMessagesUsedToday;
           break;
         case "cv_adapt":
-          localUsed = freemium.usage.cvAdaptsUsedToday;
+          localUsed = localUsage.cvAdaptsUsedToday;
           break;
         case "cover_letter":
-          localUsed = freemium.usage.coverLettersUsedToday;
+          localUsed = localUsage.coverLettersUsedToday;
           break;
         case "recruiter_search":
-          localUsed = freemium.usage.recruiterSearchesUsedToday;
+          localUsed = localUsage.recruiterSearchesUsedToday;
           break;
       }
 
@@ -324,7 +325,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         // API shows reset, but we have local usage
         // Check if we JUST incremented this locally (short protection window)
         const lastIncrement =
-          freemium.usage.lastIncrementTimestamps?.[feature] || 0;
+          localUsage.lastIncrementTimestamps?.[feature] || 0;
         const timeSinceIncrement = Date.now() - lastIncrement;
 
         // Use a small window (5 seconds) to avoid fighting with in-flight requests,
@@ -333,13 +334,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           console.log(
             `[SUBSCRIPTION] Sync: Resetting local usage for ${feature} (API is 0 and no recent local increment)`,
           );
-          freemium.resetUsage(feature);
+          resetUsage(feature);
         }
       } else if (q.used !== localUsed) {
         // API differs from local state (usually we sync UP, but we must also heal DOWN)
         // Check if we JUST incremented this locally (5 seconds protection window for in-flight requests)
         const lastIncrement =
-          freemium.usage.lastIncrementTimestamps?.[feature] || 0;
+          localUsage.lastIncrementTimestamps?.[feature] || 0;
         const timeSinceIncrement = Date.now() - lastIncrement;
 
         if (timeSinceIncrement > 5000 || q.used > localUsed) {
@@ -347,11 +348,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           console.log(
             `[SUBSCRIPTION] Sync: Correcting local usage for ${feature} from API (${localUsed} -> ${q.used})`,
           );
-          freemium.syncUsage(feature, q.used);
+          syncUsage(feature, q.used);
         }
       }
     });
-  }, [apiData.quotas, freemium.usage]);
+  }, [apiData.quotas, localUsage, resetUsage, syncUsage]);
 
   // Listen for subscription-downgraded event (403 interceptor)
   useEffect(() => {
@@ -458,9 +459,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       lastResetDate:
         apiData.quotas?.ats_score?.reset_at ?? freemium.usage.lastResetDate,
     }),
-    [apiData.quotas, freemium.usage],
+    [apiData.quotas, apiData.saved_jobs_quota?.used, freemium.usage],
   );
 
+  const quotas = apiData.quotas;
   // canUse helper: Check if user can use a feature based on API quotas + local state
   const canUse = useCallback(
     (feature: FeatureType): boolean => {
@@ -468,12 +470,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const localCanUse = freemium.canUse(feature);
 
       // 2. If no API data yet, rely on local state
-      if (!apiData.quotas) {
+      if (!quotas) {
         return localCanUse;
       }
 
       // 3. Extract API access flag
-      const q = apiData.quotas[feature as keyof typeof apiData.quotas];
+      const q = quotas[feature as keyof typeof quotas];
       const apiCanUse = q ? (q as any).has_access : localCanUse;
 
       // 4. IMPORTANT: If user is authenticated and API says YES, trust it.
@@ -487,23 +489,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // 6. Default to conservative (both must agree)
       return apiCanUse && localCanUse;
     },
-    [apiData.quotas, freemium, userId],
+    [quotas, freemium, userId],
   );
 
   // getRemaining helper: Get remaining quota based on API data for ALL features
   const getRemaining = useCallback(
     (feature: FeatureType): number => {
       const localRemaining = freemium.getRemaining(feature);
-      if (!apiData.quotas) return localRemaining;
+      if (!quotas) return localRemaining;
 
       // Per-coach remaining for assistant_messages
       if (
         feature === "assistant_messages" &&
-        apiData.quotas.assistant_messages?.by_coach
+        quotas.assistant_messages?.by_coach
       ) {
         const selectedCoach = assistantCtx?.selectedAssistant ?? "career-coach";
         const coachQuota =
-          apiData.quotas.assistant_messages.by_coach[selectedCoach];
+          quotas.assistant_messages.by_coach[selectedCoach];
         if (coachQuota) {
           return coachQuota.remaining === -1 ? Infinity : coachQuota.remaining;
         }
@@ -512,7 +514,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // Special case: saved_jobs (prefer the most aggressive used count)
       if (feature === "saved_jobs") {
         const apiUsed =
-          apiData.quotas?.saved_jobs?.used ??
+          quotas?.saved_jobs?.used ??
           apiData.saved_jobs_quota?.used ??
           0;
         const localUsed = freemium.usage.savedJobsCount;
@@ -526,7 +528,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
 
       // Generic lookup for all other quota-tracked features
-      const quotaData = apiData.quotas[feature as keyof typeof apiData.quotas];
+      const quotaData = quotas[feature as keyof typeof quotas];
       if (!quotaData) return localRemaining;
 
       // Calculate remaining based on API limit minus unified usage
@@ -555,7 +557,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
       return Math.max(0, limit - used);
     },
-    [apiData.quotas, freemium, assistantCtx?.selectedAssistant],
+    [quotas, freemium, assistantCtx?.selectedAssistant, plan, usageFromApi, apiData.saved_jobs_quota?.used, apiData.saved_jobs_quota?.limit],
   );
 
   // Refs to keep incrementUsage stable across renders (prevents downstream effect re-runs)
@@ -668,6 +670,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }),
     [
       // Plan data from API
+      apiData.quotas,
+      freemium.getRequiredPlan,
+      freemium.resetUsage,
+      freemium.setPlan,
       plan,
       planName,
       apiData.subscription?.status,

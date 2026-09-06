@@ -189,7 +189,7 @@ export function RecruiterFinderDrawer({
     setResult(null);
     setSearched(false);
     setQuotaError(false);
-  }, [job.id]);
+  }, [job.id, job.company]);
 
   const handleSearch = async () => {
     if (!session?.access_token) {

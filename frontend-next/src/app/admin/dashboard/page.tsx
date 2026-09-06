@@ -272,7 +272,7 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Vue d'ensemble en temps réel — màj{" "}
+            Vue d&apos;ensemble en temps réel — màj{" "}
             {lastRefresh.toLocaleTimeString("fr-FR", {
               hour: "2-digit",
               minute: "2-digit",

@@ -986,7 +986,7 @@ export function ApplyModal({
               </Button>
 
               <p className="text-center text-xs text-slate-400">
-                L'IA adapte votre CV aux mots-clés du poste et rédige une lettre
+                L&apos;IA adapte votre CV aux mots-clés du poste et rédige une lettre
                 personnalisée
               </p>
             </div>
@@ -1476,7 +1476,7 @@ export function ApplyModal({
                   size="lg"
                 >
                   <a href={job.url} target="_blank" rel="noopener noreferrer">
-                    Postuler sur le site de l'offre
+                    Postuler sur le site de l&apos;offre
                     <ExternalLink className="ml-2 h-4 w-4" />
                   </a>
                 </Button>

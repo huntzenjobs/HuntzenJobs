@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { PLAN_LIMITS } from "@/hooks/use-freemium-limits";
 import { Bookmark, Loader2, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Contact {
   name?: string;
@@ -130,7 +130,7 @@ export function RecruiterEmailFinder({
     }
   };
 
-  const fetchSavedContacts = async () => {
+  const fetchSavedContacts = useCallback(async () => {
     if (!session?.access_token) return;
     setLoadingSaved(true);
     try {
@@ -150,13 +150,13 @@ export function RecruiterEmailFinder({
     } finally {
       setLoadingSaved(false);
     }
-  };
+  }, [session?.access_token]);
 
   useEffect(() => {
     if (session?.access_token) {
       fetchSavedContacts();
     }
-  }, [session?.access_token]);
+  }, [session?.access_token, fetchSavedContacts]);
 
   const handleSaveContact = async (contact: Contact) => {
     if (!session?.access_token) {

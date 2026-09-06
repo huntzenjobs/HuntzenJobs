@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -86,7 +87,7 @@ export function WelcomeScreen({
         style={{ backgroundColor: assistant.bgColor }}
       >
         {assistant.avatarUrl ? (
-          <img
+          <Image width={96} height={96} unoptimized
             src={assistant.avatarUrl}
             alt={displayName}
             className="size-24 rounded-full object-cover"

@@ -17,7 +17,6 @@ import {
   Clock,
   DollarSign,
   Users,
-  Sparkles,
   Info,
   FileText,
   Download,
@@ -32,7 +31,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { Job } from "@/lib/api/huntzen-client";
-import { formatJobSource } from "@/lib/utils/job-source-formatter";
 import DOMPurify from "dompurify";
 import { useFullJobDescription } from "@/hooks/use-full-job-description";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -257,8 +255,6 @@ export function JobDetailsModal({
     // "Non" → pas de badge "Postulé", la card garde juste "Déjà ouvert"
   };
 
-  // Format source for display
-  const displaySource = formatJobSource(job.source);
 
   // Use full description if available, fallback to job.description
   const displayDescription = normalizeJobDescription(
@@ -306,7 +302,7 @@ export function JobDetailsModal({
           <DialogPrimitive.Content
             className={cn(
               "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%]",
-              "w-full max-w-[95vw] md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[95vh]",
+              "w-full max-w-[calc(100vw-1rem)] md:max-w-4xl lg:max-w-5xl max-h-[calc(100dvh-1rem)]",
               "bg-white rounded-lg shadow-xl flex flex-col",
               "overflow-hidden",
               "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -348,10 +344,10 @@ export function JobDetailsModal({
             </div>
 
             {/* Body - Scrollable with 2-column layout */}
-            <div className="overflow-y-auto flex-1 p-4 md:p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+            <div className="overflow-y-auto min-h-0 flex-1 p-4 md:p-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 {/* Left Column - Main Info (2/3 width) */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-6 order-2 lg:order-1 min-w-0">
                   {/* Truncated description notice */}
                   {job.description_truncated &&
                     !fullDescription &&
@@ -366,11 +362,10 @@ export function JobDetailsModal({
                   {/* Description */}
                   {(job.description || displayDescription) && (
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Briefcase className="h-6 w-6 text-blue-600" />
+                      <h3 className="text-lg font-semibold text-slate-900 mb-4">
                         {t("jobDescription")}
                       </h3>
-                      <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                      <div className="max-w-prose">
                         {loadingDescription ? (
                           <div className="space-y-4">
                             <Skeleton className="h-5 w-1/3" />
@@ -388,7 +383,7 @@ export function JobDetailsModal({
                           </div>
                         ) : (
                           <div
-                            className="prose prose-sm max-w-none whitespace-pre-line prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:hover:underline prose-ul:list-disc prose-ol:list-decimal"
+                            className="prose prose-sm max-w-none break-words whitespace-pre-line prose-headings:text-slate-900 prose-headings:font-semibold prose-p:text-slate-700 prose-p:leading-relaxed prose-a:text-cyan-800 prose-a:underline prose-ul:list-disc prose-ol:list-decimal"
                             dangerouslySetInnerHTML={{
                               __html: sanitizedDescription,
                             }}
@@ -437,19 +432,19 @@ export function JobDetailsModal({
                 </div>
 
                 {/* Right Column - Quick Info (1/3 width) */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">
+                <div className="order-1 lg:order-2 grid grid-cols-2 gap-x-4 lg:block lg:space-y-4 border-b lg:border-b-0 lg:border-l border-slate-200 pb-4 lg:pb-0 lg:pl-6">
+                  <h3 className="col-span-2 text-sm font-semibold text-slate-900 mb-2">
                     {t("keyInfo")}
                   </h3>
 
                   {/* Salary */}
                   {job.salary && (
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                      <div className="flex items-center gap-2 text-sm text-green-700 mb-2">
+                    <div className="py-2">
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
                         <DollarSign className="h-5 w-5" />
                         <span className="font-semibold">{t("salary")}</span>
                       </div>
-                      <p className="text-green-900 font-bold text-lg">
+                      <p className="text-slate-900 font-semibold text-base">
                         {job.salary}
                       </p>
                     </div>
@@ -457,7 +452,7 @@ export function JobDetailsModal({
 
                   {/* Company */}
                   {job.company && (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="py-2">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <Building className="h-5 w-5" />
                         <span className="font-semibold">{t("company")}</span>
@@ -468,7 +463,7 @@ export function JobDetailsModal({
 
                   {/* Location */}
                   {job.location && (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="py-2">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <MapPin className="h-5 w-5" />
                         <span className="font-semibold">{t("location")}</span>
@@ -481,7 +476,7 @@ export function JobDetailsModal({
 
                   {/* Posted Date */}
                   {job.posted_date && (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="py-2">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <Clock className="h-5 w-5" />
                         <span className="font-semibold">{t("postedDate")}</span>
@@ -494,7 +489,7 @@ export function JobDetailsModal({
 
                   {/* Contract Type */}
                   {job.contract_type && (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="py-2">
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <Briefcase className="h-5 w-5" />
                         <span className="font-semibold">
@@ -511,37 +506,24 @@ export function JobDetailsModal({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-gray-200 p-4 md:p-6 bg-gray-50 flex-shrink-0">
+            <div className="border-t border-slate-200 p-3 md:px-6 md:py-4 bg-white flex-shrink-0">
               {/* Ligne 1 : actions secondaires — s'empilent sur mobile */}
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
+                  className="min-h-11"
                   onClick={() => setContactDrawerOpen(true)}
                 >
                   <Users className="mr-2 h-4 w-4" />
                   {t("findContacts")}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 sm:flex-none"
-                  onClick={() => onOpenChange(false)}
-                >
-                  {t("close")}
-                </Button>
                 {job.url && (
                   <Button
                     asChild
-                    variant={
-                      job.url_is_direct || isNowDirect ? "default" : "outline"
-                    }
+                    variant="default"
                     size="sm"
-                    className={
-                      job.url_is_direct || isNowDirect
-                        ? "flex-1 sm:flex-none bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950"
-                        : "flex-1 sm:flex-none"
-                    }
+                    className="flex-1 min-h-11 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold"
                   >
                     <a href={resolvedUrl} target="_blank" rel="noopener noreferrer" onClick={handleApplyClick}>
                       {job.url_is_direct || isNowDirect
@@ -556,8 +538,9 @@ export function JobDetailsModal({
               {job.url && (
                 <div className="flex items-center gap-1">
                   <Button
-                    size="lg"
-                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+                    size="sm"
+                    variant="ghost"
+                    className="flex-1 min-h-11 text-slate-700 hover:bg-slate-50 whitespace-normal text-left"
                     onClick={() => {
                       if (!canUse("matching_score")) {
                         openPricingModal("matching_score");
@@ -566,7 +549,7 @@ export function JobDetailsModal({
                       setApplyModalOpen(true);
                     }}
                   >
-                    <Sparkles className="mr-2 h-4 w-4" />
+                    <FileText className="mr-2 h-4 w-4 shrink-0" />
                     {t("generateDocuments")}
                   </Button>
                   <Popover>
