@@ -1,9 +1,102 @@
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 
 from src.agents.base import SubAgentTransientError
 from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
+
+
+def test_docling_configuration_can_initialize_the_pdf_backend() -> None:
+    from docling.datamodel.base_models import InputFormat
+    from docling.document_converter import PdfFormatOption
+
+    agent = object.__new__(CVAnalyzerAgent)
+    agent.name = "CVAnalyzer"
+    agent._docling_converter = None
+    converter = agent.docling_converter
+    assert isinstance(converter.format_to_options[InputFormat.PDF], PdfFormatOption)
+    options = converter.format_to_options[InputFormat.PDF].pipeline_options
+    assert options.do_ocr is True
+    assert options.ocr_options.lang == ["fra", "eng"]
+    assert options.ocr_options.force_full_page_ocr is False
+
+
+@pytest.mark.asyncio
+async def test_successful_pdf_extraction_removes_private_temporary_file(tmp_path, monkeypatch) -> None:
+    from src.agents.cv_analyzer import main_agent
+
+    original = main_agent.tempfile.NamedTemporaryFile
+    monkeypatch.setattr(main_agent.tempfile, "NamedTemporaryFile",
+                        lambda **kwargs: original(dir=tmp_path, **kwargs))
+    text = "Expérience et formation en logistique. " * 10
+    agent = object.__new__(CVAnalyzerAgent)
+    agent.name = "CVAnalyzer"
+    agent._docling_converter = SimpleNamespace(convert=lambda path: SimpleNamespace(
+        document=SimpleNamespace(export_to_markdown=lambda: text)))
+    assert await agent.extract_text_from_pdf(b"synthetic fixture") == text
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.asyncio
+async def test_failed_pdf_extraction_removes_private_temporary_file(tmp_path, monkeypatch) -> None:
+    from src.agents.cv_analyzer import main_agent
+
+    original = main_agent.tempfile.NamedTemporaryFile
+    monkeypatch.setattr(main_agent.tempfile, "NamedTemporaryFile",
+                        lambda **kwargs: original(dir=tmp_path, **kwargs))
+
+    def fail_conversion(path):
+        raise ValueError("Synthetic conversion failure")
+
+    agent = object.__new__(CVAnalyzerAgent)
+    agent.name = "CVAnalyzer"
+    agent._docling_converter = SimpleNamespace(convert=fail_conversion)
+    with pytest.raises(RuntimeError):
+        await agent.extract_text_from_pdf(b"invalid synthetic PDF")
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("score", [
+    {}, {"total": "80"}, {"total": float("nan")}, {"total": -1},
+    {"total": True}, {"total": float("inf")}, {"total": 101},
+])
+async def test_invalid_ats_result_is_not_reported_as_success(score, monkeypatch) -> None:
+    from src.agents.cv_analyzer import main_agent
+
+    redis = SimpleNamespace(get=AsyncMock(return_value=None), setex=AsyncMock())
+    monkeypatch.setattr(main_agent, "get_redis", AsyncMock(return_value=redis))
+    agent = object.__new__(CVAnalyzerAgent)
+    agent.name = "CVAnalyzer"
+    agent._score_ats = AsyncMock(return_value=score)
+    agent._extract_skills = AsyncMock(return_value={"technical_skills": ["Excel"]})
+    agent._extract_info = AsyncMock(return_value={"full_name": "Alex"})
+    agent._get_improvements = AsyncMock(return_value={})
+    result = await agent.run("Expérience en manutention. Formation logistique. " * 15)
+    assert result["success"] is False
+    assert result.get("ats_score") is None
+    redis.setex.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("score", [0, 80, 100])
+async def test_valid_ats_score_is_preserved_without_invented_job_advice(score, monkeypatch) -> None:
+    from src.agents.cv_analyzer import main_agent
+
+    monkeypatch.setattr(main_agent, "get_redis", AsyncMock(return_value=None))
+    agent = object.__new__(CVAnalyzerAgent)
+    agent.name = "CVAnalyzer"
+    agent._score_ats = AsyncMock(return_value={"total": score})
+    agent._extract_skills = AsyncMock(return_value={"technical_skills": ["Excel"]})
+    agent._extract_info = AsyncMock(return_value={"full_name": "Alex"})
+    agent._get_improvements = AsyncMock(return_value={"content_improvements": ["Précisez votre rôle."]})
+    agent._match_job = AsyncMock(return_value={"match_score": 60})
+    result = await agent.run("Expérience en manutention. Formation logistique. " * 15,
+                             job_description="Offre de manutentionnaire, rangement de colis.")
+    assert result["success"] is True
+    assert result["ats_score"] == score
+    assert result["improvements"]["content_improvements"] == ["Précisez votre rôle."]
 
 
 class FakeJobMatcher:

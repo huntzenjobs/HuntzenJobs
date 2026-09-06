@@ -10,19 +10,25 @@ Sub-agents:
 4. ImprovementAdvisor - Suggests CV improvements
 """
 
+from __future__ import annotations
+
 import asyncio
 import hashlib
 import json
 import logging
-import os
+import math
 import tempfile
-from typing import Any
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING, Any, cast
 
 from groq import Groq
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.config.settings import settings
 from src.utils.cache import get_redis
+
+if TYPE_CHECKING:
+    from docling.document_converter import DocumentConverter
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +46,7 @@ class CVAnalyzerAgent(BaseAgent):
     - Improvement recommendations
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the CV Analyzer with its sub-agents."""
         config = AgentConfig(
             name="CVAnalyzer",
@@ -55,7 +61,7 @@ class CVAnalyzerAgent(BaseAgent):
         self.groq_client = Groq(api_key=settings.get_groq_key())
 
         # Docling converter (lazy loaded)
-        self._docling_converter = None
+        self._docling_converter: DocumentConverter | None = None
 
         # Initialize sub-agents
         self._init_sub_agents()
@@ -107,21 +113,27 @@ class CVAnalyzerAgent(BaseAgent):
         logger.info(f"[{self.name}] Initialized 4 sub-agents")
 
     @property
-    def docling_converter(self):
+    def docling_converter(self) -> DocumentConverter:
         """Lazy load Docling converter."""
         if self._docling_converter is None:
             from docling.datamodel.base_models import InputFormat
-            from docling.datamodel.pipeline_options import PdfPipelineOptions
-            from docling.document_converter import DocumentConverter
+            from docling.datamodel.pipeline_options import (
+                PdfPipelineOptions,
+                TesseractCliOcrOptions,
+            )
+            from docling.document_converter import DocumentConverter, PdfFormatOption
 
             logger.info(f"[{self.name}] Initializing Docling converter...")
-            # CVs are text-based PDFs — OCR is unnecessary and triggers
-            # RapidOCR model downloads that fail in non-root containers
-            pdf_options = PdfPipelineOptions(do_ocr=False)
-            self._docling_converter = DocumentConverter(
-                format_options={InputFormat.PDF: pdf_options}
+            # Le texte natif est conservé, seules les zones image nécessitent l'OCR.
+            # Tesseract et ses langues sont déjà installés dans l'image backend.
+            pdf_options = PdfPipelineOptions(
+                do_ocr=True,
+                ocr_options=TesseractCliOcrOptions(lang=["fra", "eng"]),
             )
-            logger.info(f"[{self.name}] Docling ready (OCR disabled for text-based PDFs)")
+            self._docling_converter = DocumentConverter(
+                format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pdf_options)}
+            )
+            logger.info(f"[{self.name}] Docling ready (Tesseract OCR for image regions)")
         return self._docling_converter
 
     async def run(
@@ -203,7 +215,11 @@ class CVAnalyzerAgent(BaseAgent):
                     logger.warning(f"[{self.name}] Cache read error: {e}")
 
             # Run sub-agents in parallel
-            tasks = []
+            tasks: list[Awaitable[dict[str, Any]]] = []
+            ats_task: Awaitable[dict[str, Any]]
+            skills_task: Awaitable[dict[str, Any]]
+            imp_task: Awaitable[dict[str, Any]]
+            info_task: Awaitable[dict[str, Any]]
 
             # 1. ATS Scoring
             if cached_data and "ats_result" in cached_data:
@@ -246,6 +262,17 @@ class CVAnalyzerAgent(BaseAgent):
             info_result = results[3] if isinstance(results[3], dict) else {}
             job_match_result = results[4] if len(results) > 4 and isinstance(results[4], dict) else {}
 
+            score = ats_result.get("total")
+            if (isinstance(score, bool) or not isinstance(score, (int, float))
+                    or not math.isfinite(score) or not 0 <= score <= 100):
+                return {
+                    "success": False,
+                    "error": "ATS analysis returned an invalid score. Please retry.",
+                    "error_code": "invalid_ats_result",
+                    "strengths": [],
+                    "weaknesses": [],
+                }
+
             # ── SAVE TO CACHE ──
             if redis and not cached_data:
                 try:
@@ -265,22 +292,6 @@ class CVAnalyzerAgent(BaseAgent):
             recommended_titles = self._extract_recommended_titles(skills_result)
             match_total = job_match_result.get("match_score") if job_description else None
             match_verdict = job_match_result.get("verdict", "") if job_description else ""
-
-            # ── SIMPLE CV/JD ALIGNMENT CHECK ──
-            if job_description:
-                jd_words = {w.strip(' ,.;:\n\t').lower() for w in job_description.split() if len(w) > 3}
-                tech_skills = skills_result.get("technical_skills") or []
-                extracted_skills = {str(s).lower() for s in tech_skills if s}
-                overlap = jd_words.intersection(extracted_skills)
-                if not overlap:
-                    msg = (
-                        "CV et offre semblent peu alignés : ajoutez les compétences clés de l'offre "
-                        "(ex: CI/CD, cloud provider, IaC, monitoring, sécurité)."
-                    )
-                    if isinstance(improvements_result, dict):
-                        improvements_result.setdefault("content_improvements", [])
-                        if msg not in improvements_result["content_improvements"]:
-                            improvements_result["content_improvements"].append(msg)
 
             ats_total = min(ats_result.get("total", 0), 100)
             match_total = job_match_result.get("match_score") if job_description else None
@@ -438,19 +449,19 @@ class CVAnalyzerAgent(BaseAgent):
         Returns:
             Extracted text as markdown
         """
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            tmp.write(pdf_bytes)
-            tmp_path = tmp.name
+        def convert_pdf() -> str:
+            # Le thread possède le fichier et le ferme aussi en cas d'erreur.
+            # Une annulation de l'appelant ne supprime pas un fichier encore lu.
+            with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+                tmp.write(pdf_bytes)
+                tmp.flush()
+                return cast(str, self.docling_converter.convert(tmp.name).document.export_to_markdown())
 
         docling_text = None
         docling_exc = None
         try:
             loop = asyncio.get_event_loop()
-            doc = await loop.run_in_executor(
-                None,
-                lambda: self.docling_converter.convert(tmp_path).document
-            )
-            docling_text = doc.export_to_markdown()
+            docling_text = await loop.run_in_executor(None, convert_pdf)
         except Exception as exc:
             docling_exc = exc
             logger.warning(
@@ -494,8 +505,6 @@ class CVAnalyzerAgent(BaseAgent):
                 f"pypdf fallback also failed: {pypdf_exc}. "
                 "The PDF may be image-based (scanned) or use unsupported encoding."
             ) from None
-        finally:
-            os.unlink(tmp_path)
 
     async def analyze_ats_only(self, cv_text: str) -> dict:
         """
@@ -535,7 +544,7 @@ def get_cv_analyzer() -> CVAnalyzerAgent:
         CVAnalyzerAgent singleton instance (thread-safe via deps.py)
     """
     from src.api.deps import get_cv_analyzer_main
-    return get_cv_analyzer_main()
+    return cast(CVAnalyzerAgent, get_cv_analyzer_main())
 
 
 async def analyze_cv(
