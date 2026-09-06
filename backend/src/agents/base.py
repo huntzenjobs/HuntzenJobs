@@ -266,7 +266,7 @@ class BaseAgent(ABC):
             except json.JSONDecodeError:
                 pass
 
-        logger.error(f"[{self.name}] Failed to parse JSON from response. Raw text: {text[:500]}...")
+        logger.error("[%s] Failed to parse JSON from response (%d characters)", self.name, len(text))
         return None
 
     def _parse_json_response(self, text: str) -> dict | None:

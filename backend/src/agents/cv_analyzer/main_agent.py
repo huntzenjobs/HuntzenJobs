@@ -189,7 +189,7 @@ class CVAnalyzerAgent(BaseAgent):
 
             # ── CACHE LAYER ──
             cv_hash = hashlib.md5(cv_text.encode()).hexdigest()
-            cache_key = f"cv:analysis:{cv_hash}"
+            cache_key = f"cv:analysis:v2:{language}:{cv_hash}"
 
             redis = await get_redis()
             cached_data = None
@@ -305,7 +305,7 @@ class CVAnalyzerAgent(BaseAgent):
                 "job_match": job_match_result if job_description else None,
                 "job_match_score": match_total,
                 "verdict": match_verdict,
-                "strengths": self._extract_strengths(ats_result, skills_result),
+                "strengths": self._extract_strengths(ats_result, skills_result, language),
                 "weaknesses": self._extract_weaknesses(ats_result, improvements_result),
                 "recommended_job_titles": recommended_titles,
             }
@@ -352,7 +352,9 @@ class CVAnalyzerAgent(BaseAgent):
 
     async def _get_improvements(self, cv_text: str, language: str = "en") -> dict:
         """Get CV improvements."""
-        return await self.delegate_to("ImprovementAdvisor", task=cv_text, context=f"Language: {language}")
+        result = await self.delegate_to("ImprovementAdvisor", task=cv_text, context=f"Language: {language}")
+        parsed = self._parse_json(result)
+        return parsed if isinstance(parsed, dict) else {}
 
     async def _extract_info(self, cv_text: str, language: str = "en") -> dict:
         """Extract identity info from CV."""
@@ -381,7 +383,7 @@ class CVAnalyzerAgent(BaseAgent):
             ]
         return filtered
 
-    def _extract_strengths(self, ats_result: dict, skills_result: dict) -> list[str]:
+    def _extract_strengths(self, ats_result: dict, skills_result: dict, language: str = "en") -> list[str]:
         """Extract strengths from analysis."""
         strengths = []
 
@@ -394,10 +396,18 @@ class CVAnalyzerAgent(BaseAgent):
         # From Soft/Technical Skills (Top ones)
         tech_skills = skills_result.get("technical_skills", [])[:3]
         if tech_skills:
-            strengths.append(f"Strong proficiency in: {', '.join(tech_skills)}")
+            label = {
+                "fr": "Compétences mentionnées", "en": "Skills mentioned",
+                "es": "Competencias mencionadas", "pt": "Competências mencionadas",
+            }.get(language, "Skills mentioned")
+            strengths.append(f"{label} : {', '.join(tech_skills)}")
 
         if skills_result.get("certifications"):
-            strengths.append(f"Has {len(skills_result['certifications'])} certifications")
+            label = {
+                "fr": "Certifications mentionnées", "en": "Certifications mentioned",
+                "es": "Certificaciones mencionadas", "pt": "Certificações mencionadas",
+            }.get(language, "Certifications mentioned")
+            strengths.append(f"{label} : {len(skills_result['certifications'])}")
 
         return strengths[:5]
 
