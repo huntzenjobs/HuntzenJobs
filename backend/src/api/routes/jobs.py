@@ -11,7 +11,7 @@ import logging
 import re
 
 import httpx
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
@@ -797,16 +797,59 @@ async def get_market_insights(
     }
 
 
-def _clean_element_html(el) -> str:
-    """
-    Strip unsafe/noisy attributes from all child tags and return inner HTML.
-    """
-    for tag in el.find_all(True):
-        tag.attrs = {
-            k: v for k, v in tag.attrs.items()
-            if k not in ("style", "class", "id") and not k.startswith("on")
-        }
-    return el.decode_contents()
+def _clean_element_html(el: Tag) -> str:
+    """Conserve le texte métier, sans contrôles ni mise en page du fournisseur."""
+    for tag in el.select("script, style, nav, header, footer, form, button, iframe, svg, img"):
+        tag.decompose()
+    allowed = {"p", "br", "ul", "ol", "li", "strong", "b", "em", "i", "h2", "h3", "h4", "div"}
+    for tag in list(el.find_all(True)):
+        tag.attrs = {}
+        if tag.name not in allowed:
+            tag.unwrap()
+    for tag in reversed(el.find_all(["p", "div", "li"])):
+        if not tag.get_text(strip=True):
+            tag.decompose()
+    return re.sub(r"\n\s*\n", "\n", el.decode_contents()).strip()
+
+
+def _extract_job_description(page_html: str) -> str:
+    """Extrait uniquement une description identifiée, jamais la page entière."""
+    soup = BeautifulSoup(page_html, "html.parser")
+    postings: list[dict] = []
+    for script in soup.select('script[type="application/ld+json"]'):
+        try:
+            pending = [json.loads(script.get_text())]
+        except (ValueError, TypeError):
+            continue
+        while pending:
+            node = pending.pop()
+            if isinstance(node, list):
+                pending.extend(node)
+            elif isinstance(node, dict):
+                node_type = node.get("@type", [])
+                if node_type == "JobPosting" or (isinstance(node_type, list) and "JobPosting" in node_type):
+                    postings.append(node)
+                elif "@graph" in node:
+                    pending.append(node["@graph"])
+    # Plusieurs annonces structurées indiquent une liste, pas un poste unique.
+    if len(postings) > 1:
+        return ""
+    if postings and isinstance(postings[0].get("description"), str):
+        content = _clean_element_html(BeautifulSoup(postings[0]["description"], "html.parser"))
+        if len(content) >= 50:
+            return content
+    for selector in (
+        '[itemprop="description"]', '[class*="job-description"]',
+        '[class*="jobDescription"]', '[class*="job_description"]',
+        '[id*="job-description"]',
+    ):
+        elements = soup.select(selector)
+        if len(elements) != 1:
+            continue
+        content = _clean_element_html(elements[0])
+        if len(BeautifulSoup(content, "html.parser").get_text(strip=True)) >= 50:
+            return content
+    return ""
 
 
 @router.post("/description")
@@ -816,7 +859,7 @@ async def get_job_description(request: Request):
     Get full job description by scraping the job URL.
 
     Fetches the page and extracts the job description section using common
-    CSS selectors, then falls back to the longest paragraph block.
+    CSS selectors or a single structured JobPosting description.
     Returns HTML content and the final resolved URL after redirects.
     """
     try:
@@ -835,42 +878,11 @@ async def get_job_description(request: Request):
         if response.status_code != 200:
             return {"success": False, "description": "", "final_url": final_url}
 
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        # Remove noisy elements
-        for tag in soup(["script", "style", "nav", "header", "footer"]):
-            tag.decompose()
-
-        # Try common job description selectors (most specific first)
-        selectors = [
-            '[class*="job-description"]',
-            '[class*="jobDescription"]',
-            '[class*="job_description"]',
-            '[id*="job-description"]',
-            '[class*="description"]',
-            'article',
-            'main',
-        ]
-        found_el = None
-        for selector in selectors:
-            el = soup.select_one(selector)
-            if el and len(el.get_text(strip=True)) > 200:
-                found_el = el
-                break
-
-        if found_el:
-            html_content = _clean_element_html(found_el)
-        else:
-            # Fallback: wrap long paragraphs in <p> tags
-            paragraphs = soup.find_all("p")
-            html_content = "".join(
-                f"<p>{p.get_text(strip=True)}</p>"
-                for p in paragraphs if len(p.get_text()) > 50
-            )
+        html_content = _extract_job_description(response.text)
 
         if not html_content or len(html_content.strip()) < 50:
             return {"success": False, "description": "", "final_url": final_url}
-        return {"success": True, "description": html_content[:8000], "final_url": final_url}
+        return {"success": True, "description": html_content, "final_url": final_url}
 
     except Exception:
         logger.exception("description scrape failed for url=%s", url)

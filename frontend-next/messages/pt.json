@@ -1501,8 +1501,8 @@
     "generateDocuments": "Gerar CVs adaptados + letras",
     "notAvailable": "Não especificado",
     "applyDirect": "Candidatar-se diretamente",
-    "viewOffer": "Ver a oferta",
-    "truncatedDescription": "Clique em \"Ver a oferta\" para aceder à descrição completa.",
+    "viewOffer": "Ver a oferta original",
+    "truncatedDescription": "Apenas um resumo está disponível aqui. Consulte a oferta original para ler o resto.",
     "relativeDate": {
       "today": "Hoje",
       "yesterday": "Ontem",

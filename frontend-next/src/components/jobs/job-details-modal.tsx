@@ -198,7 +198,6 @@ export function JobDetailsModal({
   if (!job) return null;
 
   const resolvedUrl = finalUrl || job.url;
-  const isNowDirect = !!finalUrl;
 
   const handleApplyClick = () => {
     // Capturer le job pour le cas où la modal se ferme avant la popup
@@ -344,10 +343,10 @@ export function JobDetailsModal({
             </div>
 
             {/* Body - Scrollable with 2-column layout */}
-            <div className="overflow-y-auto min-h-0 flex-1 p-4 md:p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+            <div className="overflow-y-auto min-h-0 flex-1 p-4 md:p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Left Column - Main Info (2/3 width) */}
-                <div className="lg:col-span-2 space-y-6 order-2 lg:order-1 min-w-0">
+                <div className="lg:col-span-2 space-y-4 order-2 lg:order-1 min-w-0">
                   {/* Truncated description notice */}
                   {job.description_truncated &&
                     !fullDescription &&
@@ -383,7 +382,7 @@ export function JobDetailsModal({
                           </div>
                         ) : (
                           <div
-                            className="prose prose-sm max-w-none break-words whitespace-pre-line prose-headings:text-slate-900 prose-headings:font-semibold prose-p:text-slate-700 prose-p:leading-relaxed prose-a:text-cyan-800 prose-a:underline prose-ul:list-disc prose-ol:list-decimal"
+                            className={`prose prose-sm max-w-none break-words ${/<[a-z][\s\S]*>/i.test(displayDescription) ? "whitespace-normal" : "whitespace-pre-line"} prose-headings:text-slate-900 prose-headings:font-semibold prose-headings:my-3 prose-p:text-slate-700 prose-p:leading-relaxed prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0 prose-a:text-cyan-800 prose-a:underline prose-ul:list-disc prose-ol:list-decimal`}
                             dangerouslySetInnerHTML={{
                               __html: sanitizedDescription,
                             }}
@@ -450,30 +449,6 @@ export function JobDetailsModal({
                     </div>
                   )}
 
-                  {/* Company */}
-                  {job.company && (
-                    <div className="py-2">
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                        <Building className="h-5 w-5" />
-                        <span className="font-semibold">{t("company")}</span>
-                      </div>
-                      <p className="text-gray-900 font-medium">{job.company}</p>
-                    </div>
-                  )}
-
-                  {/* Location */}
-                  {job.location && (
-                    <div className="py-2">
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                        <MapPin className="h-5 w-5" />
-                        <span className="font-semibold">{t("location")}</span>
-                      </div>
-                      <p className="text-gray-900 font-medium">
-                        {job.location}
-                      </p>
-                    </div>
-                  )}
-
                   {/* Posted Date */}
                   {job.posted_date && (
                     <div className="py-2">
@@ -526,9 +501,7 @@ export function JobDetailsModal({
                     className="flex-1 min-h-11 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold"
                   >
                     <a href={resolvedUrl} target="_blank" rel="noopener noreferrer" onClick={handleApplyClick}>
-                      {job.url_is_direct || isNowDirect
-                        ? t("applyDirect")
-                        : t("viewOffer")}
+                      {t("viewOffer")}
                       <ExternalLink className="ml-2 h-4 w-4" />
                     </a>
                   </Button>

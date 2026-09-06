@@ -2003,8 +2003,8 @@
     "generateDocuments": "Générer CV + lettre adaptés",
     "notAvailable": "Non spécifié",
     "applyDirect": "Postuler directement",
-    "viewOffer": "Voir l'offre",
-    "truncatedDescription": "Cliquez sur \"Voir l'offre\" pour accéder à la description complète.",
+    "viewOffer": "Voir l'offre originale",
+    "truncatedDescription": "Seul un extrait est disponible ici. Consultez l'offre originale pour lire la suite.",
     "relativeDate": {
       "today": "Aujourd'hui",
       "yesterday": "Hier",

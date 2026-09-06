@@ -1501,8 +1501,8 @@
     "generateDocuments": "Generar CV + carta adaptados",
     "notAvailable": "No especificado",
     "applyDirect": "Postular directamente",
-    "viewOffer": "Ver la oferta",
-    "truncatedDescription": "Haz clic en \"Ver la oferta\" para acceder a la descripción completa.",
+    "viewOffer": "Ver la oferta original",
+    "truncatedDescription": "Aquí solo hay un extracto disponible. Consulta la oferta original para leer el resto.",
     "relativeDate": {
       "today": "Hoy",
       "yesterday": "Ayer",

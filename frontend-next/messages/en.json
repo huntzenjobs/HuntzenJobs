@@ -1846,8 +1846,8 @@
     "generateDocuments": "Generate adapted CVs + letters",
     "notAvailable": "Not specified",
     "applyDirect": "Apply directly",
-    "viewOffer": "View Offering",
-    "truncatedDescription": "Click \"View offer\" to access the full job description.",
+    "viewOffer": "View original listing",
+    "truncatedDescription": "Only a preview is available here. View the original listing to read more.",
     "relativeDate": {
       "today": "Today",
       "yesterday": "Yesterday",

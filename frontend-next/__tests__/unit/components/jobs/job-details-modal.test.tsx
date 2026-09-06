@@ -24,3 +24,10 @@ it("expose l'offre externe comme un vrai lien accessible au clavier", () => {
   render(<JobDetailsModal job={job} open onOpenChange={vi.fn()} />);
   expect(screen.getByRole("link", { name: "viewOffer" })).toHaveAttribute("href", job.url);
 });
+
+it("ne promet pas de candidature directe et ne répète pas entreprise et lieu", () => {
+  render(<JobDetailsModal job={{ ...job, url_is_direct: true }} open onOpenChange={vi.fn()} />);
+  expect(screen.getByRole("link", { name: "viewOffer" })).toHaveAttribute("href", job.url);
+  expect(screen.getAllByText(job.company)).toHaveLength(1);
+  expect(screen.getAllByText(job.location)).toHaveLength(1);
+});
