@@ -132,7 +132,7 @@ image = (
         "pydantic-settings",
         "tenacity",
         "cachetools>=5.3.2",
-        "supabase==2.10.0",
+        "supabase==2.16.0",
         "slowapi==0.1.9",
         "sentry-sdk[fastapi]==2.19.2",
         "stripe>=11.0.0",
