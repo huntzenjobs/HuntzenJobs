@@ -5,9 +5,11 @@ Custom middleware for logging, CORS, rate limiting.
 """
 
 import logging
+import os
 import time
 from collections.abc import Callable
 from functools import lru_cache
+from ipaddress import ip_address
 from uuid import UUID, uuid4
 
 import jwt
@@ -34,6 +36,18 @@ def _canonical_request_id(requested_id: str) -> str:
         return uuid4().hex
 
 
+def get_rate_limit_client_ip(request: Request) -> str:
+    """Identifier le client réel derrière le proxy public Railway."""
+    if os.getenv("RAILWAY_ENVIRONMENT_ID"):
+        railway_real_ip = request.headers.get("x-real-ip", "").strip()
+        try:
+            return str(ip_address(railway_real_ip))
+        except ValueError:
+            pass
+
+    return str(get_remote_address(request) or "unknown")
+
+
 @lru_cache(maxsize=4)
 def _get_supabase_jwks_client(jwks_url: str) -> jwt.PyJWKClient:
     """Cache le jeu de clés Supabase et refuse les rafraîchissements par `kid` arbitraire."""
@@ -50,7 +64,7 @@ def get_verified_supabase_user_rate_limit_key(request: Request) -> str:
     """Utilise le `sub` uniquement après vérification locale de la signature Supabase."""
     authorization = request.headers.get("authorization", "")
     if not authorization.startswith("Bearer ") or not settings.supabase_url:
-        return get_remote_address(request)
+        return get_rate_limit_client_ip(request)
 
     token = authorization[7:].strip()
     try:
@@ -82,7 +96,7 @@ def get_verified_supabase_user_rate_limit_key(request: Request) -> str:
             raise jwt.InvalidTokenError("Missing Supabase subject")
         return f"user:{user_id}"
     except (jwt.PyJWTError, StopIteration, ValueError, TypeError):
-        return get_remote_address(request)
+        return get_rate_limit_client_ip(request)
 
 
 async def custom_rate_limit_handler(request: Request, exc: Exception) -> Response:
@@ -138,7 +152,7 @@ def get_limiter() -> Limiter:
         try:
             logger.info("✅ Initializing distributed rate limiting with Railway Redis")
             return Limiter(
-                key_func=get_remote_address,
+                key_func=get_rate_limit_client_ip,
                 storage_uri=redis_url,
                 default_limits=["300/minute"],
                 swallow_errors=True,
@@ -152,7 +166,7 @@ def get_limiter() -> Limiter:
         logger.warning("⚠️ Using in-memory rate limiting (not distributed)")
 
     return Limiter(
-        key_func=get_remote_address,
+        key_func=get_rate_limit_client_ip,
         default_limits=["300/minute"],
     )
 

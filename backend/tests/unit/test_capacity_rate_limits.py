@@ -17,7 +17,7 @@ def test_auth_rate_limit_combines_coarse_ip_and_validated_user_guards() -> None:
     assert 'algorithm not in {"ES256", "RS256"}' in middleware
     assert "jwks_client.get_signing_keys(refresh=False)" in middleware
     assert "jwt.decode(" in middleware
-    assert "return get_remote_address(request)" in middleware
+    assert "return get_rate_limit_client_ip(request)" in middleware
     assert (
         '@limiter.limit("60/minute", key_func=get_verified_supabase_user_rate_limit_key)'
         in auth_route
