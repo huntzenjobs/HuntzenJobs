@@ -1307,6 +1307,9 @@ attributed to the candidate without support in CANDIDATE SOURCE DATA."""
         title = personal_info.get("title") or first_experience.get("title") or ""
         summary = str(cv_data.get("summary") or "").strip()
         employer = str(first_experience.get("company") or "").strip()
+        # Le paragraphe peut agréger deux postes, pas les attribuer au premier employeur.
+        if len(experiences) > 1:
+            employer = ""
         bullets = [
             str(bullet).strip()
             for experience in experiences[:2]

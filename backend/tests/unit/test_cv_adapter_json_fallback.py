@@ -49,6 +49,19 @@ async def test_skill_categorization_failure_keeps_all_source_skills_once() -> No
     assert set(skills) == set(source)
 
 
+@pytest.mark.parametrize("language", ["fr", "en"])
+def test_source_only_letter_does_not_attribute_two_jobs_to_one_employer(language: str) -> None:
+    result = CVAdapterAgent._build_source_only_cover_letter(
+        {"experiences": [
+            {"company": "Source A", "bullets": ["Réception des colis."]},
+            {"company": "Source B", "bullets": ["Mise en rayon."]},
+        ]}, language=language, company_name="Cible", date_str="2026-09-06"
+    )
+    assert "Réception des colis." in result["paragraph_2"]
+    assert "Mise en rayon." in result["paragraph_2"]
+    assert "Source A" not in result["paragraph_2"]
+
+
 class FakeCompletions:
     def __init__(self) -> None:
         self.calls: list[dict[str, object]] = []
