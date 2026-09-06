@@ -1546,9 +1546,9 @@ export default function JobsPage() {
                                     : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
                                 )}
                               >
-                                {t(`contractType_${ct.toLowerCase()}`, {
-                                  defaultMessage: ct,
-                                })}
+                                {t.has(`contractType_${ct.toLowerCase()}`)
+                                  ? t(`contractType_${ct.toLowerCase()}`)
+                                  : ct}
                               </button>
                             ))}
                           </div>
@@ -1646,7 +1646,7 @@ export default function JobsPage() {
 
               <div
                 aria-live="polite"
-                className="grid grid-cols-1 gap-6 auto-rows-fr md:grid-cols-2 xl:grid-cols-3"
+                className="grid grid-cols-1 gap-4 auto-rows-fr lg:grid-cols-2"
               >
                 {/* Visible jobs (current page) */}
                 {paginatedJobs.map((job, index) => (
@@ -1658,17 +1658,17 @@ export default function JobsPage() {
                   >
                     <Card
                       className={cn(
-                        "hover:shadow-2xl hover:border-[#00D9FF]/30 transition-all duration-300 group flex flex-col border border-slate-200 overflow-hidden h-full",
+                        "hover:shadow-md hover:border-sky-300 transition-colors duration-200 group flex flex-col border border-slate-200 rounded-2xl overflow-hidden h-full",
                         viewedJobIds.has(job.id)
                           ? "bg-slate-50/80"
                           : "bg-white",
                       )}
                     >
-                      <CardHeader className="pb-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
+                      <CardHeader className="p-5 pb-4 border-b border-slate-100">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <CardTitle className="text-xl line-clamp-2 font-black group-hover:text-[#00D9FF] transition-colors text-slate-900">
+                              <CardTitle className="text-lg sm:text-xl leading-snug line-clamp-2 font-semibold text-slate-900">
                                 {job.title}
                               </CardTitle>
                               {appliedJobIds.has(job.id) && (
@@ -1687,7 +1687,7 @@ export default function JobsPage() {
                             <CardDescription className="flex items-center gap-2 mt-3 text-base">
                               <div
                                 className={cn(
-                                  "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md text-white font-bold text-sm",
+                                  "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-semibold text-sm",
                                   getSourceColor(job.source),
                                 )}
                               >
@@ -1705,8 +1705,7 @@ export default function JobsPage() {
                           <div className="flex flex-col items-end gap-2">
                             <Badge
                               className={cn(
-                                "shrink-0 font-bold px-3 py-1 text-white border-0",
-                                getSourceColor(job.source),
+                                "shrink-0 font-medium px-2 py-1 text-slate-600 bg-slate-100 border-0 hover:bg-slate-100",
                               )}
                             >
                               {formatJobSource(job.source)}
@@ -1813,7 +1812,7 @@ export default function JobsPage() {
                         <div className="flex gap-2 pt-5 mt-auto">
                           <Button
                             size="lg"
-                            className="flex-1 bg-gradient-to-r from-[#00D9FF] to-[#00C4EA] hover:from-[#00C4EA] hover:to-[#00B3D9] text-white font-bold shadow-md hover:shadow-lg hover:shadow-[#00D9FF]/30 transition-all h-11"
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors h-11 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
                             onClick={() => handleViewDetails(job)}
                           >
                             {t("card.details")}

@@ -4,22 +4,22 @@
  */
 
 const SOURCE_MAPPING: Record<string, string> = {
-  adzuna: "Offre vérifiée",
-  google_jobs: "Offre vérifiée",
-  linkedin: "Réseau Pro",
-  indeed: "Offre vérifiée",
-  monster: "Offre vérifiée",
-  apec: "Emploi Cadres",
+  adzuna: "Adzuna",
+  google_jobs: "Google Jobs",
+  linkedin: "LinkedIn",
+  indeed: "Indeed",
+  monster: "Monster",
+  apec: "APEC",
   pole_emploi: "France Travail",
   france_travail: "France Travail",
-  welcometothejungle: "Startup",
-  glassdoor: "Offre vérifiée",
-  jsearch: "Offre vérifiée",
-  remoteok: "Remote",
-  careerjet: "Offre vérifiée",
-  jooble: "Offre vérifiée",
+  welcometothejungle: "Welcome to the Jungle",
+  glassdoor: "Glassdoor",
+  jsearch: "JSearch",
+  remoteok: "Remote OK",
+  careerjet: "Careerjet",
+  jooble: "Jooble",
   le_forem: "Le Forem",
-  ziprecruiter: "Offre vérifiée",
+  ziprecruiter: "ZipRecruiter",
 };
 
 /**
@@ -40,7 +40,7 @@ export function formatJobSource(source: string): string {
   }
 
   // If no mapping found, return generic label
-  return "Offre vérifiée";
+  return source;
 }
 
 /**

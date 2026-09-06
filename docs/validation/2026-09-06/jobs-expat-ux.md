@@ -32,3 +32,18 @@ Le changement préexistant de frontend-next/AGENTS.md est préservé.
 - Lot frontend uniquement. Aucune migration nécessaire, aucun changement backend/worker.
 - Rollback envisagé : retour à ce déploiement frontend, sans modification de données.
 - Recette locale authentifiée bloquée sur la page de connexion. Aucun contournement ni extraction de session effectué.
+
+## Deuxième lot visuel, non committé
+
+- Réutilisation des cartes et actions existantes. Deux colonnes maximum, titres moins gras, ombres réduites, badges neutres, bouton principal bleu avec focus visible.
+- Production : compte wissemkarboub@gmail.com et plan Carrière observés dans le menu du compte.
+- Production : filtre CDI réduit le compteur secondaire de 70 à 40 offres. Compteur principal reste à 88 : cohérence à retravailler.
+- Production : filtres sources répétant « Offre vérifiée » et clés contractType_h / contractType_m visibles. Correction locale des noms sources et repli du libellé de contrat lorsqu'une traduction manque.
+- 483 tests passent sur 84 fichiers. TypeScript passe. ESLint ciblé : aucune erreur, deux avertissements de dépendances React sur jobs/page.tsx.
+- Aucun nouveau déploiement effectué. Rendu du deuxième lot non certifié desktop/mobile.
+
+## Limite découverte dans les tests historiques
+
+- Le fichier integration/pages/jobs.test.tsx contenait 20 tests sans rendu du composant, dont des assertions constantes. Le total historique de tests passants ne doit pas être présenté comme une recette fonctionnelle de la page recherche.
+- Remplacés dans le même fichier par quatre tests du formulaire réel : soumission des paramètres par les deux variantes, validation d'une recherche vide et désactivation pendant chargement. Les tests jsdom ne prouvent pas le rendu responsive réel.
+- Candidat local rouvert sur /jobs : affiche toujours « Connectez-vous pour continuer ». Connexion utilisateur nécessaire pour poursuivre cette recette visuelle.
