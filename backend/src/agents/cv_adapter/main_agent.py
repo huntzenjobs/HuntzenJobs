@@ -1128,16 +1128,27 @@ Return JSON with category names as keys and skill arrays as values:
                 ],
                 temperature=0.2,
             )
-            logger.info(f"[{self.name}] Skills categorized into: {list(categorized.keys())}")
-            return categorized
+            # Le modèle choisit les groupes, jamais les compétences ni leurs niveaux.
+            source = {str(skill).strip().casefold(): str(skill).strip() for skill in all_skills}
+            remaining = dict(source)
+            verified: dict[str, list[str]] = {}
+            for category, values in categorized.items():
+                if not isinstance(values, list):
+                    continue
+                for value in values:
+                    key = str(value).strip().casefold()
+                    if key in remaining:
+                        verified.setdefault(category, []).append(remaining.pop(key))
+            if remaining:
+                verified.setdefault("Compétences", []).extend(remaining.values())
+            logger.info(f"[{self.name}] Skills categorized into: {list(verified.keys())}")
+            return verified
 
         except Exception as e:
             logger.error(f"[{self.name}] Skills categorization failed: {e}")
-            # Fallback to simple categorization
-            return {
-                "Compétences": all_skills[:15],
-                "Langues": [s for s in all_skills if s.lower() in ["français", "anglais", "arabe", "espagnol", "allemand", "french", "english"]]
-            }
+            # Conserver toutes les données source même si le classement échoue.
+            unique = {str(skill).strip().casefold(): str(skill).strip() for skill in all_skills}
+            return {"Compétences": list(unique.values())} if unique else {}
 
     async def _fact_check(self, original_cv: str, adapted_cv: dict) -> dict[str, Any]:
         """Verify that every candidate claim is supported by the source CV."""

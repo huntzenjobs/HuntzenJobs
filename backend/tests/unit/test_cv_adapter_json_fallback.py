@@ -11,6 +11,44 @@ class JsonValidationError(Exception):
     body = {"error": {"code": "json_validate_failed"}}
 
 
+@pytest.mark.asyncio
+async def test_skill_categorization_preserves_source_levels_and_rejects_additions() -> None:
+    agent = object.__new__(CVAdapterAgent)
+    agent.name = "CVAdapter"
+    agent._create_json_completion = AsyncMock(return_value={
+        "Outils": ["Excel", "SAP"],
+        "Langues": ["Français courant", "Français courant"],
+    })
+    result = await agent._categorize_skills_dynamically(
+        ["Excel débutant", "Français courant"], "Manutentionnaire", "Logistique", []
+    )
+    skills = [skill for values in result.values() for skill in values]
+    assert sorted(skills) == ["Excel débutant", "Français courant"]
+
+
+@pytest.mark.asyncio
+async def test_skill_categorization_keeps_valid_grouping_and_original_spelling() -> None:
+    agent = object.__new__(CVAdapterAgent)
+    agent.name = "CVAdapter"
+    agent._create_json_completion = AsyncMock(return_value={"Outils": ["excel débutant"]})
+    result = await agent._categorize_skills_dynamically(
+        ["Excel débutant"], "Manutentionnaire", "Logistique", []
+    )
+    assert result == {"Outils": ["Excel débutant"]}
+
+
+@pytest.mark.asyncio
+async def test_skill_categorization_failure_keeps_all_source_skills_once() -> None:
+    agent = object.__new__(CVAdapterAgent)
+    agent.name = "CVAdapter"
+    agent._create_json_completion = AsyncMock(side_effect=RuntimeError("provider unavailable"))
+    source = [f"Compétence {number}" for number in range(16)] + ["Français", "Français"]
+    result = await agent._categorize_skills_dynamically(source, "Logistique", "", [])
+    skills = [skill for values in result.values() for skill in values]
+    assert len(skills) == 17
+    assert set(skills) == set(source)
+
+
 class FakeCompletions:
     def __init__(self) -> None:
         self.calls: list[dict[str, object]] = []

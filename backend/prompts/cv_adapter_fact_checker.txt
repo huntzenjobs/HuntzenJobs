@@ -11,6 +11,9 @@ CHECK EVERY CANDIDATE CLAIM:
 3. Technologies, tools, methods, languages and other skills.
 4. Certifications, diplomas, schools and projects.
 5. Metrics, volumes, percentages, team sizes, revenue, savings and results.
+6. Availability, notice period, mobility, work authorization and driving licences. Omit them unless explicitly stated by the candidate.
+7. Exact proficiency levels: beginner must remain beginner. Reject claims of mastery, strong knowledge or independent use when the source only states beginner.
+8. Employer claims: validate every statement about the company against the supplied job description, not general knowledge or plausible assumptions.
 
 STRICTLY FORBIDDEN:
 - Adding a technology merely because the job asks for it.
