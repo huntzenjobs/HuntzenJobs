@@ -1,4 +1,9 @@
 {
+  "autocomplete": {
+    "loading": "Recherche en cours…",
+    "clear": "Effacer",
+    "searchError": "Recherche indisponible. Modifiez votre saisie pour réessayer."
+  },
   "notFound": {
     "title": "404",
     "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
@@ -2335,10 +2340,10 @@
       "send": "Envoyer",
       "welcome": "Bonjour ! Je suis votre assistant expatriation. Posez-moi vos questions sur les visas, la fiscalité, le logement, les démarches administratives ou le marché du travail dans le pays de votre choix.",
       "suggestions": "Questions fréquentes",
-      "suggestion1": "Quel visa pour travailler au Canada en tant que développeur ?",
-      "suggestion2": "Comment fonctionne la fiscalité pour un expatrié en Allemagne ?",
-      "suggestion3": "Quelles démarches pour s'installer en Espagne depuis la France ?",
-      "suggestion4": "Quelles sont les meilleures villes pour trouver un emploi tech en UK ?",
+      "suggestion1": "Destination : {country}. Quelles autorisations pour y travailler ?",
+      "suggestion2": "Destination : {country}. Comment fonctionne la fiscalité ?",
+      "suggestion3": "Destination : {country}. Quelles démarches avant le départ ?",
+      "suggestion4": "Destination : {country}. Quelles villes privilégier pour chercher un emploi ?",
       "sources": "Sources",
       "scrapedAt": "Mis à jour le {date}",
       "freshnessWarning": "Avertissement",

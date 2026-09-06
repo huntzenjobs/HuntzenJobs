@@ -6,6 +6,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Command as CommandPrimitive } from "cmdk";
 import { Check, ChevronDown, Loader2, Search, X } from "lucide-react";
@@ -93,12 +94,15 @@ export const AutocompleteInput = React.forwardRef<
     },
     ref,
   ) => {
+    const t = useTranslations("autocomplete");
+    const optionsId = React.useId();
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState(value);
     const [internalOptions, setInternalOptions] = React.useState<
       AutocompleteOption[]
     >([]);
     const [internalLoading, setInternalLoading] = React.useState(false);
+    const [searchFailed, setSearchFailed] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement>(null);
     const debounceRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
     const isSelectionRef = React.useRef(false);
@@ -126,16 +130,19 @@ export const AutocompleteInput = React.forwardRef<
 
     // Debounced search
     React.useEffect(() => {
+      setSearchFailed(false);
       if (!onSearch || disabled) {
         setInternalLoading(false);
         return;
       }
       if (search.length === 0) {
         setInternalOptions([]);
+        setInternalLoading(false);
         return;
       }
 
       let cancelled = false;
+      setInternalLoading(true);
 
       // Clear previous timeout
       if (debounceRef.current) {
@@ -148,9 +155,11 @@ export const AutocompleteInput = React.forwardRef<
         try {
           const results = await onSearch(search);
           if (!cancelled) setInternalOptions(results);
-        } catch (error) {
-          console.error("Autocomplete search error:", error);
-          if (!cancelled) setInternalOptions([]);
+        } catch {
+          if (!cancelled) {
+            setInternalOptions([]);
+            setSearchFailed(true);
+          }
         } finally {
           if (!cancelled) setInternalLoading(false);
         }
@@ -321,7 +330,7 @@ export const AutocompleteInput = React.forwardRef<
                 aria-label={label}
                 aria-expanded={open}
                 aria-haspopup="listbox"
-                aria-controls="autocomplete-options"
+                aria-controls={optionsId}
                 aria-invalid={error}
                 role="combobox"
               />
@@ -331,7 +340,7 @@ export const AutocompleteInput = React.forwardRef<
                 {loading && (
                   <Loader2
                     className="size-4 animate-spin text-ocean-500"
-                    aria-label="Chargement..."
+                    aria-label={t("loading")}
                   />
                 )}
 
@@ -344,7 +353,7 @@ export const AutocompleteInput = React.forwardRef<
                       "text-gray-400 hover:text-gray-600",
                       "transition-colors",
                     )}
-                    aria-label="Effacer"
+                    aria-label={t("clear")}
                   >
                     <X className="size-4" />
                   </button>
@@ -364,7 +373,7 @@ export const AutocompleteInput = React.forwardRef<
           {/* Options popover */}
           <PopoverPrimitive.Portal>
             <PopoverPrimitive.Content
-              id="autocomplete-options"
+              id={optionsId}
               align="start"
               sideOffset={4}
               className={cn(
@@ -382,11 +391,15 @@ export const AutocompleteInput = React.forwardRef<
               <CommandPrimitive>
                 <CommandPrimitive.List>
                   {loading ? (
-                    <div className="flex items-center justify-center py-6">
+                    <div role="status" className="flex items-center justify-center py-6">
                       <Loader2 className="size-5 animate-spin text-ocean-500" />
                       <span className="ml-2 text-sm text-gray-500">
-                        Recherche en cours...
+                        {t("loading")}
                       </span>
+                    </div>
+                  ) : searchFailed ? (
+                    <div role="alert" className="py-6 px-3 text-center text-sm text-red-700">
+                      {t("searchError")}
                     </div>
                   ) : options.length === 0 ? (
                     <div className="py-6 text-center text-sm text-gray-500">

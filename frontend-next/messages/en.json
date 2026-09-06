@@ -1,4 +1,9 @@
 {
+  "autocomplete": {
+    "loading": "Searching…",
+    "clear": "Clear",
+    "searchError": "Search unavailable. Edit your query to try again."
+  },
   "notFound": {
     "title": "404",
     "description": "The page you are looking for does not exist or has been moved.",
@@ -2343,10 +2348,10 @@
       "send": "Send",
       "welcome": "Hello! I am your expat assistant. Ask me your questions about visas, taxation, housing, administrative steps or the job market in your destination country.",
       "suggestions": "Frequently asked questions",
-      "suggestion1": "What visa do I need to work in Canada as a developer?",
-      "suggestion2": "How does taxation work for an expat in Germany?",
-      "suggestion3": "What are the steps to move to Spain from France?",
-      "suggestion4": "What are the best cities for tech jobs in the UK?",
+      "suggestion1": "Destination: {country}. What permits do I need to work there?",
+      "suggestion2": "Destination: {country}. How does taxation work?",
+      "suggestion3": "Destination: {country}. What should I arrange before moving?",
+      "suggestion4": "Destination: {country}. Which cities should I consider for my job search?",
       "sources": "Sources",
       "scrapedAt": "Updated on {date}",
       "freshnessWarning": "Warning",

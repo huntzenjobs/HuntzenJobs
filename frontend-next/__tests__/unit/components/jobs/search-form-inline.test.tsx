@@ -45,6 +45,15 @@ describe("SearchFormInline", () => {
     getCountries.mockResolvedValue([{ name: "France", code: "fr" }]);
   });
 
+  it("affiche une erreur lorsque la liste des pays est indisponible", async () => {
+    getCountries.mockRejectedValue(new Error("network"));
+    const user = userEvent.setup();
+    const { container } = render(<SearchFormInline onSearch={vi.fn()} />);
+    const input = container.querySelector('input[placeholder="searchForm.countryPlaceholder"]') as HTMLInputElement;
+    await user.type(input, "France");
+    expect(await screen.findByRole("alert")).toHaveTextContent("autocomplete.searchError");
+  });
+
   it("conserve une recherche populaire pendant la sélection du pays", async () => {
     const user = userEvent.setup();
     const { container, rerender } = render(
@@ -114,7 +123,7 @@ describe("SearchFormInline", () => {
     );
     await user.type(countryInputs[0] as HTMLInputElement, "France");
     const franceOption = await screen.findByRole("option", { name: "France" });
-    getCountries.mockImplementation(() => new Promise(() => {}));
+    getCountries.mockRejectedValue(new Error("network"));
     await user.click(franceOption);
 
     const desktopButton = container.querySelector(

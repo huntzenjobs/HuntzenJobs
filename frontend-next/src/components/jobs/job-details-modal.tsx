@@ -205,8 +205,7 @@ export function JobDetailsModal({
   const handleApplyClick = () => {
     // Capturer le job pour le cas où la modal se ferme avant la popup
     pendingJobRef.current = job;
-    // Open external job in new tab
-    window.open(resolvedUrl, "_blank", "noopener,noreferrer");
+    // Le lien natif ouvre l'offre, y compris au clavier et via le menu contextuel.
     // Fire-and-forget backend tracking (apply-click uniquement)
     authenticatedFetch(
       `${BACKEND_URL}/api/saved-jobs/apply-click/${encodeURIComponent(job.id)}?job_url=${encodeURIComponent(resolvedUrl)}&job_source=${encodeURIComponent(job.source || "unknown")}`,
@@ -544,12 +543,12 @@ export function JobDetailsModal({
                         : "flex-1 sm:flex-none"
                     }
                   >
-                    <span className="cursor-pointer" onClick={handleApplyClick}>
+                    <a href={resolvedUrl} target="_blank" rel="noopener noreferrer" onClick={handleApplyClick}>
                       {job.url_is_direct || isNowDirect
                         ? t("applyDirect")
                         : t("viewOffer")}
                       <ExternalLink className="ml-2 h-4 w-4" />
-                    </span>
+                    </a>
                   </Button>
                 )}
               </div>

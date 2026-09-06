@@ -85,7 +85,7 @@ export default function ExpatPage() {
   const formatSalary = (amount: number, currency: string, eurRate: number) => {
     const eur = Math.round(amount * eurRate);
     if (currency === "EUR")
-      return `${amount.toLocaleString(numberLocale)} ${t("salaryPerYear")}`;
+      return `${amount.toLocaleString(numberLocale, { style: "currency", currency, maximumFractionDigits: 0 })} ${t("salaryPerYear")}`;
     return t("salaryApprox", {
       amount: amount.toLocaleString(numberLocale),
       currency,
@@ -130,10 +130,10 @@ export default function ExpatPage() {
   }, [messages, scrollToBottom]);
 
   const suggestions = [
-    tc("suggestion1"),
-    tc("suggestion2"),
-    tc("suggestion3"),
-    tc("suggestion4"),
+    tc("suggestion1", { country: country.name }),
+    tc("suggestion2", { country: country.name }),
+    tc("suggestion3", { country: country.name }),
+    tc("suggestion4", { country: country.name }),
   ];
 
   const sendMessage = useCallback(
@@ -188,7 +188,7 @@ export default function ExpatPage() {
         setLoading(false);
       }
     },
-    [loading, messages, session, locale, tc],
+    [loading, messages, session, locale, tc, country],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -226,11 +226,11 @@ export default function ExpatPage() {
 
         {/* Sélecteur pays */}
         <div>
-          <label className="text-sm font-medium mb-2 block">
+          <label htmlFor="expat-destination" className="text-sm font-medium mb-2 block">
             {t("destination")}
           </label>
           <Select value={selectedCode} onValueChange={setSelectedCode}>
-            <SelectTrigger className="w-64">
+            <SelectTrigger id="expat-destination" className="w-full sm:w-64">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -553,6 +553,7 @@ export default function ExpatPage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={tc("placeholder")}
+                aria-label={tc("placeholder")}
                 rows={2}
                 disabled={loading}
                 className="flex-1 resize-none border-0 shadow-none focus-visible:ring-0 text-sm p-1 min-h-0"

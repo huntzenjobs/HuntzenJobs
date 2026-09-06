@@ -149,15 +149,11 @@ export function SearchFormInline({
   const fetchCountries = useCallback(
     async (query: string): Promise<AutocompleteOption[]> => {
       if (!query) return [];
-      try {
-        const countries = await huntzenApi.getCountries();
-        return countries
-          .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
-          .slice(0, 8)
-          .map((c) => ({ label: c.name, value: c.code }));
-      } catch {
-        return [];
-      }
+      const countries = await huntzenApi.getCountries();
+      return countries
+        .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, 8)
+        .map((c) => ({ label: c.name, value: c.code }));
     },
     [],
   );
@@ -172,20 +168,16 @@ export function SearchFormInline({
       ) {
         return [];
       }
-      try {
-        const locations = await huntzenApi.searchCities(query, country);
-        return locations.map((loc) => {
-          const suffix =
-            loc.type === "region"
-              ? " · Région"
-              : loc.type === "department"
-                ? ` · Dép. ${loc.code ?? ""}`
-                : "";
-          return { label: loc.name + suffix, value: loc.name };
-        });
-      } catch {
-        return [];
-      }
+      const locations = await huntzenApi.searchCities(query, country);
+      return locations.map((loc) => {
+        const suffix =
+          loc.type === "region"
+            ? " · Région"
+            : loc.type === "department"
+              ? ` · Dép. ${loc.code ?? ""}`
+              : "";
+        return { label: loc.name + suffix, value: loc.name };
+      });
     },
     [country, isCountryValid],
   );
@@ -222,6 +214,9 @@ export function SearchFormInline({
         } else {
           setIsCountryValid(false);
         }
+      }).catch(() => {
+        // Une panne réseau ne doit pas invalider une suggestion déjà sélectionnée.
+        // L'autocomplétion affiche séparément l'erreur de recherche.
       });
     } else {
       setIsCountryValid(false);

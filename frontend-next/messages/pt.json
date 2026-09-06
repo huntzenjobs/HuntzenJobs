@@ -1,4 +1,9 @@
 {
+  "autocomplete": {
+    "loading": "A pesquisar…",
+    "clear": "Limpar",
+    "searchError": "Pesquisa indisponível. Altera a pesquisa para tentar novamente."
+  },
   "nav": {
     "jobs": "Busca de emprego",
     "salons": "Feiras & Fóruns",
@@ -2462,10 +2467,10 @@
       "send": "Enviar",
       "welcome": "Olá! Sou o seu assistente de expatriação. Faça-me perguntas sobre vistos, fiscalidade, habitação, procedimentos administrativos ou o mercado de trabalho no país de destino.",
       "suggestions": "Perguntas frequentes",
-      "suggestion1": "Qual visto preciso para trabalhar no Canadá como desenvolvedor?",
-      "suggestion2": "Como funciona a fiscalidade para um expatriado na Alemanha?",
-      "suggestion3": "Quais são os procedimentos para se instalar na Espanha a partir de França?",
-      "suggestion4": "Quais são as melhores cidades para empregos tech no Reino Unido?",
+      "suggestion1": "Destino: {country}. Que autorizações preciso para trabalhar lá?",
+      "suggestion2": "Destino: {country}. Como funciona a fiscalidade?",
+      "suggestion3": "Destino: {country}. Que procedimentos devo tratar antes da mudança?",
+      "suggestion4": "Destino: {country}. Que cidades devo considerar para procurar emprego?",
       "sources": "Fontes",
       "scrapedAt": "Atualizado em {date}",
       "freshnessWarning": "Aviso",
