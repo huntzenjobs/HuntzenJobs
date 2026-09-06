@@ -7,7 +7,7 @@ export default getRequestConfig(async () => {
   const cookieStore = await cookies();
   const rawLocale = cookieStore.get("NEXT_LOCALE")?.value;
   const headerStore = await headers();
-  const locale = isSupportedLocale(rawLocale)
+  const locale = cookieStore.get("LOCALE_MANUAL")?.value === "1" && isSupportedLocale(rawLocale)
     ? rawLocale
     : detectLocale(
         headerStore.get("x-vercel-ip-country"),

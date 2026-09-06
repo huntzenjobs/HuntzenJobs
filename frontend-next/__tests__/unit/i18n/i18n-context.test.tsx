@@ -28,4 +28,10 @@ describe("I18nProvider", () => {
 
     expect(screen.getByTestId("locale")).toHaveTextContent("en");
   });
+
+  it("ne rétablit pas un ancien cookie français après le rendu anglais", () => {
+    document.cookie = "NEXT_LOCALE=fr; path=/";
+    render(<I18nProvider><LocaleProbe /></I18nProvider>);
+    expect(screen.getByTestId("locale")).toHaveTextContent("en");
+  });
 });
