@@ -421,7 +421,7 @@ export function SearchFormInline({
   return (
     <div className="w-full">
       {/* Desktop: Horizontal Layout */}
-      <div className="hidden md:block p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="hidden md:block p-4 bg-white rounded-lg border border-gray-200">
         {/* Main Search Inputs Row */}
         <div className="flex items-start gap-3 mb-4">
           {/* Query Input */}
@@ -511,7 +511,7 @@ export function SearchFormInline({
               onClick={() => handleSearch()}
               disabled={disabled || isLoading}
               size="lg"
-              className="px-6 whitespace-nowrap bg-huntzen-blue hover:bg-huntzen-blue-dark text-white"
+              className="px-6 whitespace-nowrap bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold"
             >
               {isLoading ? t("searchingLabel") : t("searchButton")}
             </Button>
@@ -543,7 +543,7 @@ export function SearchFormInline({
       </div>
 
       {/* Mobile: Vertical Layout */}
-      <div className="md:hidden space-y-4 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="md:hidden space-y-4 p-4 bg-white rounded-lg border border-gray-200">
         {/* Query Input */}
         <div>
           <label htmlFor="query-mobile" className="sr-only">
@@ -646,7 +646,7 @@ export function SearchFormInline({
             onClick={() => handleSearch()}
             disabled={disabled || isLoading}
             size="lg"
-            className="w-full bg-huntzen-blue hover:bg-huntzen-blue-dark text-white"
+            className="w-full bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold"
           >
             {isLoading ? t("searchingLabel") : t("searchButton")}
           </Button>

@@ -11,8 +11,11 @@ export function useFullJobDescription(
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     setFinalUrl(null);
     setDescription(null);
+    setError(null);
+    setLoading(false);
 
     if (!url) return;
 
@@ -20,6 +23,8 @@ export function useFullJobDescription(
       setLoading(true);
       try {
         const result = await huntzenApi.getJobDescription(url, source);
+        // Une réponse d'une ancienne offre ne doit jamais changer le lien courant.
+        if (!active) return;
         if (result && result.description && result.description.length > 100) {
           setDescription(result.description);
         }
@@ -27,14 +32,16 @@ export function useFullJobDescription(
           setFinalUrl(result.final_url);
         }
       } catch (err) {
+        if (!active) return;
         console.error("Failed to fetch full description:", err);
         setError("Impossible de charger la description complète");
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchFullDescription();
+    return () => { active = false; };
   }, [url, source]);
 
   return { description, finalUrl, loading, error };

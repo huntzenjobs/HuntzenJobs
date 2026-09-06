@@ -317,17 +317,17 @@ export function JobDetailsModal({
             )}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-violet-600 text-white p-4 md:p-6 relative flex-shrink-0">
-              <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-2 bg-white/10 hover:bg-white/20 transition-colors">
+            <div className="bg-white border-b border-slate-200 text-slate-900 p-4 md:p-6 relative flex-shrink-0">
+              <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md p-2 hover:bg-slate-100 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
                 <X className="h-5 w-5" />
                 <span className="sr-only">{t("close")}</span>
               </DialogPrimitive.Close>
 
               <div className="pr-12">
-                <DialogPrimitive.Title className="text-lg md:text-2xl font-bold mb-2">
+                <DialogPrimitive.Title className="text-lg md:text-2xl font-semibold mb-2">
                   {job.title}
                 </DialogPrimitive.Title>
-                <div className="flex flex-wrap items-center gap-2 md:gap-3 text-white/90">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 text-slate-600">
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4" />
                     <span className="font-medium">
@@ -539,7 +539,7 @@ export function JobDetailsModal({
                     size="sm"
                     className={
                       job.url_is_direct || isNowDirect
-                        ? "flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
+                        ? "flex-1 sm:flex-none bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950"
                         : "flex-1 sm:flex-none"
                     }
                   >
@@ -557,7 +557,7 @@ export function JobDetailsModal({
                 <div className="flex items-center gap-1">
                   <Button
                     size="lg"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold"
                     onClick={() => {
                       if (!canUse("matching_score")) {
                         openPricingModal("matching_score");

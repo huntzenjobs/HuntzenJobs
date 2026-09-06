@@ -47,3 +47,11 @@ Le changement préexistant de frontend-next/AGENTS.md est préservé.
 - Le fichier integration/pages/jobs.test.tsx contenait 20 tests sans rendu du composant, dont des assertions constantes. Le total historique de tests passants ne doit pas être présenté comme une recette fonctionnelle de la page recherche.
 - Remplacés dans le même fichier par quatre tests du formulaire réel : soumission des paramètres par les deux variantes, validation d'une recherche vide et désactivation pendant chargement. Les tests jsdom ne prouvent pas le rendu responsive réel.
 - Candidat local rouvert sur /jobs : affiche toujours « Connectez-vous pour continuer ». Connexion utilisateur nécessaire pour poursuivre cette recette visuelle.
+
+## Déploiement et diagnostic des liens, 6 septembre
+
+- Le lot précédent 801aa75 a été poussé sur codex/stripe-stabilization et Production. Vercel Ready : dpl_C9kiuJULxF4A42L7RS8eqK5g2H84, frontend-next-j1fz847ay-huntzen-jobs.vercel.app. Badges Adzuna observés sur www.huntzenjobs.com avec le compte Wissem.
+- Une nouvelle refonte sobre est uniquement locale : formulaire cyan, en-têtes sans dégradé, cartes compactes, fenêtre de détail blanche. Ne pas confondre avec le lot déjà déployé.
+- L'offre Adzuna 5870119298 a ouvert une seule nouvelle fenêtre vers EmploiSoignant 2814469. Le navigateur intégré affiche ERR_HTTP_RESPONSE_CODE_FAILURE. Une requête HTTP indépendante sur l'adresse finale renvoie 200 avec le titre et le contenu de cette offre. Le lien Adzuna lui-même renvoie 403 au client HTTP. Les résultats varient selon le client : ni expiration ni cause réseau précise démontrée. Aucun contournement de protection ou de TLS.
+- Défaut distinct reproduit en test contrôlé : une réponse tardive de la description A écrase l'URL de B après changement d'offre. Correction locale : ignorer les réponses obsolètes, réinitialiser erreur et chargement au changement d'URL. Deux tests de non-régression passent après échec constaté avant correctif. TypeScript et ESLint du hook passent.
+- Local ouvert sur http://127.0.0.1:3100/jobs. Recette authentifiée du nouveau design encore nécessaire. Aucun paiement, candidature envoyée ou suppression d'offre pendant ce diagnostic.

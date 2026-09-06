@@ -83,10 +83,7 @@ import {
   type Job,
 } from "@/lib/api/huntzen-client";
 import { track } from "@/lib/track";
-import {
-  formatJobSource,
-  getSourceColor,
-} from "@/lib/utils/job-source-formatter";
+import { formatJobSource } from "@/lib/utils/job-source-formatter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserSearch } from "lucide-react";
 import { toast } from "sonner";
@@ -1083,7 +1080,7 @@ export default function JobsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row items-start justify-between gap-4 bg-gradient-to-br from-white to-slate-50 p-4 md:p-8 rounded-2xl border border-slate-200 shadow-sm"
+          className="flex flex-col md:flex-row items-start justify-between gap-4 py-4 border-b border-slate-200"
         >
           <div className="flex-1">
             <motion.div
@@ -1096,11 +1093,11 @@ export default function JobsPage() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#00C4EA] flex items-center justify-center shadow-lg shadow-[#00D9FF]/30 flex-shrink-0"
+                className="w-10 h-10 rounded-lg bg-[#00D9FF]/10 flex items-center justify-center flex-shrink-0"
               >
-                <Search className="w-7 h-7 text-white" />
+                <Search className="w-5 h-5 text-slate-900" />
               </motion.div>
-              <h1 className="text-4xl font-black text-slate-900">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900">
                 {t("title")}
               </h1>
             </motion.div>
@@ -1246,26 +1243,26 @@ export default function JobsPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-emerald-50 to-green-50 p-4 md:p-6 rounded-2xl border border-emerald-200/50 shadow-sm"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4 border-b border-slate-200"
               >
                 <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:gap-4">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                    className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-lg"
+                    className="hidden"
                   >
                     <CheckCircle className="w-6 h-6 text-white" />
                   </motion.div>
                   <div className="min-w-0 flex-1 sm:flex-none">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-2xl font-black text-emerald-700">
+                      <h2 className="text-lg font-semibold text-slate-900">
                         {jobs.length === 1
                           ? t("results.count_one", { count: jobs.length })
                           : t("results.count_other", { count: jobs.length })}
                       </h2>
                     </div>
-                    <p className="text-sm text-emerald-600 font-medium">
+                    <p className="text-sm text-slate-500">
                       {searchQuery.isFetching
                         ? t("results.refreshing")
                         : searchQuery.dataUpdatedAt
@@ -1646,7 +1643,7 @@ export default function JobsPage() {
 
               <div
                 aria-live="polite"
-                className="grid grid-cols-1 gap-4 auto-rows-fr lg:grid-cols-2"
+                className="grid grid-cols-1 gap-3 items-start lg:grid-cols-2"
               >
                 {/* Visible jobs (current page) */}
                 {paginatedJobs.map((job, index) => (
@@ -1658,13 +1655,13 @@ export default function JobsPage() {
                   >
                     <Card
                       className={cn(
-                        "hover:shadow-md hover:border-sky-300 transition-colors duration-200 group flex flex-col border border-slate-200 rounded-2xl overflow-hidden h-full",
+                        "hover:border-slate-400 transition-colors duration-200 group flex flex-col border border-slate-200 rounded-lg shadow-none overflow-hidden",
                         viewedJobIds.has(job.id)
                           ? "bg-slate-50/80"
                           : "bg-white",
                       )}
                     >
-                      <CardHeader className="p-5 pb-4 border-b border-slate-100">
+                      <CardHeader className="p-4 pb-2">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1684,11 +1681,10 @@ export default function JobsPage() {
                                   </span>
                                 )}
                             </div>
-                            <CardDescription className="flex items-center gap-2 mt-3 text-base">
+                            <CardDescription className="flex items-center gap-2 mt-2 text-sm">
                               <div
                                 className={cn(
-                                  "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-semibold text-sm",
-                                  getSourceColor(job.source),
+                                  "w-7 h-7 rounded flex items-center justify-center flex-shrink-0 bg-slate-100 text-slate-700 font-medium text-sm",
                                 )}
                               >
                                 {job.company ? (
@@ -1770,24 +1766,24 @@ export default function JobsPage() {
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex-1 flex flex-col pt-4">
-                        <div className="flex-1 space-y-4">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-gray-50 px-3 py-2 rounded-lg">
-                            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                      <CardContent className="flex flex-col px-4 pb-4 pt-0">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <MapPin className="h-4 w-4 text-slate-500 flex-shrink-0" />
                             <span className="font-medium">
                               {job.location || t("card.locationUnknown")}
                             </span>
                           </div>
 
                           {job.salary && (
-                            <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
-                              <span className="text-sm font-bold text-green-600">
-                                💰 {job.salary}
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-slate-900">
+                                {job.salary}
                               </span>
                             </div>
                           )}
 
-                          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                          <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
                             {stripHtmlForPreview(job.description || "")}
                           </p>
                         </div>
@@ -1809,10 +1805,10 @@ export default function JobsPage() {
                         )}
 
                         {/* Button always at bottom */}
-                        <div className="flex gap-2 pt-5 mt-auto">
+                        <div className="flex gap-2 pt-3">
                           <Button
                             size="lg"
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors h-11 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                            className="flex-1 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold rounded-md transition-colors h-11 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
                             onClick={() => handleViewDetails(job)}
                           >
                             {t("card.details")}
@@ -1823,7 +1819,7 @@ export default function JobsPage() {
                         {/* Recruiter email finder */}
                         <Sheet>
                           <SheetTrigger asChild>
-                            <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                            <button className="flex min-h-11 items-center gap-1.5 text-sm text-slate-600 hover:text-slate-950 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
                               <UserSearch className="w-3.5 h-3.5" />
                               {t("findRecruiters")}
                               <span className="px-1 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-semibold rounded">

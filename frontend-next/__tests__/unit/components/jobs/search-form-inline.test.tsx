@@ -98,9 +98,9 @@ describe("SearchFormInline", () => {
       />,
     );
 
-    const desktopButton = container.querySelector(
-      ".hidden.md\\:block button.bg-huntzen-blue",
-    );
+    const desktopButton = screen.getAllByRole("button", {
+      name: "searchForm.searchButton",
+    })[0];
     expect(desktopButton).toBeInstanceOf(HTMLButtonElement);
     await user.click(desktopButton as HTMLButtonElement);
 
@@ -126,9 +126,9 @@ describe("SearchFormInline", () => {
     getCountries.mockRejectedValue(new Error("network"));
     await user.click(franceOption);
 
-    const desktopButton = container.querySelector(
-      ".hidden.md\\:block button.bg-huntzen-blue",
-    );
+    const desktopButton = screen.getAllByRole("button", {
+      name: "searchForm.searchButton",
+    })[0];
     await user.click(desktopButton as HTMLButtonElement);
 
     expect(onSearch).toHaveBeenCalledWith(
