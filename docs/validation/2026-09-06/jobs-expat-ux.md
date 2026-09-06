@@ -72,3 +72,14 @@ Le changement préexistant de frontend-next/AGENTS.md est préservé.
 - Admin : recette non effectuée avec un rôle admin. Navigation tentée, sans élévation de privilèges.
 - Mobile : tentative de fenêtre 390px non effective, Arc conserve 1512px ; iframe de recette non accessible et retirée. Aucun résultat mobile à revendiquer.
 - Verdict de cette passe : recette globale INCOMPLÈTE, aucune promotion production ni lancement de publicité autorisé par ces seuls résultats.
+
+## Retest du candidat 94efe7c, 13h07 à 13h15
+
+- Commit poussé sur codex/stripe-stabilization et Pre-production. Vercel dpl_8i43rGwVxpWb4U2d8U6UXGxemXcG Ready, alias staging.huntzenjobs.com basculé. API et worker staging Online, health API status=ok.
+- Retest Arc du seuil 100 sur la même recherche : 36 résultats, compteurs principal et secondaire cohérents, cartes 2,200 et 25,000 conservées. Noms fournisseurs absents du panneau. Validation réelle des défauts reproduits précédemment.
+- Coach Nova : question synthétique manutentionnaire vers chef d'équipe, réponse réelle reçue, quota 5 vers 4. Réponse structurée, mais formations et durées précises non sourcées. Ce test ne certifie pas la qualité de tous les assistants.
+- ATS texte fictif : traitement lancé depuis le wizard. Logs API : création à 11:09:09 UTC, callback completed à 11:09:31 UTC. Quota 5 vers 4. Arc conserve un écran 95% et un document hidden ; restitution du résultat non certifiée. Ne pas relancer aveuglément le traitement ni confondre calcul terminé et rendu terminé.
+- Chromium séparé, sans authentification, viewport réellement mesuré à 390px : home, pricing, contact, FAQ, signup, forgot-password et payment/cancel rendent sans débordement horizontal ni erreur Application error/500/404 détectée. Formulaires non soumis. Ce n'est pas une recette mobile authentifiée.
+- Refus cookies testé dans Chromium : bannière masquée, aucun chargement gtm.js ni Google Analytics collect observé avant ou après refus dans cette session.
+- Contraste Refuser reproduit : texte rgb(209,213,219) sur blanc, ratio calculé 1,47:1. Correctif local fond transparent/texte blanc et cibles 44px. Les handlers de consentement restent inchangés, revue indépendante et six tests ciblés passent. Retest visuel déployé encore nécessaire.
+- Une autorisation temporaire admin + plan supérieur staging a été demandée pour poursuivre la couverture payante. Aucun droit modifié tant que cette demande reste sans réponse.

@@ -73,21 +73,21 @@ export function CookieBanner() {
             variant="outline"
             size="sm"
             onClick={handleDecline}
-            className="flex-1 sm:flex-none border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
+            className="min-h-11 flex-1 sm:flex-none bg-transparent border-gray-500 text-white hover:bg-gray-800 hover:text-white"
           >
             {t("decline")}
           </Button>
           <Button
             size="sm"
             onClick={handleAccept}
-            className="flex-1 sm:flex-none bg-[#00D9FF] text-black font-semibold hover:bg-[#00D9FF]/90"
+            className="min-h-11 flex-1 sm:flex-none bg-[#00D9FF] text-black font-semibold hover:bg-[#00D9FF]/90"
           >
             {t("accept")}
           </Button>
           <button
             onClick={handleDecline}
             aria-label={t("close")}
-            className="min-w-9 min-h-9 sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-300 transition-colors shrink-0"
+            className="min-w-11 min-h-11 flex items-center justify-center text-gray-300 hover:text-white transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
