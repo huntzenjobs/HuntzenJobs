@@ -2,6 +2,27 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SearchFormInline } from "@/components/jobs/search-form-inline";
+import { parseJobSalaryAmount } from "@/lib/utils";
+
+describe("Montants des salaires fournisseurs", () => {
+  it.each([
+    ["25,000 - 27,000", 25000],
+    ["2,200 - 2,800", 2200],
+    ["25 000 EUR/an", 25000],
+    ["25\u202f000 €", 25000],
+    ["12,31 EUR/heure", 12.31],
+    ["12.31 EUR/hour", 12.31],
+    ["Annuel de 22405.0 Euros à 27405.0 Euros", 22405],
+    ["25.000,50 EUR", 25000.5],
+    ["25,000.50 USD", 25000.5],
+    ["45K - 55K EUR/an", 45000],
+    ["45,5k €", 45500],
+    ["À négocier", null],
+    [undefined, null],
+  ])("interprète %s sans couper les milliers", (salary, expected) => {
+    expect(parseJobSalaryAmount(salary)).toBe(expected);
+  });
+});
 
 vi.mock("@/contexts/subscription-context", () => ({
   useSubscription: () => ({ canUse: () => true, getRemaining: () => 0, isFreePlan: false }),

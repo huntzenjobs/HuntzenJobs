@@ -55,3 +55,20 @@ Le changement préexistant de frontend-next/AGENTS.md est préservé.
 - L'offre Adzuna 5870119298 a ouvert une seule nouvelle fenêtre vers EmploiSoignant 2814469. Le navigateur intégré affiche ERR_HTTP_RESPONSE_CODE_FAILURE. Une requête HTTP indépendante sur l'adresse finale renvoie 200 avec le titre et le contenu de cette offre. Le lien Adzuna lui-même renvoie 403 au client HTTP. Les résultats varient selon le client : ni expiration ni cause réseau précise démontrée. Aucun contournement de protection ou de TLS.
 - Défaut distinct reproduit en test contrôlé : une réponse tardive de la description A écrase l'URL de B après changement d'offre. Correction locale : ignorer les réponses obsolètes, réinitialiser erreur et chargement au changement d'URL. Deux tests de non-régression passent après échec constaté avant correctif. TypeScript et ESLint du hook passent.
 - Local ouvert sur http://127.0.0.1:3100/jobs. Recette authentifiée du nouveau design encore nécessaire. Aucun paiement, candidature envoyée ou suppression d'offre pendant ce diagnostic.
+
+## Recette authentifiée Arc, 6 septembre, 12h45 à 13h10
+
+- Google OAuth réel réussi dans Arc avec le compte de test Wissem. Le compte staging est sur le plan Exploration, une recherche restante affichée. Aucun droit modifié.
+- Staging observé sur c02692d, Vercel Ready. Production toujours sur frontend-next-j1fz847ay, non modifiée.
+- Recherche récente manutention : 200 résultats reçus, 10 accessibles au plan actuel. Détail ouvert, extrait signalé explicitement, bouton Voir l'offre originale avec lien d'annonce Adzuna. La destination externe de ce lien n'a pas encore été validée dans cette passe.
+- Capture desktop locale : /tmp/huntzen-staging-arc-detail-20260906.png. Non versionnée car une notification personnelle est apparue sur la capture.
+- Défauts reproduits : noms fournisseurs encore visibles dans les filtres ; montant 25,000 interprété comme 25 ; compteur principal 200 inchangé après filtrage alors que le compteur secondaire passe à 27.
+- Correctifs candidats : suppression du filtre fournisseurs, compteur fondé sur les résultats filtrés, parseur partagé filtre/tri pour milliers, décimales et suffixe K. Aucun taux de change ni annualisation inventés. Libellé et avertissement explicites pour les montants non convertis, dans les quatre langues.
+- Tests rouges : six échecs sur séparateurs, puis deux échecs sur suffixe K. Après correction : 485 tests / 86 fichiers passent, TypeScript passe, lint global avec max-warnings 0 passe.
+- Revue indépendante lecture seule : suffixe K découvert puis corrigé ; absence de tests de rendu JobsPage signalée. Les tests du parseur ne certifient pas les compteurs dans le navigateur.
+- Ouverture connectée vérifiée pour saved-jobs, candidatures, documents, cv-analysis, assistant, expat, profile, referral et recruiter-contact. Le verrou du plan Exploration est affiché pour recruiter-finder. Ces ouvertures ne valident pas les traitements IA, téléchargements ou paiements.
+- Pages publiques pricing, contact, faq, about, privacy, terms, legal et temoignages : titres rendus, pas de débordement horizontal au viewport desktop de 1512px, pas de message Application error/500/404 observé. Aucun avis juridique ni certification du contenu commercial.
+- Restant observé : textes mêlant tu/vous ; parrainage à zéro affichant encore trois amis vers Argent alors que le premier palier Bronze est à un ami ; statistiques commerciales visibles non justifiées dans cette passe.
+- Admin : recette non effectuée avec un rôle admin. Navigation tentée, sans élévation de privilèges.
+- Mobile : tentative de fenêtre 390px non effective, Arc conserve 1512px ; iframe de recette non accessible et retirée. Aucun résultat mobile à revendiquer.
+- Verdict de cette passe : recette globale INCOMPLÈTE, aucune promotion production ni lancement de publicité autorisé par ces seuls résultats.

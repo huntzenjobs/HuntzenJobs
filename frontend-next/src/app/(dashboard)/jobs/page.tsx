@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, parseJobSalaryAmount } from "@/lib/utils";
 import {
   AlertCircle,
   ArrowUpDown,
@@ -80,7 +80,6 @@ import {
   type Job,
 } from "@/lib/api/huntzen-client";
 import { track } from "@/lib/track";
-import { formatJobSource } from "@/lib/utils/job-source-formatter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserSearch } from "lucide-react";
 import { toast } from "sonner";
@@ -123,7 +122,6 @@ function formatRelativeDate(
 }
 
 interface QuickFilters {
-  sources: string[];
   contractTypes: string[];
   maxDays: number | null; // null = all dates
   salaryMin: number | null;
@@ -217,7 +215,6 @@ export default function JobsPage() {
   // Quick filters state (client-side filtering on loaded results)
   const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
   const [quickFilters, setQuickFilters] = useState<QuickFilters>({
-    sources: [],
     contractTypes: [],
     maxDays: null,
     salaryMin: null,
@@ -928,11 +925,6 @@ export default function JobsPage() {
   };
 
   // Derive available filter options from loaded results
-  const availableSources = useMemo(
-    () =>
-      [...new Set(translatedJobs.map((j) => j.source).filter(Boolean))].sort(),
-    [translatedJobs],
-  );
   const availableContractTypes = useMemo(
     () =>
       [
@@ -947,7 +939,6 @@ export default function JobsPage() {
 
   // Count active quick filters
   const activeQuickFiltersCount =
-    quickFilters.sources.length +
     quickFilters.contractTypes.length +
     (quickFilters.maxDays !== null ? 1 : 0) +
     (quickFilters.salaryMin !== null ? 1 : 0) +
@@ -963,9 +954,6 @@ export default function JobsPage() {
   // Apply quick filters client-side
   const quickFilteredJobs = useMemo(() => {
     let result = filteredProgressiveJobs;
-    if (quickFilters.sources.length > 0) {
-      result = result.filter((j) => quickFilters.sources.includes(j.source));
-    }
     if (quickFilters.contractTypes.length > 0) {
       // Map frontend filter values → backend normalized contract_type values
       const ALIASES: Record<string, string> = {
@@ -1009,10 +997,8 @@ export default function JobsPage() {
     }
     if (quickFilters.salaryMin !== null) {
       result = result.filter((j) => {
-        if (!j.salary) return false;
-        const match = j.salary.replace(/\s/g, "").match(/\d+/);
-        if (!match) return false;
-        return parseInt(match[0]) >= (quickFilters.salaryMin ?? 0);
+        const amount = parseJobSalaryAmount(j.salary);
+        return amount !== null && amount >= (quickFilters.salaryMin ?? 0);
       });
     }
     if (quickFilters.directOnly) {
@@ -1041,11 +1027,11 @@ export default function JobsPage() {
         }
         case "salary_desc":
         case "salary_asc": {
-          const extract = (s?: string) => {
-            const m = (s || "").replace(/\s/g, "").match(/\d+/);
-            return m ? parseInt(m[0]) : -1;
-          };
-          const diff = extract(b.salary) - extract(a.salary);
+          const amountA = parseJobSalaryAmount(a.salary);
+          const amountB = parseJobSalaryAmount(b.salary);
+          if (amountA === null) return amountB === null ? 0 : 1;
+          if (amountB === null) return -1;
+          const diff = amountB - amountA;
           return sortKey === "salary_desc" ? diff : -diff;
         }
         case "company_asc":
@@ -1259,9 +1245,9 @@ export default function JobsPage() {
                   <div className="min-w-0 flex-1 sm:flex-none">
                     <div className="flex items-center gap-2">
                       <h2 className="text-lg font-semibold text-slate-900">
-                        {jobs.length === 1
-                          ? t("results.count_one", { count: jobs.length })
-                          : t("results.count_other", { count: jobs.length })}
+                        {quickFilteredJobs.length === 1
+                          ? t("results.count_one", { count: quickFilteredJobs.length })
+                          : t("results.count_other", { count: quickFilteredJobs.length })}
                       </h2>
                     </div>
                     <p className="text-sm text-slate-500">
@@ -1437,8 +1423,8 @@ export default function JobsPage() {
                     <div className="text-right">
                       <p className="text-sm font-bold text-slate-700">
                         {t("results.visibleCount", {
-                          visible: Math.min(jobs.length, jobsVisibleLimit),
-                          total: jobs.length,
+                          visible: visibleJobs.length,
+                          total: quickFilteredJobs.length,
                         })}
                       </p>
                       <Button
@@ -1470,7 +1456,6 @@ export default function JobsPage() {
                       <button
                         onClick={() =>
                           setQuickFilters({
-                            sources: [],
                             contractTypes: [],
                             maxDays: null,
                             salaryMin: null,
@@ -1486,37 +1471,6 @@ export default function JobsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Source filter */}
-                    {availableSources.length > 1 && (
-                      <div>
-                        <p className="text-xs font-semibold text-slate-600 mb-2">
-                          {t("filterSource")}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {availableSources.map((source) => (
-                            <button
-                              key={source}
-                              onClick={() =>
-                                setQuickFilters((prev) => ({
-                                  ...prev,
-                                  sources: prev.sources.includes(source)
-                                    ? prev.sources.filter((s) => s !== source)
-                                    : [...prev.sources, source],
-                                }))
-                              }
-                              className={cn(
-                                "text-xs px-2 py-1 rounded-full border transition-colors",
-                                quickFilters.sources.includes(source)
-                                  ? "bg-[#00D9FF] text-white border-[#00D9FF]"
-                                  : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
-                              )}
-                            >
-                              {formatJobSource(source)}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
                     {/* Contract type filter — hidden if pre-search contract type is active */}
                     {availableContractTypes.length > 0 &&
@@ -1598,18 +1552,25 @@ export default function JobsPage() {
                         </p>
                         <input
                           type="number"
+                          min="0"
+                          step="any"
+                          aria-label={t("filterSalaryMin")}
+                          aria-describedby="salary-filter-hint"
                           placeholder={t("salaryMinPlaceholder")}
                           value={quickFilters.salaryMin ?? ""}
                           onChange={(e) =>
                             setQuickFilters((prev) => ({
                               ...prev,
                               salaryMin: e.target.value
-                                ? parseInt(e.target.value)
+                                ? Math.max(0, Number(e.target.value))
                                 : null,
                             }))
                           }
                           className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#00D9FF]"
                         />
+                        <p id="salary-filter-hint" className="mt-2 text-xs text-slate-600">
+                          {t("salaryComparisonHint")}
+                        </p>
                       </div>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
