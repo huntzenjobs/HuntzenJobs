@@ -55,7 +55,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 // Dynamic import: @react-pdf/renderer est lourd (~200KB), chargé uniquement au clic export
@@ -171,7 +171,6 @@ export function CVUploadAsyncWizard({
 }: CVUploadAsyncWizardProps) {
   const { session, user, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useTranslations("cv");
 
   // ============================================
@@ -184,13 +183,10 @@ export function CVUploadAsyncWizard({
   const [loadedHistoryResult, setLoadedHistoryResult] =
     useState<CVAnalysisApiResult | null>(null);
 
-  // Wizard state — initialise step from URL ?step=X if present
+  // L'URL ne restaure ni fichier ni résultat : repartir du dépôt au remontage.
   const [wizardState, setWizardState] = useState<WizardState>(() => {
-    const stepParam = searchParams.get("step");
-    const parsed = stepParam ? parseInt(stepParam, 10) : 1;
-    const initialStep: WizardStep = parsed === 2 ? 2 : parsed === 3 ? 3 : 1;
     return {
-      currentStep: initialStep,
+      currentStep: 1,
       uploadMethod: "file",
       file: null,
       cvText: "",
