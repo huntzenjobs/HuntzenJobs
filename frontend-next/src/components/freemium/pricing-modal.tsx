@@ -106,7 +106,7 @@ export function PricingModal() {
       priceYearly: formatPrice(p.price_yearly ?? 0),
       priceValue: p.price_monthly,
       priceYearlyValue: p.price_yearly ?? 0,
-      period: tModal("plans.free.period"),
+      period: tModal("billing.perMonth"),
       description: p.description,
       icon: ICON_MAP[p.icon] ?? <Gift className="w-6 h-6" />,
       color: colors.text,
