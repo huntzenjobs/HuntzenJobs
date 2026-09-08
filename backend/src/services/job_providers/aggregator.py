@@ -7,6 +7,7 @@ Combines results from multiple job providers.
 import asyncio
 import logging
 import re
+import time
 import unicodedata
 from difflib import SequenceMatcher
 from typing import Any
@@ -14,6 +15,8 @@ from typing import Any
 from src.services.job_providers.base import BaseJobProvider, clean_job_description
 
 logger = logging.getLogger(__name__)
+
+PROVIDER_TIMEOUT_SECONDS = 8.0
 
 
 ALTERNANCE_SIGNALS = frozenset({
@@ -181,6 +184,7 @@ async def aggregate_jobs(
     """
     async def search_provider(provider: BaseJobProvider) -> tuple[str, list[dict]]:
         """Search a single provider."""
+        started_at = time.perf_counter()
         try:
             # Pass extra params if provider supports them
             kwargs = {
@@ -200,10 +204,57 @@ async def aggregate_jobs(
             if radius_km is not None:
                 kwargs["radius_km"] = radius_km
 
-            jobs = await provider.search(**kwargs)
+            jobs = await asyncio.wait_for(
+                provider.search(**kwargs),
+                timeout=PROVIDER_TIMEOUT_SECONDS,
+            )
+            duration_ms = round((time.perf_counter() - started_at) * 1000)
+            logger.info(
+                "[Aggregator] provider_result provider=%s duration_ms=%d "
+                "job_count=%d status=success",
+                provider.name,
+                duration_ms,
+                len(jobs),
+                extra={
+                    "provider": provider.name,
+                    "duration_ms": duration_ms,
+                    "job_count": len(jobs),
+                    "provider_status": "success",
+                },
+            )
             return provider.name, jobs
+        except TimeoutError:
+            duration_ms = round((time.perf_counter() - started_at) * 1000)
+            logger.warning(
+                "[Aggregator] provider_result provider=%s duration_ms=%d "
+                "job_count=0 status=timeout timeout_seconds=%.1f",
+                provider.name,
+                duration_ms,
+                PROVIDER_TIMEOUT_SECONDS,
+                extra={
+                    "provider": provider.name,
+                    "duration_ms": duration_ms,
+                    "job_count": 0,
+                    "provider_status": "timeout",
+                    "timeout_seconds": PROVIDER_TIMEOUT_SECONDS,
+                },
+            )
+            return provider.name, []
         except Exception as e:
-            logger.error(f"[Aggregator] {provider.name} failed: {e}")
+            duration_ms = round((time.perf_counter() - started_at) * 1000)
+            logger.error(
+                "[Aggregator] provider_result provider=%s duration_ms=%d "
+                "job_count=0 status=error error=%s",
+                provider.name,
+                duration_ms,
+                e,
+                extra={
+                    "provider": provider.name,
+                    "duration_ms": duration_ms,
+                    "job_count": 0,
+                    "provider_status": "error",
+                },
+            )
             return provider.name, []
 
     # Search all providers in parallel

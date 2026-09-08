@@ -1,11 +1,14 @@
 """Contrats envoyés aux API externes d'offres d'emploi."""
 
+import asyncio
+import logging
+import time
 from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
 
-from src.services.job_providers import adzuna, france_travail
+from src.services.job_providers import adzuna, aggregator, france_travail
 from src.services.job_providers.aggregator import _repair_job_text
 
 
@@ -36,6 +39,22 @@ class _Client:
     async def get(self, _url: str, **kwargs: Any) -> _Response:
         self.params = dict(kwargs.get("params") or {})
         return self.response
+
+
+class _TimedProvider:
+    def __init__(
+        self,
+        name: str,
+        delay_seconds: float,
+        jobs: list[dict[str, Any]],
+    ) -> None:
+        self.name = name
+        self.delay_seconds = delay_seconds
+        self.jobs = jobs
+
+    async def search(self, **_kwargs: Any) -> list[dict[str, Any]]:
+        await asyncio.sleep(self.delay_seconds)
+        return self.jobs
 
 
 @pytest.mark.asyncio
@@ -158,3 +177,58 @@ def test_aggregator_removes_scraped_navigation_prefix_from_any_provider() -> Non
     _repair_job_text(job)
 
     assert job["description"] == "Missions React et TypeScript."
+
+
+@pytest.mark.asyncio
+async def test_aggregator_preserves_fast_results_without_waiting_for_blocked_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fast_job = {
+        "id": "fast-1",
+        "title": "Agent de manutention",
+        "source": "fast",
+    }
+    providers = [
+        _TimedProvider("fast", 0, [fast_job]),
+        _TimedProvider("blocked", 0.25, []),
+    ]
+    monkeypatch.setattr(
+        aggregator,
+        "PROVIDER_TIMEOUT_SECONDS",
+        0.02,
+        raising=False,
+    )
+
+    started_at = time.perf_counter()
+    jobs = await aggregator.aggregate_jobs(providers, "Manutention")
+    elapsed_seconds = time.perf_counter() - started_at
+
+    assert elapsed_seconds < 0.12
+    assert jobs == [fast_job]
+
+
+@pytest.mark.asyncio
+async def test_aggregator_logs_structured_status_for_each_provider(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    providers = [
+        _TimedProvider("fast", 0, [{"id": "fast-1", "source": "fast"}]),
+        _TimedProvider("blocked", 0.25, []),
+    ]
+    monkeypatch.setattr(aggregator, "PROVIDER_TIMEOUT_SECONDS", 0.02)
+    caplog.set_level(logging.INFO, logger=aggregator.__name__)
+
+    await aggregator.aggregate_jobs(providers, "Manutention")
+
+    records_by_provider = {
+        record.provider: record
+        for record in caplog.records
+        if hasattr(record, "provider")
+    }
+    assert records_by_provider["fast"].provider_status == "success"
+    assert records_by_provider["fast"].job_count == 1
+    assert records_by_provider["fast"].duration_ms >= 0
+    assert records_by_provider["blocked"].provider_status == "timeout"
+    assert records_by_provider["blocked"].job_count == 0
+    assert records_by_provider["blocked"].duration_ms >= 20
