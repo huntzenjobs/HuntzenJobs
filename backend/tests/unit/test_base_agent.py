@@ -157,6 +157,7 @@ class TestLoadPrompt:
 
         assert "Recommend the HuntZen Interview Simulator" not in prompt
         assert "do not claim that the interview simulator is available" in prompt.lower()
+        assert "never output raw html tags" in prompt.lower()
 
     def test_load_nonexistent_prompt_returns_empty(self):
         """Should return empty string for non-existent file."""
