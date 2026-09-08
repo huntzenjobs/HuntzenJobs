@@ -64,4 +64,22 @@ describe("ConversionPopup", () => {
     fireEvent.click(screen.getByLabelText("close"));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("confie le CTA au tunnel de paiement fourni", () => {
+    const onClose = vi.fn();
+    const onUpgrade = vi.fn();
+    render(
+      <ConversionPopup
+        popupId="pricing_hover"
+        isOpen={true}
+        onClose={onClose}
+        onUpgrade={onUpgrade}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "pricingHover.primaryCta" }));
+
+    expect(onUpgrade).toHaveBeenCalledWith(undefined);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
 });

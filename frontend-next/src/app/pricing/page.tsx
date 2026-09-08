@@ -62,9 +62,6 @@ export default function PricingPage() {
     formatPrice,
   } = usePricingPlans();
 
-  const pricingHoverPopup = useConversionPopup("pricing_hover");
-  const openPricingHoverPopup = pricingHoverPopup.open;
-
   const plans = dbPlans.map((p) => ({
     id: p.name,
     name: p.display_name,
@@ -86,20 +83,6 @@ export default function PricingPage() {
       })),
     ],
   }));
-
-  // Show pricing_hover popup after 20s (once per session)
-  useEffect(() => {
-    if (
-      typeof sessionStorage !== "undefined" &&
-      sessionStorage.getItem("pricing_popup_shown")
-    )
-      return;
-    const t = setTimeout(() => {
-      sessionStorage.setItem("pricing_popup_shown", "1");
-      openPricingHoverPopup();
-    }, 20000);
-    return () => clearTimeout(t);
-  }, [openPricingHoverPopup]);
 
   const currentPlan = subscription?.plan || "free";
 
@@ -216,6 +199,25 @@ export default function PricingPage() {
     },
     [auth?.session, currentPlan, executeSelectPlan, tPricing, user],
   );
+
+  const pricingHoverPopup = useConversionPopup("pricing_hover", {
+    onUpgrade: () => executeSelectPlan("pro"),
+  });
+  const openPricingHoverPopup = pricingHoverPopup.open;
+
+  // Show pricing_hover popup after 20s (once per session)
+  useEffect(() => {
+    if (
+      typeof sessionStorage !== "undefined" &&
+      sessionStorage.getItem("pricing_popup_shown")
+    )
+      return;
+    const timer = setTimeout(() => {
+      sessionStorage.setItem("pricing_popup_shown", "1");
+      openPricingHoverPopup();
+    }, 20000);
+    return () => clearTimeout(timer);
+  }, [openPricingHoverPopup]);
 
   return (
     <>
