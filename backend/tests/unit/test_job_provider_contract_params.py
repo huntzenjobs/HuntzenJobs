@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.services.job_providers import adzuna, france_travail
+from src.services.job_providers.aggregator import _repair_job_text
 
 
 class _Response:
@@ -143,3 +144,17 @@ def test_adzuna_preserves_legitimate_description_beginning_with_retour() -> None
     normalized = provider._normalize_adzuna_job(item)
 
     assert normalized["description"] == item["description"]
+
+
+def test_aggregator_removes_scraped_navigation_prefix_from_any_provider() -> None:
+    job = {
+        "source": "jsearch",
+        "description": (
+            "Retour Développeur React · École Rennes · France · "
+            "10 mars, 2025 78,712 Description Missions React et TypeScript."
+        ),
+    }
+
+    _repair_job_text(job)
+
+    assert job["description"] == "Missions React et TypeScript."

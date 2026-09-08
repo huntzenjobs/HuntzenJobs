@@ -5,6 +5,7 @@ Abstract base class for all job providers.
 """
 
 import logging
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import wraps
@@ -19,6 +20,19 @@ logger = logging.getLogger(__name__)
 NORMALIZED_CONTRACT_TYPES = {
     "CDI", "CDD", "Freelance", "Stage", "Alternance", "Interim", "Remote", "Temps partiel",
 }
+
+_SCRAPED_NAVIGATION_PREFIX = re.compile(
+    r"^\s*Retour\b.{0,450}?\b\d{1,2}\s+[A-Za-zÀ-ÖØ-öø-ÿ]+,\s+\d{4}"
+    r"\s+[\d,.]+\s+Description\s+",
+    flags=re.IGNORECASE | re.DOTALL,
+)
+
+
+def clean_job_description(description: str | None) -> str | None:
+    """Retire uniquement un en-tête de navigation injecté avant l'annonce."""
+    if not description:
+        return description
+    return _SCRAPED_NAVIGATION_PREFIX.sub("", description, count=1).strip()
 
 
 def normalize_contract_type(raw: str | None) -> str:

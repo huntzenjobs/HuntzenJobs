@@ -11,7 +11,7 @@ import unicodedata
 from difflib import SequenceMatcher
 from typing import Any
 
-from src.services.job_providers.base import BaseJobProvider
+from src.services.job_providers.base import BaseJobProvider, clean_job_description
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,12 @@ def _repair_job_text(job: dict[str, Any]) -> None:
     for field in _JOB_TEXT_FIELDS:
         value = job.get(field)
         if isinstance(value, str):
-            job[field] = _repair_mojibake(value)
+            repaired = _repair_mojibake(value)
+            job[field] = (
+                clean_job_description(repaired)
+                if field == "description"
+                else repaired
+            )
 
 
 def _normalize_location_text(text: str) -> str:
