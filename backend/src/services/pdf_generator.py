@@ -75,6 +75,7 @@ class PDFGenerator:
         try:
             # Sanitize and ensure required fields exist
             cv_data = self._sanitize_data(cv_data)
+            cv_data = self._normalize_cv_presentation(cv_data)
             cv_data = self._ensure_required_fields(cv_data)
 
             # Load template
@@ -144,6 +145,26 @@ class PDFGenerator:
         except Exception:
             return 1  # Assume 1 page on error
 
+    @staticmethod
+    def _normalize_cv_presentation(cv_data: dict[str, Any]) -> dict[str, Any]:
+        """Évite de doubler les marqueurs que les templates rendent déjà."""
+        normalized = dict(cv_data)
+        normalized_experiences = []
+        for experience in cv_data.get("experiences", []):
+            if not isinstance(experience, dict):
+                normalized_experiences.append(experience)
+                continue
+            normalized_experience = dict(experience)
+            bullets = experience.get("bullets")
+            if isinstance(bullets, list):
+                normalized_experience["bullets"] = [
+                    re.sub(r"^[\s›•*-]+", "", str(bullet)).strip()
+                    for bullet in bullets
+                ]
+            normalized_experiences.append(normalized_experience)
+        normalized["experiences"] = normalized_experiences
+        return normalized
+
     def generate_preview_html(
         self,
         cv_data: dict[str, Any],
@@ -157,6 +178,7 @@ class PDFGenerator:
         Returns rendered HTML string for preview without PDF conversion.
         """
         cv_data = self._sanitize_data(cv_data)
+        cv_data = self._normalize_cv_presentation(cv_data)
 
         try:
             jinja_template = self.env.get_template(f"cv_{template}.html")

@@ -72,3 +72,25 @@ def test_pdf_preview_omits_technology_separator_for_empty_list() -> None:
     assert 'class="proj-tech"' not in html
     assert "Projet test" in html
     assert "Description conservée" in html
+
+
+def test_pdf_preview_does_not_render_two_bullet_markers() -> None:
+    html = PDFGenerator().generate_preview_html(
+        {
+            "personal_info": {"name": "Wissem Karboub"},
+            "experiences": [
+                {
+                    "title": "Tech Lead",
+                    "company": "HuntZenJobs",
+                    "bullets": ["› Pilotage produit", "• Développement React"],
+                }
+            ],
+        },
+        template="ats",
+        language="fr",
+    )
+
+    assert "› Pilotage produit" not in html
+    assert "• Développement React" not in html
+    assert "Pilotage produit" in html
+    assert "Développement React" in html
