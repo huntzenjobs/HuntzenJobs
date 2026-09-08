@@ -80,14 +80,16 @@ class DocumentRetriever:
             try:
                 embedding = await embed_query(query)
             except RuntimeError as exc:
-                # Une dépendance d'embedding absente ne doit pas exposer une
-                # erreur technique au client. L'agent retournera son message
-                # prudent « aucune source officielle vérifiée ».
                 logger.warning(
-                    "[DocumentRetriever] Embeddings indisponibles, mode dégradé: %s",
+                    "[DocumentRetriever] Embeddings indisponibles, repli lexical: %s",
                     exc,
                 )
-                return []
+                return self._retrieve_lexically(
+                    sub_queries=sub_queries,
+                    country=country,
+                    visa_type=visa_type,
+                    match_count=match_count,
+                )
             except Exception as exc:
                 # Erreurs réseau transitoires : on logue et on continue avec la sous-requête suivante.
                 logger.error(
@@ -160,3 +162,60 @@ class DocumentRetriever:
             len(chunk_by_id),
         )
         return results
+
+    def _retrieve_lexically(
+        self,
+        sub_queries: list[str],
+        country: str,
+        visa_type: str,
+        match_count: int,
+    ) -> list[dict[str, Any]]:
+        """Interroge l'index lexical PostgreSQL quand l'embedding est indisponible."""
+        rrf_scores: dict[str, float] = {}
+        chunk_by_id: dict[str, dict[str, Any]] = {}
+        for query_idx, query in enumerate(sub_queries):
+            if not query.strip():
+                continue
+            rpc_params = {
+                "p_query": query.strip(),
+                "p_country": country,
+                "p_visa_type": visa_type,
+                "p_match_count": match_count,
+            }
+            try:
+                result = self._supabase.rpc(
+                    "search_expat_chunks_lexical", rpc_params
+                ).execute()
+            except Exception as exc:
+                logger.error(
+                    "[DocumentRetriever] Échec du repli lexical (requête %d): %s",
+                    query_idx,
+                    exc,
+                    exc_info=True,
+                )
+                continue
+
+            for rank, row in enumerate(result.data or []):
+                chunk_id = str(row.get("id", ""))
+                if not chunk_id:
+                    continue
+                rrf_scores[chunk_id] = rrf_scores.get(chunk_id, 0.0) + 1.0 / (
+                    _RRF_K + rank
+                )
+                chunk_by_id.setdefault(chunk_id, dict(row))
+
+        sorted_ids = sorted(
+            chunk_by_id,
+            key=lambda chunk_id: rrf_scores[chunk_id],
+            reverse=True,
+        )
+        rows = []
+        for chunk_id in sorted_ids[:match_count]:
+            chunk = chunk_by_id[chunk_id]
+            chunk["rrf_score"] = rrf_scores[chunk_id]
+            rows.append(chunk)
+        logger.info(
+            "[DocumentRetriever] Repli lexical: %d chunks retournés.",
+            len(rows),
+        )
+        return rows
