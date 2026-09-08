@@ -8,7 +8,7 @@ import {
 } from "@/components/cv/cv-source-review";
 
 const labels: Record<string, string> = {
-  title: "Vérifiez les informations de votre CV", guidance: "Corrigez uniquement ce qui ne correspond pas à votre CV.", rawTextTitle: "Texte original extrait", rawTextGuidance: "Conservé comme référence.", confirmationLabel: "J’ai vérifié ces informations", replaceFile: "Remplacer le fichier", confirm: "Confirmer et générer", retry: "Réessayer", loading: "Préparation de la vérification", extractionError: "Lecture impossible. Réessayez ou remplacez le fichier.", emptySection: "Aucune information détectée", addItem: "Ajouter", removeItem: "Supprimer", addValue: "Ajouter une valeur", removeValue: "Supprimer la valeur", newValue: "Nouvelle valeur", sections_personal_info: "Informations personnelles", sections_experiences: "Expériences", sections_education: "Formations", sections_certifications: "Certifications", sections_projects: "Projets", sections_skills: "Compétences", sections_interests: "Centres d’intérêt", fields_name: "Nom", fields_title: "Poste", fields_company: "Entreprise", fields_degree: "Diplôme", fields_school: "Établissement", fields_technical: "Compétences", fields_value: "Information", fields_description: "Description", addEntry_experiences: "Ajouter une expérience", addEntry_education: "Ajouter une formation", addEntry_certifications: "Ajouter une certification", addEntry_projects: "Ajouter un projet", removeEntry_experiences: "Supprimer l’expérience {index}", removeEntry_education: "Supprimer la formation {index}", removeEntry_certifications: "Supprimer la certification {index}", removeEntry_projects: "Supprimer le projet {index}", addSkillValue: "Ajouter une valeur à {section}", removeSkillValue: "Supprimer la valeur {index} de {section}", addInterest: "Ajouter un centre d’intérêt", removeInterest: "Supprimer le centre d’intérêt {index}",
+  title: "Vérifiez les informations de votre CV", guidance: "Corrigez uniquement ce qui ne correspond pas à votre CV.", rawTextTitle: "Texte original extrait", rawTextGuidance: "Conservé comme référence.", confirmationLabel: "J’ai vérifié ces informations", replaceFile: "Remplacer le fichier", confirm: "Confirmer et générer", retry: "Réessayer", loading: "Préparation de la vérification", extractionError: "Lecture impossible. Réessayez ou remplacez le fichier.", missingName: "Ajoutez votre nom avant de générer les documents.", emptySection: "Aucune information détectée", addItem: "Ajouter", removeItem: "Supprimer", addValue: "Ajouter une valeur", removeValue: "Supprimer la valeur", newValue: "Nouvelle valeur", sections_personal_info: "Informations personnelles", sections_experiences: "Expériences", sections_education: "Formations", sections_certifications: "Certifications", sections_projects: "Projets", sections_skills: "Compétences", sections_interests: "Centres d’intérêt", fields_name: "Nom", fields_title: "Poste", fields_company: "Entreprise", fields_degree: "Diplôme", fields_school: "Établissement", fields_technical: "Compétences", fields_value: "Information", fields_description: "Description", addEntry_experiences: "Ajouter une expérience", addEntry_education: "Ajouter une formation", addEntry_certifications: "Ajouter une certification", addEntry_projects: "Ajouter un projet", removeEntry_experiences: "Supprimer l’expérience {index}", removeEntry_education: "Supprimer la formation {index}", removeEntry_certifications: "Supprimer la certification {index}", removeEntry_projects: "Supprimer le projet {index}", addSkillValue: "Ajouter une valeur à {section}", removeSkillValue: "Supprimer la valeur {index} de {section}", addInterest: "Ajouter un centre d’intérêt", removeInterest: "Supprimer le centre d’intérêt {index}",
 };
 
 vi.mock("next-intl", () => ({
@@ -78,6 +78,25 @@ describe("CVSourceReview", () => {
     await user.type(screen.getByLabelText("Entreprise"), " France");
     expect(checkbox).not.toBeChecked();
     expect(screen.getByRole("button", { name: "Confirmer et générer" })).toBeDisabled();
+  });
+
+  it("bloque la génération tant que le nom vérifié est vide", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({
+      cv_text: "Wissem\nKarboub\nDéveloppeur",
+      factual_reference: { ...factualReference, personal_info: { ...factualReference.personal_info, name: "" } },
+    }));
+    render(<CVSourceReview file={file} onConfirm={vi.fn()} onCancel={vi.fn()} />);
+
+    expect(await screen.findByText(labels.missingName)).toBeInTheDocument();
+    const checkbox = screen.getByRole("checkbox", { name: "J’ai vérifié ces informations" });
+    expect(checkbox).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Confirmer et générer" })).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Nom"), "Wissem Karboub");
+    expect(checkbox).toBeEnabled();
+    await user.click(checkbox);
+    expect(screen.getByRole("button", { name: "Confirmer et générer" })).toBeEnabled();
   });
 
   it("ajoute puis supprime une expérience", async () => {
@@ -150,8 +169,8 @@ describe("CVSourceReview", () => {
     const rawText = screen.getByLabelText("Texte original extrait");
     expect(rawText).not.toHaveAttribute("readonly");
     await user.type(rawText, "x".repeat(100));
-    await user.click(screen.getByRole("checkbox", { name: "J’ai vérifié ces informations" }));
-    expect(screen.getByRole("button", { name: "Confirmer et générer" })).toBeEnabled();
+    expect(screen.getByRole("checkbox", { name: "J’ai vérifié ces informations" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Confirmer et générer" })).toBeDisabled();
     await user.type(screen.getByLabelText("Nom"), "Camille");
     expect(screen.getByRole("button", { name: "Confirmer et générer" })).toBeDisabled();
     await user.click(screen.getByRole("checkbox", { name: "J’ai vérifié ces informations" }));

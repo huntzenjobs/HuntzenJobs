@@ -3119,6 +3119,7 @@
     "cancel": "Cancelar",
     "loading": "Preparando as informações para revisão",
     "extractionError": "Não foi possível preparar a revisão. Tente novamente ou substitua o arquivo.",
+    "missingName": "Adicione o seu nome antes de gerar os documentos.",
     "manualGuidance": "Modo manual: introduza o texto do seu CV e reveja cada secção. A preparação automática não foi concluída.",
     "emptySection": "Nenhuma informação foi encontrada nesta seção.",
     "addItem": "Adicionar",

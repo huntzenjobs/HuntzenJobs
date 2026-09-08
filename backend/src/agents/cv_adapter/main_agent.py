@@ -1667,6 +1667,7 @@ contradiction: absence of evidence is enough to reject a factual attribution."""
         language: str,
         company_name: str,
         date_str: str,
+        job_title: str = "",
     ) -> dict[str, Any]:
         """Construit un brouillon conservateur qui doit encore être vérifié."""
         personal_info = cv_data.get("personal_info", {})
@@ -1679,7 +1680,7 @@ contradiction: absence of evidence is enough to reject a factual attribution."""
         if len(experiences) > 1:
             employer = ""
         bullets = [
-            str(bullet).strip()
+            re.sub(r"^[\s›•*-]+", "", str(bullet)).strip()
             for experience in experiences[:2]
             for bullet in experience.get("bullets", [])[:2]
             if str(bullet).strip()
@@ -1687,7 +1688,8 @@ contradiction: absence of evidence is enough to reject a factual attribution."""
 
         if language == "fr":
             # Le titre actuel du candidat n'est pas nécessairement celui de l'offre.
-            paragraph_1 = "Je vous adresse ma candidature pour le poste proposé."
+            target_role = f"le poste de {job_title}" if job_title else "le poste proposé"
+            paragraph_1 = f"Je vous adresse ma candidature pour {target_role}."
             if summary:
                 paragraph_1 = f"{paragraph_1} {summary}"
 
@@ -1707,14 +1709,15 @@ contradiction: absence of evidence is enough to reject a factual attribution."""
                 f"Je souhaite mettre ce parcours au service du poste présenté{target}. "
                 "Je reste disponible pour échanger avec vous sur cette candidature."
             )
-            subject = "Candidature au poste proposé"
+            subject = f"Candidature au poste de {job_title}" if job_title else "Candidature au poste proposé"
             salutation = "Madame, Monsieur,"
             closing = (
                 "Dans l'attente de votre retour, je vous prie d'agréer, Madame, Monsieur, "
                 "l'expression de mes salutations distinguées."
             )
         else:
-            paragraph_1 = "I am applying for the advertised position."
+            target_role = f"the {job_title} position" if job_title else "the advertised position"
+            paragraph_1 = f"I am applying for {target_role}."
             if summary:
                 paragraph_1 = f"{paragraph_1} {summary}"
 
@@ -1731,7 +1734,7 @@ contradiction: absence of evidence is enough to reject a factual attribution."""
                 f"I would welcome the opportunity to apply this background to the role{target}. "
                 "I look forward to discussing my application with you."
             )
-            subject = "Application for the advertised position"
+            subject = f"Application for the {job_title} position" if job_title else "Application for the advertised position"
             salutation = "Dear Hiring Manager,"
             closing = "Thank you for considering my application."
 
@@ -1828,6 +1831,7 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
         job_description: str,
         language: str = "fr",
         company_name: str = "",
+        job_title: str = "",
         source_cv_text: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -2006,6 +2010,7 @@ than filling space with unsupported claims. Preserve the candidate's stated cons
                         language=language,
                         company_name=company_name,
                         date_str=date_str,
+                        job_title=job_title,
                     )
                     if source_cv_text and source_cv_text.strip():
                         # L'extraction conserve la langue originale. Traduire le

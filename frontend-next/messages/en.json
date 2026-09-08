@@ -3113,6 +3113,7 @@
     "cancel": "Cancel",
     "loading": "Preparing the information to review",
     "extractionError": "The review could not be prepared. Try again or replace the file.",
+    "missingName": "Add your name before generating the documents.",
     "manualGuidance": "Manual mode: enter your CV text, then review every section. Automatic preparation did not succeed.",
     "emptySection": "No information was found in this section.",
     "addItem": "Add",

@@ -123,6 +123,7 @@ export function CVSourceReview({ file, accessToken, onConfirm, onCancel, initial
   const requestIdRef = useRef(0);
   const mountedRef = useRef(true);
   const accessTokenRef = useRef(accessToken);
+  const hasCandidateName = String(reference.personal_info.name ?? "").trim().length > 0;
 
   useEffect(() => { accessTokenRef.current = accessToken; }, [accessToken]);
 
@@ -232,6 +233,7 @@ export function CVSourceReview({ file, accessToken, onConfirm, onCancel, initial
       {!loading && (
         <div className="space-y-4">
           <EditorSection title={t("sections_personal_info")}><div className="grid gap-3 sm:grid-cols-2">{Object.entries(reference.personal_info).map(([key, value]) => renderField("personal_info", key, value))}</div></EditorSection>
+          {!hasCandidateName && <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950" role="alert"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span>{t("missingName")}</span></div>}
           {COLLECTION_SECTIONS.map((section) => (
             <EditorSection key={section} title={t("sections_" + section)}>
               <div className="space-y-3">
@@ -265,12 +267,12 @@ export function CVSourceReview({ file, accessToken, onConfirm, onCancel, initial
             <textarea readOnly={!error} maxLength={100000} value={rawText} onChange={(event) => { setRawText(event.target.value); setConfirmed(false); }} rows={8} aria-label={t("rawTextTitle")} className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-base leading-6 text-slate-700 sm:text-sm" />
             {error && <p className="mt-2 text-xs text-amber-800">{t("manualGuidance")}</p>}
           </details>
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 focus-within:ring-2 focus-within:ring-[#00D9FF]/40"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#00B8D9]" /><span>{t("confirmationLabel")}</span></label>
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 focus-within:ring-2 focus-within:ring-[#00D9FF]/40"><input type="checkbox" checked={confirmed} disabled={!hasCandidateName} onChange={(event) => setConfirmed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#00B8D9]" /><span>{t("confirmationLabel")}</span></label>
         </div>
       )}
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         <Button type="button" variant="outline" className="min-h-11" onClick={onCancel}>{t("replaceFile")}</Button>
-        <Button type="button" disabled={loading || !confirmed || (error && rawText.trim().length < 100) || rawText.length > 100000} onClick={() => onConfirm(rawText.trim(), reference)} className="min-h-11 bg-[#00D9FF] font-semibold text-slate-950 hover:bg-[#00C4EA]">{t("confirm")}</Button>
+        <Button type="button" disabled={loading || !hasCandidateName || !confirmed || (error && rawText.trim().length < 100) || rawText.length > 100000} onClick={() => onConfirm(rawText.trim(), reference)} className="min-h-11 bg-[#00D9FF] font-semibold text-slate-950 hover:bg-[#00C4EA]">{t("confirm")}</Button>
       </div>
     </section>
   );

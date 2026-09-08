@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { buildCoverLetterSource, saveConfirmedApplication } from "@/components/jobs/apply-modal";
+import {
+  buildCoverLetterRequest,
+  buildCoverLetterSource,
+  saveConfirmedApplication,
+} from "@/components/jobs/apply-modal";
 import type { Job } from "@/lib/api/huntzen-client";
 
 const job = {
@@ -32,6 +36,27 @@ describe("buildCoverLetterSource", () => {
 
   it("ne prétend pas avoir une source originale pour un ancien document", () => {
     expect(buildCoverLetterSource(undefined, baseline, baseline)).toBeUndefined();
+  });
+});
+
+describe("buildCoverLetterRequest", () => {
+  it("transmet le titre exact de l’offre à la génération", () => {
+    expect(buildCoverLetterRequest({
+      cvData: {
+        personal_info: { name: "Wissem Karboub" },
+        experiences: [],
+        education: [],
+        skills: {},
+      },
+      sourceCvText: "CV source",
+      jobDescription: "Offre détaillée",
+      language: "fr",
+      job,
+    })).toMatchObject({
+      job_title: "Développeur Python",
+      company_name: "HuntZen Test",
+      job_description: "Offre détaillée",
+    });
   });
 });
 

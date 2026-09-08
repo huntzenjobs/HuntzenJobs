@@ -817,6 +817,31 @@ def test_source_only_letter_does_not_attribute_two_jobs_to_one_employer(language
     assert "Source A" not in result["paragraph_2"]
 
 
+def test_source_only_letter_uses_target_job_and_cleans_list_markers() -> None:
+    result = CVAdapterAgent._build_source_only_cover_letter(
+        {
+            "personal_info": {"name": "Wissem Karboub"},
+            "experiences": [
+                {
+                    "company": "HuntZenJobs",
+                    "bullets": ["› Pilotage produit", "• Développement React"],
+                }
+            ],
+        },
+        language="fr",
+        company_name="Informatis",
+        job_title="Développeur React Native Junior",
+        date_str="2026-09-08",
+    )
+
+    assert result["subject"] == "Candidature au poste de Développeur React Native Junior"
+    assert "poste de Développeur React Native Junior" in result["paragraph_1"]
+    assert "poste proposé" not in result["paragraph_1"]
+    assert "›" not in result["paragraph_2"]
+    assert "•" not in result["paragraph_2"]
+    assert result["signature"] == "Wissem Karboub"
+
+
 @pytest.mark.asyncio
 async def test_extraction_restores_explicit_source_skill_levels_and_deduplicates() -> None:
     agent = object.__new__(CVAdapterAgent)

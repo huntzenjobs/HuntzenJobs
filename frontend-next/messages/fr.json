@@ -3114,6 +3114,7 @@
     "cancel": "Annuler",
     "loading": "Préparation des informations à vérifier",
     "extractionError": "Impossible de préparer la vérification. Réessayez ou remplacez le fichier.",
+    "missingName": "Ajoutez votre nom avant de générer les documents.",
     "manualGuidance": "Mode manuel : saisissez le texte de votre CV puis vérifiez chaque rubrique. La préparation automatique n’a pas réussi.",
     "emptySection": "Aucune information détectée dans cette rubrique.",
     "addItem": "Ajouter",

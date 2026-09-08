@@ -390,6 +390,7 @@ async def _run_cover_letter_generation(
     job_description: str,
     language: str,
     company_name: str,
+    job_title: str,
     user_id: str,
     quota_reservation_id: str,
     allow_queue: bool,
@@ -419,6 +420,7 @@ async def _run_cover_letter_generation(
                         job_description=job_description,
                         language=language,
                         company_name=company_name,
+                        job_title=job_title,
                         user_id=user_id,
                         quota_reservation_id=quota_reservation_id,
                     )
@@ -455,6 +457,7 @@ async def _run_cover_letter_generation(
                     job_description=job_description,
                     language=language,
                     company_name=company_name,
+                    job_title=job_title,
                 ),
                 timeout=CV_ADAPT_SYNC_TIMEOUT_SECONDS,
             )
@@ -1234,6 +1237,7 @@ class CoverLetterRequest(BaseModel):
     job_description: str = Field(min_length=50, max_length=30_000)
     language: str = Field(default="fr", pattern="^(fr|en|es|pt)$")
     company_name: str | None = Field(default=None, max_length=200)
+    job_title: str | None = Field(default=None, max_length=300)
 
     @model_validator(mode="after")
     def validate_cv_payload_size(self) -> "CoverLetterRequest":
@@ -1276,6 +1280,7 @@ async def generate_cover_letter(
             job_description=data.job_description,
             language=data.language,
             company_name=data.company_name or "",
+            job_title=data.job_title or "",
             user_id=user_id,
             quota_reservation_id=reservation_id,
             allow_queue=False,
@@ -1374,6 +1379,7 @@ async def generate_cover_letter_json(
             job_description=data.job_description,
             language=data.language,
             company_name=data.company_name or "",
+            job_title=data.job_title or "",
             user_id=user_id,
             quota_reservation_id=reservation_id,
             allow_queue=True,

@@ -156,6 +156,7 @@ async def test_cover_letter_task_uses_structured_cv_data(monkeypatch: pytest.Mon
         job_description="Offre suffisamment détaillée",
         language="fr",
         company_name="Entreprise Test",
+        job_title="",
     )
     commit_reservation.assert_awaited_once_with("reservation-456", "owner-123")
 
@@ -209,7 +210,7 @@ async def test_final_worker_commit_failure_releases_reservation(
 
 
 @pytest.mark.asyncio
-async def test_cover_letter_task_accepts_legacy_queued_payload(
+async def test_cover_letter_task_forwards_target_job_title(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     agent = Mock()
@@ -221,7 +222,7 @@ async def test_cover_letter_task_accepts_legacy_queued_payload(
         {},
         cv_text=json.dumps(cv_data),
         job_description="Offre suffisamment détaillée",
-        job_title="Ancien champ toléré",
+        job_title="Développeur React Native Junior",
     )
 
     agent.generate_cover_letter.assert_awaited_once_with(
@@ -229,4 +230,5 @@ async def test_cover_letter_task_accepts_legacy_queued_payload(
         job_description="Offre suffisamment détaillée",
         language="fr",
         company_name="",
+        job_title="Développeur React Native Junior",
     )

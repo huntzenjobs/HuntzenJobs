@@ -142,6 +142,31 @@ export interface GenerationResult {
   matchScore?: number;
 }
 
+interface CoverLetterRequestInput {
+  cvData: ParsedCvData;
+  sourceCvText?: string;
+  jobDescription: string;
+  language: "fr" | "en";
+  job: Job;
+}
+
+export function buildCoverLetterRequest({
+  cvData,
+  sourceCvText,
+  jobDescription,
+  language,
+  job,
+}: CoverLetterRequestInput) {
+  return {
+    cv_data: cvData,
+    source_cv_text: sourceCvText,
+    job_description: jobDescription,
+    language,
+    company_name: job.company || "",
+    job_title: job.title,
+  };
+}
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -663,17 +688,17 @@ export function ApplyModal({
           "Content-Type": "application/json",
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({
-          cv_data: cvData,
-          source_cv_text: buildCoverLetterSource(
+        body: JSON.stringify(buildCoverLetterRequest({
+          cvData,
+          sourceCvText: buildCoverLetterSource(
             sourceCvTextRef.current,
             sourceAdaptedCvRef.current,
             cvData,
           ),
-          job_description: jobDescription || job.description || job.title,
+          jobDescription: jobDescription || job.description || job.title,
           language,
-          company_name: job.company || "",
-        }),
+          job,
+        })),
       }),
     ]);
 

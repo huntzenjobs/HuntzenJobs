@@ -335,7 +335,6 @@ async def cover_letter_task(
     """Génère une lettre de motivation JSON (CVAdapterAgent)."""
     from src.api.deps import get_cv_adapter_main
 
-    del job_title  # Compatibilité avec les tâches déjà placées dans la file.
     if cv_data is None:
         if not cv_text:
             raise ValueError("Les données du CV sont requises")
@@ -357,6 +356,7 @@ async def cover_letter_task(
                 job_description=job_description,
                 language=language,
                 company_name=company_name or "",
+                job_title=job_title or "",
             )
     except Retry:
         await _release_final_failed_reservation(ctx, quota_reservation_id)
