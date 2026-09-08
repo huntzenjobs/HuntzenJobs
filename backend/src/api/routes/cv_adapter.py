@@ -525,7 +525,7 @@ class CVSourceReviewResponse(BaseModel):
 def _ensure_review_text_size(text: str) -> None:
     if len(text) > 100_000:
         raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="CV text exceeds the supported size",
         )
 
@@ -618,14 +618,14 @@ def _parse_confirmed_factual_reference(raw_json: str | None) -> dict | None:
         return None
     if len(raw_json.encode("utf-8")) > 100_000:
         raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="La référence factuelle dépasse 100 Ko.",
         )
     try:
         reference = ConfirmedFactualReference.model_validate_json(raw_json)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="La référence factuelle confirmée est invalide.",
         ) from None
     return reference.model_dump(mode="json")
@@ -674,7 +674,7 @@ async def prepare_structured_review(
     result = await _prepare_factual_reference(get_adapter_agent(), cv_text, language)
     if result.get("success") is not True:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Impossible de préparer une référence factuelle complète.",
         )
     factual_payload = {key: value for key, value in result.items() if key != "success"}
@@ -682,7 +682,7 @@ async def prepare_structured_review(
         factual_reference = ConfirmedFactualReference.model_validate(factual_payload)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="La référence factuelle extraite est invalide.",
         ) from None
     return StructuredReviewResponse(
