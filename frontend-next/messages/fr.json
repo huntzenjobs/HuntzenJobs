@@ -1828,6 +1828,23 @@
       "rateLimited": "Trop de demandes. Réessayez dans une minute.",
       "unavailable": "Le service est temporairement indisponible. Vous pouvez ouvrir un ticket."
     },
+    "chatbotUi": {
+      "welcome": "Bonjour {name}, comment pouvons-nous vous aider ?",
+      "frequentQuestions": "Questions fréquentes",
+      "guestName": "",
+      "send": "Envoyer",
+      "faqBadge": "Aide",
+      "aiBadge": "Assistant",
+      "openTicket": "Ouvrir un ticket",
+      "quick": {
+        "analyzeCv": "Comment analyser mon CV ?",
+        "chooseCoach": "Quel coach choisir ?",
+        "searchJobs": "Comment rechercher des offres ?",
+        "comparePlans": "Comparer les abonnements",
+        "trackApplications": "Suivre mes candidatures",
+        "adaptCv": "Adapter mon CV à une offre"
+      }
+    },
     "errors": {
       "unauthenticated": "Votre session a expiré. Reconnectez-vous pour contacter le support.",
       "ticketsUnavailable": "Impossible de charger vos tickets.",

@@ -2119,6 +2119,23 @@
       "rateLimited": "Demasiadas solicitudes. Inténtalo de nuevo en un minuto.",
       "unavailable": "El servicio no está disponible temporalmente. Puedes abrir un ticket."
     },
+    "chatbotUi": {
+      "welcome": "Hola {name}, ¿cómo podemos ayudarte?",
+      "frequentQuestions": "Preguntas frecuentes",
+      "guestName": "",
+      "send": "Enviar",
+      "faqBadge": "Ayuda",
+      "aiBadge": "Asistente",
+      "openTicket": "Abrir un ticket",
+      "quick": {
+        "analyzeCv": "¿Cómo analizo mi currículum?",
+        "chooseCoach": "¿Qué coach debo elegir?",
+        "searchJobs": "¿Cómo busco ofertas?",
+        "comparePlans": "Comparar planes",
+        "trackApplications": "Seguir mis candidaturas",
+        "adaptCv": "Adaptar mi currículum a una oferta"
+      }
+    },
     "errors": {
       "unauthenticated": "Tu sesión ha caducado. Vuelve a iniciar sesión para contactar con soporte.",
       "ticketsUnavailable": "No se pudieron cargar tus tickets.",

@@ -1671,6 +1671,23 @@
       "rateLimited": "Too many requests. Try again in one minute.",
       "unavailable": "The service is temporarily unavailable. You can open a ticket."
     },
+    "chatbotUi": {
+      "welcome": "Hi {name}, how can we help?",
+      "frequentQuestions": "Frequently asked questions",
+      "guestName": "there",
+      "send": "Send",
+      "faqBadge": "Help",
+      "aiBadge": "Assistant",
+      "openTicket": "Open a ticket",
+      "quick": {
+        "analyzeCv": "How do I analyze my resume?",
+        "chooseCoach": "Which coach should I choose?",
+        "searchJobs": "How do I search for jobs?",
+        "comparePlans": "Compare plans",
+        "trackApplications": "Track my applications",
+        "adaptCv": "Tailor my resume to a job"
+      }
+    },
     "errors": {
       "unauthenticated": "Your session has expired. Sign in again to contact support.",
       "ticketsUnavailable": "Unable to load your tickets.",
