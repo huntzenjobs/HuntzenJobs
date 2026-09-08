@@ -11,15 +11,36 @@ Pipeline séquentiel :
   5. SourceCiter / FreshnessChecker — construit la liste de sources et les avertissements.
 """
 
+import asyncio
 import logging
+import unicodedata
+from time import monotonic
 from typing import Any
 
 from src.agents.base import AgentConfig, BaseAgent, SubAgent, load_prompt
 from src.agents.expat.citation import FreshnessChecker, SourceCiter
 from src.agents.expat.retriever import DocumentRetriever
 from src.config.settings import settings
+from src.services.expat.scraper import SOURCE_REGISTRY, scrape_url
 
 logger = logging.getLogger(__name__)
+
+_OFFICIAL_SOURCE_CACHE_TTL_SECONDS = 3600
+_OFFICIAL_SOURCE_TIMEOUT_SECONDS = 12
+_official_source_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+_official_source_locks: dict[str, asyncio.Lock] = {}
+_PROJECT_ALIASES: dict[str, tuple[str, ...]] = {
+    "travail": (
+        "travail", "emploi", "salarie", "talent", "entrepreneur",
+        "saisonnier", "carte-bleue", "pvt",
+    ),
+    "etude": ("etud", "student", "diplome", "stagiaire"),
+    "residence": (
+        "residence", "resident", "immigration", "entree-express",
+        "regroupement", "sejour",
+    ),
+    "famille": ("famille", "familial", "regroupement", "vie-privee"),
+}
 
 # ---------------------------------------------------------------------------
 # Normalisation pays → code ISO 2 lettres
@@ -196,10 +217,12 @@ class ExpadationAgent(BaseAgent):
 
             # ── Étape 4 : Garantie KPI — aucune source disponible ─────────────
             if not chunks:
-                logger.warning(
-                    "[%s] Aucun chunk récupéré — réponse de repli retournée.",
-                    self.name,
+                chunks = await self._retrieve_official_sources(
+                    destination=destination,
+                    project_type=project_type,
                 )
+            if not chunks:
+                logger.warning("[%s] Aucune source officielle disponible.", self.name)
                 return {
                     "success": True,
                     "response": _NO_SOURCE_RESPONSE,
@@ -242,6 +265,87 @@ class ExpadationAgent(BaseAgent):
                 "response": "Une erreur est survenue lors du traitement de votre demande. Veuillez réessayer.",
                 "error": str(exc),
             }
+
+    async def _retrieve_official_sources(
+        self,
+        destination: str,
+        project_type: str,
+    ) -> list[dict[str, Any]]:
+        """Charge une page officielle pertinente et mise en cache si l'index est vide."""
+        registered = SOURCE_REGISTRY.get(destination, [])
+        if not registered:
+            return []
+
+        project_token = "".join(
+            character
+            for character in unicodedata.normalize("NFKD", project_type.strip().lower())
+            if not unicodedata.combining(character)
+        )
+        aliases = _PROJECT_ALIASES.get(project_token, (project_token,) if project_token else ())
+        scored_sources = [
+            (
+                sum(
+                    alias in candidate.get("visa_type", "").lower()
+                    for alias in aliases
+                    if alias
+                ),
+                candidate,
+            )
+            for candidate in registered
+        ]
+        best_score, source = max(scored_sources, key=lambda item: item[0])
+        if project_token and best_score == 0:
+            logger.info(
+                "[%s] Aucune source officielle adaptée au projet %s pour %s.",
+                self.name,
+                project_token,
+                destination,
+            )
+            return []
+        url = source["url"]
+        cached = _official_source_cache.get(url)
+        if cached and monotonic() - cached[0] < _OFFICIAL_SOURCE_CACHE_TTL_SECONDS:
+            return [dict(cached[1])]
+
+        lock = _official_source_locks.setdefault(url, asyncio.Lock())
+        async with lock:
+            cached = _official_source_cache.get(url)
+            if cached and monotonic() - cached[0] < _OFFICIAL_SOURCE_CACHE_TTL_SECONDS:
+                return [dict(cached[1])]
+            try:
+                scraped = await asyncio.wait_for(
+                    scrape_url(
+                        url,
+                        content_selector=source.get("content_selector", ""),
+                    ),
+                    timeout=_OFFICIAL_SOURCE_TIMEOUT_SECONDS,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "[%s] Source officielle inaccessible: %s (%s)",
+                    self.name,
+                    url,
+                    type(exc).__name__,
+                )
+                return []
+            content = str(scraped.get("markdown", "")).strip()
+            if not content:
+                return []
+            chunk = {
+                "id": url,
+                "content": content[:12_000],
+                "source_url": url,
+                "country": destination,
+                "visa_type": source.get("visa_type", ""),
+                "scraped_at": scraped.get("scraped_at", ""),
+            }
+            _official_source_cache[url] = (monotonic(), chunk)
+        logger.info(
+            "[%s] Repli direct officiel: %d source(s).",
+            self.name,
+            1,
+        )
+        return [dict(chunk)]
 
     # ── Méthodes internes ───────────────────────────────────────────────────────
 
