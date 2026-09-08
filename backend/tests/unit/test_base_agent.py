@@ -149,6 +149,15 @@ class TestLoadPrompt:
         assert len(prompt) > 0
         assert isinstance(prompt, str)
 
+    def test_coach_prompt_never_recommends_unavailable_interview_simulator(self):
+        """Le coach ne doit pas orienter vers une fonctionnalité inaccessible."""
+        from src.agents.base import load_prompt
+
+        prompt = load_prompt("coach_main.txt")
+
+        assert "Recommend the HuntZen Interview Simulator" not in prompt
+        assert "do not claim that the interview simulator is available" in prompt.lower()
+
     def test_load_nonexistent_prompt_returns_empty(self):
         """Should return empty string for non-existent file."""
         from src.agents.base import load_prompt
