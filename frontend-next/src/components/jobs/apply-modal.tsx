@@ -19,6 +19,10 @@ import { QueueWaitingIndicator } from "@/components/coach/queue-waiting-indicato
 import { CvBuilderWizard } from "@/components/cv-builder/cv-builder-wizard";
 import type { CvData } from "@/components/cv-builder/types";
 import {
+  CVSourceReview,
+  type FactualReference,
+} from "@/components/cv/cv-source-review";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -80,6 +84,7 @@ interface ApplyModalProps {
   initialResult?: GenerationResult;
   /** Pre-filled cvData to enable editing without re-generating (e.g. from CV analysis wizard) */
   initialCvData?: ParsedCvData;
+  initialSourceCvText?: string;
   /** Initial step to start at (default: "upload") */
   initialStep?: Step;
   /** Pre-filled match score */
@@ -88,7 +93,7 @@ interface ApplyModalProps {
   initialLanguage?: "fr" | "en";
 }
 
-type Step = "upload" | "generating" | "preview" | "results";
+type Step = "upload" | "source-review" | "generating" | "preview" | "results";
 type CvSource = "upload" | "profile";
 
 /** Shape of parsed CV data returned by the /adapt endpoint for preview/edit */
@@ -150,6 +155,32 @@ const MAX_SIZE_MB = 10;
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+export function buildCoverLetterSource(
+  source: string | undefined,
+  baseline: unknown,
+  edited: unknown,
+): string | undefined {
+  if (!source || !baseline) return source;
+  const corrections: Record<string, unknown> = {};
+  const collectChanges = (before: unknown, after: unknown, path: string) => {
+    if (JSON.stringify(before) === JSON.stringify(after)) return;
+    if (before && after && typeof before === "object" && typeof after === "object") {
+      const oldFields = before as Record<string, unknown>;
+      const newFields = after as Record<string, unknown>;
+      for (const key of new Set([...Object.keys(oldFields), ...Object.keys(newFields)])) {
+        collectChanges(oldFields[key], newFields[key], path ? `${path}.${key}` : key);
+      }
+    } else {
+      corrections[path] = after ?? null;
+    }
+  };
+  collectChanges(baseline, edited, "");
+  if (!Object.keys(corrections).length) return source;
+  // Ne pas certifier tout le CV généré : seuls les champs effectivement édités
+  // deviennent des corrections déclarées par la personne.
+  return `${source}\n\nCorrections déclarées par la personne dans l'éditeur, prioritaires sur les champs correspondants du CV original :\n${JSON.stringify(corrections)}`;
+}
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -262,6 +293,7 @@ export function ApplyModal({
   savedJobId,
   initialResult,
   initialCvData,
+  initialSourceCvText,
   initialStep,
   initialMatchScore,
   initialLanguage,
@@ -293,7 +325,13 @@ export function ApplyModal({
   >(initialMatchScore);
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [confirmedReview, setConfirmedReview] = useState<{
+    rawText: string;
+    factualReference: FactualReference;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sourceCvTextRef = useRef<string | undefined>(initialSourceCvText);
+  const sourceAdaptedCvRef = useRef<ParsedCvData | undefined>(initialCvData);
   const queueAbortControllerRef = useRef<AbortController | null>(null);
 
   const t = useTranslations("applyModal");
@@ -352,9 +390,12 @@ export function ApplyModal({
       setMarkingApplied(false);
       setLanguage(initialLanguage ?? "fr");
       setPendingCvData(null);
+      sourceCvTextRef.current = undefined;
+      sourceAdaptedCvRef.current = undefined;
       setPendingMatchScore(undefined);
       setPreviewHtml("");
       setPreviewLoading(false);
+      setConfirmedReview(null);
     }
     onOpenChange(open);
   };
@@ -454,10 +495,23 @@ export function ApplyModal({
       : {};
   };
 
-  // ── Generation from uploaded file ───────────────────────────────────────────
+  // ── Generation from explicitly confirmed source text ───────────────────────
 
-  const generateFromFile = async () => {
+  const generateFromConfirmedText = async (
+    confirmedText: string,
+    confirmedReference: FactualReference,
+  ) => {
     if (!selectedFile) return;
+
+    // Les quotas peuvent évoluer pendant la relecture : revérifier au clic final.
+    if (!canUse("cv_adapt")) {
+      openPricingModal("cv_adapt_per_day");
+      return;
+    }
+    if (!canUse("cover_letter")) {
+      openPricingModal("cover_letter_per_day");
+      return;
+    }
 
     setStep("generating");
 
@@ -465,16 +519,20 @@ export function ApplyModal({
       setGeneratingLabel(t("processingStep1"));
 
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("cv_text", confirmedText);
       formData.append(
         "job_description",
         jobDescription || job.description || job.title,
       );
       formData.append("language", language);
-      formData.append("output_format", "json");
+      formData.append("template", "ats");
+      formData.append(
+        "confirmed_factual_reference",
+        JSON.stringify(confirmedReference),
+      );
 
       const adaptResponse = await fetch(
-        `${BACKEND_URL}/api/cv-adapter/adapt/upload`,
+        `${BACKEND_URL}/api/cv-adapter/adapt`,
         {
           method: "POST",
           body: formData,
@@ -504,6 +562,8 @@ export function ApplyModal({
 
       setPendingCvData(cvData);
       setPendingMatchScore(matchScore);
+      sourceCvTextRef.current = adaptData.source_cv_text;
+      sourceAdaptedCvRef.current = cvData;
       await generatePdfsAndSave(cvData, matchScore);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
@@ -511,7 +571,7 @@ export function ApplyModal({
         err instanceof Error ? err.message : "Une erreur est survenue";
       toast.error(message);
       setQueueWaitState(null);
-      setStep("upload");
+      setStep("source-review");
       setGeneratingLabel("");
     }
   };
@@ -566,6 +626,8 @@ export function ApplyModal({
 
       setPendingCvData(cvData);
       setPendingMatchScore(matchScore);
+      sourceCvTextRef.current = cvText;
+      sourceAdaptedCvRef.current = cvData;
       await generatePdfsAndSave(cvData, matchScore);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
@@ -603,6 +665,11 @@ export function ApplyModal({
         },
         body: JSON.stringify({
           cv_data: cvData,
+          source_cv_text: buildCoverLetterSource(
+            sourceCvTextRef.current,
+            sourceAdaptedCvRef.current,
+            cvData,
+          ),
           job_description: jobDescription || job.description || job.title,
           language,
           company_name: job.company || "",
@@ -662,7 +729,7 @@ export function ApplyModal({
         toast.error(tJobs("toasts.selectCvFirst"));
         return;
       }
-      await generateFromFile();
+      setStep("source-review");
     } else {
       if (!selectedProfile) {
         toast.error(tJobs("toasts.selectSavedProfile"));
@@ -745,7 +812,7 @@ export function ApplyModal({
                   overflowY: "auto",
                 }
           }
-          className="bg-white"
+          className="flex flex-col bg-white"
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-900">
@@ -992,6 +1059,23 @@ export function ApplyModal({
             </div>
           )}
 
+          {step === "source-review" && selectedFile && (
+            <CVSourceReview
+              file={selectedFile}
+              accessToken={session?.access_token}
+              initialReview={confirmedReview ?? undefined}
+              onConfirm={(text, factualReference) => {
+                setConfirmedReview({ rawText: text, factualReference });
+                void generateFromConfirmedText(text, factualReference);
+              }}
+              onCancel={() => {
+                setSelectedFile(null);
+                setConfirmedReview(null);
+                setStep("upload");
+              }}
+            />
+          )}
+
           {/* ── STEP 2 : Generating ── */}
           {step === "generating" && (
             <div className="flex flex-col items-center gap-6 py-8">
@@ -1032,10 +1116,10 @@ export function ApplyModal({
 
           {/* ── STEP 3 : Preview & Edit ── */}
           {step === "preview" && pendingCvData && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto">
+              <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
                 {/* Left: editable form */}
-                <div className="space-y-2 max-h-[320px] md:max-h-[calc(88vh-220px)] overflow-y-auto pr-1">
+                <div className="min-w-0 space-y-2 max-h-[320px] md:max-h-[calc(88vh-220px)] overflow-y-auto pr-1">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Modifier le contenu
                   </p>
@@ -1289,7 +1373,7 @@ export function ApplyModal({
                 </div>
 
                 {/* Right: iframe preview */}
-                <div className="relative rounded-lg border border-slate-200 overflow-hidden bg-white h-[320px] md:h-[calc(88vh-220px)] min-h-[320px]">
+                <div className="relative min-w-0 rounded-lg border border-slate-200 overflow-hidden bg-white h-[320px] md:h-[calc(88vh-220px)] min-h-[320px]">
                   {previewLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
                       <Loader2 className="h-6 w-6 animate-spin text-[#00D9FF]" />
@@ -1314,7 +1398,7 @@ export function ApplyModal({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+              <div className="flex flex-col items-stretch gap-2 border-t border-slate-100 pt-2 sm:flex-row sm:flex-wrap sm:items-center">
                 <Button
                   variant="ghost"
                   size="sm"

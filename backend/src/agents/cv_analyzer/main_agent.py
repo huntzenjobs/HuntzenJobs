@@ -450,6 +450,30 @@ class CVAnalyzerAgent(BaseAgent):
             Extracted text as markdown
         """
         def convert_pdf() -> str:
+            # Le texte natif conserve les lignes entreprise/dates. Le réordonnancement
+            # des blocs Docling peut déplacer une colonne de dates vers un autre poste.
+            import io
+
+            from pypdf import PdfReader
+
+            try:
+                reader = PdfReader(io.BytesIO(pdf_bytes))
+                native_pages = [
+                    page.extract_text(extraction_mode="layout") or ""
+                    for page in reader.pages
+                ]
+                # Une image peut contenir du texte même sur une page riche en texte
+                # natif. Dans le doute, conserver l'OCR plutôt que perdre une expérience.
+                has_images = any(len(page.images) > 0 for page in reader.pages)
+                if (
+                    native_pages
+                    and not has_images
+                    and all(len(page.strip()) >= 100 for page in native_pages)
+                ):
+                    return "\n\n".join(native_pages)
+            except Exception:
+                logger.debug("[%s] Native PDF layout unavailable; using OCR", self.name)
+
             # Le thread possède le fichier et le ferme aussi en cas d'erreur.
             # Une annulation de l'appelant ne supprime pas un fichier encore lu.
             with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:

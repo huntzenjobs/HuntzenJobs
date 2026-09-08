@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Literal
 from arq import create_pool
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import Response
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.api.deps import (
     CurrentUserDep,
@@ -307,6 +307,7 @@ async def _run_cv_adaptation(
     user_id: str,
     allow_queue: bool,
     quota_reservation_id: str = "",
+    confirmed_factual_reference: dict | None = None,
 ) -> dict:
     """Exécute l'adaptation sous le plafond global ou la place dans ARQ."""
     active = await _acquire_active_or_503("cv_adapter")
@@ -333,6 +334,7 @@ async def _run_cv_adaptation(
                         template=template,
                         user_id=user_id,
                         quota_reservation_id=quota_reservation_id,
+                        confirmed_factual_reference=confirmed_factual_reference,
                     )
                     if job is None:
                         raise RuntimeError("ARQ n'a pas accepté le job d'adaptation")
@@ -363,6 +365,11 @@ async def _run_cv_adaptation(
                     job_description=job_description,
                     language=language,
                     template=template,
+                    **(
+                        {"confirmed_factual_reference": confirmed_factual_reference}
+                        if confirmed_factual_reference is not None
+                        else {}
+                    ),
                 ),
                 timeout=CV_ADAPT_SYNC_TIMEOUT_SECONDS,
             )
@@ -386,6 +393,7 @@ async def _run_cover_letter_generation(
     user_id: str,
     quota_reservation_id: str,
     allow_queue: bool,
+    source_cv_text: str | None = None,
 ) -> dict:
     """Génère une LM sous le plafond global ou la transmet atomiquement à ARQ."""
     active = await _acquire_active_or_503("cover_letter")
@@ -407,6 +415,7 @@ async def _run_cover_letter_generation(
                         "cover_letter_task",
                         _job_id=job_id,
                         cv_data=cv_data,
+                        source_cv_text=source_cv_text,
                         job_description=job_description,
                         language=language,
                         company_name=company_name,
@@ -442,6 +451,7 @@ async def _run_cover_letter_generation(
             return await asyncio.wait_for(
                 agent.generate_cover_letter(
                     cv_data=cv_data,
+                    source_cv_text=source_cv_text,
                     job_description=job_description,
                     language=language,
                     company_name=company_name,
@@ -504,6 +514,208 @@ async def _extract_cv_text_from_file(file: UploadFile) -> str:
     """Extract CV text from an uploaded PDF or DOCX via Modal (Docling fallback)."""
     async with _cv_extraction_slot():
         return await _extract_cv_text_without_capacity(file)
+
+
+class CVSourceReviewResponse(BaseModel):
+    """Texte brut borné à relire avant toute génération."""
+
+    cv_text: str = Field(max_length=100_000)
+
+
+def _ensure_review_text_size(text: str) -> None:
+    if len(text) > 100_000:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="CV text exceeds the supported size",
+        )
+
+
+class _StrictReviewModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class ReviewPersonalInfo(_StrictReviewModel):
+    name: str = ""
+    title: str = ""
+    email: str = ""
+    phone: str = ""
+    location: str = ""
+    linkedin: str = ""
+    github: str = ""
+    twitter: str = ""
+    portfolio: str = ""
+    driving_license: str = ""
+
+
+class ReviewExperience(_StrictReviewModel):
+    title: str = ""
+    company: str = ""
+    location: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    type: str = ""
+    bullets: list[str] = Field(default_factory=list)
+
+
+class ReviewEducation(_StrictReviewModel):
+    degree: str = ""
+    school: str = ""
+    year: str = ""
+    location: str = ""
+    details: str = ""
+
+
+class ReviewCertification(_StrictReviewModel):
+    name: str = ""
+    issuer: str = ""
+    year: str = ""
+
+
+class ReviewProject(_StrictReviewModel):
+    name: str = ""
+    technologies: list[str] = Field(default_factory=list)
+    description: str = ""
+    url: str = ""
+
+
+class ReviewSkills(_StrictReviewModel):
+    technical: list[str] = Field(default_factory=list)
+    tools: list[str] = Field(default_factory=list)
+    soft: list[str] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+
+
+class ConfirmedFactualReference(_StrictReviewModel):
+    """Référence relue, sans métadonnée interne ni donnée provenant de l'offre."""
+
+    personal_info: ReviewPersonalInfo
+    experiences: list[ReviewExperience]
+    education: list[ReviewEducation]
+    certifications: list[ReviewCertification]
+    projects: list[ReviewProject]
+    skills: ReviewSkills
+    interests: list[str]
+
+    @model_validator(mode="after")
+    def validate_serialized_size(self) -> "ConfirmedFactualReference":
+        serialized = json.dumps(
+            self.model_dump(mode="json"),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        if len(serialized) > 100_000:
+            raise ValueError("La référence factuelle dépasse 100 Ko")
+        return self
+
+
+class StructuredReviewResponse(BaseModel):
+    cv_text: str = Field(max_length=100_000)
+    factual_reference: ConfirmedFactualReference
+
+
+def _parse_confirmed_factual_reference(raw_json: str | None) -> dict | None:
+    if raw_json is None:
+        return None
+    if len(raw_json.encode("utf-8")) > 100_000:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="La référence factuelle dépasse 100 Ko.",
+        )
+    try:
+        reference = ConfirmedFactualReference.model_validate_json(raw_json)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="La référence factuelle confirmée est invalide.",
+        ) from None
+    return reference.model_dump(mode="json")
+
+
+async def _prepare_factual_reference(
+    agent: "CVAdapterAgent",
+    cv_text: str,
+    language: str,
+) -> dict:
+    """Extrait la référence sous la capacité IA globale, sans quota utilisateur."""
+    active = await _acquire_active_or_503("cv_adapter/structured-review")
+    if active > CV_ADAPT_SYNC_THRESHOLD:
+        await _decr_active()
+        raise _capacity_error()
+    try:
+        return await asyncio.wait_for(
+            agent._extract_factual_data(cv_text, language),
+            timeout=CV_ADAPT_SYNC_TIMEOUT_SECONDS,
+        )
+    except TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="La préparation du CV a dépassé le délai maximal.",
+        ) from None
+    finally:
+        await _decr_active()
+
+
+@router.post(
+    "/prepare-structured-review",
+    response_model=StructuredReviewResponse,
+    summary="Préparer la référence factuelle d'un CV",
+)
+@limiter.limit("5/minute")
+async def prepare_structured_review(
+    request: Request,
+    current_user: CurrentUserDep,
+    file: UploadFile = File(..., description="CV source au format PDF ou DOCX"),
+    language: Literal["fr", "en", "es", "pt"] = Form(default="fr"),
+) -> StructuredReviewResponse:
+    """Extrait le CV puis prépare les sept sections à confirmer par l'utilisateur."""
+    del current_user
+    cv_text = await _extract_cv_text_from_file(file)
+    _ensure_review_text_size(cv_text)
+    result = await _prepare_factual_reference(get_adapter_agent(), cv_text, language)
+    if result.get("success") is not True:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Impossible de préparer une référence factuelle complète.",
+        )
+    factual_payload = {key: value for key, value in result.items() if key != "success"}
+    try:
+        factual_reference = ConfirmedFactualReference.model_validate(factual_payload)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="La référence factuelle extraite est invalide.",
+        ) from None
+    return StructuredReviewResponse(
+        cv_text=cv_text,
+        factual_reference=factual_reference,
+    )
+
+
+@router.post(
+    "/extract-for-review",
+    response_model=CVSourceReviewResponse,
+    summary="Extraire un CV pour relecture humaine",
+    description=(
+        "Extrait le texte d'un PDF ou DOCX authentifié sans lancer de génération "
+        "IA ni réserver de quota de génération."
+    ),
+    responses={
+        400: {"description": "Fichier vide, non pris en charge ou texte insuffisant"},
+        413: {"description": "Fichier ou texte extrait trop volumineux"},
+        503: {"description": "Capacité d'extraction temporairement indisponible"},
+    },
+)
+@limiter.limit("5/minute")
+async def extract_cv_for_review(
+    request: Request,
+    current_user: CurrentUserDep,
+    file: UploadFile = File(..., description="CV source au format PDF ou DOCX"),
+) -> CVSourceReviewResponse:
+    """Retourne exactement le texte extrait pour correction explicite."""
+    del current_user
+    text = await _extract_cv_text_from_file(file)
+    _ensure_review_text_size(text)
+    return CVSourceReviewResponse(cv_text=text)
 
 
 async def _extract_cv_text_without_capacity(file: UploadFile) -> str:
@@ -616,6 +828,10 @@ async def adapt_cv(
         description="Original CV content as text",
     ),
     file: UploadFile | None = File(default=None, description="CV file (PDF or DOCX)"),
+    confirmed_factual_reference: str | None = Form(
+        default=None,
+        description="Référence factuelle JSON relue et confirmée",
+    ),
 ):
     """
     Adapt a CV to match a specific job offer.
@@ -631,6 +847,9 @@ async def adapt_cv(
     Returns structured CV data with match analysis.
     """
     user_id = current_user["id"]
+    confirmed_reference = _parse_confirmed_factual_reference(
+        confirmed_factual_reference
+    )
 
     # Resolve CV text — from file or raw text
     if file and file.filename:
@@ -661,6 +880,7 @@ async def adapt_cv(
             user_id=user_id,
             allow_queue=True,
             quota_reservation_id=reservation_id,
+            confirmed_factual_reference=confirmed_reference,
         )
         if result.get("queued"):
             reservation_retained = True
@@ -691,6 +911,7 @@ async def adapt_cv(
         return {
             "success": True,
             "cv_data": result.get("cv_data"),
+            "source_cv_text": result.get("source_cv_text"),
             "match_score": result.get("match_score"),
             "job_analysis": result.get("job_analysis"),
             "fact_check": result.get("fact_check"),
@@ -899,6 +1120,7 @@ async def adapt_cv_from_file(
         return {
             "success": True,
             "cv_data": result.get("cv_data"),
+            "source_cv_text": result.get("source_cv_text"),
             "match_score": result.get("match_score"),
             "job_analysis": result.get("job_analysis"),
         }
@@ -1008,6 +1230,7 @@ async def list_templates():
 class CoverLetterRequest(BaseModel):
     """Request model for cover letter generation."""
     cv_data: dict
+    source_cv_text: str | None = Field(default=None, max_length=100_000)
     job_description: str = Field(min_length=50, max_length=30_000)
     language: str = Field(default="fr", pattern="^(fr|en|es|pt)$")
     company_name: str | None = Field(default=None, max_length=200)
@@ -1049,6 +1272,7 @@ async def generate_cover_letter(
         result = await _run_cover_letter_generation(
             agent,
             cv_data=data.cv_data,
+            source_cv_text=data.source_cv_text,
             job_description=data.job_description,
             language=data.language,
             company_name=data.company_name or "",
@@ -1146,6 +1370,7 @@ async def generate_cover_letter_json(
         result = await _run_cover_letter_generation(
             agent,
             cv_data=data.cv_data,
+            source_cv_text=data.source_cv_text,
             job_description=data.job_description,
             language=data.language,
             company_name=data.company_name or "",

@@ -32,7 +32,7 @@ def test_ci_uses_the_real_projects_and_never_masks_failures() -> None:
     assert "docker/setup-buildx-action@v4" in workflow
     assert "docker/build-push-action@v7" in workflow
     assert '"test:backend": "cd backend && python -m pytest tests/unit tests/integration' in root_package
-    assert '"lint": "eslint . --max-warnings 102"' in (
+    assert '"lint": "eslint . --max-warnings 0"' in (
         REPOSITORY_ROOT / "frontend-next" / "package.json"
     ).read_text(encoding="utf-8")
     assert '"ruff==0.16.3"' in (REPOSITORY_ROOT / "backend" / "pyproject.toml").read_text(

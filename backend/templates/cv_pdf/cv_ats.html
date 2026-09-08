@@ -355,8 +355,8 @@
   {% for proj in cv.projects %}
   <div class="proj-item">
     <span class="proj-name">{{ proj.name }}</span>
-    {% if proj.technologies and proj.technologies != '' %}
-    <span class="proj-tech"> — {{ proj.technologies }}</span>
+    {% if proj.technologies %}
+    <span class="proj-tech"> : {% if proj.technologies is string %}{{ proj.technologies }}{% else %}{{ proj.technologies | join(', ') }}{% endif %}</span>
     {% endif %}
     {% if proj.url and proj.url != '' %}
     <span style="font-size:8pt; color:#888;"> | {{ proj.url }}</span>

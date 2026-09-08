@@ -97,6 +97,39 @@ async def test_cv_adapt_task_uses_current_agent_contract(monkeypatch: pytest.Mon
 
 
 @pytest.mark.asyncio
+async def test_cv_adapt_task_forwards_confirmed_factual_reference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    agent = Mock()
+    agent.run = AsyncMock(return_value={"success": True})
+    monkeypatch.setattr(deps, "get_cv_adapter_main", lambda: agent)
+    reference = {
+        "personal_info": {"name": "Camille"},
+        "experiences": [],
+        "education": [],
+        "certifications": [],
+        "projects": [],
+        "skills": {},
+        "interests": [],
+    }
+
+    await cv_adapt_task(
+        {},
+        cv_text="CV suffisamment détaillé",
+        job_description="Offre suffisamment détaillée",
+        confirmed_factual_reference=reference,
+    )
+
+    agent.run.assert_awaited_once_with(
+        cv_text="CV suffisamment détaillé",
+        job_description="Offre suffisamment détaillée",
+        language="fr",
+        template="ats",
+        confirmed_factual_reference=reference,
+    )
+
+
+@pytest.mark.asyncio
 async def test_cover_letter_task_uses_structured_cv_data(monkeypatch: pytest.MonkeyPatch) -> None:
     agent = Mock()
     agent.generate_cover_letter = AsyncMock(return_value={"success": True})
@@ -108,6 +141,7 @@ async def test_cover_letter_task_uses_structured_cv_data(monkeypatch: pytest.Mon
     result = await cover_letter_task(
         {},
         cv_data=cv_data,
+        source_cv_text="Jean Dupont, alternance uniquement.",
         job_description="Offre suffisamment détaillée",
         language="fr",
         company_name="Entreprise Test",
@@ -118,6 +152,7 @@ async def test_cover_letter_task_uses_structured_cv_data(monkeypatch: pytest.Mon
     assert result == {"success": True}
     agent.generate_cover_letter.assert_awaited_once_with(
         cv_data=cv_data,
+        source_cv_text="Jean Dupont, alternance uniquement.",
         job_description="Offre suffisamment détaillée",
         language="fr",
         company_name="Entreprise Test",

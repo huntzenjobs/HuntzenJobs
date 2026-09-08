@@ -7,6 +7,72 @@ from src.agents.base import SubAgentTransientError
 from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("has_image", [False, True])
+async def test_native_pdf_preserves_company_and_dates_on_the_same_row(has_image: bool) -> None:
+    import io
+    import re
+
+    from pypdf import PdfWriter
+    from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=595, height=842)
+    font = DictionaryObject({NameObject("/Type"): NameObject("/Font"),
+                             NameObject("/Subtype"): NameObject("/Type1"),
+                             NameObject("/BaseFont"): NameObject("/Helvetica")})
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/Font"): DictionaryObject({NameObject("/F1"): font}),
+    })
+    stream = DecodedStreamObject()
+    stream.set_data(
+        b"BT /F1 10 Tf 30 750 Td (Developer - Company A) Tj ET\n"
+        b"BT /F1 10 Tf 420 750 Td (10/2025 - 06/2026) Tj ET\n"
+        b"BT /F1 10 Tf 30 725 Td (Developed Python APIs and maintained automated tests.) Tj ET\n"
+        b"BT /F1 10 Tf 30 650 Td (Developer - Company B) Tj ET\n"
+        b"BT /F1 10 Tf 420 650 Td (11/2023 - 11/2024) Tj ET\n"
+        b"BT /F1 10 Tf 30 625 Td (Built web interfaces and documented product features.) Tj ET\n"
+    )
+    page[NameObject("/Contents")] = writer._add_object(stream)
+    if has_image:
+        from pypdf.generic import NumberObject
+
+        image = DecodedStreamObject()
+        image.set_data(b"\xff\xff\xff")
+        image.update({NameObject("/Type"): NameObject("/XObject"),
+                      NameObject("/Subtype"): NameObject("/Image"),
+                      NameObject("/Width"): NumberObject(1),
+                      NameObject("/Height"): NumberObject(1),
+                      NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+                      NameObject("/BitsPerComponent"): NumberObject(8)})
+        page["/Resources"][NameObject("/XObject")] = DictionaryObject({
+            NameObject("/Im1"): writer._add_object(image),
+        })
+        stream.set_data(stream.get_data() + b"\nq 100 0 0 100 30 400 cm /Im1 Do Q")
+    buffer = io.BytesIO()
+    writer.write(buffer)
+    agent = object.__new__(CVAnalyzerAgent)
+    agent.name = "CVAnalyzer"
+    # Dépendance externe simulant le déplacement observé dans la lecture Docling.
+    converted_paths = []
+
+    def convert(path):
+        converted_paths.append(path)
+        return SimpleNamespace(
+        document=SimpleNamespace(export_to_markdown=lambda:
+            "Company A\nCompany B\n10/2025 - 06/2026\n11/2023 - 11/2024\n" * 3))
+
+    agent._docling_converter = SimpleNamespace(convert=convert)
+    result = await agent.extract_text_from_pdf(buffer.getvalue())
+    if has_image:
+        # Même avec beaucoup de texte natif, une image peut contenir une expérience.
+        assert len(converted_paths) == 1
+    else:
+        assert converted_paths == []
+        assert re.search(r"Company A[^\n]*10/2025[^\n]*06/2026", result)
+        assert re.search(r"Company B[^\n]*11/2023[^\n]*11/2024", result)
+
+
 def test_docling_configuration_can_initialize_the_pdf_backend() -> None:
     from docling.datamodel.base_models import InputFormat
     from docling.document_converter import PdfFormatOption

@@ -273,6 +273,7 @@ async def cv_adapt_task(
     template: str = "ats",
     user_id: str | None = None,
     quota_reservation_id: str | None = None,
+    confirmed_factual_reference: dict | None = None,
 ) -> dict:
     """Adapte un CV pour une offre d'emploi (CVAdapterAgent)."""
     from src.api.deps import get_cv_adapter_main
@@ -286,6 +287,11 @@ async def cv_adapt_task(
                 job_description=job_description,
                 language=language,
                 template=template,
+                **(
+                    {"confirmed_factual_reference": confirmed_factual_reference}
+                    if confirmed_factual_reference is not None
+                    else {}
+                ),
             )
     except Retry:
         await _release_final_failed_reservation(ctx, quota_reservation_id)
@@ -324,6 +330,7 @@ async def cover_letter_task(
     cv_data: dict | None = None,
     user_id: str | None = None,
     quota_reservation_id: str | None = None,
+    source_cv_text: str | None = None,
 ) -> dict:
     """Génère une lettre de motivation JSON (CVAdapterAgent)."""
     from src.api.deps import get_cv_adapter_main
@@ -346,6 +353,7 @@ async def cover_letter_task(
         async with _global_ai_execution_slot():
             result = await agent.generate_cover_letter(
                 cv_data=cv_data,
+                **({"source_cv_text": source_cv_text} if source_cv_text else {}),
                 job_description=job_description,
                 language=language,
                 company_name=company_name or "",

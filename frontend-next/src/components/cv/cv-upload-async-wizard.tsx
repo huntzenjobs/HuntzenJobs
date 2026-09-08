@@ -25,6 +25,10 @@ import type { Suggestion } from "@/components/cv/actionable-suggestions";
 import { CVHistoryDrawer } from "@/components/cv/cv-history-drawer";
 import type { CvInfo } from "@/components/cv/cv-info-panel";
 import { CVInfoPanel } from "@/components/cv/cv-info-panel";
+import {
+  CVSourceReview,
+  type FactualReference,
+} from "@/components/cv/cv-source-review";
 import { ProcessingSteps } from "@/components/cv/processing-steps";
 import { ResultsAccordion } from "@/components/cv/results-accordion";
 import { ScoreRing } from "@/components/cv/score-ring";
@@ -103,6 +107,7 @@ interface WizardState {
 }
 
 interface AdaptResult {
+  sourceCvText?: string;
   cvPdfBlob: Blob;
   lmPdfBlob: Blob | null;
   matchScore: number | null;
@@ -207,6 +212,11 @@ export function CVUploadAsyncWizard({
   const [adaptLoading, setAdaptLoading] = useState(false);
   const [adaptResult, setAdaptResult] = useState<AdaptResult | null>(null);
   const [adaptError, setAdaptError] = useState<string | null>(null);
+  const [adaptSourceReviewOpen, setAdaptSourceReviewOpen] = useState(false);
+  const [confirmedAdaptReview, setConfirmedAdaptReview] = useState<{
+    rawText: string;
+    factualReference: FactualReference;
+  } | null>(null);
   const adaptAbortControllerRef = useRef<AbortController | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showLmEditor, setShowLmEditor] = useState(false);
@@ -536,22 +546,11 @@ export function CVUploadAsyncWizard({
     setWizardState((prev) => ({ ...prev, currentStep: 1 }));
   };
 
-  const handleStep2Analyze = async () => {
-    if (!canAnalyze) return;
-
-    // "adapt" mode: generate CV + LM PDFs
-    if (wizardState.analysisType === "adapt") {
-      if (!wizardState.file) return; // adapt requires a file
-
-      // Check freemium limits for BOTH CV and Letter
-      if (!canUse("cv_adapt")) {
-        openPricingModal("cv_adapt_per_day");
-        return;
-      }
-      if (!canUse("cover_letter")) {
-        openPricingModal("cover_letter_per_day");
-        return;
-      }
+  const generateAdaptationFromConfirmedText = async (
+    confirmedText: string,
+    confirmedReference: FactualReference,
+  ) => {
+      if (!wizardState.file) return;
 
       setWizardState((prev) => ({ ...prev, currentStep: 3 }));
       setAdaptLoading(true);
@@ -572,13 +571,17 @@ export function CVUploadAsyncWizard({
 
         // Step 1: adapt CV
         const formData = new FormData();
-        formData.append("file", wizardState.file);
+        formData.append("cv_text", confirmedText);
         formData.append("job_description", wizardState.jobDescription);
         formData.append("language", adaptLang);
-        formData.append("output_format", "json");
+        formData.append("template", "ats");
+        formData.append(
+          "confirmed_factual_reference",
+          JSON.stringify(confirmedReference),
+        );
 
         const adaptRes = await fetch(
-          `${backendUrl}/api/cv-adapter/adapt/upload`,
+          `${backendUrl}/api/cv-adapter/adapt`,
           {
             method: "POST",
             body: formData,
@@ -602,6 +605,7 @@ export function CVUploadAsyncWizard({
           adaptData = await huntzenApi.waitForJobResult<{
             success: boolean;
             cv_data?: ParsedCvData;
+            source_cv_text?: string;
             match_score?: unknown;
           }>(
             adaptData.job_id,
@@ -641,6 +645,7 @@ export function CVUploadAsyncWizard({
             },
             body: JSON.stringify({
               cv_data: cvData,
+              source_cv_text: adaptData.source_cv_text,
               job_description: wizardState.jobDescription,
               language: adaptLang,
               company_name: "",
@@ -690,6 +695,7 @@ export function CVUploadAsyncWizard({
         }
 
         setAdaptResult({
+          sourceCvText: adaptData.source_cv_text,
           cvPdfBlob,
           lmPdfBlob,
           matchScore,
@@ -717,12 +723,52 @@ export function CVUploadAsyncWizard({
         toast.error(
           err instanceof Error ? err.message : "Erreur lors de la génération",
         );
+        setAdaptSourceReviewOpen(true);
       } finally {
         if (adaptAbortControllerRef.current === adaptController) {
           adaptAbortControllerRef.current = null;
         }
         setAdaptLoading(false);
       }
+      return;
+  };
+
+  const handleConfirmedAdaptSource = (
+    confirmedText: string,
+    confirmedReference: FactualReference,
+  ) => {
+    setConfirmedAdaptReview({
+      rawText: confirmedText,
+      factualReference: confirmedReference,
+    });
+    // Les quotas peuvent évoluer pendant la relecture. Conserver le texte en
+    // mémoire tant que les deux droits ne sont pas encore disponibles.
+    if (!canUse("cv_adapt")) {
+      openPricingModal("cv_adapt_per_day");
+      return;
+    }
+    if (!canUse("cover_letter")) {
+      openPricingModal("cover_letter_per_day");
+      return;
+    }
+    setAdaptSourceReviewOpen(false);
+    void generateAdaptationFromConfirmedText(confirmedText, confirmedReference);
+  };
+
+  const handleStep2Analyze = async () => {
+    if (!canAnalyze) return;
+
+    if (wizardState.analysisType === "adapt") {
+      if (!wizardState.file) return;
+      if (!canUse("cv_adapt")) {
+        openPricingModal("cv_adapt_per_day");
+        return;
+      }
+      if (!canUse("cover_letter")) {
+        openPricingModal("cover_letter_per_day");
+        return;
+      }
+      setAdaptSourceReviewOpen(true);
       return;
     }
 
@@ -789,6 +835,7 @@ export function CVUploadAsyncWizard({
     setAdaptResult(null);
     setAdaptError(null);
     setAdaptLoading(false);
+    setAdaptSourceReviewOpen(false);
     setShowEditModal(false);
     setShowLmEditor(false);
     setEditingLmData(null);
@@ -1437,6 +1484,7 @@ export function CVUploadAsyncWizard({
                       : undefined,
                 }}
                 initialCvData={adaptResult.cvData}
+                initialSourceCvText={adaptResult.sourceCvText}
                 initialStep="preview"
                 initialMatchScore={adaptResult.matchScore ?? undefined}
                 initialLanguage={wizardState.adaptLanguage}
@@ -1817,11 +1865,29 @@ export function CVUploadAsyncWizard({
       </div>
 
       {/* Steps with AnimatePresence */}
-      <AnimatePresence mode="wait">
-        {wizardState.currentStep === 1 && renderStep1()}
-        {wizardState.currentStep === 2 && renderStep2()}
-        {wizardState.currentStep === 3 && renderStep3()}
-      </AnimatePresence>
+      {adaptSourceReviewOpen && wizardState.file ? (
+        <CVSourceReview
+          file={wizardState.file}
+          accessToken={session.access_token}
+          initialReview={confirmedAdaptReview ?? undefined}
+          onConfirm={handleConfirmedAdaptSource}
+          onCancel={() => {
+            setAdaptSourceReviewOpen(false);
+            setConfirmedAdaptReview(null);
+            setWizardState((prev) => ({
+              ...prev,
+              currentStep: 1,
+              file: null,
+            }));
+          }}
+        />
+      ) : (
+        <AnimatePresence mode="wait">
+          {wizardState.currentStep === 1 && renderStep1()}
+          {wizardState.currentStep === 2 && renderStep2()}
+          {wizardState.currentStep === 3 && renderStep3()}
+        </AnimatePresence>
+      )}
 
       {/* History Drawer */}
       {hasFeatures.hasCVHistory && (

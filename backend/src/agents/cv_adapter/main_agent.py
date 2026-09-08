@@ -137,6 +137,11 @@ class CVAdapterAgent(BaseAgent):
             for character in unicodedata.normalize("NFKD", cv_text.upper())
             if not unicodedata.combining(character)
         )
+        normalized_lines = [
+            " ".join(line.split())
+            for line in normalized.splitlines()
+            if line.strip()
+        ]
         markers = {
             "experiences": (
                 "EXPERIENCE PROFESSIONNELLE",
@@ -145,11 +150,40 @@ class CVAdapterAgent(BaseAgent):
                 "EMPLOYMENT HISTORY",
             ),
             "education": ("FORMATION", "EDUCATION"),
+            "certifications": (
+                "CERTIFICATION",
+                "CERTIFICATIONS",
+                "CERTIFICATE",
+                "CERTIFICATES",
+            ),
+            "projects": ("PROJETS", "PROJECTS"),
+            "skills": ("COMPETENCES", "SKILLS"),
+            "interests": (
+                "CENTRE D'INTERET",
+                "CENTRES D'INTERET",
+                "INTERETS",
+                "INTERESTS",
+                "LOISIRS",
+                "HOBBIES",
+            ),
         }
+
+        def has_explicit_heading(headings: tuple[str, ...]) -> bool:
+            return any(
+                line == heading
+                or (
+                    line.startswith(heading)
+                    and len(line) > len(heading)
+                    and line[len(heading)] in " :|/-"
+                )
+                for line in normalized_lines
+                for heading in headings
+            )
+
         return [
             section
             for section, headings in markers.items()
-            if any(heading in normalized for heading in headings)
+            if has_explicit_heading(headings)
             and not extracted_data.get(section)
         ]
 
@@ -177,12 +211,9 @@ class CVAdapterAgent(BaseAgent):
         return improved_bullets
 
     @staticmethod
-    def _sanitized_cv_preserves_source_facts(
-        original_data: dict[str, Any],
-        sanitized_cv: Any,
-    ) -> bool:
-        """Validate a complete sanitized CV before HuntZen certification."""
-        if not isinstance(sanitized_cv, dict) or not sanitized_cv:
+    def _has_complete_cv_structure(cv_data: Any) -> bool:
+        """Return whether all seven factual CV sections have their expected type."""
+        if not isinstance(cv_data, dict) or not cv_data:
             return False
 
         expected_types: dict[str, type] = {
@@ -194,10 +225,180 @@ class CVAdapterAgent(BaseAgent):
             "skills": dict,
             "interests": list,
         }
-        if any(
-            key not in sanitized_cv or not isinstance(sanitized_cv[key], expected_type)
+        return all(
+            key in cv_data and isinstance(cv_data[key], expected_type)
             for key, expected_type in expected_types.items()
+        )
+
+    @staticmethod
+    def _normalize_reference_text(value: str) -> str:
+        """Normalize Unicode and whitespace without weakening factual equality."""
+        return " ".join(unicodedata.normalize("NFKC", value).split())
+
+    @staticmethod
+    def _factual_strings(value: Any) -> list[str]:
+        """Collect non-empty factual strings from a structured CV value."""
+        if isinstance(value, str):
+            return [value] if value.strip() else []
+        if isinstance(value, bool):
+            raise ValueError("Unexpected boolean in factual CV data")
+        if isinstance(value, (int, float)):
+            return [str(value)]
+        if isinstance(value, dict):
+            return [
+                fact
+                for nested_value in value.values()
+                for fact in CVAdapterAgent._factual_strings(nested_value)
+            ]
+        if isinstance(value, list):
+            return [
+                fact
+                for nested_value in value
+                for fact in CVAdapterAgent._factual_strings(nested_value)
+            ]
+        return []
+
+    @staticmethod
+    def _explicit_factual_section_slices(cv_text: str) -> dict[str, list[str]]:
+        """Return normalized source slices delimited by explicit CV headings."""
+        markers = {
+            "experiences": (
+                "EXPERIENCE PROFESSIONNELLE",
+                "EXPERIENCES PROFESSIONNELLES",
+                "WORK EXPERIENCE",
+                "EMPLOYMENT HISTORY",
+            ),
+            "education": ("FORMATION", "EDUCATION"),
+            "certifications": (
+                "CERTIFICATION",
+                "CERTIFICATIONS",
+                "CERTIFICATE",
+                "CERTIFICATES",
+            ),
+            "projects": ("PROJETS", "PROJECTS"),
+            "skills": ("COMPETENCES", "SKILLS"),
+            "interests": (
+                "CENTRE D'INTERET",
+                "CENTRES D'INTERET",
+                "INTERETS",
+                "INTERESTS",
+                "LOISIRS",
+                "HOBBIES",
+            ),
+        }
+        boundary_markers = (
+            "PORTFOLIO",
+            "CONTACT",
+            "PROFIL",
+            "PROFILE",
+            "LANGUES",
+            "LANGUAGES",
+            "RESUME",
+            "SUMMARY",
+        )
+        lines = [
+            CVAdapterAgent._normalize_reference_text(line)
+            for line in cv_text.splitlines()
+            if line.strip()
+        ]
+        headings: list[tuple[int, str | None]] = []
+        for index, line in enumerate(lines):
+            comparable = "".join(
+                character
+                for character in unicodedata.normalize("NFKD", line.upper())
+                if not unicodedata.combining(character)
+            )
+            for section, section_markers in markers.items():
+                if any(
+                    comparable == marker
+                    or (
+                        comparable.startswith(marker)
+                        and len(comparable) > len(marker)
+                        and comparable[len(marker)] in " :|/-"
+                    )
+                    for marker in section_markers
+                ):
+                    headings.append((index, section))
+                    break
+            else:
+                if any(
+                    comparable == marker
+                    or (
+                        comparable.startswith(marker)
+                        and len(comparable) > len(marker)
+                        and comparable[len(marker)] in " :|/-"
+                    )
+                    for marker in boundary_markers
+                ):
+                    headings.append((index, None))
+
+        slices: dict[str, list[str]] = {}
+        for heading_index, (start, section) in enumerate(headings):
+            end = headings[heading_index + 1][0] if heading_index + 1 < len(headings) else len(lines)
+            if section is not None:
+                slices.setdefault(section, []).append(" ".join(lines[start:end]))
+        return slices
+
+    @staticmethod
+    def _is_deterministically_faithful_reference(
+        cv_text: str,
+        extracted_data: Any,
+    ) -> bool:
+        """Prove an exact factual extraction without probabilistic validation."""
+        if not CVAdapterAgent._has_complete_cv_structure(extracted_data):
+            return False
+
+        factual_sections = {
+            "personal_info",
+            "experiences",
+            "education",
+            "certifications",
+            "projects",
+            "skills",
+            "interests",
+        }
+        if set(extracted_data) - factual_sections - {"success"}:
+            return False
+
+        normalized_source = CVAdapterAgent._normalize_reference_text(cv_text)
+        if not normalized_source:
+            return False
+
+        try:
+            section_facts = {
+                section: CVAdapterAgent._factual_strings(extracted_data[section])
+                for section in factual_sections
+            }
+        except ValueError:
+            return False
+        if any(
+            CVAdapterAgent._normalize_reference_text(fact) not in normalized_source
+            for facts in section_facts.values()
+            for fact in facts
         ):
+            return False
+
+        section_slices = CVAdapterAgent._explicit_factual_section_slices(cv_text)
+        for section in ("experiences", "education", "certifications", "projects"):
+            facts = section_facts[section]
+            if not facts:
+                continue
+            slices = section_slices.get(section, [])
+            if not slices or any(
+                all(CVAdapterAgent._normalize_reference_text(fact) not in source_slice for source_slice in slices)
+                for fact in facts
+            ):
+                return False
+
+        return True
+
+    @staticmethod
+    def _sanitized_cv_preserves_source_facts(
+        original_data: dict[str, Any],
+        sanitized_cv: Any,
+    ) -> bool:
+        """Validate a complete sanitized CV before HuntZen certification."""
+        if not CVAdapterAgent._has_complete_cv_structure(sanitized_cv):
             return False
 
         original_personal = original_data.get("personal_info", {})
@@ -266,6 +467,63 @@ class CVAdapterAgent(BaseAgent):
 
         return True
 
+    async def _validate_extracted_data(
+        self,
+        cv_text: str,
+        extracted_data: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Validate up to two successive complete corrections before adaptation."""
+        if self._is_deterministically_faithful_reference(cv_text, extracted_data):
+            return extracted_data
+
+        fact_check = await self._fact_check(
+            cv_text,
+            extracted_data,
+            require_complete=True,
+        )
+        if fact_check.get("valid") is True:
+            return extracted_data
+
+        sanitized_cv = fact_check.get("sanitized_cv")
+        if (
+            not self._has_complete_cv_structure(sanitized_cv)
+            or self._missing_factual_sections(cv_text, sanitized_cv)
+        ):
+            return {
+                "success": False,
+                "error": "Complete corrected CV reference unavailable",
+                "fact_check": fact_check,
+            }
+
+        for recheck_index in range(2):
+            recheck = await self._fact_check(
+                cv_text,
+                sanitized_cv,
+                require_complete=True,
+            )
+            if recheck.get("valid") is True:
+                return {**sanitized_cv, "success": True}
+            if recheck_index == 1:
+                break
+
+            next_sanitized_cv = recheck.get("sanitized_cv")
+            if (
+                not self._has_complete_cv_structure(next_sanitized_cv)
+                or self._missing_factual_sections(cv_text, next_sanitized_cv)
+            ):
+                return {
+                    "success": False,
+                    "error": "Complete corrected CV reference unavailable",
+                    "fact_check": recheck,
+                }
+            sanitized_cv = next_sanitized_cv
+
+        return {
+            "success": False,
+            "error": "Corrected CV failed complete factual verification",
+            "fact_check": recheck,
+        }
+
     def _init_sub_agents(self) -> None:
         """Initialize specialized sub-agents."""
         # Job Analyzer - Extracts requirements from job posting
@@ -319,6 +577,7 @@ class CVAdapterAgent(BaseAgent):
         language: str = "en",
         template: str = "ats",
         include_photo: bool = False,
+        confirmed_factual_reference: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Adapt CV to match a job offer using HYBRID approach.
@@ -333,12 +592,47 @@ class CVAdapterAgent(BaseAgent):
         try:
             logger.info(f"[{self.name}] Starting CV adaptation pipeline (HYBRID MODE)")
 
-            # Phase 1: Extract FACTUAL data from original CV (IMMUTABLE)
-            logger.info(f"[{self.name}] Phase 1: Extracting factual data from original CV...")
-            original_data = await self._extract_factual_data(cv_text, language)
+            if confirmed_factual_reference is None:
+                # Phase 1: Extract FACTUAL data from original CV (IMMUTABLE)
+                logger.info(f"[{self.name}] Phase 1: Extracting factual data from original CV...")
+                original_data = await self._extract_factual_data(cv_text, language)
 
-            if not original_data.get("success"):
-                return {"success": False, "error": "Failed to extract CV data"}
+                if not original_data.get("success"):
+                    return {"success": False, "error": "Failed to extract CV data"}
+
+                original_data = await self._validate_extracted_data(cv_text, original_data)
+                if not original_data.get("success"):
+                    return original_data
+                factual_source = cv_text
+            else:
+                allowed_sections = {
+                    "personal_info",
+                    "experiences",
+                    "education",
+                    "certifications",
+                    "projects",
+                    "skills",
+                    "interests",
+                }
+                if (
+                    set(confirmed_factual_reference) != allowed_sections
+                    or not self._has_complete_cv_structure(confirmed_factual_reference)
+                ):
+                    return {
+                        "success": False,
+                        "error": "Invalid confirmed factual reference",
+                    }
+                original_data = json.loads(
+                    json.dumps(confirmed_factual_reference, ensure_ascii=False)
+                )
+                original_data["success"] = True
+                factual_source = json.dumps(
+                    confirmed_factual_reference,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                logger.info(f"[{self.name}] Phase 1: Using confirmed factual reference")
 
             # Phase 2: Analyze job requirements
             logger.info(f"[{self.name}] Phase 2: Analyzing job requirements...")
@@ -349,7 +643,7 @@ class CVAdapterAgent(BaseAgent):
 
             # Phase 3: Map CV to job requirements
             logger.info(f"[{self.name}] Phase 3: Mapping CV to requirements...")
-            cv_mapping = await self._map_cv_to_job(cv_text, job_analysis, language)
+            cv_mapping = await self._map_cv_to_job(factual_source, job_analysis, language)
 
             if not cv_mapping.get("success"):
                 return {"success": False, "error": "Failed to map CV to job"}
@@ -371,29 +665,42 @@ class CVAdapterAgent(BaseAgent):
 
             # Phase 6: reject or sanitize any unsupported candidate claim.
             logger.info(f"[{self.name}] Phase 6: Fact-checking adapted CV...")
-            fact_check = await self._fact_check(cv_text, final_cv)
+            fact_check = await self._fact_check(factual_source, final_cv)
             if fact_check.get("valid") is not True:
                 sanitized_cv = fact_check.get("sanitized_cv")
+                source_cv = {
+                    key: value for key, value in original_data.items() if key != "success"
+                }
                 source_fallback = not self._sanitized_cv_preserves_source_facts(
                     original_data,
                     sanitized_cv,
                 )
                 if source_fallback:
                     # Préserver la source plutôt qu'une reformulation qui perd des faits.
-                    final_cv = {
-                        key: value for key, value in original_data.items() if key != "success"
-                    }
+                    final_cv = source_cv
                 else:
                     final_cv = dict(sanitized_cv)
-                fact_check = await self._fact_check(cv_text, dict(final_cv))
-                if fact_check.get("valid") is not True:
-                    return {
-                        "success": False,
-                        "error": "Sanitized CV failed factual verification",
-                        "fact_check": fact_check,
-                    }
-                if source_fallback:
-                    fact_check["mode"] = "source_only_fallback"
+
+                for control_index in range(2):
+                    fact_check = await self._fact_check(factual_source, dict(final_cv))
+                    if fact_check.get("valid") is True:
+                        if source_fallback:
+                            fact_check["mode"] = "source_only_fallback"
+                        break
+
+                    if source_fallback or control_index == 1:
+                        return {
+                            "success": False,
+                            "error": "Sanitized CV failed factual verification",
+                            "fact_check": fact_check,
+                        }
+
+                    next_sanitized_cv = fact_check.get("sanitized_cv")
+                    source_fallback = not self._sanitized_cv_preserves_source_facts(
+                        original_data,
+                        next_sanitized_cv,
+                    )
+                    final_cv = source_cv if source_fallback else dict(next_sanitized_cv)
 
             if language == "fr" and isinstance(final_cv.get("skills"), dict):
                 labels = {"technical": "Compétences techniques", "tools": "Outils",
@@ -412,6 +719,7 @@ class CVAdapterAgent(BaseAgent):
             return {
                 "success": True,
                 "cv_data": final_cv,
+                "source_cv_text": factual_source,
                 "huntzen_certified": True,
                 "job_analysis": job_analysis,
                 "cv_mapping": cv_mapping,
@@ -445,6 +753,13 @@ CV CONTENT:
 
 CRITICAL: Extract information EXACTLY as it appears. Do NOT modify, translate, or "improve" anything.
 Keep dates, company names, school names, locations EXACTLY as written.
+Preserve each item under the CV section where it appears. A URL, domain, or product mentioned in a projects section is project data, never an employer or work experience. Only classify an item as work experience when the CV explicitly presents it as such with a job title and both a start date and an end date. Never promote project data to an employer or experience, and never invent missing title or dates.
+
+LITERAL VALUE CONTRACT:
+- Every non-empty string value in the JSON must be copied as one contiguous literal quotation from the CV content after normalizing only Unicode representation and whitespace. Keep casing, punctuation, wording and order unchanged.
+- Never summarize, paraphrase, rewrite, or concatenate separate source fragments. A value assembled from multiple non-contiguous passages is forbidden even when every fragment appears somewhere in the CV.
+- If no single exact contiguous quotation exists, use an empty string for a scalar field or an empty list for a list field.
+- technologies must always be a JSON list of strings. Each item must be one exact contiguous quotation from the CV; never combine non-contiguous technology fragments into one item.
 
 Return a JSON object:
 {{
@@ -490,7 +805,7 @@ Return a JSON object:
     "projects": [
         {{
             "name": "EXACT project name",
-            "technologies": "EXACT technologies as listed",
+            "technologies": ["EXACT contiguous technology text from CV"],
             "description": "EXACT description",
             "url": "EXACT url if present"
         }}
@@ -511,7 +826,7 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
                 {"role": "user", "content": task},
             ]
             result = await self._create_json_completion(
-                model=settings.llm_model_fast,
+                model=settings.llm_model_powerful,
                 messages=messages,
                 temperature=0.0,  # Zero temperature for exact extraction
             )
@@ -519,7 +834,7 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
             missing_sections = self._missing_factual_sections(cv_text, result)
             if missing_sections:
                 logger.warning(
-                    "[%s] Fast factual extraction omitted %s; retrying with the powerful model",
+                    "[%s] Factual extraction omitted %s; retrying once",
                     self.name,
                     ", ".join(missing_sections),
                 )
@@ -591,9 +906,7 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
         It ONLY improves the textual descriptions.
         """
         try:
-            keywords = job_analysis.get("keywords", [])
             tone = job_analysis.get("tone", "professional")
-            _skills_coverage = cv_mapping.get("skills_coverage", {})
 
             # Prepare experiences for rewriting
             original_experiences = original_data.get("experiences", [])
@@ -619,27 +932,14 @@ OUTPUT LANGUAGE: Keep everything in the ORIGINAL language of the CV."""
             # Check for career change
             is_career_change = cv_mapping.get("is_career_change", False)
             career_change_info = cv_mapping.get("career_change_info", {})
-            suggested_title = career_change_info.get("suggested_title", "")
-            transferable_skills = career_change_info.get("transferable_skills", [])
 
             career_change_instructions = ""
             if is_career_change:
                 career_change_instructions = f"""
-⚠️ CAREER CHANGE DETECTED - BE HONEST! ⚠️
-This candidate is making a career change from {career_change_info.get('current_field', 'unknown')} to {career_change_info.get('target_field', 'unknown')}.
-
-TITLE MUST REFLECT TRANSITION:
-- Suggested: "{suggested_title}"
-- Examples: "DRH en reconversion Data", "Manager RH | Transition Tech", "Professionnel RH → Data Engineer Junior"
-- DO NOT use "{job_analysis.get('job_title', '')}" alone as if they have experience in it
-
-SUMMARY MUST BE HONEST:
-- Mention years of experience in CURRENT field
-- Explain motivation for transition
-- Highlight transferable skills: {', '.join(transferable_skills)}
-- Example: "Fort de 15 ans d'expérience en RH, je me reconvertis vers la Data Engineering..."
-
-DO NOT PRETEND the candidate is already an expert in the new field!
+The job mapping suggests a difference between {career_change_info.get('current_field', 'unknown')}
+and {career_change_info.get('target_field', 'unknown')}. This is not a candidate declaration.
+Preserve the source professional title. Do not assert a career transition, motivation,
+years of experience or expertise unless explicitly supported by the source facts.
 """
 
             task = f"""Rewrite ONLY the bullet points and descriptions for this CV.
@@ -657,8 +957,7 @@ ORIGINAL TITLE/PROFILE:
 TARGET JOB: {job_analysis.get('job_title', 'Unknown')}
 IS CAREER CHANGE: {is_career_change}
 COMPANY TONE: {tone}
-MUST-USE KEYWORDS: {', '.join(keywords[:15])}
-REQUIRED SKILLS: {', '.join(job_analysis.get('required_skills', [])[:10])}
+The target job is context only, not evidence about the candidate.
 
 RULES:
 1. Rewrite bullet points to include relevant keywords while preserving every factual claim
@@ -666,15 +965,15 @@ RULES:
 3. NEVER add a metric, number, project, technology, outcome, employer, date, or responsibility absent from the original bullet points
 4. Keep same NUMBER of bullets per experience (don't add or remove)
 5. DO NOT change the meaning - just improve the wording
-6. Write a new professional summary (2-3 sentences) tailored to the job
-7. If career change: title MUST show transition (e.g., "HRBP en reconversion Data")
-8. If NOT career change: title can match the job directly
+6. Write a concise professional summary grounded only in the supplied source facts, without inventing seniority, availability, motivation, proficiency or achievements
+7. A possible career change never authorizes inventing a transition or changing a title held by the candidate
+8. If NOT career change: preserve the original professional title; a target job title is not evidence of a title held by the candidate
 9. Language: {language.upper()}
 
 Return JSON:
 {{
     "is_career_change": {str(is_career_change).lower()},
-    "adapted_title": "Professional title (showing transition if career change, otherwise matching job)",
+    "adapted_title": "Source-grounded professional title, never implying an unheld role",
     "summary": "2-3 sentence professional summary (honest about transition if career change)",
     "experience_bullets": [
         {{
@@ -1189,21 +1488,41 @@ Return JSON with category names as keys and skill arrays as values:
             unique = {str(skill).strip().casefold(): str(skill).strip() for skill in all_skills}
             return {"Compétences": list(unique.values())} if unique else {}
 
-    async def _fact_check(self, original_cv: str, adapted_cv: dict) -> dict[str, Any]:
+    async def _fact_check(
+        self,
+        original_cv: str,
+        adapted_cv: dict,
+        *,
+        require_complete: bool = False,
+    ) -> dict[str, Any]:
         """Verify that every candidate claim is supported by the source CV."""
         try:
+            # Le statut du pipeline n'est pas une affirmation biographique du candidat.
+            candidate_facts = {key: value for key, value in adapted_cv.items() if key != "success"}
+            completeness_requirement = ""
+            if require_complete:
+                completeness_requirement = """
+
+Also verify complete source coverage: preserve every distinct experience,
+education entry, certification, project and skill from the original CV, with
+dates associated with the correct experience, education entry or certification.
+Repeated presentation of the same source fact is a duplicate, not an additional
+experience or education entry. Missing facts or incorrect date associations make
+the result invalid. A sanitized_cv must contain all seven typed CV sections."""
+
             task = f"""Fact-check the adapted CV against the original.
 
 ORIGINAL CV:
 {original_cv}
 
 ADAPTED CV:
-{json.dumps(adapted_cv, indent=2)}
+{json.dumps(candidate_facts, indent=2)}
 
 Check every candidate claim, including job titles, companies, dates, skills,
 technologies, certifications, responsibilities, projects, metrics and results.
 Anything absent from the original CV must be removed, even if it appears in the
 job description. Rewording may improve clarity but cannot change meaning.
+{completeness_requirement}
 
 Return a JSON object:
 {{
@@ -1221,7 +1540,7 @@ Return a JSON object:
 }}"""
 
             result = await self._create_json_completion(
-                model=settings.llm_model_fast,
+                model=settings.llm_model_powerful,
                 messages=[
                     {
                         "role": "system",
@@ -1278,7 +1597,18 @@ COVER LETTER:
 
 Return JSON with `valid` and `issues`. Mark invalid when any technology,
 certification, metric, responsibility, domain, achievement or experience is
-attributed to the candidate without support in CANDIDATE SOURCE DATA."""
+attributed to the candidate without support in CANDIDATE SOURCE DATA.
+
+Check each performed action separately. A listed skill does NOT prove the
+candidate used it in a job, project or task. A job title does NOT prove typical
+duties were performed. Plausible details are still unsupported facts.
+For example, 'Excel beginner' plus 'filing documents' does NOT support
+'I used Excel to track documents or created spreadsheets'. Mark that invalid.
+Accept a faithful translation such as 'I filed documents; I have beginner-level
+Excel skills', without adding a link between those two independent facts.
+For each unsupported action, return an issue quoting that action and stating
+which source evidence is missing. Do not require invented detail to be a
+contradiction: absence of evidence is enough to reject a factual attribution."""
             result = await self._create_json_completion(
                 model=settings.llm_model_fast,
                 messages=[
@@ -1338,13 +1668,11 @@ attributed to the candidate without support in CANDIDATE SOURCE DATA."""
         company_name: str,
         date_str: str,
     ) -> dict[str, Any]:
-        """Construit une lettre conservatrice sans dépendre d'un nouveau jugement LLM."""
+        """Construit un brouillon conservateur qui doit encore être vérifié."""
         personal_info = cv_data.get("personal_info", {})
         experiences = cv_data.get("experiences", [])
         first_experience = experiences[0] if experiences else {}
         name = personal_info.get("name") or "Candidate"
-        title = personal_info.get("title") or first_experience.get("title") or ""
-        title = re.sub(r"^(?:objectif|objective)\s*:\s*", "", title, flags=re.IGNORECASE)
         summary = str(cv_data.get("summary") or "").strip()
         employer = str(first_experience.get("company") or "").strip()
         # Le paragraphe peut agréger deux postes, pas les attribuer au premier employeur.
@@ -1358,11 +1686,8 @@ attributed to the candidate without support in CANDIDATE SOURCE DATA."""
         ]
 
         if language == "fr":
-            paragraph_1 = (
-                f"Je vous adresse ma candidature en tant que {title}."
-                if title
-                else "Je vous adresse ma candidature pour le poste proposé."
-            )
+            # Le titre actuel du candidat n'est pas nécessairement celui de l'offre.
+            paragraph_1 = "Je vous adresse ma candidature pour le poste proposé."
             if summary:
                 paragraph_1 = f"{paragraph_1} {summary}"
 
@@ -1382,18 +1707,14 @@ attributed to the candidate without support in CANDIDATE SOURCE DATA."""
                 f"Je souhaite mettre ce parcours au service du poste présenté{target}. "
                 "Je reste disponible pour échanger avec vous sur cette candidature."
             )
-            subject = f"Candidature – {title}" if title else "Candidature au poste proposé"
+            subject = "Candidature au poste proposé"
             salutation = "Madame, Monsieur,"
             closing = (
                 "Dans l'attente de votre retour, je vous prie d'agréer, Madame, Monsieur, "
                 "l'expression de mes salutations distinguées."
             )
         else:
-            paragraph_1 = (
-                f"I am applying as a {title}."
-                if title
-                else "I am applying for the advertised position."
-            )
+            paragraph_1 = "I am applying for the advertised position."
             if summary:
                 paragraph_1 = f"{paragraph_1} {summary}"
 
@@ -1410,7 +1731,7 @@ attributed to the candidate without support in CANDIDATE SOURCE DATA."""
                 f"I would welcome the opportunity to apply this background to the role{target}. "
                 "I look forward to discussing my application with you."
             )
-            subject = f"Application – {title}" if title else "Application for the advertised position"
+            subject = "Application for the advertised position"
             salutation = "Dear Hiring Manager,"
             closing = "Thank you for considering my application."
 
@@ -1427,11 +1748,11 @@ attributed to the candidate without support in CANDIDATE SOURCE DATA."""
             "closing": closing,
             "signature": name,
             "fact_check": {
-                "valid": True,
+                "valid": False,
                 "issues": [],
-                "mode": "source_only_fallback",
+                "mode": "unchecked_fallback",
             },
-            "success": True,
+            "success": False,
         }
         return CVAdapterAgent._apply_cover_letter_header(result, personal_info)
 
@@ -1507,6 +1828,7 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
         job_description: str,
         language: str = "fr",
         company_name: str = "",
+        source_cv_text: str | None = None,
     ) -> dict[str, Any]:
         """
         Generate a personalized cover letter from CV data and job description.
@@ -1522,6 +1844,11 @@ Return JSON with: personal_info, summary, experiences, education, skills, certif
         """
         try:
             logger.info(f"[{self.name}] Generating cover letter in {language}")
+            verification_source = (
+                {"original_cv_text": source_cv_text}
+                if source_cv_text and source_cv_text.strip()
+                else cv_data
+            )
 
             # Extract key info from CV
             personal_info = cv_data.get("personal_info", {})
@@ -1602,6 +1929,25 @@ Return a JSON object with the cover letter content."""
             system_prompt = (
                 f"{load_prompt('cover_letter_generator.txt')}\n\n{FACTUAL_SAFETY_POLICY}"
             )
+            if source_cv_text and source_cv_text.strip():
+                # Ne pas présenter les faits adaptés au générateur : une mise en
+                # garde ne suffit pas à empêcher leur réutilisation dans la lettre.
+                task = f"""Write a cover letter using only the original candidate source below.
+
+ORIGINAL CANDIDATE SOURCE (including any explicit user corrections):
+{source_cv_text}
+
+JOB DESCRIPTION (requirements, not evidence about the candidate):
+{job_description}
+
+Language: {language.upper()}
+Company: {company_name or 'Extract from job description'}
+Date: {date_str}
+Maximum 280 words across three paragraphs. Return the complete cover letter JSON.
+Select relevant facts; do not expand them into invented examples or typical duties.
+A skill does not prove it was used in a particular task. Do not infer location,
+availability or contract preference from the job. A short truthful letter is better
+than filling space with unsupported claims. Preserve the candidate's stated constraints."""
             generation_messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": task},
@@ -1614,7 +1960,7 @@ Return a JSON object with the cover letter content."""
             result = self._apply_cover_letter_header(result, personal_info)
 
             fact_check = await self._fact_check_cover_letter(
-                cv_data,
+                verification_source,
                 job_description,
                 result,
             )
@@ -1636,7 +1982,7 @@ Return a JSON object with the cover letter content."""
                 )
                 result = self._apply_cover_letter_header(result, personal_info)
                 fact_check = await self._fact_check_cover_letter(
-                    cv_data,
+                    verification_source,
                     job_description,
                     result,
                 )
@@ -1646,12 +1992,65 @@ Return a JSON object with the cover letter content."""
                         "using source-only fallback",
                         self.name,
                     )
-                    return self._build_source_only_cover_letter(
-                        cv_data,
+                    fallback_data = cv_data
+                    if source_cv_text and source_cv_text.strip():
+                        fallback_data = await self._extract_factual_data(source_cv_text, language)
+                        if fallback_data.get("success") is not True:
+                            return {
+                                "success": False,
+                                "error": "Original CV extraction failed for cover letter fallback",
+                                "fact_check": fact_check,
+                            }
+                    result = self._build_source_only_cover_letter(
+                        fallback_data,
                         language=language,
                         company_name=company_name,
                         date_str=date_str,
                     )
+                    if source_cv_text and source_cv_text.strip():
+                        # L'extraction conserve la langue originale. Traduire le
+                        # brouillon avant le contrôle final, jamais après celui-ci.
+                        result = await self._create_json_completion(
+                            model=settings.llm_model_powerful,
+                            messages=[
+                                {"role": "system", "content": (
+                                    "Translate the supplied cover letter JSON into the requested "
+                                    "language. Do not add facts or typical duties. Preserve names, "
+                                    "companies, dates and contact details. Fix grammar and duplicated "
+                                    "punctuation. Return the complete JSON with the same fields."
+                                )},
+                                {"role": "user", "content": (
+                                    f"Target language: {language}\n"
+                                    + json.dumps(result, ensure_ascii=False)
+                                )},
+                            ],
+                            temperature=0.0,
+                        )
+                        result = self._apply_cover_letter_header(
+                            result, fallback_data.get("personal_info", {}),
+                        )
+                        required_content = (
+                            "subject", "salutation", "paragraph_1", "paragraph_2",
+                            "paragraph_3", "closing", "signature",
+                        )
+                        if any(
+                            not isinstance(result.get(field), str) or not result[field].strip()
+                            for field in required_content
+                        ):
+                            return {
+                                "success": False,
+                                "error": "Translated cover letter is incomplete",
+                            }
+                    fact_check = await self._fact_check_cover_letter(
+                        verification_source, job_description, result,
+                    )
+                    if fact_check.get("valid") is not True:
+                        return {
+                            "success": False,
+                            "error": "Cover letter failed factual verification",
+                            "fact_check": fact_check,
+                        }
+                    fact_check["mode"] = "source_only_fallback"
 
             result["fact_check"] = fact_check
             result["success"] = True
