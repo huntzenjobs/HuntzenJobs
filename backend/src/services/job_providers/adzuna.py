@@ -6,6 +6,7 @@ https://developer.adzuna.com/
 """
 
 import logging
+import re
 from typing import Any
 
 import httpx
@@ -19,6 +20,19 @@ from src.services.job_providers.base import (
 from src.utils.url_validator import is_description_truncated, is_direct_job_url
 
 logger = logging.getLogger(__name__)
+
+_SCRAPED_NAVIGATION_PREFIX = re.compile(
+    r"^\s*Retour\b.{0,450}?\b\d{1,2}\s+[A-Za-zÀ-ÖØ-öø-ÿ]+,\s+\d{4}"
+    r"\s+[\d,.]+\s+Description\s+",
+    flags=re.IGNORECASE | re.DOTALL,
+)
+
+
+def _clean_adzuna_description(description: str | None) -> str | None:
+    """Retire uniquement l'en-tête de navigation parfois injecté par Adzuna."""
+    if not description:
+        return description
+    return _SCRAPED_NAVIGATION_PREFIX.sub("", description, count=1).strip()
 
 
 class AdzunaProvider(BaseJobProvider):
@@ -130,7 +144,7 @@ class AdzunaProvider(BaseJobProvider):
 
     def _normalize_adzuna_job(self, item: dict) -> dict[str, Any]:
         """Normalize Adzuna job response."""
-        description = item.get("description")
+        description = _clean_adzuna_description(item.get("description"))
         url = item.get("redirect_url")
         return {
             "id": f"adzuna_{item.get('id')}",

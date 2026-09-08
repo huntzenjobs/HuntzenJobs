@@ -109,3 +109,37 @@ async def test_adzuna_uses_documented_boolean_contract_flags(
 
     assert "contract_type" not in client.params
     assert client.params[expected_flag] == 1
+
+
+def test_adzuna_removes_scraped_navigation_prefix_from_description() -> None:
+    provider = adzuna.AdzunaProvider()
+    item = {
+        "id": "5828771275",
+        "title": "Développeur React H/F/X en alternance",
+        "description": (
+            "Retour Développeur React H/F/X en alternance · École Rennes · "
+            "Ille-et-Vilaine, France · 10 mars, 2025 78,712 Description "
+            "L'école recherche un développeur React pour son partenaire."
+        ),
+    }
+
+    normalized = provider._normalize_adzuna_job(item)
+
+    assert normalized["description"] == (
+        "L'école recherche un développeur React pour son partenaire."
+    )
+
+
+def test_adzuna_preserves_legitimate_description_beginning_with_retour() -> None:
+    provider = adzuna.AdzunaProvider()
+    item = {
+        "id": "legitimate",
+        "description": (
+            "Retour sur expérience et description des missions principales "
+            "au sein de notre équipe produit."
+        ),
+    }
+
+    normalized = provider._normalize_adzuna_job(item)
+
+    assert normalized["description"] == item["description"]
