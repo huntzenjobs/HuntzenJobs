@@ -77,3 +77,116 @@ async def test_cached_get_search_checks_and_increments_quota(monkeypatch):
     check_quota.assert_called_once_with("user-test")
     increment_quota.assert_called_once_with("user-test")
     invalidate_cache.assert_awaited_once_with("user-test")
+
+
+@pytest.mark.asyncio
+async def test_get_search_disables_market_insights(monkeypatch):
+    agent = SimpleNamespace(
+        run=AsyncMock(
+            return_value={
+                "success": True,
+                "jobs": [],
+                "metadata": {},
+            }
+        )
+    )
+
+    monkeypatch.setattr(jobs, "get_user_id_from_token", Mock(return_value="user-test"))
+    monkeypatch.setattr(jobs, "get_redis", AsyncMock(return_value=None))
+    monkeypatch.setattr(jobs, "_check_job_search_quota", Mock())
+    monkeypatch.setattr(jobs, "_record_job_search_usage", AsyncMock())
+
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/api/jobs/search",
+            "query_string": b"",
+            "headers": [],
+            "client": ("127.0.0.1", 12345),
+        }
+    )
+    await jobs.search_jobs_get(
+        request=request,
+        agent=agent,
+        q="Manutention",
+        country="fr",
+        city="",
+        contract="",
+        limit=10,
+        radius=None,
+        include_remote=True,
+        industries="",
+        keywords="",
+        experience_level="",
+        salary_min=None,
+        salary_max=None,
+        company_size="",
+        contract_types="",
+        work_schedule="",
+        work_days="",
+        from_history=False,
+        authorization="Bearer test-token",
+    )
+
+    agent.run.assert_awaited_once_with(
+        job_title="Manutention",
+        country_code="fr",
+        city="",
+        contract_type="",
+        max_results=10,
+        radius_km=None,
+        include_remote=True,
+        include_insights=False,
+    )
+
+
+@pytest.mark.asyncio
+async def test_post_search_disables_market_insights(monkeypatch):
+    agent = SimpleNamespace(
+        run=AsyncMock(
+            return_value={
+                "success": True,
+                "jobs": [],
+                "metadata": {},
+            }
+        )
+    )
+
+    monkeypatch.setattr(jobs, "get_user_id_from_token", Mock(return_value="user-test"))
+    monkeypatch.setattr(jobs, "get_redis", AsyncMock(return_value=None))
+    monkeypatch.setattr(jobs, "_check_job_search_quota", Mock())
+    monkeypatch.setattr(jobs, "_record_job_search_usage", AsyncMock())
+
+    request = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/jobs/search",
+            "query_string": b"",
+            "headers": [],
+            "client": ("127.0.0.1", 12345),
+        }
+    )
+    await jobs.search_jobs(
+        request=request,
+        data=jobs.JobSearchRequest(
+            job_title="Manutention",
+            country_code="fr",
+            max_results=10,
+        ),
+        agent=agent,
+        authorization="Bearer test-token",
+    )
+
+    agent.run.assert_awaited_once_with(
+        job_title="Manutention",
+        country_code="fr",
+        city="",
+        contract_type="",
+        max_results=10,
+        max_days=120,
+        radius_km=None,
+        include_remote=True,
+        include_insights=False,
+    )

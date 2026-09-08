@@ -489,7 +489,7 @@ async def search_jobs(
             max_days=data.max_days,
             radius_km=data.radius_km,
             include_remote=data.include_remote,
-            include_insights=True,
+            include_insights=False,
         )
 
         if not result.get("success"):
@@ -686,6 +686,7 @@ async def search_jobs_get(
             max_results=limit,
             radius_km=radius,
             include_remote=include_remote,
+            include_insights=False,
         )
 
         # Stocker en cache les offres
