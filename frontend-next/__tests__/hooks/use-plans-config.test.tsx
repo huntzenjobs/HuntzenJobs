@@ -105,4 +105,25 @@ describe("usePlansConfig", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("réutilise le catalogue quand une fenêtre commerciale s'ouvre après 20 secondes", async () => {
+    let now = 1_000_000;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(plansResponse), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const first = renderHook(() => usePlansConfig());
+    await waitFor(() => expect(first.result.current.isLoading).toBe(false));
+    first.unmount();
+
+    now += 20_000;
+    const popup = renderHook(() => usePlansConfig());
+    await waitFor(() => expect(popup.result.current.isLoading).toBe(false));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });

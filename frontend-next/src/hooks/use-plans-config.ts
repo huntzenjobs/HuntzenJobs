@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocale } from "next-intl";
 
-const CACHE_TTL = 10 * 1000; // 10 seconds — pre-commercialisation, propagation rapide des changements admin
+// Les changements administrateur invalident explicitement ce cache. Un TTL court
+// provoquait donc des rechargements inutiles lors de l'ouverture du popup à 20 s.
+const CACHE_TTL = 5 * 60 * 1000;
 interface PendingPlansRequest {
   controller: AbortController;
   consumers: number;
