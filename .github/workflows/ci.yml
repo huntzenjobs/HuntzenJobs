@@ -31,6 +31,17 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
+      - name: Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Dépendances Railway
+        working-directory: .
+        run: npm ci --ignore-scripts
+
       - name: Dépendances système
         run: |
           sudo apt-get update
