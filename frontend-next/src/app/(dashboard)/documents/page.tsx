@@ -407,9 +407,9 @@ function DocumentCard({
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 hover:border-gray-300 transition-colors">
-      <div className="flex-1 min-w-0">
+      <div className="w-full min-w-0 max-w-full flex-1">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <p className="font-semibold text-gray-900 text-sm truncate">
+          <p className="min-w-0 max-w-full flex-1 truncate text-sm font-semibold text-gray-900">
             {doc.job_title}
           </p>
           {doc.match_score != null && (

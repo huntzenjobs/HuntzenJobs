@@ -26,20 +26,45 @@ export const ConversationContextSchema = z
   })
   .passthrough(); // Allow additional properties
 
-export const CoachConversationSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  session_id: z.string(),
-  messages: z.array(CoachMessageSchema),
-  context: ConversationContextSchema.optional().nullable(),
-  title: z.string().max(60).optional().nullable(),
-  is_favorite: z.boolean().default(false),
-  message_count: z.number().int().optional(),
-  last_message_at: z.string().optional(),
-  created_at: z.string(),
-  updated_at: z.string(),
-  assistant_type: z.string().optional().nullable(),
-});
+function normalizeLegacyConversation(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value;
+
+  const conversation = value as Record<string, unknown>;
+  if (!Array.isArray(conversation.messages)) return value;
+
+  const conversationId =
+    typeof conversation.id === "string" ? conversation.id : "conversation";
+  const messages = conversation.messages.map((message, index) => {
+    if (!message || typeof message !== "object") return message;
+
+    const candidate = message as Record<string, unknown>;
+    if (typeof candidate.id === "string" && candidate.id.length > 0) {
+      return message;
+    }
+
+    return { ...candidate, id: `${conversationId}-${index}` };
+  });
+
+  return { ...conversation, messages };
+}
+
+export const CoachConversationSchema = z.preprocess(
+  normalizeLegacyConversation,
+  z.object({
+    id: z.string().uuid(),
+    user_id: z.string().uuid(),
+    session_id: z.string(),
+    messages: z.array(CoachMessageSchema),
+    context: ConversationContextSchema.optional().nullable(),
+    title: z.string().max(60).optional().nullable(),
+    is_favorite: z.boolean().default(false),
+    message_count: z.number().int().optional(),
+    last_message_at: z.string().optional(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    assistant_type: z.string().optional().nullable(),
+  }),
+);
 
 export const ConversationMetadataSchema = z.object({
   id: z.string().uuid(),
