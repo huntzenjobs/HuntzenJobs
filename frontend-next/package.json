@@ -47,7 +47,7 @@
     "isomorphic-dompurify": "^2.35.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.441.0",
-    "next": "16.3.1",
+    "next": "16.3.4",
     "next-intl": "^4.13.6",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
@@ -66,8 +66,8 @@
   },
   "devDependencies": {
     "@serwist/turbopack": "^9.5.12",
-    "@testing-library/jest-dom": "^6.4.0",
     "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.4.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.5.0",
     "@types/dompurify": "^3.0.5",
@@ -79,17 +79,23 @@
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/ui": "^4.1.10",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9.39.5",
     "esbuild": "^0.28.2",
-    "eslint-config-next": "16.3.1",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.3.4",
     "jsdom": "^24.0.0",
     "msw": "^2.2.0",
     "postcss": "^8.5.26",
+    "serwist": "^9.5.12",
     "tailwindcss": "^3.4.13",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5",
-    "serwist": "^9.5.12",
     "vite": "^8.2.1",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "browserslist": "4.28.9",
+    "fast-uri": "3.1.6",
+    "fflate": "0.8.3",
+    "postcss-selector-parser": "6.1.3"
   }
 }
