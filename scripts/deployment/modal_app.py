@@ -453,7 +453,14 @@ async def process_cv_analysis(
         return {"success": True, "cv_id": cv_id}
 
     except Exception as e:  # noqa: BLE001 - frontière du traitement asynchrone
-        error_msg = f"Unified Processing Failed: {e!s}"
+        # Les refus métier de l'agent sont destinés à l'utilisateur. Ne pas leur
+        # ajouter un préfixe technique interne dans l'interface.
+        rejection = str(e)
+        error_msg = (
+            rejection
+            if isinstance(e, ValueError) and rejection.startswith("Document non reconnu comme CV")
+            else "L'analyse du CV a échoué. Veuillez réessayer."
+        )
         sentry_sdk.capture_exception(e)
         logger.error("modal_cv_processing_failed error_type=%s", type(e).__name__)
         if ownership_verified:

@@ -4,7 +4,22 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.agents.base import SubAgentTransientError
-from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
+from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent, _looks_like_cv_text
+
+
+def test_short_structured_cv_matches_the_text_upload_contract() -> None:
+    cv_text = (
+        "Camille Martin\nExpérience : développeuse React.\n"
+        "Formation : licence informatique.\nCompétences : TypeScript, tests et Git.\n"
+        "Projet recherché : développeuse frontend junior."
+    )
+
+    assert 100 <= len(cv_text) < 500
+    assert _looks_like_cv_text(cv_text) is True
+
+
+def test_short_unstructured_text_is_not_recognized_as_a_cv() -> None:
+    assert _looks_like_cv_text("texte sans rubrique professionnelle " * 5) is False
 
 
 @pytest.mark.asyncio

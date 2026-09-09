@@ -33,6 +33,26 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 HUNTZEN_CV_MARKERS = ["HuntZen Jobs", "Optimisé par HuntZen", "HuntZen ATS", "huntzenjobs.com", "HuntZen ATS Certified"]
+MIN_CV_TEXT_LENGTH = 100
+CV_SECTION_KEYWORDS = (
+    "experience",
+    "expérience",
+    "work",
+    "emploi",
+    "employment",
+    "education",
+    "formation",
+    "skills",
+    "compétence",
+)
+
+
+def _looks_like_cv_text(cv_text: str | None) -> bool:
+    """Valider un CV court sans contredire le minimum affiché par l'interface."""
+    normalized = (cv_text or "").strip().lower()
+    return len(normalized) >= MIN_CV_TEXT_LENGTH and any(
+        keyword in normalized for keyword in CV_SECTION_KEYWORDS
+    )
 
 
 class CVAnalyzerAgent(BaseAgent):
@@ -155,21 +175,7 @@ class CVAnalyzerAgent(BaseAgent):
         """
         try:
             # ── BASIC GUARD: reject non-CV or too-short content ─────────────────
-            minimal_len = 500
-            cv_lower = (cv_text or "").lower()
-            cv_keywords = [
-                "experience",
-                "expérience",
-                "work",
-                "emploi",
-                "employment",
-                "education",
-                "formation",
-                "skills",
-                "compétence",
-            ]
-
-            if len(cv_lower) < minimal_len or not any(k in cv_lower for k in cv_keywords):
+            if not _looks_like_cv_text(cv_text):
                 msg = "Document non reconnu comme CV (texte trop court ou sections clés absentes)."
                 return {
                     "success": False,

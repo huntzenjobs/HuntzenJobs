@@ -902,7 +902,7 @@ async def test_modal_processing_fails_when_final_status_cannot_be_persisted(
     )
 
     assert response["success"] is False
-    assert "final status persistence failed" in response["error"]
+    assert response["error"] == "L'analyse du CV a échoué. Veuillez réessayer."
 
 
 @pytest.mark.asyncio
@@ -933,6 +933,7 @@ async def test_modal_processing_marks_agent_rejection_as_failed(
 
     assert response["success"] is False
     assert "Document non reconnu comme CV" in response["error"]
+    assert "Unified Processing Failed" not in response["error"]
     assert update_status.await_args_list[-1].args[2] == "failed"
     assert update_status.await_args_list[-1].kwargs["error_message"]
     assert all(call.args[2] != "completed" for call in update_status.await_args_list)
