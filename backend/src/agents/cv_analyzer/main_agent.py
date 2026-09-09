@@ -340,7 +340,18 @@ class CVAnalyzerAgent(BaseAgent):
         """Score CV for ATS compatibility."""
         task = f"Score this CV in {language}:\n\n{cv_text}"
         result = await self.ats_scorer.run(task=task)
-        return self._parse_json(result) or {}
+        parsed = self._parse_json(result)
+        if isinstance(parsed, dict):
+            return parsed
+
+        logger.warning("[%s] ATS response was malformed; retrying once", self.name)
+        strict_task = (
+            f"{task}\n\n"
+            "Répondez uniquement avec l'objet JSON valide demandé, sans Markdown ni commentaire."
+        )
+        retry_result = await self.ats_scorer.run(task=strict_task)
+        retry_parsed = self._parse_json(retry_result)
+        return retry_parsed if isinstance(retry_parsed, dict) else {}
 
     async def _extract_skills(self, cv_text: str, language: str = "en") -> dict:
         """Extract skills from CV."""
