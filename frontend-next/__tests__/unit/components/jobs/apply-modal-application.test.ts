@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildCoverLetterRequest,
   buildCoverLetterSource,
+  fetchCoverLetterWithRetry,
   saveConfirmedApplication,
 } from "@/components/jobs/apply-modal";
 import type { Job } from "@/lib/api/huntzen-client";
@@ -84,5 +85,38 @@ describe("saveConfirmedApplication", () => {
     await expect(saveConfirmedApplication(authenticatedFetch, job)).rejects.toThrow(
       "Application save failed (500)",
     );
+  });
+});
+
+describe("fetchCoverLetterWithRetry", () => {
+  it("retente une seule fois apres un 500 explicite", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 500 }))
+      .mockResolvedValueOnce(new Response("pdf", { status: 200 }));
+
+    const response = await fetchCoverLetterWithRetry(
+      "https://api.example.test/generate-cover-letter",
+      { method: "POST" },
+      fetcher,
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([400, 401, 429, 503])("ne retente pas le statut %s", async (status) => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status }));
+
+    const response = await fetchCoverLetterWithRetry(
+      "https://api.example.test/generate-cover-letter",
+      { method: "POST" },
+      fetcher,
+    );
+
+    expect(response.status).toBe(status);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 });
