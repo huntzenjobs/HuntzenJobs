@@ -81,7 +81,7 @@ export function useAdminPlans() {
           body: JSON.stringify(limits),
         });
         toast.success("Limites mises à jour");
-        window.dispatchEvent(new Event("subscription-changed"));
+        window.dispatchEvent(new Event("plans-config-changed"));
         return true;
       } catch (e) {
         toast.error(
@@ -111,7 +111,7 @@ export function useAdminPlans() {
           body: JSON.stringify(payload),
         });
         toast.success("Fonctionnalités mises à jour");
-        window.dispatchEvent(new Event("subscription-changed"));
+        window.dispatchEvent(new Event("plans-config-changed"));
         return true;
       } catch (e) {
         toast.error(
@@ -137,7 +137,7 @@ export function useAdminPlans() {
           body: JSON.stringify(prices),
         });
         toast.success("Prix affiché mis à jour");
-        window.dispatchEvent(new Event("subscription-changed"));
+        window.dispatchEvent(new Event("plans-config-changed"));
         return true;
       } catch (e) {
         toast.error(
@@ -165,7 +165,7 @@ export function useAdminPlans() {
           body: JSON.stringify(wording),
         });
         toast.success("Wording mis à jour");
-        window.dispatchEvent(new Event("subscription-changed"));
+        window.dispatchEvent(new Event("plans-config-changed"));
         return true;
       } catch (e) {
         toast.error(
@@ -216,7 +216,7 @@ export function useAdminPlans() {
         method: "POST",
       });
       toast.success("Traductions générées (en, es, pt)");
-      window.dispatchEvent(new Event("subscription-changed"));
+      window.dispatchEvent(new Event("plans-config-changed"));
       return true;
     } catch (e) {
       toast.error(

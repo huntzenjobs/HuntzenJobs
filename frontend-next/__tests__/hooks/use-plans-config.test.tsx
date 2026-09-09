@@ -67,7 +67,7 @@ describe("usePlansConfig", () => {
     const second = renderHook(() => usePlansConfig());
 
     act(() => {
-      window.dispatchEvent(new Event("subscription-changed"));
+      window.dispatchEvent(new Event("plans-config-changed"));
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -85,5 +85,24 @@ describe("usePlansConfig", () => {
       }),
     );
     await waitFor(() => expect(second.result.current.isLoading).toBe(false));
+  });
+
+  it("ne recharge pas le catalogue lors d'un changement d'abonnement", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(
+      async () =>
+        new Response(JSON.stringify(plansResponse), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+    );
+
+    const hook = renderHook(() => usePlansConfig());
+    await waitFor(() => expect(hook.result.current.isLoading).toBe(false));
+
+    act(() => {
+      window.dispatchEvent(new Event("subscription-changed"));
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
