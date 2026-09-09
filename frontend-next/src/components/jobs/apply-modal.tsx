@@ -241,6 +241,16 @@ export async function saveConfirmedApplication(
   }
 }
 
+export async function fetchCoverLetterWithRetry(
+  url: string,
+  init: RequestInit,
+  fetcher: typeof fetch = fetch,
+): Promise<Response> {
+  const response = await fetcher(url, init);
+  if (response.status !== 500) return response;
+  return fetcher(url, init);
+}
+
 /**
  * Serialize cv_data profile to readable text for the /adapt endpoint.
  * The LLM can process this structured text format as a CV.
@@ -682,7 +692,7 @@ export function ApplyModal({
         },
         body: JSON.stringify({ cv_data: cvData, template: "ats", language }),
       }),
-      fetch(`${BACKEND_URL}/api/cv-adapter/generate-cover-letter`, {
+      fetchCoverLetterWithRetry(`${BACKEND_URL}/api/cv-adapter/generate-cover-letter`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
