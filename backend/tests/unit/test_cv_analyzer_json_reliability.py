@@ -4,7 +4,46 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent
+from src.agents.cv_analyzer.main_agent import CVAnalyzerAgent, _normalize_ats_scores
+
+
+def test_normalize_ats_scores_uses_component_sum() -> None:
+    """Le score affiché doit être la somme vérifiable des cinq catégories."""
+    result = _normalize_ats_scores(
+        {
+            "total": 95,
+            "format_score": 19,
+            "keywords_score": 27,
+            "experience_score": 12,
+            "skills_score": 8,
+            "education_score": 5,
+        }
+    )
+
+    assert result["total"] == 71
+
+
+def test_normalize_ats_scores_caps_each_component() -> None:
+    """Une catégorie hors barème ne doit pas gonfler le score final."""
+    result = _normalize_ats_scores(
+        {
+            "total": 100,
+            "format_score": 99,
+            "keywords_score": -4,
+            "experience_score": 25,
+            "skills_score": 15,
+            "education_score": 10,
+        }
+    )
+
+    assert result == {
+        "total": 70,
+        "format_score": 20,
+        "keywords_score": 0,
+        "experience_score": 25,
+        "skills_score": 15,
+        "education_score": 10,
+    }
 
 
 @pytest.mark.asyncio

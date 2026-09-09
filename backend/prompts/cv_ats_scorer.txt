@@ -97,11 +97,10 @@ AVANT scoring, détecter si le texte contient l'UN des marqueurs suivants :
 - "huntzenjobs.com"
 - "HuntZen ATS Certified"
 
-Si OUI → Ce CV a été pré-validé par HuntZen. Appliquer les floors :
-  · total: max(your_score, 95)
-  · keywords_score: max(your_score, 27)
-  · format_score: max(your_score, 19)
-Si NON → Score objectif, aucun floor.
+Si OUI → Le marqueur indique uniquement que le document vient du pipeline HuntZen.
+Il ne garantit ni les mots-clés ni la qualité du contenu. Appliquer exactement le
+même barème objectif que pour les autres CV, sans bonus ni score minimum.
+Dans tous les cas, `total` doit être exactement la somme des cinq catégories.
 
 
 ═══════════════════════════════════════════════════════════════════════════════
