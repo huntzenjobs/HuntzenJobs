@@ -177,9 +177,9 @@ export function usePlansConfig() {
       invalidatePlansRequest(locale, event);
       void fetchPlans();
     };
-    window.addEventListener("subscription-changed", handleChange);
+    window.addEventListener("plans-config-changed", handleChange);
     return () =>
-      window.removeEventListener("subscription-changed", handleChange);
+      window.removeEventListener("plans-config-changed", handleChange);
   }, [fetchPlans, locale]);
 
   const getPlan = useCallback(
