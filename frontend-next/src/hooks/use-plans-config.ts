@@ -4,6 +4,14 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocale } from "next-intl";
 
 const CACHE_TTL = 10 * 1000; // 10 seconds — pre-commercialisation, propagation rapide des changements admin
+interface PendingPlansRequest {
+  controller: AbortController;
+  consumers: number;
+  promise: Promise<PlanConfig[]>;
+}
+
+const pendingPlansRequests = new Map<string, PendingPlansRequest>();
+const handledInvalidationEvents = new WeakSet<Event>();
 
 export interface PlanConfig {
   id: string;
@@ -53,52 +61,120 @@ function clearCache(locale: string) {
   } catch {}
 }
 
+function invalidatePlansRequest(locale: string, event: Event) {
+  if (handledInvalidationEvents.has(event)) return;
+  handledInvalidationEvents.add(event);
+  const pendingRequest = pendingPlansRequests.get(locale);
+  if (!pendingRequest) return;
+  pendingPlansRequests.delete(locale);
+  pendingRequest.controller.abort();
+}
+
+function requestPlans(locale: string): {
+  promise: Promise<PlanConfig[]>;
+  release: () => void;
+} {
+  const pendingRequest = pendingPlansRequests.get(locale);
+  if (pendingRequest) {
+    pendingRequest.consumers += 1;
+    return createRequestHandle(locale, pendingRequest);
+  }
+
+  const path = `/api/public/plans${locale !== "fr" ? `?locale=${locale}` : ""}`;
+  const url = new URL(path, window.location.origin).toString();
+  const controller = new AbortController();
+  const request: PendingPlansRequest = {
+    controller,
+    consumers: 1,
+    promise: Promise.resolve([]),
+  };
+  request.promise = fetch(url, { signal: controller.signal })
+    .then(async (response) => {
+      if (!response.ok) throw new Error("Failed to fetch plans");
+      return (await response.json()) as PlanConfig[];
+    })
+    .finally(() => {
+      if (pendingPlansRequests.get(locale) === request) {
+        pendingPlansRequests.delete(locale);
+      }
+    });
+
+  pendingPlansRequests.set(locale, request);
+  return createRequestHandle(locale, request);
+}
+
+function createRequestHandle(
+  locale: string,
+  request: PendingPlansRequest,
+): { promise: Promise<PlanConfig[]>; release: () => void } {
+  let released = false;
+  return {
+    promise: request.promise,
+    release: () => {
+      if (released) return;
+      released = true;
+      request.consumers -= 1;
+      if (
+        request.consumers === 0 &&
+        pendingPlansRequests.get(locale) === request
+      ) {
+        pendingPlansRequests.delete(locale);
+        request.controller.abort();
+      }
+    },
+  };
+}
+
 export function usePlansConfig() {
   const locale = useLocale();
   const [plans, setPlans] = useState<PlanConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const activeRequestRef = useRef<AbortController | null>(null);
+  const releaseRequestRef = useRef<(() => void) | null>(null);
 
   const fetchPlans = useCallback(async () => {
-    activeRequestRef.current?.abort();
-    const controller = new AbortController();
-    activeRequestRef.current = controller;
+    releaseRequestRef.current?.();
+    releaseRequestRef.current = null;
 
     // Try cache first
     const cached = loadCache(locale);
     if (cached) {
-      if (controller.signal.aborted) return;
       setPlans(cached);
       setIsLoading(false);
       return;
     }
 
+    const request = requestPlans(locale);
+    releaseRequestRef.current = request.release;
     try {
-      const path = `/api/public/plans${locale !== "fr" ? `?locale=${locale}` : ""}`;
-      const url = new URL(path, window.location.origin).toString();
-      const res = await fetch(url, { signal: controller.signal });
-      if (!res.ok) throw new Error("Failed to fetch plans");
-      const data: PlanConfig[] = await res.json();
-      if (controller.signal.aborted) return;
+      const data = await request.promise;
+      if (releaseRequestRef.current !== request.release) return;
       saveCache(locale, data);
       setPlans(data);
     } catch (err) {
-      if (controller.signal.aborted) return;
+      if (releaseRequestRef.current !== request.release) return;
       console.warn("[usePlansConfig] API unavailable, no fallback:", err);
     } finally {
-      if (!controller.signal.aborted) setIsLoading(false);
+      if (releaseRequestRef.current === request.release) {
+        releaseRequestRef.current = null;
+        request.release();
+        setIsLoading(false);
+      }
     }
   }, [locale]);
 
   useEffect(() => {
     void fetchPlans();
-    return () => activeRequestRef.current?.abort();
+    return () => {
+      releaseRequestRef.current?.();
+      releaseRequestRef.current = null;
+    };
   }, [fetchPlans]);
 
   // Refresh when admin saves plan changes
   useEffect(() => {
-    const handleChange = () => {
+    const handleChange = (event: Event) => {
       clearCache(locale);
+      invalidatePlansRequest(locale, event);
       void fetchPlans();
     };
     window.addEventListener("subscription-changed", handleChange);
