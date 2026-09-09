@@ -55,6 +55,31 @@ def _looks_like_cv_text(cv_text: str | None) -> bool:
     )
 
 
+ATS_SCORE_LIMITS = {
+    "format_score": 20,
+    "keywords_score": 30,
+    "experience_score": 25,
+    "skills_score": 15,
+    "education_score": 10,
+}
+
+
+def _normalize_ats_scores(result: dict[str, Any]) -> dict[str, Any]:
+    """Borner les catégories ATS et calculer un total explicable."""
+    normalized = dict(result)
+    total = 0
+    for key, maximum in ATS_SCORE_LIMITS.items():
+        value = result.get(key, 0)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            score = 0
+        else:
+            score = int(max(0, min(maximum, value)))
+        normalized[key] = score
+        total += score
+    normalized["total"] = total
+    return normalized
+
+
 class CVAnalyzerAgent(BaseAgent):
     """
     CV Analyzer Agent with deep sub-agent architecture.
@@ -268,6 +293,7 @@ class CVAnalyzerAgent(BaseAgent):
             info_result = results[3] if isinstance(results[3], dict) else {}
             job_match_result = results[4] if len(results) > 4 and isinstance(results[4], dict) else {}
 
+            ats_result = _normalize_ats_scores(ats_result)
             score = ats_result.get("total")
             if (isinstance(score, bool) or not isinstance(score, (int, float))
                     or not math.isfinite(score) or not 0 <= score <= 100):
