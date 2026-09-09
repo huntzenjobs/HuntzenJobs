@@ -67,6 +67,9 @@ ATS_SCORE_LIMITS = {
 def _normalize_ats_scores(result: dict[str, Any]) -> dict[str, Any]:
     """Borner les catégories ATS et calculer un total explicable."""
     normalized = dict(result)
+    if not all(key in result for key in ATS_SCORE_LIMITS):
+        return normalized
+
     total = 0
     for key, maximum in ATS_SCORE_LIMITS.items():
         value = result.get(key, 0)
