@@ -33,8 +33,6 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     color: "#2563eb", // blue-600
     bgColor: "#dbeafe", // blue-100
     accentColor: "#7C3AED", // violet-700
-    avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=Nova&backgroundColor=dbeafe",
     isPremium: false,
     specialtiesKeys: [
       "nova.specialty1",
@@ -57,8 +55,6 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     color: "#059669", // emerald-600
     bgColor: "#d1fae5", // emerald-100
     accentColor: "#0D9488", // teal-600
-    avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=Maria&backgroundColor=d1fae5",
     isPremium: false,
     specialtiesKeys: [
       "maria.specialty1",
@@ -81,8 +77,6 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     color: "#7c3aed", // violet-600
     bgColor: "#ede9fe", // violet-100
     accentColor: "#EC4899", // pink-500
-    avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=Sofia&backgroundColor=ede9fe",
     isPremium: false,
     specialtiesKeys: [
       "sofia.specialty1",
@@ -106,8 +100,6 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     icon: FileEdit,
     color: "#dc2626", // red-600
     bgColor: "#fee2e2", // red-100
-    avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=Adapter&backgroundColor=fee2e2",
     isPremium: false,
     specialtiesKeys: [
       "cvAdapter.specialty1",
@@ -130,8 +122,6 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     color: "#ea580c", // orange-600
     bgColor: "#ffedd5", // orange-100
     accentColor: "#EA580C", // orange-600
-    avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=Lucas&backgroundColor=ffedd5",
     isPremium: true,
     isComingSoon: true,
     specialtiesKeys: [
@@ -155,8 +145,6 @@ export const ASSISTANTS_CONFIG: Record<AssistantType, AssistantConfig> = {
     color: "#0077b5",
     bgColor: "#dbeafe",
     accentColor: "#DC2626", // red-600
-    avatarUrl:
-      "https://api.dicebear.com/9.x/personas/svg?seed=David&backgroundColor=dbeafe",
     isPremium: false,
     specialtiesKeys: [
       "david.specialty1",
