@@ -48,11 +48,12 @@ def check_recruiter_search_quota(user_id: str) -> None:
     Lève HTTP 429 si le quota est dépassé.
     """
     if not supabase_client:
-        return  # Dev mode — pas de Supabase configuré
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "QUOTA_SERVICE_UNAVAILABLE", "feature": "recruiter_search"},
+        )
     try:
         result = supabase_client.rpc("get_quota_status", {"p_user_id": user_id}).execute()
-        if not result.data:
-            return
         for row in result.data:
             if row.get("feature") == "recruiter_search":
                 if not row.get("has_access", True):
@@ -68,10 +69,15 @@ def check_recruiter_search_quota(user_id: str) -> None:
                         }
                     )
                 return
+        raise RuntimeError("quota status missing feature recruiter_search")
     except HTTPException:
         raise
     except Exception as e:
-        logger.warning(f"[quota] recruiter_search check failed for {user_id}, allowing through: {e}")
+        logger.error(f"[quota] recruiter_search check failed for {user_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "QUOTA_SERVICE_UNAVAILABLE", "feature": "recruiter_search"},
+        ) from None
 
 
 def increment_recruiter_search_quota(user_id: str) -> bool:
@@ -193,7 +199,11 @@ async def find_recruiters(
         _enrich_contact_metadata(result)
 
         # Incrémenter le quota après succès
-        increment_recruiter_search_quota(user_id)
+        if not increment_recruiter_search_quota(user_id):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"code": "QUOTA_SERVICE_UNAVAILABLE", "feature": "recruiter_search"},
+            )
         await invalidate_user_quota_cache(user_id)
         return result
     except HTTPException:

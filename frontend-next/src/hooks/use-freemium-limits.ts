@@ -71,7 +71,7 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     assistant_messages_per_day: 5,
     saved_jobs_per_day: 10,
     recruiter_searches_per_day: 10,
-    cv_adapt_per_day: 5,
+    cv_adapt_per_day: 10,
     cover_letter_per_day: 10,
     has_advanced_filters: true,
     has_favorites: true,
@@ -107,8 +107,8 @@ const HARDCODED_DEFAULTS: Record<PlanType, PlanLimitValues> = {
     assistant_messages_per_day: 20,
     saved_jobs_per_day: 30,
     recruiter_searches_per_day: 20,
-    cv_adapt_per_day: 10,
-    cover_letter_per_day: 10,
+    cv_adapt_per_day: 30,
+    cover_letter_per_day: 30,
     has_advanced_filters: true,
     has_favorites: true,
     has_email_alerts: false,
@@ -694,6 +694,9 @@ export function useFreemiumLimits(userId?: string) {
         case "cover_letter":
           newState.usage.coverLettersUsedToday = value;
           break;
+        case "recruiter_search":
+          newState.usage.recruiterSearchesUsedToday = value;
+          break;
       }
 
       stateRef.current = newState;
@@ -741,6 +744,9 @@ export function useFreemiumLimits(userId?: string) {
             break;
           case "saved_jobs":
             newState.usage.savedJobsCount += amount;
+            break;
+          case "recruiter_search":
+            newState.usage.recruiterSearchesUsedToday += amount;
             break;
         }
         stateRef.current = newState;

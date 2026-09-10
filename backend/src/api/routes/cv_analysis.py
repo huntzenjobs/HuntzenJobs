@@ -14,6 +14,7 @@ Date: 2026-02-08
 Sprint: 6 - Modal Integration
 """
 
+import asyncio
 import os
 from typing import Any
 
@@ -23,6 +24,11 @@ from supabase import Client, create_client
 
 from src.api.deps import get_user_id_from_token
 from src.api.middleware import limiter
+from src.api.routes.cv_adapter import (
+    _commit_quota_reservation,
+    _release_quota_reservation,
+    _reserve_quota,
+)
 from src.modal_integration import get_cv_analysis_status, list_user_cv_analyses, process_cv_async
 from src.services.stripe import invalidate_user_quota_cache
 from src.services.user_events import log_event
@@ -43,74 +49,6 @@ if SUPABASE_URL and SUPABASE_KEY:
 else:
     supabase_client = None
     logger.warning("Supabase not configured for quota management")
-
-
-# ============================================
-# QUOTA INCREMENT HELPER
-# ============================================
-
-def _check_quota(user_id: str, feature: str) -> None:
-    """
-    Check if user has remaining quota for a specific feature.
-    Raises HTTP 429 if quota exceeded.
-    """
-    if not supabase_client:
-        return
-    try:
-        result = supabase_client.rpc("get_quota_status", {"p_user_id": user_id}).execute()
-        if not result.data:
-            return
-        for row in result.data:
-            if row.get("feature") == feature:
-                if not row.get("has_access", True):
-                    raise HTTPException(
-                        status_code=429,
-                        detail={
-                            "code": "QUOTA_EXCEEDED",
-                            "feature": feature,
-                            "limit": row.get("quota_limit"),
-                            "used": row.get("quota_used"),
-                            "reset_at": str(row.get("reset_at", "")),
-                            "message": f"Quota journalier pour {feature} atteint. Passez à un plan supérieur pour continuer."
-                        }
-                    )
-                return
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.warning(f"[quota] {feature} check failed for {user_id}, allowing through: {e}")
-
-
-async def _increment_quota(user_id: str, feature: str) -> bool:
-    """
-    Increment usage quota for a specific feature via Supabase RPC.
-    """
-    if not supabase_client:
-        logger.error(f"[QUOTA] Supabase client not configured for {feature}")
-        return False
-
-    try:
-        response = supabase_client.rpc(
-            "increment_usage",
-            {
-                "p_user_id": user_id,
-                "p_feature": feature,
-                "p_amount": 1
-            }
-        ).execute()
-
-        success = response.data if response.data else False
-
-        if success:
-            logger.info(f"[QUOTA] ✅ Incremented {feature} quota for user {user_id}")
-        else:
-            logger.warning(f"[QUOTA] ⚠️ Failed to increment {feature} quota for user {user_id}")
-
-        return bool(success)
-
-    except Exception as e:
-        logger.error(f"[QUOTA] Error incrementing quota for {user_id}: {e}")
-        return False
 
 
 @router.post("/async")
@@ -198,20 +136,62 @@ async def analyze_cv_async(
     # ✅ DETERMINE FEATURE BASED ON JOB DESCRIPTION
     feature = "matching_score" if job_description else "ats_score"
 
-    # ✅ CHECK QUOTA BEFORE PROCESSING
-    _check_quota(user_id, feature)
+    reservation_id = await _reserve_quota(user_id, feature)
+    try:
+        result = await process_cv_async(
+            user_id=user_id,
+            file=file,
+            cv_text=cv_text,
+            job_description=job_description,
+            language=language,
+            before_spawn=lambda cv_id: _bind_reservation_to_cv(reservation_id, cv_id),
+        )
+        cv_id = result.get("cv_id")
+        if not isinstance(cv_id, str) or not cv_id:
+            raise HTTPException(status_code=500, detail="Identifiant d'analyse CV manquant")
+        return result
+    except Exception:
+        await _release_quota_reservation(reservation_id)
+        raise
 
-    # ✅ INCREMENT QUOTA IMMEDIATELY
-    await _increment_quota(user_id, feature)
-    await invalidate_user_quota_cache(user_id)
 
-    return await process_cv_async(
-        user_id=user_id,
-        file=file,
-        cv_text=cv_text,
-        job_description=job_description,
-        language=language
+async def _bind_reservation_to_cv(reservation_id: str, cv_id: str) -> None:
+    """Lie la réservation au traitement Modal avant son callback."""
+    if not supabase_client:
+        raise HTTPException(status_code=503, detail="Le service de quotas est indisponible.")
+    try:
+        result = await asyncio.wait_for(
+            asyncio.to_thread(
+                lambda: supabase_client.rpc(
+                    "bind_ai_quota_reservation",
+                    {"p_reservation_id": reservation_id, "p_resource_id": cv_id},
+                ).execute()
+            ),
+            timeout=10,
+        )
+        if result.data is not True:
+            raise RuntimeError("reservation not pending or resource already bound")
+    except Exception as exc:
+        logger.error("[quota] failed to bind reservation", reservation_id=reservation_id, error=str(exc))
+        raise HTTPException(status_code=503, detail="Le service de quotas est indisponible.") from None
+
+
+async def _find_bound_reservation(cv_id: str) -> str | None:
+    if not supabase_client:
+        return None
+    result = await asyncio.wait_for(
+        asyncio.to_thread(
+            lambda: supabase_client.table("ai_quota_reservations")
+            .select("id")
+            .eq("resource_id", cv_id)
+            .maybe_single()
+            .execute()
+        ),
+        timeout=10,
     )
+    data = result.data if result else None
+    reservation_id = data.get("id") if isinstance(data, dict) else None
+    return reservation_id if isinstance(reservation_id, str) else None
 
 
 @router.get("/status/{cv_id}")
@@ -361,9 +341,15 @@ async def cv_analysis_callback(
 
         logger.info(f"[CALLBACK] Received: cv_id={cv_id}, user_id={user_id}, status={status}")
 
-        # Quota already incremented in POST /async — just log and re-invalidate cache
+        reservation_id = await _find_bound_reservation(cv_id)
+
         if status == "completed" and user_id:
-            await invalidate_user_quota_cache(user_id)
+            if reservation_id:
+                await _commit_quota_reservation(reservation_id, user_id)
+            else:
+                # Compatibilité des traitements lancés avant le déploiement de
+                # la réservation atomique : ils ont déjà été débités au départ.
+                await invalidate_user_quota_cache(user_id)
             logger.info(
                 f"[CALLBACK] ✅ CV completed for user {user_id}, "
                 f"quota already tracked in /async: {cv_id}"
@@ -418,6 +404,8 @@ async def cv_analysis_callback(
                 "cv_id": cv_id
             }
         elif status == "failed":
+            if reservation_id:
+                await _release_quota_reservation(reservation_id)
             logger.warning(f"[CALLBACK] ❌ CV processing failed for {cv_id}, quota NOT incremented")
             return {
                 "success": True,

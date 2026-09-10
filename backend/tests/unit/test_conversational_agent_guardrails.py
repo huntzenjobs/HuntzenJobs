@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 import src.agents.coach.main_agent as coach_module
-from src.agents.base import BaseAgent
+from src.agents.base import BaseAgent, load_prompt
 from src.agents.branding.main_agent import BrandingAgent
 from src.agents.coach.main_agent import CareerCoachAgent
 from src.agents.cv_adapter.conversational_agent import CVAdapterConversationalAgent
@@ -59,6 +59,8 @@ async def test_conversational_agents_send_factual_guardrails_to_llm(
     assert agent.config.temperature <= 0.3
     assert "n'attribue jamais au candidat" in prompt
     assert "n'invente jamais de score numérique de cv" in prompt
+    assert "champ applicatif explicite `ats_score`" in prompt
+    assert "un ancien message de l'assistant" in prompt
     assert "exemple hypothétique" in prompt
 
 
@@ -117,7 +119,24 @@ def test_coach_and_branding_append_factual_guardrails_after_loaded_prompt(
     assert prompt.startswith("ancien prompt db")
     assert "n'attribue jamais au candidat" in prompt
     assert "n'invente jamais de score numérique de cv" in prompt
+    assert "champ applicatif explicite `ats_score`" in prompt
+    assert "un ancien message de l'assistant" in prompt
     assert "exemple hypothétique" in prompt
+
+
+def test_coach_prompt_requires_explicit_ats_score_provenance() -> None:
+    prompt = load_prompt("coach_main.txt").lower()
+
+    assert "champ explicite `ats_score`" in prompt
+    assert "message précédent de l'assistant" in prompt
+    assert "n'affiche aucun score numérique" in prompt
+
+
+def test_improvement_advisor_requires_requested_language_for_every_string() -> None:
+    prompt = load_prompt("cv_improvement_advisor.txt").lower()
+
+    assert "every human-readable string value" in prompt
+    assert "examples below define the schema only" in prompt
 
 
 def test_all_coach_subagents_append_factual_guardrails(

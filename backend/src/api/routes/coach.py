@@ -159,10 +159,16 @@ def _check_per_coach_quota(user_id: str, coach_type: str) -> None:
                         "message": "COACH_QUOTA_EXCEEDED"
                     }
                 )
+            return
+        raise RuntimeError("coach quota status missing")
     except Exception as e:
         if hasattr(e, 'status_code'):
             raise
-        logger.warning(f"[quota] per-coach check failed for {user_id}/{coach_type}, allowing through: {e}")
+        logger.error(f"[quota] per-coach check failed for {user_id}/{coach_type}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "QUOTA_SERVICE_UNAVAILABLE", "feature": "assistant_messages"},
+        ) from None
 
 
 def _check_coach_quota(user_id: str) -> None:
@@ -170,8 +176,6 @@ def _check_coach_quota(user_id: str) -> None:
     try:
         supabase = get_supabase_client()
         result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
-        if not result.data:
-            return
         for row in result.data:
             if row.get("feature") == "coach":
                 if not row.get("has_access", True):
@@ -188,10 +192,15 @@ def _check_coach_quota(user_id: str) -> None:
                         }
                     )
                 return
+        raise RuntimeError("quota status missing feature coach")
     except Exception as e:
         if hasattr(e, 'status_code'):
             raise
-        logger.warning(f"[quota] coach check failed for {user_id}, allowing through: {e}")
+        logger.error(f"[quota] coach check failed for {user_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "QUOTA_SERVICE_UNAVAILABLE", "feature": "coach"},
+        ) from None
 
 
 async def _record_coach_message_usage(user_id: str, assistant_type: str) -> None:

@@ -52,6 +52,8 @@ You produce ONLY this JSON structure (no nested objects except the certification
 }
 
 HARD RULES:
+- Follow the output language supplied in the runtime context. Every human-readable string value MUST be written in that language, including certification names and reasons.
+- The English examples below define the schema only. Never copy their language when another output language is requested.
 - NEVER return nested JSON or objects inside arrays (except the certification objects).
 - If you have nothing to propose in an array, return it as [] (empty array), not [{}] and not a stringified JSON.
 - Do not wrap the entire JSON in quotes; respond with raw JSON only.

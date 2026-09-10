@@ -536,7 +536,9 @@ async def check_quota(user_id: str, feature: str) -> None:
         supabase = get_supabase_client()
         result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
         for row in (result.data or []):
-            if row.get("feature") == feature and not row.get("has_access", True):
+            if row.get("feature") != feature:
+                continue
+            if not row.get("has_access", True):
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     detail={
@@ -547,10 +549,20 @@ async def check_quota(user_id: str, feature: str) -> None:
                         "message": f"Quota journalier atteint pour {feature}.",
                     },
                 )
+            return
+        raise RuntimeError(f"quota status missing feature {feature}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.warning(f"[quota] check_quota({feature}) failed: {e} — allowing through")
+        logger.error(f"[quota] check_quota({feature}) unavailable: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "QUOTA_SERVICE_UNAVAILABLE",
+                "feature": feature,
+                "message": "Le service de quotas est temporairement indisponible.",
+            },
+        ) from None
 
 
 async def increment_quota(user_id: str, feature: str, amount: int = 1) -> None:

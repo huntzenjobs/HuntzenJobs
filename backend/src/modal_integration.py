@@ -16,8 +16,10 @@ Date: 2026-01-28
 Sprint: 6 - Ticket S6-6
 """
 
+import asyncio
 import os
 import uuid
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
@@ -523,12 +525,29 @@ async def spawn_modal_cv_processing(
 # MAIN WORKFLOW: ASYNC CV PROCESSING
 # ============================================
 
+
+async def _mark_cv_analysis_failed(cv_id: str, message: str) -> None:
+    """Marque un traitement créé mais non lancé, sans masquer l'erreur initiale."""
+    if not supabase_client:
+        return
+    try:
+        await asyncio.to_thread(
+            lambda: supabase_client.table("cv_analyses").update({
+                "status": "failed",
+                "error_message": message[:500],
+                "updated_at": datetime.utcnow().isoformat(),
+            }).eq("id", cv_id).execute()
+        )
+    except Exception as exc:
+        logger.error(f"Failed to mark CV {cv_id} as failed: {exc}")
+
 async def process_cv_async(
     user_id: str,  # ✅ Maintenant OBLIGATOIRE (pas Optional)
     file: UploadFile | None = None,
     cv_text: str | None = None,
     job_description: str | None = None,
-    language: str = "fr"
+    language: str = "fr",
+    before_spawn: Callable[[str], Awaitable[None]] | None = None,
 ) -> dict[str, Any]:
     """
     Main workflow for async CV processing with Modal.
@@ -557,6 +576,7 @@ async def process_cv_async(
     Returns:
         Dict with cv_id and status='pending'
     """
+    cv_id: str | None = None
     try:
         # ✅ Validation: user_id is required
         if not user_id:
@@ -587,6 +607,11 @@ async def process_cv_async(
             language=language
         )
 
+        # Les opérations de comptabilité qui doivent précéder tout travail
+        # externe (par exemple lier une réservation de quota) s'exécutent ici.
+        if before_spawn is not None:
+            await before_spawn(cv_id)
+
         # Step 3: Spawn Modal function (non-blocking)
         modal_spawned = await spawn_modal_cv_processing(
             cv_id=cv_id,
@@ -611,9 +636,13 @@ async def process_cv_async(
         }
 
     except HTTPException:
+        if cv_id:
+            await _mark_cv_analysis_failed(cv_id, "CV processing dispatch failed")
         raise
     except Exception as e:
         logger.error(f"CV async processing failed: {e}")
+        if cv_id:
+            await _mark_cv_analysis_failed(cv_id, "CV processing dispatch failed")
         raise HTTPException(status_code=500, detail=f"CV processing failed: {str(e)}") from None
 
 

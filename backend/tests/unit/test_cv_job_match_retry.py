@@ -245,7 +245,9 @@ async def test_improvements_decode_advisor_json_without_losing_recommendations()
         "missing_sections": ["Résumé professionnel"],
     }
     agent.delegate_to.assert_awaited_once_with(
-        "ImprovementAdvisor", task="CV fictif", context="Language: fr"
+        "ImprovementAdvisor",
+        task="CV fictif",
+        context="Output language: fr. Every human-readable string value must be written in fr.",
     )
 
 

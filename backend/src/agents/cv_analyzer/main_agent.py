@@ -409,7 +409,14 @@ class CVAnalyzerAgent(BaseAgent):
 
     async def _get_improvements(self, cv_text: str, language: str = "en") -> dict:
         """Get CV improvements."""
-        result = await self.delegate_to("ImprovementAdvisor", task=cv_text, context=f"Language: {language}")
+        result = await self.delegate_to(
+            "ImprovementAdvisor",
+            task=cv_text,
+            context=(
+                f"Output language: {language}. "
+                f"Every human-readable string value must be written in {language}."
+            ),
+        )
         parsed = self._parse_json(result)
         return parsed if isinstance(parsed, dict) else {}
 

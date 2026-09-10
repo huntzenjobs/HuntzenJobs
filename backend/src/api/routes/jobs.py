@@ -51,8 +51,6 @@ def _check_job_search_quota(user_id: str) -> None:
     try:
         supabase = get_supabase_client()
         result = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
-        if not result.data:
-            return
         for row in result.data:
             if row.get("feature") == "job_search":
                 if not row.get("has_access", True):
@@ -68,10 +66,15 @@ def _check_job_search_quota(user_id: str) -> None:
                         }
                     )
                 return
+        raise RuntimeError("quota status missing feature job_search")
     except Exception as e:
         if hasattr(e, 'status_code'):
             raise
-        logger.warning(f"[quota] job_search check failed for {user_id}, allowing through: {e}")
+        logger.error(f"[quota] job_search check failed for {user_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "QUOTA_SERVICE_UNAVAILABLE", "feature": "job_search"},
+        ) from None
 
 
 def _increment_job_search_quota(user_id: str) -> None:
@@ -922,11 +925,13 @@ async def track_job_view(
         supabase = get_supabase_client()
 
         # Increment job_view usage
-        supabase.rpc("increment_usage", {
+        increment_result = supabase.rpc("increment_usage", {
             "p_user_id": user_id,
             "p_feature": "job_view",
             "p_amount": 1,
         }).execute()
+        if increment_result.data is not True:
+            raise RuntimeError("job_view increment rejected")
         await invalidate_user_quota_cache(user_id)
 
         # Get updated quota status
@@ -942,13 +947,18 @@ async def track_job_view(
             "tracked": True,
             "remaining": remaining,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.warning(f"[track-view] Failed for user {user_id}: {e}")
-        return {
-            "success": True,
-            "tracked": False,
-            "remaining": None,
-        }
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "QUOTA_SERVICE_UNAVAILABLE",
+                "feature": "job_view",
+                "message": "La consultation ne peut pas être comptabilisée pour le moment.",
+            },
+        ) from None
 
 
 # ============================================================================
