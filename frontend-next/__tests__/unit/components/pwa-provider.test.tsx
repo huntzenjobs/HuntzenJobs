@@ -29,6 +29,30 @@ describe("PwaProvider", () => {
     expect(shouldDisablePwa("huntzenjobs.com")).toBe(false);
   });
 
+  it("désactive la PWA par défaut pour conserver un rendu identique côté serveur et navigateur", async () => {
+    const unregister = vi.fn().mockResolvedValue(true);
+    const deleteCache = vi.fn().mockResolvedValue(true);
+
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: { getRegistrations: vi.fn().mockResolvedValue([{ unregister }]) },
+    });
+    Object.defineProperty(globalThis, "caches", {
+      configurable: true,
+      value: { keys: vi.fn().mockResolvedValue(["serwist-precache-v2"]), delete: deleteCache },
+    });
+
+    render(
+      <PwaProvider>
+        <div>contenu</div>
+      </PwaProvider>,
+    );
+
+    await waitFor(() => expect(unregister).toHaveBeenCalledOnce());
+    expect(deleteCache).toHaveBeenCalledWith("serwist-precache-v2");
+    expect(registerWorker).not.toHaveBeenCalled();
+  });
+
   it("purge les workers et caches existants quand la PWA est désactivée", async () => {
     const unregisterLegacy = vi.fn().mockResolvedValue(true);
     const unregisterSerwist = vi.fn().mockResolvedValue(true);
@@ -94,7 +118,7 @@ describe("PwaProvider", () => {
     });
 
     render(
-      <PwaProvider>
+      <PwaProvider disabled={false}>
         <div>contenu</div>
       </PwaProvider>,
     );
@@ -119,7 +143,7 @@ describe("PwaProvider", () => {
     });
 
     render(
-      <PwaProvider>
+      <PwaProvider disabled={false}>
         <div>contenu</div>
       </PwaProvider>,
     );
@@ -141,7 +165,7 @@ describe("PwaProvider", () => {
     });
 
     render(
-      <PwaProvider>
+      <PwaProvider disabled={false}>
         <div>contenu</div>
       </PwaProvider>,
     );
@@ -162,7 +186,7 @@ describe("PwaProvider", () => {
     });
 
     render(
-      <PwaProvider>
+      <PwaProvider disabled={false}>
         <div>contenu</div>
       </PwaProvider>,
     );

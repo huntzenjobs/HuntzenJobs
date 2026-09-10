@@ -400,6 +400,95 @@ def test_payment_failed_notifies_once_when_subscription_is_already_past_due(
             connection.execute("DELETE FROM auth.users WHERE id = %s", (user_id,))
 
 
+def test_subscription_deleted_without_local_projection_is_terminal_and_audited(
+    staging_database_url: str,
+) -> None:
+    event_id = f"evt_codex_subscription_deleted_{uuid.uuid4().hex}"
+    subscription_id = f"sub_codex_missing_{uuid.uuid4().hex}"
+
+    try:
+        with _service_connection(staging_database_url) as connection:
+            claim = connection.execute(
+                "SELECT public.claim_stripe_webhook_event(%s, %s) AS result",
+                (event_id, "customer.subscription.deleted"),
+            ).fetchone()
+            assert claim is not None
+            assert claim["result"]["status"] == "claimed"
+
+            applied = connection.execute(
+                """
+                SELECT public.apply_stripe_subscription_deleted(%s, %s, %s)
+                  AS result
+                """,
+                (
+                    event_id,
+                    claim["result"]["claim_token"],
+                    subscription_id,
+                ),
+            ).fetchone()
+            assert applied is not None
+            assert applied["result"] == {
+                "finalized": True,
+                "projection_missing": True,
+                "user_id": None,
+            }
+
+            processed = connection.execute(
+                """
+                SELECT status, processed_at, error_type
+                FROM public.stripe_webhook_events
+                WHERE stripe_event_id = %s
+                """,
+                (event_id,),
+            ).fetchone()
+            assert processed is not None
+            assert processed["status"] == "processed"
+            assert processed["processed_at"] is not None
+            assert processed["error_type"] is None
+
+            effects = connection.execute(
+                """
+                SELECT effect_type, payload
+                FROM public.stripe_effect_outbox
+                WHERE stripe_event_id = %s
+                ORDER BY effect_type
+                """,
+                (event_id,),
+            ).fetchall()
+            assert [row["effect_type"] for row in effects] == [
+                "subscription_cancelled_admin"
+            ]
+            assert effects[0]["payload"]["projection_missing"] is True
+
+            replay = connection.execute(
+                "SELECT public.claim_stripe_webhook_event(%s, %s) AS result",
+                (event_id, "customer.subscription.deleted"),
+            ).fetchone()
+            assert replay is not None
+            assert replay["result"]["status"] == "processed"
+
+            effect_count = connection.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM public.stripe_effect_outbox
+                WHERE stripe_event_id = %s
+                """,
+                (event_id,),
+            ).fetchone()
+            assert effect_count is not None
+            assert effect_count["count"] == 1
+    finally:
+        with psycopg.connect(staging_database_url, autocommit=True) as connection:
+            connection.execute(
+                "DELETE FROM public.stripe_effect_outbox WHERE stripe_event_id = %s",
+                (event_id,),
+            )
+            connection.execute(
+                "DELETE FROM public.stripe_webhook_events WHERE stripe_event_id = %s",
+                (event_id,),
+            )
+
+
 def test_stripe_rpc_acl_is_service_role_only(staging_database_url: str) -> None:
     signatures = (
         "public.claim_stripe_webhook_event(text,text)",
