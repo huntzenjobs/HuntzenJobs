@@ -25,30 +25,26 @@ interface ProcessingStepsProps {
 
 interface Step {
   id: string;
-  label: string;
+  labelKey: string;
   icon: React.ElementType;
-  estimatedTime: string;
 }
 
 const steps: Step[] = [
-  { id: "upload", label: "Upload du CV", icon: Upload, estimatedTime: "1s" },
+  { id: "upload", labelKey: "processing.steps.upload", icon: Upload },
   {
     id: "extraction",
-    label: "Extraction du texte",
+    labelKey: "processing.steps.extraction",
     icon: FileSearch,
-    estimatedTime: "3-5s",
   },
   {
     id: "analysis",
-    label: "Analyse",
+    labelKey: "processing.steps.analysis",
     icon: Sparkles,
-    estimatedTime: "8-12s",
   },
   {
     id: "complete",
-    label: "Finalisation",
+    labelKey: "processing.steps.finalization",
     icon: CheckCircle2,
-    estimatedTime: "1s",
   },
 ];
 
@@ -124,7 +120,7 @@ export function ProcessingSteps({ status, elapsedTime }: ProcessingStepsProps) {
                           : "text-gray-600"
                     }`}
                   >
-                    {step.label}
+                    {t(step.labelKey)}
                   </h4>
                   <span
                     className={`text-sm ${
@@ -139,7 +135,7 @@ export function ProcessingSteps({ status, elapsedTime }: ProcessingStepsProps) {
                       ? "✓"
                       : isCurrent
                         ? t("inProgress")
-                        : step.estimatedTime}
+                        : t("processing.upcoming")}
                   </span>
                 </div>
 
@@ -167,16 +163,20 @@ export function ProcessingSteps({ status, elapsedTime }: ProcessingStepsProps) {
       {/* Time Info */}
       <div className="text-center text-sm text-gray-600 space-y-1">
         <p>
-          Temps écoulé :{" "}
+          {t("processing.elapsed")} {" "}
           <span className="font-semibold text-gray-900">{elapsedTime}s</span>
         </p>
         <p className="text-xs text-gray-500">
           {status === "processing"
-            ? "Traitement en cours..."
+            ? t("processing.running")
             : status === "pending"
-              ? "Préparation du traitement..."
-              : "Finalisation..."}
+              ? t("processing.preparing")
+              : t("processing.finalizing")}
         </p>
+        <p className="font-medium text-gray-700">
+          {t("processing.expectedDuration")}
+        </p>
+        <p className="text-xs text-gray-500">{t("processing.canLeave")}</p>
       </div>
     </div>
   );

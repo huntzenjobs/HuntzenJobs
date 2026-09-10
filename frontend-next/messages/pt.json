@@ -1419,6 +1419,21 @@
   },
   "cv": {
     "inProgress": "Em progresso...",
+    "processing": {
+      "elapsed": "Tempo decorrido:",
+      "expectedDuration": "A maioria das análises demora entre 30 e 90 segundos.",
+      "canLeave": "Pode sair desta página, o resultado será guardado em Os meus documentos.",
+      "upcoming": "A seguir",
+      "running": "Análise em curso...",
+      "preparing": "A preparar a análise...",
+      "finalizing": "A finalizar...",
+      "steps": {
+        "upload": "Envio do CV",
+        "extraction": "Leitura do documento",
+        "analysis": "Análise do conteúdo",
+        "finalization": "Finalização"
+      }
+    },
     "matchingJobOffer": "🎯 Correspondência de trabalho",
     "freeAnalysesPerDay": "{count} análise(s) de CV grátis por dia",
     "freeSignupBenefits": "O que você ganha gratuitamente:",
