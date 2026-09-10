@@ -124,6 +124,104 @@ describe("relais backend same-origin", () => {
     });
   });
 
+  it("propage les durées anonymes de /api/auth/me lorsque l'instrumentation est activée", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
+    vi.stubEnv("AUTH_ME_TIMING_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_ENVIRONMENT", "staging");
+    const backendFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ success: true }), {
+        headers: {
+          "Content-Type": "application/json",
+          "Server-Timing": "backend-auth;dur=12.3",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", backendFetch);
+
+    const { proxyBackendRequest } = await import("@/lib/api/backend-route");
+    const response = await proxyBackendRequest(
+      new Request("https://app.example.test/api/auth/me", {
+        headers: { Authorization: "Bearer user-token" },
+      }),
+      "/api/auth/me",
+    );
+
+    const serverTiming = response.headers.get("server-timing");
+    expect(serverTiming).not.toBeNull();
+    if (!serverTiming) return;
+    expect(serverTiming).toContain("backend-auth;dur=12.3");
+    expect(serverTiming).toMatch(/next-backend;dur=\d+(?:\.\d+)?/);
+    expect(serverTiming).not.toContain("user-token");
+  });
+
+  it("compose la mesure interne du proxy sans la transmettre au backend", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
+    vi.stubEnv("AUTH_ME_TIMING_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_ENVIRONMENT", "staging");
+    const backendFetch = vi.fn().mockResolvedValue(Response.json({ success: true }));
+    vi.stubGlobal("fetch", backendFetch);
+
+    const { proxyBackendRequest } = await import("@/lib/api/backend-route");
+    const response = await proxyBackendRequest(
+      new Request("https://app.example.test/api/auth/me", {
+        headers: {
+          "x-huntzen-proxy-timing": "next-proxy-supabase;dur=23.4",
+        },
+      }),
+      "/api/auth/me",
+    );
+
+    expect(response.headers.get("server-timing")).toContain(
+      "next-proxy-supabase;dur=23.4",
+    );
+    const [, init] = backendFetch.mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).has("x-huntzen-proxy-timing")).toBe(false);
+  });
+
+  it("n'expose aucune durée en production, même si le flag est activé", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
+    vi.stubEnv("AUTH_ME_TIMING_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_ENVIRONMENT", "production");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ success: true }), {
+          headers: { "Server-Timing": "backend-auth;dur=12.3" },
+        }),
+      ),
+    );
+
+    const { proxyBackendRequest } = await import("@/lib/api/backend-route");
+    const response = await proxyBackendRequest(
+      new Request("https://app.example.test/api/auth/me"),
+      "/api/auth/me",
+    );
+
+    expect(response.headers.has("server-timing")).toBe(false);
+  });
+
+  it("n'expose aucune durée lorsque l'instrumentation est désactivée", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
+    vi.stubEnv("AUTH_ME_TIMING_ENABLED", "false");
+    vi.stubEnv("NEXT_PUBLIC_SENTRY_ENVIRONMENT", "staging");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ success: true }), {
+          headers: { "Server-Timing": "backend-auth;dur=12.3" },
+        }),
+      ),
+    );
+
+    const { proxyBackendRequest } = await import("@/lib/api/backend-route");
+    const response = await proxyBackendRequest(
+      new Request("https://app.example.test/api/auth/me"),
+      "/api/auth/me",
+    );
+
+    expect(response.headers.has("server-timing")).toBe(false);
+  });
+
   it("relaie l'invalidation du cache d'abonnement en POST", async () => {
     vi.stubEnv("NEXT_PUBLIC_BACKEND_URL", "https://backend.example.test");
     const backendFetch = vi

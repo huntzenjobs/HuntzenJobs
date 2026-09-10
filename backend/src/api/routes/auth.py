@@ -7,12 +7,13 @@ User authentication and profile management.
 import json
 import logging
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel
 from supabase import Client, create_client
 
 from src.api.middleware import get_verified_supabase_user_rate_limit_key, limiter
 from src.config.settings import get_settings
+from src.utils.auth_me_timing import AuthMeTiming
 from src.utils.cache import get_redis
 
 logger = logging.getLogger(__name__)
@@ -111,6 +112,7 @@ def get_user_from_token(authorization: str | None) -> dict | None:
 @limiter.limit("60/minute", key_func=get_verified_supabase_user_rate_limit_key)
 async def get_current_user_info(
     request: Request,
+    response: Response,
     authorization: str | None = Header(None)
 ):
     """
@@ -126,8 +128,12 @@ async def get_current_user_info(
     Raises:
         HTTPException: If not authenticated
     """
+    timing = AuthMeTiming(settings.environment)
+
     # Get user from token
+    auth_started_at = timing.start()
     user = get_user_from_token(authorization)
+    timing.stop("backend-auth", auth_started_at)
 
     if not user:
         raise HTTPException(
@@ -140,6 +146,7 @@ async def get_current_user_info(
     # Le plafond IP élevé borne les Bearer invalides avant validation. Après
     # validation, ce quota Redis isole chaque utilisateur derrière le relais Vercel.
     redis = None
+    rate_limit_started_at = timing.start()
     try:
         redis = await get_redis()
         if redis:
@@ -157,24 +164,34 @@ async def get_current_user_info(
         raise
     except Exception:
         redis = None
+    finally:
+        timing.stop("backend-rate-limit", rate_limit_started_at)
 
     # Cache Redis TTL 30s (réduit la charge Supabase ×10 sous charge)
+    cache_started_at = timing.start()
+    cache_outcome = "unavailable"
     try:
         if redis:
+            cache_outcome = "miss"
             cached = await redis.get(f"auth_me:{user_id}")
             if cached:
+                timing.stop("backend-cache", cache_started_at, "hit")
+                timing.apply(response)
                 return json.loads(cached)
     except Exception:
-        pass
+        cache_outcome = "error"
+    timing.stop("backend-cache", cache_started_at, cache_outcome)
 
     try:
         # Get Supabase client
         supabase = get_supabase_client()
 
         # Get user profile from profiles table
+        profile_started_at = timing.start()
         profile_response = supabase.table("profiles").select(
             "id, email, full_name, avatar_url, created_at"
         ).eq("id", user_id).execute()
+        timing.stop("backend-profile", profile_started_at)
 
         if not profile_response or not profile_response.data or len(profile_response.data) == 0:
             raise HTTPException(
@@ -191,10 +208,12 @@ async def get_current_user_info(
 
         # Get user's active subscription using RPC (with ORDER BY fix)
         # This ensures we always get the highest-priority plan (paid > free)
+        subscription_started_at = timing.start()
         subscription_response = supabase.rpc(
             "get_user_current_subscription",
             {"p_user_id": user_id}
         ).execute()
+        timing.stop("backend-subscription", subscription_started_at)
 
         # 🔍 DEBUG: Log raw RPC response
         logger.debug("="*70)
@@ -229,9 +248,11 @@ async def get_current_user_info(
 
             # Fetch plan prices dynamically from subscription_plans table
             try:
+                plan_prices_started_at = timing.start()
                 plans_response = supabase.table("subscription_plans")\
                     .select("name, price_monthly")\
                     .execute()
+                timing.stop("backend-plan-prices", plan_prices_started_at)
 
                 plan_prices = {
                     plan["name"]: plan["price_monthly"]
@@ -256,11 +277,13 @@ async def get_current_user_info(
             # Check if user has stripe_subscription_id in profiles but no active subscription
             # This would indicate a desync between Stripe and Supabase
             try:
+                desync_profile_started_at = timing.start()
                 profile_check = supabase.table("profiles") \
                     .select("stripe_subscription_id, stripe_customer_id") \
                     .eq("id", user_id) \
                     .maybe_single() \
                     .execute()
+                timing.stop("backend-desync-profile", desync_profile_started_at)
 
                 if profile_check.data:
                     stripe_sub_id = profile_check.data.get("stripe_subscription_id")
@@ -285,7 +308,9 @@ async def get_current_user_info(
             logger.debug("="*70)
 
         # Get quota status using Supabase RPC
+        quota_started_at = timing.start()
         quota_response = supabase.rpc("get_quota_status", {"p_user_id": user_id}).execute()
+        timing.stop("backend-quota", quota_started_at)
 
         # Format quotas for frontend
         quotas = {}
@@ -306,9 +331,11 @@ async def get_current_user_info(
             try:
                 from datetime import date
                 today_str = date.today().isoformat()
+                coach_breakdown_started_at = timing.start()
                 by_coach_response = supabase.table("usage_quotas").select(
                     "assistant_messages_by_coach"
                 ).eq("user_id", user_id).eq("quota_date", today_str).maybe_single().execute()
+                timing.stop("backend-coach-breakdown", coach_breakdown_started_at)
 
                 by_coach_raw: dict = {}
                 if by_coach_response and by_coach_response.data and by_coach_response.data.get("assistant_messages_by_coach"):
@@ -349,15 +376,19 @@ async def get_current_user_info(
         else:
             # Fallback for old DB versions or transition period
             try:
+                saved_jobs_started_at = timing.start()
                 sj_count = supabase.table("saved_jobs").select(
                     "id", count="exact"
                 ).eq("user_id", user_id).execute()
+                timing.stop("backend-saved-jobs", saved_jobs_started_at)
                 saved_jobs_quota["used"] = sj_count.count or 0
                 # Get limit from plan
                 plan_name_for_limit = subscription_data.get("plan_name", "free")
+                saved_jobs_limit_started_at = timing.start()
                 plan_limits_res = supabase.table("subscription_plans").select(
                     "limits"
                 ).eq("name", plan_name_for_limit).single().execute()
+                timing.stop("backend-saved-jobs-limit", saved_jobs_limit_started_at)
                 if plan_limits_res and plan_limits_res.data:
                     saved_jobs_quota["limit"] = _get_saved_jobs_plan_limit(
                         plan_limits_res.data.get("limits") or {}
@@ -368,10 +399,12 @@ async def get_current_user_info(
         # Fetch individual feature overrides set by admin
         feature_overrides = {}
         try:
+            feature_overrides_started_at = timing.start()
             overrides_res = supabase.table("user_feature_overrides") \
                 .select("feature_name, enabled") \
                 .eq("user_id", user_id) \
                 .execute()
+            timing.stop("backend-feature-overrides", feature_overrides_started_at)
             if overrides_res.data:
                 feature_overrides = {r["feature_name"]: r["enabled"] for r in overrides_res.data}
         except Exception as e:
@@ -381,11 +414,13 @@ async def get_current_user_info(
         plan_feature_flags: dict = {}
         try:
             plan_name = subscription_data.get("plan_name", "free")
+            feature_flags_started_at = timing.start()
             flags_res = supabase.table("subscription_plans") \
                 .select("feature_flags") \
                 .eq("name", plan_name) \
                 .single() \
                 .execute()
+            timing.stop("backend-feature-flags", feature_flags_started_at)
             if flags_res and flags_res.data and flags_res.data.get("feature_flags"):
                 plan_feature_flags = flags_res.data["feature_flags"]
         except Exception as e:
@@ -419,10 +454,13 @@ async def get_current_user_info(
         try:
             redis = await get_redis()
             if redis:
+                cache_store_started_at = timing.start()
                 await redis.setex(f"auth_me:{user_id}", 30, json.dumps(response_data))
+                timing.stop("backend-cache-store", cache_store_started_at)
         except Exception:
             pass
 
+        timing.apply(response)
         return response_data
 
     except HTTPException:

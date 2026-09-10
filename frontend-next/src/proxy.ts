@@ -2,12 +2,23 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { detectLocale } from "@/i18n/detect-locale";
 
+const PROXY_TIMING_HEADER = "x-huntzen-proxy-timing";
+
+function isAuthMeTimingEnabled(request: NextRequest): boolean {
+  return (
+    process.env.AUTH_ME_TIMING_ENABLED === "true" &&
+    process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "staging" &&
+    request.nextUrl.pathname === "/api/auth/me"
+  );
+}
+
 // Generate a client ID for freemium tracking
 function generateClientId(): string {
   return "hzn_" + crypto.randomUUID().replace(/-/g, "");
 }
 
 export async function proxy(request: NextRequest) {
+  const includeAuthMeTiming = isAuthMeTimingEnabled(request);
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -45,6 +56,7 @@ export async function proxy(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
+  const supabaseAuthStartedAt = includeAuthMeTiming ? performance.now() : null;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -157,6 +169,24 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/jobs";
     return NextResponse.redirect(url);
+  }
+
+  if (supabaseAuthStartedAt !== null) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set(
+      PROXY_TIMING_HEADER,
+      `next-proxy-supabase;dur=${Math.max(
+        0,
+        performance.now() - supabaseAuthStartedAt,
+      ).toFixed(1)}`,
+    );
+    const timingResponse = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+    supabaseResponse.cookies
+      .getAll()
+      .forEach((cookie) => timingResponse.cookies.set(cookie));
+    return timingResponse;
   }
 
   return supabaseResponse;
