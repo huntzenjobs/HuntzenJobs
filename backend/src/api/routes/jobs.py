@@ -9,6 +9,7 @@ import hashlib
 import json
 import logging
 import re
+import secrets
 
 import httpx
 from bs4 import BeautifulSoup, Tag
@@ -31,6 +32,7 @@ from src.utils.cache import get_redis
 logger = logging.getLogger(__name__)
 
 JOBS_CACHE_TTL = 7200  # 2 hours
+REFINEMENT_TOKEN_TTL = 900  # 15 minutes
 
 router = APIRouter()
 
@@ -98,6 +100,85 @@ async def _record_job_search_usage(user_id: str, *, from_history: bool) -> None:
 
     await asyncio.to_thread(_increment_job_search_quota, user_id)
     await invalidate_user_quota_cache(user_id)
+
+
+def _build_refinement_context(
+    *,
+    q: str,
+    country: str,
+    city: str,
+    limit: int,
+    radius: int | None,
+) -> dict[str, str | int | None]:
+    """Construit le contexte immuable d'une recherche pouvant être affinée."""
+    return {
+        "q": q.strip(),
+        "country": country.strip().lower(),
+        "city": city.strip().lower(),
+        "limit": limit,
+        "radius": radius,
+    }
+
+
+async def _create_refinement_token(
+    redis: object,
+    *,
+    user_id: str,
+    context: dict[str, str | int | None],
+) -> str | None:
+    """Autorise temporairement l'affinage serveur de cette recherche précise."""
+    if redis is None or not hasattr(redis, "setex"):
+        return None
+
+    token = secrets.token_urlsafe(24)
+    key = f"jobs:refinement:{user_id}:{token}"
+    await redis.setex(key, REFINEMENT_TOKEN_TTL, json.dumps(context, sort_keys=True))
+    return token
+
+
+async def _is_valid_refinement_token(
+    redis: object,
+    *,
+    user_id: str,
+    token: str,
+    context: dict[str, str | int | None],
+) -> bool:
+    """Vérifie que le jeton appartient à l'utilisateur et à la recherche de base."""
+    if redis is None or not token:
+        return False
+
+    raw = await redis.get(f"jobs:refinement:{user_id}:{token}")
+    if not raw:
+        return False
+
+    try:
+        if isinstance(raw, bytes):
+            raw = raw.decode()
+        return json.loads(raw) == context
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return False
+
+
+async def _attach_refinement_token(
+    response: dict,
+    redis: object,
+    *,
+    user_id: str,
+    context: dict[str, str | int | None],
+    refinement_token: str = "",
+) -> dict:
+    """Ajoute le jeton courant ou en émet un nouveau sans le placer dans le cache."""
+    token = refinement_token or await _create_refinement_token(
+        redis,
+        user_id=user_id,
+        context=context,
+    )
+    if not token:
+        return response
+
+    response_with_token = dict(response)
+    response_with_token["refinement_token"] = token
+    return response_with_token
 
 
 def _extract_salary(job: dict) -> tuple:
@@ -593,6 +674,7 @@ async def search_jobs_get(
     work_schedule: str = Query(default="", description="Comma-separated work schedules: matin,journee,soir,nuit,temps_plein"),
     work_days: str = Query(default="", description="Comma-separated work days: semaine,weekend"),
     from_history: bool = Query(default=False, description="True if search is from history (skip quota increment)"),
+    refinement_token: str = Query(default="", max_length=128, description="Jeton temporaire autorisant l'affinage de la recherche initiale"),
     authorization: str | None = Header(None),
 ):
     """
@@ -623,6 +705,26 @@ async def search_jobs_get(
             detail="Authentication required",
         )
 
+    refinement_context = _build_refinement_context(
+        q=q,
+        country=country,
+        city=city,
+        limit=limit,
+        radius=radius,
+    )
+    redis = await get_redis()
+    is_refinement = await _is_valid_refinement_token(
+        redis,
+        user_id=user_id,
+        token=refinement_token,
+        context=refinement_context,
+    )
+    if refinement_token and not is_refinement:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cette recherche ne peut plus être affinée. Lancez une nouvelle recherche.",
+        )
+
     # ── Verrou de recherche (Race condition protection) ──
     params_dict = {
         "job_title": q,
@@ -637,7 +739,6 @@ async def search_jobs_get(
     search_hash = hashlib.md5(json.dumps(params_dict, sort_keys=True, default=str).encode()).hexdigest()
     lock_key = f"search_lock:{user_id}:{search_hash}"
     cache_key = f"jobs:search:{search_hash}"
-    redis = await get_redis()
 
     if redis:
         # Tenter d'acquerir un verrou de 30s
@@ -652,7 +753,13 @@ async def search_jobs_get(
                 if raw:
                     import orjson
                     logger.info(f"Concurrent search resolved (GET) via cache for user {user_id}")
-                    return orjson.loads(raw)
+                    return await _attach_refinement_token(
+                        orjson.loads(raw),
+                        redis,
+                        user_id=user_id,
+                        context=refinement_context,
+                        refinement_token=refinement_token if is_refinement else "",
+                    )
 
             # Si toujours pas de cache apres 5s
             raise HTTPException(
@@ -661,7 +768,8 @@ async def search_jobs_get(
             )
 
     try:
-        _check_job_search_quota(user_id)
+        if not is_refinement:
+            _check_job_search_quota(user_id)
 
         # Un cache hit reste une recherche utilisateur et doit respecter le quota.
         cached_response = None
@@ -677,8 +785,15 @@ async def search_jobs_get(
                 logger.warning(f"[cache] job search GET error: {e}")
 
         if cached_response is not None:
-            await _record_job_search_usage(user_id, from_history=from_history)
-            return cached_response
+            if not is_refinement:
+                await _record_job_search_usage(user_id, from_history=from_history)
+            return await _attach_refinement_token(
+                cached_response,
+                redis,
+                user_id=user_id,
+                context=refinement_context,
+                refinement_token=refinement_token if is_refinement else "",
+            )
 
         # ── Cache MISS : executer la recherche ──
         result = await agent.run(
@@ -737,9 +852,16 @@ async def search_jobs_get(
             result['metadata']['total_before_filters'] = len(jobs)
 
         # Incrémenter quota après recherche réussie
-        await _record_job_search_usage(user_id, from_history=from_history)
+        if not is_refinement:
+            await _record_job_search_usage(user_id, from_history=from_history)
 
-        return result
+        return await _attach_refinement_token(
+            result,
+            redis,
+            user_id=user_id,
+            context=refinement_context,
+            refinement_token=refinement_token if is_refinement else "",
+        )
     finally:
         if redis:
             await redis.delete(lock_key)

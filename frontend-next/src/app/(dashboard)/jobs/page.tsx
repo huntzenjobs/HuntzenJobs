@@ -119,143 +119,9 @@ function formatRelativeDate(
 }
 
 interface QuickFilters {
-  contractTypes: string[];
-  workDays: string[];
-  workSchedule: string[];
-  includeRemote: boolean;
   maxDays: number | null; // null = all dates
   salaryMin: number | null;
   directOnly: boolean;
-}
-
-const contractTypeMap: Record<string, string> = {
-  cdi: "cdi",
-  cdd: "cdd",
-  freelance: "freelance",
-  internship: "stage",
-  stage: "stage",
-  alternance: "alternance",
-  apprentissage: "alternance",
-  interim: "interim",
-  cdi_partial: "temps partiel",
-  cdd_partial: "temps partiel",
-};
-
-const contractTextSignals: Record<string, string[]> = {
-  cdi: ["cdi", "contrat à durée indéterminée", "permanent"],
-  cdd: ["cdd", "contrat à durée déterminée", "fixed-term"],
-  freelance: ["freelance", "indépendant", "mission freelance"],
-  stage: ["stage", "internship", "stagiaire"],
-  alternance: [
-    "alternance",
-    "apprentissage",
-    "contrat pro",
-    "contrat d'apprentissage",
-    "work-study",
-    "apprenti",
-  ],
-  interim: ["intérim", "interim", "travail temporaire"],
-  "temps partiel": ["temps partiel", "part-time", "mi-temps"],
-};
-
-const scheduleKeywords: Record<string, string[]> = {
-  morning: ["matin", "morning", "6h", "7h", "8h", "tôt", "early shift", "poste du matin"],
-  daytime: ["journée", "day shift", "9h-17h", "9h-18h", "bureau", "office hours", "horaires de bureau", "horaires classiques"],
-  evening: ["soir", "evening", "soirée", "18h", "19h", "20h", "evening shift", "poste du soir", "après 17h"],
-  night: ["nuit", "night", "nocturne", "3x8", "2x8", "night shift", "poste de nuit", "travail de nuit"],
-};
-
-const dayKeywords: Record<string, string[]> = {
-  weekdays: [
-    "lundi", "mardi", "mercredi", "jeudi", "vendredi",
-    "monday", "tuesday", "wednesday", "thursday", "friday",
-    "weekday", "en semaine", "du lundi au vendredi", "lundi-vendredi",
-  ],
-  weekend: [
-    "samedi", "dimanche", "weekend", "week-end", "week end",
-    "saturday", "sunday", "le week-end", "le weekend",
-    "travail le samedi", "travail le dimanche", "disponible le weekend", "weekends",
-  ],
-};
-
-const partTimeKeywords = [
-  "temps partiel",
-  "part-time",
-  "part time",
-  "mi-temps",
-  "half-time",
-  "partiel",
-];
-
-function getJobText(job: Job): string {
-  return `${job.title} ${job.description}`.toLowerCase();
-}
-
-function matchesContractTypes(job: Job, selectedTypes: string[]): boolean {
-  if (selectedTypes.length === 0) return true;
-
-  const targetTypes = new Set(
-    selectedTypes
-      .map((type) => contractTypeMap[type])
-      .filter((type): type is string => Boolean(type)),
-  );
-  if (targetTypes.size === 0) return true;
-
-  const contractType = job.contract_type?.toLowerCase();
-  if (contractType) return targetTypes.has(contractType);
-
-  const text = getJobText(job);
-  return [...targetTypes].some((type) =>
-    contractTextSignals[type]?.some((signal) => text.includes(signal)),
-  );
-}
-
-function matchesWorkSchedule(job: Job, selectedSchedules: string[]): boolean {
-  if (selectedSchedules.length === 0) return true;
-
-  const text = getJobText(job);
-  if (
-    selectedSchedules.includes("fulltime") &&
-    partTimeKeywords.some((keyword) => text.includes(keyword))
-  ) {
-    return false;
-  }
-
-  const selectedKeywords = selectedSchedules
-    .filter((schedule) => schedule !== "fulltime")
-    .flatMap((schedule) => scheduleKeywords[schedule] ?? []);
-  return (
-    selectedKeywords.length === 0 ||
-    selectedKeywords.some((keyword) => text.includes(keyword))
-  );
-}
-
-function matchesWorkDays(job: Job, selectedDays: string[]): boolean {
-  if (
-    selectedDays.length === 0 ||
-    (selectedDays.includes("weekdays") && selectedDays.includes("weekend"))
-  ) {
-    return true;
-  }
-
-  const selectedKeywords = selectedDays.flatMap(
-    (day) => dayKeywords[day] ?? [],
-  );
-  return (
-    selectedKeywords.length === 0 ||
-    selectedKeywords.some((keyword) => getJobText(job).includes(keyword))
-  );
-}
-
-function isRemoteJob(job: Job): boolean {
-  const location = job.location.toLowerCase();
-  return (
-    location.includes("remote") ||
-    location.includes("télétravail") ||
-    location.includes("teletravail") ||
-    job.contract_type?.toLowerCase() === "remote" ||
-    job.source.toLowerCase() === "remoteok"
-  );
 }
 
 interface SearchHistoryEntry {
@@ -343,10 +209,6 @@ export default function JobsPage() {
 
   // Quick filters state (client-side filtering on loaded results)
   const [quickFilters, setQuickFilters] = useState<QuickFilters>({
-    contractTypes: [],
-    workDays: [],
-    workSchedule: [],
-    includeRemote: true,
     maxDays: null,
     salaryMin: null,
     directOnly: false,
@@ -456,6 +318,7 @@ export default function JobsPage() {
   const [jobSearchParams, setJobSearchParams] = useState<SearchParams | null>(
     null,
   );
+  const [refinementToken, setRefinementToken] = useState<string | null>(null);
 
   /**
    * Tracks whether quota has been incremented for current search params.
@@ -720,6 +583,7 @@ export default function JobsPage() {
             work_schedule: effectiveWorkSchedule,
             includeRemote: jobSearchParams.includeRemote,
             from_history: jobSearchParams.fromHistory,
+            refinementToken: jobSearchParams.refinementToken,
             // Advanced filters (Premium feature)
             industries: advancedFilters.industries?.join(","),
             keywords: advancedFilters.keywords?.join(","),
@@ -772,6 +636,7 @@ export default function JobsPage() {
       !searchQuery.isFetching &&
       !hasIncrementedQuotaRef.current &&
       !jobSearchParams?.fromHistory &&
+      !jobSearchParams?.refinementToken &&
       searchQuery.dataUpdatedAt > lastFetchTimeRef.current
     ) {
       // PER-REQUEST DEDUPLICATION (Inline check for maximum robustness)
@@ -823,6 +688,7 @@ export default function JobsPage() {
   useEffect(() => {
     if (searchQuery.data) {
       setJobs(searchQuery.data.jobs);
+      setRefinementToken(searchQuery.data.refinement_token ?? null);
       setVisibleJobsCount(0); // Reset counter for progressive reveal
       setCorrectedQuery(searchQuery.data.corrected_query || null);
       try {
@@ -855,10 +721,6 @@ export default function JobsPage() {
     setSelectedCountry(params.country);
     setSelectedCity(params.location);
     setQuickFilters({
-      contractTypes: params.contractTypes ?? [],
-      workDays: params.workDays ?? [],
-      workSchedule: params.workSchedule ?? [],
-      includeRemote: params.includeRemote ?? true,
       maxDays: params.maxDays ?? null,
       salaryMin: params.salaryMin ?? null,
       directOnly: params.directOnly ?? false,
@@ -899,6 +761,7 @@ export default function JobsPage() {
 
     // Vider les résultats précédents pour afficher le loading modal
     setJobs([]);
+    setRefinementToken(null);
 
     // Trigger search with caching
     setJobSearchParams(params);
@@ -916,17 +779,26 @@ export default function JobsPage() {
       | "directOnly"
     >) => {
       setQuickFilters({
-        contractTypes: params.contractTypes ?? [],
-        workDays: params.workDays ?? [],
-        workSchedule: params.workSchedule ?? [],
-        includeRemote: params.includeRemote ?? true,
         maxDays: params.maxDays ?? null,
         salaryMin: params.salaryMin ?? null,
         directOnly: params.directOnly ?? false,
       });
       setCurrentPage(1);
+      if (!jobSearchParams || !refinementToken) return;
+
+      setJobs([]);
+      setJobSearchParams({
+        ...jobSearchParams,
+        contractType:
+          params.contractTypes?.length === 1 ? params.contractTypes[0] : "",
+        contractTypes: params.contractTypes,
+        workDays: params.workDays,
+        workSchedule: params.workSchedule,
+        includeRemote: params.includeRemote,
+        refinementToken,
+      });
     },
-    [],
+    [jobSearchParams, refinementToken],
   );
 
 
@@ -1119,22 +991,6 @@ export default function JobsPage() {
     }
     if (quickFilters.directOnly) {
       result = result.filter((j) => j.url_is_direct === true);
-    }
-    if (quickFilters.contractTypes.length > 0) {
-      result = result.filter((j) =>
-        matchesContractTypes(j, quickFilters.contractTypes),
-      );
-    }
-    if (quickFilters.workSchedule.length > 0) {
-      result = result.filter((j) =>
-        matchesWorkSchedule(j, quickFilters.workSchedule),
-      );
-    }
-    if (quickFilters.workDays.length > 0) {
-      result = result.filter((j) => matchesWorkDays(j, quickFilters.workDays));
-    }
-    if (!quickFilters.includeRemote) {
-      result = result.filter((j) => !isRemoteJob(j));
     }
     return result;
   }, [filteredProgressiveJobs, quickFilters]);

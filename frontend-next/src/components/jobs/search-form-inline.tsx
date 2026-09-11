@@ -122,6 +122,7 @@ export interface SearchParams {
   salaryMin?: number | null;
   directOnly?: boolean;
   fromHistory?: boolean;
+  refinementToken?: string;
 }
 
 export type AppliedFilters = Pick<

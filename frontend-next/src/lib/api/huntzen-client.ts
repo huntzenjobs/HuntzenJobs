@@ -351,9 +351,15 @@ export class HuntzenApiClient {
       salaryMax?: number;
       companySize?: string;
       from_history?: boolean;
+      refinementToken?: string;
     },
     token?: string,
-  ): Promise<{ jobs: Job[]; count: number; corrected_query?: string }> {
+  ): Promise<{
+    jobs: Job[];
+    count: number;
+    corrected_query?: string;
+    refinement_token?: string;
+  }> {
     // Build query parameters
     const queryParams = new URLSearchParams();
     queryParams.append("q", params.job_title);
@@ -384,12 +390,15 @@ export class HuntzenApiClient {
     if (params.companySize)
       queryParams.append("company_size", params.companySize);
     if (params.from_history) queryParams.append("from_history", "true");
+    if (params.refinementToken)
+      queryParams.append("refinement_token", params.refinementToken);
 
     const response = await this.fetch<{
       success: boolean;
       jobs: Job[];
       count: number;
       corrected_query?: string;
+      refinement_token?: string;
       metadata?: {
         total_filtered?: number;
         total_before_filters?: number;
@@ -402,6 +411,7 @@ export class HuntzenApiClient {
       jobs: response.jobs || [],
       count: response.metadata?.total_filtered ?? response.count ?? 0,
       corrected_query: response.corrected_query,
+      refinement_token: response.refinement_token,
     };
   }
 
