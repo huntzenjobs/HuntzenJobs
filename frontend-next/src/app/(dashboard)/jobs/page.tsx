@@ -1609,16 +1609,17 @@ export default function JobsPage() {
 
               <div
                 aria-live="polite"
-                className="grid grid-cols-1 gap-3 items-start lg:grid-cols-2"
+                className="grid grid-cols-1 gap-3 lg:grid-cols-2"
               >
                 {/* Visible jobs (current page) */}
                 {paginatedJobs.map((job, index) => (
                   <div
                     key={job.id || index}
+                    className="h-full"
                   >
                     <Card
                       className={cn(
-                        "hover:border-slate-400 transition-colors duration-200 group flex flex-col border border-slate-200 rounded-lg shadow-none overflow-hidden",
+                        "h-full hover:border-slate-400 transition-colors duration-200 group flex flex-col border border-slate-200 rounded-lg shadow-none overflow-hidden",
                         viewedJobIds.has(job.id)
                           ? "bg-slate-50/80"
                           : "bg-white",
@@ -1724,7 +1725,7 @@ export default function JobsPage() {
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="flex flex-col px-4 pb-3 pt-0">
+                      <CardContent className="flex flex-1 flex-col px-4 pb-3 pt-0">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-slate-600">
                             <MapPin className="h-4 w-4 text-slate-500 flex-shrink-0" />
@@ -1762,36 +1763,37 @@ export default function JobsPage() {
                           </p>
                         )}
 
-                        {/* Button always at bottom */}
-                        <div className="flex gap-2 pt-3 mt-3 border-t border-slate-100">
-                          <Button
-                            size="lg"
-                            className="flex-1 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold rounded-md transition-colors h-11 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
-                            onClick={() => handleViewDetails(job)}
-                          >
-                            {t("card.details")}
-                          </Button>
-                        </div>
+                        <div className="mt-auto pt-3">
+                          <div className="flex gap-2 border-t border-slate-100 pt-3">
+                            <Button
+                              size="lg"
+                              className="flex-1 bg-[#00D9FF] hover:bg-[#00C4EA] text-slate-950 font-semibold rounded-md transition-colors h-11 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
+                              onClick={() => handleViewDetails(job)}
+                            >
+                              {t("card.details")}
+                            </Button>
+                          </div>
 
-                        {/* Recruiter email finder */}
-                        <Sheet>
-                          <SheetTrigger asChild>
-                            <button className="flex min-h-11 items-center gap-1.5 text-sm text-slate-600 hover:text-slate-950 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
-                              <UserSearch className="w-3.5 h-3.5" />
-                              {t("findRecruiters")}
-                            </button>
-                          </SheetTrigger>
-                          <SheetContent>
-                            <SheetHeader>
-                              <SheetTitle>{t("findRecruiters")}</SheetTitle>
-                            </SheetHeader>
-                            <div className="mt-4">
-                              <RecruiterEmailFinder
-                                companyName={job.company || ""}
-                              />
-                            </div>
-                          </SheetContent>
-                        </Sheet>
+                          {/* Recruiter email finder */}
+                          <Sheet>
+                            <SheetTrigger asChild>
+                              <button className="flex min-h-11 items-center gap-1.5 text-sm text-slate-600 hover:text-slate-950 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                                <UserSearch className="w-3.5 h-3.5" />
+                                {t("findRecruiters")}
+                              </button>
+                            </SheetTrigger>
+                            <SheetContent>
+                              <SheetHeader>
+                                <SheetTitle>{t("findRecruiters")}</SheetTitle>
+                              </SheetHeader>
+                              <div className="mt-4">
+                                <RecruiterEmailFinder
+                                  companyName={job.company || ""}
+                                />
+                              </div>
+                            </SheetContent>
+                          </Sheet>
+                        </div>
                       </CardContent>
                     </Card>
                   </div>

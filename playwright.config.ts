@@ -75,7 +75,7 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: [
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? [] : [
     {
       command: 'cd frontend-next && npm run dev',
       url: 'http://localhost:3000',

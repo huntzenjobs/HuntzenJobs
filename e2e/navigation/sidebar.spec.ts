@@ -32,6 +32,11 @@ test.describe('Sidebar Navigation', () => {
     await expect(page).toHaveURL(/\/cv/);
   });
 
+  test('should navigate to salons and forums page', async ({ page }) => {
+    await page.getByRole('link', { name: /salons & forums/i }).click();
+    await expect(page).toHaveURL(/\/salons$/);
+  });
+
   test('should navigate to coach page', async ({ page }) => {
     // Click coach link
     await page.locator('a[href*="coach"], a:has-text("Coach")').first().click();

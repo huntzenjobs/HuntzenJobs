@@ -131,9 +131,7 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/salons",
       icon: Calendar,
       premium: false,
-      badge: t("badges.soon"),
       pageFlag: "page_salons",
-      comingSoon: true,
     },
     {
       name: t("nav.savedJobs"),
