@@ -110,13 +110,12 @@ export default async function HomePage() {
             title: tFeatures("coaches.title"),
             description: tFeatures("coaches.description"),
             cta: tFeatures("coaches.cta"),
-            list: (["nova", "maria", "sofia", "lucas", "david"] as const).map(
+            list: (["nova", "maria", "sofia", "david"] as const).map(
               (key) => ({
                 name: {
                   nova: "Nova",
                   maria: "Maria",
                   sofia: "Sofia",
-                  lucas: "Lucas",
                   david: "David",
                 }[key],
                 desc: tFeatures(`coaches.list.${key}`),

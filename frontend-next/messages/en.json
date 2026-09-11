@@ -35,7 +35,7 @@
     "tag": "For candidates tired of applying into the void",
     "h1": "Finding a job shouldn't feel like an obstacle course.",
     "h2": "Access matching opportunities, improve your CV and get more interviews without wasting hours searching.",
-    "subtitle": "ATS-certified CV · 5 career coaches · Compatibility score · 6+ job platforms",
+    "subtitle": "CV analysis and ATS score · 4 career coaches · Lucas coming soon · Compatibility score · Job search tools",
     "ctaSearch": "Start my search",
     "ctaDiscover": "Discover the method",
     "socialProof": "Tools to structure your job search"
@@ -142,14 +142,13 @@
     },
     "coaches": {
       "badge": "CAREER COACHES",
-      "title": "Five career experts in your pocket.",
-      "description": "Nova, Maria, Sofia, Lucas and David, each specialized in a domain. Available 24/7, no appointment needed.",
+      "title": "Four career experts to support you.",
+      "description": "Nova, Maria, Sofia and David help you plan your next steps.",
       "cta": "Talk to a coach →",
       "list": {
         "nova": "Strategy and career planning",
         "maria": "Job search and applications",
         "sofia": "CV optimization and analysis",
-        "lucas": "Interview preparation",
         "david": "Personal Branding and LinkedIn"
       }
     },

@@ -24,6 +24,22 @@ function readPublicCopy(locale: (typeof locales)[number]): string {
   );
 }
 
+function readAvailableCoaches(locale: (typeof locales)[number]): string {
+  const messages = JSON.parse(
+    readFileSync(resolve(process.cwd(), `messages/${locale}.json`), "utf8"),
+  ) as { features: { coaches: unknown } };
+
+  return JSON.stringify(messages.features.coaches);
+}
+
+function readHeroSubtitle(locale: (typeof locales)[number]): string {
+  const messages = JSON.parse(
+    readFileSync(resolve(process.cwd(), `messages/${locale}.json`), "utf8"),
+  ) as { hero: { subtitle: string } };
+
+  return messages.hero.subtitle;
+}
+
 describe("public marketing claims", () => {
   it.each(locales)(
     "keeps %s public copy free from unverified social-proof metrics",
@@ -66,4 +82,30 @@ describe("pricing availability", () => {
 
     expect(subscriptionCard).not.toContain('"has_interview_sim"');
   });
+});
+
+describe("available coach claims", () => {
+  it.each(locales)(
+    "does not present Lucas as an available coach in %s",
+    (locale) => {
+      expect(readAvailableCoaches(locale)).not.toMatch(/Lucas/i);
+    },
+  );
+
+  it("does not pass Lucas to the available coaches showcase", () => {
+    const homePage = readFileSync(resolve(process.cwd(), "src/app/page.tsx"), "utf8");
+
+    expect(homePage).not.toContain(
+      '["nova", "maria", "sofia", "lucas", "david"] as const',
+    );
+  });
+
+  it.each(locales)(
+    "does not count Lucas as available in the %s hero subtitle",
+    (locale) => {
+      expect(readHeroSubtitle(locale)).not.toMatch(
+        /5 coachs|5 career coaches|5 coaches de carrera|5 coaches de carreira/i,
+      );
+    },
+  );
 });

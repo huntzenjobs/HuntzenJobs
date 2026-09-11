@@ -30,7 +30,7 @@
     "tag": "Para candidatos cansados de se candidatar sem resposta",
     "h1": "Encontrar emprego não deveria ser uma corrida de obstáculos.",
     "h2": "Acesse as vagas que combinam com você, melhore seu CV e consiga mais entrevistas sem perder horas procurando.",
-    "subtitle": "CV certificado ATS · 5 coaches de carreira · Score de compatibilidade · +6 plataformas de vagas",
+    "subtitle": "Análise de CV e pontuação ATS · 4 coaches de carreira · Lucas em breve · Score de compatibilidade · Ferramentas de busca de vagas",
     "ctaSearch": "Começar minha busca",
     "ctaDiscover": "Descobrir o método",
     "socialProof": "Ferramentas para estruturar a sua busca"
@@ -147,14 +147,13 @@
     },
     "coaches": {
       "badge": "COACHES DE CARREIRA",
-      "title": "Cinco especialistas no seu bolso.",
-      "description": "Nova, Maria, Sofia, Lucas e David, cada um especializado em uma área. Disponíveis 24/7, sem agendamento.",
+      "title": "Quatro especialistas para acompanhar você.",
+      "description": "Nova, Maria, Sofia e David ajudam você a planejar seus próximos passos.",
       "cta": "Falar com um coach →",
       "list": {
         "nova": "Estratégia e plano de carreira",
         "maria": "Busca de emprego e candidaturas",
         "sofia": "Otimização e análise de CV",
-        "lucas": "Preparação para entrevistas",
         "david": "Personal Branding e LinkedIn"
       }
     }

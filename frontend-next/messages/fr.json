@@ -35,7 +35,7 @@
     "tag": "Pour les candidats qui en ont assez de postuler dans le vide",
     "h1": "Trouver un job ne devrait pas être un parcours du combattant.",
     "h2": "Accédez aux offres qui vous correspondent, améliorez votre CV et obtenez plus d'entretiens sans perdre des heures à chercher.",
-    "subtitle": "CV certifié ATS · 5 coachs carrière · Score de compatibilité · Contact recruteur",
+    "subtitle": "Analyse CV et score ATS · 4 coachs carrière · Lucas bientôt · Score de compatibilité · Contact recruteur",
     "ctaSearch": "Commencer ma recherche",
     "ctaDiscover": "Découvrir la méthode",
     "socialProof": "Des outils pour structurer votre recherche"
@@ -155,14 +155,13 @@
     },
     "coaches": {
       "badge": "COACHS CARRIÈRE",
-      "title": "Cinq experts carrière dans votre poche.",
-      "description": "Nova, Maria, Sofia, Lucas et David, chacun spécialisé dans un domaine. Disponibles 24h/24, sans rendez-vous.",
+      "title": "Quatre experts carrière pour vous accompagner.",
+      "description": "Nova, Maria, Sofia et David vous aident à structurer vos prochaines étapes.",
       "cta": "Parler à un coach →",
       "list": {
         "nova": "Stratégie et plan de carrière",
         "maria": "Recherche d'emploi et candidatures",
         "sofia": "Optimisation et analyse de CV",
-        "lucas": "Préparation aux entretiens",
         "david": "Personal Branding et LinkedIn"
       }
     },
