@@ -710,8 +710,16 @@ export default function JobsPage() {
   }, [searchQuery.data, jobSearchParams]);
 
   const handleSearch = (params: SearchParams) => {
-    // Check if user can search (quota check)
-    if (!canUse("job_search")) {
+    const keepsPaidScope =
+      Boolean(refinementToken) &&
+      Boolean(jobSearchParams) &&
+      params.query.trim().toLocaleLowerCase() ===
+        jobSearchParams!.query.trim().toLocaleLowerCase() &&
+      params.country.trim().toLocaleLowerCase() ===
+        jobSearchParams!.country.trim().toLocaleLowerCase();
+
+    // Le métier ou le pays lance une nouvelle recherche comptabilisée.
+    if (!keepsPaidScope && !canUse("job_search")) {
       searchLimitPopup.open();
       return;
     }
@@ -761,10 +769,13 @@ export default function JobsPage() {
 
     // Vider les résultats précédents pour afficher le loading modal
     setJobs([]);
-    setRefinementToken(null);
+    setRefinementToken(keepsPaidScope ? refinementToken : null);
 
     // Trigger search with caching
-    setJobSearchParams(params);
+    setJobSearchParams({
+      ...params,
+      refinementToken: keepsPaidScope ? refinementToken ?? undefined : undefined,
+    });
   };
 
   const handleApplyFilters = useCallback(
@@ -1109,6 +1120,7 @@ export default function JobsPage() {
             initialCountry={selectedCountry}
             initialLocation={selectedCity}
             initialIncludeRemote={jobSearchParams?.includeRemote}
+            canRefineSearch={Boolean(refinementToken)}
             onSearch={handleSearch}
             onApplyFilters={handleApplyFilters}
             isLoading={searchQuery.isFetching}

@@ -109,6 +109,53 @@ describe("SearchFormInline", () => {
     );
   });
 
+  it("autorise une recherche de ville avec le même métier et pays sans quota", async () => {
+    canUse.mockReturnValue(false);
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    render(
+      <SearchFormInline
+        onSearch={onSearch}
+        initialQuery="Data Scientist"
+        initialCountry="fr"
+        canRefineSearch
+      />,
+    );
+
+    await user.click(
+      screen.getAllByRole("button", { name: "searchForm.searchButton" })[0],
+    );
+
+    expect(onSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ query: "Data Scientist", country: "fr" }),
+    );
+    expect(toastError).not.toHaveBeenCalled();
+  });
+
+  it("ne contourne pas le quota si le métier change", async () => {
+    canUse.mockReturnValue(false);
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    const { container } = render(
+      <SearchFormInline
+        onSearch={onSearch}
+        initialQuery="Data Scientist"
+        initialCountry="fr"
+        canRefineSearch
+      />,
+    );
+
+    const queryInput = container.querySelector("#query-inline") as HTMLInputElement;
+    await user.clear(queryInput);
+    await user.type(queryInput, "Data Engineer");
+    await user.click(
+      screen.getAllByRole("button", { name: "searchForm.searchButton" })[0],
+    );
+
+    expect(onSearch).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("searchForm.searchLimitReached:0");
+  });
+
   it("recherche immédiatement après la sélection d'un pays", async () => {
     const user = userEvent.setup();
     const onSearch = vi.fn();

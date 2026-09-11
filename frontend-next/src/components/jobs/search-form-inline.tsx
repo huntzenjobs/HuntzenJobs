@@ -107,6 +107,7 @@ interface SearchFormInlineProps {
   initialCountry?: string;
   initialLocation?: string;
   initialIncludeRemote?: boolean;
+  canRefineSearch?: boolean;
 }
 
 export interface SearchParams {
@@ -145,6 +146,7 @@ export function SearchFormInline({
   initialCountry,
   initialLocation,
   initialIncludeRemote = true,
+  canRefineSearch = false,
 }: SearchFormInlineProps) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [location, setLocation] = useState(initialLocation ?? "");
@@ -287,7 +289,14 @@ export function SearchFormInline({
       return;
     }
 
-    if (!canUse("job_search")) {
+    const keepsPaidScope =
+      canRefineSearch &&
+      query.trim().toLocaleLowerCase() ===
+        (initialQuery ?? "").trim().toLocaleLowerCase() &&
+      country.trim().toLocaleLowerCase() ===
+        (initialCountry ?? "").trim().toLocaleLowerCase();
+
+    if (!keepsPaidScope && !canUse("job_search")) {
       const remaining = getRemaining("job_search");
       toast.error(t("searchLimitReached", { count: remaining }));
       return;

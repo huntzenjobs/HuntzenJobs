@@ -110,11 +110,10 @@ def _build_refinement_context(
     limit: int,
     radius: int | None,
 ) -> dict[str, str | int | None]:
-    """Construit le contexte immuable d'une recherche pouvant être affinée."""
+    """Construit le périmètre payé : métier et pays restent immuables."""
     return {
         "q": q.strip(),
         "country": country.strip().lower(),
-        "city": city.strip().lower(),
         "limit": limit,
         "radius": radius,
     }

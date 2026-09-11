@@ -48,11 +48,23 @@ async def test_refinement_token_is_scoped_to_the_user_and_base_search():
         token=token,
         context=context,
     )
+    assert await jobs._is_valid_refinement_token(
+        redis,
+        user_id="user-a",
+        token=token,
+        context=jobs._build_refinement_context(
+            q="Développeur Python",
+            country="fr",
+            city="Lyon",
+            limit=200,
+            radius=None,
+        ),
+    )
     assert not await jobs._is_valid_refinement_token(
         redis,
         user_id="user-a",
         token=token,
-        context={**context, "city": "lyon"},
+        context={**context, "q": "Data Scientist"},
     )
 
 
