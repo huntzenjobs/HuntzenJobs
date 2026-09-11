@@ -50,7 +50,6 @@ const FEATURE_KEYS = [
   "has_visual_score",
   "has_pdf_export",
   "has_cv_history",
-  "has_interview_sim",
   "has_personalized_advice",
   "has_coach_history",
 ] as const;

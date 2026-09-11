@@ -25,6 +25,10 @@ import {
 import { cn } from "@/lib/utils";
 import { huntzenApi } from "@/lib/api/huntzen-client";
 import type { QueueWaitingState } from "@/lib/api/huntzen-client";
+import {
+  createAssistantSessionId,
+  INITIAL_ASSISTANT_SESSION_ID,
+} from "@/lib/assistant-session";
 import { v4 as uuidv4 } from "uuid";
 import { useSubscription } from "@/contexts/subscription-context";
 import { useAssistant } from "@/contexts/assistant-context";
@@ -76,7 +80,7 @@ export default function AssistantPage() {
   });
   const [loading, setLoading] = useState(false);
   const [queueState, setQueueState] = useState<QueueWaitingState | null>(null);
-  const [sessionId, setSessionId] = useState(() => uuidv4());
+  const [sessionId, setSessionId] = useState(INITIAL_ASSISTANT_SESSION_ID);
   const [brandingState, setBrandingState] = useState<Record<
     string,
     unknown
@@ -104,6 +108,10 @@ export default function AssistantPage() {
   const currentCoach = currentCoachId ? getCoach(currentCoachId) : undefined;
   const [transitioning, setTransitioning] = useState(false);
   const [showHub, setShowHub] = useState(true);
+
+  useEffect(() => {
+    setSessionId(createAssistantSessionId());
+  }, []);
 
   const triggerTransition = () => {
     setTransitioning(true);

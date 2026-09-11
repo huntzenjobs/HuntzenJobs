@@ -43,7 +43,14 @@ const PLAN_COLORS: Record<string, string> = {
   amber: "#F97316",
 };
 
-// Testimonials and FAQs are now in i18n files (pricing namespace)
+function filterUnavailablePlanFeatures(features: string[]): string[] {
+  return features.filter(
+    (feature) =>
+      !/simulation d['’]entretien|interview simulation|simulaci[oó]n de entrevista|simula[cç][aã]o de entrevista/i.test(
+        feature,
+      ),
+  );
+}
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
@@ -75,7 +82,11 @@ export default function PricingPage() {
     color: PLAN_COLORS[p.color] ?? "#9CA3AF",
     popular: p.isPopular,
     features: [
-      ...p.features.map((name) => ({ icon: Check, name, excluded: false })),
+      ...filterUnavailablePlanFeatures(p.features).map((name) => ({
+        icon: Check,
+        name,
+        excluded: false,
+      })),
       ...(p.features_excluded ?? []).map((name) => ({
         icon: X,
         name,
@@ -518,66 +529,6 @@ export default function PricingPage() {
                       ? tPricing("currentPlan")
                       : tPricing("choosePlan", { name: plan.name })}
                   </Button>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Testimonials */}
-        <section className="py-16 bg-gray-50 dark:bg-gray-800">
-          <div className="container mx-auto px-4 sm:px-6">
-            <div className="text-center mb-12">
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 dark:text-white"
-              >
-                {tPricing("testimonialsTitle")}
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
-              >
-                {tPricing("testimonialsSubtitle")}
-              </motion.p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
-              {[0, 1, 2].map((index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white dark:bg-gray-700 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-                >
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-5 h-5 text-yellow-400 fill-yellow-400"
-                      />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-200 mb-4 leading-relaxed">
-                    &ldquo;{tPricing(`testimonials.${index}.content`)}&rdquo;
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-gray-900 dark:text-white">
-                        {tPricing(`testimonials.${index}.name`)}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {tPricing(`testimonials.${index}.role`)}
-                      </p>
-                    </div>
-                    <span className="px-3 py-1 bg-[#00D9FF]/10 text-[#00D9FF] text-xs font-bold rounded-full">
-                      {tPricing(`testimonials.${index}.plan`)}
-                    </span>
-                  </div>
                 </motion.div>
               ))}
             </div>

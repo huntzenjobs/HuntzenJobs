@@ -181,10 +181,13 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
             {[
-              { value: "+100K", key: "stat_jobs" },
-              { value: "50K+", key: "stat_users" },
-              { value: "87%", key: "stat_satisfaction" },
-              { value: "24/7", key: "stat_support" },
+              { value: t("stat_jobs_value"), key: "stat_jobs" },
+              { value: t("stat_users_value"), key: "stat_users" },
+              {
+                value: t("stat_satisfaction_value"),
+                key: "stat_satisfaction",
+              },
+              { value: t("stat_support_value"), key: "stat_support" },
             ].map((stat, index) => (
               <motion.div
                 key={stat.key}

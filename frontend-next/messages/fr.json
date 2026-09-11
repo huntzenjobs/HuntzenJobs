@@ -38,7 +38,7 @@
     "subtitle": "CV certifié ATS · 5 coachs carrière · Score de compatibilité · Contact recruteur",
     "ctaSearch": "Commencer ma recherche",
     "ctaDiscover": "Découvrir la méthode",
-    "socialProof": "Des milliers de candidats déjà accompagnés"
+    "socialProof": "Des outils pour structurer votre recherche"
   },
   "trustBar": {
     "title": "Offres agrégées en temps réel depuis :",
@@ -178,21 +178,21 @@
     }
   },
   "stats": {
-    "title": "Des résultats mesurables",
-    "subtitle": "Des candidats avancent avec HuntZen chaque jour",
+    "title": "Des outils pour votre recherche",
+    "subtitle": "Organisez vos candidatures à votre rythme",
     "candidates": {
-      "value": "Des milliers",
-      "label": "De candidats accompagnés chaque jour"
+      "value": "Offres",
+      "label": "Recherchez selon vos critères"
     },
     "responseRate": {
-      "value": "87%",
-      "label": "Obtiennent au moins une réponse"
+      "value": "CV",
+      "label": "Analysez votre profil"
     },
     "salary": {
-      "value": "+ 35%",
-      "label": "De salaire négocié en moyenne"
+      "value": "Coach",
+      "label": "Préparez vos prochaines étapes"
     },
-    "disclaimer": "* Données indicatives basées sur nos utilisateurs actifs"
+    "disclaimer": "Fonctionnalités disponibles selon votre plan"
   },
   "featuresGrid": {
     "title": "Tout ce dont vous avez besoin pour réussir",
@@ -259,7 +259,7 @@
   },
   "ctaFinal": {
     "title": "Prêt à décrocher votre prochain emploi ?",
-    "subtitle": "Rejoins des milliers de candidats qui avancent avec HuntZen.",
+    "subtitle": "Organisez votre recherche d'emploi avec HuntZen.",
     "cta": "Commencer gratuitement, c'est sans engagement"
   },
   "pricing": {
@@ -278,23 +278,21 @@
     },
     "secure": "Paiement sécurisé",
     "noCommitment": "Sans engagement",
-    "responseRate": "87% de taux de réponse",
+    "responseRate": "Fonctionnalités selon votre plan",
     "monthly": "Mensuel",
     "yearly": "Annuel",
     "toggleBillingLabel": "Basculer la période de facturation",
     "frenchSupport": "Support francophone",
     "saveBadge": "Économisez jusqu'à 20%",
-    "testimonialsTitle": "Ils ont transformé leur recherche d'emploi",
-    "testimonialsSubtitle": "Découvrez comment HuntZen a aidé des milliers de professionnels",
     "faqTitle": "Questions fréquentes",
     "faqSubtitle": "Tout ce que vous devez savoir sur nos abonnements",
     "faqMore": "Vous avez d'autres questions ?",
     "faqContact": "Contactez notre support",
     "ctaTitle": "Prêt à décrocher votre prochain job ?",
-    "ctaSubtitle": "Rejoignez des milliers de candidats qui utilisent HuntZen pour trouver leur emploi idéal. Commencez gratuitement, aucune carte bancaire requise.",
+    "ctaSubtitle": "Découvrez les outils HuntZen et commencez gratuitement, sans carte bancaire.",
     "ctaButton": "Commencer gratuitement",
     "mostPopular": "Le plus populaire",
-    "socialProof": "Des milliers de candidats accompagnés",
+    "socialProof": "Des outils pour avancer avec méthode",
     "heroTitle": "Choisissez votre plan",
     "heroHighlight": "et décrochez votre job",
     "heroDescription": "Des outils puissants pour optimiser votre recherche, préparer vos entretiens et trouver l'emploi qui vous correspond",
@@ -303,26 +301,6 @@
     "billedYearly": "{price}€ facturé annuellement",
     "savingsLabel": "-{percentage}% soit {amount}€/an",
     "learnMore": "En savoir plus",
-    "testimonials": [
-      {
-        "name": "Marie L.",
-        "role": "Chef de projet",
-        "content": "J'ai trouvé mon poste actuel en 3 semaines. L'analyse CV et les simulations d'entretien m'ont vraiment aidée.",
-        "plan": "Accélérateur"
-      },
-      {
-        "name": "Thomas D.",
-        "role": "Développeur Full Stack",
-        "content": "Le coaching personnel est exceptionnel. Il m'a aidé à optimiser mon CV et mes candidatures.",
-        "plan": "Carrière"
-      },
-      {
-        "name": "Sophie M.",
-        "role": "Responsable Marketing",
-        "content": "Les alertes instantanées m'ont permis de postuler en premier sur des offres qui correspondaient à mon profil.",
-        "plan": "Carrière"
-      }
-    ],
     "faqs": [
       {
         "question": "Puis-je changer de plan à tout moment ?",
@@ -932,7 +910,7 @@
       "feature4Title": "Résultats instantanés",
       "feature4Desc": "Analyses rapides et recommandations personnalisées",
       "heroTitle": "Votre carrière mérite le meilleur",
-      "heroSubtitle": "Rejoignez des milliers de candidats qui ont transformé leur recherche d'emploi avec HuntZen.",
+      "heroSubtitle": "Découvrez les outils HuntZen pour structurer votre recherche d'emploi.",
       "statCandidates": "Candidats accompagnés",
       "statResponseRate": "Taux de réponse",
       "statSupport": "Support",
@@ -2397,41 +2375,45 @@
     "who_title": "Qui est HuntZen ?",
     "who_p1": "<strong>HuntZen Jobs</strong> est la plateforme de recherche d'emploi nouvelle génération qui transforme la façon dont les candidats trouvent leur prochain emploi en France. <strong>HuntZen</strong> combine technologie de pointe, intelligence artificielle et expertise RH pour offrir une expérience de recherche d'emploi inégalée.",
     "who_p2": "Fondée en 2024, <strong>HuntZen Jobs</strong> est née d'une vision simple : rendre la recherche d'emploi plus efficace, plus humaine et plus accessible à tous. Avec <strong>HuntZen</strong>, nous croyons que chaque candidat mérite les meilleures opportunités et les outils les plus performants pour réussir sa carrière.",
-    "who_p3": "Aujourd'hui, <strong>HuntZen Jobs</strong> agrège des milliers d'offres d'emploi en France, couvrant tous les secteurs, tous les niveaux d'expérience et tous les types de contrats. La plateforme <strong>HuntZen</strong> analyse quotidiennement des milliers d'offres provenant des plus grands sites emploi pour vous offrir un catalogue complet du marché français.",
+    "who_p3": "<strong>HuntZen Jobs</strong> réunit la recherche d'offres, l'analyse de CV et l'accompagnement carrière dans une même plateforme.",
     "why_title": "Pourquoi choisir HuntZen Jobs ?",
     "why_subtitle": "<strong>HuntZen Jobs</strong> vous offre bien plus qu'une simple liste d'offres d'emploi. Découvrez nos 3 piliers qui font de <strong>HuntZen</strong> votre meilleur allié carrière.",
-    "feature1_title": "1. La plus grande base d'offres d'emploi",
-    "feature1_desc": "<strong>HuntZen Jobs</strong> agrège des milliers d'offres d'emploi en France depuis les plus grandes plateformes : Indeed, LinkedIn, Pôle Emploi, APEC et bien d'autres. Avec <strong>HuntZen</strong>, vous accédez à toutes les opportunités en un seul endroit.",
+    "feature1_title": "1. Recherche d'offres centralisée",
+    "feature1_desc": "<strong>HuntZen Jobs</strong> vous aide à explorer des offres depuis une interface unique et à affiner votre recherche selon vos critères.",
     "feature2_title": "2. Analyse CV experte avec HuntZen",
     "feature2_desc": "Notre technologie <strong>HuntZen</strong> analyse votre CV en profondeur et vous donne un score ATS précis. L'outil d'analyse CV <strong>HuntZen Jobs</strong> identifie les points faibles et vous fournit des recommandations concrètes pour améliorer vos chances de décrocher un entretien.",
-    "feature3_title": "3. Coach IA HuntZen 24/7",
-    "feature3_desc": "L'assistant carrière <strong>HuntZen</strong> vous accompagne à chaque étape : préparation d'entretien, négociation salariale, optimisation LinkedIn. Avec <strong>HuntZen Jobs</strong>, vous avez un coach professionnel disponible 24h/24.",
+    "feature3_title": "3. Assistant carrière HuntZen",
+    "feature3_desc": "L'assistant carrière <strong>HuntZen</strong> vous accompagne dans la préparation d'entretien, la négociation salariale et l'optimisation LinkedIn.",
     "story_title": "L'histoire de HuntZen Jobs",
     "story_p1": "Fondée en 2024, <strong>HuntZen Jobs</strong> révolutionne le marché de la recherche d'emploi en France. L'équipe <strong>HuntZen</strong> a identifié un problème majeur : les candidats perdent des heures à consulter plusieurs sites emploi, à optimiser leur CV sans guidance, et à se préparer seuls aux entretiens.",
-    "story_p2": "La vision de <strong>HuntZen Jobs</strong> ? Centraliser toutes les offres d'emploi, fournir des outils d'analyse professionnels et offrir un accompagnement personnalisé grâce à l'intelligence artificielle. En quelques mois, <strong>HuntZen</strong> est devenu la référence pour des milliers de candidats en France.",
-    "story_p3": "Aujourd'hui, <strong>HuntZen Jobs</strong> compte plus de 50 000 utilisateurs actifs qui utilisent quotidiennement la plateforme pour trouver leur prochain emploi. La communauté <strong>HuntZen</strong> grandit chaque jour, et notre mission reste la même : rendre la recherche d'emploi plus efficace et plus humaine.",
-    "stats_title": "HuntZen Jobs en chiffres",
-    "stats_subtitle": "Les résultats parlent d'eux-mêmes",
-    "stat_jobs": "Offres d'emploi",
-    "stat_users": "Utilisateurs actifs",
-    "stat_satisfaction": "Taux de satisfaction",
-    "stat_support": "Support disponible",
+    "story_p2": "La vision de <strong>HuntZen Jobs</strong> est de réunir la recherche d'offres, des outils d'analyse et un accompagnement personnalisé par intelligence artificielle.",
+    "story_p3": "Notre mission reste la même : rendre la recherche d'emploi plus claire, plus structurée et plus humaine.",
+    "stats_title": "Les outils HuntZen",
+    "stats_subtitle": "Des fonctionnalités pour chaque étape de votre recherche",
+    "stat_jobs": "Recherche d'offres",
+    "stat_jobs_value": "Offres",
+    "stat_users": "Analyse de CV",
+    "stat_users_value": "CV",
+    "stat_satisfaction": "Assistant carrière",
+    "stat_satisfaction_value": "IA",
+    "stat_support": "À votre rythme",
+    "stat_support_value": "Vous",
     "vs_title": "HuntZen Jobs vs autres plateformes",
     "vs_subtitle": "Découvrez pourquoi <strong>HuntZen Jobs</strong> surpasse Indeed, LinkedIn et les autres",
     "vs_item1_title": "Agrégation complète",
     "vs_item1_desc": "HuntZen centralise TOUTES les offres (Indeed, LinkedIn, Pôle Emploi...)",
     "vs_item2_title": "Analyse CV gratuite",
     "vs_item2_desc": "Score ATS précis inclus - payant sur les autres plateformes",
-    "vs_item3_title": "Coach IA 24/7",
-    "vs_item3_desc": "Assistant carrière personnalisé - inexistant ailleurs",
+    "vs_item3_title": "Assistant carrière IA",
+    "vs_item3_desc": "Un accompagnement pour structurer vos prochaines étapes.",
     "vs_item4_title": "Interface moderne",
     "vs_item4_desc": "UX intuitive et rapide - bien supérieure aux autres",
     "vs_item5_title": "Matching intelligent",
     "vs_item5_desc": "Recommandations IA basées sur votre profil complet",
-    "vs_item6_title": "100% gratuit",
-    "vs_item6_desc": "Toutes les fonctionnalités essentielles sans payer",
+    "vs_item6_title": "Plan gratuit",
+    "vs_item6_desc": "Commencez à découvrir HuntZen sans abonnement.",
     "cta_title": "Rejoignez HuntZen Jobs aujourd'hui",
-    "cta_subtitle": "Transformez votre recherche d'emploi avec HuntZen. <strong>HuntZen Jobs</strong> est 100% gratuit et sans engagement.",
+    "cta_subtitle": "Commencez votre recherche d'emploi avec le plan gratuit HuntZen, sans engagement.",
     "cta_signup": "Créer mon compte gratuit",
     "cta_jobs": "Découvrir les offres",
     "cta_already": "Déjà membre ?",
@@ -2532,23 +2514,9 @@
     "switchToDark": "Passer en mode sombre"
   },
   "testimonials": {
-    "title": "Témoignages HuntZen Jobs",
-    "subtitle": "Découvrez comment <strong>HuntZen Jobs</strong> a transformé la recherche d'emploi de +10 000 utilisateurs",
-    "ratingLabel": "sur 5",
-    "verifiedReviews": "{count} avis vérifiés",
-    "searchPlaceholder": "Rechercher un témoignage...",
-    "allJobs": "Tous les métiers",
-    "allRatings": "Toutes les notes",
-    "stars5": "5 étoiles",
-    "stars4": "4 étoiles",
-    "selectedRating": "{rating} étoiles",
-    "noResults": "Aucun témoignage trouvé",
-    "noResultsHint": "Essayez d'autres critères de recherche",
-    "resetFilters": "Réinitialiser les filtres",
-    "loadMore": "Voir plus de témoignages",
-    "displayCount": "{displayed} sur {total} témoignages affichés",
-    "ctaTitle": "Rejoignez +10 000 utilisateurs satisfaits",
-    "ctaSubtitle": "Transformez votre recherche d'emploi avec HuntZen Jobs dès maintenant",
+    "title": "Retours d'expérience",
+    "subtitle": "Des retours vérifiés seront publiés ici.",
+    "body": "Nous ne publions pas de témoignage ni de note avant d'en avoir vérifié l'origine.",
     "ctaSignup": "Créer mon compte gratuitement",
     "ctaAbout": "En savoir plus sur HuntZen"
   },
@@ -2631,7 +2599,7 @@
       "salonsAnchor": "salons emploi HuntZen",
       "footerDescription": "<strong>HuntZen Jobs</strong> est votre allié pour la recherche d'emploi en France. Que vous cherchiez des <jobsLink>offres d'emploi</jobsLink>, une <cvLink>analyse CV ATS</cvLink>, ou un <coachLink>coaching carrière personnalisé</coachLink>, <strong>HuntZen</strong> vous accompagne dans votre réussite professionnelle.",
       "ctaDefaultTitle": "Transformez votre recherche d'emploi avec HuntZen Jobs",
-      "ctaDefaultDescription": "Rejoignez des milliers de candidats qui ont trouvé leur emploi idéal grâce à HuntZen Jobs",
+      "ctaDefaultDescription": "Découvrez les outils HuntZen Jobs pour votre recherche d'emploi",
       "ctaStartFree": "Commencer gratuitement",
       "ctaLearnMore": "En savoir plus",
       "ctaReviews": "Avis HuntZen Jobs",
