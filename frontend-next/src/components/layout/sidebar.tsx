@@ -255,7 +255,6 @@ export function Sidebar({ className }: SidebarProps) {
                   )
                 : false;
             const isLocked =
-              item.comingSoon ||
               isPageBlocked ||
               (item.premium && (!user || isFreePlan)) ||
               !user;
@@ -265,12 +264,6 @@ export function Sidebar({ className }: SidebarProps) {
                 <Link
                   href={item.href}
                   onClick={(e) => {
-                    if (item.comingSoon) {
-                      e.preventDefault();
-                      toast.info(t("soonMessage"));
-                      return;
-                    }
-
                     if (isLocked && user) {
                       e.preventDefault();
                       openPricingModal();
