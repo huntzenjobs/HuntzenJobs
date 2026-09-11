@@ -1423,6 +1423,8 @@ async def handle_invoice_paid(
         interval: str | None = None
         interval_count: int | None = None
         subscription_status: str | None = None
+        subscription_user_id: str | None = None
+        subscription_price_id: str | None = None
         payment_logged = payment_already_recorded
 
         if event_id is not None or claim_token is not None:
@@ -1448,6 +1450,17 @@ async def handle_invoice_paid(
                 ) or []
                 first_item = items[0] if items else {}
                 price = _stripe_value(first_item, "price", {})
+                metadata = _stripe_value(stripe_sub, "metadata", {})
+                metadata_user_id = _stripe_value(metadata, "user_id")
+                subscription_user_id = (
+                    metadata_user_id
+                    if isinstance(metadata_user_id, str)
+                    else None
+                )
+                price_id = _stripe_value(price, "id")
+                subscription_price_id = (
+                    price_id if isinstance(price_id, str) else None
+                )
                 recurring = _stripe_value(price, "recurring", {})
                 interval_value = _stripe_value(recurring, "interval")
                 interval_count_value = _stripe_value(recurring, "interval_count")
@@ -1481,6 +1494,8 @@ async def handle_invoice_paid(
                     ),
                     "p_interval": interval,
                     "p_interval_count": interval_count,
+                    "p_user_id": subscription_user_id,
+                    "p_price_id": subscription_price_id,
                 },
             ).execute()
             transaction_data = (

@@ -63,7 +63,13 @@ class _Database:
 @pytest.mark.asyncio
 async def test_invoice_paid_uses_atomic_projection_ledger_outbox_rpc(monkeypatch):
     database = _Database()
-    subscription = stripe.StripeObject.construct_from(CLOVER_SUBSCRIPTION, key=None)
+    subscription = stripe.StripeObject.construct_from(
+        {
+            **CLOVER_SUBSCRIPTION,
+            "metadata": {"user_id": "11111111-1111-1111-1111-111111111111"},
+        },
+        key=None,
+    )
     monkeypatch.setattr(stripe_service, "supabase_client", database)
     monkeypatch.setattr(
         stripe_service.stripe.Subscription,
@@ -99,6 +105,8 @@ async def test_invoice_paid_uses_atomic_projection_ledger_outbox_rpc(monkeypatch
                 "p_period_end": "2026-09-09T16:00:00+00:00",
                 "p_interval": None,
                 "p_interval_count": None,
+                "p_user_id": "11111111-1111-1111-1111-111111111111",
+                "p_price_id": "price_test_monthly",
             },
         )
     ]
@@ -148,6 +156,8 @@ async def test_standalone_invoice_paid_is_journaled_and_finalized_atomically(mon
                 "p_period_end": None,
                 "p_interval": None,
                 "p_interval_count": None,
+                "p_user_id": None,
+                "p_price_id": None,
             },
         )
     ]

@@ -44,9 +44,9 @@ async def delete_account(
     Supprime le compte de l'utilisateur authentifie.
 
     Etapes :
-    1. Soft-delete du profil (status = "deleted")
-    2. Suppression des abonnements
-    3. Suppression des quotas d'utilisation
+    1. Annulation des abonnements Stripe actifs
+    2. Soft-delete du profil (status = "deleted")
+    3. Suppression des abonnements et des quotas
     4. Hard-delete du compte auth Supabase
 
     Necessite confirmation explicite via {"confirm": true}.
@@ -77,13 +77,9 @@ async def delete_account(
     )
 
     try:
-        # 3. Soft-delete du profil
-        supabase.table("profiles").update(
-            {"status": "deleted"}
-        ).eq("id", user_id).execute()
-        logger.info("Profil soft-delete effectue", extra={"user_id": user_id})
-
-        # 3b. Annuler les subscriptions Stripe actives avant suppression
+        # 3. Annuler les subscriptions Stripe actives avant toute suppression
+        # locale. Une erreur Stripe doit laisser le compte intact afin de ne pas
+        # conserver un abonnement facturable sans titulaire local.
         settings = get_settings()
         stripe_lib.api_key = settings.get_stripe_secret_key()
         subs_result = supabase.table("user_subscriptions").select(
@@ -101,39 +97,54 @@ async def delete_account(
                     sub_id,
                     cancel_at_period_end=True,
                 )
-                logger.info(
-                    "Subscription Stripe annulee (cancel_at_period_end)",
-                    extra={"user_id": user_id, "stripe_subscription_id": sub_id},
-                )
             except Exception as stripe_err:
                 logger.error(
-                    "Echec annulation Stripe, suppression continue",
+                    "Echec annulation Stripe, suppression interrompue",
                     extra={
                         "user_id": user_id,
                         "stripe_subscription_id": sub_id,
                         "error": str(stripe_err),
                     },
                 )
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=(
+                        "Impossible d'annuler l'abonnement Stripe. "
+                        "Votre compte n'a pas ete supprime."
+                    ),
+                ) from stripe_err
+            logger.info(
+                "Subscription Stripe annulee (cancel_at_period_end)",
+                extra={"user_id": user_id, "stripe_subscription_id": sub_id},
+            )
 
-        # 4. Suppression des abonnements
+        # 4. Soft-delete uniquement apres annulation Stripe confirmee.
+        supabase.table("profiles").update(
+            {"status": "deleted"}
+        ).eq("id", user_id).execute()
+        logger.info("Profil soft-delete effectue", extra={"user_id": user_id})
+
+        # 5. Suppression des abonnements
         supabase.table("user_subscriptions").delete().eq(
             "user_id", user_id
         ).execute()
         logger.info("Abonnements supprimes", extra={"user_id": user_id})
 
-        # 5. Suppression des quotas d'utilisation
+        # 6. Suppression des quotas d'utilisation
         supabase.table("usage_quotas").delete().eq(
             "user_id", user_id
         ).execute()
         logger.info("Quotas supprimes", extra={"user_id": user_id})
 
-        # 6. Hard-delete du compte auth Supabase
+        # 7. Hard-delete du compte auth Supabase
         supabase.auth.admin.delete_user(user_id)
         logger.info(
             "Compte auth Supabase supprime",
             extra={"user_id": user_id},
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(
             "Erreur lors de la suppression du compte",
