@@ -174,7 +174,8 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/recruiter-contact",
       icon: Users,
       premium: false,
-      badge: t("badges.recruiterPrice"),
+      badge: t("badges.soon"),
+      comingSoon: true,
       pageFlag: "page_recruiter_contact",
     },
     {
@@ -254,7 +255,9 @@ export function Sidebar({ className }: SidebarProps) {
                     >[0],
                   )
                 : false;
+            const isComingSoon = "comingSoon" in item && item.comingSoon;
             const isLocked =
+              isComingSoon ||
               isPageBlocked ||
               (item.premium && (!user || isFreePlan)) ||
               !user;
@@ -264,7 +267,9 @@ export function Sidebar({ className }: SidebarProps) {
                 <Link
                   href={item.href}
                   onClick={(e) => {
-                    if (isLocked && user) {
+                    if (isComingSoon) {
+                      e.preventDefault();
+                    } else if (isLocked && user) {
                       e.preventDefault();
                       openPricingModal();
                     }
@@ -285,12 +290,14 @@ export function Sidebar({ className }: SidebarProps) {
                     setIsMobileMenuOpen(false);
                   }}
                   aria-current={isActive ? "page" : undefined}
+                  aria-disabled={isComingSoon || undefined}
                   className={cn(
                     "nav-item flex items-center gap-3 px-4 py-3 mb-1 rounded-xl text-sm font-medium transition-all relative group",
                     isActive
                       ? "bg-[#00D9FF]/15 text-white"
                       : "text-white/70 hover:bg-white/8 hover:text-white",
                     isLocked && "opacity-50",
+                    isComingSoon && "cursor-not-allowed",
                   )}
                 >
                   {/* Active indicator - positioned at sidebar edge */}
@@ -320,7 +327,9 @@ export function Sidebar({ className }: SidebarProps) {
                       {item.badge}
                     </span>
                   )}
-                  {isLocked && <Lock className="w-4 h-4 text-white/30" />}
+                  {isLocked && !isComingSoon && (
+                    <Lock className="w-4 h-4 text-white/30" />
+                  )}
                 </Link>
               </div>
             );

@@ -100,6 +100,18 @@ describe("Sidebar Component", () => {
       expect(cvLinks.length).toBeGreaterThan(0);
     });
 
+    it("indique que le contact expert arrive bientôt sans ouvrir la page", () => {
+      render(<Sidebar />);
+
+      const expertLinks = screen.getAllByRole("link", {
+        name: /nav\.recruiterContact/i,
+      });
+      expect(expertLinks).toHaveLength(1);
+      expect(expertLinks[0]).toHaveAttribute("aria-disabled", "true");
+      expect(expertLinks[0]).toHaveTextContent("badges.soon");
+      expect(fireEvent.click(expertLinks[0])).toBe(false);
+    });
+
     it("renders coach link", () => {
       render(<Sidebar />);
       // Use getAllByText since there are multiple instances
