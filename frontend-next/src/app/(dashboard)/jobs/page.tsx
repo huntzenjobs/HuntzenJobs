@@ -36,16 +36,13 @@ import {
   ChevronRight,
   Clock,
   ExternalLink,
-  Filter,
   Heart,
   Loader2,
   Lock,
   MapPin,
   RefreshCw,
   Search,
-  SlidersHorizontal,
   Sparkles,
-  X,
 } from "lucide-react";
 
 import { PageGate } from "@/components/auth/page-gate";
@@ -211,7 +208,6 @@ export default function JobsPage() {
   const [pageSize, setPageSize] = useState(10);
 
   // Quick filters state (client-side filtering on loaded results)
-  const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
   const [quickFilters, setQuickFilters] = useState<QuickFilters>({
     maxDays: null,
     salaryMin: null,
@@ -720,6 +716,12 @@ export default function JobsPage() {
     setJobTitle(params.query);
     setSelectedCountry(params.country);
     setSelectedCity(params.location);
+    setQuickFilters({
+      maxDays: params.maxDays ?? null,
+      salaryMin: params.salaryMin ?? null,
+      directOnly: params.directOnly ?? false,
+    });
+    setCurrentPage(1);
 
     // Sync search params to URL so state persists on navigation
     const urlParams = new URLSearchParams();
@@ -920,12 +922,6 @@ export default function JobsPage() {
       return next;
     });
   };
-
-  // Count active quick filters
-  const activeQuickFiltersCount =
-    (quickFilters.maxDays !== null ? 1 : 0) +
-    (quickFilters.salaryMin !== null ? 1 : 0) +
-    (quickFilters.directOnly ? 1 : 0);
 
   // Split jobs into visible and blurred
   // Progressive reveal: only show jobs up to visibleJobsCount
@@ -1270,29 +1266,6 @@ export default function JobsPage() {
                       {t("results.refresh")}
                     </span>
                   </Button>
-                  {/* Result refinements that do not repeat the search form */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setQuickFiltersOpen(!quickFiltersOpen)}
-                    aria-label={t("filterResults")}
-                    aria-expanded={quickFiltersOpen}
-                    className={cn(
-                      "gap-2 min-h-11 bg-white",
-                      quickFiltersOpen && "border-cyan-400 text-cyan-900",
-                      activeQuickFiltersCount > 0 && "border-[#00D9FF]",
-                    )}
-                  >
-                    <SlidersHorizontal className="w-4 h-4" />
-                    <span className="hidden sm:inline">
-                      {t("filterResults")}
-                    </span>
-                    {activeQuickFiltersCount > 0 && (
-                      <span className="ml-1 bg-[#00D9FF] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        {activeQuickFiltersCount}
-                      </span>
-                    )}
-                  </Button>
                   {/* Sort selector */}
                   <Select
                     value={sortKey}
@@ -1374,133 +1347,6 @@ export default function JobsPage() {
                   )}
                 </div>
               </motion.div>
-
-              {/* Quick filter panel */}
-              {quickFiltersOpen && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-white border border-slate-200 rounded-xl p-4 space-y-4 overflow-hidden"
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-700">
-                      {t("filterResults")}
-                    </h3>
-                    {activeQuickFiltersCount > 0 && (
-                      <button
-                        onClick={() =>
-                          setQuickFilters({
-                            maxDays: null,
-                            salaryMin: null,
-                            directOnly: false,
-                          })
-                        }
-                        className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
-                      >
-                        <X className="h-3 w-3" />
-                        {t("resetFilters", { count: activeQuickFiltersCount })}
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                    {/* Date filter */}
-                    <div>
-                      <p className="text-xs font-semibold text-slate-600 mb-2">
-                        {t("filterPostDate")}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[
-                          { label: t("filterDateToday"), days: 1 },
-                          { label: t("filterDate3Days"), days: 3 },
-                          { label: t("filterDate7Days"), days: 7 },
-                          { label: t("filterDate30Days"), days: 30 },
-                        ].map(({ label, days }) => (
-                          <button
-                            key={days}
-                            onClick={() =>
-                              setQuickFilters((prev) => ({
-                                ...prev,
-                                maxDays: prev.maxDays === days ? null : days,
-                              }))
-                            }
-                            className={cn(
-                              "text-xs px-2 py-1 rounded-full border transition-colors",
-                              quickFilters.maxDays === days
-                                ? "bg-[#00D9FF] text-white border-[#00D9FF]"
-                                : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
-                            )}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Salary + direct-only */}
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-600 mb-2">
-                          {t("filterSalaryMin")}
-                        </p>
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          aria-label={t("filterSalaryMin")}
-                          aria-describedby="salary-filter-hint"
-                          placeholder={t("salaryMinPlaceholder")}
-                          value={quickFilters.salaryMin ?? ""}
-                          onChange={(e) =>
-                            setQuickFilters((prev) => ({
-                              ...prev,
-                              salaryMin: e.target.value
-                                ? Math.max(0, Number(e.target.value))
-                                : null,
-                            }))
-                          }
-                          className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#00D9FF]"
-                        />
-                        <p id="salary-filter-hint" className="mt-2 text-xs text-slate-600">
-                          {t("salaryComparisonHint")}
-                        </p>
-                      </div>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={quickFilters.directOnly}
-                          onChange={(e) =>
-                            setQuickFilters((prev) => ({
-                              ...prev,
-                              directOnly: e.target.checked,
-                            }))
-                          }
-                          className="rounded border-slate-300 text-[#00D9FF] focus:ring-[#00D9FF]"
-                        />
-                        <span className="text-xs text-slate-600">
-                          {t("filterDirectOnly")}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Results count */}
-                  <p className="text-xs text-slate-500 border-t border-slate-100 pt-2">
-                    {t(
-                      quickFilteredJobs.length !== 1
-                        ? "filteredCount_other"
-                        : "filteredCount_one",
-                      { count: quickFilteredJobs.length },
-                    )}
-                    {activeQuickFiltersCount > 0 &&
-                      t("filteredCountTotal", {
-                        total: filteredProgressiveJobs.length,
-                      })}
-                  </p>
-                </motion.div>
-              )}
 
               <div
                 aria-live="polite"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Search, MapPin, Globe, ChevronDown } from "lucide-react";
+import { Search, MapPin, Globe, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -117,6 +117,9 @@ export interface SearchParams {
   workDays?: string[];
   workSchedule?: string[];
   includeRemote?: boolean;
+  maxDays?: number | null;
+  salaryMin?: number | null;
+  directOnly?: boolean;
   fromHistory?: boolean;
 }
 
@@ -139,6 +142,10 @@ export function SearchFormInline({
     [],
   );
   const [includeRemote, setIncludeRemote] = useState(initialIncludeRemote);
+  const [refinementsOpen, setRefinementsOpen] = useState(false);
+  const [maxDays, setMaxDays] = useState<number | null>(null);
+  const [salaryMin, setSalaryMin] = useState<number | null>(null);
+  const [directOnly, setDirectOnly] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const t = useTranslations("searchForm");
@@ -281,6 +288,9 @@ export function SearchFormInline({
       workSchedule:
         selectedWorkSchedule.length > 0 ? selectedWorkSchedule : undefined,
       includeRemote,
+      maxDays,
+      salaryMin,
+      directOnly,
     });
 
     setErrors({});
@@ -418,6 +428,99 @@ export function SearchFormInline({
     </div>
   );
 
+  const refinementToggle = (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={() => setRefinementsOpen((open) => !open)}
+      disabled={disabled || isLoading}
+      aria-expanded={refinementsOpen}
+      className={cn(
+        "min-h-11 gap-2",
+        refinementsOpen && "border-[#00D9FF] text-cyan-900",
+      )}
+    >
+      <SlidersHorizontal className="h-4 w-4" />
+      {t("refineResults")}
+    </Button>
+  );
+
+  const refinementPanel = (suffix: "desktop" | "mobile") =>
+    refinementsOpen && (
+      <fieldset className="mt-3 grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 sm:grid-cols-3">
+        <legend className="sr-only">{t("refineResults")}</legend>
+        <div>
+          <p className="mb-2 text-xs font-semibold text-slate-600">
+            {t("filterPostDate")}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { label: t("filterDateToday"), days: 1 },
+              { label: t("filterDate3Days"), days: 3 },
+              { label: t("filterDate7Days"), days: 7 },
+              { label: t("filterDate30Days"), days: 30 },
+            ].map(({ label, days }) => (
+              <Button
+                key={days}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setMaxDays((current) => (current === days ? null : days))
+                }
+                disabled={disabled || isLoading}
+                className={cn(
+                  "min-h-9 text-xs",
+                  maxDays === days && "border-[#00D9FF] bg-[#00D9FF] text-slate-950 hover:bg-[#00C4EA]",
+                )}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label
+            htmlFor={`salary-min-${suffix}`}
+            className="mb-2 block text-xs font-semibold text-slate-600"
+          >
+            {t("filterSalaryMin")}
+          </label>
+          <input
+            id={`salary-min-${suffix}`}
+            type="number"
+            min="0"
+            step="any"
+            placeholder={t("salaryMinPlaceholder")}
+            value={salaryMin ?? ""}
+            onChange={(event) =>
+              setSalaryMin(
+                event.target.value
+                  ? Math.max(0, Number(event.target.value))
+                  : null,
+              )
+            }
+            disabled={disabled || isLoading}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#00D9FF] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </div>
+        <label className="flex cursor-pointer items-center gap-2 self-end pb-2">
+          <input
+            type="checkbox"
+            checked={directOnly}
+            onChange={(event) => setDirectOnly(event.target.checked)}
+            disabled={disabled || isLoading}
+            className="rounded border-slate-300 text-[#00D9FF] focus:ring-[#00D9FF]"
+          />
+          <span className="text-sm text-slate-700">{t("filterDirectOnly")}</span>
+        </label>
+        <p className="text-xs text-slate-500 sm:col-span-3">
+          {t("refinementsSubmitHint")}
+        </p>
+      </fieldset>
+    );
+
   return (
     <div className="w-full">
       {/* Desktop: Horizontal Layout */}
@@ -521,8 +624,8 @@ export function SearchFormInline({
         {/* Contract Type Filter Chips */}
         {filterRow}
 
-        {/* Options Row: Remote Checkbox */}
-        <div className="flex items-center gap-4 pt-3 mt-3 border-t border-gray-100">
+        {/* Options Row */}
+        <div className="flex flex-wrap items-center gap-4 pt-3 mt-3 border-t border-gray-100">
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -539,7 +642,9 @@ export function SearchFormInline({
               {t("includeRemote")}
             </label>
           </div>
+          {refinementToggle}
         </div>
+        {refinementPanel("desktop")}
       </div>
 
       {/* Mobile: Vertical Layout */}
@@ -622,8 +727,8 @@ export function SearchFormInline({
         {/* Contract Type Filter Chips */}
         {filterRow}
 
-        {/* Include Remote Jobs Checkbox */}
-        <div className="flex items-center gap-3 px-4 py-3">
+        {/* Options */}
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3">
           <input
             type="checkbox"
             id="include-remote-mobile"
@@ -638,7 +743,9 @@ export function SearchFormInline({
           >
             {t("includeRemote")}
           </label>
+          {refinementToggle}
         </div>
+        {refinementPanel("mobile")}
 
         {/* Action Button */}
         <div className="w-full">

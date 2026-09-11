@@ -1571,6 +1571,16 @@
     "workSchedule_night": "Noche (22h-6h)",
     "workSchedule_fulltime": "Tiempo completo",
     "allSchedules": "Todos los horarios",
+    "refineResults": "Afinar resultados",
+    "filterPostDate": "Fecha de publicación",
+    "filterDateToday": "Hoy",
+    "filterDate3Days": "3 días",
+    "filterDate7Days": "7 días",
+    "filterDate30Days": "30 días",
+    "filterSalaryMin": "Importe mínimo indicado",
+    "salaryMinPlaceholder": "Ej. 45.000",
+    "filterDirectOnly": "Solo enlaces directos",
+    "refinementsSubmitHint": "Los criterios se aplicarán al iniciar la búsqueda.",
     "searchLimitReached": "Límite alcanzado: queda {count} búsqueda hoy. Pásate a Pro para continuar."
   },
   "advancedFilters": {

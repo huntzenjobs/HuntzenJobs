@@ -1933,6 +1933,16 @@
     "workSchedule_night": "Night (10pm-6am)",
     "workSchedule_fulltime": "Full-time",
     "allSchedules": "All schedules",
+    "refineResults": "Refine results",
+    "filterPostDate": "Posted date",
+    "filterDateToday": "Today",
+    "filterDate3Days": "3 days",
+    "filterDate7Days": "7 days",
+    "filterDate30Days": "30 days",
+    "filterSalaryMin": "Minimum listed amount",
+    "salaryMinPlaceholder": "E.g. 45,000",
+    "filterDirectOnly": "Direct links only",
+    "refinementsSubmitHint": "Your criteria will apply when you start the search.",
     "searchLimitReached": "Limit reached: {count} search remaining today. Upgrade to Pro to continue."
   },
   "advancedFilters": {

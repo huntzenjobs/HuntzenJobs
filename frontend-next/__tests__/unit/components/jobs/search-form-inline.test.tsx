@@ -135,4 +135,39 @@ describe("SearchFormInline", () => {
       expect.objectContaining({ query: "Data Engineer", country: "fr" }),
     );
   });
+
+  it("applique les raffinements uniquement quand la recherche est validée", async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    render(
+      <SearchFormInline
+        onSearch={onSearch}
+        initialQuery="Développeur"
+        initialCountry="fr"
+      />,
+    );
+
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "searchForm.refineResults",
+      })[0],
+    );
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "searchForm.filterDate7Days",
+      })[0],
+    );
+
+    expect(onSearch).not.toHaveBeenCalled();
+
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "searchForm.searchButton",
+      })[0],
+    );
+
+    expect(onSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ maxDays: 7 }),
+    );
+  });
 });
