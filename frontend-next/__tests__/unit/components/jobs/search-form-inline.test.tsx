@@ -208,4 +208,38 @@ describe("SearchFormInline", () => {
       directOnly: false,
     });
   });
+
+  it("affiche et applique les filtres dès que le télétravail est modifié", async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    render(
+      <SearchFormInline
+        onSearch={onSearch}
+        initialQuery="Développeur"
+        initialCountry="fr"
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", {
+        name: "searchForm.applyRefinements",
+      }),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getAllByRole("checkbox", {
+        name: "searchForm.includeRemote",
+      })[0],
+    );
+
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "searchForm.applyRefinements",
+      })[0],
+    );
+
+    expect(onSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ includeRemote: false }),
+    );
+  });
 });

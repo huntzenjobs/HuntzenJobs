@@ -153,6 +153,8 @@ export function SearchFormInline({
   const [maxDays, setMaxDays] = useState<number | null>(null);
   const [salaryMin, setSalaryMin] = useState<number | null>(null);
   const [directOnly, setDirectOnly] = useState(false);
+  const [filtersDirty, setFiltersDirty] = useState(false);
+  const [searchFiltersDirty, setSearchFiltersDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const t = useTranslations("searchForm");
@@ -245,6 +247,8 @@ export function SearchFormInline({
           ? prev.filter((v) => v !== value)
           : [...prev, value],
       );
+      setFiltersDirty(true);
+      setSearchFiltersDirty(true);
     },
     [],
   );
@@ -300,6 +304,8 @@ export function SearchFormInline({
       directOnly,
     });
 
+    setFiltersDirty(false);
+    setSearchFiltersDirty(false);
     setErrors({});
   };
 
@@ -394,7 +400,11 @@ export function SearchFormInline({
         {selected.length > 0 && (
           <button
             type="button"
-            onClick={() => setter([])}
+            onClick={() => {
+              setter([]);
+              setFiltersDirty(true);
+              setSearchFiltersDirty(true);
+            }}
             className="mt-2 text-xs text-huntzen-blue hover:underline w-full text-center"
           >
             {allLabel}
@@ -404,10 +414,45 @@ export function SearchFormInline({
     </Popover>
   );
 
+  const refinementParams: RefinementParams = {
+    maxDays,
+    salaryMin,
+    directOnly,
+  };
+
+  const handleApplyFilters = () => {
+    if (searchFiltersDirty) {
+      handleSearch();
+      return;
+    }
+
+    onApplyRefinements?.(refinementParams);
+    setFiltersDirty(false);
+    setRefinementsOpen(false);
+  };
+
+  const refinementToggle = (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={() => setRefinementsOpen((open) => !open)}
+      disabled={disabled || isLoading}
+      aria-expanded={refinementsOpen}
+      className={cn(
+        "h-9 gap-2 text-xs font-medium",
+        refinementsOpen && "border-[#00D9FF] text-cyan-900",
+      )}
+    >
+      <SlidersHorizontal className="h-4 w-4" />
+      {t("refineResults")}
+    </Button>
+  );
+
   // ─── Filter row (shared between desktop and mobile) ─────────────────────
 
   const filterRow = (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className="flex flex-wrap items-center gap-2">
       {renderFilterPopover(
         t("contractTypesLabel"),
         CONTRACT_TYPE_OPTIONS,
@@ -432,36 +477,8 @@ export function SearchFormInline({
         t("allSchedules"),
         t("selectedCount"),
       )}
+      {refinementToggle}
     </div>
-  );
-
-  const refinementParams: RefinementParams = {
-    maxDays,
-    salaryMin,
-    directOnly,
-  };
-
-  const handleApplyRefinements = () => {
-    onApplyRefinements?.(refinementParams);
-    setRefinementsOpen(false);
-  };
-
-  const refinementToggle = (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      onClick={() => setRefinementsOpen((open) => !open)}
-      disabled={disabled || isLoading}
-      aria-expanded={refinementsOpen}
-      className={cn(
-        "min-h-11 gap-2",
-        refinementsOpen && "border-[#00D9FF] text-cyan-900",
-      )}
-    >
-      <SlidersHorizontal className="h-4 w-4" />
-      {t("refineResults")}
-    </Button>
   );
 
   const refinementPanel = (suffix: "desktop" | "mobile") =>
@@ -484,9 +501,10 @@ export function SearchFormInline({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  setMaxDays((current) => (current === days ? null : days))
-                }
+                onClick={() => {
+                  setMaxDays((current) => (current === days ? null : days));
+                  setFiltersDirty(true);
+                }}
                 disabled={disabled || isLoading}
                 className={cn(
                   "min-h-9 text-xs",
@@ -512,13 +530,14 @@ export function SearchFormInline({
             step="any"
             placeholder={t("salaryMinPlaceholder")}
             value={salaryMin ?? ""}
-            onChange={(event) =>
+            onChange={(event) => {
               setSalaryMin(
                 event.target.value
                   ? Math.max(0, Number(event.target.value))
                   : null,
-              )
-            }
+              );
+              setFiltersDirty(true);
+            }}
             disabled={disabled || isLoading}
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#00D9FF] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
@@ -527,7 +546,10 @@ export function SearchFormInline({
           <input
             type="checkbox"
             checked={directOnly}
-            onChange={(event) => setDirectOnly(event.target.checked)}
+            onChange={(event) => {
+              setDirectOnly(event.target.checked);
+              setFiltersDirty(true);
+            }}
             disabled={disabled || isLoading}
             className="rounded border-slate-300 text-[#00D9FF] focus:ring-[#00D9FF]"
           />
@@ -536,19 +558,21 @@ export function SearchFormInline({
         <p className="text-xs text-slate-500 sm:col-span-3">
           {t("refinementsSubmitHint")}
         </p>
-        {onApplyRefinements && (
-          <div className="sm:col-span-3 flex justify-end">
-            <Button
-              type="button"
-              onClick={handleApplyRefinements}
-              disabled={disabled || isLoading}
-              className="min-h-11 bg-[#00D9FF] font-semibold text-slate-950 hover:bg-[#00C4EA]"
-            >
-              {t("applyRefinements")}
-            </Button>
-          </div>
-        )}
       </fieldset>
+    );
+
+  const filterApplyAction =
+    filtersDirty && (
+      <div className="mt-3 flex justify-end border-t border-gray-100 pt-3">
+        <Button
+          type="button"
+          onClick={handleApplyFilters}
+          disabled={disabled || isLoading}
+          className="min-h-11 bg-[#00D9FF] font-semibold text-slate-950 hover:bg-[#00C4EA]"
+        >
+          {t("applyRefinements")}
+        </Button>
+      </div>
     );
 
   return (
@@ -661,7 +685,11 @@ export function SearchFormInline({
               type="checkbox"
               id="include-remote-desktop"
               checked={includeRemote}
-              onChange={(e) => setIncludeRemote(e.target.checked)}
+              onChange={(e) => {
+                setIncludeRemote(e.target.checked);
+                setFiltersDirty(true);
+                setSearchFiltersDirty(true);
+              }}
               disabled={disabled || isLoading}
               className="w-4 h-4 text-huntzen-blue bg-gray-100 border-gray-300 rounded focus:ring-huntzen-blue focus:ring-2 disabled:opacity-50"
             />
@@ -672,9 +700,9 @@ export function SearchFormInline({
               {t("includeRemote")}
             </label>
           </div>
-          {refinementToggle}
         </div>
         {refinementPanel("desktop")}
+        {filterApplyAction}
       </div>
 
       {/* Mobile: Vertical Layout */}
@@ -763,7 +791,11 @@ export function SearchFormInline({
             type="checkbox"
             id="include-remote-mobile"
             checked={includeRemote}
-            onChange={(e) => setIncludeRemote(e.target.checked)}
+            onChange={(e) => {
+              setIncludeRemote(e.target.checked);
+              setFiltersDirty(true);
+              setSearchFiltersDirty(true);
+            }}
             disabled={disabled || isLoading}
             className="w-4 h-4 text-huntzen-blue bg-gray-100 border-gray-300 rounded focus:ring-huntzen-blue focus:ring-2 disabled:opacity-50"
           />
@@ -773,9 +805,9 @@ export function SearchFormInline({
           >
             {t("includeRemote")}
           </label>
-          {refinementToggle}
         </div>
         {refinementPanel("mobile")}
+        {filterApplyAction}
 
         {/* Action Button */}
         <div className="w-full">
