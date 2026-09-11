@@ -536,7 +536,7 @@ export default function AssistantPage() {
             <p className="text-slate-600">{t("hubSubtitle")}</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 sm:auto-rows-fr gap-4">
             {allAssistants.map((assistant, index) => {
               const coachId = ASSISTANT_TO_COACH_ID[assistant.id];
               const coach = coachId ? getCoach(coachId) : undefined;
@@ -550,6 +550,7 @@ export default function AssistantPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.08 }}
+                  className="h-full"
                 >
                   <button
                     onClick={() => {
@@ -561,7 +562,7 @@ export default function AssistantPage() {
                       handleHubSelect(assistant.id);
                     }}
                     className={cn(
-                      "w-full text-left p-5 rounded-2xl border-2 transition-all duration-200 bg-white hover:shadow-lg group relative overflow-hidden",
+                      "w-full h-full flex flex-col text-left p-5 rounded-2xl border-2 transition-all duration-200 bg-white hover:shadow-lg group relative overflow-hidden",
                       isComingSoon
                         ? "opacity-60 cursor-default border-slate-200"
                         : isLocked
@@ -645,7 +646,7 @@ export default function AssistantPage() {
 
                     {/* Response time */}
                     {assistant.responseTime && (
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <div className="mt-auto flex items-center gap-1.5 text-xs text-slate-400">
                         <Clock className="w-3 h-3" />
                         {t("hubResponseTime", { time: assistant.responseTime })}
                       </div>
