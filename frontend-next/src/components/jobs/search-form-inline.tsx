@@ -100,7 +100,7 @@ const WORK_SCHEDULE_OPTIONS = [
 
 interface SearchFormInlineProps {
   onSearch: (params: SearchParams) => void;
-  onApplyRefinements?: (params: RefinementParams) => void;
+  onApplyFilters?: (params: AppliedFilters) => void;
   isLoading?: boolean;
   disabled?: boolean;
   initialQuery?: string;
@@ -124,14 +124,20 @@ export interface SearchParams {
   fromHistory?: boolean;
 }
 
-export type RefinementParams = Pick<
+export type AppliedFilters = Pick<
   SearchParams,
-  "maxDays" | "salaryMin" | "directOnly"
+  | "contractTypes"
+  | "workDays"
+  | "workSchedule"
+  | "includeRemote"
+  | "maxDays"
+  | "salaryMin"
+  | "directOnly"
 >;
 
 export function SearchFormInline({
   onSearch,
-  onApplyRefinements,
+  onApplyFilters,
   isLoading = false,
   disabled = false,
   initialQuery,
@@ -154,7 +160,6 @@ export function SearchFormInline({
   const [salaryMin, setSalaryMin] = useState<number | null>(null);
   const [directOnly, setDirectOnly] = useState(false);
   const [filtersDirty, setFiltersDirty] = useState(false);
-  const [searchFiltersDirty, setSearchFiltersDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const t = useTranslations("searchForm");
@@ -248,7 +253,6 @@ export function SearchFormInline({
           : [...prev, value],
       );
       setFiltersDirty(true);
-      setSearchFiltersDirty(true);
     },
     [],
   );
@@ -305,7 +309,6 @@ export function SearchFormInline({
     });
 
     setFiltersDirty(false);
-    setSearchFiltersDirty(false);
     setErrors({});
   };
 
@@ -403,7 +406,6 @@ export function SearchFormInline({
             onClick={() => {
               setter([]);
               setFiltersDirty(true);
-              setSearchFiltersDirty(true);
             }}
             className="mt-2 text-xs text-huntzen-blue hover:underline w-full text-center"
           >
@@ -414,19 +416,20 @@ export function SearchFormInline({
     </Popover>
   );
 
-  const refinementParams: RefinementParams = {
+  const appliedFilters: AppliedFilters = {
+    contractTypes:
+      selectedContracts.length > 0 ? selectedContracts : undefined,
+    workDays: selectedWorkDays.length > 0 ? selectedWorkDays : undefined,
+    workSchedule:
+      selectedWorkSchedule.length > 0 ? selectedWorkSchedule : undefined,
+    includeRemote,
     maxDays,
     salaryMin,
     directOnly,
   };
 
   const handleApplyFilters = () => {
-    if (searchFiltersDirty) {
-      handleSearch();
-      return;
-    }
-
-    onApplyRefinements?.(refinementParams);
+    onApplyFilters?.(appliedFilters);
     setFiltersDirty(false);
     setRefinementsOpen(false);
   };
@@ -688,7 +691,6 @@ export function SearchFormInline({
               onChange={(e) => {
                 setIncludeRemote(e.target.checked);
                 setFiltersDirty(true);
-                setSearchFiltersDirty(true);
               }}
               disabled={disabled || isLoading}
               className="w-4 h-4 text-huntzen-blue bg-gray-100 border-gray-300 rounded focus:ring-huntzen-blue focus:ring-2 disabled:opacity-50"
@@ -794,7 +796,6 @@ export function SearchFormInline({
             onChange={(e) => {
               setIncludeRemote(e.target.checked);
               setFiltersDirty(true);
-              setSearchFiltersDirty(true);
             }}
             disabled={disabled || isLoading}
             className="w-4 h-4 text-huntzen-blue bg-gray-100 border-gray-300 rounded focus:ring-huntzen-blue focus:ring-2 disabled:opacity-50"

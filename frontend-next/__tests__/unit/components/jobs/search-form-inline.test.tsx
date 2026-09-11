@@ -173,11 +173,11 @@ describe("SearchFormInline", () => {
 
   it("applique les raffinements au clic sur le bouton dédié", async () => {
     const user = userEvent.setup();
-    const onApplyRefinements = vi.fn();
+    const onApplyFilters = vi.fn();
     render(
       <SearchFormInline
         onSearch={vi.fn()}
-        onApplyRefinements={onApplyRefinements}
+        onApplyFilters={onApplyFilters}
         initialQuery="Développeur"
         initialCountry="fr"
       />,
@@ -194,7 +194,7 @@ describe("SearchFormInline", () => {
       })[0],
     );
 
-    expect(onApplyRefinements).not.toHaveBeenCalled();
+    expect(onApplyFilters).not.toHaveBeenCalled();
 
     await user.click(
       screen.getAllByRole("button", {
@@ -202,19 +202,23 @@ describe("SearchFormInline", () => {
       })[0],
     );
 
-    expect(onApplyRefinements).toHaveBeenCalledWith({
-      maxDays: 7,
-      salaryMin: null,
-      directOnly: false,
-    });
+    expect(onApplyFilters).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxDays: 7,
+        salaryMin: null,
+        directOnly: false,
+      }),
+    );
   });
 
-  it("affiche et applique les filtres dès que le télétravail est modifié", async () => {
+  it("applique le filtre télétravail sans lancer une recherche", async () => {
     const user = userEvent.setup();
     const onSearch = vi.fn();
+    const onApplyFilters = vi.fn();
     render(
       <SearchFormInline
         onSearch={onSearch}
+        onApplyFilters={onApplyFilters}
         initialQuery="Développeur"
         initialCountry="fr"
       />,
@@ -238,7 +242,8 @@ describe("SearchFormInline", () => {
       })[0],
     );
 
-    expect(onSearch).toHaveBeenCalledWith(
+    expect(onSearch).not.toHaveBeenCalled();
+    expect(onApplyFilters).toHaveBeenCalledWith(
       expect.objectContaining({ includeRemote: false }),
     );
   });
