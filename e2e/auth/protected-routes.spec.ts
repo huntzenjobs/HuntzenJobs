@@ -2,9 +2,10 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Protected Routes', () => {
   const protectedRoutes = [
-    '/jobs',
-    '/cv-analysis',
-    '/coach',
+    '/dashboard',
+    '/profile',
+    '/saved-jobs',
+    '/referral',
   ];
 
   for (const route of protectedRoutes) {
@@ -61,6 +62,12 @@ test.describe('Protected Routes', () => {
     await page.goto('/pricing');
     // Should not redirect to login
     await expect(page).toHaveURL(/\/pricing/);
+  });
+
+  test('should redirect the legacy coach URL to the active assistant route', async ({ page }) => {
+    await page.goto('/coach');
+
+    await expect(page).toHaveURL(/\/assistant$/, { timeout: 10000 });
   });
 
   test('should redirect authenticated user from login to dashboard', async ({ page }) => {

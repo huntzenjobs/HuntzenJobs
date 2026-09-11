@@ -40,6 +40,15 @@ const nextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 365,
     dangerouslyAllowSVG: false,
   },
+  async redirects() {
+    return [
+      {
+        source: "/coach",
+        destination: "/assistant",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
