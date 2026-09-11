@@ -60,6 +60,17 @@ describe("NotificationCenter", () => {
     expect(screen.getByText("3 nouvelles offres")).toBeInTheDocument();
   });
 
+  it("monte le panneau au niveau du document pour passer devant le contenu", () => {
+    render(<NotificationCenter isOpen={true} onClose={vi.fn()} />);
+
+    const dialog = screen.getByRole("dialog");
+    const [backdrop, panel] = Array.from(dialog.children);
+
+    expect(dialog.parentElement).toBe(document.body);
+    expect(backdrop).toHaveClass("z-[80]");
+    expect(panel).toHaveClass("z-[81]");
+  });
+
   it("appelle markAllAsRead au click sur 'Tout lire'", () => {
     render(<NotificationCenter isOpen={true} onClose={vi.fn()} />);
     fireEvent.click(screen.getByText(/markAllRead/i));

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Bell, Briefcase, TrendingUp, Gift, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -77,10 +78,12 @@ export function NotificationCenter({
 
   if (!isOpen) return null;
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div role="dialog" aria-modal="true" aria-label={t("centerAriaLabel")}>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 w-full sm:w-80 bg-background border-l shadow-xl z-50 flex flex-col">
+      <div className="fixed inset-0 z-[80] bg-black/20" onClick={onClose} />
+      <div className="fixed right-0 top-0 bottom-0 z-[81] flex w-full flex-col border-l bg-background shadow-xl sm:w-80">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4" />
@@ -161,6 +164,7 @@ export function NotificationCenter({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
