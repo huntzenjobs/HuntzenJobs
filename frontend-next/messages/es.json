@@ -869,7 +869,7 @@
       "refreshTitle": "Actualizar resultados desde el servidor",
       "alternanceToggle": "Alternancia",
       "filterButton": "Filtrar",
-      "filterResults": "Filtrar resultados",
+      "filterResults": "Afinar resultados",
       "resetFilters": "Restablecer ({count})",
       "filterSource": "Fuente",
       "filterContractType": "Tipo de contrato",

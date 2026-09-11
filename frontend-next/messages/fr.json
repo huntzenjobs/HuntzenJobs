@@ -1059,7 +1059,7 @@
       "refreshTitle": "Actualiser les résultats depuis le serveur",
       "alternanceToggle": "Alternance",
       "filterButton": "Filtrer",
-      "filterResults": "Filtrer les résultats",
+      "filterResults": "Affiner les résultats",
       "resetFilters": "Réinitialiser ({count})",
       "filterSource": "Source",
       "filterContractType": "Type de contrat",

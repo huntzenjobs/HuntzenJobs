@@ -122,7 +122,6 @@ function formatRelativeDate(
 }
 
 interface QuickFilters {
-  contractTypes: string[];
   maxDays: number | null; // null = all dates
   salaryMin: number | null;
   directOnly: boolean;
@@ -154,7 +153,6 @@ export default function JobsPage() {
   );
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [contractType, setContractType] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
   const { translatedJobs, isTranslating } = useJobTranslation(jobs);
   const [visibleJobsCount, setVisibleJobsCount] = useState(0);
@@ -215,7 +213,6 @@ export default function JobsPage() {
   // Quick filters state (client-side filtering on loaded results)
   const [quickFiltersOpen, setQuickFiltersOpen] = useState(false);
   const [quickFilters, setQuickFilters] = useState<QuickFilters>({
-    contractTypes: [],
     maxDays: null,
     salaryMin: null,
     directOnly: false,
@@ -344,7 +341,7 @@ export default function JobsPage() {
   );
 
   // Re-declare missing variables used later in the file
-  const effectiveContractType = jobSearchParams?.contractType || contractType;
+  const effectiveContractType = jobSearchParams?.contractType;
   const effectiveWorkDays = jobSearchParams?.workDays;
   const effectiveWorkSchedule = jobSearchParams?.workSchedule;
   /**
@@ -924,22 +921,8 @@ export default function JobsPage() {
     });
   };
 
-  // Derive available filter options from loaded results
-  const availableContractTypes = useMemo(
-    () =>
-      [
-        ...new Set(
-          translatedJobs
-            .map((j) => j.contract_type)
-            .filter(Boolean) as string[],
-        ),
-      ].sort(),
-    [translatedJobs],
-  );
-
   // Count active quick filters
   const activeQuickFiltersCount =
-    quickFilters.contractTypes.length +
     (quickFilters.maxDays !== null ? 1 : 0) +
     (quickFilters.salaryMin !== null ? 1 : 0) +
     (quickFilters.directOnly ? 1 : 0);
@@ -954,36 +937,6 @@ export default function JobsPage() {
   // Apply quick filters client-side
   const quickFilteredJobs = useMemo(() => {
     let result = filteredProgressiveJobs;
-    if (quickFilters.contractTypes.length > 0) {
-      // Map frontend filter values → backend normalized contract_type values
-      const ALIASES: Record<string, string> = {
-        internship: "stage",
-        apprentissage: "alternance",
-        cdi_partial: "temps partiel",
-        cdd_partial: "temps partiel",
-      };
-      const normalizedFilters = quickFilters.contractTypes.map((c) => {
-        const lower = c.toLowerCase();
-        return ALIASES[lower] ?? lower;
-      });
-      const hasAlternance = normalizedFilters.includes("alternance");
-      result = result.filter((j) => {
-        const jobType = j.contract_type?.toLowerCase();
-        if (hasAlternance) {
-          const text = `${j.title ?? ""} ${j.description ?? ""}`.toLowerCase();
-          const isAlternance =
-            jobType === "alternance" ||
-            text.includes("alternance") ||
-            text.includes("apprenti");
-          if (normalizedFilters.length === 1) return isAlternance;
-          return (
-            isAlternance ||
-            (jobType != null && normalizedFilters.includes(jobType))
-          );
-        }
-        return jobType != null && normalizedFilters.includes(jobType);
-      });
-    }
     if (quickFilters.maxDays !== null) {
       const cutoff = Date.now() - quickFilters.maxDays * 24 * 60 * 60 * 1000;
       result = result.filter((j) => {
@@ -1317,30 +1270,12 @@ export default function JobsPage() {
                       {t("results.refresh")}
                     </span>
                   </Button>
-                  {/* Toggle alternance — first-class, déclenche un nouveau search via React Query */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next =
-                        contractType === "alternance" ? "" : "alternance";
-                      setContractType(next);
-                      setCurrentPage(1);
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all",
-                      contractType === "alternance"
-                        ? "bg-cyan-50 text-cyan-900 border-cyan-300 min-h-11"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-cyan-300 min-h-11",
-                    )}
-                  >
-                    🎓 {t("alternanceToggle")}
-                  </button>
-                  {/* Quick filter toggle button */}
+                  {/* Result refinements that do not repeat the search form */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setQuickFiltersOpen(!quickFiltersOpen)}
-                    aria-label={t("filterButton")}
+                    aria-label={t("filterResults")}
                     aria-expanded={quickFiltersOpen}
                     className={cn(
                       "gap-2 min-h-11 bg-white",
@@ -1350,7 +1285,7 @@ export default function JobsPage() {
                   >
                     <SlidersHorizontal className="w-4 h-4" />
                     <span className="hidden sm:inline">
-                      {t("filterButton")}
+                      {t("filterResults")}
                     </span>
                     {activeQuickFiltersCount > 0 && (
                       <span className="ml-1 bg-[#00D9FF] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -1456,7 +1391,6 @@ export default function JobsPage() {
                       <button
                         onClick={() =>
                           setQuickFilters({
-                            contractTypes: [],
                             maxDays: null,
                             salaryMin: null,
                             directOnly: false,
@@ -1470,46 +1404,7 @@ export default function JobsPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-                    {/* Contract type filter — hidden if pre-search contract type is active */}
-                    {availableContractTypes.length > 0 &&
-                      !effectiveContractType && (
-                        <div>
-                          <p className="text-xs font-semibold text-slate-600 mb-2">
-                            {t("filterContractType")}
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {availableContractTypes.map((ct) => (
-                              <button
-                                key={ct}
-                                onClick={() =>
-                                  setQuickFilters((prev) => ({
-                                    ...prev,
-                                    contractTypes: prev.contractTypes.includes(
-                                      ct,
-                                    )
-                                      ? prev.contractTypes.filter(
-                                          (c) => c !== ct,
-                                        )
-                                      : [...prev.contractTypes, ct],
-                                  }))
-                                }
-                                className={cn(
-                                  "text-xs px-2 py-1 rounded-full border transition-colors",
-                                  quickFilters.contractTypes.includes(ct)
-                                    ? "bg-[#00D9FF] text-white border-[#00D9FF]"
-                                    : "bg-white text-slate-600 border-slate-200 hover:border-[#00D9FF]",
-                                )}
-                              >
-                                {t.has(`contractType_${ct.toLowerCase()}`)
-                                  ? t(`contractType_${ct.toLowerCase()}`)
-                                  : ct}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
                     {/* Date filter */}
                     <div>
