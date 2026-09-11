@@ -101,6 +101,11 @@ export function PwaRegistration({
 
 export interface PwaProviderProps {
   children: ReactNode;
+  /**
+   * La PWA reste désactivée tant que la recette d'hydratation production n'est
+   * pas stabilisée. Cela garantit le même arbre lors du rendu serveur et client.
+   */
+  disabled?: boolean;
 }
 
 export function shouldDisablePwa(hostname: string): boolean {
@@ -110,20 +115,16 @@ export function shouldDisablePwa(hostname: string): boolean {
   );
 }
 
-export function PwaProvider({ children }: PwaProviderProps) {
-  const isProtectedVercelDeployment =
-    typeof window !== "undefined" && shouldDisablePwa(window.location.hostname);
-  const isSerwistProviderDisabled =
-    process.env.NODE_ENV !== "production" || isProtectedVercelDeployment;
+export function PwaProvider({ children, disabled = true }: PwaProviderProps) {
 
   return (
     <SerwistProvider
       swUrl="/serwist/sw.js"
       cacheOnNavigation={false}
-      disable={isSerwistProviderDisabled}
+      disable={disabled}
       register={false}
     >
-      <PwaRegistration disabled={isProtectedVercelDeployment}>
+      <PwaRegistration disabled={disabled}>
         {children}
       </PwaRegistration>
     </SerwistProvider>

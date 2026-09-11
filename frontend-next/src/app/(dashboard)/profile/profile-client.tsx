@@ -336,7 +336,7 @@ export function ProfilePageClient({ user, profile }: ProfilePageClientProps) {
         className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm"
       >
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-none border-b bg-transparent p-0 [&_[data-slot=tabs-trigger]]:shrink-0 max-sm:[&_[data-slot=tabs-trigger]]:!px-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 rounded-none border-b bg-transparent p-0 sm:flex sm:justify-start sm:overflow-x-auto [&_[data-slot=tabs-trigger]]:w-full [&_[data-slot=tabs-trigger]]:justify-center [&_[data-slot=tabs-trigger]]:px-3 sm:[&_[data-slot=tabs-trigger]]:w-auto sm:[&_[data-slot=tabs-trigger]]:shrink-0 sm:[&_[data-slot=tabs-trigger]]:justify-start sm:[&_[data-slot=tabs-trigger]]:px-6">
             <TabsTrigger
               value="profile"
               className="data-[state=active]:border-b-2 data-[state=active]:border-[#00D9FF] rounded-none px-6 py-4 transition-all data-[state=active]:text-[#00D9FF] font-medium"

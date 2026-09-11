@@ -11,7 +11,7 @@ from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
 from src.api.deps import get_supabase_client
-from src.api.middleware import limiter
+from src.api.middleware import get_verified_supabase_user_rate_limit_key, limiter
 from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ def get_user_id_from_header(authorization: str | None) -> str | None:
 
 
 @router.get("/api/saved-jobs")
-@limiter.limit("60/minute")
+@limiter.limit("60/minute", key_func=get_verified_supabase_user_rate_limit_key)
 async def get_saved_jobs(request: Request, authorization: str | None = Header(None)):
     """
     Get all saved jobs for the current user.
