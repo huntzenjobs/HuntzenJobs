@@ -762,6 +762,18 @@ export default function JobsPage() {
     setJobSearchParams(params);
   };
 
+  const handleApplyRefinements = useCallback(
+    (params: Pick<SearchParams, "maxDays" | "salaryMin" | "directOnly">) => {
+      setQuickFilters({
+        maxDays: params.maxDays ?? null,
+        salaryMin: params.salaryMin ?? null,
+        directOnly: params.directOnly ?? false,
+      });
+      setCurrentPage(1);
+    },
+    [],
+  );
+
 
   // Save job mutation — uses Supabase directly (same schema as saved-jobs page)
   const saveJobMutation = useMutation({
@@ -1071,6 +1083,7 @@ export default function JobsPage() {
             initialLocation={selectedCity}
             initialIncludeRemote={jobSearchParams?.includeRemote}
             onSearch={handleSearch}
+            onApplyRefinements={handleApplyRefinements}
             isLoading={searchQuery.isFetching}
             disabled={false}
           />

@@ -1580,7 +1580,8 @@
     "filterSalaryMin": "Valor mínimo indicado",
     "salaryMinPlaceholder": "Ex. 45.000",
     "filterDirectOnly": "Apenas links diretos",
-    "refinementsSubmitHint": "Os critérios serão aplicados quando iniciar a pesquisa.",
+    "refinementsSubmitHint": "Selecione os critérios e aplique-os às vagas apresentadas.",
+    "applyRefinements": "Aplicar filtros",
     "searchLimitReached": "Limite atingido: resta {count} pesquisa hoje. Atualize para Pro para continuar."
   },
   "advancedFilters": {

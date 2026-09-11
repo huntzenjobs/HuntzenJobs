@@ -170,4 +170,42 @@ describe("SearchFormInline", () => {
       expect.objectContaining({ maxDays: 7 }),
     );
   });
+
+  it("applique les raffinements au clic sur le bouton dédié", async () => {
+    const user = userEvent.setup();
+    const onApplyRefinements = vi.fn();
+    render(
+      <SearchFormInline
+        onSearch={vi.fn()}
+        onApplyRefinements={onApplyRefinements}
+        initialQuery="Développeur"
+        initialCountry="fr"
+      />,
+    );
+
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "searchForm.refineResults",
+      })[0],
+    );
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "searchForm.filterDate7Days",
+      })[0],
+    );
+
+    expect(onApplyRefinements).not.toHaveBeenCalled();
+
+    await user.click(
+      screen.getAllByRole("button", {
+        name: "searchForm.applyRefinements",
+      })[0],
+    );
+
+    expect(onApplyRefinements).toHaveBeenCalledWith({
+      maxDays: 7,
+      salaryMin: null,
+      directOnly: false,
+    });
+  });
 });

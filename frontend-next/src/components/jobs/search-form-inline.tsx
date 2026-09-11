@@ -100,6 +100,7 @@ const WORK_SCHEDULE_OPTIONS = [
 
 interface SearchFormInlineProps {
   onSearch: (params: SearchParams) => void;
+  onApplyRefinements?: (params: RefinementParams) => void;
   isLoading?: boolean;
   disabled?: boolean;
   initialQuery?: string;
@@ -123,8 +124,14 @@ export interface SearchParams {
   fromHistory?: boolean;
 }
 
+export type RefinementParams = Pick<
+  SearchParams,
+  "maxDays" | "salaryMin" | "directOnly"
+>;
+
 export function SearchFormInline({
   onSearch,
+  onApplyRefinements,
   isLoading = false,
   disabled = false,
   initialQuery,
@@ -428,6 +435,17 @@ export function SearchFormInline({
     </div>
   );
 
+  const refinementParams: RefinementParams = {
+    maxDays,
+    salaryMin,
+    directOnly,
+  };
+
+  const handleApplyRefinements = () => {
+    onApplyRefinements?.(refinementParams);
+    setRefinementsOpen(false);
+  };
+
   const refinementToggle = (
     <Button
       type="button"
@@ -518,6 +536,18 @@ export function SearchFormInline({
         <p className="text-xs text-slate-500 sm:col-span-3">
           {t("refinementsSubmitHint")}
         </p>
+        {onApplyRefinements && (
+          <div className="sm:col-span-3 flex justify-end">
+            <Button
+              type="button"
+              onClick={handleApplyRefinements}
+              disabled={disabled || isLoading}
+              className="min-h-11 bg-[#00D9FF] font-semibold text-slate-950 hover:bg-[#00C4EA]"
+            >
+              {t("applyRefinements")}
+            </Button>
+          </div>
+        )}
       </fieldset>
     );
 

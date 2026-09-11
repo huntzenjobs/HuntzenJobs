@@ -1942,7 +1942,8 @@
     "filterSalaryMin": "Minimum listed amount",
     "salaryMinPlaceholder": "E.g. 45,000",
     "filterDirectOnly": "Direct links only",
-    "refinementsSubmitHint": "Your criteria will apply when you start the search.",
+    "refinementsSubmitHint": "Select your criteria, then apply them to the displayed jobs.",
+    "applyRefinements": "Apply filters",
     "searchLimitReached": "Limit reached: {count} search remaining today. Upgrade to Pro to continue."
   },
   "advancedFilters": {

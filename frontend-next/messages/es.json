@@ -1580,7 +1580,8 @@
     "filterSalaryMin": "Importe mínimo indicado",
     "salaryMinPlaceholder": "Ej. 45.000",
     "filterDirectOnly": "Solo enlaces directos",
-    "refinementsSubmitHint": "Los criterios se aplicarán al iniciar la búsqueda.",
+    "refinementsSubmitHint": "Selecciona tus criterios y aplícalos a las ofertas mostradas.",
+    "applyRefinements": "Aplicar filtros",
     "searchLimitReached": "Límite alcanzado: queda {count} búsqueda hoy. Pásate a Pro para continuar."
   },
   "advancedFilters": {
