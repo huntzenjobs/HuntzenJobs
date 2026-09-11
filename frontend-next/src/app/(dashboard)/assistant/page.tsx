@@ -70,14 +70,8 @@ export default function AssistantPage() {
   const tc = useTranslations("coaches");
   const locale = useLocale();
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
-  const [input, setInput] = useState(() => {
-    try {
-      if (typeof window === "undefined") return "";
-      return sessionStorage.getItem("huntzen_assistant_draft") || "";
-    } catch {
-      return "";
-    }
-  });
+  const [input, setInput] = useState("");
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [queueState, setQueueState] = useState<QueueWaitingState | null>(null);
   const [sessionId, setSessionId] = useState(INITIAL_ASSISTANT_SESSION_ID);
@@ -111,6 +105,16 @@ export default function AssistantPage() {
 
   useEffect(() => {
     setSessionId(createAssistantSessionId());
+  }, []);
+
+  useEffect(() => {
+    try {
+      setInput(sessionStorage.getItem("huntzen_assistant_draft") || "");
+    } catch {
+      // sessionStorage unavailable — silently ignore
+    } finally {
+      setDraftLoaded(true);
+    }
   }, []);
 
   const triggerTransition = () => {
@@ -165,6 +169,7 @@ export default function AssistantPage() {
 
   // Persist draft input to sessionStorage so it survives back/forward navigation
   useEffect(() => {
+    if (!draftLoaded) return;
     try {
       if (input) {
         sessionStorage.setItem("huntzen_assistant_draft", input);
@@ -174,7 +179,7 @@ export default function AssistantPage() {
     } catch {
       // sessionStorage unavailable — silently ignore
     }
-  }, [input]);
+  }, [draftLoaded, input]);
 
   // Smart scroll: scroll to user message when sent (best UX)
   useEffect(() => {
