@@ -50,6 +50,14 @@ def is_campaign_recipient_eligible(
     )
 
 
+def newsletter_subscription_state(result: Any) -> bool | None:
+    """Lit l'état newsletter d'une réponse Supabase éventuellement absente."""
+    data = getattr(result, "data", None)
+    if not isinstance(data, dict):
+        return None
+    return bool(data.get("newsletter_subscribed"))
+
+
 def validate_frozen_campaign(
     campaign: dict[str, Any],
     campaign_type: CampaignType,

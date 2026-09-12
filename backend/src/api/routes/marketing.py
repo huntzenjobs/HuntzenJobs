@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from src.api.deps import get_supabase_client
 from src.api.middleware import limiter
 from src.config.settings import get_settings
-from src.services.bulk_email import decode_preference_token
+from src.services.bulk_email import decode_preference_token, newsletter_subscription_state
 
 router = APIRouter()
 
@@ -59,12 +59,13 @@ async def show_preferences(
         .maybe_single()
         .execute()
     )
-    if not result.data:
+    subscribed = newsletter_subscription_state(result)
+    if subscribed is None:
         raise HTTPException(status_code=404, detail="Compte introuvable")
     return HTMLResponse(
         _preference_page(
             token=token,
-            subscribed=bool(result.data.get("newsletter_subscribed")),
+            subscribed=subscribed,
         )
     )
 

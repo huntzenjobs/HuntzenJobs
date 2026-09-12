@@ -2,7 +2,14 @@
 
 from datetime import UTC, datetime
 
-from src.services.bulk_email import preference_update_payload
+from src.services.bulk_email import (
+    newsletter_subscription_state,
+    preference_update_payload,
+)
+
+
+def test_missing_profile_result_has_no_subscription_state() -> None:
+    assert newsletter_subscription_state(None) is None
 
 
 def test_opt_in_records_traceable_consent() -> None:
