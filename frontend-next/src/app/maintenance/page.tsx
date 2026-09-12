@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
 import { Wrench } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+import { getLocalizedMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+const maintenanceMetadata: Metadata = {
   title: "Maintenance | HuntZen",
   robots: { index: false },
 };
 
-export default function MaintenancePage() {
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(maintenanceMetadata, "maintenance");
+}
+
+export default async function MaintenancePage() {
+  const t = await getTranslations("maintenance");
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="text-center max-w-md space-y-6">
@@ -17,14 +25,14 @@ export default function MaintenancePage() {
         </div>
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">
-            Maintenance en cours
+            {t("title")}
           </h1>
           <p className="text-muted-foreground text-lg">
-            HuntZen est temporairement indisponible pour une mise à jour.
+            {t("description")}
           </p>
         </div>
         <p className="text-sm text-muted-foreground">
-          Nous serons de retour très prochainement. Merci pour votre patience.
+          {t("backSoon")}
         </p>
         <div className="flex justify-center">
           <div className="flex gap-1.5">

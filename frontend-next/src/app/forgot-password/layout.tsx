@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
-import { forgotPasswordMetadata } from "@/lib/seo/metadata";
+import {
+  forgotPasswordMetadata,
+  getLocalizedMetadata,
+} from "@/lib/seo/metadata";
 
-export const metadata: Metadata = forgotPasswordMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(forgotPasswordMetadata, "forgotPassword");
+}
 
 export default function ForgotPasswordLayout({
   children,

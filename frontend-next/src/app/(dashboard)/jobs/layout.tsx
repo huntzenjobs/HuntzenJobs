@@ -1,7 +1,9 @@
 import { Metadata } from "next";
-import { jobsMetadata } from "@/lib/seo/metadata";
+import { getLocalizedMetadata, jobsMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = jobsMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(jobsMetadata, "jobs");
+}
 
 export default function JobsLayout({
   children,

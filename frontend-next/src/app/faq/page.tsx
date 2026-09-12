@@ -5,11 +5,13 @@
  */
 
 import { Metadata } from "next";
-import { faqMetadata } from "@/lib/seo/metadata";
+import { faqMetadata, getLocalizedMetadata } from "@/lib/seo/metadata";
 import { FAQClient } from "./faq-client";
 import { FAQSchema } from "./faq-schema";
 
-export const metadata: Metadata = faqMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(faqMetadata, "faq");
+}
 
 export default function FAQPage() {
   return (

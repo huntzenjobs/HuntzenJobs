@@ -1,4 +1,7 @@
 import { Metadata } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+
+import { isSupportedLocale, type Locale } from "@/i18n/detect-locale";
 
 /**
  * Configuration SEO centralisée pour HuntZen Jobs
@@ -9,6 +12,86 @@ const SITE_URL = "https://huntzenjobs.com";
 const SITE_NAME = "HuntZen Jobs";
 // Next.js auto-generates /opengraph-image from src/app/opengraph-image.tsx
 const DEFAULT_OG_IMAGE = `${SITE_URL}/opengraph-image`;
+
+interface LocalizedMetadataCopy {
+  title: string;
+  description: string;
+}
+
+export type MetadataPage =
+  | "home"
+  | "jobs"
+  | "cvAnalysis"
+  | "salons"
+  | "assistant"
+  | "pricing"
+  | "terms"
+  | "privacy"
+  | "about"
+  | "faq"
+  | "contact"
+  | "legal"
+  | "testimonials"
+  | "login"
+  | "signup"
+  | "forgotPassword"
+  | "maintenance";
+
+const OPEN_GRAPH_LOCALES: Record<Locale, string> = {
+  fr: "fr_FR",
+  en: "en_US",
+  es: "es_ES",
+  pt: "pt_PT",
+};
+
+export function localizeMetadata(
+  metadata: Metadata,
+  copy: LocalizedMetadataCopy,
+  locale: Locale,
+): Metadata {
+  return {
+    ...metadata,
+    title: copy.title,
+    description: copy.description,
+    ...(metadata.openGraph
+      ? {
+          openGraph: {
+            ...metadata.openGraph,
+            title: copy.title,
+            description: copy.description,
+            locale: OPEN_GRAPH_LOCALES[locale],
+          },
+        }
+      : {}),
+    ...(metadata.twitter
+      ? {
+          twitter: {
+            ...metadata.twitter,
+            title: copy.title,
+            description: copy.description,
+          },
+        }
+      : {}),
+  };
+}
+
+export async function getLocalizedMetadata(
+  metadata: Metadata,
+  page: MetadataPage,
+): Promise<Metadata> {
+  const requestedLocale = await getLocale();
+  const locale = isSupportedLocale(requestedLocale) ? requestedLocale : "en";
+  const t = await getTranslations({ locale, namespace: "metadata" });
+
+  return localizeMetadata(
+    metadata,
+    {
+      title: t(`${page}.title`),
+      description: t(`${page}.description`),
+    },
+    locale,
+  );
+}
 
 /**
  * Metadata par défaut (fallback)

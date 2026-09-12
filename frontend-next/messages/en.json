@@ -2594,6 +2594,81 @@
     "xp": "XP",
     "profileAttractive": "Your profile is becoming really attractive to recruiters."
   },
+  "metadata": {
+    "home": {
+      "title": "HuntZen Jobs - Job search, CV analysis and career coaching",
+      "description": "Find relevant jobs, analyze your CV and structure your job search with HuntZen Jobs tools and career assistants."
+    },
+    "jobs": {
+      "title": "Jobs in France - Permanent, temporary, internship and apprenticeship",
+      "description": "Explore job listings, refine your search and compare opportunities by role, country and criteria."
+    },
+    "cvAnalysis": {
+      "title": "CV analysis and ATS score | HuntZen Jobs",
+      "description": "Analyze your CV, get an ATS score and receive personalized recommendations to improve your applications."
+    },
+    "salons": {
+      "title": "Job fairs and career forums | HuntZen Jobs",
+      "description": "Discover job fairs, career forums and events where you can meet recruiters and find new opportunities."
+    },
+    "assistant": {
+      "title": "Career and job search assistants | HuntZen Jobs",
+      "description": "Prepare your job search, CV and career strategy with HuntZen Jobs career assistants."
+    },
+    "pricing": {
+      "title": "Pricing and subscriptions | HuntZen Jobs",
+      "description": "Compare HuntZen Jobs plans and choose the tools that fit your job search, with no long-term commitment."
+    },
+    "terms": {
+      "title": "Terms and conditions | HuntZen Jobs",
+      "description": "Read the terms and conditions governing the HuntZen Jobs platform and services."
+    },
+    "privacy": {
+      "title": "Privacy policy and GDPR | HuntZen Jobs",
+      "description": "Learn how HuntZen Jobs collects, protects and uses your personal data in accordance with the GDPR."
+    },
+    "about": {
+      "title": "About HuntZen Jobs",
+      "description": "Discover the HuntZen Jobs mission and the tools designed to make job searching clearer, more structured and effective."
+    },
+    "faq": {
+      "title": "Frequently asked questions | HuntZen Jobs",
+      "description": "Find answers about job searching, CV analysis, career assistants and HuntZen Jobs subscriptions."
+    },
+    "contact": {
+      "title": "Contact and support | HuntZen Jobs",
+      "description": "Contact the HuntZen Jobs team with questions about your account, subscription or use of the platform."
+    },
+    "legal": {
+      "title": "Legal notice | HuntZen Jobs",
+      "description": "Read information about the publisher, hosting provider and rules applicable to the HuntZen Jobs website."
+    },
+    "testimonials": {
+      "title": "Customer experiences | HuntZen Jobs",
+      "description": "Discover verified customer experiences with HuntZen Jobs."
+    },
+    "login": {
+      "title": "Log in | HuntZen Jobs",
+      "description": "Log in to your HuntZen Jobs account to access your workspace."
+    },
+    "signup": {
+      "title": "Create a free account | HuntZen Jobs",
+      "description": "Create your free HuntZen Jobs account and start organizing your job search."
+    },
+    "forgotPassword": {
+      "title": "Forgot password | HuntZen Jobs",
+      "description": "Request a secure link to reset your HuntZen Jobs account password."
+    },
+    "maintenance": {
+      "title": "Maintenance | HuntZen Jobs",
+      "description": "HuntZen Jobs is temporarily unavailable while maintenance is in progress."
+    }
+  },
+  "maintenance": {
+    "title": "Maintenance in progress",
+    "description": "HuntZen is temporarily unavailable while we perform an update.",
+    "backSoon": "We will be back very soon. Thank you for your patience."
+  },
   "seo": {
     "links": {
       "discoverFeatures": "Discover all HuntZen Jobs features",

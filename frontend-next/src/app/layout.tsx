@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SkipLink } from "@/components/ui/skip-link";
-import { homeMetadata } from "@/lib/seo/metadata";
+import { getLocalizedMetadata, homeMetadata } from "@/lib/seo/metadata";
 import { HomePageSchemas } from "@/components/seo/structured-data";
 import { inter, dmSans } from "@/lib/fonts";
 import { NextIntlClientProvider } from "next-intl";
@@ -13,8 +13,9 @@ import { GoogleTagManager } from "@/components/analytics/google-tag-manager";
 import { createClient } from "@/lib/supabase/server";
 import { PwaProvider } from "@/components/providers/pwa-provider";
 
-// Metadata optimisées pour SEO 100/100
-export const metadata: Metadata = homeMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(homeMetadata, "home");
+}
 
 export const viewport: Viewport = {
   width: "device-width",

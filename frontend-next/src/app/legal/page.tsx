@@ -4,13 +4,18 @@ import { Scale, ChevronRight } from "lucide-react";
 import { LandingHeader } from "@/components/landing-header";
 import { Footer } from "@/components/layout/footer";
 import { getTranslations } from "next-intl/server";
+import { getLocalizedMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+const legalMetadata: Metadata = {
   title: "Mentions l\u00e9gales | HuntZen Jobs",
   description:
     "Mentions l\u00e9gales de HuntZen Jobs -- \u00e9diteur, h\u00e9bergeur, propri\u00e9t\u00e9 intellectuelle et conditions d'utilisation.",
   robots: { index: true, follow: true },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(legalMetadata, "legal");
+}
 
 export default async function LegalPage() {
   const t = await getTranslations("legal");

@@ -1,7 +1,9 @@
 import { Metadata } from "next";
-import { assistantMetadata } from "@/lib/seo/metadata";
+import { assistantMetadata, getLocalizedMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = assistantMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(assistantMetadata, "assistant");
+}
 
 export default function AssistantLayout({
   children,

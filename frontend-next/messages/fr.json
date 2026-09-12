@@ -2595,6 +2595,81 @@
     "xp": "XP",
     "profileAttractive": "Ton profil devient vraiment intéressant pour les recruteurs."
   },
+  "metadata": {
+    "home": {
+      "title": "HuntZen Jobs - Recherche emploi, CV et coaching carrière",
+      "description": "Trouvez des offres adaptées, analysez votre CV et structurez votre recherche d'emploi avec les outils et assistants carrière HuntZen Jobs."
+    },
+    "jobs": {
+      "title": "Offres d'emploi en France - CDI, CDD, alternance et stage",
+      "description": "Explorez des offres d'emploi, affinez votre recherche et comparez les opportunités selon votre métier, votre pays et vos critères."
+    },
+    "cvAnalysis": {
+      "title": "Analyse CV et score ATS | HuntZen Jobs",
+      "description": "Analysez votre CV, obtenez un score ATS et recevez des recommandations personnalisées pour améliorer vos candidatures."
+    },
+    "salons": {
+      "title": "Salons et forums emploi | HuntZen Jobs",
+      "description": "Découvrez les salons, forums et événements emploi pour rencontrer des recruteurs et développer vos opportunités professionnelles."
+    },
+    "assistant": {
+      "title": "Assistants carrière et recherche d'emploi | HuntZen Jobs",
+      "description": "Préparez votre recherche d'emploi, votre CV et votre stratégie professionnelle avec les assistants carrière HuntZen Jobs."
+    },
+    "pricing": {
+      "title": "Tarifs et abonnements | HuntZen Jobs",
+      "description": "Comparez les plans HuntZen Jobs et choisissez les outils adaptés à votre recherche d'emploi, sans engagement."
+    },
+    "terms": {
+      "title": "Conditions générales d'utilisation | HuntZen Jobs",
+      "description": "Consultez les conditions générales d'utilisation de la plateforme et des services HuntZen Jobs."
+    },
+    "privacy": {
+      "title": "Politique de confidentialité et RGPD | HuntZen Jobs",
+      "description": "Découvrez comment HuntZen Jobs collecte, protège et utilise vos données personnelles conformément au RGPD."
+    },
+    "about": {
+      "title": "À propos de HuntZen Jobs",
+      "description": "Découvrez la mission de HuntZen Jobs et les outils conçus pour rendre la recherche d'emploi plus claire, structurée et efficace."
+    },
+    "faq": {
+      "title": "Questions fréquentes | HuntZen Jobs",
+      "description": "Retrouvez les réponses aux questions fréquentes sur la recherche d'emploi, l'analyse CV, les assistants et les abonnements HuntZen Jobs."
+    },
+    "contact": {
+      "title": "Contact et support | HuntZen Jobs",
+      "description": "Contactez l'équipe HuntZen Jobs pour toute question concernant votre compte, votre abonnement ou l'utilisation de la plateforme."
+    },
+    "legal": {
+      "title": "Mentions légales | HuntZen Jobs",
+      "description": "Consultez les informations relatives à l'éditeur, à l'hébergement et aux règles applicables au site HuntZen Jobs."
+    },
+    "testimonials": {
+      "title": "Retours d'expérience | HuntZen Jobs",
+      "description": "Découvrez les retours d'expérience HuntZen Jobs publiés après vérification."
+    },
+    "login": {
+      "title": "Connexion | HuntZen Jobs",
+      "description": "Connectez-vous à votre compte HuntZen Jobs pour accéder à votre espace."
+    },
+    "signup": {
+      "title": "Inscription gratuite | HuntZen Jobs",
+      "description": "Créez gratuitement votre compte HuntZen Jobs et commencez à structurer votre recherche d'emploi."
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié | HuntZen Jobs",
+      "description": "Demandez un lien sécurisé pour réinitialiser le mot de passe de votre compte HuntZen Jobs."
+    },
+    "maintenance": {
+      "title": "Maintenance | HuntZen Jobs",
+      "description": "HuntZen Jobs est temporairement indisponible pendant une opération de maintenance."
+    }
+  },
+  "maintenance": {
+    "title": "Maintenance en cours",
+    "description": "HuntZen est temporairement indisponible pour une mise à jour.",
+    "backSoon": "Nous serons de retour très prochainement. Merci pour votre patience."
+  },
   "seo": {
     "links": {
       "discoverFeatures": "Découvrez toutes les fonctionnalités de HuntZen Jobs",

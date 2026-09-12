@@ -1,7 +1,9 @@
 import { Metadata } from "next";
-import { cvAnalysisMetadata } from "@/lib/seo/metadata";
+import { cvAnalysisMetadata, getLocalizedMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = cvAnalysisMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(cvAnalysisMetadata, "cvAnalysis");
+}
 
 export default function CVAnalysisLayout({
   children,

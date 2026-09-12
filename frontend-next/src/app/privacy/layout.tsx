@@ -1,7 +1,9 @@
 import { Metadata } from "next";
-import { privacyMetadata } from "@/lib/seo/metadata";
+import { getLocalizedMetadata, privacyMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = privacyMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(privacyMetadata, "privacy");
+}
 
 export default function PrivacyLayout({
   children,

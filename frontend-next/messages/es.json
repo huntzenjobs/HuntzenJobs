@@ -2614,6 +2614,81 @@
     "xp": "XP",
     "profileAttractive": "Your profile is becoming really attractive to recruiters."
   },
+  "metadata": {
+    "home": {
+      "title": "HuntZen Jobs - Búsqueda de empleo, análisis de CV y orientación",
+      "description": "Encuentra empleos relevantes, analiza tu CV y organiza tu búsqueda con las herramientas y asistentes de carrera de HuntZen Jobs."
+    },
+    "jobs": {
+      "title": "Ofertas de empleo en Francia | HuntZen Jobs",
+      "description": "Explora ofertas de empleo, afina tu búsqueda y compara oportunidades por puesto, país y criterios."
+    },
+    "cvAnalysis": {
+      "title": "Análisis de CV y puntuación ATS | HuntZen Jobs",
+      "description": "Analiza tu CV, obtén una puntuación ATS y recibe recomendaciones personalizadas para mejorar tus candidaturas."
+    },
+    "salons": {
+      "title": "Ferias y foros de empleo | HuntZen Jobs",
+      "description": "Descubre ferias, foros y eventos de empleo para conocer reclutadores y encontrar nuevas oportunidades."
+    },
+    "assistant": {
+      "title": "Asistentes de carrera y búsqueda de empleo | HuntZen Jobs",
+      "description": "Prepara tu búsqueda de empleo, tu CV y tu estrategia profesional con los asistentes de carrera de HuntZen Jobs."
+    },
+    "pricing": {
+      "title": "Precios y suscripciones | HuntZen Jobs",
+      "description": "Compara los planes de HuntZen Jobs y elige las herramientas que se adapten a tu búsqueda de empleo, sin permanencia."
+    },
+    "terms": {
+      "title": "Términos y condiciones | HuntZen Jobs",
+      "description": "Consulta los términos y condiciones que rigen la plataforma y los servicios de HuntZen Jobs."
+    },
+    "privacy": {
+      "title": "Política de privacidad y RGPD | HuntZen Jobs",
+      "description": "Descubre cómo HuntZen Jobs recopila, protege y utiliza tus datos personales de acuerdo con el RGPD."
+    },
+    "about": {
+      "title": "Acerca de HuntZen Jobs",
+      "description": "Descubre la misión de HuntZen Jobs y las herramientas diseñadas para hacer la búsqueda de empleo más clara y eficaz."
+    },
+    "faq": {
+      "title": "Preguntas frecuentes | HuntZen Jobs",
+      "description": "Encuentra respuestas sobre búsqueda de empleo, análisis de CV, asistentes de carrera y suscripciones de HuntZen Jobs."
+    },
+    "contact": {
+      "title": "Contacto y soporte | HuntZen Jobs",
+      "description": "Contacta con el equipo de HuntZen Jobs para resolver dudas sobre tu cuenta, suscripción o uso de la plataforma."
+    },
+    "legal": {
+      "title": "Aviso legal | HuntZen Jobs",
+      "description": "Consulta la información sobre el editor, el alojamiento y las normas aplicables al sitio web de HuntZen Jobs."
+    },
+    "testimonials": {
+      "title": "Experiencias de usuarios | HuntZen Jobs",
+      "description": "Descubre experiencias verificadas de usuarios de HuntZen Jobs."
+    },
+    "login": {
+      "title": "Iniciar sesión | HuntZen Jobs",
+      "description": "Inicia sesión en tu cuenta de HuntZen Jobs para acceder a tu espacio."
+    },
+    "signup": {
+      "title": "Crear una cuenta gratis | HuntZen Jobs",
+      "description": "Crea tu cuenta gratuita de HuntZen Jobs y empieza a organizar tu búsqueda de empleo."
+    },
+    "forgotPassword": {
+      "title": "Contraseña olvidada | HuntZen Jobs",
+      "description": "Solicita un enlace seguro para restablecer la contraseña de tu cuenta de HuntZen Jobs."
+    },
+    "maintenance": {
+      "title": "Mantenimiento | HuntZen Jobs",
+      "description": "HuntZen Jobs no está disponible temporalmente mientras se realizan tareas de mantenimiento."
+    }
+  },
+  "maintenance": {
+    "title": "Mantenimiento en curso",
+    "description": "HuntZen no está disponible temporalmente mientras realizamos una actualización.",
+    "backSoon": "Volveremos muy pronto. Gracias por tu paciencia."
+  },
   "seo": {
     "links": {
       "discoverFeatures": "Discover all HuntZen Jobs features",

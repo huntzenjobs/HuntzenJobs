@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 
-import { contactMetadata } from "@/lib/seo/metadata";
+import { contactMetadata, getLocalizedMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = contactMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(contactMetadata, "contact");
+}
 
 export default function ContactLayout({
   children,

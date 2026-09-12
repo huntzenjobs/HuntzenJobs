@@ -3,12 +3,17 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LandingHeader } from "@/components/landing-header";
 import { Footer } from "@/components/layout/footer";
+import { getLocalizedMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+const testimonialsPageMetadata: Metadata = {
   title: "Retours d'expérience | HuntZen Jobs",
   description:
     "Les retours d'expérience HuntZen Jobs seront publiés après vérification.",
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(testimonialsPageMetadata, "testimonials");
+}
 
 export default async function TestimonialsPage() {
   const t = await getTranslations("testimonials");

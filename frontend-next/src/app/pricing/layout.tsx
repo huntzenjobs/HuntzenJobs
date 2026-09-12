@@ -1,7 +1,9 @@
 import { Metadata } from "next";
-import { pricingMetadata } from "@/lib/seo/metadata";
+import { getLocalizedMetadata, pricingMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = pricingMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(pricingMetadata, "pricing");
+}
 
 export default function PricingLayout({
   children,

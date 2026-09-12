@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { loginMetadata } from "@/lib/seo/metadata";
+import { getLocalizedMetadata, loginMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = loginMetadata;
+export async function generateMetadata(): Promise<Metadata> {
+  return getLocalizedMetadata(loginMetadata, "login");
+}
 
 export default function LoginLayout({
   children,
