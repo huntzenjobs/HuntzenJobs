@@ -1,16 +1,34 @@
 """Tests du découpage fiable des campagnes email Resend."""
 
 import pytest
-
 from src.services.bulk_email import (
     build_resend_batches,
     collect_paginated,
     create_preference_token,
     decode_preference_token,
+    is_resend_quota_error,
     normalize_sender,
     render_campaign_email,
     send_resend_batches,
 )
+
+
+class FakeResendError(Exception):
+    def __init__(self, error_type: str, message: str) -> None:
+        super().__init__(message)
+        self.error_type = error_type
+
+
+def test_only_explicit_resend_quota_errors_are_deferred() -> None:
+    assert is_resend_quota_error(
+        FakeResendError("daily_quota_exceeded", "Daily quota reached")
+    )
+    assert is_resend_quota_error(
+        FakeResendError("monthly_quota_exceeded", "Monthly quota reached")
+    )
+    assert not is_resend_quota_error(
+        FakeResendError("rate_limit_exceeded", "Too many requests")
+    )
 
 
 def test_build_resend_batches_sends_every_unique_recipient() -> None:

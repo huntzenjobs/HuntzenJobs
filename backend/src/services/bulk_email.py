@@ -58,6 +58,14 @@ def newsletter_subscription_state(result: Any) -> bool | None:
     return bool(data.get("newsletter_subscribed"))
 
 
+def is_resend_quota_error(error: Exception) -> bool:
+    """Distingue une limite de volume explicite d'un échec d'envoi ambigu."""
+    return getattr(error, "error_type", None) in {
+        "daily_quota_exceeded",
+        "monthly_quota_exceeded",
+    }
+
+
 def validate_frozen_campaign(
     campaign: dict[str, Any],
     campaign_type: CampaignType,

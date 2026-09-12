@@ -28,6 +28,16 @@ interface CampaignPreview {
   html: string;
 }
 
+export function campaignFailureMessage(status: string): string {
+  if (status === "running") {
+    return "Un envoi est encore en cours. Gardez cet identifiant de campagne.";
+  }
+  if (status === "deferred") {
+    return "Quota email atteint. La campagne est conservée et pourra reprendre avec le même identifiant.";
+  }
+  return "La campagne exige une vérification manuelle.";
+}
+
 async function adminRequest(path: string, init?: RequestInit) {
   const supabase = createClient();
   const {
@@ -159,11 +169,7 @@ export default function SendEmailDialog(props: Props) {
           },
         );
         if (!result.ok) {
-          throw new Error(
-            result.status === "running"
-              ? "Un envoi est encore en cours. Gardez cet identifiant de campagne."
-              : "La campagne exige une vérification manuelle.",
-          );
+          throw new Error(campaignFailureMessage(result.status));
         }
         toast.success(
           `${result.sent} envoyé(s), ${result.skipped} ignoré(s), ${result.failed} en échec`,

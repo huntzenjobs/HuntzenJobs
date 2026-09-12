@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import SendEmailDialog from "@/components/admin/users/send-email-dialog";
+import SendEmailDialog, {
+  campaignFailureMessage,
+} from "@/components/admin/users/send-email-dialog";
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
@@ -36,6 +38,15 @@ describe("SendEmailDialog", () => {
           }),
         };
       }),
+    );
+  });
+
+  it("explique qu'une campagne différée peut reprendre sans doublon", () => {
+    expect(campaignFailureMessage("deferred")).toContain(
+      "pourra reprendre avec le même identifiant",
+    );
+    expect(campaignFailureMessage("failed")).toContain(
+      "vérification manuelle",
     );
   });
 

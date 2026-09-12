@@ -24,6 +24,7 @@ from src.services.bulk_email import (
     CampaignType,
     create_preference_token,
     is_campaign_recipient_eligible,
+    is_resend_quota_error,
     normalize_sender,
     render_campaign_email,
     validate_frozen_campaign,
@@ -2958,7 +2959,12 @@ async def send_campaign(
             updated_at = datetime.now(UTC).isoformat()
             if sent_ids:
                 supabase.table("email_campaign_deliveries").update(
-                    {"status": "sent", "sent_at": updated_at, "updated_at": updated_at}
+                    {
+                        "status": "sent",
+                        "sent_at": updated_at,
+                        "error_code": None,
+                        "updated_at": updated_at,
+                    }
                 ).in_("id", sent_ids).execute()
             if failed_ids:
                 supabase.table("email_campaign_deliveries").update(
@@ -2966,6 +2972,40 @@ async def send_campaign(
                 ).in_("id", failed_ids).execute()
             await asyncio.sleep(0.25)
         except Exception as exc:
+            if is_resend_quota_error(exc):
+                updated_at = datetime.now(UTC).isoformat()
+                error_code = str(getattr(exc, "error_type", "email_quota_exceeded"))
+                supabase.table("email_campaign_deliveries").update(
+                    {
+                        "status": "pending",
+                        "error_code": error_code,
+                        "claimed_at": None,
+                        "updated_at": updated_at,
+                    }
+                ).in_("id", send_delivery_ids).execute()
+                summary = _campaign_summary(supabase, campaign_id)
+                supabase.table("email_campaigns").update(
+                    {
+                        "status": "running",
+                        "sent_count": summary["sent"],
+                        "failed_count": summary["failed"] + summary["needs_review"],
+                        "skipped_count": summary["skipped"],
+                        "updated_at": updated_at,
+                    }
+                ).eq("id", campaign_id).execute()
+                logger.warning(
+                    "Campaign deferred until email quota is available",
+                    campaign_id=campaign_id,
+                    batch_number=batch_number,
+                    error_code=error_code,
+                )
+                return {
+                    "ok": False,
+                    "campaign_id": campaign_id,
+                    "status": "deferred",
+                    "retryable": True,
+                    **summary,
+                }
             supabase.table("email_campaign_deliveries").update(
                 {"status": "needs_review", "error_code": type(exc).__name__, "updated_at": datetime.now(UTC).isoformat()}
             ).in_("id", send_delivery_ids).execute()
