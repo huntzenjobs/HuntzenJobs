@@ -85,13 +85,18 @@ export function SettingsSection({
       const supabase = createClient();
 
       try {
-        const { error } = await supabase
-          .from("profiles")
-          .update({
-            [field]: value,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", userId);
+        const { error } =
+          field === "newsletter_subscribed"
+            ? await supabase.rpc("set_newsletter_preference", {
+                p_subscribed: value,
+              })
+            : await supabase
+                .from("profiles")
+                .update({
+                  [field]: value,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", userId);
 
         if (error) {
           console.error("Settings update error:", error);

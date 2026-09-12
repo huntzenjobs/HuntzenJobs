@@ -28,6 +28,7 @@ from src.api.routes.expat import router as expat_router
 from src.api.routes.health import router as health_router
 from src.api.routes.insider_finder import router as insider_finder_router
 from src.api.routes.jobs import router as jobs_router
+from src.api.routes.marketing import router as marketing_router
 from src.api.routes.notifications import router as notifications_router
 from src.api.routes.pages import router as pages_router
 from src.api.routes.presence import banner_router, presence_router, tracking_router
@@ -58,6 +59,7 @@ router.include_router(saved_recruiters_router, tags=["Saved Recruiters"])
 router.include_router(coach_router, prefix="/api/coach", tags=["Career Coach"])
 router.include_router(assistant_router, prefix="/api/assistant", tags=["Multi-Assistant"])
 router.include_router(jobs_router, prefix="/api/jobs", tags=["Job Search"])
+router.include_router(marketing_router, prefix="/api/marketing", tags=["Marketing Preferences"])
 router.include_router(cv_analysis_router, prefix="/api/cv-analysis", tags=["CV Analysis Async"])
 router.include_router(cv_adapter_router, prefix="/api/cv-adapter", tags=["CV Adapter"])
 router.include_router(recruiter_router, prefix="/api/recruiter", tags=["Recruiter Contact"])

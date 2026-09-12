@@ -7,7 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, XCircle, UserX, Mail, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  XCircle,
+  UserX,
+  Mail,
+  Megaphone,
+  RefreshCw,
+} from "lucide-react";
 import SendEmailDialog from "@/components/admin/users/send-email-dialog";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -80,10 +87,12 @@ function BulkEmailButton({
   segment,
   count,
   disabled,
+  label,
 }: {
   segment: string;
   count: number;
   disabled: boolean;
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -95,7 +104,7 @@ function BulkEmailButton({
         disabled={disabled || count === 0}
       >
         <Mail className="h-4 w-4 mr-2" />
-        Envoyer un email ({count})
+        {label || `Envoyer un email (${count})`}
       </Button>
       <SendEmailDialog
         open={open}
@@ -113,6 +122,8 @@ export default function SegmentsPage() {
   const [neverConverted, setNeverConverted] = useState<NeverConvertedUser[]>(
     [],
   );
+  const [activeAccountCount, setActiveAccountCount] = useState(0);
+  const [newsletterCount, setNewsletterCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [emailTarget, setEmailTarget] = useState<{
     userId: string;
@@ -122,14 +133,18 @@ export default function SegmentsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [ar, ch, nc] = await Promise.all([
+      const [ar, ch, nc, serviceUpdate, marketing] = await Promise.all([
         adminFetch("/api/admin/segments/at-risk"),
         adminFetch("/api/admin/segments/about-to-churn"),
         adminFetch("/api/admin/segments/never-converted"),
+        adminFetch("/api/admin/campaigns/service-update/preview"),
+        adminFetch("/api/admin/campaigns/marketing-reactivation/preview"),
       ]);
       setAtRisk(ar.users || []);
       setChurn(ch.users || []);
       setNeverConverted(nc.users || []);
+      setActiveAccountCount(serviceUpdate.recipient_count || 0);
+      setNewsletterCount(marketing.recipient_count || 0);
     } catch {
       toast.error("Impossible de charger les segments");
     } finally {
@@ -156,6 +171,74 @@ export default function SegmentsPage() {
           />
           Actualiser
         </Button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="h-full border-cyan-200 bg-cyan-50/60">
+          <CardContent className="flex h-full flex-col gap-5 p-6">
+            <div className="flex items-start gap-4">
+              <div className="rounded-xl bg-cyan-100 p-3 text-cyan-700">
+                <Mail className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">
+                  Étape 1
+                </p>
+                <h2 className="mt-1 text-lg font-semibold">Email relationnel</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Présentez les nouveautés du service sans promotion tarifaire et
+                  invitez chacun à choisir ses communications.
+                </p>
+                <p className="mt-2 text-sm font-medium text-cyan-800">
+                  {activeAccountCount} comptes actifs
+                </p>
+              </div>
+            </div>
+            <div className="mt-auto">
+              <BulkEmailButton
+                segment="active-accounts"
+                count={activeAccountCount}
+                disabled={loading}
+                label="Préparer l'email relationnel"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="h-full overflow-hidden border-cyan-200 bg-gradient-to-r from-slate-950 to-slate-900 text-white">
+          <CardContent className="flex h-full flex-col gap-5 p-6">
+            <div className="flex items-start gap-4">
+              <div className="rounded-xl bg-cyan-400/15 p-3 text-cyan-300">
+                <Megaphone className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">
+                  Étape 2
+                </p>
+                <h2 className="mt-1 text-lg font-semibold">
+                  Campagne de réactivation
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-300">
+                Invitez les utilisateurs ayant accepté les communications à
+                revenir découvrir les offres, les assistants et les formules
+                HuntZen.
+                </p>
+                <p className="mt-2 text-sm font-medium text-cyan-300">
+                  {newsletterCount} destinataire{newsletterCount === 1 ? "" : "s"}{" "}
+                  autorisé{newsletterCount === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+            <div className="mt-auto">
+              <BulkEmailButton
+                segment="newsletter-subscribers"
+                count={newsletterCount}
+                disabled={loading}
+                label="Préparer la campagne commerciale"
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="at-risk">

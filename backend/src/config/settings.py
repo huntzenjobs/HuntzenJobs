@@ -148,6 +148,10 @@ class Settings(BaseSettings):
     # --------------------------------------------------------------------------
     # Security
     # --------------------------------------------------------------------------
+    jwt_secret: SecretStr = Field(
+        default=SecretStr(""),
+        description="Secret used for HuntZen signed application tokens",
+    )
     cors_origins_str: str = Field(
         default="http://localhost:3000,https://huntzenjobs.com,https://www.huntzenjobs.com",
         description="Allowed CORS origins (comma-separated string)",
@@ -234,6 +238,10 @@ class Settings(BaseSettings):
     def get_resend_api_key(self) -> str:
         """Get Resend API key as string."""
         return self.resend_api_key.get_secret_value()
+
+    def get_jwt_secret(self) -> str:
+        """Get the application JWT signing secret as string."""
+        return self.jwt_secret.get_secret_value()
 
     def get_jina_key(self) -> str:
         """Get Jina AI API key as string (free tier, embeddings)."""

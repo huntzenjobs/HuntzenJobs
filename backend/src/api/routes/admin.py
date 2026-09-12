@@ -5,18 +5,29 @@ Complete admin API for user management, plan editing, analytics, and logs.
 All endpoints require is_admin = TRUE in profiles table.
 """
 
+import asyncio
 import json
 from datetime import UTC, datetime, timedelta
-from typing import Any
-from uuid import uuid4
+from typing import Any, Literal
+from uuid import UUID, uuid4
 
 import stripe as stripe_lib
-from fastapi import APIRouter, HTTPException, Query, status
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
 from structlog import get_logger
 
 from src.api.deps import AdminUserDep, get_supabase_client
 from src.config.settings import get_settings
+from src.services.bulk_email import (
+    CAMPAIGN_TEMPLATE_VERSIONS,
+    CampaignSendRequest,
+    CampaignType,
+    create_preference_token,
+    is_campaign_recipient_eligible,
+    normalize_sender,
+    render_campaign_email,
+    validate_frozen_campaign,
+)
 from src.services.email import (
     send_application_confirmation,
     send_application_status_change,
@@ -2284,6 +2295,61 @@ async def reset_user_usage(user_id: str, admin: AdminUserDep) -> dict[str, Any]:
 # SEGMENTS & RETENTION
 # ============================================================
 
+def _get_active_profiles(
+    supabase: Any,
+    *,
+    newsletter_only: bool,
+) -> list[dict[str, Any]]:
+    """Retourne tous les profils actifs, avec filtre marketing optionnel."""
+    profiles: list[dict[str, Any]] = []
+    last_id: str | None = None
+    while True:
+        query = (
+            supabase.table("profiles")
+            .select(
+                "id, email, full_name, preferred_language, status, "
+                "newsletter_subscribed, newsletter_consent_at, "
+                "newsletter_unsubscribed_at"
+            )
+            .eq("status", "active")
+            .order("id")
+            .limit(500)
+        )
+        if last_id:
+            query = query.gt("id", last_id)
+        if newsletter_only:
+            query = (
+                query.eq("newsletter_subscribed", True)
+                .not_.is_("newsletter_consent_at", "null")
+                .is_("newsletter_unsubscribed_at", "null")
+            )
+        page = query.execute().data or []
+        profiles.extend(page)
+        if len(page) < 500:
+            return profiles
+        last_id = str(page[-1]["id"])
+
+
+@router.get("/segments/active-accounts")
+async def get_active_accounts(admin: AdminUserDep) -> dict[str, Any]:
+    """Audience de l'email relationnel sur les nouveautés du service."""
+    profiles = _get_active_profiles(
+        get_supabase_client(),
+        newsletter_only=False,
+    )
+    return {"users": profiles, "total": len(profiles)}
+
+
+@router.get("/segments/newsletter-subscribers")
+async def get_newsletter_subscribers(admin: AdminUserDep) -> dict[str, Any]:
+    """Audience autorisée pour les campagnes marketing Huntzen."""
+    profiles = _get_active_profiles(
+        get_supabase_client(),
+        newsletter_only=True,
+    )
+    return {"users": profiles, "total": len(profiles)}
+
+
 @router.get("/segments/at-risk")
 async def get_at_risk_users(admin: AdminUserDep) -> dict[str, Any]:
     """Abonnés actifs sans usage depuis 7+ jours."""
@@ -2608,6 +2674,423 @@ async def get_mrr_forecast(admin: AdminUserDep) -> dict[str, Any]:
 # EMAIL CUSTOM
 # ============================================================
 
+CAMPAIGN_TYPES: tuple[CampaignType, ...] = (
+    "service-update",
+    "marketing-reactivation",
+)
+
+
+class ResolveCampaignRequest(BaseModel):
+    delivery_ids: list[int] = Field(min_length=1, max_length=100)
+    resolution: Literal["sent", "failed"]
+    reason: str = Field(min_length=3, max_length=200)
+
+
+def _validated_campaign_type(value: str) -> CampaignType:
+    if value not in CAMPAIGN_TYPES:
+        raise HTTPException(status_code=404, detail="Type de campagne inconnu")
+    return value
+
+
+def _campaign_profiles(supabase: Any, campaign_type: CampaignType) -> list[dict[str, Any]]:
+    profiles = _get_active_profiles(
+        supabase,
+        newsletter_only=campaign_type == "marketing-reactivation",
+    )
+    unique: dict[str, dict[str, Any]] = {}
+    for profile in profiles:
+        email = str(profile.get("email") or "").strip()
+        user_id = str(profile.get("id") or "")
+        if user_id and email and is_campaign_recipient_eligible(campaign_type, profile):
+            unique[user_id] = profile
+    return [unique[user_id] for user_id in sorted(unique)]
+
+
+def _campaign_summary(supabase: Any, campaign_id: str) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    last_id = 0
+    while True:
+        page = (
+            supabase.table("email_campaign_deliveries")
+            .select("id, status")
+            .eq("campaign_id", campaign_id)
+            .gt("id", last_id)
+            .order("id")
+            .limit(500)
+            .execute()
+        ).data or []
+        rows.extend(page)
+        if len(page) < 500:
+            break
+        last_id = int(page[-1]["id"])
+    counts = {
+        state: sum(1 for row in rows if row.get("status") == state)
+        for state in ("pending", "sending", "sent", "failed", "skipped", "needs_review")
+    }
+    return {"total": len(rows), **counts}
+
+
+def _freeze_campaign(
+    *,
+    supabase: Any,
+    campaign_type: CampaignType,
+    request_data: CampaignSendRequest,
+    admin_id: str,
+) -> dict[str, Any]:
+    campaign_id = str(request_data.campaign_id)
+    try:
+        frozen = supabase.rpc(
+            "freeze_email_campaign",
+            {
+                "p_campaign_id": campaign_id,
+                "p_campaign_type": campaign_type,
+                "p_template_version": CAMPAIGN_TEMPLATE_VERSIONS[campaign_type],
+                "p_created_by": admin_id,
+                "p_confirmed_total": request_data.confirmed_recipient_count,
+            },
+        ).execute().data or []
+    except Exception as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Le volume confirmé ou l'état de la campagne a changé",
+        ) from exc
+    if not frozen:
+        raise HTTPException(status_code=409, detail="La campagne n'a pas pu être figée")
+    validate_frozen_campaign(
+        frozen[0],
+        campaign_type,
+        request_data.confirmed_recipient_count,
+        CAMPAIGN_TEMPLATE_VERSIONS[campaign_type],
+    )
+    return frozen[0]
+
+
+@router.get("/campaigns/{campaign_type}/preview")
+async def preview_campaign(
+    campaign_type: str,
+    request: Request,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Retourne le modèle serveur exact et son audience actuelle."""
+    del admin
+    validated_type = _validated_campaign_type(campaign_type)
+    profiles = _campaign_profiles(get_supabase_client(), validated_type)
+    rendered = render_campaign_email(
+        campaign_type=validated_type,
+        language="fr",
+        first_name=None,
+        app_url=get_settings().frontend_url.split(",")[0].strip(),
+        preferences_token="preview-token",
+        preferences_base_url=str(request.base_url).rstrip("/"),
+    )
+    return {
+        "campaign_type": validated_type,
+        "template_version": CAMPAIGN_TEMPLATE_VERSIONS[validated_type],
+        "recipient_count": len(profiles),
+        "subject": rendered["subject"],
+        "html": rendered["html"],
+    }
+
+
+@router.post("/campaigns/{campaign_type}/send")
+async def send_campaign(
+    campaign_type: str,
+    req: CampaignSendRequest,
+    request: Request,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Fige l'audience puis envoie les lots stables d'un modèle serveur."""
+    import resend as resend_lib
+
+    validated_type = _validated_campaign_type(campaign_type)
+    supabase = get_supabase_client()
+    settings = get_settings()
+    if not settings.get_resend_api_key() or not settings.get_jwt_secret():
+        raise HTTPException(status_code=503, detail="Configuration email incomplète")
+
+    campaign = _freeze_campaign(
+        supabase=supabase,
+        campaign_type=validated_type,
+        request_data=req,
+        admin_id=admin["id"],
+    )
+    campaign_id = str(req.campaign_id)
+    if campaign.get("status") == "completed":
+        return {"ok": True, "campaign_id": campaign_id, **_campaign_summary(supabase, campaign_id)}
+    if campaign.get("status") in {"cancelled", "failed"}:
+        raise HTTPException(status_code=409, detail="Cette campagne exige une revue manuelle")
+
+    current_summary = _campaign_summary(supabase, campaign_id)
+    if current_summary["sending"]:
+        stale_before = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+        stale = (
+            supabase.table("email_campaign_deliveries")
+            .update(
+                {
+                    "status": "needs_review",
+                    "error_code": "stale_ambiguous_batch",
+                    "updated_at": datetime.now(UTC).isoformat(),
+                }
+            )
+            .eq("campaign_id", campaign_id)
+            .eq("status", "sending")
+            .lt("claimed_at", stale_before)
+            .execute()
+        ).data or []
+        if stale:
+            supabase.table("email_campaigns").update(
+                {"status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+            ).eq("id", campaign_id).execute()
+            raise HTTPException(
+                status_code=409,
+                detail="Un lot ambigu exige une revue manuelle avant toute reprise",
+            )
+        return {
+            "ok": False,
+            "campaign_id": campaign_id,
+            "status": "running",
+            **current_summary,
+        }
+
+    now = datetime.now(UTC).isoformat()
+    supabase.table("email_campaigns").update(
+        {"status": "running", "started_at": campaign.get("started_at") or now, "updated_at": now}
+    ).eq("id", campaign_id).in_("status", ["ready", "running"]).execute()
+    resend_lib.api_key = settings.get_resend_api_key()
+    public_api_url = str(request.base_url).rstrip("/")
+    app_url = settings.frontend_url.split(",")[0].strip()
+
+    while True:
+        claimed = supabase.rpc(
+            "claim_email_campaign_deliveries",
+            {"p_campaign_id": campaign_id, "p_limit": 100},
+        ).execute().data or []
+        if not claimed:
+            break
+        user_ids = [row["user_id"] for row in claimed]
+        batch_number = claimed[0]["batch_number"]
+        profile_rows = (
+            supabase.table("profiles")
+            .select(
+                "id, email, full_name, preferred_language, status, "
+                "newsletter_subscribed, newsletter_consent_at, newsletter_unsubscribed_at"
+            )
+            .in_("id", user_ids)
+            .execute()
+        ).data or []
+        profile_map = {row["id"]: row for row in profile_rows}
+        messages: list[dict[str, Any]] = []
+        send_delivery_ids: list[int] = []
+        skipped_ids: list[int] = []
+        for delivery in claimed:
+            profile = profile_map.get(delivery["user_id"])
+            if not profile or not is_campaign_recipient_eligible(validated_type, profile):
+                skipped_ids.append(delivery["id"])
+                continue
+            token = create_preference_token(
+                user_id=profile["id"],
+                secret=settings.get_jwt_secret(),
+            )
+            rendered = render_campaign_email(
+                campaign_type=validated_type,
+                language=profile.get("preferred_language"),
+                first_name=profile.get("full_name"),
+                app_url=app_url,
+                preferences_token=token,
+                preferences_base_url=public_api_url,
+            )
+            messages.append(
+                {
+                    "from": normalize_sender(settings.from_email),
+                    "to": [profile["email"]],
+                    "subject": rendered["subject"],
+                    "html": rendered["html"],
+                    "headers": rendered["headers"],
+                    "tags": [
+                        {"name": "campaign_id", "value": campaign_id},
+                        {
+                            "name": "delivery_id",
+                            "value": str(delivery["id"]),
+                        },
+                    ],
+                }
+            )
+            send_delivery_ids.append(delivery["id"])
+
+        if skipped_ids:
+            supabase.table("email_campaign_deliveries").update(
+                {"status": "skipped", "updated_at": datetime.now(UTC).isoformat()}
+            ).in_("id", skipped_ids).execute()
+        if not messages:
+            continue
+
+        try:
+            response = await asyncio.to_thread(
+                resend_lib.Batch.send,
+                messages,
+                {
+                    "idempotency_key": f"{campaign_id}-batch-{batch_number}",
+                    "batch_validation": "permissive",
+                },
+            )
+            errors = getattr(response, "errors", None)
+            if errors is None and isinstance(response, dict):
+                errors = response.get("errors")
+            error_indices: set[int] = set()
+            for error in errors or []:
+                error_index = (
+                    error.get("index")
+                    if isinstance(error, dict)
+                    else getattr(error, "index", None)
+                )
+                if isinstance(error_index, int):
+                    error_indices.add(error_index)
+            failed_ids = [
+                delivery_id
+                for index, delivery_id in enumerate(send_delivery_ids)
+                if index in error_indices
+            ]
+            sent_ids = [
+                delivery_id
+                for index, delivery_id in enumerate(send_delivery_ids)
+                if index not in error_indices
+            ]
+            updated_at = datetime.now(UTC).isoformat()
+            if sent_ids:
+                supabase.table("email_campaign_deliveries").update(
+                    {"status": "sent", "sent_at": updated_at, "updated_at": updated_at}
+                ).in_("id", sent_ids).execute()
+            if failed_ids:
+                supabase.table("email_campaign_deliveries").update(
+                    {"status": "failed", "error_code": "resend_rejected", "updated_at": updated_at}
+                ).in_("id", failed_ids).execute()
+            await asyncio.sleep(0.25)
+        except Exception as exc:
+            supabase.table("email_campaign_deliveries").update(
+                {"status": "needs_review", "error_code": type(exc).__name__, "updated_at": datetime.now(UTC).isoformat()}
+            ).in_("id", send_delivery_ids).execute()
+            supabase.table("email_campaigns").update(
+                {"status": "failed", "updated_at": datetime.now(UTC).isoformat()}
+            ).eq("id", campaign_id).execute()
+            logger.error(
+                "Campaign batch requires manual review",
+                campaign_id=campaign_id,
+                batch_number=batch_number,
+                error_type=type(exc).__name__,
+            )
+            raise HTTPException(status_code=502, detail="Un lot exige une revue manuelle") from exc
+
+    summary = _campaign_summary(supabase, campaign_id)
+    has_unfinished = summary["pending"] > 0 or summary["sending"] > 0
+    has_errors = summary["failed"] > 0 or summary["needs_review"] > 0
+    final_status = "running" if has_unfinished else ("failed" if has_errors else "completed")
+    completed_at = datetime.now(UTC).isoformat() if final_status == "completed" else None
+    supabase.table("email_campaigns").update(
+        {
+            "status": final_status,
+            "sent_count": summary["sent"],
+            "failed_count": summary["failed"] + summary["needs_review"],
+            "skipped_count": summary["skipped"],
+            "completed_at": completed_at,
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+    ).eq("id", campaign_id).execute()
+    _log_admin_action(
+        supabase,
+        admin["id"],
+        "admin.campaign_processed",
+        event_data={"campaign_id": campaign_id, "campaign_type": validated_type, **summary},
+    )
+    return {"ok": final_status == "completed", "campaign_id": campaign_id, "status": final_status, **summary}
+
+
+@router.get("/campaigns/{campaign_id}/ambiguous")
+async def list_ambiguous_campaign_deliveries(
+    campaign_id: UUID,
+    admin: AdminUserDep,
+    limit: int = Query(default=100, ge=1, le=100),
+) -> dict[str, Any]:
+    """Liste les identifiants à rapprocher des tags du tableau de bord Resend."""
+    del admin
+    rows = (
+        get_supabase_client()
+        .table("email_campaign_deliveries")
+        .select("id, batch_number, claimed_at, error_code, status")
+        .eq("campaign_id", str(campaign_id))
+        .eq("status", "needs_review")
+        .order("id")
+        .limit(limit)
+        .execute()
+    ).data or []
+    return {"campaign_id": str(campaign_id), "deliveries": rows, "count": len(rows)}
+
+
+@router.post("/campaigns/{campaign_id}/resolve")
+async def resolve_ambiguous_campaign_batch(
+    campaign_id: UUID,
+    req: ResolveCampaignRequest,
+    admin: AdminUserDep,
+) -> dict[str, Any]:
+    """Enregistre le verdict humain obtenu après contrôle dans Resend."""
+    supabase = get_supabase_client()
+    campaign_id_str = str(campaign_id)
+    rows = (
+        supabase.table("email_campaign_deliveries")
+        .select("id, status")
+        .eq("campaign_id", campaign_id_str)
+        .in_("id", req.delivery_ids)
+        .execute()
+    ).data or []
+    if len(rows) != len(set(req.delivery_ids)) or any(
+        row.get("status") != "needs_review" for row in rows
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="La résolution ne cible pas exactement des livraisons à vérifier",
+        )
+
+    now = datetime.now(UTC).isoformat()
+    update_data: dict[str, Any] = {
+        "status": req.resolution,
+        "error_code": f"manual_{req.resolution}",
+        "updated_at": now,
+    }
+    if req.resolution == "sent":
+        update_data["sent_at"] = now
+    supabase.table("email_campaign_deliveries").update(update_data).eq(
+        "campaign_id", campaign_id_str
+    ).in_("id", req.delivery_ids).eq("status", "needs_review").execute()
+
+    summary = _campaign_summary(supabase, campaign_id_str)
+    if summary["needs_review"] == 0 and summary["sending"] == 0:
+        next_status = "ready" if summary["pending"] else (
+            "failed" if summary["failed"] else "completed"
+        )
+        supabase.table("email_campaigns").update(
+            {
+                "status": next_status,
+                "sent_count": summary["sent"],
+                "failed_count": summary["failed"],
+                "skipped_count": summary["skipped"],
+                "completed_at": now if next_status == "completed" else None,
+                "updated_at": now,
+            }
+        ).eq("id", campaign_id_str).execute()
+
+    _log_admin_action(
+        supabase,
+        admin["id"],
+        "admin.campaign_manual_resolution",
+        event_data={
+            "campaign_id": campaign_id_str,
+            "delivery_count": len(req.delivery_ids),
+            "resolution": req.resolution,
+            "reason_length": len(req.reason),
+        },
+    )
+    return {"ok": True, "campaign_id": campaign_id_str, **summary}
+
+
 class SendEmailRequest(BaseModel):
     subject: str
     body: str
@@ -2615,9 +3098,10 @@ class SendEmailRequest(BaseModel):
 
 
 class BulkEmailRequest(BaseModel):
-    segment: str  # 'at-risk' | 'about-to-churn' | 'never-converted' | 'all-paying'
+    segment: str  # 'at-risk' | 'about-to-churn' | 'never-converted' | 'all-paying' | 'newsletter-subscribers'
     subject: str
     body: str
+    campaign_id: str | None = None
 
 
 @router.post("/users/{user_id}/send-email")
@@ -2641,7 +3125,7 @@ async def send_custom_email(
     html_body = req.body.replace("\n", "<br>") if not req.body.strip().startswith("<") else req.body
 
     resend_lib.Emails.send({
-        "from": f"{req.from_name} <{settings.from_email}>",
+        "from": normalize_sender(settings.from_email),
         "to": [email_addr],
         "subject": req.subject,
         "html": html_body,
@@ -2724,59 +3208,12 @@ async def send_bulk_email(
     req: BulkEmailRequest,
     admin: AdminUserDep,
 ) -> dict[str, Any]:
-    """Envoie un email à tous les users d'un segment."""
-    import resend as resend_lib
-    supabase = get_supabase_client()
-    settings = get_settings()
-    resend_lib.api_key = settings.get_resend_api_key()
-
-    # Récupérer les emails du segment
-    emails: list[str] = []
-    if req.segment == "all-paying":
-        subs = supabase.table("user_subscriptions").select("user_id").eq("status", "active").execute()
-        user_ids = [s["user_id"] for s in (subs.data or [])]
-        if user_ids:
-            profiles = supabase.table("profiles").select("email").in_("id", user_ids).execute()
-            emails = [p["email"] for p in (profiles.data or [])]
-    elif req.segment in ("at-risk", "about-to-churn", "never-converted"):
-        # Réutiliser les mêmes queries que les endpoints segment
-        if req.segment == "at-risk":
-            res = await get_at_risk_users(admin)
-        elif req.segment == "about-to-churn":
-            res = await get_about_to_churn(admin)
-        else:
-            res = await get_never_converted(admin)
-        emails = [u["email"] for u in res["users"]]
-    else:
-        raise HTTPException(status_code=400, detail="Segment invalide")
-
-    if not emails:
-        return {"ok": True, "sent": 0, "skipped": 0}
-
-    MAX_BULK = 500
-    emails = emails[:MAX_BULK]
-    html_body = req.body.replace("\n", "<br>") if not req.body.strip().startswith("<") else req.body
-    sent = 0
-
-    for email_addr in emails:
-        try:
-            resend_lib.Emails.send({
-                "from": f"Huntzen <{settings.from_email}>",
-                "to": [email_addr],
-                "subject": req.subject,
-                "html": html_body,
-            })
-            sent += 1
-        except Exception:
-            pass
-
-    _log_admin_action(supabase, admin["id"], "admin.bulk_email_sent", None, {
-        "segment": req.segment,
-        "subject": req.subject,
-        "sent": sent,
-        "total": len(emails),
-    })
-    return {"ok": True, "sent": sent, "skipped": len(emails) - sent}
+    """Ancien envoi groupé désactivé au profit des campagnes verrouillées."""
+    del req, admin
+    raise HTTPException(
+        status_code=410,
+        detail="Les envois groupés utilisent désormais les campagnes verrouillées",
+    )
 
 
 # ============================================================
