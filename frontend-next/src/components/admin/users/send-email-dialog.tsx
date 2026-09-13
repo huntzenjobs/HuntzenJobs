@@ -21,7 +21,8 @@ import { createClient } from "@/lib/supabase/client";
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface CampaignPreview {
-  campaign_type: "service-update" | "marketing-reactivation";
+  campaign_type:
+    "service-update" | "marketing-reactivation" | "marketing-reactivation-all";
   template_version: string;
   recipient_count: number;
   subject: string;
@@ -86,11 +87,13 @@ const SEGMENT_LABELS: Record<string, string> = {
   "all-paying": "Tous les abonnés",
   "active-accounts": "Comptes actifs",
   "newsletter-subscribers": "Communications acceptées",
+  "all-active-marketing": "Tous les comptes actifs",
 };
 
 function campaignTypeForSegment(segment: string | undefined) {
   if (segment === "active-accounts") return "service-update";
   if (segment === "newsletter-subscribers") return "marketing-reactivation";
+  if (segment === "all-active-marketing") return "marketing-reactivation-all";
   return null;
 }
 
@@ -265,9 +268,9 @@ export default function SendEmailDialog(props: Props) {
                 htmlFor="confirm-recipient-count"
                 className="font-normal leading-5"
               >
-                Je confirme l&apos;envoi à {preview.recipient_count} destinataire(s).
-                L&apos;audience sera figée et ne pourra pas être élargie lors
-                d&apos;une reprise.
+                Je confirme l&apos;envoi à {preview.recipient_count}{" "}
+                destinataire(s). L&apos;audience sera figée et ne pourra pas
+                être élargie lors d&apos;une reprise.
               </Label>
             </div>
           )}

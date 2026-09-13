@@ -119,7 +119,13 @@ def test_service_update_is_relational_and_escapes_profile_data() -> None:
     assert rendered["subject"] == (
         "HuntZen a évolué : découvrez votre nouvel espace emploi"
     )
-    assert "Choisir mes communications" in rendered["html"]
+    assert 'src="https://huntzenjobs.com/logo.png"' in rendered["html"]
+    assert "Choisir mes communications" not in rendered["html"]
+    assert "Se désabonner" in rendered["html"]
+    assert 'href="https://huntzenjobs.com/api/marketing/preferences?token=signed-token"' in rendered["html"]
+    assert rendered["headers"]["List-Unsubscribe"] == (
+        "<https://huntzenjobs.com/api/marketing/unsubscribe?token=signed-token>"
+    )
     assert "Découvrir les abonnements" not in rendered["html"]
     assert "tarif" not in rendered["html"].casefold()
     assert "<script>" not in rendered["html"]
@@ -129,7 +135,7 @@ def test_service_update_is_relational_and_escapes_profile_data() -> None:
     )
 
 
-def test_marketing_template_uses_confirmed_social_proof_without_account_count() -> None:
+def test_marketing_template_promotes_subscriptions_without_unverified_count() -> None:
     rendered = render_campaign_email(
         campaign_type="marketing-reactivation",
         language="fr",
@@ -138,10 +144,24 @@ def test_marketing_template_uses_confirmed_social_proof_without_account_count() 
         preferences_token="signed-token",
     )
 
-    assert "Plus de 4 500 personnes" in rendered["html"]
     assert "Découvrir les abonnements" in rendered["html"]
+    assert "4 500" not in rendered["html"]
     assert "abonné" not in rendered["html"].casefold()
     assert "inscrit" not in rendered["html"].casefold()
+
+
+def test_all_active_campaign_uses_the_validated_marketing_template() -> None:
+    rendered = render_campaign_email(
+        campaign_type="marketing-reactivation-all",
+        language="fr",
+        first_name="Wissem",
+        app_url="https://huntzenjobs.com",
+        preferences_token="signed-token",
+    )
+
+    assert rendered["subject"] == "Votre prochaine opportunité vous attend sur HuntZen"
+    assert "Découvrir les abonnements" in rendered["html"]
+    assert "4 500" not in rendered["html"]
 
 
 def test_non_french_language_uses_english_template() -> None:
@@ -154,7 +174,8 @@ def test_non_french_language_uses_english_template() -> None:
     )
 
     assert rendered["subject"] == "HuntZen has evolved: discover your new job space"
-    assert "Choose my communications" in rendered["html"]
+    assert "Choose my communications" not in rendered["html"]
+    assert "Unsubscribe" in rendered["html"]
 
 
 def test_preference_token_is_scoped_and_expires() -> None:

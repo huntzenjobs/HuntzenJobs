@@ -5,7 +5,6 @@ from uuid import UUID
 import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
-
 from src.services.bulk_email import (
     CampaignSendRequest,
     is_campaign_recipient_eligible,
@@ -37,6 +36,34 @@ def test_marketing_recipient_requires_current_traceable_consent() -> None:
     assert is_campaign_recipient_eligible(
         "marketing-reactivation",
         {**base, "newsletter_consent_at": "2026-09-12T20:00:00Z"},
+    )
+
+
+def test_all_active_marketing_excludes_only_explicit_unsubscribes() -> None:
+    assert is_campaign_recipient_eligible(
+        "marketing-reactivation-all",
+        {
+            "status": "active",
+            "newsletter_subscribed": False,
+            "newsletter_consent_at": None,
+            "newsletter_unsubscribed_at": None,
+        },
+    )
+    assert not is_campaign_recipient_eligible(
+        "marketing-reactivation-all",
+        {
+            "status": "active",
+            "newsletter_subscribed": True,
+            "newsletter_consent_at": "2026-09-12T20:00:00Z",
+            "newsletter_unsubscribed_at": "2026-09-13T08:00:00Z",
+        },
+    )
+    assert not is_campaign_recipient_eligible(
+        "marketing-reactivation-all",
+        {
+            "status": "deleted",
+            "newsletter_unsubscribed_at": None,
+        },
     )
 
 

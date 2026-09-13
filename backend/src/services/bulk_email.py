@@ -14,7 +14,11 @@ from pydantic import BaseModel, Field
 
 RESEND_BATCH_SIZE = 100
 Record = TypeVar("Record")
-CampaignType = Literal["service-update", "marketing-reactivation"]
+CampaignType = Literal[
+    "service-update",
+    "marketing-reactivation",
+    "marketing-reactivation-all",
+]
 
 
 class RenderedCampaignEmail(TypedDict):
@@ -26,6 +30,7 @@ class RenderedCampaignEmail(TypedDict):
 CAMPAIGN_TEMPLATE_VERSIONS: dict[CampaignType, str] = {
     "service-update": "2026-09-v1",
     "marketing-reactivation": "2026-09-v1",
+    "marketing-reactivation-all": "2026-09-v1",
 }
 
 
@@ -43,6 +48,8 @@ def is_campaign_recipient_eligible(
         return False
     if campaign_type == "service-update":
         return True
+    if campaign_type == "marketing-reactivation-all":
+        return not profile.get("newsletter_unsubscribed_at")
     return bool(
         profile.get("newsletter_subscribed") is True
         and profile.get("newsletter_consent_at")
@@ -166,12 +173,12 @@ def decode_preference_token(*, token: str, secret: str) -> dict[str, Any]:
     return cast(dict[str, Any], claims)
 
 
-def _email_shell(*, title: str, content: str, footer: str) -> str:
+def _email_shell(*, title: str, content: str, footer: str, logo_url: str) -> str:
     return f"""<!doctype html>
 <html><body style="margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#111827">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:18px;overflow:hidden">
-<tr><td style="padding:28px 32px;background:#071426;color:#fff"><strong style="font-size:24px">HuntZen</strong></td></tr>
+<tr><td style="padding:26px 32px;background:#071426"><img src="{logo_url}" width="180" alt="HuntZen" style="display:block;width:180px;max-width:100%;height:auto;border:0"></td></tr>
 <tr><td style="padding:32px"><h1 style="font-size:28px;line-height:1.2;margin:0 0 20px">{title}</h1>{content}</td></tr>
 <tr><td style="padding:20px 32px;background:#f8fafc;color:#64748b;font-size:12px;line-height:1.6">{footer}</td></tr>
 </table></td></tr></table></body></html>"""
@@ -200,11 +207,8 @@ def render_campaign_email(
 
     if is_french:
         greeting = f"Bonjour {safe_name}," if safe_name else "Bonjour,"
-        manage_label = "Choisir mes communications"
         footer = (
-            "Vous recevez cet email au sujet de votre compte HuntZen. "
-            f'<a href="{preferences_url}" style="color:#475569">{manage_label}</a> · '
-            f'<a href="{preferences_url}" style="color:#475569">Se désabonner</a>'
+            f'<a href="{preferences_url}" style="color:#94a3b8;text-decoration:underline">Se désabonner</a>'
         )
         if campaign_type == "service-update":
             subject = "HuntZen a évolué : découvrez votre nouvel espace emploi"
@@ -212,24 +216,20 @@ def render_campaign_email(
             content = f"""
 <p style="font-size:16px;line-height:1.7">{greeting}</p>
 <p style="font-size:16px;line-height:1.7">HuntZen a évolué pour vous aider à chercher plus efficacement : recherche d’offres améliorée, assistants carrière, analyse de CV et suivi de candidatures.</p>
-<p style="font-size:16px;line-height:1.7">Revenez découvrir votre nouvel espace et choisissez les communications que vous souhaitez recevoir.</p>
-<p style="margin:28px 0"><a href="{application_base}/dashboard" style="background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">Découvrir les nouveautés</a></p>
-<p><a href="{preferences_url}" style="color:#0f6f80;font-weight:700">{manage_label}</a></p>"""
+<p style="font-size:16px;line-height:1.7">Revenez découvrir votre nouvel espace et avancez plus efficacement dans votre recherche.</p>
+<p style="margin:28px 0"><a href="{application_base}/dashboard" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">Découvrir les nouveautés</a></p>"""
         else:
             subject = "Votre prochaine opportunité vous attend sur HuntZen"
             title = "Prêt à relancer votre recherche d’emploi ?"
             content = f"""
 <p style="font-size:16px;line-height:1.7">{greeting}</p>
-<p style="font-size:16px;line-height:1.7">Plus de 4 500 personnes ont déjà trouvé un emploi avec HuntZen. Cette réussite nous encourage à aller encore plus loin pour vous.</p>
+<p style="font-size:16px;line-height:1.7">Donnez un nouvel élan à votre recherche avec un accompagnement adapté à chaque étape.</p>
 <p style="font-size:16px;line-height:1.7">Retrouvez vos assistants carrière, les offres adaptées à votre profil et les outils pour renforcer vos candidatures.</p>
-<p style="margin:28px 0"><a href="{application_base}/pricing" style="background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">Découvrir les abonnements</a></p>"""
+<p style="margin:28px 0"><a href="{application_base}/pricing" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">Découvrir les abonnements</a></p>"""
     else:
         greeting = f"Hello {safe_name}," if safe_name else "Hello,"
-        manage_label = "Choose my communications"
         footer = (
-            "You are receiving this email about your HuntZen account. "
-            f'<a href="{preferences_url}" style="color:#475569">{manage_label}</a> · '
-            f'<a href="{preferences_url}" style="color:#475569">Unsubscribe</a>'
+            f'<a href="{preferences_url}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a>'
         )
         if campaign_type == "service-update":
             subject = "HuntZen has evolved: discover your new job space"
@@ -237,21 +237,25 @@ def render_campaign_email(
             content = f"""
 <p style="font-size:16px;line-height:1.7">{greeting}</p>
 <p style="font-size:16px;line-height:1.7">HuntZen has evolved to help you search more effectively with improved job search, career assistants, CV analysis and application tracking.</p>
-<p style="font-size:16px;line-height:1.7">Come back to discover your new space and choose the communications you want to receive.</p>
-<p style="margin:28px 0"><a href="{application_base}/dashboard" style="background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">Discover what’s new</a></p>
-<p><a href="{preferences_url}" style="color:#0f6f80;font-weight:700">{manage_label}</a></p>"""
+<p style="font-size:16px;line-height:1.7">Come back to discover your new space and move forward more effectively in your search.</p>
+<p style="margin:28px 0"><a href="{application_base}/dashboard" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">Discover what’s new</a></p>"""
         else:
             subject = "Your next opportunity is waiting on HuntZen"
             title = "Ready to restart your job search?"
             content = f"""
 <p style="font-size:16px;line-height:1.7">{greeting}</p>
-<p style="font-size:16px;line-height:1.7">More than 4,500 people have already found a job with HuntZen. Their success encourages us to do even more for you.</p>
+<p style="font-size:16px;line-height:1.7">Give your job search new momentum with guidance tailored to every step.</p>
 <p style="font-size:16px;line-height:1.7">Return to your career assistants, tailored job listings and tools that strengthen your applications.</p>
-<p style="margin:28px 0"><a href="{application_base}/pricing" style="background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">Discover subscriptions</a></p>"""
+<p style="margin:28px 0"><a href="{application_base}/pricing" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">Discover subscriptions</a></p>"""
 
     return {
         "subject": subject,
-        "html": _email_shell(title=title, content=content, footer=footer),
+        "html": _email_shell(
+            title=title,
+            content=content,
+            footer=footer,
+            logo_url=f"{application_base}/logo.png",
+        ),
         "headers": {
             "List-Unsubscribe": f"<{unsubscribe_url}>",
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

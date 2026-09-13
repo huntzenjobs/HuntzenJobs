@@ -20,21 +20,25 @@ describe("SendEmailDialog", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string | URL | Request) => {
-        const isRelational = String(url).includes("service-update");
+        const path = String(url);
+        const isRelational = path.includes("service-update");
+        const isAllActive = path.includes("marketing-reactivation-all");
         return {
           ok: true,
           json: async () => ({
             campaign_type: isRelational
               ? "service-update"
-              : "marketing-reactivation",
+              : isAllActive
+                ? "marketing-reactivation-all"
+                : "marketing-reactivation",
             template_version: "2026-09-v1",
-            recipient_count: isRelational ? 836 : 12,
+            recipient_count: isRelational || isAllActive ? 836 : 12,
             subject: isRelational
               ? "HuntZen a évolué : découvrez votre nouvel espace emploi"
               : "Votre prochaine opportunité vous attend sur HuntZen",
             html: isRelational
-              ? "<p>Choisir mes communications</p>"
-              : "<p>Plus de 4 500 personnes</p><p>Découvrir les abonnements</p>",
+              ? "<p>Découvrir les nouveautés</p>"
+              : "<p>Découvrir les abonnements</p>",
           }),
         };
       }),
@@ -45,9 +49,7 @@ describe("SendEmailDialog", () => {
     expect(campaignFailureMessage("deferred")).toContain(
       "pourra reprendre avec le même identifiant",
     );
-    expect(campaignFailureMessage("failed")).toContain(
-      "vérification manuelle",
-    );
+    expect(campaignFailureMessage("failed")).toContain("vérification manuelle");
   });
 
   it("prépare l'email relationnel sans promotion des abonnements", async () => {
@@ -66,7 +68,7 @@ describe("SendEmailDialog", () => {
     const body = (
       screen.getByLabelText("Corps du message") as HTMLTextAreaElement
     ).value;
-    expect(body).toContain("Choisir mes communications");
+    expect(body).toContain("Découvrir les nouveautés");
     expect(body).not.toContain("Découvrir les abonnements");
   });
 
@@ -85,7 +87,25 @@ describe("SendEmailDialog", () => {
     );
     expect(
       (screen.getByLabelText("Corps du message") as HTMLTextAreaElement).value,
-    ).toContain("Plus de 4 500 personnes");
+    ).toContain("Découvrir les abonnements");
     expect(screen.getByTitle("Aperçu de la campagne")).toBeInTheDocument();
+  });
+
+  it("prépare la même campagne commerciale pour tous les comptes actifs", async () => {
+    render(
+      <SendEmailDialog
+        mode="bulk"
+        segment="all-active-marketing"
+        open={true}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByLabelText("Sujet")).toHaveValue(
+      "Votre prochaine opportunité vous attend sur HuntZen",
+    );
+    expect(
+      screen.getByText(/Je confirme l'envoi à 836 destinataire/),
+    ).toBeInTheDocument();
   });
 });

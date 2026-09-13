@@ -2678,6 +2678,7 @@ async def get_mrr_forecast(admin: AdminUserDep) -> dict[str, Any]:
 CAMPAIGN_TYPES: tuple[CampaignType, ...] = (
     "service-update",
     "marketing-reactivation",
+    "marketing-reactivation-all",
 )
 
 

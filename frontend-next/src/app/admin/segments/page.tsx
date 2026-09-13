@@ -124,6 +124,7 @@ export default function SegmentsPage() {
   );
   const [activeAccountCount, setActiveAccountCount] = useState(0);
   const [newsletterCount, setNewsletterCount] = useState(0);
+  const [allActiveMarketingCount, setAllActiveMarketingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [emailTarget, setEmailTarget] = useState<{
     userId: string;
@@ -133,18 +134,21 @@ export default function SegmentsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [ar, ch, nc, serviceUpdate, marketing] = await Promise.all([
-        adminFetch("/api/admin/segments/at-risk"),
-        adminFetch("/api/admin/segments/about-to-churn"),
-        adminFetch("/api/admin/segments/never-converted"),
-        adminFetch("/api/admin/campaigns/service-update/preview"),
-        adminFetch("/api/admin/campaigns/marketing-reactivation/preview"),
-      ]);
+      const [ar, ch, nc, serviceUpdate, marketing, allActiveMarketing] =
+        await Promise.all([
+          adminFetch("/api/admin/segments/at-risk"),
+          adminFetch("/api/admin/segments/about-to-churn"),
+          adminFetch("/api/admin/segments/never-converted"),
+          adminFetch("/api/admin/campaigns/service-update/preview"),
+          adminFetch("/api/admin/campaigns/marketing-reactivation/preview"),
+          adminFetch("/api/admin/campaigns/marketing-reactivation-all/preview"),
+        ]);
       setAtRisk(ar.users || []);
       setChurn(ch.users || []);
       setNeverConverted(nc.users || []);
       setActiveAccountCount(serviceUpdate.recipient_count || 0);
       setNewsletterCount(marketing.recipient_count || 0);
+      setAllActiveMarketingCount(allActiveMarketing.recipient_count || 0);
     } catch {
       toast.error("Impossible de charger les segments");
     } finally {
@@ -184,10 +188,12 @@ export default function SegmentsPage() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">
                   Étape 1
                 </p>
-                <h2 className="mt-1 text-lg font-semibold">Email relationnel</h2>
+                <h2 className="mt-1 text-lg font-semibold">
+                  Email relationnel
+                </h2>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  Présentez les nouveautés du service sans promotion tarifaire et
-                  invitez chacun à choisir ses communications.
+                  Présentez les nouveautés du service sans promotion tarifaire
+                  et invitez chacun à choisir ses communications.
                 </p>
                 <p className="mt-2 text-sm font-medium text-cyan-800">
                   {activeAccountCount} comptes actifs
@@ -219,22 +225,29 @@ export default function SegmentsPage() {
                   Campagne de réactivation
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-slate-300">
-                Invitez les utilisateurs ayant accepté les communications à
-                revenir découvrir les offres, les assistants et les formules
-                HuntZen.
+                  Invitez les utilisateurs ayant accepté les communications à
+                  revenir découvrir les offres, les assistants et les formules
+                  HuntZen.
                 </p>
                 <p className="mt-2 text-sm font-medium text-cyan-300">
-                  {newsletterCount} destinataire{newsletterCount === 1 ? "" : "s"}{" "}
-                  autorisé{newsletterCount === 1 ? "" : "s"}
+                  {newsletterCount} destinataire
+                  {newsletterCount === 1 ? "" : "s"} autorisé
+                  {newsletterCount === 1 ? "" : "s"}
                 </p>
               </div>
             </div>
-            <div className="mt-auto">
+            <div className="mt-auto flex flex-wrap gap-2">
               <BulkEmailButton
                 segment="newsletter-subscribers"
                 count={newsletterCount}
                 disabled={loading}
                 label="Préparer la campagne commerciale"
+              />
+              <BulkEmailButton
+                segment="all-active-marketing"
+                count={allActiveMarketingCount}
+                disabled={loading}
+                label="Envoyer la campagne à tous"
               />
             </div>
           </CardContent>
