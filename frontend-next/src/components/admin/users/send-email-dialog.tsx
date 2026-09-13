@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -26,8 +33,12 @@ interface CampaignPreview {
   template_version: string;
   recipient_count: number;
   subject: string;
+  main_text: string;
   html: string;
+  html_template: string;
 }
+
+type EditorMode = "simple" | "html";
 
 export function campaignFailureMessage(status: string): string {
   if (status === "running") {
@@ -98,10 +109,14 @@ function campaignTypeForSegment(segment: string | undefined) {
 }
 
 export default function SendEmailDialog(props: Props) {
+  const t = useTranslations("adminEmailCampaign");
   const segment = props.mode === "bulk" ? props.segment : undefined;
   const campaignType = campaignTypeForSegment(segment);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [editorMode, setEditorMode] = useState<EditorMode>("simple");
+  const [mainText, setMainText] = useState("");
+  const [htmlTemplate, setHtmlTemplate] = useState("");
   const [preview, setPreview] = useState<CampaignPreview | null>(null);
   const [campaignId, setCampaignId] = useState(() => crypto.randomUUID());
   const [confirmed, setConfirmed] = useState(false);
@@ -118,7 +133,9 @@ export default function SendEmailDialog(props: Props) {
         if (cancelled) return;
         setPreview(data);
         setSubject(data.subject);
-        setBody(data.html);
+        setEditorMode("simple");
+        setMainText(data.main_text);
+        setHtmlTemplate(data.html_template);
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -144,7 +161,8 @@ export default function SendEmailDialog(props: Props) {
   );
 
   const handleSend = async () => {
-    if (!subject.trim() || !body.trim()) {
+    const campaignContent = editorMode === "simple" ? mainText : htmlTemplate;
+    if (!subject.trim() || !(campaignType ? campaignContent : body).trim()) {
       toast.error("Sujet et corps requis");
       return;
     }
@@ -168,6 +186,11 @@ export default function SendEmailDialog(props: Props) {
             body: JSON.stringify({
               campaign_id: campaignId,
               confirmed_recipient_count: preview.recipient_count,
+              editor_mode: editorMode,
+              subject,
+              ...(editorMode === "simple"
+                ? { main_text: mainText }
+                : { html_template: htmlTemplate }),
             }),
           },
         );
@@ -186,6 +209,8 @@ export default function SendEmailDialog(props: Props) {
       }
       setSubject("");
       setBody("");
+      setMainText("");
+      setHtmlTemplate("");
       setPreview(null);
       setConfirmed(false);
       setCampaignId(crypto.randomUUID());
@@ -218,39 +243,77 @@ export default function SendEmailDialog(props: Props) {
               id="email-subject"
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
-              readOnly={Boolean(campaignType)}
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="email-body">Corps du message</Label>
-            <Textarea
-              id="email-body"
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              rows={8}
-              readOnly={Boolean(campaignType)}
-              className="font-mono text-sm"
-            />
-            {campaignType && (
+          {campaignType ? (
+            <Tabs
+              value={editorMode}
+              onValueChange={(value) => setEditorMode(value as EditorMode)}
+              className="space-y-4"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="simple">{t("simpleMode")}</TabsTrigger>
+                <TabsTrigger value="html">{t("htmlMode")}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="simple" className="space-y-1.5">
+                <Label htmlFor="campaign-main-text">{t("mainText")}</Label>
+                <Textarea
+                  id="campaign-main-text"
+                  value={mainText}
+                  onChange={(event) => setMainText(event.target.value)}
+                  rows={8}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("simpleHelp")}
+                </p>
+              </TabsContent>
+              <TabsContent value="html" className="space-y-1.5">
+                <Label htmlFor="campaign-html">{t("fullHtml")}</Label>
+                <Textarea
+                  id="campaign-html"
+                  value={htmlTemplate}
+                  onChange={(event) => setHtmlTemplate(event.target.value)}
+                  rows={14}
+                  className="font-mono text-xs"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("htmlHelp", {
+                    firstName: "{{first_name}}",
+                    appUrl: "{{app_url}}",
+                  })}
+                </p>
+              </TabsContent>
               <p className="text-xs text-muted-foreground">
-                Modèle verrouillé côté serveur, version{" "}
-                {preview?.template_version || "…"}.
+                {t("frozenHelp", {
+                  version: preview?.template_version || "…",
+                })}
               </p>
-            )}
-          </div>
+            </Tabs>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="email-body">Corps du message</Label>
+              <Textarea
+                id="email-body"
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                rows={8}
+                className="font-mono text-sm"
+              />
+            </div>
+          )}
 
-          {body.trim().startsWith("<") && (
+          {editorMode === "html" && htmlTemplate.trim().startsWith("<") && (
             <details
               className="rounded-lg border bg-muted/20 p-3"
-              open={Boolean(campaignType)}
+              open
             >
               <summary className="cursor-pointer text-sm font-medium">
                 Prévisualiser l&apos;email
               </summary>
               <iframe
                 title="Aperçu de la campagne"
-                srcDoc={body}
+                srcDoc={htmlTemplate}
                 sandbox=""
                 className="mt-3 h-[520px] w-full rounded-md border bg-white"
               />

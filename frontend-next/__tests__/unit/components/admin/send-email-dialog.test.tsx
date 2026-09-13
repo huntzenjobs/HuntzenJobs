@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import SendEmailDialog, {
@@ -13,6 +14,28 @@ vi.mock("@/lib/supabase/client", () => ({
       }),
     },
   }),
+}));
+
+vi.mock("next-intl", () => ({
+  useTranslations: () =>
+    (key: string, values?: Record<string, string>) => {
+      const translations: Record<string, string> = {
+        simpleMode: "Mode simple",
+        htmlMode: "Mode HTML",
+        mainText: "Texte principal",
+        fullHtml: "HTML complet",
+        simpleHelp:
+          "Le logo HuntzenJobs, le bouton et la mise en page restent automatiques.",
+        htmlHelp:
+          "Le lien de gestion des communications est ajouté automatiquement. Vous pouvez utiliser {firstName} et {appUrl}.",
+        frozenHelp:
+          "Le contenu exact sera gelé côté serveur, version {version}.",
+      };
+      return Object.entries(values || {}).reduce(
+        (message, [name, value]) => message.replace(`{${name}}`, value),
+        translations[key] || key,
+      );
+    },
 }));
 
 describe("SendEmailDialog", () => {
@@ -34,9 +57,15 @@ describe("SendEmailDialog", () => {
             template_version: "2026-09-v1",
             recipient_count: isRelational || isAllActive ? 836 : 12,
             subject: isRelational
-              ? "HuntZen a évolué : découvrez votre nouvel espace emploi"
-              : "Votre prochaine opportunité vous attend sur HuntZen",
+              ? "HuntzenJobs a évolué : découvrez votre nouvel espace emploi"
+              : "Votre prochaine opportunité vous attend sur HuntzenJobs",
+            main_text: isRelational
+              ? "Découvrez les nouveautés"
+              : "Découvrez les abonnements",
             html: isRelational
+              ? "<p>Découvrir les nouveautés</p>"
+              : "<p>Découvrir les abonnements</p>",
+            html_template: isRelational
               ? "<p>Découvrir les nouveautés</p>"
               : "<p>Découvrir les abonnements</p>",
           }),
@@ -63,12 +92,12 @@ describe("SendEmailDialog", () => {
     );
 
     expect(await screen.findByLabelText("Sujet")).toHaveValue(
-      "HuntZen a évolué : découvrez votre nouvel espace emploi",
+      "HuntzenJobs a évolué : découvrez votre nouvel espace emploi",
     );
     const body = (
-      screen.getByLabelText("Corps du message") as HTMLTextAreaElement
+      screen.getByLabelText("Texte principal") as HTMLTextAreaElement
     ).value;
-    expect(body).toContain("Découvrir les nouveautés");
+    expect(body).toContain("Découvrez les nouveautés");
     expect(body).not.toContain("Découvrir les abonnements");
   });
 
@@ -83,12 +112,12 @@ describe("SendEmailDialog", () => {
     );
 
     expect(await screen.findByLabelText("Sujet")).toHaveValue(
-      "Votre prochaine opportunité vous attend sur HuntZen",
+      "Votre prochaine opportunité vous attend sur HuntzenJobs",
     );
     expect(
-      (screen.getByLabelText("Corps du message") as HTMLTextAreaElement).value,
-    ).toContain("Découvrir les abonnements");
-    expect(screen.getByTitle("Aperçu de la campagne")).toBeInTheDocument();
+      (screen.getByLabelText("Texte principal") as HTMLTextAreaElement).value,
+    ).toContain("Découvrez les abonnements");
+    expect(screen.getByRole("tab", { name: "Mode HTML" })).toBeInTheDocument();
   });
 
   it("prépare la même campagne commerciale pour tous les comptes actifs", async () => {
@@ -102,10 +131,68 @@ describe("SendEmailDialog", () => {
     );
 
     expect(await screen.findByLabelText("Sujet")).toHaveValue(
-      "Votre prochaine opportunité vous attend sur HuntZen",
+      "Votre prochaine opportunité vous attend sur HuntzenJobs",
     );
     expect(
       screen.getByText(/Je confirme l'envoi à 836 destinataire/),
     ).toBeInTheDocument();
+  });
+
+  it("permet d'éditer le HTML complet et envoie exactement le contenu choisi", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockImplementation(async (url, init) => {
+      if (init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({ ok: true, sent: 1, skipped: 0, failed: 0 }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          campaign_type: "marketing-reactivation-all",
+          template_version: "2026-09-v1",
+          recipient_count: 1,
+          subject: "Sujet initial HuntzenJobs",
+          main_text: "Texte initial",
+          html: "<p>Texte initial</p>",
+          html_template: "<html><p>Texte initial</p></html>",
+        }),
+      } as Response;
+    });
+
+    render(
+      <SendEmailDialog
+        mode="bulk"
+        segment="all-active-marketing"
+        open={true}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const subject = await screen.findByLabelText("Sujet");
+    expect(subject).not.toHaveAttribute("readonly");
+    await user.clear(subject);
+    await user.type(subject, "Sujet final HuntzenJobs");
+    await user.click(screen.getByRole("tab", { name: "Mode HTML" }));
+    const html = screen.getByLabelText("HTML complet");
+    fireEvent.change(html, {
+      target: {
+        value:
+          "<html><p>Campagne finale</p></html>",
+      },
+    });
+    await user.click(screen.getByLabelText(/Je confirme l'envoi à 1/));
+    await user.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    const postCall = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
+    expect(postCall).toBeDefined();
+    expect(JSON.parse(String(postCall?.[1]?.body))).toMatchObject({
+      editor_mode: "html",
+      subject: "Sujet final HuntzenJobs",
+      html_template:
+        "<html><p>Campagne finale</p></html>",
+    });
   });
 });

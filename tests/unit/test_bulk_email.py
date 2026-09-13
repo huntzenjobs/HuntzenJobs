@@ -3,12 +3,14 @@
 import pytest
 from src.services.bulk_email import (
     build_resend_batches,
+    campaign_content_hash,
     collect_paginated,
     create_preference_token,
     decode_preference_token,
     is_resend_quota_error,
     normalize_sender,
     render_campaign_email,
+    render_editable_campaign_email,
     send_resend_batches,
 )
 
@@ -56,7 +58,7 @@ def test_normalize_sender_preserves_professional_sender() -> None:
 
 def test_normalize_sender_adds_brand_to_plain_address() -> None:
     assert normalize_sender("bonjour@huntzenjobs.com") == (
-        "Huntzen <bonjour@huntzenjobs.com>"
+        "HuntzenJobs <bonjour@huntzenjobs.com>"
     )
 
 
@@ -176,6 +178,63 @@ def test_non_french_language_uses_english_template() -> None:
     assert rendered["subject"] == "HuntZen has evolved: discover your new job space"
     assert "Choose my communications" not in rendered["html"]
     assert "Unsubscribe" in rendered["html"]
+
+
+def test_simple_editor_keeps_the_branded_layout_and_escapes_content() -> None:
+    rendered = render_editable_campaign_email(
+        campaign_type="marketing-reactivation-all",
+        editor_mode="simple",
+        subject="Revenez sur HuntzenJobs",
+        content='Une nouveauté <script>alert("x")</script>\nUn second paragraphe.',
+        language="fr",
+        first_name="Wissem",
+        app_url="https://huntzenjobs.com",
+        preferences_token="signed-token",
+    )
+
+    assert rendered["subject"] == "Revenez sur HuntzenJobs"
+    assert 'alt="HuntzenJobs"' in rendered["html"]
+    assert "&lt;script&gt;" in rendered["html"]
+    assert "<script>" not in rendered["html"]
+    assert "Découvrir les abonnements" in rendered["html"]
+    assert "signed-token" in rendered["html"]
+
+
+def test_html_editor_adds_mandatory_footer_and_replaces_safe_placeholders() -> None:
+    template = """<!doctype html><html><body>
+<p>Bonjour {{first_name}}</p>
+<a href="{{app_url}}/pricing">Voir les offres</a>
+</body></html>"""
+    rendered = render_editable_campaign_email(
+        campaign_type="marketing-reactivation-all",
+        editor_mode="html",
+        subject="Offres HuntzenJobs",
+        content=template,
+        language="fr",
+        first_name='<img src=x onerror="alert(1)">',
+        app_url="https://huntzenjobs.com",
+        preferences_token="signed-token",
+    )
+
+    assert "{{" not in rendered["html"]
+    assert "&lt;img" in rendered["html"]
+    assert 'href="https://huntzenjobs.com/pricing"' in rendered["html"]
+    assert "/api/marketing/preferences?token=signed-token" in rendered["html"]
+    assert rendered["headers"]["List-Unsubscribe"].endswith(
+        "/api/marketing/unsubscribe?token=signed-token>"
+    )
+
+
+def test_campaign_content_hash_changes_when_content_changes() -> None:
+    first = campaign_content_hash(
+        editor_mode="simple", subject="Sujet", content="Premier texte"
+    )
+    second = campaign_content_hash(
+        editor_mode="simple", subject="Sujet", content="Second texte"
+    )
+
+    assert first != second
+    assert len(first) == 64
 
 
 def test_preference_token_is_scoped_and_expires() -> None:

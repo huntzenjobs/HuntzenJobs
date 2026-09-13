@@ -1,4 +1,13 @@
 {
+  "adminEmailCampaign": {
+    "simpleMode": "Simple mode",
+    "htmlMode": "HTML mode",
+    "mainText": "Main text",
+    "fullHtml": "Full HTML",
+    "simpleHelp": "The HuntzenJobs logo, button and layout remain automatic.",
+    "htmlHelp": "The email preference link is added automatically. You can use {firstName} and {appUrl}.",
+    "frozenHelp": "The exact content will be frozen on the server, version {version}."
+  },
   "autocomplete": {
     "loading": "Searching…",
     "clear": "Clear",

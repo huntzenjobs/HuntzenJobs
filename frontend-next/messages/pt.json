@@ -1,4 +1,13 @@
 {
+  "adminEmailCampaign": {
+    "simpleMode": "Modo simples",
+    "htmlMode": "Modo HTML",
+    "mainText": "Texto principal",
+    "fullHtml": "HTML completo",
+    "simpleHelp": "O logótipo, o botão e o esquema HuntzenJobs permanecem automáticos.",
+    "htmlHelp": "A ligação para gerir as comunicações é adicionada automaticamente. Pode utilizar {firstName} e {appUrl}.",
+    "frozenHelp": "O conteúdo exato será bloqueado no servidor, versão {version}."
+  },
   "autocomplete": {
     "loading": "A pesquisar…",
     "clear": "Limpar",

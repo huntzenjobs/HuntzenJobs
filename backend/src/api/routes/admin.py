@@ -22,11 +22,15 @@ from src.services.bulk_email import (
     CAMPAIGN_TEMPLATE_VERSIONS,
     CampaignSendRequest,
     CampaignType,
+    campaign_request_content,
     create_preference_token,
+    default_campaign_editor_content,
+    default_campaign_html_template,
     is_campaign_recipient_eligible,
     is_resend_quota_error,
     normalize_sender,
     render_campaign_email,
+    render_editable_campaign_email,
     validate_frozen_campaign,
 )
 from src.services.email import (
@@ -2749,15 +2753,23 @@ def _freeze_campaign(
     admin_id: str,
 ) -> dict[str, Any]:
     campaign_id = str(request_data.campaign_id)
+    editor_mode, subject, content, content_hash = campaign_request_content(
+        campaign_type,
+        request_data,
+    )
     try:
         frozen = supabase.rpc(
-            "freeze_email_campaign",
+            "freeze_editable_email_campaign",
             {
                 "p_campaign_id": campaign_id,
                 "p_campaign_type": campaign_type,
                 "p_template_version": CAMPAIGN_TEMPLATE_VERSIONS[campaign_type],
                 "p_created_by": admin_id,
                 "p_confirmed_total": request_data.confirmed_recipient_count,
+                "p_editor_mode": editor_mode,
+                "p_email_subject": subject,
+                "p_email_content": content,
+                "p_content_hash": content_hash,
             },
         ).execute().data or []
     except Exception as exc:
@@ -2772,6 +2784,7 @@ def _freeze_campaign(
         campaign_type,
         request_data.confirmed_recipient_count,
         CAMPAIGN_TEMPLATE_VERSIONS[campaign_type],
+        content_hash=content_hash,
     )
     return frozen[0]
 
@@ -2786,11 +2799,17 @@ async def preview_campaign(
     del admin
     validated_type = _validated_campaign_type(campaign_type)
     profiles = _campaign_profiles(get_supabase_client(), validated_type)
-    rendered = render_campaign_email(
+    app_url = get_settings().frontend_url.split(",")[0].strip()
+    subject, main_text = default_campaign_editor_content(validated_type, "fr")
+    html_template = default_campaign_html_template(validated_type, app_url)
+    rendered = render_editable_campaign_email(
         campaign_type=validated_type,
+        editor_mode="html",
+        subject=subject,
+        content=html_template,
         language="fr",
         first_name=None,
-        app_url=get_settings().frontend_url.split(",")[0].strip(),
+        app_url=app_url,
         preferences_token="preview-token",
         preferences_base_url=str(request.base_url).rstrip("/"),
     )
@@ -2798,8 +2817,10 @@ async def preview_campaign(
         "campaign_type": validated_type,
         "template_version": CAMPAIGN_TEMPLATE_VERSIONS[validated_type],
         "recipient_count": len(profiles),
-        "subject": rendered["subject"],
+        "subject": subject,
+        "main_text": main_text,
         "html": rendered["html"],
+        "html_template": html_template,
     }
 
 
@@ -2810,7 +2831,7 @@ async def send_campaign(
     request: Request,
     admin: AdminUserDep,
 ) -> dict[str, Any]:
-    """Fige l'audience puis envoie les lots stables d'un modèle serveur."""
+    """Fige l'audience et le contenu, puis envoie des lots stables."""
     import resend as resend_lib
 
     validated_type = _validated_campaign_type(campaign_type)
@@ -2902,14 +2923,27 @@ async def send_campaign(
                 user_id=profile["id"],
                 secret=settings.get_jwt_secret(),
             )
-            rendered = render_campaign_email(
-                campaign_type=validated_type,
-                language=profile.get("preferred_language"),
-                first_name=profile.get("full_name"),
-                app_url=app_url,
-                preferences_token=token,
-                preferences_base_url=public_api_url,
-            )
+            if campaign.get("content_hash") is None:
+                rendered = render_campaign_email(
+                    campaign_type=validated_type,
+                    language=profile.get("preferred_language"),
+                    first_name=profile.get("full_name"),
+                    app_url=app_url,
+                    preferences_token=token,
+                    preferences_base_url=public_api_url,
+                )
+            else:
+                rendered = render_editable_campaign_email(
+                    campaign_type=validated_type,
+                    editor_mode=campaign["editor_mode"],
+                    subject=campaign["email_subject"],
+                    content=campaign["email_content"],
+                    language=profile.get("preferred_language"),
+                    first_name=profile.get("full_name"),
+                    app_url=app_url,
+                    preferences_token=token,
+                    preferences_base_url=public_api_url,
+                )
             messages.append(
                 {
                     "from": normalize_sender(settings.from_email),
