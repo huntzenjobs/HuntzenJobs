@@ -54,20 +54,20 @@ describe("SendEmailDialog", () => {
               : isAllActive
                 ? "marketing-reactivation-all"
                 : "marketing-reactivation",
-            template_version: "2026-09-v1",
+            template_version: isRelational ? "2026-09-v1" : "2026-09-v2",
             recipient_count: isRelational || isAllActive ? 836 : 12,
             subject: isRelational
               ? "HuntzenJobs a évolué : découvrez votre nouvel espace emploi"
-              : "Votre prochaine opportunité vous attend sur HuntzenJobs",
+              : "Et si votre prochaine candidature était la bonne ?",
             main_text: isRelational
               ? "Découvrez les nouveautés"
-              : "Découvrez les abonnements",
+              : "Des offres ciblées, un CV renforcé et des assistants carrière",
             html: isRelational
               ? "<p>Découvrir les nouveautés</p>"
-              : "<p>Découvrir les abonnements</p>",
+              : "<p>Découvrir les formules</p>",
             html_template: isRelational
               ? "<p>Découvrir les nouveautés</p>"
-              : "<p>Découvrir les abonnements</p>",
+              : "<p>Découvrir les formules</p>",
           }),
         };
       }),
@@ -112,11 +112,11 @@ describe("SendEmailDialog", () => {
     );
 
     expect(await screen.findByLabelText("Sujet")).toHaveValue(
-      "Votre prochaine opportunité vous attend sur HuntzenJobs",
+      "Et si votre prochaine candidature était la bonne ?",
     );
     expect(
       (screen.getByLabelText("Texte principal") as HTMLTextAreaElement).value,
-    ).toContain("Découvrez les abonnements");
+    ).toContain("Des offres ciblées");
     expect(screen.getByRole("tab", { name: "Mode HTML" })).toBeInTheDocument();
   });
 
@@ -131,7 +131,7 @@ describe("SendEmailDialog", () => {
     );
 
     expect(await screen.findByLabelText("Sujet")).toHaveValue(
-      "Votre prochaine opportunité vous attend sur HuntzenJobs",
+      "Et si votre prochaine candidature était la bonne ?",
     );
     expect(
       screen.getByText(/Je confirme l'envoi à 836 destinataire/),
@@ -152,7 +152,7 @@ describe("SendEmailDialog", () => {
         ok: true,
         json: async () => ({
           campaign_type: "marketing-reactivation-all",
-          template_version: "2026-09-v1",
+          template_version: "2026-09-v2",
           recipient_count: 1,
           subject: "Sujet initial HuntzenJobs",
           main_text: "Texte initial",

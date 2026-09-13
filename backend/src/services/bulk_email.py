@@ -32,8 +32,8 @@ class RenderedCampaignEmail(TypedDict):
 
 CAMPAIGN_TEMPLATE_VERSIONS: dict[CampaignType, str] = {
     "service-update": "2026-09-v1",
-    "marketing-reactivation": "2026-09-v1",
-    "marketing-reactivation-all": "2026-09-v1",
+    "marketing-reactivation": "2026-09-v2",
+    "marketing-reactivation-all": "2026-09-v2",
 }
 
 
@@ -258,10 +258,15 @@ def default_campaign_editor_content(
                 "avancez plus efficacement dans votre recherche.",
             )
         return (
-            "Votre prochaine opportunité vous attend sur HuntzenJobs",
-            "Donnez un nouvel élan à votre recherche avec un accompagnement adapté à "
-            "chaque étape.\n\nRetrouvez vos assistants carrière, les offres adaptées à "
-            "votre profil et les outils pour renforcer vos candidatures.",
+            "Et si votre prochaine candidature était la bonne ?",
+            "Votre recherche d’emploi mérite mieux que des dizaines d’onglets et des "
+            "candidatures envoyées au hasard. HuntzenJobs réunit dans un seul espace "
+            "les outils qui vous aident à avancer avec méthode.\n\n"
+            "✓ Des offres ciblées selon votre recherche\n"
+            "✓ Des outils pour renforcer votre CV et vos candidatures\n"
+            "✓ Des assistants carrière pour vous guider à chaque étape\n\n"
+            "Reprenez votre recherche là où vous l’aviez laissée et découvrez la "
+            "formule qui correspond à votre rythme.",
         )
     if campaign_type == "service-update":
         return (
@@ -272,10 +277,14 @@ def default_campaign_editor_content(
             "your search.",
         )
     return (
-        "Your next opportunity is waiting on HuntzenJobs",
-        "Give your job search new momentum with guidance tailored to every step.\n\n"
-        "Return to your career assistants, tailored job listings and tools that "
-        "strengthen your applications.",
+        "What if your next application were the right one?",
+        "Your job search deserves better than dozens of open tabs and applications "
+        "sent at random. HuntzenJobs brings together the tools that help you move "
+        "forward with a clear method.\n\n"
+        "✓ Targeted job opportunities based on your search\n"
+        "✓ Tools to strengthen your CV and applications\n"
+        "✓ Career assistants to guide you at every step\n\n"
+        "Pick up where you left off and discover the plan that matches your pace.",
     )
 
 
@@ -352,6 +361,39 @@ def _email_shell(
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:18px;overflow:hidden">
 <tr><td style="padding:26px 32px;background:#071426"><img src="{logo_url}" width="180" alt="{brand_name}" style="display:block;width:180px;max-width:100%;height:auto;border:0"></td></tr>
 <tr><td style="padding:32px"><h1 style="font-size:28px;line-height:1.2;margin:0 0 20px">{title}</h1>{content}</td></tr>
+{footer_row}
+</table></td></tr></table></body></html>"""
+
+
+def _editable_email_shell(
+    *,
+    title: str,
+    content: str,
+    footer: str,
+    app_url: str,
+    preheader: str,
+    style_body: bool = True,
+) -> str:
+    """Rend l'identité HuntzenJobs des nouvelles campagnes éditables."""
+    footer_row = (
+        f'<tr><td style="padding:20px 34px;background:#f4f7fa;color:#64748b;'
+        f'font-size:12px;line-height:1.6;text-align:center">{footer}</td></tr>'
+        if footer
+        else ""
+    )
+    body_attributes = (
+        ' style="margin:0;background:#eaf0f5;font-family:Arial,sans-serif;color:#142033"'
+        if style_body
+        else ""
+    )
+    wordmark_url = f"{app_url.rstrip('/')}/dashboard"
+    return f"""<!doctype html>
+<html><body{body_attributes}>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#eaf0f5" style="background:#eaf0f5;font-family:Arial,Helvetica,sans-serif;color:#142033"><tr><td align="center" style="padding:30px 14px">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:640px;background:#ffffff;border:1px solid #dce5ec;border-radius:20px;overflow:hidden">
+<tr><td style="padding:24px 34px;background:#071426"><a href="{wordmark_url}" title="HuntzenJobs" style="display:inline-block;color:#ffffff;text-decoration:none;font-size:25px;line-height:1;font-weight:800;letter-spacing:-0.8px"><span style="color:#ffffff">Huntzen</span><span style="color:#06c5df">Jobs</span></a></td></tr>
+<tr><td style="padding:14px 34px;background:#e9fbfe;color:#14536a;font-size:13px;line-height:1.5;font-weight:700">{preheader}</td></tr>
+<tr><td style="padding:36px 34px 38px"><h1 style="color:#071426;font-size:30px;line-height:1.18;letter-spacing:-0.7px;margin:0 0 22px">{title}</h1>{content}</td></tr>
 {footer_row}
 </table></td></tr></table></body></html>"""
 
@@ -500,9 +542,9 @@ def render_editable_campaign_email(
         is_service = campaign_type == "service-update"
         cta_text = (
             "Découvrir les nouveautés" if is_french and is_service else
-            "Découvrir les abonnements" if is_french else
+            "Découvrir les formules" if is_french else
             "Discover what’s new" if is_service else
-            "Discover subscriptions"
+            "Explore HuntzenJobs plans"
         )
         cta_path = "/dashboard" if is_service else "/pricing"
         body = f"""
@@ -514,12 +556,26 @@ def render_editable_campaign_email(
             f'<a href="{preferences_url}" style="color:#94a3b8;text-decoration:underline">'
             f"{footer_text}</a>"
         )
-        rendered_html = _email_shell(
-            title=escape(subject),
-            content=body,
-            footer=footer,
-            logo_url=f"{application_base}/logo.png",
+        preheader = (
+            "Vos outils de recherche d’emploi sont prêts à vous accompagner."
+            if is_french
+            else "Your job search tools are ready when you are."
         )
+        if is_service:
+            rendered_html = _email_shell(
+                title=escape(subject),
+                content=body,
+                footer=footer,
+                logo_url=f"{application_base}/logo.png",
+            )
+        else:
+            rendered_html = _editable_email_shell(
+                title=escape(subject),
+                content=body,
+                footer=footer,
+                app_url=application_base,
+                preheader=preheader,
+            )
 
     return {
         "subject": subject,
@@ -537,22 +593,45 @@ def default_campaign_html_template(
 ) -> str:
     """Construit le point de départ HTML sans lien technique éditable."""
     subject, main_text = default_campaign_editor_content(campaign_type, "fr")
-    paragraphs = "".join(
-        f'<p style="font-size:16px;line-height:1.7">{escape(paragraph)}</p>'
-        for paragraph in main_text.split("\n\n")
-    )
     is_service = campaign_type == "service-update"
-    cta_text = "Découvrir les nouveautés" if is_service else "Découvrir les abonnements"
-    cta_path = "/dashboard" if is_service else "/pricing"
-    content = f"""
+    if is_service:
+        paragraphs = "".join(
+            f'<p style="font-size:16px;line-height:1.7;color:#344256">{escape(paragraph)}</p>'
+            for paragraph in main_text.split("\n\n")
+        )
+        content = f"""
 <p style="font-size:16px;line-height:1.7">Bonjour {{{{first_name}}}},</p>
 {paragraphs}
-<p style="margin:28px 0"><a href="{{{{app_url}}}}{cta_path}" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px">{cta_text}</a></p>"""
-    return _email_shell(
+<p style="margin:28px 0 0"><a href="{{{{app_url}}}}/dashboard" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:15px 24px;border-radius:10px">Découvrir les nouveautés</a></p>"""
+        return _email_shell(
+            title=escape(subject),
+            content=content,
+            footer="",
+            logo_url=f"{app_url.rstrip('/')}/logo.png",
+            style_body=False,
+        )
+    else:
+        content = """
+<p style="font-size:16px;line-height:1.7;color:#344256;margin:0 0 18px">Bonjour {{first_name}},</p>
+<p style="font-size:17px;line-height:1.7;color:#344256;margin:0 0 26px">Votre recherche d’emploi mérite mieux que des dizaines d’onglets et des candidatures envoyées au hasard. HuntzenJobs réunit vos outils dans un seul espace pour vous aider à avancer avec méthode.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #dce5ec">
+<tr><td width="48" valign="top" style="padding:20px 0;border-bottom:1px solid #dce5ec"><span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border-radius:17px;background:#dff9fd;color:#087f95;font-size:14px;font-weight:800">1</span></td><td valign="top" style="padding:20px 0;border-bottom:1px solid #dce5ec"><strong style="display:block;color:#071426;font-size:16px;line-height:1.4;margin-bottom:4px">Des offres ciblées</strong><span style="color:#526277;font-size:14px;line-height:1.6">Concentrez votre énergie sur les opportunités qui correspondent à votre recherche.</span></td></tr>
+<tr><td width="48" valign="top" style="padding:20px 0;border-bottom:1px solid #dce5ec"><span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border-radius:17px;background:#dff9fd;color:#087f95;font-size:14px;font-weight:800">2</span></td><td valign="top" style="padding:20px 0;border-bottom:1px solid #dce5ec"><strong style="display:block;color:#071426;font-size:16px;line-height:1.4;margin-bottom:4px">Une candidature renforcée</strong><span style="color:#526277;font-size:14px;line-height:1.6">Travaillez votre CV et préparez des candidatures plus claires et plus pertinentes.</span></td></tr>
+<tr><td width="48" valign="top" style="padding:20px 0"><span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border-radius:17px;background:#dff9fd;color:#087f95;font-size:14px;font-weight:800">3</span></td><td valign="top" style="padding:20px 0"><strong style="display:block;color:#071426;font-size:16px;line-height:1.4;margin-bottom:4px">Un accompagnement à chaque étape</strong><span style="color:#526277;font-size:14px;line-height:1.6">Appuyez-vous sur vos assistants carrière pour structurer la suite de votre recherche.</span></td></tr>
+</table>
+<div style="margin:28px 0 0;padding:20px 22px;background:#f4f8fb;border-left:4px solid #06c5df;border-radius:8px"><strong style="display:block;color:#071426;font-size:16px;line-height:1.4;margin-bottom:6px">Reprenez là où vous vous étiez arrêté</strong><span style="color:#526277;font-size:14px;line-height:1.6">Choisissez la formule qui correspond à votre rythme et remettez votre recherche en mouvement.</span></div>
+<p style="margin:28px 0 10px"><a href="{{app_url}}/pricing" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:800;padding:16px 24px;border-radius:10px">Découvrir les formules</a></p>
+<p style="margin:0;color:#738196;font-size:12px;line-height:1.6">Accédez à votre espace depuis votre ordinateur ou votre mobile.</p>"""
+        preheader = (
+            "Offres ciblées, candidature renforcée et assistants carrière dans un "
+            "seul espace."
+        )
+    return _editable_email_shell(
         title=escape(subject),
         content=content,
         footer="",
-        logo_url=f"{app_url.rstrip('/')}/logo.png",
+        app_url="{{app_url}}",
+        preheader=preheader,
         style_body=False,
     )
 
