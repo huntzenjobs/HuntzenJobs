@@ -32,8 +32,8 @@ class RenderedCampaignEmail(TypedDict):
 
 CAMPAIGN_TEMPLATE_VERSIONS: dict[CampaignType, str] = {
     "service-update": "2026-09-v1",
-    "marketing-reactivation": "2026-09-v2",
-    "marketing-reactivation-all": "2026-09-v2",
+    "marketing-reactivation": "2026-09-v3",
+    "marketing-reactivation-all": "2026-09-v3",
 }
 
 
@@ -258,15 +258,15 @@ def default_campaign_editor_content(
                 "avancez plus efficacement dans votre recherche.",
             )
         return (
-            "Et si votre prochaine candidature était la bonne ?",
-            "Votre recherche d’emploi mérite mieux que des dizaines d’onglets et des "
-            "candidatures envoyées au hasard. HuntzenJobs réunit dans un seul espace "
-            "les outils qui vous aident à avancer avec méthode.\n\n"
-            "✓ Des offres ciblées selon votre recherche\n"
-            "✓ Des outils pour renforcer votre CV et vos candidatures\n"
-            "✓ Des assistants carrière pour vous guider à chaque étape\n\n"
-            "Reprenez votre recherche là où vous l’aviez laissée et découvrez la "
-            "formule qui correspond à votre rythme.",
+            "Du nouveau sur HuntzenJobs",
+            "Cela fait peut-être un moment que vous n’avez pas ouvert HuntzenJobs. "
+            "Depuis votre dernière visite, nous avons amélioré les outils qui vous "
+            "accompagnent dans votre recherche d’emploi.\n\n"
+            "Vous pouvez maintenant retrouver des offres adaptées à votre recherche, "
+            "travailler votre CV et préparer vos candidatures avec nos assistants "
+            "carrière, depuis un seul espace.\n\n"
+            "Votre compte vous attend, vous pouvez reprendre simplement là où vous "
+            "vous étiez arrêté.\n\nL’équipe HuntzenJobs",
         )
     if campaign_type == "service-update":
         return (
@@ -277,14 +277,13 @@ def default_campaign_editor_content(
             "your search.",
         )
     return (
-        "What if your next application were the right one?",
-        "Your job search deserves better than dozens of open tabs and applications "
-        "sent at random. HuntzenJobs brings together the tools that help you move "
-        "forward with a clear method.\n\n"
-        "✓ Targeted job opportunities based on your search\n"
-        "✓ Tools to strengthen your CV and applications\n"
-        "✓ Career assistants to guide you at every step\n\n"
-        "Pick up where you left off and discover the plan that matches your pace.",
+        "What’s new on HuntzenJobs",
+        "It may have been a while since you last opened HuntzenJobs. Since your last "
+        "visit, we have improved the tools that support your job search.\n\n"
+        "You can now find jobs that match your search, work on your CV and prepare "
+        "applications with our career assistants, all in one place.\n\n"
+        "Your account is ready whenever you are. Simply pick up where you left "
+        "off.\n\nThe HuntzenJobs team",
     )
 
 
@@ -371,7 +370,6 @@ def _editable_email_shell(
     content: str,
     footer: str,
     app_url: str,
-    preheader: str,
     style_body: bool = True,
 ) -> str:
     """Rend l'identité HuntzenJobs des nouvelles campagnes éditables."""
@@ -382,18 +380,18 @@ def _editable_email_shell(
         else ""
     )
     body_attributes = (
-        ' style="margin:0;background:#eaf0f5;font-family:Arial,sans-serif;color:#142033"'
+        ' style="margin:0;background:#f5f7f9;font-family:Arial,sans-serif;color:#243247"'
         if style_body
         else ""
     )
     wordmark_url = f"{app_url.rstrip('/')}/dashboard"
     return f"""<!doctype html>
 <html><body{body_attributes}>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#eaf0f5" style="background:#eaf0f5;font-family:Arial,Helvetica,sans-serif;color:#142033"><tr><td align="center" style="padding:30px 14px">
-<table role="presentation" width="640" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:640px;background:#ffffff;border:1px solid #dce5ec;border-radius:20px;overflow:hidden">
-<tr><td style="padding:24px 34px;background:#071426"><a href="{wordmark_url}" title="HuntzenJobs" style="display:inline-block;color:#ffffff;text-decoration:none;font-size:25px;line-height:1;font-weight:800;letter-spacing:-0.8px"><span style="color:#ffffff">Huntzen</span><span style="color:#06c5df">Jobs</span></a></td></tr>
-<tr><td style="padding:14px 34px;background:#e9fbfe;color:#14536a;font-size:13px;line-height:1.5;font-weight:700">{preheader}</td></tr>
-<tr><td style="padding:36px 34px 38px"><h1 style="color:#071426;font-size:30px;line-height:1.18;letter-spacing:-0.7px;margin:0 0 22px">{title}</h1>{content}</td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f5f7f9" style="background:#f5f7f9;font-family:Arial,Helvetica,sans-serif;color:#243247"><tr><td align="center" style="padding:28px 14px">
+<table role="presentation" width="620" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:620px;background:#ffffff;border:1px solid #e1e7ec;border-radius:12px;overflow:hidden">
+<tr><td style="padding:24px 32px 18px"><a href="{wordmark_url}" title="HuntzenJobs" style="display:inline-block;color:#101b2d;text-decoration:none;font-size:22px;line-height:1;font-weight:800;letter-spacing:-0.6px"><span style="color:#101b2d">Huntzen</span><span style="color:#06bcd4">Jobs</span></a></td></tr>
+<tr><td style="padding:0 32px"><div style="height:2px;line-height:2px;background:#06c5df">&nbsp;</div></td></tr>
+<tr><td style="padding:30px 32px 34px"><h1 style="color:#101b2d;font-size:25px;line-height:1.3;letter-spacing:-0.3px;margin:0 0 22px">{title}</h1>{content}</td></tr>
 {footer_row}
 </table></td></tr></table></body></html>"""
 
@@ -542,11 +540,11 @@ def render_editable_campaign_email(
         is_service = campaign_type == "service-update"
         cta_text = (
             "Découvrir les nouveautés" if is_french and is_service else
-            "Découvrir les formules" if is_french else
+            "Accéder à mon espace" if is_french else
             "Discover what’s new" if is_service else
-            "Explore HuntzenJobs plans"
+            "Open my account"
         )
-        cta_path = "/dashboard" if is_service else "/pricing"
+        cta_path = "/dashboard"
         body = f"""
 <p style="font-size:16px;line-height:1.7">{greeting}</p>
 {paragraphs}
@@ -555,11 +553,6 @@ def render_editable_campaign_email(
         footer = (
             f'<a href="{preferences_url}" style="color:#94a3b8;text-decoration:underline">'
             f"{footer_text}</a>"
-        )
-        preheader = (
-            "Vos outils de recherche d’emploi sont prêts à vous accompagner."
-            if is_french
-            else "Your job search tools are ready when you are."
         )
         if is_service:
             rendered_html = _email_shell(
@@ -574,7 +567,6 @@ def render_editable_campaign_email(
                 content=body,
                 footer=footer,
                 app_url=application_base,
-                preheader=preheader,
             )
 
     return {
@@ -613,25 +605,17 @@ def default_campaign_html_template(
     else:
         content = """
 <p style="font-size:16px;line-height:1.7;color:#344256;margin:0 0 18px">Bonjour {{first_name}},</p>
-<p style="font-size:17px;line-height:1.7;color:#344256;margin:0 0 26px">Votre recherche d’emploi mérite mieux que des dizaines d’onglets et des candidatures envoyées au hasard. HuntzenJobs réunit vos outils dans un seul espace pour vous aider à avancer avec méthode.</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #dce5ec">
-<tr><td width="48" valign="top" style="padding:20px 0;border-bottom:1px solid #dce5ec"><span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border-radius:17px;background:#dff9fd;color:#087f95;font-size:14px;font-weight:800">1</span></td><td valign="top" style="padding:20px 0;border-bottom:1px solid #dce5ec"><strong style="display:block;color:#071426;font-size:16px;line-height:1.4;margin-bottom:4px">Des offres ciblées</strong><span style="color:#526277;font-size:14px;line-height:1.6">Concentrez votre énergie sur les opportunités qui correspondent à votre recherche.</span></td></tr>
-<tr><td width="48" valign="top" style="padding:20px 0;border-bottom:1px solid #dce5ec"><span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border-radius:17px;background:#dff9fd;color:#087f95;font-size:14px;font-weight:800">2</span></td><td valign="top" style="padding:20px 0;border-bottom:1px solid #dce5ec"><strong style="display:block;color:#071426;font-size:16px;line-height:1.4;margin-bottom:4px">Une candidature renforcée</strong><span style="color:#526277;font-size:14px;line-height:1.6">Travaillez votre CV et préparez des candidatures plus claires et plus pertinentes.</span></td></tr>
-<tr><td width="48" valign="top" style="padding:20px 0"><span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border-radius:17px;background:#dff9fd;color:#087f95;font-size:14px;font-weight:800">3</span></td><td valign="top" style="padding:20px 0"><strong style="display:block;color:#071426;font-size:16px;line-height:1.4;margin-bottom:4px">Un accompagnement à chaque étape</strong><span style="color:#526277;font-size:14px;line-height:1.6">Appuyez-vous sur vos assistants carrière pour structurer la suite de votre recherche.</span></td></tr>
-</table>
-<div style="margin:28px 0 0;padding:20px 22px;background:#f4f8fb;border-left:4px solid #06c5df;border-radius:8px"><strong style="display:block;color:#071426;font-size:16px;line-height:1.4;margin-bottom:6px">Reprenez là où vous vous étiez arrêté</strong><span style="color:#526277;font-size:14px;line-height:1.6">Choisissez la formule qui correspond à votre rythme et remettez votre recherche en mouvement.</span></div>
-<p style="margin:28px 0 10px"><a href="{{app_url}}/pricing" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:800;padding:16px 24px;border-radius:10px">Découvrir les formules</a></p>
-<p style="margin:0;color:#738196;font-size:12px;line-height:1.6">Accédez à votre espace depuis votre ordinateur ou votre mobile.</p>"""
-        preheader = (
-            "Offres ciblées, candidature renforcée et assistants carrière dans un "
-            "seul espace."
-        )
+<p style="font-size:16px;line-height:1.7;color:#344256;margin:0 0 18px">Cela fait peut-être un moment que vous n’avez pas ouvert HuntzenJobs. Depuis votre dernière visite, nous avons amélioré les outils qui vous accompagnent dans votre recherche d’emploi.</p>
+<p style="font-size:16px;line-height:1.7;color:#344256;margin:0 0 18px">Vous pouvez maintenant retrouver <a href="{{app_url}}/jobs" style="color:#087f95;text-decoration:underline">des offres adaptées à votre recherche</a>, <a href="{{app_url}}/cv-analysis" style="color:#087f95;text-decoration:underline">travailler votre CV</a> et préparer vos candidatures avec <a href="{{app_url}}/assistant" style="color:#087f95;text-decoration:underline">nos assistants carrière</a>, depuis un seul espace.</p>
+<p style="font-size:16px;line-height:1.7;color:#344256;margin:0 0 24px">Votre compte vous attend, vous pouvez reprendre simplement là où vous vous étiez arrêté.</p>
+<p style="margin:0 0 24px"><a href="{{app_url}}/dashboard" style="display:inline-block;background:#06c5df;color:#071426;text-decoration:none;font-weight:700;padding:13px 20px;border-radius:8px">Accéder à mon espace</a></p>
+<p style="font-size:14px;line-height:1.6;color:#526277;margin:0 0 26px">Vous souhaitez comparer les possibilités ? <a href="{{app_url}}/pricing" style="color:#087f95;text-decoration:underline;font-weight:700">Voir les formules</a>.</p>
+<p style="font-size:15px;line-height:1.7;color:#344256;margin:0">À bientôt,<br><strong>L’équipe HuntzenJobs</strong></p>"""
     return _editable_email_shell(
         title=escape(subject),
         content=content,
         footer="",
         app_url="{{app_url}}",
-        preheader=preheader,
         style_body=False,
     )
 

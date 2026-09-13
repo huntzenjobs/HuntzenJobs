@@ -200,15 +200,15 @@ def test_simple_editor_keeps_the_branded_layout_and_escapes_content() -> None:
     assert "HuntzenJobs" in rendered["html"]
     assert "&lt;script&gt;" in rendered["html"]
     assert "<script>" not in rendered["html"]
-    assert ">Découvrir les formules</a>" in rendered["html"]
+    assert ">Accéder à mon espace</a>" in rendered["html"]
     assert "signed-token" in rendered["html"]
 
 
-def test_new_marketing_campaigns_use_the_v2_template() -> None:
+def test_new_marketing_campaigns_use_the_v3_template() -> None:
     assert CAMPAIGN_TEMPLATE_VERSIONS["service-update"] == "2026-09-v1"
-    assert CAMPAIGN_TEMPLATE_VERSIONS["marketing-reactivation"] == "2026-09-v2"
+    assert CAMPAIGN_TEMPLATE_VERSIONS["marketing-reactivation"] == "2026-09-v3"
     assert CAMPAIGN_TEMPLATE_VERSIONS["marketing-reactivation-all"] == (
-        "2026-09-v2"
+        "2026-09-v3"
     )
 
 
@@ -238,11 +238,12 @@ def test_default_marketing_content_leads_with_a_clear_reason_to_return() -> None
         "fr",
     )
 
-    assert subject == "Et si votre prochaine candidature était la bonne ?"
+    assert subject == "Du nouveau sur HuntzenJobs"
     assert "HuntzenJobs" in main_text
-    assert "offres ciblées" in main_text
+    assert "offres adaptées" in main_text
     assert "CV" in main_text
     assert "assistants carrière" in main_text
+    assert "L’équipe HuntzenJobs" in main_text
     assert "abonné" not in main_text.casefold()
     assert "4 500" not in main_text
 
@@ -256,15 +257,22 @@ def test_default_marketing_html_is_branded_actionable_and_email_safe() -> None:
     validated = validate_campaign_html(template)
     assert "HuntzenJobs" in validated
     assert 'src="https://www.huntzenjobs.com/logo.png"' not in validated
-    assert "Et si votre prochaine candidature était la bonne ?" in validated
-    assert "Des offres ciblées" in validated
-    assert "Une candidature renforcée" in validated
-    assert "Un accompagnement à chaque étape" in validated
+    assert "Du nouveau sur HuntzenJobs" in validated
+    assert "Cela fait peut-être un moment" in validated
+    assert "L’équipe HuntzenJobs" in validated
+    assert 'href="{{app_url}}/jobs"' in validated
+    assert 'href="{{app_url}}/assistant"' in validated
+    assert 'href="{{app_url}}/cv-analysis"' in validated
+    assert 'href="{{app_url}}/dashboard"' in validated
     assert 'href="{{app_url}}/pricing"' in validated
-    assert ">Découvrir les formules</a>" in validated
+    assert ">Accéder à mon espace</a>" in validated
+    assert ">Voir les formules</a>" in validated
     assert "{{first_name}}" in validated
     assert "unsubscribe" not in validated.casefold()
     assert "font-family:Arial,Helvetica,sans-serif" in validated
+    assert "Et si votre prochaine candidature" not in validated
+    assert "Reprenez là où" not in validated
+    assert "background:#071426" not in validated
 
 
 def test_html_editor_adds_mandatory_footer_and_replaces_safe_placeholders() -> None:

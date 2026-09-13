@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import SendEmailDialog, {
+  campaignPreviewHtml,
   campaignFailureMessage,
 } from "@/components/admin/users/send-email-dialog";
 
@@ -54,20 +55,20 @@ describe("SendEmailDialog", () => {
               : isAllActive
                 ? "marketing-reactivation-all"
                 : "marketing-reactivation",
-            template_version: isRelational ? "2026-09-v1" : "2026-09-v2",
+            template_version: isRelational ? "2026-09-v1" : "2026-09-v3",
             recipient_count: isRelational || isAllActive ? 836 : 12,
             subject: isRelational
               ? "HuntzenJobs a évolué : découvrez votre nouvel espace emploi"
-              : "Et si votre prochaine candidature était la bonne ?",
+              : "Du nouveau sur HuntzenJobs",
             main_text: isRelational
               ? "Découvrez les nouveautés"
-              : "Des offres ciblées, un CV renforcé et des assistants carrière",
+              : "Des offres adaptées, un CV renforcé et des assistants carrière",
             html: isRelational
               ? "<p>Découvrir les nouveautés</p>"
-              : "<p>Découvrir les formules</p>",
+              : '<a href="{{app_url}}/dashboard">Accéder à mon espace</a>',
             html_template: isRelational
               ? "<p>Découvrir les nouveautés</p>"
-              : "<p>Découvrir les formules</p>",
+              : '<a href="{{app_url}}/dashboard">Accéder à mon espace</a>',
           }),
         };
       }),
@@ -112,11 +113,11 @@ describe("SendEmailDialog", () => {
     );
 
     expect(await screen.findByLabelText("Sujet")).toHaveValue(
-      "Et si votre prochaine candidature était la bonne ?",
+      "Du nouveau sur HuntzenJobs",
     );
     expect(
       (screen.getByLabelText("Texte principal") as HTMLTextAreaElement).value,
-    ).toContain("Des offres ciblées");
+    ).toContain("Des offres adaptées");
     expect(screen.getByRole("tab", { name: "Mode HTML" })).toBeInTheDocument();
   });
 
@@ -131,7 +132,7 @@ describe("SendEmailDialog", () => {
     );
 
     expect(await screen.findByLabelText("Sujet")).toHaveValue(
-      "Et si votre prochaine candidature était la bonne ?",
+      "Du nouveau sur HuntzenJobs",
     );
     expect(
       screen.getByText(/Je confirme l'envoi à 836 destinataire/),
@@ -152,7 +153,7 @@ describe("SendEmailDialog", () => {
         ok: true,
         json: async () => ({
           campaign_type: "marketing-reactivation-all",
-          template_version: "2026-09-v2",
+          template_version: "2026-09-v3",
           recipient_count: 1,
           subject: "Sujet initial HuntzenJobs",
           main_text: "Texte initial",
@@ -194,5 +195,20 @@ describe("SendEmailDialog", () => {
       html_template:
         "<html><p>Campagne finale</p></html>",
     });
+  });
+
+  it("résout les liens et le prénom dans l'aperçu HTML", () => {
+    const preview = campaignPreviewHtml(
+      '<a href="{{app_url}}/dashboard">Bonjour {{first_name}}</a>',
+    );
+
+    expect(preview).toContain('href="/dashboard"');
+    expect(preview).toContain("Bonjour Camille");
+    expect(preview).toContain('http-equiv="Content-Security-Policy"');
+    expect(preview).toContain("default-src 'none'");
+    expect(preview).toMatch(
+      /^<!doctype html><html><head><meta http-equiv="Content-Security-Policy"/,
+    );
+    expect(preview).not.toContain("{{");
   });
 });

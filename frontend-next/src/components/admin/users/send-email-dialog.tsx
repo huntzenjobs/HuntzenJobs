@@ -50,6 +50,15 @@ export function campaignFailureMessage(status: string): string {
   return "La campagne exige une vérification manuelle.";
 }
 
+export function campaignPreviewHtml(htmlTemplate: string): string {
+  const resolvedTemplate = htmlTemplate
+    .replaceAll("{{app_url}}", "")
+    .replaceAll("{{first_name}}", "Camille");
+  const previewPolicy =
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob:; style-src \'unsafe-inline\'">';
+  return `<!doctype html><html><head>${previewPolicy}</head><body>${resolvedTemplate}</body></html>`;
+}
+
 async function adminRequest(path: string, init?: RequestInit) {
   const supabase = createClient();
   const {
@@ -313,7 +322,7 @@ export default function SendEmailDialog(props: Props) {
               </summary>
               <iframe
                 title="Aperçu de la campagne"
-                srcDoc={htmlTemplate}
+                srcDoc={campaignPreviewHtml(htmlTemplate)}
                 sandbox=""
                 className="mt-3 h-[520px] w-full rounded-md border bg-white"
               />
