@@ -135,7 +135,7 @@ export default function SegmentsPage() {
     setLoading(true);
     try {
       const [ar, ch, nc, serviceUpdate, marketing, allActiveMarketing] =
-        await Promise.all([
+        await Promise.allSettled([
           adminFetch("/api/admin/segments/at-risk"),
           adminFetch("/api/admin/segments/about-to-churn"),
           adminFetch("/api/admin/segments/never-converted"),
@@ -143,14 +143,25 @@ export default function SegmentsPage() {
           adminFetch("/api/admin/campaigns/marketing-reactivation/preview"),
           adminFetch("/api/admin/campaigns/marketing-reactivation-all/preview"),
         ]);
-      setAtRisk(ar.users || []);
-      setChurn(ch.users || []);
-      setNeverConverted(nc.users || []);
-      setActiveAccountCount(serviceUpdate.recipient_count || 0);
-      setNewsletterCount(marketing.recipient_count || 0);
-      setAllActiveMarketingCount(allActiveMarketing.recipient_count || 0);
-    } catch {
-      toast.error("Impossible de charger les segments");
+      if (ar.status === "fulfilled") setAtRisk(ar.value.users || []);
+      if (ch.status === "fulfilled") setChurn(ch.value.users || []);
+      if (nc.status === "fulfilled") setNeverConverted(nc.value.users || []);
+      if (serviceUpdate.status === "fulfilled") {
+        setActiveAccountCount(serviceUpdate.value.recipient_count || 0);
+      }
+      if (marketing.status === "fulfilled") {
+        setNewsletterCount(marketing.value.recipient_count || 0);
+      }
+      if (allActiveMarketing.status === "fulfilled") {
+        setAllActiveMarketingCount(allActiveMarketing.value.recipient_count || 0);
+      }
+      if (
+        [ar, ch, nc, serviceUpdate, marketing, allActiveMarketing].some(
+          (result) => result.status === "rejected",
+        )
+      ) {
+        toast.error("Certaines données n'ont pas pu être chargées");
+      }
     } finally {
       setLoading(false);
     }

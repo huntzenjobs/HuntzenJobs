@@ -21,6 +21,11 @@ from tenacity import (
 T = TypeVar("T")
 
 
+def chunk_values(values: list[T], size: int) -> list[list[T]]:
+    """Découpe une liste pour limiter la taille des filtres PostgREST."""
+    return [values[start:start + size] for start in range(0, len(values), size)]
+
+
 def async_retry(
     max_attempts: int = 3,
     min_wait: float = 1.0,

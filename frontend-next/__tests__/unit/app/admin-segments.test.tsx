@@ -46,4 +46,38 @@ describe("SegmentsPage", () => {
       screen.getByRole("button", { name: "Envoyer la campagne à tous" }),
     ).toBeInTheDocument();
   });
+
+  it("conserve les campagnes disponibles lorsqu'un segment échoue", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL | Request) => {
+        const path = String(url);
+        if (path.endsWith("/segments/never-converted")) {
+          return {
+            ok: false,
+            json: async () => ({}),
+            text: async () => "Bad Request",
+          };
+        }
+        const payload = path.endsWith("/service-update/preview")
+          ? { recipient_count: 836 }
+          : path.endsWith("/marketing-reactivation-all/preview")
+            ? { recipient_count: 835 }
+            : path.endsWith("/marketing-reactivation/preview")
+              ? { recipient_count: 0 }
+              : { users: [], total: 0 };
+        return { ok: true, json: async () => payload, text: async () => "" };
+      }),
+    );
+
+    render(<SegmentsPage />);
+
+    expect(await screen.findByText("836 comptes actifs")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Préparer l'email relationnel" }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Envoyer la campagne à tous" }),
+    ).toBeEnabled();
+  });
 });

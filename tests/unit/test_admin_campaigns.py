@@ -10,6 +10,16 @@ from src.services.bulk_email import (
     is_campaign_recipient_eligible,
     validate_frozen_campaign,
 )
+from src.utils import helpers
+
+
+def test_chunk_values_limits_supabase_in_filter_size() -> None:
+    values = [f"user-{index}" for index in range(205)]
+    chunk_values = getattr(helpers, "chunk_values", None)
+
+    assert callable(chunk_values)
+    assert [len(chunk) for chunk in chunk_values(values, 100)] == [100, 100, 5]
+    assert [value for chunk in chunk_values(values, 100) for value in chunk] == values
 
 
 def test_campaign_send_requires_a_uuid_and_a_non_negative_confirmation() -> None:

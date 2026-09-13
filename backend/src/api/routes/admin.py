@@ -45,6 +45,7 @@ from src.services.email import (
     send_weekly_summary,
     send_welcome,
 )
+from src.utils.helpers import chunk_values
 
 
 def _admin_grant_subscription_id() -> str:
@@ -2469,21 +2470,29 @@ async def get_never_converted(admin: AdminUserDep) -> dict[str, Any]:
 
     all_ids = [p["id"] for p in profiles_res.data]
 
-    paying_res = supabase.table("user_subscriptions").select(
-        "user_id"
-    ).in_("user_id", all_ids).in_("status", ["active", "trialing"]).execute()
-    paying_ids = {s["user_id"] for s in (paying_res.data or [])}
+    paying_rows: list[dict[str, Any]] = []
+    for user_ids in chunk_values(all_ids, 100):
+        page = supabase.table("user_subscriptions").select(
+            "user_id"
+        ).in_("user_id", user_ids).in_(
+            "status", ["active", "trialing"]
+        ).execute().data or []
+        paying_rows.extend(page)
+    paying_ids = {subscription["user_id"] for subscription in paying_rows}
 
     free_ids = [uid for uid in all_ids if uid not in paying_ids]
     if not free_ids:
         return {"users": [], "total": 0}
 
-    usage_res = supabase.table("usage_quotas").select(
-        "user_id, cv_analyses_used, assistant_messages_used"
-    ).in_("user_id", free_ids).execute()
+    usage_rows: list[dict[str, Any]] = []
+    for user_ids in chunk_values(free_ids, 100):
+        page = supabase.table("usage_quotas").select(
+            "user_id, cv_analyses_used, assistant_messages_used"
+        ).in_("user_id", user_ids).execute().data or []
+        usage_rows.extend(page)
 
     usage_map: dict[str, dict] = {}
-    for u in (usage_res.data or []):
+    for u in usage_rows:
         uid = u["user_id"]
         if uid not in usage_map:
             usage_map[uid] = {"cv": 0, "coach": 0}
